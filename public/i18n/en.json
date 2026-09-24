@@ -1020,5 +1020,22 @@
   "dash.due": "Due {date}",
   "dash.paidOn": "Paid {date}",
   "dash.pending.note": "The payment isn't finished. If you were charged, it will show up here shortly.",
-  "dash.retry": "Ask again"
+  "dash.retry": "Ask again",
+  "auth.panel.signup.title": "Ask people who've already done it",
+  "auth.panel.signup.1": "Real answers from mentors our team has verified.",
+  "auth.panel.signup.2": "Pay only for the questions you ask, in lari. No subscription.",
+  "auth.panel.signup.3": "Full refund if nobody answers within {answerDays} days.",
+  "auth.panel.signup.4": "Want to share what you know? Become a mentor later and keep {sharePct}% of every question.",
+  "auth.panel.login.title": "Good to see you again",
+  "auth.panel.login.1": "Follow your questions and answers in one dashboard.",
+  "auth.panel.login.2": "Mentors: answer questions and track your earnings.",
+  "auth.panel.login.3": "Your card number never touches Wisecall.",
+  "auth.pw.show": "Show password",
+  "auth.pw.hide": "Hide password",
+  "auth.pw.strength": "Password strength",
+  "auth.pw.s.short": "Too short: use at least 8 characters",
+  "auth.pw.s.common": "Too common: choose something less obvious",
+  "auth.pw.s.weak": "Weak: make it longer or mix in numbers and symbols",
+  "auth.pw.s.ok": "Okay",
+  "auth.pw.s.strong": "Strong"
 }

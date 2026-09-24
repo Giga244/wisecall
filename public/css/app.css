@@ -25,6 +25,50 @@
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
+/* Sign up and log in: a benefits panel next to the form ------------------------------------------------- */
+.auth-split {
+  display: grid; grid-template-columns: 1fr 1fr; max-width: 980px; margin: 56px auto 90px; width: calc(100% - 48px);
+  border-radius: var(--radius); overflow: hidden; box-shadow: 0 24px 60px -30px rgba(43, 36, 64, 0.5); background: var(--card);
+}
+.auth-panel { position: relative; overflow: hidden; background: var(--ink); color: #fff; padding: 44px 38px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+.auth-panel h2 { color: #fff; margin: 0; font-size: 1.7rem; line-height: 1.2; position: relative; }
+.auth-blob { position: absolute; border-radius: 50%; }
+.auth-blob.a1 { width: 220px; height: 220px; background: rgba(255, 111, 89, 0.22); top: -80px; right: -70px; }
+.auth-blob.a2 { width: 150px; height: 150px; background: rgba(61, 184, 142, 0.2); bottom: -50px; left: -40px; }
+.auth-benefits { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; position: relative; }
+.auth-benefits li { display: flex; gap: 14px; align-items: flex-start; font-size: 0.98rem; line-height: 1.45; }
+.auth-benefits svg { flex: 0 0 auto; color: #6fd4b0; margin-top: 2px; }
+.auth-split .auth-card { max-width: none; border-radius: 0; box-shadow: none; animation: none; padding: 44px 40px; display: flex; flex-direction: column; justify-content: center; }
+.field { margin-bottom: 16px; }
+.field > label { display: block; font-size: 0.85rem; font-weight: 800; margin: 0 0 6px; color: var(--ink-soft); }
+.field input { margin-top: 0; }
+.field .hint { display: block; font-weight: 600; color: var(--ink-soft); font-size: 0.78rem; margin-top: 6px; }
+.field input[aria-invalid="true"] { border-color: var(--red-strong); }
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 52px; }
+.pw-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: none; background: transparent; border-radius: 50%; color: var(--ink-soft); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.pw-toggle:hover { color: var(--ink); background: var(--bg); }
+.pw-toggle[aria-pressed="true"] { color: var(--accent-text); }
+.pw-toggle:focus-visible { outline: 3px solid var(--accent-strong); outline-offset: 1px; }
+.pw-strength { min-height: 22px; margin-top: 8px; display: flex; align-items: center; gap: 10px; }
+.pw-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 120px; }
+.pw-bar i { display: block; height: 6px; border-radius: 999px; background: var(--border); }
+.pw-strength[data-level="1"] .pw-bar i.on { background: var(--red-strong); }
+.pw-strength[data-level="2"] .pw-bar i.on { background: #d9822b; }
+.pw-strength[data-level="3"] .pw-bar i.on { background: #b39a1a; }
+.pw-strength[data-level="4"] .pw-bar i.on { background: var(--accent2-strong); }
+.pw-text { font-size: 0.8rem; font-weight: 800; color: var(--ink-soft); }
+.pw-strength[data-level="1"] .pw-text { color: var(--red-strong); }
+.pw-strength[data-level="4"] .pw-text { color: var(--accent2-text); }
+.forgot-row { margin: -4px 0 16px; text-align: right; }
+.forgot-row a { font-size: 0.85rem; font-weight: 800; color: var(--accent-text); text-decoration: none; display: inline-flex; align-items: center; min-height: 32px; }
+.forgot-row a:hover { text-decoration: underline; }
+@media (max-width: 860px) {
+  .auth-split { grid-template-columns: 1fr; margin: 28px auto 60px; width: calc(100% - 32px); }
+  .auth-panel { display: none; }
+  .auth-split .auth-card { padding: 30px 22px; }
+}
+
 /* Dashboard ---------------------------------------------------------------------------------------- */
 .dash { max-width: 880px; }
 .tab-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--accent-strong); color: #fff; font-size: 0.75rem; font-weight: 800; }
