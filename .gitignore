@@ -1,3 +1,8 @@
 node_modules/
 .env
 data/db.json
+
+# end-to-end test output
+e2e/.tmp/
+e2e/results/
+e2e/report/
