@@ -66,7 +66,14 @@ const config = {
   SUPPORT_EMAIL: env.SUPPORT_EMAIL || '',
 
   // ADMIN_EMAILS is a comma-separated list; the old single ADMIN_EMAIL still works.
-  ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL)
+  ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL),
+
+  // Public social links shown in the footer. An empty one is not shown; a value must be an https address.
+  SOCIAL_URLS: Object.fromEntries(
+    ['facebook', 'instagram', 'linkedin', 'x', 'tiktok', 'youtube']
+      .map((name) => [name, String(env[`SOCIAL_${name.toUpperCase()}`] || '').trim()])
+      .filter(([, url]) => /^https:\/\/[^\s]+$/i.test(url))
+  )
 };
 
 config.EMAIL_ENABLED = (() => {

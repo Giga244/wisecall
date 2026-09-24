@@ -96,6 +96,7 @@ function seoRoutes() {
       'Disallow: /verify-email.html',
       'Disallow: /reset-password.html',
       'Disallow: /forgot-password.html',
+      'Disallow: /waitlist-unsubscribe.html',
       `Sitemap: ${config.PUBLIC_URL}/sitemap.xml`,
       ''
     ].join('\n'));

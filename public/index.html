@@ -23,15 +23,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
 
+<a class="skip-link" href="#main" data-i18n="a11y.skip">Skip to content</a>
+
 <header class="nav">
   <div class="container nav-inner">
-    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
-    <nav class="nav-links">
+    <a href="/index.html" class="logo" aria-label="Wisecall">Wisecall<span class="dot">.</span></a>
+    <nav class="nav-links" aria-label="Main">
       <a href="#how" data-i18n="nav.how">How it works</a>
       <a href="#experts" data-i18n="nav.browse">Browse experts</a>
+      <a href="#for-mentors" data-i18n="footer.forMentors">For mentors</a>
+      <a href="#faq" data-i18n="footer.faq">FAQ</a>
     </nav>
     <div class="nav-right">
       <div class="lang-toggle">
@@ -51,6 +56,9 @@
   </div>
 </header>
 
+<main id="main">
+
+<!-- 1. Hero -->
 <section class="hero">
   <span class="hero-blob b1"></span>
   <span class="hero-blob b2"></span>
@@ -63,145 +71,344 @@
         <a href="#experts" class="btn btn-primary btn-lg" data-i18n="hero.browse">Browse experts</a>
         <a href="/signup.html?redirect=/settings.html" class="btn btn-outline btn-lg become-link" data-i18n="hero.become">Become a mentor</a>
       </div>
-      <div id="heroStats"></div>
+      <p class="hero-note">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+        <span data-i18n="hero.note">Pay per question · Answer within 7 days or full refund</span>
+      </p>
     </div>
-    <div class="hero-seal">
-      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two chat bubbles">
-        <g class="orb-spin">
-          <ellipse cx="200" cy="200" rx="170" ry="150" fill="none" stroke="#2b2440" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="3 10" stroke-linecap="round"/>
-          <circle cx="370" cy="200" r="11" fill="#f4a93b"/>
-          <circle cx="30" cy="200" r="8" fill="#3db88e"/>
-        </g>
-        <g class="orb-bob">
-          <ellipse cx="170" cy="170" rx="105" ry="80" fill="#ff6f59"/>
-          <path d="M110 232 Q100 275 70 290 Q125 285 150 245 Z" fill="#ff6f59"/>
-          <circle cx="135" cy="170" r="9" fill="#fff"/><circle cx="170" cy="170" r="9" fill="#fff"/><circle cx="205" cy="170" r="9" fill="#fff"/>
-        </g>
-        <ellipse cx="245" cy="262" rx="85" ry="62" fill="#fff" stroke="#2b2440" stroke-width="5"/>
-        <path d="M300 306 Q312 338 340 350 Q290 350 270 314 Z" fill="#fff" stroke="#2b2440" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M212 262 l20 20 l40 -44" fill="none" stroke="#3db88e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+
+    <div class="hero-mock" role="img" data-i18n-aria="mock.aria" aria-label="An example of a question and an answer on Wisecall">
+      <div class="mock-card mock-question" aria-hidden="true">
+        <span class="mock-tag" data-i18n="mock.example">Example</span>
+        <div class="mock-head">
+          <span class="mock-avatar mock-avatar-q">?</span>
+          <span class="mock-label" data-i18n="mock.q.label">A question</span>
+        </div>
+        <p data-i18n="mock.q.text">I'm a marketing manager who wants to move into product design. Should I start with a course, or build projects first?</p>
+      </div>
+      <div class="mock-card mock-answer" aria-hidden="true">
+        <span class="mock-tag" data-i18n="mock.example">Example</span>
+        <div class="mock-head">
+          <span class="mock-avatar mock-avatar-a">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          </span>
+          <span class="mock-label"><span data-i18n="mock.a.label">An answer</span> · <span data-i18n="mock.a.role">Product designer</span></span>
+        </div>
+        <p data-i18n="mock.a.text">Build first. Pick one real problem, design a small fix for it, and write down your thinking. Two solid case studies beat any certificate. A course helps once you know which gaps you have.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="how" id="how">
+<!-- 2. Fields -->
+<section class="strip" aria-labelledby="stripTitle">
   <div class="container">
-    <h2 data-i18n="how.title">How it works</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
+    <h2 id="stripTitle" class="strip-title" data-i18n="strip.title">Find someone in your field</h2>
+    <ul class="niche-strip" id="nicheStrip"></ul>
+  </div>
+</section>
+
+<!-- 3. How it works -->
+<section class="how" id="how" aria-labelledby="howTitle">
+  <div class="container">
+    <h2 id="howTitle" data-i18n="how.title">How it works</h2>
+    <p class="section-sub" data-i18n="how.sub">From question to answer in three steps.</p>
+    <ol class="how-steps">
+      <li class="how-step">
+        <div class="how-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <span class="how-num">1</span>
+        </div>
         <h3 data-i18n="how.step1.title">Find your person</h3>
-        <p data-i18n="how.step1.body">Search by niche and find someone who's already where you want to be.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
+        <p data-i18n="how.step1.body">Browse experts by field and read their profile, price and how they got there. Every mentor is verified by our team before they appear.</p>
+      </li>
+      <li class="how-step">
+        <div class="how-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L20 8l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>
+          <span class="how-num">2</span>
+        </div>
         <h3 data-i18n="how.step2.title">Ask your question</h3>
-        <p data-i18n="how.step2.body">Write what you're stuck on.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
+        <p data-i18n="how.step2.body">Write what you're stuck on and pay the price the mentor set, in lari, through a Georgian bank. The more specific your question, the better the answer.</p>
+      </li>
+      <li class="how-step">
+        <div class="how-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4V5z"/><path d="M9 10.5l2 2 4-4"/></svg>
+          <span class="how-num">3</span>
+        </div>
         <h3 data-i18n="how.step3.title">Get a real answer</h3>
-        <p data-i18n="how.step3.body">Your mentor answers directly in your dashboard.</p>
-      </div>
+        <p data-i18n="how.step3.body">Your mentor answers in your dashboard and by email within 7 days. If they don't, you are refunded automatically. Rate the answer to help others.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- 4. Example answers -->
+<section class="examples" id="examples" aria-labelledby="exTitle">
+  <div class="container">
+    <h2 id="exTitle" data-i18n="ex.title">What an answer looks like</h2>
+    <p class="section-sub" data-i18n="ex.sub">Three examples written by the Wisecall team to show the kind of question people ask and the kind of answer they get. They are not real customers or real mentors.</p>
+    <div class="example-grid">
+      <article class="example-card">
+        <header><span class="ex-niche" data-i18n="niche.tech">Tech</span><span class="ex-tag" data-i18n="ex.label">Example</span></header>
+        <h3 class="ex-q" data-i18n="ex.1.q">I'm self-taught and want my first developer job. Should I learn Python or JavaScript first?</h3>
+        <p class="ex-a" data-i18n="ex.1.a">Pick the one that matches the jobs you can actually apply to. Look at ten local job posts, count which language shows up most, and start there. Depth in one language beats a little of both.</p>
+        <p class="ex-who" data-i18n="ex.1.who">Software engineer</p>
+      </article>
+      <article class="example-card">
+        <header><span class="ex-niche" data-i18n="niche.business">Business</span><span class="ex-tag" data-i18n="ex.label">Example</span></header>
+        <h3 class="ex-q" data-i18n="ex.2.q">I'm launching a small product and have no competitors to compare prices with. How do I price it?</h3>
+        <p class="ex-a" data-i18n="ex.2.a">Start from the value, not the cost. Ask five likely customers what they pay today to solve the problem, and price at a fraction of that. You can raise a price later, but it is hard to lower one.</p>
+        <p class="ex-who" data-i18n="ex.2.who">Founder</p>
+      </article>
+      <article class="example-card">
+        <header><span class="ex-niche" data-i18n="niche.teaching">Teaching</span><span class="ex-tag" data-i18n="ex.label">Example</span></header>
+        <h3 class="ex-q" data-i18n="ex.3.q">My class of 25 teenagers talks over me. How do I get their attention without shouting?</h3>
+        <p class="ex-a" data-i18n="ex.3.a">Choose one signal and use it every time: a raised hand, a countdown, or silence at the front. Practise it on the first day, thank the first students who follow it, and wait. Consistency matters more than volume.</p>
+        <p class="ex-who" data-i18n="ex.3.who">Secondary school teacher</p>
+      </article>
     </div>
   </div>
 </section>
 
-<section class="verify-how" id="verify">
+<!-- 5. Why trust Wisecall -->
+<section class="trust" id="trust" aria-labelledby="trustTitle">
   <div class="container">
-    <h2 data-i18n="hv.title">How we verify mentors</h2>
-    <p class="verify-sub" data-i18n="hv.sub"></p>
+    <h2 id="trustTitle" data-i18n="trust.title">Why trust Wisecall</h2>
+    <div class="trust-grid">
+      <article class="trust-card">
+        <svg class="trust-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+        <h3 data-i18n="trust.1.title">Every mentor is reviewed by a person</h3>
+        <p data-i18n="trust.1.body">We check ID, proof of experience and, in regulated fields such as medicine and law, professional licenses. See how below.</p>
+      </article>
+      <article class="trust-card">
+        <svg class="trust-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M7 15h3"/></svg>
+        <h3 data-i18n="trust.2.title">Secure payment through a Georgian bank</h3>
+        <p data-i18n="trust.2.body">You pay in lari on your bank's own secure page. Wisecall never sees or stores your card number.</p>
+      </article>
+      <article class="trust-card">
+        <svg class="trust-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>
+        <h3 data-i18n="trust.3.title">Full refund if nobody answers</h3>
+        <p data-i18n="trust.3.body">If your mentor doesn't answer within 7 days, you get all your money back automatically. You don't have to ask.</p>
+      </article>
+      <article class="trust-card">
+        <svg class="trust-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg>
+        <h3 data-i18n="trust.4.title">Honest, public reviews</h3>
+        <p data-i18n="trust.4.body">Only people who paid for and received an answer can leave a review. Mentors can't edit or hide them.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- How we verify mentors (the detail behind the first trust card) -->
+<section class="verify-how" id="verify" aria-labelledby="verifyTitle">
+  <div class="container">
+    <h2 id="verifyTitle" data-i18n="hv.title">How we verify mentors</h2>
+    <p class="verify-sub" data-i18n="hv.sub">Nobody appears in Browse experts just by signing up. Every mentor goes through these checks first, and a person on our team approves each one.</p>
     <div class="verify-grid">
       <article class="verify-card">
         <svg class="verify-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
-        <h3 data-i18n="hv.1.title"></h3>
-        <p data-i18n="hv.1.body"></p>
+        <h3 data-i18n="hv.1.title">A real person</h3>
+        <p data-i18n="hv.1.body">A government ID and a live selfie, checked by our identity partner. The name on the ID has to match their profile and payout account.</p>
       </article>
       <article class="verify-card">
         <svg class="verify-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
-        <h3 data-i18n="hv.2.title"></h3>
-        <p data-i18n="hv.2.body"></p>
+        <h3 data-i18n="hv.2.title">Real experience</h3>
+        <p data-i18n="hv.2.body">A proof link, a sample answer, and at least one more proof of background: a work email, a diploma or a portfolio. Our team reads all of it.</p>
       </article>
       <article class="verify-card">
         <svg class="verify-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M9 13.5L8 21l4-2 4 2-1-7.5"/></svg>
-        <h3 data-i18n="hv.3.title"></h3>
-        <p data-i18n="hv.3.body"></p>
+        <h3 data-i18n="hv.3.title">Licensed where it matters</h3>
+        <p data-i18n="hv.3.body">Doctors, lawyers and financial advisers also give us their license or registration, and we check it against the official register.</p>
       </article>
       <article class="verify-card">
         <svg class="verify-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="3"/><path d="M15 10l6-3v10l-6-3"/></svg>
-        <h3 data-i18n="hv.4.title"></h3>
-        <p data-i18n="hv.4.body"></p>
+        <h3 data-i18n="hv.4.title">Met on video</h3>
+        <p data-i18n="hv.4.body">In regulated fields, our team also holds a short video interview before approving anyone.</p>
       </article>
       <article class="verify-card">
         <svg class="verify-ico" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-        <h3 data-i18n="hv.5.title"></h3>
-        <p data-i18n="hv.5.body"></p>
+        <h3 data-i18n="hv.5.title">Watched after approval</h3>
+        <p data-i18n="hv.5.body">A new mentor's first answers are checked before you see them. Reports and low ratings are reviewed, and we can suspend a profile at once.</p>
       </article>
     </div>
-    <p class="verify-legend-title" data-i18n="hv.badges"></p>
+    <p class="verify-legend-title" data-i18n="hv.badges">Look for these badges on a mentor's profile:</p>
     <div id="badgeLegend"></div>
-    <p class="muted small" data-i18n="hv.privacy"></p>
+    <p class="muted small" data-i18n="hv.privacy">We never show an ID, a license number or a document. Only the badge and the date of the check.</p>
     <p><a href="/about.html" class="btn btn-outline" data-i18n="hv.more">Read more about how Wisecall works</a></p>
   </div>
 </section>
-<section class="experts" id="experts">
+
+<!-- 6. Pricing -->
+<section class="pricing" id="pricing" aria-labelledby="pricingTitle">
   <div class="container">
-    <h2 data-i18n="experts.title">Browse experts</h2>
+    <h2 id="pricingTitle" data-i18n="price.title">Simple, fair pricing</h2>
+    <p class="section-sub" data-i18n="price.sub">Each mentor sets their own price per question, between 5 and 2000 ₾. You pay once per question. No subscriptions, no hidden fees.</p>
+    <div class="price-grid">
+      <article class="price-card">
+        <h3 data-i18n="price.1.title">You pay per question</h3>
+        <p data-i18n="price.1.body">The price is shown on every profile before you ask. Pay by card in lari, on your bank's secure page.</p>
+      </article>
+      <article class="price-card">
+        <h3 data-i18n="price.2.title">Nothing to cancel</h3>
+        <p data-i18n="price.2.body">There is no membership and no monthly charge. Ask one question, or many, whenever you need to.</p>
+      </article>
+      <article class="price-card">
+        <h3 data-i18n="price.3.title">Protected by a refund</h3>
+        <p data-i18n="price.3.body">If your mentor doesn't answer within 7 days, the full amount goes back to your card automatically.</p>
+      </article>
+    </div>
+    <div class="tips-box">
+      <h3 data-i18n="price.tips.title">What makes a good question</h3>
+      <ul>
+        <li data-i18n="price.tip1">Give context: who you are, where you are now and what you want.</li>
+        <li data-i18n="price.tip2">Say what you already tried, so the mentor doesn't repeat it.</li>
+        <li data-i18n="price.tip3">Ask one clear thing. One question, one answer.</li>
+        <li data-i18n="price.tip4">Say how you will use the answer, for example a decision you have to make by a certain date.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Browse experts -->
+<section class="experts" id="experts" aria-labelledby="expertsTitle">
+  <div class="container">
+    <h2 id="expertsTitle" data-i18n="experts.title">Browse experts</h2>
     <div class="browse-toolbar">
-      <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" placeholder="Search by name or specialty…">
-      <select id="sortSelect" class="sort-select">
+      <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" data-i18n-aria="experts.searchPlaceholder" aria-label="Search by name or specialty" placeholder="Search by name or specialty…">
+      <select id="sortSelect" class="sort-select" data-i18n-aria="experts.sort.label" aria-label="Sort">
         <option value="rating" data-i18n="experts.sort.rating">Top rated</option>
         <option value="priceAsc" data-i18n="experts.sort.priceAsc">Price: low to high</option>
         <option value="priceDesc" data-i18n="experts.sort.priceDesc">Price: high to low</option>
         <option value="newest" data-i18n="experts.sort.newest">Newest</option>
       </select>
     </div>
-    <div class="filters" id="filters">
-      <button class="chip active" data-niche="all" data-i18n="niche.all">All</button>
-      <button class="chip" data-niche="business" data-i18n="niche.business">Business</button>
-      <button class="chip" data-niche="medicine" data-i18n="niche.medicine">Medicine</button>
-      <button class="chip" data-niche="teaching" data-i18n="niche.teaching">Teaching</button>
-      <button class="chip" data-niche="tech" data-i18n="niche.tech">Tech</button>
-      <button class="chip" data-niche="fitness" data-i18n="niche.fitness">Fitness</button>
-      <button class="chip" data-niche="creative" data-i18n="niche.creative">Creative</button>
-      <button class="chip" data-niche="law" data-i18n="niche.law">Law</button>
-      <button class="chip" data-niche="finance" data-i18n="niche.finance">Finance</button>
-      <button class="chip" data-niche="marketing" data-i18n="niche.marketing">Marketing</button>
-      <button class="chip" data-niche="design" data-i18n="niche.design">Design</button>
-      <button class="chip" data-niche="writing" data-i18n="niche.writing">Writing</button>
-      <button class="chip" data-niche="parenting" data-i18n="niche.parenting">Parenting</button>
-      <button class="chip" data-niche="engineering" data-i18n="niche.engineering">Engineering</button>
-      <button class="chip" data-niche="science" data-i18n="niche.science">Science</button>
+    <div class="filters" id="filters" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field">
+      <button type="button" class="chip active" data-niche="all" data-i18n="niche.all">All</button>
+      <button type="button" class="chip" data-niche="business" data-i18n="niche.business">Business</button>
+      <button type="button" class="chip" data-niche="medicine" data-i18n="niche.medicine">Medicine</button>
+      <button type="button" class="chip" data-niche="teaching" data-i18n="niche.teaching">Teaching</button>
+      <button type="button" class="chip" data-niche="tech" data-i18n="niche.tech">Tech</button>
+      <button type="button" class="chip" data-niche="fitness" data-i18n="niche.fitness">Fitness</button>
+      <button type="button" class="chip" data-niche="creative" data-i18n="niche.creative">Creative</button>
+      <button type="button" class="chip" data-niche="law" data-i18n="niche.law">Law</button>
+      <button type="button" class="chip" data-niche="finance" data-i18n="niche.finance">Finance</button>
+      <button type="button" class="chip" data-niche="marketing" data-i18n="niche.marketing">Marketing</button>
+      <button type="button" class="chip" data-niche="design" data-i18n="niche.design">Design</button>
+      <button type="button" class="chip" data-niche="writing" data-i18n="niche.writing">Writing</button>
+      <button type="button" class="chip" data-niche="parenting" data-i18n="niche.parenting">Parenting</button>
+      <button type="button" class="chip" data-niche="engineering" data-i18n="niche.engineering">Engineering</button>
+      <button type="button" class="chip" data-niche="science" data-i18n="niche.science">Science</button>
     </div>
-    <div class="expert-grid" id="expertGrid"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+    <div class="expert-grid" id="expertGrid" aria-live="polite"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
   </div>
 </section>
 
-<section class="become" id="become">
-  <div class="container become-inner">
+<!-- 8. For mentors -->
+<section class="mentors" id="for-mentors" aria-labelledby="mentorsTitle">
+  <div class="container">
+    <div class="mentors-head">
+      <h2 id="mentorsTitle" data-i18n="mentors.title">Share what you know, get paid for it</h2>
+      <p data-i18n="mentors.sub">Set your own price, answer in your own time and keep 80% of every question. We handle payments, refunds and payouts.</p>
+    </div>
+    <div class="perk-grid">
+      <article class="perk">
+        <h3 data-i18n="mentors.1.title">Your price</h3>
+        <p data-i18n="mentors.1.body">You decide what a question costs, from 5 to 2000 ₾.</p>
+      </article>
+      <article class="perk">
+        <h3 data-i18n="mentors.2.title">Your time</h3>
+        <p data-i18n="mentors.2.body">Answer when it suits you, within 7 days of the question.</p>
+      </article>
+      <article class="perk">
+        <h3 data-i18n="mentors.3.title">Your 80%</h3>
+        <p data-i18n="mentors.3.body">You keep 80% of every paid question. Wisecall keeps 20% to run the platform and cover payment costs.</p>
+      </article>
+    </div>
+    <h3 class="mentors-how" data-i18n="mentors.how.title">How to become a mentor</h3>
+    <ol class="mentor-steps">
+      <li><span class="ms-num" aria-hidden="true">1</span><div><strong data-i18n="mentors.how.1.title">Create an account and apply</strong><p data-i18n="mentors.how.1.body">Sign up, then tell us your field, your price and how we can check your experience.</p></div></li>
+      <li><span class="ms-num" aria-hidden="true">2</span><div><strong data-i18n="mentors.how.2.title">Get verified</strong><p data-i18n="mentors.how.2.body">Confirm your ID and show proof of your experience. In regulated fields we also check your license. A person on our team reviews each step.</p></div></li>
+      <li><span class="ms-num" aria-hidden="true">3</span><div><strong data-i18n="mentors.how.3.title">Start answering</strong><p data-i18n="mentors.how.3.body">Once you are approved and have added your bank account, you appear in Browse experts. Answer from your dashboard and get paid by bank transfer.</p></div></li>
+    </ol>
+    <a href="/signup.html?redirect=/settings.html" class="btn btn-primary btn-lg become-link" data-i18n="mentors.cta">Apply as a mentor</a>
+  </div>
+</section>
+
+<!-- 9. FAQ -->
+<section class="faq" id="faq" aria-labelledby="faqTitle">
+  <div class="container faq-inner">
+    <h2 id="faqTitle" data-i18n="faq.title">Questions and answers</h2>
+    <div class="faq-list" id="faqList">
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q1" aria-expanded="false" aria-controls="faq-a1" data-i18n="faq.1.q">How does Wisecall work?</button></h3>
+        <div class="faq-a" id="faq-a1" role="region" aria-labelledby="faq-q1" hidden><p data-i18n="faq.1.a">You choose a mentor, ask one question and pay the price on their profile. The mentor answers in your dashboard and by email, and you can rate the answer.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q2" aria-expanded="false" aria-controls="faq-a2" data-i18n="faq.2.q">How much does it cost?</button></h3>
+        <div class="faq-a" id="faq-a2" role="region" aria-labelledby="faq-q2" hidden><p data-i18n="faq.2.a">Each mentor sets their own price per question, between 5 and 2000 ₾. You pay once per question. There are no subscriptions or hidden fees.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q3" aria-expanded="false" aria-controls="faq-a3" data-i18n="faq.3.q">What if the mentor doesn't answer?</button></h3>
+        <div class="faq-a" id="faq-a3" role="region" aria-labelledby="faq-q3" hidden><p data-i18n="faq.3.a">Mentors have 7 days to answer. If they don't, your payment is refunded in full automatically. You don't need to contact us.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q4" aria-expanded="false" aria-controls="faq-a4" data-i18n="faq.4.q">Is my payment safe?</button></h3>
+        <div class="faq-a" id="faq-a4" role="region" aria-labelledby="faq-q4" hidden><p data-i18n="faq.4.a">Yes. You pay on your Georgian bank's secure page, in lari. Wisecall never sees or stores your card number.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q5" aria-expanded="false" aria-controls="faq-a5" data-i18n="faq.5.q">How are mentors checked?</button></h3>
+        <div class="faq-a" id="faq-a5" role="region" aria-labelledby="faq-q5" hidden><p data-i18n="faq.5.a">Every mentor is reviewed by a person on our team: an ID and selfie check, proof of experience and, in regulated fields like medicine and law, a professional license and a video interview. See "How we verify mentors" above.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q6" aria-expanded="false" aria-controls="faq-a6" data-i18n="faq.6.q">Can I get a refund if I don't like the answer?</button></h3>
+        <div class="faq-a" id="faq-a6" role="region" aria-labelledby="faq-q6" hidden><p data-i18n="faq.6.a">After an answer is delivered, payments are generally not refundable. We refund in full if the answer is spam, empty, off-topic or breaks our terms; contact us within 7 days. Disliking an answer is not a reason for a refund, but you can leave an honest review.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q7" aria-expanded="false" aria-controls="faq-a7" data-i18n="faq.7.q">How long until I get my answer?</button></h3>
+        <div class="faq-a" id="faq-a7" role="region" aria-labelledby="faq-q7" hidden><p data-i18n="faq.7.a">Your mentor has up to 7 days. You get an email as soon as they answer, and the answer appears in your dashboard.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q8" aria-expanded="false" aria-controls="faq-a8" data-i18n="faq.8.q">Is this professional medical, legal or financial advice?</button></h3>
+        <div class="faq-a" id="faq-a8" role="region" aria-labelledby="faq-q8" hidden><p data-i18n="faq.8.a">No. Answers are personal experience and opinion, not professional advice, and they don't replace a doctor, a lawyer or a financial adviser. In an emergency, call the emergency services.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q9" aria-expanded="false" aria-controls="faq-a9" data-i18n="faq.9.q">How do I become a mentor and get paid?</button></h3>
+        <div class="faq-a" id="faq-a9" role="region" aria-labelledby="faq-q9" hidden><p data-i18n="faq.9.a">Sign up and apply in Settings. After we verify you and you add your bank account (IBAN), you appear in Browse experts. Each answer's earnings become payable 7 days later and are sent by bank transfer.</p></div>
+      </div>
+      <div class="faq-item">
+        <h3><button type="button" class="faq-q" id="faq-q10" aria-expanded="false" aria-controls="faq-a10" data-i18n="faq.10.q">Which languages does Wisecall support?</button></h3>
+        <div class="faq-a" id="faq-a10" role="region" aria-labelledby="faq-q10" hidden><p data-i18n="faq.10.a">The whole site works in English and Georgian, and you can switch at any time. Ask in the language you are most comfortable with.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10. Final call to action -->
+<section class="cta-band" aria-labelledby="ctaTitle">
+  <span class="cta-blob c1"></span>
+  <span class="cta-blob c2"></span>
+  <div class="container cta-inner">
     <div>
-      <h2 data-i18n="become.title">Are you the expert people are searching for?</h2>
-      <p data-i18n="become.body">Set your own price, answer on your own time, and help someone skip years of guessing.</p>
+      <h2 id="ctaTitle" data-i18n="cta.title">Ready to ask your question?</h2>
+      <p data-i18n="cta.sub">Get a real answer from someone who has already done it.</p>
     </div>
-    <a href="/signup.html?redirect=/settings.html" class="btn btn-primary btn-lg become-link" data-i18n="become.cta">Go to settings</a>
+    <div class="cta-actions">
+      <a href="#experts" class="btn btn-lg cta-primary" data-i18n="hero.browse">Browse experts</a>
+      <a href="/signup.html?redirect=/settings.html" class="btn btn-lg cta-secondary become-link" data-i18n="mentors.cta">Apply as a mentor</a>
+    </div>
   </div>
 </section>
 
-<footer class="footer">
-  <div class="container footer-inner">
-    <div class="logo">Wisecall<span class="dot">.</span></div>
-    <p data-i18n="footer.tagline">Real advice, from people who've done it.</p>
-  </div>
-</footer>
+</main>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="/js/i18n.js"></script>
 <script src="/js/footer.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
 <script src="/js/badges.js"></script>
+<script src="/js/home.js"></script>
 <script src="/js/main.js"></script>
 </body>
 </html>

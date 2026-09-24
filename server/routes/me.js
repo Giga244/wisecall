@@ -136,6 +136,7 @@ router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
   });
   // The account holder's name is compared with the name on the ID.
   await names.recompute(user.id);
+  require('../waitlist').afterMaybeListed(user.id); // an approved mentor becomes visible once they can be paid
   res.json({ user: meProfile(updated), name: cleanName, iban: pretty(normalized), last4: normalized.slice(-4) });
 }));
 

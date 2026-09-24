@@ -4,6 +4,9 @@
 const config = require('../config');
 const { escapeHtml } = require('../email');
 
+// Names of the niches in each language, read from the site's own dictionaries.
+const NICHE_NAMES = { en: require('../../public/i18n/en.json'), ka: require('../../public/i18n/ka.json') };
+
 const COLORS = { ink: '#2b2440', soft: '#746e94', bg: '#eaf6f1', card: '#ffffff', accent: '#ff6f59', quote: '#eefaf4' };
 
 // Text with {placeholders}; each placeholder is escaped for HTML (or left raw for plain text).
@@ -43,6 +46,11 @@ const S = {
       subject: 'A question was refunded on Wisecall', heading: 'A question was refunded',
       intro: 'The question below was refunded to the buyer because {reason}. You will not receive a payout for it.',
       reasons: { no_answer_deadline: 'it was not answered within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: 'your profile was suspended', answer_rejected: 'our team found that the answer did not meet our standards', other: 'our team refunded it' }
+    },
+    mentorJoined: {
+      subject: 'A new mentor just joined Wisecall', heading: 'A new mentor just joined',
+      intro: 'You asked us to tell you when mentors in {field} join. A mentor has just been listed on Wisecall.',
+      after: 'This is the only email you will get about it.', button: 'Browse experts', unsubscribe: 'Changed your mind? Remove your address:', anyField: 'the fields you follow'
     },
     mentorSuspended: {
       subject: 'Your Wisecall mentor profile was suspended', heading: 'Your profile is suspended',
@@ -140,6 +148,11 @@ const S = {
       subject: 'Wisecall-ზე კითხვის თანხა დაბრუნდა', heading: 'კითხვის თანხა დაბრუნდა',
       intro: 'ქვემოთ მოცემული კითხვის თანხა დაუბრუნდა მყიდველს, რადგან {reason}. ამ კითხვაზე ანაზღაურებას ვერ მიიღებ.',
       reasons: { no_answer_deadline: 'პასუხი {days} დღის განმავლობაში არ გაიცა', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'შენი პროფილი შეჩერდა', answer_rejected: 'ჩვენმა გუნდმა დაადგინა, რომ პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+    },
+    mentorJoined: {
+      subject: 'Wisecall-ზე ახალი მენტორი გამოჩნდა', heading: 'ახალი მენტორი გამოჩნდა',
+      intro: 'გვთხოვე, გაცნობებინა, როცა {field} სფეროში მენტორები შემოვლენ. Wisecall-ზე ახლახან გამოჩნდა მენტორი.',
+      after: 'ამ თემაზე მხოლოდ ეს ერთი წერილი მოგივა.', button: 'ექსპერტების ნახვა', unsubscribe: 'გადაიფიქრე? წაშალე შენი მისამართი:', anyField: 'შენთვის საინტერესო სფეროები'
     },
     mentorSuspended: {
       subject: 'შენი Wisecall-ის მენტორის პროფილი შეჩერდა', heading: 'შენი პროფილი შეჩერებულია',
@@ -245,6 +258,18 @@ const BUILDERS = {
     heading: s.mentorRejected.heading,
     blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.PUBLIC_URL}/settings.html` }]
   }),
+  mentorJoined: (s, d, lang) => {
+    const names = NICHE_NAMES[lang] || NICHE_NAMES.en;
+    const field = names['niche.' + d.niche] || s.mentorJoined.anyField;
+    return {
+      heading: s.mentorJoined.heading,
+      blocks: [
+        { p: fill(s.mentorJoined.intro, { field }), raw: true }, { p: s.mentorJoined.after },
+        { button: s.mentorJoined.button, url: `${config.PUBLIC_URL}/index.html${d.mentorField ? '?niche=' + encodeURIComponent(d.mentorField) : ''}#experts` },
+        { small: s.mentorJoined.unsubscribe }, { link: d.unsubscribeUrl }
+      ]
+    };
+  },
   mentorSuspended: (s, d) => ({
     heading: s.mentorSuspended.heading,
     blocks: [{ p: s.mentorSuspended.intro }, ...(d.note ? [{ quote: `${s.mentorSuspended.reasonLabel} ${d.note}` }] : []), { p: s.mentorSuspended.after }, { button: s.mentorSuspended.button, url: `${config.PUBLIC_URL}/contact.html` }]
@@ -333,7 +358,7 @@ function render(name, lang, data = {}) {
   const build = BUILDERS[name];
   if (!build) throw new Error(`Unknown email template: ${name}`);
   const d = { days: config.ANSWER_DEADLINE_DAYS, ...data };
-  const { heading, blocks } = build(s, d);
+  const { heading, blocks } = build(s, d, l);
   const subject = fill(s[name].subject, d, false).replace(/[<>]/g, '');
   return { subject, ...layout(l, heading, blocks) };
 }

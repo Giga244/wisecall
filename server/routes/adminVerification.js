@@ -96,6 +96,7 @@ router.post('/mentors/:id/approve', requireAuth, requireAdmin, asyncHandler(asyn
   try {
     const mentor = await review.approve({ mentorId: req.params.id, admin: req.adminUser });
     notify.notifyMentorDecision(mentor, true, null);
+    require('../waitlist').afterMaybeListed(mentor.id); // if they are now visible, tell the people waiting for their field
     res.json({ mentor: meProfile(mentor) });
   } catch (e) { fail(res, e); }
 }));

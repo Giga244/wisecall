@@ -58,6 +58,7 @@ app.use('/api/auth/resend-verification', authLimit(6));
 app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
 app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
+app.use('/api/waitlist', rateLimit({ windowMs: 60 * 60 * 1000, max: 12 }));
 app.use('/api/verification/kyc/start', rateLimit({ windowMs: 60 * 60 * 1000, max: 15 }));
 app.use('/api/verification/work-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 12 }));
 app.use('/api/verification/documents', rateLimit({ windowMs: 60 * 60 * 1000, max: 40 }));
@@ -66,6 +67,7 @@ app.use(/^\/api\/experts\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000,
 app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/contact', require('./routes/contact'));
+app.use('/api/waitlist', require('./routes/waitlist'));
 app.use('/api/me', require('./routes/me'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
@@ -82,6 +84,13 @@ app.get('/api/config', (req, res) => {
     priceMin: config.PRICE_MIN,
     priceMax: config.PRICE_MAX,
     payoutHoldDays: config.PAYOUT_HOLD_DAYS,
+    answerDeadlineDays: config.ANSWER_DEADLINE_DAYS,
+    // What the platform keeps, and what a mentor keeps of each paid question.
+    platformFeePercent: config.PLATFORM_FEE_PERCENT,
+    mentorSharePercent: 100 - config.PLATFORM_FEE_PERCENT,
+    // Shown in the footer only when set.
+    contactEmail: config.SUPPORT_EMAIL || null,
+    social: config.SOCIAL_URLS,
     // Only ever true on a developer's computer: pages may then show dev-mode helpers.
     devMode: !config.IS_PROD
   });

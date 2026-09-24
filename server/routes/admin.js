@@ -11,6 +11,7 @@ const verificationSteps = require('../verification/steps');
 const rules = require('../verification/rules');
 const flags = require('../verification/flags');
 const ledger = require('../ledger');
+const waitlist = require('../waitlist');
 const { decrypt } = require('../cryptoBox');
 const { pretty } = require('../iban');
 
@@ -84,6 +85,19 @@ router.post('/bookings/:id/refund', requireAuth, requireAdmin, asyncHandler(asyn
     }
     throw e;
   }
+}));
+
+// ---- Waiting list ("get notified when mentors in your field join") ------------------------------------
+router.get('/waitlist', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const rows = await waitlist.listForAdmin();
+  const byNiche = {};
+  rows.forEach((r) => { byNiche[r.niche] = (byNiche[r.niche] || 0) + 1; });
+  res.json({ signups: rows, total: rows.length, byNiche });
+}));
+router.get('/waitlist.csv', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const rows = await waitlist.listForAdmin();
+  sendCsv(res, `wisecall-waitlist-${new Date().toISOString().slice(0, 10)}.csv`, ['email', 'field', 'language', 'signed_up', 'notified'],
+    rows.map((r) => [r.email, r.niche, r.language, new Date(r.createdAt).toISOString(), r.notifiedAt ? new Date(r.notifiedAt).toISOString() : '']));
 }));
 
 // ---- Mentor payouts (manual bank transfers) -------------------------------------------------

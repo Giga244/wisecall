@@ -1,14 +1,18 @@
+// The home page: the expert list with search, sort and field filters, and what it shows when nobody
+// is listed yet. (The other sections are static markup; see home.js for the strip, FAQ and waiting list.)
 (async function () {
   await WisecallI18n.initI18n();
   const currentUser = await WisecallNav.initNav();
   // Logged-in visitors go straight to Settings; logged-out ones sign up first and land there afterwards.
   const becomeHref = currentUser ? '/settings.html' : '/signup.html?redirect=/settings.html';
   document.querySelectorAll('.become-link').forEach(a => { a.href = becomeHref; });
+  WisecallHome.drawStrip();
 
   const grid = document.getElementById('expertGrid');
   const filters = document.getElementById('filters');
   const searchInput = document.getElementById('searchInput');
   const sortSelect = document.getElementById('sortSelect');
+  const t = WisecallI18n.t;
   let allExperts = [];
   let activeNiche = 'all';
   let searchTerm = '';
@@ -31,7 +35,40 @@
     return sorted;
   }
 
+  // The chips (and the strip's links) choose a field; the address shows it (?niche=) so it can be shared.
+  function setNiche(niche, opts) {
+    activeNiche = WisecallHome.NICHES.includes(niche) ? niche : 'all';
+    filters.querySelectorAll('.chip').forEach(c => {
+      const on = c.dataset.niche === activeNiche;
+      c.classList.toggle('active', on);
+      c.setAttribute('aria-pressed', String(on));
+    });
+    if (!opts || opts.push !== false) {
+      const url = new URL(window.location.href);
+      if (activeNiche === 'all') url.searchParams.delete('niche'); else url.searchParams.set('niche', activeNiche);
+      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
+    render();
+  }
+
+  // Shown when there is nobody to list: a picture, what to do, a way to be told later, and an invitation to mentors.
+  function emptyState(kind) {
+    const field = activeNiche === 'all' ? null : t('niche.' + activeNiche);
+    const title = kind === 'all' ? t('experts.emptyAll.title') : t('experts.emptyNiche.title').replace('{field}', field);
+    const body = kind === 'all' ? t('experts.emptyAll.body') : t('experts.emptyNiche.body');
+    return `
+      <div class="empty-state empty-rich">
+        ${WisecallHome.emptyArt}
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(body)}</p>
+        <a class="btn btn-primary" href="${becomeHref}">${t('wait.mentorCta')}</a>
+        <div class="empty-wait">${WisecallHome.waitlistHtml(activeNiche === 'all' ? 'any' : activeNiche)}</div>
+      </div>`;
+  }
+
+  let loaded = false;
   function render() {
+    if (!loaded) { grid.innerHTML = `<p class="muted">${t('experts.loading')}</p>`; return; }
     let list = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
     if (searchTerm) {
       const needle = searchTerm.toLowerCase();
@@ -44,29 +81,36 @@
     list = sortList(list);
 
     if (allExperts.length === 0) {
-      grid.innerHTML = `<div class="empty-state"><h3>${WisecallI18n.t('experts.emptyAll.title')}</h3><p>${WisecallI18n.t('experts.emptyAll.body')}</p><a class="btn btn-primary" href="${becomeHref}">${WisecallI18n.t('experts.emptyAll.cta')}</a></div>`;
+      grid.innerHTML = emptyState('all');
+      WisecallHome.wireWaitlist(grid);
       return;
     }
     if (list.length === 0) {
-      grid.innerHTML = `<p class="muted">${WisecallI18n.t('experts.empty')}</p>`;
+      const inField = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
+      if (searchTerm && inField.length) {
+        grid.innerHTML = `<p class="muted">${t('experts.noMatch')}</p>`;
+      } else {
+        grid.innerHTML = emptyState('niche');
+        WisecallHome.wireWaitlist(grid);
+      }
       return;
     }
-    const perQ = WisecallI18n.t('expert.perQuestion');
-    const askLabel = WisecallI18n.t('expert.ask');
-    const reviewsLabel = WisecallI18n.t('expert.reviewsShort');
+    const perQ = t('expert.perQuestion');
+    const askLabel = t('expert.ask');
+    const reviewsLabel = t('expert.reviewsShort');
     grid.innerHTML = list.map(e => `
       <a class="expert-card" href="/expert.html?id=${e.id}">
         <div class="card-top">
-          <div class="avatar" style="background:${e.color || '#6d4de0'}">${initials(e.name)}</div>
+          <div class="avatar" style="background:${e.color || '#6d4de0'}" aria-hidden="true">${initials(e.name)}</div>
           <div>
-            <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${WisecallI18n.t('expert.newMentor')}</span>` : ''}</div>
-            <div class="card-role">${escapeHtml(e.roleTitle || '')}</div>
+            <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
+            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(t('niche.' + e.niche))}` : ''}</div>
           </div>
         </div>
         <div class="card-bio">${escapeHtml(e.bio || '')}</div>
         ${WisecallBadges.row(e.badges)}
         <div class="card-bottom">
-          <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : WisecallI18n.t('expert.noReviewsYet')}</span>
+          <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : t('expert.noReviewsYet')}</span>
           <span class="price">${WisecallAPI.formatPrice(e.price)}<span> ${perQ}</span></span>
         </div>
         <span class="btn btn-primary btn-sm btn-block">${askLabel}</span>
@@ -76,11 +120,16 @@
 
   filters.addEventListener('click', ev => {
     const btn = ev.target.closest('.chip');
-    if (!btn) return;
-    filters.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    activeNiche = btn.dataset.niche;
-    render();
+    if (btn) setNiche(btn.dataset.niche);
+  });
+
+  // The strip under the hero: choose the field without reloading the page, then scroll to the list.
+  document.addEventListener('click', ev => {
+    const link = ev.target.closest('[data-niche-link]');
+    if (!link || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) return;
+    ev.preventDefault();
+    setNiche(link.dataset.nicheLink);
+    document.getElementById('experts').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
 
   let searchTimer;
@@ -97,43 +146,20 @@
     render();
   });
 
-  const legend = document.getElementById('badgeLegend');
-  const drawLegend = () => { if (legend) legend.innerHTML = WisecallBadges.legend(); };
-  drawLegend();
+  document.addEventListener('wisecall:lang-changed', render);
 
-  let lastStats = null;
-  document.addEventListener('wisecall:lang-changed', () => {
-    drawLegend();
-    render();
-    if (lastStats) renderHeroStats(lastStats);
-  });
-
+  setNiche(new URLSearchParams(window.location.search).get('niche') || 'all', { push: false });
   try {
     const data = await WisecallAPI.apiFetch('/experts');
     allExperts = data.experts;
+    loaded = true;
     render();
   } catch (e) {
-    grid.innerHTML = `<p class="muted">${WisecallI18n.t('experts.loadError')}</p>`;
+    grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
   }
 
-  try {
-    lastStats = await WisecallAPI.apiFetch('/stats');
-    renderHeroStats(lastStats);
-  } catch (e) { /* stats are optional */ }
-
-  function renderHeroStats(stats) {
-    const el = document.getElementById('heroStats');
-    if (!el) return;
-    if (stats.mentorCount === 0) {
-      el.innerHTML = `<div class="hero-cta-banner">${WisecallI18n.t('hero.beFirst')} <a href="${becomeHref}">${WisecallI18n.t('hero.become')}</a></div>`;
-      return;
-    }
-    el.innerHTML = `
-      <div class="hero-stats">
-        <div><strong>${stats.mentorCount}</strong><span>${WisecallI18n.t('hero.stat.mentors')}</span></div>
-        <div><strong>${stats.nicheCount}</strong><span>${WisecallI18n.t('hero.stat.niches')}</span></div>
-        <div><strong>${stats.answeredCount}</strong><span>${WisecallI18n.t('hero.stat.answers')}</span></div>
-      </div>
-    `;
-  }
+  const legend = document.getElementById('badgeLegend');
+  const drawLegend = () => { if (legend) legend.innerHTML = WisecallBadges.legend(); };
+  drawLegend();
+  document.addEventListener('wisecall:lang-changed', drawLegend);
 })();
