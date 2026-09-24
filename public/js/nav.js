@@ -1,0 +1,53 @@
+(function () {
+  async function initNav() {
+    const loggedOutEl = document.getElementById('navLoggedOut');
+    const loggedInEl = document.getElementById('navLoggedIn');
+    let user = null;
+    try {
+      const data = await SagelyAPI.apiFetch('/me');
+      user = data.user;
+    } catch (e) { /* not logged in */ }
+
+    if (user) {
+      if (loggedOutEl) loggedOutEl.style.display = 'none';
+      if (loggedInEl) loggedInEl.style.display = 'flex';
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+          await SagelyAPI.apiFetch('/auth/logout', { method: 'POST' });
+          window.location.href = '/index.html';
+        });
+      }
+      if (!user.emailVerified && location.pathname !== '/verify-email.html') {
+        const nav = document.querySelector('header.nav');
+        const t = (window.SagelyI18n && window.SagelyI18n.t) || (k => k);
+        if (nav) {
+          const bar = document.createElement('div');
+          bar.className = 'verify-banner';
+          bar.innerHTML = `<span>${t('nav.verifyBanner')}</span> <a href="/verify-email.html?redirect=${encodeURIComponent(location.pathname)}">${t('nav.verifyBannerCta')}</a>`;
+          nav.insertAdjacentElement('afterend', bar);
+        }
+      }
+    } else {
+      if (loggedOutEl) loggedOutEl.style.display = 'flex';
+      if (loggedInEl) loggedInEl.style.display = 'none';
+    }
+    return user;
+  }
+
+  function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.className = 'toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  window.SagelyNav = { initNav, showToast };
+})();

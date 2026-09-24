@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — Wisecall</title>
+<meta name="description" content="Manage your Wisecall profile, mentor application, password and language.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <nav class="nav-links">
+      <a href="/dashboard.html" data-i18n="nav.dashboard">Dashboard</a>
+    </nav>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+      <div class="nav-actions" id="navLoggedOut">
+        <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">Log in</a>
+        <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
+      </div>
+      <div class="nav-actions" id="navLoggedIn" style="display:none">
+        <button class="btn btn-outline" id="logoutBtn" data-i18n="nav.logout">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="settings container">
+  <h1 data-i18n="settings.title">Settings</h1>
+
+  <div class="settings-card">
+    <h2 data-i18n="settings.profile.title">Profile</h2>
+    <form id="profileForm">
+      <label><span data-i18n="settings.profile.name">Full name</span>
+        <input type="text" id="name" required>
+      </label>
+      <label><span data-i18n="settings.profile.bio">Bio</span>
+        <textarea id="bio" rows="3"></textarea>
+      </label>
+      <button type="submit" class="btn btn-primary" data-i18n="settings.profile.save">Save profile</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h2 data-i18n="settings.mentor.title">Mentor profile</h2>
+    <label class="checkbox-row">
+      <input type="checkbox" id="becomeMentor">
+      <span data-i18n="settings.mentor.enable">I'd like to offer advice as a mentor</span>
+    </label>
+    <p class="muted small" data-i18n="settings.mentor.hint">Your profile appears in Browse experts once you've set a title, niche, and price below, and our team has reviewed it.</p>
+    <div id="verificationBox" style="display:none; margin: 12px 0;"></div>
+    <form id="mentorForm" style="display:none">
+      <label><span data-i18n="settings.mentor.roleTitle">Title</span>
+        <input type="text" id="roleTitle" placeholder="Cardiologist, 14 yrs" required>
+      </label>
+      <label><span data-i18n="settings.mentor.niche">Niche</span>
+        <select id="niche" required>
+          <option value="business" data-i18n="niche.business">Business</option>
+          <option value="medicine" data-i18n="niche.medicine">Medicine</option>
+          <option value="teaching" data-i18n="niche.teaching">Teaching</option>
+          <option value="tech" data-i18n="niche.tech">Tech</option>
+          <option value="fitness" data-i18n="niche.fitness">Fitness</option>
+          <option value="creative" data-i18n="niche.creative">Creative</option>
+          <option value="law" data-i18n="niche.law">Law</option>
+          <option value="finance" data-i18n="niche.finance">Finance</option>
+          <option value="marketing" data-i18n="niche.marketing">Marketing</option>
+          <option value="design" data-i18n="niche.design">Design</option>
+          <option value="writing" data-i18n="niche.writing">Writing</option>
+          <option value="parenting" data-i18n="niche.parenting">Parenting</option>
+          <option value="engineering" data-i18n="niche.engineering">Engineering</option>
+          <option value="science" data-i18n="niche.science">Science</option>
+        </select>
+      </label>
+      <label><span data-i18n="settings.mentor.price">Price per question (USD)</span>
+        <input type="number" id="price" min="1" max="5000" step="1" required>
+      </label>
+      <label><span data-i18n="settings.mentor.proofUrl">Proof of expertise — a LinkedIn link is strongly preferred</span>
+        <input type="url" id="proofUrl" placeholder="https://linkedin.com/in/yourname" required>
+        <span class="hint" data-i18n="settings.mentor.proofUrl.hint">Required. We check this before your profile goes public — it's how we confirm you're actually worth paying for advice.</span>
+      </label>
+      <label><span data-i18n="settings.mentor.sample">Sample answer — reply to a typical question in your field</span>
+        <textarea id="sampleAnswer" rows="5" minlength="80" required></textarea>
+        <span class="hint" data-i18n="settings.mentor.sample.hint">At least 80 characters. We read this to judge whether your advice is worth paying for.</span>
+      </label>
+      <button type="submit" class="btn btn-primary" data-i18n="settings.mentor.save">Save mentor profile</button>
+    </form>
+
+    <div class="payouts-box" id="payoutsBox" style="display:none">
+      <h3 data-i18n="settings.payouts.title">Payouts</h3>
+      <p class="muted" id="payoutsStatus"></p>
+      <button class="btn btn-outline" id="connectBtn" data-i18n="settings.payouts.connect">Connect payout account</button>
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <h2 data-i18n="settings.password.title">Change password</h2>
+    <form id="passwordForm">
+      <label><span data-i18n="settings.password.current">Current password</span>
+        <input type="password" id="currentPassword" required>
+      </label>
+      <label><span data-i18n="settings.password.new">New password</span>
+        <input type="password" id="newPassword" required minlength="8">
+      </label>
+      <p class="form-error" id="passwordError"></p>
+      <button type="submit" class="btn btn-primary" data-i18n="settings.password.save">Update password</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h2 data-i18n="settings.lang.title">Language</h2>
+    <p class="muted" data-i18n="settings.lang.body">Choose the language for your Wisecall account.</p>
+    <div class="lang-toggle lang-toggle-lg">
+      <button class="lang-btn" data-lang="en">English</button>
+      <button class="lang-btn" data-lang="ka">ქართული</button>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/settings.js"></script>
+</body>
+</html>

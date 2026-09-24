@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — Wisecall</title>
+<meta name="description" content="Log in to Wisecall to ask experts questions or answer them.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="auth-page">
+  <div class="auth-card">
+    <h1 data-i18n="auth.login.title">Welcome back</h1>
+    <p class="muted" data-i18n="auth.login.sub">Log in to ask a question or answer one.</p>
+    <form id="loginForm">
+      <label><span data-i18n="auth.field.email">Email</span>
+        <input type="email" id="email" required>
+      </label>
+      <label><span data-i18n="auth.field.password">Password</span>
+        <input type="password" id="password" required minlength="8">
+      </label>
+      <p style="margin: -10px 0 16px; text-align: right;"><a href="/forgot-password.html" class="small" style="color: var(--accent); text-decoration: none;" data-i18n="auth.login.forgot">Forgot password?</a></p>
+      <p class="form-error" id="formError"></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.login.cta">Log in</button>
+    </form>
+    <p class="auth-switch">
+      <span data-i18n="auth.login.noAccount">Don't have an account?</span>
+      <a href="/signup.html" data-i18n="auth.login.createOne">Create one</a>
+    </p>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+(async function () {
+  await SagelyI18n.initI18n();
+  const form = document.getElementById('loginForm');
+  const errorEl = document.getElementById('formError');
+
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get('redirect') || '/dashboard.html';
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    errorEl.textContent = '';
+    try {
+      await SagelyAPI.apiFetch('/auth/login', {
+        method: 'POST',
+        body: {
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value
+        }
+      });
+      window.location.href = redirect;
+    } catch (e) {
+      errorEl.textContent = SagelyI18n.t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error');
+    }
+  });
+})();
+</script>
+</body>
+</html>

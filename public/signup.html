@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign up — Wisecall</title>
+<meta name="description" content="Create a free Wisecall account to get advice from people who have done it.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="auth-page">
+  <div class="auth-card">
+    <h1 data-i18n="auth.signup.title">Create your account</h1>
+    <p class="muted" data-i18n="auth.signup.sub">Join as someone looking for advice — you can become a mentor later in Settings.</p>
+    <form id="signupForm">
+      <label><span data-i18n="auth.field.name">Full name</span>
+        <input type="text" id="name" required>
+      </label>
+      <label><span data-i18n="auth.field.email">Email</span>
+        <input type="email" id="email" required>
+      </label>
+      <label><span data-i18n="auth.field.password">Password</span>
+        <input type="password" id="password" required minlength="8">
+        <span class="hint" data-i18n="auth.field.password.hint">At least 8 characters.</span>
+      </label>
+      <p class="form-error" id="formError"></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.signup.cta">Create account</button>
+    </form>
+    <p class="auth-switch">
+      <span data-i18n="auth.signup.haveAccount">Already have an account?</span>
+      <a href="/login.html" data-i18n="auth.signup.logIn">Log in</a>
+    </p>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+(async function () {
+  await SagelyI18n.initI18n();
+  const form = document.getElementById('signupForm');
+  const errorEl = document.getElementById('formError');
+
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get('redirect') || '/dashboard.html';
+
+  const ERROR_KEYS = {
+    email_taken: 'auth.error.emailTaken',
+    invalid_email: 'auth.error.invalidEmail',
+    weak_password: 'auth.error.weakPassword',
+    missing_fields: 'auth.error.missingFields'
+  };
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    errorEl.textContent = '';
+    try {
+      const data = await SagelyAPI.apiFetch('/auth/signup', {
+        method: 'POST',
+        body: {
+          name: document.getElementById('name').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value
+        }
+      });
+      let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}`;
+      if (data.devMode && data.devVerifyCode) verifyUrl += `&devCode=${data.devVerifyCode}`;
+      window.location.href = verifyUrl;
+    } catch (e) {
+      errorEl.textContent = SagelyI18n.t(ERROR_KEYS[e.code] || 'toast.error');
+    }
+  });
+})();
+</script>
+</body>
+</html>

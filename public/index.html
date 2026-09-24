@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wisecall — Advice from people who've already done it</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="description" content="Book a real, paid answer from someone who's already done what you're trying to do — doctors, founders, teachers, engineers, and more.">
+<meta property="og:title" content="Wisecall — Advice from people who've already done it">
+<meta property="og:description" content="Book a real, paid answer from someone who's already done what you're trying to do.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <nav class="nav-links">
+      <a href="#how" data-i18n="nav.how">How it works</a>
+      <a href="#experts" data-i18n="nav.browse">Browse experts</a>
+    </nav>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+      <div class="nav-actions" id="navLoggedOut">
+        <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">Log in</a>
+        <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
+      </div>
+      <div class="nav-actions" id="navLoggedIn" style="display:none">
+        <a href="/dashboard.html" class="btn btn-ghost" data-i18n="nav.dashboard">Dashboard</a>
+        <a href="/settings.html" class="btn btn-ghost" data-i18n="nav.settings">Settings</a>
+        <button class="btn btn-outline" id="logoutBtn" data-i18n="nav.logout">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <span class="hero-blob b1"></span>
+  <span class="hero-blob b2"></span>
+  <span class="hero-blob b3"></span>
+  <div class="container hero-inner">
+    <div class="hero-text">
+      <h1><span data-i18n="hero.title1">Get advice from people</span> <br><em data-i18n="hero.title2">who've already done it.</em></h1>
+      <p class="hero-sub" data-i18n="hero.sub">Doctors, founders, teachers, engineers, and more — book a real answer from someone who's lived the path you want to walk.</p>
+      <div class="hero-actions">
+        <a href="#experts" class="btn btn-primary btn-lg" data-i18n="hero.browse">Browse experts</a>
+        <a href="/signup.html" class="btn btn-outline btn-lg" data-i18n="hero.become">Become a mentor</a>
+      </div>
+      <div id="heroStats"></div>
+    </div>
+    <div class="hero-seal">
+      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two chat bubbles">
+        <g class="orb-spin">
+          <ellipse cx="200" cy="200" rx="170" ry="150" fill="none" stroke="#2b2440" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="3 10" stroke-linecap="round"/>
+          <circle cx="370" cy="200" r="11" fill="#f4a93b"/>
+          <circle cx="30" cy="200" r="8" fill="#3db88e"/>
+        </g>
+        <g class="orb-bob">
+          <ellipse cx="170" cy="170" rx="105" ry="80" fill="#ff6f59"/>
+          <path d="M110 232 Q100 275 70 290 Q125 285 150 245 Z" fill="#ff6f59"/>
+          <circle cx="135" cy="170" r="9" fill="#fff"/><circle cx="170" cy="170" r="9" fill="#fff"/><circle cx="205" cy="170" r="9" fill="#fff"/>
+        </g>
+        <ellipse cx="245" cy="262" rx="85" ry="62" fill="#fff" stroke="#2b2440" stroke-width="5"/>
+        <path d="M300 306 Q312 338 340 350 Q290 350 270 314 Z" fill="#fff" stroke="#2b2440" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M212 262 l20 20 l40 -44" fill="none" stroke="#3db88e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="container">
+    <h2 data-i18n="how.title">How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3 data-i18n="how.step1.title">Find your person</h3>
+        <p data-i18n="how.step1.body">Search by niche and find someone who's already where you want to be.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3 data-i18n="how.step2.title">Ask your question</h3>
+        <p data-i18n="how.step2.body">Write what you're stuck on.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3 data-i18n="how.step3.title">Get a real answer</h3>
+        <p data-i18n="how.step3.body">Your mentor answers directly in your dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="experts" id="experts">
+  <div class="container">
+    <h2 data-i18n="experts.title">Browse experts</h2>
+    <div class="browse-toolbar">
+      <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" placeholder="Search by name or specialty…">
+      <select id="sortSelect" class="sort-select">
+        <option value="rating" data-i18n="experts.sort.rating">Top rated</option>
+        <option value="priceAsc" data-i18n="experts.sort.priceAsc">Price: low to high</option>
+        <option value="priceDesc" data-i18n="experts.sort.priceDesc">Price: high to low</option>
+        <option value="newest" data-i18n="experts.sort.newest">Newest</option>
+      </select>
+    </div>
+    <div class="filters" id="filters">
+      <button class="chip active" data-niche="all" data-i18n="niche.all">All</button>
+      <button class="chip" data-niche="business" data-i18n="niche.business">Business</button>
+      <button class="chip" data-niche="medicine" data-i18n="niche.medicine">Medicine</button>
+      <button class="chip" data-niche="teaching" data-i18n="niche.teaching">Teaching</button>
+      <button class="chip" data-niche="tech" data-i18n="niche.tech">Tech</button>
+      <button class="chip" data-niche="fitness" data-i18n="niche.fitness">Fitness</button>
+      <button class="chip" data-niche="creative" data-i18n="niche.creative">Creative</button>
+      <button class="chip" data-niche="law" data-i18n="niche.law">Law</button>
+      <button class="chip" data-niche="finance" data-i18n="niche.finance">Finance</button>
+      <button class="chip" data-niche="marketing" data-i18n="niche.marketing">Marketing</button>
+      <button class="chip" data-niche="design" data-i18n="niche.design">Design</button>
+      <button class="chip" data-niche="writing" data-i18n="niche.writing">Writing</button>
+      <button class="chip" data-niche="parenting" data-i18n="niche.parenting">Parenting</button>
+      <button class="chip" data-niche="engineering" data-i18n="niche.engineering">Engineering</button>
+      <button class="chip" data-niche="science" data-i18n="niche.science">Science</button>
+    </div>
+    <div class="expert-grid" id="expertGrid"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+  </div>
+</section>
+
+<section class="become" id="become">
+  <div class="container become-inner">
+    <div>
+      <h2 data-i18n="become.title">Are you the expert people are searching for?</h2>
+      <p data-i18n="become.body">Set your own price, answer on your own time, and help someone skip years of guessing.</p>
+    </div>
+    <a href="/settings.html" class="btn btn-primary btn-lg" data-i18n="become.cta">Go to settings</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="logo">Wisecall<span class="dot">.</span></div>
+    <p data-i18n="footer.tagline">Real advice, from people who've done it.</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>

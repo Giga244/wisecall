@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Wisecall</title>
+<meta name="description" content="Your Wisecall dashboard: questions you asked and questions you received.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <nav class="nav-links">
+      <a href="/index.html#experts" data-i18n="nav.browse">Browse experts</a>
+    </nav>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+      <div class="nav-actions" id="navLoggedOut">
+        <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">Log in</a>
+        <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
+      </div>
+      <div class="nav-actions" id="navLoggedIn" style="display:none">
+        <a href="/settings.html" class="btn btn-ghost" data-i18n="nav.settings">Settings</a>
+        <button class="btn btn-outline" id="logoutBtn" data-i18n="nav.logout">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="dash container">
+  <h1 data-i18n="dash.title">Dashboard</h1>
+
+  <div class="dash-section">
+    <h2 data-i18n="dash.asked.title">Questions you've asked</h2>
+    <div id="askedList"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+  </div>
+
+  <div class="dash-section" id="mentorSection" style="display:none">
+    <h2 data-i18n="dash.received.title">Questions you've received</h2>
+    <div id="receivedList"></div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

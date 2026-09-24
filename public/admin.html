@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentor review — Wisecall</title>
+<meta name="description" content="Review and approve mentor applications on Wisecall.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <nav class="nav-links">
+      <a href="/dashboard.html" data-i18n="nav.dashboard">Dashboard</a>
+    </nav>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="dash container">
+  <h1 data-i18n="admin.title">Mentor applications</h1>
+  <div class="filters" id="statusFilters" style="margin-bottom: 28px;">
+    <button class="chip active" data-status="pending" data-i18n="admin.filter.pending">Pending</button>
+    <button class="chip" data-status="verified" data-i18n="admin.filter.verified">Verified</button>
+    <button class="chip" data-status="rejected" data-i18n="admin.filter.rejected">Rejected</button>
+    <button class="chip" data-status="" data-i18n="admin.filter.all">All</button>
+  </div>
+  <div id="adminContent"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>
