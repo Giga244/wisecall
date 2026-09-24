@@ -2,7 +2,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 const path = require('path');
-const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, SAMPLE } = require('./helpers');
+const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
 
 let srv, base;
 const ids = {};
@@ -109,15 +109,61 @@ describe('mentor application and approval', () => {
     assert.equal(b.status, 404);
   });
 
-  test('only admins can review; approval needs the full checklist', async () => {
+  test('only admins can review; final approval needs every step the niche requires', async () => {
     assert.equal((await ids.seekerClient.api('/admin/mentors')).error, 'not_admin');
+    assert.equal((await ids.seekerClient.api(`/admin/mentors/${ids.mentor}/verification`)).error, 'not_admin');
     ids.admin = await signupVerified(base, 'QA Admin', 'qa-admin@example.com');
+
+    // The list shows how far along each application is. Medicine is a regulated niche.
     const list = await ids.admin.api('/admin/mentors?status=pending');
     const row = list.mentors.find((x) => x.id === ids.mentor);
-    assert.ok(row && row.sampleAnswer && row.proofUrl, 'admin sees proof + sample');
-    const noChecks = await ids.admin.api(`/admin/mentors/${ids.mentor}/review`, { method: 'POST', body: { approve: true } });
-    assert.equal(noChecks.error, 'checklist_incomplete');
-    const ok = await ids.admin.api(`/admin/mentors/${ids.mentor}/review`, { method: 'POST', body: { approve: true, checks: { identity: true, credential: true, sample: true } } });
+    assert.ok(row, 'the application is in the pending list');
+    assert.equal(row.verification.level, 'regulated');
+    assert.equal(row.verification.ready, false);
+
+    // The detail view has the evidence, the registries to check by hand, and the audit log.
+    const d = await ids.admin.api(`/admin/mentors/${ids.mentor}/verification`);
+    assert.equal(d.status, 200);
+    assert.equal(d.mentor.sampleAnswer, SAMPLE);
+    assert.equal(d.mentor.proofUrl, 'https://linkedin.com/in/dr');
+    const byStep = Object.fromEntries(d.requirements.filter((r) => r.type === 'step').map((r) => [r.step, r]));
+    assert.deepEqual(Object.keys(byStep), ['email', 'id_kyc', 'name_match', 'sample_answer', 'proof_link', 'license', 'license_document', 'video_interview']);
+    assert.equal(byStep.email.status, 'passed', 'the verified email passed by itself');
+    assert.equal(byStep.proof_link.status, 'pending');
+    assert.equal(byStep.sample_answer.status, 'pending');
+    assert.equal(byStep.id_kyc.status, 'todo');
+    assert.ok(d.registries.length > 0);
+    assert.ok(d.audit.some((a) => a.action === 'step_submitted' && a.step === 'proof_link'));
+
+    // Step decisions need a reason, and only cover what a person is allowed to decide.
+    const decide = (step, body) => ids.admin.api(`/admin/mentors/${ids.mentor}/steps/${step}`, { method: 'POST', body });
+    assert.equal((await decide('proof_link', { decision: 'passed' })).error, 'reason_required');
+    assert.equal((await decide('proof_link', { decision: 'passed', reason: 'ok' })).error, 'reason_required', 'a reason of a few characters is not enough');
+    assert.equal((await decide('id_kyc', { decision: 'passed', reason: 'I looked at the ID myself' })).error, 'not_manual', 'the ID check is decided only by the provider');
+    assert.equal((await decide('email', { decision: 'failed', reason: 'because I want to' })).error, 'not_manual');
+    assert.equal((await decide('license', { decision: 'passed', reason: 'Looks fine to me' })).error, 'not_submitted', 'nothing was submitted for the licence yet');
+    assert.equal((await decide('nonsense', { decision: 'passed', reason: 'Looks fine to me' })).status, 404);
+    assert.equal((await decide('proof_link', { decision: 'maybe', reason: 'Looks fine to me' })).error, 'invalid_decision');
+    assert.equal((await ids.seekerClient.api(`/admin/mentors/${ids.mentor}/steps/proof_link`, { method: 'POST', body: { decision: 'passed', reason: 'Looks fine to me' } })).error, 'not_admin');
+
+    assert.equal((await decide('proof_link', { decision: 'passed', reason: 'LinkedIn profile matches the name and role' })).status, 200);
+    assert.equal((await decide('sample_answer', { decision: 'passed', reason: 'Shows real expertise' })).status, 200);
+
+    // Final approval is refused while required steps are missing, and says which.
+    const tooEarly = await ids.admin.api(`/admin/mentors/${ids.mentor}/approve`, { method: 'POST' });
+    assert.equal(tooEarly.error, 'steps_incomplete');
+    assert.ok(tooEarly.missing.includes('id_kyc') && tooEarly.missing.includes('license') && tooEarly.missing.includes('video_interview'));
+    assert.equal((await client(base).api('/experts')).experts.length, 0);
+
+    // Every decision is in the audit log with who made it.
+    const audit = (await ids.admin.api(`/admin/mentors/${ids.mentor}/verification`)).audit;
+    assert.ok(audit.some((a) => a.action === 'step_passed' && a.step === 'proof_link' && a.by === 'qa-admin@example.com' && /LinkedIn/.test(a.reason)));
+
+    // With every required step passed, the real final approval works.
+    await approveMentor(ids.admin, ids.mentorClient);
+    const me = (await ids.mentorClient.api('/me')).user;
+    assert.equal(me.verificationStatus, 'verified');
+    const ok = { mentor: me };
     assert.equal(ok.mentor.verificationStatus, 'verified');
 
     // Approved is not enough: without payout details the mentor stays hidden and cannot be booked.
@@ -133,6 +179,34 @@ describe('mentor application and approval', () => {
     const e = pub.experts[0];
     for (const k of ['email', 'payoutIban', 'payoutName', 'proofUrl', 'sampleAnswer', 'passwordHash']) assert.equal(e[k], undefined, k + ' must not be public');
     assert.equal(e.roleTitle, 'Cardiologist');
+  });
+
+  test('a required step that later fails takes a live mentor off the site until it passes again', async () => {
+    const decide = (step, body) => ids.admin.api(`/admin/mentors/${ids.mentor}/steps/${step}`, { method: 'POST', body });
+    assert.equal((await decide('proof_link', { decision: 'failed', reason: 'The LinkedIn profile turned out to belong to someone else' })).status, 200);
+    assert.equal((await client(base).api('/experts')).experts.length, 0, 'delisted at once');
+    assert.equal((await ids.mentorClient.api('/me')).user.verificationStatus, 'pending');
+    const v = await ids.mentorClient.api('/verification');
+    assert.equal(v.requirements.find((r) => r.step === 'proof_link').status, 'failed');
+    assert.match(v.requirements.find((r) => r.step === 'proof_link').reason, /belong to someone else/, 'the mentor is told why');
+
+    assert.equal((await decide('proof_link', { decision: 'passed', reason: 'New link checked and matches' })).status, 200);
+    assert.equal((await ids.admin.api(`/admin/mentors/${ids.mentor}/approve`, { method: 'POST' })).status, 200);
+    assert.equal((await client(base).api('/experts')).experts.length, 1, 'listed again after re-approval');
+  });
+
+  test('editing the proof link or sample answer sends the mentor back to review; editing the price does not', async () => {
+    const before = await ids.mentorClient.api('/verification');
+    assert.equal(before.status, 'verified');
+    assert.equal((await ids.mentorClient.api('/me', { method: 'PATCH', body: { price: 30 } })).user.verificationStatus, 'verified');
+    const edited = await ids.mentorClient.api('/me', { method: 'PATCH', body: { proofUrl: 'https://linkedin.com/in/dr-new' } });
+    assert.equal(edited.user.verificationStatus, 'pending');
+    assert.equal((await ids.mentorClient.api('/verification')).requirements.find((r) => r.step === 'proof_link').status, 'pending');
+    assert.equal((await client(base).api('/experts')).experts.length, 0);
+    // Put things back for the tests that follow.
+    await ids.admin.api(`/admin/mentors/${ids.mentor}/steps/proof_link`, { method: 'POST', body: { decision: 'passed', reason: 'Checked the new link' } });
+    await ids.mentorClient.api('/me', { method: 'PATCH', body: { price: 25 } });
+    assert.equal((await ids.admin.api(`/admin/mentors/${ids.mentor}/approve`, { method: 'POST' })).status, 200);
   });
 });
 
@@ -223,8 +297,9 @@ describe('admin: mentor decisions and refunds', () => {
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true } });
     const app = await m.api('/me', { method: 'PATCH', body: { roleTitle: 'Coach', niche: 'business', price: 10, proofUrl: 'https://linkedin.com/in/rm', sampleAnswer: SAMPLE } });
     const id = app.user.id;
-    assert.equal((await ids.admin.api(`/admin/mentors/${id}/review`, { method: 'POST', body: { approve: false } })).error, 'reason_required');
-    const rej = await ids.admin.api(`/admin/mentors/${id}/review`, { method: 'POST', body: { approve: false, note: 'Profile link is private' } });
+    assert.equal((await ids.admin.api(`/admin/mentors/${id}/reject`, { method: 'POST', body: {} })).error, 'reason_required');
+    assert.equal((await ids.admin.api(`/admin/mentors/${id}/reject`, { method: 'POST', body: { reason: 'no' } })).error, 'reason_required');
+    const rej = await ids.admin.api(`/admin/mentors/${id}/reject`, { method: 'POST', body: { reason: 'Profile link is private' } });
     assert.equal(rej.mentor.verificationStatus, 'rejected');
     assert.equal((await m.api('/me')).user.verificationNote, 'Profile link is private');
   });

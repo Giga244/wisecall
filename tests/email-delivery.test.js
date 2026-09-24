@@ -4,7 +4,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('http');
-const { resetDatabase, startServer, client, bookAndPay, addPayoutDetails, SAMPLE, wait } = require('./helpers');
+const { resetDatabase, startServer, client, bookAndPay, addPayoutDetails, approveMentor, SAMPLE, wait } = require('./helpers');
 
 const sent = []; // every request Resend received
 const behavior = { failures: [] }; // statuses to answer with before succeeding, e.g. [500]
@@ -79,8 +79,8 @@ describe('every email goes out through the Resend API', () => {
     }
     const id1 = (await m1.c.api('/me')).user.id;
     const id2 = (await m2.c.api('/me')).user.id;
-    await admin.api(`/admin/mentors/${id1}/review`, { method: 'POST', body: { approve: true, checks: { identity: true, credential: true, sample: true } } });
-    await admin.api(`/admin/mentors/${id2}/review`, { method: 'POST', body: { approve: false, note: 'Profile link is private' } });
+    await approveMentor(admin, m1.c);
+    await admin.api(`/admin/mentors/${id2}/reject`, { method: 'POST', body: { reason: 'Profile link is private' } });
 
     const ok = await waitFor(() => mailTo('approved@example.com', 'approved')[0]);
     assert.match(ok.body.html, /IBAN/, 'tells the mentor to add payout details');

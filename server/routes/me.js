@@ -6,6 +6,8 @@ const { query } = require('../db');
 const { encrypt, decrypt } = require('../cryptoBox');
 const { isValidGeorgianIban, normalize, pretty } = require('../iban');
 const ledger = require('../ledger');
+const rules = require('../verification/rules');
+const verification = require('../verification/steps');
 const { getUserById, updateUser } = require('../models');
 const config = require('../config');
 
@@ -18,10 +20,7 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
 }));
 
 const EDITABLE_FIELDS = ['name', 'bio', 'niche', 'roleTitle', 'price', 'language', 'proofUrl', 'sampleAnswer'];
-const NICHES = [
-  'business', 'medicine', 'teaching', 'tech', 'fitness', 'creative', 'law',
-  'finance', 'marketing', 'design', 'writing', 'parenting', 'engineering', 'science'
-];
+const NICHES = rules.nicheKeys();
 const MENTOR_APPLICATION_FIELDS = ['niche', 'roleTitle', 'price', 'proofUrl', 'sampleAnswer'];
 const URL_RE = /^https?:\/\/.+\..+/i;
 
@@ -80,14 +79,26 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     if (!next.sampleAnswer || next.sampleAnswer.length < 80) return res.status(400).json({ error: 'sample_required' });
   }
 
-  // A complete (or edited) application goes back into the review queue.
+  // A complete application goes into the review queue. Changing what an admin already judged (niche,
+  // title, proof link, sample answer) sends a live mentor back to review; changing the price does not.
   const complete = Boolean(next.roleTitle && next.niche && next.price && next.proofUrl && next.sampleAnswer);
-  if (touchedMentorFields && isMentor && complete && existing.verificationStatus !== 'pending') {
+  const changed = ['niche', 'roleTitle', 'proofUrl', 'sampleAnswer'].filter((f) => patch[f] !== undefined && patch[f] !== existing[f]);
+  const canReview = existing.verificationStatus !== 'suspended';
+  if (touchedMentorFields && isMentor && complete && canReview && (changed.length || ['none', 'rejected'].includes(existing.verificationStatus))) {
     patch.verificationStatus = 'pending';
     patch.verificationNote = null;
   }
 
   const user = await updateUser(existing.id, patch);
+
+  // The two steps the mentor completes here go to an admin (again, when they were edited).
+  if (touchedMentorFields && isMentor && complete) {
+    const actor = verification.mentorActor(user);
+    const current = await verification.loadSteps(user.id);
+    if (!current.proof_link || changed.includes('proofUrl')) await verification.setStep(user.id, 'proof_link', 'pending', { evidence: { url: user.proofUrl }, replaceEvidence: true, actor });
+    if (!current.sample_answer || changed.includes('sampleAnswer')) await verification.setStep(user.id, 'sample_answer', 'pending', { evidence: { length: user.sampleAnswer.length }, replaceEvidence: true, actor });
+    await verification.syncEmailStep(user);
+  }
   res.json({ user: meProfile(user) });
 }));
 

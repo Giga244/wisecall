@@ -6,6 +6,7 @@ const { meProfile, asyncHandler } = require('../util');
 const { getUserById, getUserByEmail, insertUser, updateUser } = require('../models');
 const config = require('../config');
 const { sendTemplate } = require('../mail');
+const verification = require('../verification/steps');
 
 const router = express.Router();
 const isStr = (v) => typeof v === 'string';
@@ -143,6 +144,7 @@ router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
   if (!(await bcrypt.compare(code.trim(), user.emailVerifyCodeHash))) return res.status(400).json({ error: 'invalid_code' });
 
   const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null });
+  if (updated.role === 'mentor' || updated.role === 'both') await verification.syncEmailStep(updated);
   res.json({ user: meProfile(updated) });
 }));
 

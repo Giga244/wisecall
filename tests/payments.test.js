@@ -4,7 +4,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, signupVerified, client, addPayoutDetails, SAMPLE, wait } = require('./helpers');
+const { resetDatabase, startServer, signupVerified, client, addPayoutDetails, approveMentor, SAMPLE, wait } = require('./helpers');
 const { createFakeBank } = require('./fakeBank');
 
 const fake = createFakeBank();
@@ -34,7 +34,7 @@ async function setup(port, env) {
   const mentor = await signupVerified(base, 'Dr Mentor', 'mentor@example.com');
   await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Cardiologist', niche: 'medicine', price: 25, proofUrl: 'https://linkedin.com/in/drmentor', sampleAnswer: SAMPLE } });
   const mentorId = (await mentor.api('/me')).user.id;
-  await admin.api(`/admin/mentors/${mentorId}/review`, { method: 'POST', body: { approve: true, checks: { identity: true, credential: true, sample: true } } });
+  await approveMentor(admin, mentor);
   await addPayoutDetails(mentor);
   return { srv, base, admin, seeker, mentor, mentorId };
 }

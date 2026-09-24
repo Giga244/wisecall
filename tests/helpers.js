@@ -100,6 +100,27 @@ async function addPayoutDetails(mentorClient, iban = GOOD_IBAN, name = 'Test Men
   if (r.status !== 200) throw new Error('payout details failed: ' + r.text);
   return r;
 }
+// Gives a mentor every verification step their niche requires (written straight into the test
+// database, since the real ID check, licence review etc. have their own tests) and then performs
+// the real final approval as the admin. Returns the mentor's id.
+async function approveMentor(adminClient, mentorClient) {
+  const { Pool } = require('pg');
+  const rules = require('../server/verification/rules');
+  const me = (await mentorClient.api('/me')).user;
+  const pool = new Pool({ connectionString: TEST_DB });
+  try {
+    for (const r of rules.requiredFor(me.niche)) {
+      const step = typeof r === 'string' ? r : r.anyOf[0];
+      await pool.query(
+        `INSERT INTO verification_steps (user_id, step, status, reason, decided_at) VALUES ($1, $2, 'passed', 'test setup', now())
+         ON CONFLICT (user_id, step) DO UPDATE SET status = 'passed', reason = 'test setup', decided_at = now()`, [me.id, step]
+      );
+    }
+  } finally { await pool.end(); }
+  const res = await adminClient.api(`/admin/mentors/${me.id}/approve`, { method: 'POST' });
+  if (res.status !== 200) throw new Error('approve failed: ' + res.text);
+  return me.id;
+}
 const SAMPLE = 'This is a detailed sample answer that is comfortably longer than eighty characters to pass validation.';
 
-module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, GOOD_IBAN, wait, SAMPLE };
+module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, approveMentor, GOOD_IBAN, wait, SAMPLE };

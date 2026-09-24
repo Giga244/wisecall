@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, signupVerified, client, bookAndPay, addPayoutDetails, GOOD_IBAN, SAMPLE, wait } = require('./helpers');
+const { resetDatabase, startServer, signupVerified, client, bookAndPay, addPayoutDetails, approveMentor, GOOD_IBAN, SAMPLE, wait } = require('./helpers');
 
 const OUTBOX = path.join(os.tmpdir(), `wisecall-payout-outbox-${process.pid}.jsonl`);
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
@@ -46,7 +46,7 @@ before(async () => {
     if (language) await c.api('/me', { method: 'PATCH', body: { language } });
     await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Expert', niche: 'business', price, proofUrl: 'https://linkedin.com/in/' + email.split('@')[0], sampleAnswer: SAMPLE } });
     const id = (await c.api('/me')).user.id;
-    await admin.api(`/admin/mentors/${id}/review`, { method: 'POST', body: { approve: true, checks: { identity: true, credential: true, sample: true } } });
+    await approveMentor(admin, c);
     return { c, id };
   };
   ({ c: mentorA, id: aId } = await mk('Nino Beridze', 'nino@example.com', 25, 'ka'));

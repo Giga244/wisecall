@@ -54,8 +54,10 @@ app.use('/api/contact', require('./routes/contact'));
 app.use('/api/me', require('./routes/me'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
+app.use('/api/verification', require('./routes/verification'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/admin', require('./routes/adminVerification'));
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
 
 app.get('/api/config', (req, res) => {

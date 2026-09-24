@@ -444,3 +444,24 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
   font-family: 'Nunito', sans-serif; font-size: 0.92rem; color: var(--ink);
 }
 .payout-pay input:focus, .reject-note-input:focus { outline: none; border-color: var(--accent); }
+/* Mentor verification review (admin) */
+.badge-muted { background: #e6e9ee; color: var(--ink-soft); }
+.mv-body { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
+.mv-steps { display: grid; gap: 10px; margin: 12px 0; }
+.mv-step, .mv-group { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+.mv-group { display: grid; gap: 10px; background: var(--bg); }
+.mv-group .mv-step { border-style: dashed; }
+.mv-step-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mv-evidence { list-style: none; margin: 8px 0 0; padding: 0; font-size: 0.88rem; word-break: break-word; }
+.mv-decide { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.mv-decide input { flex: 1 1 220px; }
+.mv-final { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.mv-reject { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+.mv-decide input, .mv-reject input {
+  padding: 10px 14px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: #fff;
+  font-family: 'Nunito', sans-serif; font-size: 0.9rem; color: var(--ink);
+}
+.mv-decide input:focus, .mv-reject input:focus { outline: none; border-color: var(--accent); }
+.mv-audit { margin-top: 14px; }
+.mv-audit summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.mv-audit summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }

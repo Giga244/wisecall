@@ -1,0 +1,166 @@
+// Admin: reviewing mentor applications step by step. Loaded by admin.html before admin.js.
+(function () {
+  const t = (k) => WisecallI18n.t(k);
+  const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (d) => new Date(d).toLocaleString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  const initials = (name) => (name || '?').split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+
+  const STATUS_BADGE = { passed: 'answered', pending: 'pending_payment', failed: 'rejected', todo: 'badge-muted' };
+  const stepTitle = (s) => t(`verify.step.${s}`);
+  const badge = (status) => `<span class="badge badge-${STATUS_BADGE[status] || 'pending_payment'}">${t('verify.status.' + status)}</span>`;
+
+  // Evidence is shown as plain "label: value" lines. Nothing here is ever a link the admin could
+  // click by accident except URLs the mentor supplied, which open in a new tab without a referrer.
+  function evidenceHtml(ev) {
+    const entries = Object.entries(ev || {}).filter(([, v]) => v !== null && v !== undefined && v !== '');
+    if (!entries.length) return '';
+    return `<ul class="mv-evidence">${entries.map(([k, v]) => {
+      const text = String(v);
+      const value = /^https?:\/\//i.test(text) ? `<a href="${esc(text)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>` : esc(typeof v === 'object' ? JSON.stringify(v) : text);
+      return `<li><span class="muted small">${esc(t('verify.ev.' + k) === 'verify.ev.' + k ? k : t('verify.ev.' + k))}:</span> ${value}</li>`;
+    }).join('')}</ul>`;
+  }
+
+  function stepRow(s) {
+    const canDecide = s.manual && s.status !== 'todo';
+    return `
+      <div class="mv-step" data-step="${s.step}">
+        <div class="mv-step-head">
+          <strong>${esc(stepTitle(s.step))}</strong>
+          ${badge(s.status)}
+        </div>
+        ${evidenceHtml(s.evidence)}
+        ${s.reason ? `<p class="muted small">${esc(s.reason)}${s.decidedBy ? ` — ${esc(s.decidedBy)}` : ''}${s.decidedAt ? `, ${fmt(s.decidedAt)}` : ''}</p>` : ''}
+        ${canDecide ? `
+          <div class="mv-decide">
+            <input type="text" class="mv-reason" maxlength="300" placeholder="${esc(t('admin.mv.reasonPlaceholder'))}" aria-label="${esc(t('admin.mv.reasonPlaceholder'))}">
+            <button class="btn btn-primary btn-sm mv-pass">${t('admin.mv.pass')}</button>
+            <button class="btn btn-outline btn-sm mv-fail">${t('admin.mv.fail')}</button>
+          </div>` : ''}
+      </div>`;
+  }
+
+  function panelHtml(d) {
+    const rows = d.requirements.map((r) => (r.type === 'step'
+      ? stepRow(r)
+      : `<div class="mv-group"><p class="muted small"><strong>${t('admin.mv.anyOf')}</strong></p>${r.options.map(stepRow).join('')}</div>`)).join('');
+    const total = d.requirements.length;
+    const done = d.requirements.filter((r) => (r.type === 'step' ? r.status === 'passed' : r.satisfied)).length;
+    return `
+      <div class="mv-panel">
+        <p class="muted small">${t('admin.mv.progress').replace('{done}', done).replace('{total}', total)}</p>
+        <div class="booking-answer"><strong>${t('admin.sampleTitle')}</strong> ${esc(d.mentor.sampleAnswer || '')}</div>
+        ${d.mentor.proofUrl ? `<p>${t('admin.mv.proofLink')}: <a href="${esc(d.mentor.proofUrl)}" target="_blank" rel="noopener noreferrer">${esc(d.mentor.proofUrl)}</a></p>` : ''}
+        ${d.registries.length ? `<p class="small"><strong>${t('admin.mv.registries')}</strong> ${d.registries.map((r) => `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.label)}</a>`).join(' · ')}</p>` : ''}
+        <div class="mv-steps">${rows}</div>
+        <div class="mv-final">
+          <button class="btn btn-primary mv-approve" ${d.ready && d.mentor.verificationStatus === 'pending' ? '' : 'disabled'}>${t('admin.approve')}</button>
+          ${d.ready ? '' : `<span class="muted small">${t('admin.mv.approveBlocked')}</span>`}
+          <div class="mv-reject">
+            <input type="text" class="mv-reject-reason" maxlength="500" placeholder="${esc(t('admin.rejectReasonPlaceholder'))}" aria-label="${esc(t('admin.rejectReasonPlaceholder'))}">
+            <button class="btn btn-outline btn-sm mv-reject-btn">${t('admin.reject')}</button>
+          </div>
+        </div>
+        <details class="mv-audit"><summary>${t('admin.mv.audit')} (${d.audit.length})</summary>
+          <ul class="earn-list">${d.audit.map((a) => `<li><span>${fmt(a.at)}</span><span>${esc(a.by || '')} · ${esc(a.action)}${a.step ? ' · ' + esc(stepTitle(a.step)) : ''}</span><span class="muted small">${esc(a.reason || '')}</span></li>`).join('')}</ul>
+        </details>
+      </div>`;
+  }
+
+  function card(m) {
+    const v = m.verification || {};
+    return `
+      <div class="booking-card mv-card" data-id="${m.id}">
+        <div class="booking-top">
+          <div class="avatar" style="background:${esc(m.color || '#182236')}">${esc(initials(m.name))}</div>
+          <div>
+            <div class="card-name">${esc(m.name)}</div>
+            <span class="muted small">${esc(m.email)}</span>
+          </div>
+          <div class="booking-amount">${m.price ? WisecallAPI.formatPrice(m.price) : '—'}</div>
+        </div>
+        <p class="booking-question">
+          <strong>${esc(m.roleTitle || '—')}</strong> · ${m.niche ? esc(t('niche.' + m.niche)) : '—'}
+          <span class="badge badge-paid">${t('verify.level.' + (v.level || 'standard'))}</span>
+        </p>
+        ${m.verificationNote ? `<p class="muted small">${t('admin.lastNote')}: ${esc(m.verificationNote)}</p>` : ''}
+        <div class="review-actions" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+          <span class="badge badge-${m.verificationStatus === 'rejected' ? 'rejected' : (m.verificationStatus === 'verified' ? 'answered' : 'pending_payment')}">${t('settings.verify.' + (m.verificationStatus || 'none'))}</span>
+          ${(m.reviewCount >= 3 && m.ratingAvg < 3.5) ? `<span class="form-error" style="margin:0">${t('admin.lowRatingFlag').replace('{avg}', m.ratingAvg)}</span>` : ''}
+          <button class="btn btn-outline btn-sm mv-open" aria-expanded="false">${t('admin.mv.review')}</button>
+        </div>
+        <div class="mv-body" hidden></div>
+      </div>`;
+  }
+
+  // mentors: the list from /admin/mentors. onChange: called after any decision so the list can refresh.
+  function render(container, mentors, onChange) {
+    if (!mentors.length) { container.innerHTML = `<p class="muted">${t('admin.empty')}</p>`; return; }
+    container.innerHTML = mentors.map(card).join('');
+
+    container.querySelectorAll('.mv-card').forEach((el) => {
+      const id = el.dataset.id;
+      const body = el.querySelector('.mv-body');
+      const openBtn = el.querySelector('.mv-open');
+
+      async function loadPanel() {
+        body.innerHTML = `<p class="muted">${t('admin.loading')}</p>`;
+        try {
+          const d = await WisecallAPI.apiFetch(`/admin/mentors/${id}/verification`);
+          body.innerHTML = panelHtml(d);
+          wire(d);
+        } catch (e) { body.innerHTML = `<p class="muted">${t('toast.error')}</p>`; }
+      }
+
+      function wire() {
+        body.querySelectorAll('.mv-step').forEach((row) => {
+          const step = row.dataset.step;
+          const decide = async (decision) => {
+            const reason = row.querySelector('.mv-reason').value.trim();
+            if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+            try {
+              await WisecallAPI.apiFetch(`/admin/mentors/${id}/steps/${step}`, { method: 'POST', body: { decision, reason } });
+              WisecallNav.showToast(t('toast.saved'));
+              await loadPanel();
+              onChange({ soft: true });
+            } catch (e) { WisecallNav.showToast(t(e.code === 'reason_required' ? 'admin.mv.reasonRequired' : 'toast.error')); }
+          };
+          const pass = row.querySelector('.mv-pass');
+          const fail = row.querySelector('.mv-fail');
+          if (pass) pass.addEventListener('click', () => decide('passed'));
+          if (fail) fail.addEventListener('click', () => decide('failed'));
+        });
+        const approve = body.querySelector('.mv-approve');
+        if (approve) approve.addEventListener('click', async () => {
+          approve.disabled = true;
+          try {
+            await WisecallAPI.apiFetch(`/admin/mentors/${id}/approve`, { method: 'POST' });
+            WisecallNav.showToast(t('toast.saved'));
+            onChange();
+          } catch (e) {
+            WisecallNav.showToast(t(e.code === 'steps_incomplete' ? 'admin.mv.approveBlocked' : 'toast.error'));
+            approve.disabled = false;
+          }
+        });
+        body.querySelector('.mv-reject-btn').addEventListener('click', async () => {
+          const reason = body.querySelector('.mv-reject-reason').value.trim();
+          if (reason.length < 5) { WisecallNav.showToast(t('admin.reasonRequired')); return; }
+          try {
+            await WisecallAPI.apiFetch(`/admin/mentors/${id}/reject`, { method: 'POST', body: { reason } });
+            WisecallNav.showToast(t('toast.saved'));
+            onChange();
+          } catch (e) { WisecallNav.showToast(t('toast.error')); }
+        });
+      }
+
+      openBtn.addEventListener('click', async () => {
+        const open = body.hidden;
+        body.hidden = !open;
+        openBtn.setAttribute('aria-expanded', String(open));
+        if (open) await loadPanel();
+      });
+    });
+  }
+
+  window.AdminMentors = { render };
+})();

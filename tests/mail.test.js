@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { resetDatabase, startServer, client, bookAndPay, addPayoutDetails, SAMPLE } = require('./helpers');
+const { resetDatabase, startServer, client, bookAndPay, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
 
 const OUTBOX = path.join(os.tmpdir(), `wisecall-outbox-${process.pid}.jsonl`);
 let srv, base;
@@ -108,7 +108,7 @@ describe('delivery through the email provider', () => {
     await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Doctor', niche: 'medicine', price: 25, proofUrl: 'https://linkedin.com/in/de', sampleAnswer: SAMPLE } });
     const mid = (await mentor.api('/me')).user.id;
     await addPayoutDetails(mentor);
-    await admin.api(`/admin/mentors/${mid}/review`, { method: 'POST', body: { approve: true, checks: { identity: true, credential: true, sample: true } } });
+    await approveMentor(admin, mentor);
 
     const seeker = await signupViaOutbox('Ka Seeker', 'ka-seeker@example.com', 'ka');
 

@@ -26,7 +26,9 @@ function userFromRow(r) {
     proofUrl: r.proof_url,
     sampleAnswer: r.sample_answer,
     verificationNote: r.verification_note,
-    verificationChecks: r.verification_checks,
+    verificationDecidedAt: r.verification_decided_at,
+    suspendedAt: r.suspended_at,
+    suspensionReason: r.suspension_reason,
     emailVerified: r.email_verified,
     emailVerifyCodeHash: r.email_code_hash,
     emailVerifyCodeExpiresAt: r.email_code_expires_at,
@@ -74,7 +76,7 @@ const USER_COLUMNS = {
   language: 'language', verificationStatus: 'verification_status',
   payoutName: 'payout_name', payoutIbanEnc: 'payout_iban_enc', payoutIbanLast4: 'payout_iban_last4', payoutUpdatedAt: 'payout_updated_at',
   proofUrl: 'proof_url', sampleAnswer: 'sample_answer', verificationNote: 'verification_note',
-  verificationChecks: 'verification_checks', emailVerified: 'email_verified', emailVerifyCodeHash: 'email_code_hash',
+  verificationDecidedAt: 'verification_decided_at', suspendedAt: 'suspended_at', suspensionReason: 'suspension_reason', emailVerified: 'email_verified', emailVerifyCodeHash: 'email_code_hash',
   emailVerifyCodeExpiresAt: 'email_code_expires_at', resetTokenHash: 'reset_token_hash',
   resetTokenExpiresAt: 'reset_token_expires_at'
 };
