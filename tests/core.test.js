@@ -1,6 +1,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
+const path = require('path');
 const { ROOT, resetDatabase, startServer, client, signupVerified, SAMPLE } = require('./helpers');
 
 let srv, base;
@@ -175,6 +176,38 @@ describe('questions, answers and reviews (simulated payments)', () => {
     assert.equal(mine.asked[0].otherPartyName, 'Dr Mentor');
     const stranger = await signupVerified(base, 'Stranger', 'stranger@example.com');
     assert.equal((await stranger.api(`/bookings/${ids.booking}`)).status, 403);
+  });
+});
+
+describe('legal pages', () => {
+  const fs = require('fs');
+  const dict = (l) => JSON.parse(fs.readFileSync(path.join(ROOT, 'public', 'i18n', `${l}.json`), 'utf8'));
+
+  test('terms and privacy are served, and every page links to them in the footer', async () => {
+    for (const p of ['terms.html', 'privacy.html']) {
+      const res = await fetch(`${base}/${p}`);
+      assert.equal(res.status, 200, p);
+    }
+    for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html'))) {
+      assert.match(fs.readFileSync(path.join(ROOT, 'public', f), 'utf8'), /js\/footer\.js/, `${f} has the shared footer`);
+    }
+  });
+
+  test('English and Georgian have exactly the same keys and legal sections', () => {
+    const en = dict('en'), ka = dict('ka');
+    assert.deepEqual(Object.keys(en).filter((k) => !(k in ka)), [], 'keys missing in ka');
+    assert.deepEqual(Object.keys(ka).filter((k) => !(k in en)), [], 'keys missing in en');
+    for (const k of ['legal.terms.sections', 'legal.privacy.sections']) {
+      assert.equal(en[k].length, ka[k].length, `${k} section count`);
+      en[k].forEach((s, i) => assert.equal(s.p.length, ka[k][i].p.length, `${k} section ${i + 1} paragraphs`));
+    }
+  });
+
+  test('the terms state the refund rule, mentor duties and the not-professional-advice disclaimer', () => {
+    const t = JSON.stringify(dict('en')['legal.terms.sections']);
+    assert.match(t, /refund you in full automatically/);
+    assert.match(t, /Mentor responsibilities/);
+    assert.match(t, /Not professional advice/);
   });
 });
 
