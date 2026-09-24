@@ -387,16 +387,17 @@ describe('production safety', () => {
       // Values are blanked (not omitted) so dotenv cannot fill them in from the real .env file.
       env: {
         PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL,
-        JWT_SECRET: '', APP_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: ''
+        JWT_SECRET: '', APP_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', STRIPE_SECRET_KEY: '', ALLOW_SIMULATED_PAYMENTS: ''
       }
     });
     assert.equal(r.status, 1);
-    for (const name of ['JWT_SECRET', 'APP_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS']) assert.match(r.stderr, new RegExp(name));
+    for (const name of ['JWT_SECRET', 'APP_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'STRIPE_SECRET_KEY']) assert.match(r.stderr, new RegExp(name));
   });
 
   test('in production, codes and reset links are never returned by the API', async () => {
     const prod = await startServer(4553, {
-      NODE_ENV: 'production', APP_URL: 'https://example.com', RESEND_API_KEY: 're_fake_key_for_test', EMAIL_FROM: 'Wisecall <hi@example.com>'
+      NODE_ENV: 'production', APP_URL: 'https://example.com', RESEND_API_KEY: 're_fake_key_for_test', EMAIL_FROM: 'Wisecall <hi@example.com>',
+      ALLOW_SIMULATED_PAYMENTS: 'true'
     });
     try {
       const c = client(prod.base);

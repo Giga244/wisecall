@@ -57,7 +57,7 @@ before(async () => {
   await resetDatabase();
   const fakePort = await fake.start();
   srv = await startServer(4561, {
-    STRIPE_SECRET_KEY: 'sk_test_fake', STRIPE_PUBLISHABLE_KEY: 'pk_test_fake', STRIPE_WEBHOOK_SECRET: SECRET,
+    STRIPE_SECRET_KEY: 'sk_test_fake', STRIPE_PUBLISHABLE_KEY: 'pk_test_fake', STRIPE_WEBHOOK_SECRET: ' ' + SECRET + ', whsec_connect_endpoint',
     STRIPE_API_HOST: 'localhost', STRIPE_API_PORT: String(fakePort), SWEEP_INTERVAL_SECONDS: '1', ANSWER_DEADLINE_DAYS: '7'
   });
   base = srv.base;
@@ -124,6 +124,14 @@ describe('paying for a question', () => {
     const res = await postEvent(e, 't=1,v1=deadbeef');
     assert.equal(res.status, 400);
     assert.equal((await seeker.api(`/bookings/${booking.id}`)).booking.status, 'pending_payment');
+  });
+
+  test('a webhook signed with any one of several configured secrets is accepted', async () => {
+    const payload = JSON.stringify({ id: 'evt_connect_1', object: 'event', type: 'ping.ignored', data: { object: {} } });
+    const header = signer.webhooks.generateTestHeaderString({ payload, secret: 'whsec_connect_endpoint' });
+    assert.equal((await postEvent({ payload }, header)).status, 200);
+    const wrong = signer.webhooks.generateTestHeaderString({ payload, secret: 'whsec_somebody_else' });
+    assert.equal((await postEvent({ payload }, wrong)).status, 400);
   });
 
   test('a signed webhook marks it paid and starts the 7-day answer clock; replays are ignored', async () => {

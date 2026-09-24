@@ -1,0 +1,57 @@
+# Optional Render Blueprint: New -> Blueprint, then pick this repository.
+# Secrets (marked sync: false) are asked for in the Render dashboard, never stored here.
+# Check the plan names against Render's current plans before applying.
+databases:
+  - name: wisecall-db
+    databaseName: wisecall
+    plan: basic-256mb
+    region: frankfurt
+
+services:
+  - type: web
+    name: wisecall
+    runtime: node
+    region: frankfurt
+    plan: starter
+    numInstances: 1
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wisecall-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: PLATFORM_FEE_PERCENT
+        value: "20"
+      - key: CURRENCY
+        value: usd
+      - key: ANSWER_DEADLINE_DAYS
+        value: "7"
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_CROSS_BORDER_PAYOUTS
+        value: "false"
+      # Set to true only for a demo deploy before Stripe is ready (nobody is charged). Remove it for launch.
+      - key: ALLOW_SIMULATED_PAYMENTS
+        value: "false"

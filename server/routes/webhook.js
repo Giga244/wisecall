@@ -13,7 +13,14 @@ router.post('/stripe', async (req, res) => {
   let event;
   try {
     if (config.STRIPE_WEBHOOK_SECRET) {
-      event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], config.STRIPE_WEBHOOK_SECRET);
+      // Stripe gives each webhook endpoint its own secret (one for your account, one for connected
+      // accounts), so STRIPE_WEBHOOK_SECRET may hold several, separated by commas.
+      const secrets = config.STRIPE_WEBHOOK_SECRET.split(',').map((s) => s.trim()).filter(Boolean);
+      let lastError;
+      for (const secret of secrets) {
+        try { event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], secret); break; } catch (e) { lastError = e; }
+      }
+      if (!event) throw lastError;
     } else if (config.IS_PROD) {
       return res.status(400).send('STRIPE_WEBHOOK_SECRET is required in production');
     } else {

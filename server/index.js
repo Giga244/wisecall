@@ -82,6 +82,7 @@ async function start() {
     console.log(config.STRIPE_ENABLED
       ? 'Stripe: enabled.'
       : 'Stripe: not configured — bookings are auto-marked "paid" in simulated mode. Add STRIPE_SECRET_KEY to .env to enable real Stripe Checkout.');
+    if (config.IS_PROD && !config.STRIPE_ENABLED) console.warn('WARNING: production is running with SIMULATED payments (ALLOW_SIMULATED_PAYMENTS=true). Nobody is being charged.');
   });
 
   const stopJobs = startJobs();

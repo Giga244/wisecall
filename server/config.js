@@ -26,6 +26,9 @@ const config = {
   STRIPE_ENABLED: Boolean(stripeKey && stripeKey.startsWith('sk_')),
   // Set true when mentors live in a different country than your Stripe platform account.
   STRIPE_CROSS_BORDER_PAYOUTS: env.STRIPE_CROSS_BORDER_PAYOUTS === 'true',
+  // Without Stripe keys every question is marked paid instantly and nobody is charged. Fine for a
+  // demo, but in production it must be switched on deliberately.
+  ALLOW_SIMULATED_PAYMENTS: env.ALLOW_SIMULATED_PAYMENTS === 'true',
 
   EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
   RESEND_API_KEY: env.RESEND_API_KEY || '',
@@ -61,6 +64,7 @@ if (IS_PROD) {
   if (config.EMAIL_PROVIDER === 'postmark' && !config.POSTMARK_TOKEN) problems.push('POSTMARK_TOKEN is required (verification codes and password resets are sent by email)');
   if (!env.EMAIL_FROM) problems.push('EMAIL_FROM is required (an address on a domain you verified with your email provider)');
   if (config.ADMIN_EMAILS.length === 0) problems.push('ADMIN_EMAILS is required (who can approve mentors)');
+  if (!config.STRIPE_ENABLED && !config.ALLOW_SIMULATED_PAYMENTS && !config.STRIPE_SECRET_KEY) problems.push('STRIPE_SECRET_KEY is required in production, or nobody is charged. To run a demo with fake payments on purpose, set ALLOW_SIMULATED_PAYMENTS=true');
   if (config.STRIPE_SECRET_KEY && !config.STRIPE_SECRET_KEY.startsWith('sk_')) problems.push('STRIPE_SECRET_KEY does not look like a Stripe secret key');
   if (config.STRIPE_ENABLED && !config.STRIPE_WEBHOOK_SECRET) problems.push('STRIPE_WEBHOOK_SECRET is required when Stripe is enabled');
   if (config.STRIPE_ENABLED && !config.STRIPE_PUBLISHABLE_KEY) problems.push('STRIPE_PUBLISHABLE_KEY is required when Stripe is enabled');

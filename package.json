@@ -4,6 +4,7 @@
   "description": "Wisecall - paid advice marketplace (EN/KA)",
   "main": "server/index.js",
   "type": "commonjs",
+  "engines": { "node": ">=20" },
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
