@@ -193,7 +193,7 @@
         </div>
         <p class="muted">${t('vt.intro')}</p>
         <p class="muted small">${t('vt.level.' + v.level)}</p>
-        ${v.status === 'rejected' && v.note ? `<p class="form-error">${t('vt.reason')} ${esc(v.note)}</p>` : ''}
+        ${(v.status === 'rejected' || v.status === 'suspended') && v.note ?`<p class="form-error">${t('vt.reason')} ${esc(v.note)}</p>` : ''}
         <div class="vt-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="${esc(t('vt.progress').replace('{done}', done).replace('{total}', total))}"><span style="width:${pct}%"></span></div>
         <p class="small"><strong>${t('vt.progress').replace('{done}', done).replace('{total}', total)}</strong></p>
         ${v.status === 'verified' && !user.hasPayoutDetails ? `<p><button type="button" class="btn btn-primary btn-sm" data-goto="payouts">${t('vt.addPayout')}</button></p>` : ''}

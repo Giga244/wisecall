@@ -68,6 +68,10 @@ function bookingFromRow(r) {
     providerRefundId: r.provider_refund_id,
     refundRequestedAt: r.refund_requested_at,
     refundError: r.refund_error,
+    answerReview: r.answer_review,
+    answerHeldUntil: r.answer_held_until,
+    answerReleasedAt: r.answer_released_at,
+    answerFlaggedAt: r.answer_flagged_at,
     createdAt: r.created_at
   };
 }
@@ -87,7 +91,8 @@ const BOOKING_COLUMNS = {
   answer: 'answer', rating: 'rating', review: 'review', reviewedAt: 'reviewed_at', status: 'status',
   providerOrderId: 'provider_order_id', paidAt: 'paid_at', answeredAt: 'answered_at', answerDeadline: 'answer_deadline',
   refundedAt: 'refunded_at', refundReason: 'refund_reason', providerRefundId: 'provider_refund_id',
-  refundRequestedAt: 'refund_requested_at', refundError: 'refund_error', reminderSentAt: 'reminder_sent_at'
+  refundRequestedAt: 'refund_requested_at', refundError: 'refund_error', reminderSentAt: 'reminder_sent_at',
+  answerReview: 'answer_review', answerHeldUntil: 'answer_held_until', answerReleasedAt: 'answer_released_at', answerFlaggedAt: 'answer_flagged_at'
 };
 
 // `client` may be a transaction client; otherwise the shared pool is used.
@@ -153,7 +158,7 @@ async function mentorStatsFor(ids) {
   if (!ids.length) return out;
   const { rows } = await query(
     `SELECT mentor_id,
-            count(*) FILTER (WHERE status = 'answered') AS answered,
+            count(*) FILTER (WHERE status = 'answered' AND answer_review <> 'held') AS answered,
             count(rating) AS reviews,
             round(avg(rating)::numeric, 1) AS avg
        FROM bookings WHERE mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`,

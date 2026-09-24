@@ -37,12 +37,17 @@ const S = {
       subject: 'Your Wisecall payment was refunded', heading: 'Your payment was refunded',
       intro: 'We refunded {amount} for your question to {mentor} because {reason}.',
       after: 'It can take 5–10 business days to appear on your statement.',
-      reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', other: 'our team refunded it' }
+      reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: "the mentor's profile was suspended", answer_rejected: 'the answer did not meet our standards', other: 'our team refunded it' }
     },
     refundMentor: {
       subject: 'A question was refunded on Wisecall', heading: 'A question was refunded',
       intro: 'The question below was refunded to the buyer because {reason}. You will not receive a payout for it.',
-      reasons: { no_answer_deadline: 'it was not answered within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', other: 'our team refunded it' }
+      reasons: { no_answer_deadline: 'it was not answered within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: 'your profile was suspended', answer_rejected: 'our team found that the answer did not meet our standards', other: 'our team refunded it' }
+    },
+    mentorSuspended: {
+      subject: 'Your Wisecall mentor profile was suspended', heading: 'Your profile is suspended',
+      intro: 'We suspended your mentor profile. It is hidden from Browse experts, and questions that were waiting for your answer were refunded.', reasonLabel: 'Reason:',
+      after: 'If you think this is a mistake, please contact us and we will look at it again.', button: 'Contact us'
     },
     deadlineSoon: {
       subject: 'Answer soon or the question will be refunded', heading: 'A paid question is waiting',
@@ -65,6 +70,7 @@ const S = {
       anyOf: 'At least one of: {options}', state: { todo: 'not started', pending: 'waiting for review', failed: 'needs another try' },
       button: 'Open verification',
       reasons: {
+        license_expired: 'Your license has expired. Please submit the renewed one; until it is approved your profile is hidden from Browse experts.',
         kyc_declined: 'The ID check was not approved. Please try again with a valid, undamaged ID and good lighting.',
         kyc_expired: 'The ID check was not completed in time. Please start it again.'
       },
@@ -128,12 +134,17 @@ const S = {
       subject: 'შენი Wisecall-ის გადახდა დაგიბრუნდა', heading: 'თანხა დაგიბრუნდა',
       intro: '{mentor}-სთვის დასმულ კითხვაზე {amount} დაგიბრუნეთ, რადგან {reason}.',
       after: 'თანხა ბანკის ამონაწერში 5–10 სამუშაო დღეში გამოჩნდება.',
-      reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+      reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'მენტორის პროფილი შეჩერდა', answer_rejected: 'პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
     },
     refundMentor: {
       subject: 'Wisecall-ზე კითხვის თანხა დაბრუნდა', heading: 'კითხვის თანხა დაბრუნდა',
       intro: 'ქვემოთ მოცემული კითხვის თანხა დაუბრუნდა მყიდველს, რადგან {reason}. ამ კითხვაზე ანაზღაურებას ვერ მიიღებ.',
-      reasons: { no_answer_deadline: 'პასუხი {days} დღის განმავლობაში არ გაიცა', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+      reasons: { no_answer_deadline: 'პასუხი {days} დღის განმავლობაში არ გაიცა', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'შენი პროფილი შეჩერდა', answer_rejected: 'ჩვენმა გუნდმა დაადგინა, რომ პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+    },
+    mentorSuspended: {
+      subject: 'შენი Wisecall-ის მენტორის პროფილი შეჩერდა', heading: 'შენი პროფილი შეჩერებულია',
+      intro: 'შენი მენტორის პროფილი შევაჩერეთ. ის ექსპერტების სიაში დამალულია, ხოლო კითხვები, რომლებიც შენს პასუხს ელოდა, დაბრუნდა.', reasonLabel: 'მიზეზი:',
+      after: 'თუ გგონია, რომ ეს შეცდომაა, დაგვიკავშირდი და თავიდან განვიხილავთ.', button: 'დაგვიკავშირდი'
     },
     deadlineSoon: {
       subject: 'უპასუხე მალე, თორემ კითხვის თანხა დაბრუნდება', heading: 'ფასიანი კითხვა გელოდება',
@@ -156,6 +167,7 @@ const S = {
       anyOf: 'სულ მცირე ერთი: {options}', state: { todo: 'არ დაწყებულა', pending: 'განხილვას ელოდება', failed: 'საჭიროა ხელახლა ცდა' },
       button: 'ვერიფიკაციის გახსნა',
       reasons: {
+        license_expired: 'შენი ლიცენზიის ვადა ამოიწურა. გთხოვთ, გამოგვიგზავნე განახლებული; სანამ ის არ დამტკიცდება, შენი პროფილი ექსპერტების სიაში დამალულია.',
         kyc_declined: 'პირადობის შემოწმება ვერ დამტკიცდა. სცადე თავიდან ვალიდური, დაუზიანებელი დოკუმენტით და კარგ განათებაზე.',
         kyc_expired: 'პირადობის შემოწმება დროულად ვერ დასრულდა. დაიწყე თავიდან.'
       },
@@ -232,6 +244,10 @@ const BUILDERS = {
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,
     blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.PUBLIC_URL}/settings.html` }]
+  }),
+  mentorSuspended: (s, d) => ({
+    heading: s.mentorSuspended.heading,
+    blocks: [{ p: s.mentorSuspended.intro }, ...(d.note ? [{ quote: `${s.mentorSuspended.reasonLabel} ${d.note}` }] : []), { p: s.mentorSuspended.after }, { button: s.mentorSuspended.button, url: `${config.PUBLIC_URL}/contact.html` }]
   }),
   verificationUpdate: (s, d) => {
     const u = s.verificationUpdate;

@@ -78,12 +78,19 @@
             </li>`).join('')}</ul>` : ''}
       </div>`;
   }
+  // The flag's sentence, with its numbers filled in (average rating, number of reports, expiry date).
+  function flagText(f) {
+    const d = f.detail || {};
+    return t('admin.mv.flag.' + f.kind)
+      .replace('{average}', d.average).replace('{reviews}', d.reviews).replace('{count}', d.count)
+      .replace('{date}', d.expiresAt ? String(d.expiresAt).slice(0, 10) : '');
+  }
   // Open flags the system raised for this mentor (for example a name that does not match the ID).
   function flagsBlock(list) {
     if (!list || !list.length) return '';
     return `<div class="mv-flags">${list.map((f) => `
       <div class="mv-flag" data-flag="${f.id}">
-        <p><strong>${t('admin.mv.flag.' + f.kind)}</strong></p>
+        <p><strong>${esc(flagText(f))}</strong></p>
         ${f.detail && f.detail.mismatches ? `<ul class="mv-evidence">${f.detail.mismatches.map((m) => `<li>${esc(m.source)}: “${esc(m.name)}” (${Math.round(m.score * 100)}%)</li>`).join('')}</ul>` : ''}
         <div class="mv-decide">
           <input type="text" class="mv-flag-reason" maxlength="300" placeholder="${esc(t('admin.mv.reasonPlaceholder'))}" aria-label="${esc(t('admin.mv.reasonPlaceholder'))}">
@@ -113,6 +120,15 @@
           <div class="mv-reject">
             <input type="text" class="mv-reject-reason" maxlength="500" placeholder="${esc(t('admin.rejectReasonPlaceholder'))}" aria-label="${esc(t('admin.rejectReasonPlaceholder'))}">
             <button class="btn btn-outline btn-sm mv-reject-btn">${t('admin.reject')}</button>
+          </div>
+        </div>
+        <div class="mv-suspend">
+          <p class="muted small"><strong>${t('admin.mv.suspendTitle')}</strong></p>
+          <div class="mv-decide">
+            <input type="text" class="mv-suspend-reason" maxlength="300" placeholder="${esc(t(d.mentor.verificationStatus === 'suspended' ? 'admin.mv.reinstateReason' : 'admin.mv.suspendReason'))}" aria-label="${esc(t(d.mentor.verificationStatus === 'suspended' ? 'admin.mv.reinstateReason' : 'admin.mv.suspendReason'))}">
+            ${d.mentor.verificationStatus === 'suspended'
+              ? `<button class="btn btn-outline btn-sm mv-reinstate">${t('admin.mv.reinstate')}</button>`
+              : `<button class="btn btn-ghost btn-sm mv-suspend-btn">${t('admin.mv.suspend')}</button>`}
           </div>
         </div>
         <details class="mv-audit"><summary>${t('admin.mv.audit')} (${d.audit.length})</summary>
@@ -195,6 +211,18 @@
             catch (e) { WisecallNav.showToast(t('toast.error')); }
           });
         });
+        const suspendBtn = body.querySelector('.mv-suspend-btn');
+        const reinstateBtn = body.querySelector('.mv-reinstate');
+        const changeStanding = (btn, path, confirmKey) => async () => {
+          const reason = body.querySelector('.mv-suspend-reason').value.trim();
+          if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+          if (confirmKey && !window.confirm(t(confirmKey).replace('{name}', el.querySelector('.card-name').textContent))) return;
+          btn.disabled = true;
+          try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/${path}`, { method: 'POST', body: { reason } }); WisecallNav.showToast(t('toast.saved')); onChange(); }
+          catch (e) { WisecallNav.showToast(t('toast.error')); btn.disabled = false; }
+        };
+        if (suspendBtn) suspendBtn.addEventListener('click', changeStanding(suspendBtn, 'suspend', 'admin.mv.suspendConfirm'));
+        if (reinstateBtn) reinstateBtn.addEventListener('click', changeStanding(reinstateBtn, 'reinstate'));
         const refresh = body.querySelector('.mv-kyc-refresh');
         if (refresh) refresh.addEventListener('click', async () => {
           refresh.disabled = true;

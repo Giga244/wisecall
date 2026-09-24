@@ -34,7 +34,10 @@
     } else if (b.status === 'refund_pending') {
       text = t('dash.refund.pending');
     } else if (b.status === 'refunded') {
-      text = t(b.refundReason === 'no_answer_deadline' ? 'dash.refund.no_answer_deadline' : 'dash.refund.other');
+      const known = ['no_answer_deadline', 'mentor_suspended', 'answer_rejected'];
+      text = t(known.includes(b.refundReason) ? 'dash.refund.' + b.refundReason : 'dash.refund.other');
+    } else if (b.status === 'answered' && b.answerHeld) {
+      text = role === 'mentor' ? t('dash.answer.held.mentor') : t('dash.answer.held.buyer');
     }
     return text ? `<p class="booking-note">${escapeHtml(text)}</p>` : '';
   }
@@ -60,9 +63,11 @@
         <p class="booking-question">${escapeHtml(b.question)}</p>
         ${bookingNote(b, 'seeker')}
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
-        ${b.status === 'answered' ? renderReviewArea(b) : ''}
+        ${b.status === 'answered' && !b.answerHeld ? renderReviewArea(b) : ''}
+        ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
       </div>
     `).join('');
+    WisecallReport.wire(askedList);
 
     askedList.querySelectorAll('.review-form').forEach(form => {
       const stars = form.querySelectorAll('.star-btn');

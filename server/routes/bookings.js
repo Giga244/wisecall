@@ -6,6 +6,8 @@ const payments = require('../payments');
 const pay = require('../pay');
 const ledger = require('../ledger');
 const notify = require('../notify');
+const probation = require('../probation');
+const monitoring = require('../verification/monitoring');
 const { isListable, asyncHandler } = require('../util');
 const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('../models');
 
@@ -59,7 +61,10 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
     );
     return rows.map((r) => ({ ...bookingFromRow(r), otherPartyName: r.other_name, otherPartyColor: r.other_color }));
   };
-  res.json({ asked: await list('seeker', 'mentor'), received: await list('mentor', 'seeker') });
+  const me = req.userToken.id;
+  // A buyer never sees an answer that is still being checked (see server/probation.js).
+  const asked = (await list('seeker', 'mentor')).map((b) => probation.forViewer(b, me));
+  res.json({ asked, received: (await list('mentor', 'seeker')).map((b) => ({ ...b, answerHeld: b.answerReview === 'held' })) });
 }));
 
 router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
@@ -68,7 +73,7 @@ router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
   if (booking.seekerId !== req.userToken.id && booking.mentorId !== req.userToken.id) {
     return res.status(403).json({ error: 'forbidden' });
   }
-  res.json({ booking });
+  res.json({ booking: probation.forViewer(booking, req.userToken.id) });
 }));
 
 // The buyer came back from the bank (or is waiting on the page). We do not believe the redirect:
@@ -87,7 +92,7 @@ router.post('/:id/sync', requireAuth, asyncHandler(async (req, res) => {
     try { booking = (await payments.syncBooking(existing.id)) || existing; }
     catch (err) { console.error('[payments] status check failed:', err.message); }
   }
-  res.json({ booking });
+  res.json({ booking: probation.forViewer(booking, req.userToken.id) });
 }));
 router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   const { answer } = req.body || {};
@@ -97,21 +102,27 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   if (!existing) return res.status(404).json({ error: 'not_found' });
   if (existing.mentorId !== req.userToken.id) return res.status(400).json({ error: 'forbidden' });
   if (existing.status !== 'paid' && existing.status !== 'answered') return res.status(400).json({ error: 'not_paid' });
+  // A suspended mentor cannot answer (their open questions were refunded).
+  const mentorNow = await getUserById(existing.mentorId);
+  if (!mentorNow || mentorNow.verificationStatus === 'suspended') return res.status(403).json({ error: 'suspended' });
 
-  const booking = await updateBooking(existing.id, {
+  const first = !existing.answeredAt;
+  // One of a new mentor's first answers? Then it waits for an admin before the buyer sees it.
+  const held = first && await probation.shouldHold(existing.mentorId);
+  let booking = await updateBooking(existing.id, {
     answer: String(answer).trim().slice(0, 8000),
     status: 'answered',
     answeredAt: existing.answeredAt || new Date()
   });
+  if (held) booking = (await probation.hold(booking.id)) || booking;
 
-  // Record the mentor's earnings in the payout ledger (once, however many times the answer is edited).
-  if (!existing.answeredAt) await ledger.onAnswered(booking);
-
-  if (!existing.answeredAt) {
+  if (first && !held) {
+    // Record the mentor's earnings in the payout ledger (once, however many times the answer is edited).
+    await ledger.onAnswered(booking);
     const [seeker, mentor] = await Promise.all([getUserById(booking.seekerId), getUserById(booking.mentorId)]);
     if (seeker && mentor) notify.notifySeekerAnswered(seeker, mentor, booking);
   }
-  res.json({ booking });
+  res.json({ booking: probation.forViewer(booking, req.userToken.id) });
 }));
 
 router.post('/:id/review', requireAuth, asyncHandler(async (req, res) => {
@@ -123,7 +134,7 @@ router.post('/:id/review', requireAuth, asyncHandler(async (req, res) => {
   const existing = await getBookingById(req.params.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });
   if (existing.seekerId !== req.userToken.id) return res.status(400).json({ error: 'forbidden' });
-  if (existing.status !== 'answered') return res.status(400).json({ error: 'not_answered' });
+  if (existing.status !== 'answered' || existing.answerReview === 'held') return res.status(400).json({ error: 'not_answered' });
   if (existing.rating) return res.status(400).json({ error: 'already_reviewed' });
 
   const booking = await updateBooking(existing.id, {
@@ -131,6 +142,8 @@ router.post('/:id/review', requireAuth, asyncHandler(async (req, res) => {
     review: review ? String(review).trim().slice(0, 2000) : null,
     reviewedAt: new Date()
   });
+  // A mentor whose average drops below the limit after enough reviews is flagged for an admin.
+  await monitoring.afterReview(existing.mentorId);
   res.json({ booking });
 }));
 

@@ -61,6 +61,7 @@ app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
 app.use('/api/verification/kyc/start', rateLimit({ windowMs: 60 * 60 * 1000, max: 15 }));
 app.use('/api/verification/work-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 12 }));
 app.use('/api/verification/documents', rateLimit({ windowMs: 60 * 60 * 1000, max: 40 }));
+app.use(/^\/api\/experts\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 // Uploaded verification documents arrive as raw file bytes (PDF or JPEG, up to 10 MB).
 app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
 app.use('/api/auth', require('./routes/auth'));

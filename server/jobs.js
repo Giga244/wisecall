@@ -79,6 +79,18 @@ async function purgeDocuments() {
   if (n) console.log(`[jobs] deleted ${n} verification document(s) past their retention date`);
 }
 
+// A new mentor's first answers wait for an admin; the ones nobody flagged are released after the check window.
+async function releaseHeldAnswers() {
+  const n = await require('./probation').releaseDue();
+  if (n) console.log(`[jobs] released ${n} held answer(s) after the check window`);
+}
+
+// Licenses about to expire (a reminder for the admin) and licenses that expired (the mentor is taken off the site).
+async function checkLicenses() {
+  const r = await require('./verification/monitoring').licenseSweep();
+  if (r.reminded || r.delisted) console.log(`[jobs] license check: ${r.reminded} reminder(s), ${r.delisted} mentor(s) taken off the site`);
+}
+
 async function runSweep() {
   const client = await pool.connect();
   try {
@@ -91,6 +103,8 @@ async function runSweep() {
       await confirmRefunds();
       await reconcilePending();
       await purgeDocuments();
+      await releaseHeldAnswers();
+      await checkLicenses();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }

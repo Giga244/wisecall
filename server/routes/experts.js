@@ -3,6 +3,8 @@ const { query } = require('../db');
 const { userFromRow, listableSql, mentorStatsFor, getUserById } = require('../models');
 const { publicProfile, isListable, asyncHandler } = require('../util');
 const { badgesFor } = require('../verification/badges');
+const { requireAuth } = require('../auth');
+const reports = require('../reports');
 
 const router = express.Router();
 
@@ -32,6 +34,22 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!isListable(mentor)) return res.status(404).json({ error: 'not_found' });
   const [expert] = await withStats([mentor]);
   res.json({ expert });
+}));
+
+// "Report this mentor" (from a profile, or from an answer with bookingId). Signed-in users only; the
+// reporter's identity is visible to admins only.
+const REPORT_STATUS = { invalid_reason: 400, details_too_long: 400, invalid_booking: 400, cannot_report_self: 400, not_found: 404, already_reported: 409 };
+router.post('/:id/report', requireAuth, asyncHandler(async (req, res) => {
+  const reporter = await getUserById(req.userToken.id);
+  if (!reporter) return res.status(401).json({ error: 'not_authenticated' });
+  const b = req.body || {};
+  try {
+    await reports.create({ reporter, mentorId: req.params.id, bookingId: b.bookingId, reason: b.reason, details: b.details });
+    res.status(201).json({ ok: true });
+  } catch (e) {
+    if (e instanceof reports.ReportError) return res.status(REPORT_STATUS[e.code] || 400).json({ error: e.code });
+    throw e;
+  }
 }));
 
 router.get('/:id/reviews', asyncHandler(async (req, res) => {

@@ -10,9 +10,11 @@
 const { query, tx } = require('./db');
 const config = require('./config');
 
-// Called when a mentor answers. The unique booking_id makes editing an answer harmless.
-async function onAnswered(booking) {
-  const payableAt = new Date(new Date(booking.answeredAt || Date.now()).getTime() + config.PAYOUT_HOLD_DAYS * 86400000);
+// Called when a mentor answers, or, for a held answer (probation), when it is released to the buyer:
+// the hold period always starts when the buyer can see the answer. The unique booking_id makes
+// editing an answer harmless.
+async function onAnswered(booking, from) {
+  const payableAt = new Date(new Date(from || booking.answeredAt || Date.now()).getTime() + config.PAYOUT_HOLD_DAYS * 86400000);
   await query(
     `INSERT INTO payouts (booking_id, mentor_id, amount, currency, payable_at)
      VALUES ($1, $2, $3, $4, $5) ON CONFLICT (booking_id) DO NOTHING`,

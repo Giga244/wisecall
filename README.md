@@ -7,11 +7,12 @@ A paid advice marketplace for Georgia: seekers pay in lari (GEL) to ask a questi
 ## What it does
 
 - **Accounts**: signup, login, logout, hashed passwords (bcrypt), httpOnly session cookie, email verification (6-digit code, 15 minutes), forgot/reset password (single-use links, 1 hour).
-- **Mentors are checked by a person.** Applying needs a verified email, a proof link (LinkedIn preferred) and a sample answer. The application waits as `pending` until an admin approves it at `/admin.html` with a checklist. Rejections need a reason, and the mentor is emailed either way. A mentor is listed and bookable only when approved **and** payout details are saved, enforced on the server.
+- **Mentors are verified, step by step.** Every mentor needs a verified email, an ID + selfie check through a provider interface (Didit; a fake one for local development only), an automatic name match (Georgian ↔ Latin) across the ID, profile, license and payout account, a sample answer and a proof link. Regulated niches (Medicine, Law, Finance) also need a license number, a private supporting document and a video interview; Business needs a company ID or proof of role; other niches need a work email, a diploma or a portfolio. All rules live in `server/verification/rules.js`. Nobody is listed until every required step passed and an admin approved; each admin decision needs a reason, is written to an audit log and emailed to the mentor with what is still missing. ID images are never stored (only the provider's id, result, verified name, date of birth and country, encrypted); uploaded documents are encrypted, admin-only and deleted 90 days after a decision. A mentor is listed and bookable only when approved **and** payout details are saved, enforced on the server.
+- **Ongoing checks.** A new mentor's first 5 answers are held for an admin (released after 24 hours if nobody flags them); buyers can report a mentor; low ratings, repeated reports and expiring licenses are flagged; an expired license takes a mentor off the site; an admin can suspend a mentor at once (open questions are refunded). Profiles show trust badges only for checks really passed.
 - **Card payments in GEL through a Georgian bank** (Bank of Georgia or TBC Bank). One provider interface (`server/pay/`); a fake bank exists for local development only. See below.
 - **Manual mentor payouts.** Mentors save their name and IBAN (encrypted at rest). Every answered question earns price minus the platform fee, payable 7 days after the answer. Admins see who to pay in **Payouts**, download a CSV, send the bank transfer, and click **Mark as paid**. Mentors see earnings and payout history on their dashboard.
 - **Refunds**: automatic after 7 days without an answer, or by an admin. They go through the bank's refund API and stay "in progress" until the bank confirms. A refund after the mentor was paid becomes a debt deducted from their next payout.
-- **Admin panel** (`/admin.html`, emails in `ADMIN_EMAILS`): mentor applications, bookings and refunds, payouts.
+- **Admin panel** (`/admin.html`, emails in `ADMIN_EMAILS`): mentor applications (per-step review), review queue (held answers, reports), video interviews, bookings and refunds, payouts.
 - **Reviews and ratings**, search and sort on Browse experts, real "questions answered" counts.
 - **Email** (Resend, swappable to Postmark): every message in English or Georgian, in each person's saved language. Retried once on temporary failures. Nothing is ever shown on screen instead of emailed in production.
 - **Pages**: About, Contact (emails the admin), Terms, Privacy (EN/KA), branded 404 and 500 pages, mobile menu, footer on every page.
@@ -59,7 +60,7 @@ To add another bank, write a module with `createPayment`, `verifyCallback`, `get
 
 ## Security notes
 
-- Production (`NODE_ENV=production`) refuses to start without a strong `SESSION_SECRET`, `DATA_ENCRYPTION_KEY`, an https `PUBLIC_URL` that is not localhost, email credentials, `EMAIL_FROM`, `ADMIN_EMAILS`, and a real `PAYMENT_PROVIDER` (`bog` or `tbc`) with its keys. It never shows codes or reset links on screen and does not contain the fake bank.
+- Production (`NODE_ENV=production`) refuses to start without a strong `SESSION_SECRET`, `DATA_ENCRYPTION_KEY`, an https `PUBLIC_URL` that is not localhost, email credentials, `EMAIL_FROM`, `ADMIN_EMAILS`, a real `PAYMENT_PROVIDER` (`bog` or `tbc`) with its keys, and `KYC_PROVIDER=didit` with its keys. It never shows codes or reset links on screen and does not contain the fake bank.
 - Content-Security-Policy allows scripts only from the site's own files (no inline scripts). If you add a third-party script, update `server/security.js`.
 - CSRF: every state-changing `/api` request needs the `X-Requested-With: wisecall` header (added by `public/js/api.js`) and a same-host Origin, on top of the SameSite cookie. The bank callback is exempt and verified separately.
 - Mentors' IBANs are encrypted (AES-256-GCM) and readable only by the mentor and admins. CSV exports neutralise spreadsheet formulas.
@@ -72,6 +73,8 @@ To add another bank, write a module with `createPayment`, `verifyCallback`, `get
 ```
 server/           Express API: auth, users, experts, bookings, admin, payments, payouts, email, jobs
 server/pay/       bank integrations behind one interface (bog.js, tbc.js, mock.js)
+server/kyc/       ID-check providers behind one interface (didit.js, mock.js)
+server/verification/  mentor verification: rules.js (all the rules), steps, review, credentials, interviews, monitoring, badges
 server/mail/      email templates (EN/KA)
 public/           Frontend: plain HTML/CSS/JS, no build step
 public/i18n/      en.json / ka.json dictionaries (all user-facing text)
@@ -93,6 +96,7 @@ Every setting is an environment variable, fully explained in `.env.example`. The
 | `DATA_ENCRYPTION_KEY` | Encrypts mentors' IBANs (32+ random characters) |
 | `PAYMENT_PROVIDER` | `bog` or `tbc` in production (`mock` locally only) |
 | `BOG_CLIENT_ID` / `BOG_CLIENT_SECRET`, `TBC_API_KEY` / `TBC_CLIENT_ID` / `TBC_CLIENT_SECRET` | Bank credentials |
+| `KYC_PROVIDER` (`didit`), `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | ID + selfie check for mentors (`mock` locally only) |
 | `PLATFORM_FEE_PERCENT` | Wisecall's cut of each paid question (default 20) |
 | `ANSWER_DEADLINE_DAYS` / `PAYOUT_HOLD_DAYS` | Answer deadline before an automatic refund; days until earnings are payable (both default 7) |
 | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM`, `SUPPORT_EMAIL` | Email delivery and the contact-form inbox |

@@ -51,6 +51,14 @@ services:
         sync: false
       - key: TBC_CLIENT_SECRET
         sync: false
+      - key: KYC_PROVIDER
+        value: didit
+      - key: DIDIT_API_KEY
+        sync: false
+      - key: DIDIT_WORKFLOW_ID
+        sync: false
+      - key: DIDIT_WEBHOOK_SECRET
+        sync: false
       - key: EMAIL_PROVIDER
         value: resend
       - key: RESEND_API_KEY

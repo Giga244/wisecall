@@ -12,6 +12,9 @@ const kycService = require('../verification/kyc');
 const flags = require('../verification/flags');
 const credentials = require('../verification/credentials');
 const interviews = require('../verification/interviews');
+const probation = require('../probation');
+const payments = require('../payments');
+const reports = require('../reports');
 
 const router = express.Router();
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -128,6 +131,57 @@ router.post('/flags/:id/resolve', requireAuth, requireAdmin, asyncHandler(async 
   const done = await flags.resolveById(req.params.id, steps.adminActor(req.adminUser), reason.trim().slice(0, 1000));
   if (!done) return res.status(404).json({ error: 'not_found' });
   res.json({ ok: true });
+}));
+
+// ---- Suspension -----------------------------------------------------------------------------------------
+router.post('/mentors/:id/suspend', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try { res.json(await review.suspend({ mentorId: req.params.id, reason: (req.body || {}).reason, admin: req.adminUser })); } catch (e) { fail(res, e); }
+}));
+router.post('/mentors/:id/reinstate', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try { await review.reinstate({ mentorId: req.params.id, reason: (req.body || {}).reason, admin: req.adminUser }); res.json({ ok: true }); } catch (e) { fail(res, e); }
+}));
+
+// ---- Review queue: answers held during probation, and reports ---------------------------------------------
+router.get('/answers', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ answers: await probation.queue(), holdHours: rules.LIMITS.probationHoldHours });
+}));
+router.post('/answers/:id/approve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const b = await probation.release(req.params.id, steps.adminActor(req.adminUser), 'approved by an admin');
+  if (!b) return res.status(404).json({ error: 'not_found' });
+  res.json({ ok: true });
+}));
+router.post('/answers/:id/flag', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  if (!(await probation.flag(req.params.id, req.adminUser))) return res.status(404).json({ error: 'not_found' });
+  res.json({ ok: true });
+}));
+router.post('/answers/:id/reject', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const reason = String((req.body || {}).reason || '').trim();
+  if (reason.length < 5) return res.status(400).json({ error: 'reason_required' });
+  try {
+    if (!(await probation.reject(req.params.id, req.adminUser, reason.slice(0, 1000)))) return res.status(404).json({ error: 'not_found' });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e instanceof payments.PaymentError) return res.status(e.code === 'refund_failed' ? 502 : 409).json({ error: e.code });
+    throw e;
+  }
+}));
+
+const REPORT_CODES = { invalid_resolution: 400, reason_required: 400, not_found: 404 };
+router.get('/reports', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ reports: await reports.listOpen() });
+}));
+router.post('/reports/:id/resolve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { await reports.resolve(req.params.id, req.adminUser, b.resolution, b.note); res.json({ ok: true }); }
+  catch (e) {
+    if (e instanceof reports.ReportError) return res.status(REPORT_CODES[e.code] || 400).json({ error: e.code });
+    throw e;
+  }
 }));
 
 // ---- Video interview slots ----------------------------------------------------------------------------

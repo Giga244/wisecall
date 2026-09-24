@@ -58,7 +58,9 @@
     </div>
 
     <div class="reviews-section" id="reviewsSection"></div>
+    <div class="report-section">${WisecallReport.html(expert.id, null, Boolean(user))}</div>
   `;
+  WisecallReport.wire(page);
 
   loadReviews();
 

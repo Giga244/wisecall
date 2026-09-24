@@ -30,6 +30,7 @@ async function startServer(port, extraEnv = {}) {
     ADMIN_EMAILS: 'qa-admin@example.com',
     ADMIN_EMAIL: '',
     PLATFORM_FEE_PERCENT: '20',
+    PROBATION_ANSWERS: '0', // the probation tests turn it on; every other test answers straight away
     ...extraEnv
   };
   const proc = spawn('node', ['server/index.js'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });

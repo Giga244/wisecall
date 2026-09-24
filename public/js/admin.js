@@ -12,9 +12,9 @@
   const filters = document.getElementById('statusFilters');
   let activeStatus = 'pending';
   let tab = 'mentors';
-  const MENTOR_FILTERS = ['pending', 'verified', 'rejected', ''];
+  const MENTOR_FILTERS = ['pending', 'verified', 'rejected', 'suspended', ''];
   const BOOKING_FILTERS = ['paid', 'answered', 'refund_pending', 'refunded', 'pending_payment', ''];
-  const NO_FILTERS = ['payouts', 'interviews']; // tabs that have no status chips
+  const NO_FILTERS = ['payouts', 'interviews', 'queue']; // tabs that have no status chips
   const tabs = document.getElementById('adminTabs');
 
   function escapeHtml(str) {
@@ -31,6 +31,8 @@
       const qs = activeStatus ? `?status=${activeStatus}` : '';
       if (tab === 'interviews') {
         await AdminInterviews.render(content);
+      } else if (tab === 'queue') {
+        await AdminQueue.render(content);
       } else if (tab === 'payouts') {
         const [owed, history] = await Promise.all([WisecallAPI.apiFetch('/admin/payouts'), WisecallAPI.apiFetch('/admin/payouts/history')]);
         renderPayouts(owed, history.batches);
@@ -116,11 +118,12 @@
           ${t('admin.po.payable')}: ${money(r.payable, 'gel')} · ${t('admin.po.holding')}: ${money(r.holding, 'gel')}${r.debt ? ` · <span class="form-error">${t('admin.po.debt')}: ${money(r.debt, 'gel')}</span>` : ''}
         </p>
         ${r.flagged ? `<p class="form-error">${t('admin.po.flagged')}</p>` : ''}
+        ${r.suspended ? `<p class="form-error">${t('admin.po.suspended')}</p>` : ''}
         ${r.net < 0 ? `<p class="form-error">${t('admin.po.debtExceeds')}</p>` : ''}
         ${(r.payable > 0 || r.debt > 0) && r.net >= 0 ? `
           <div class="payout-pay">
             <input type="text" class="payout-ref" maxlength="100" placeholder="${t('admin.po.refPlaceholder')}" aria-label="${t('admin.po.refPlaceholder')}">
-            <button class="btn btn-primary btn-sm pay-btn" ${(r.iban || r.net === 0) && !r.flagged ? '' : 'disabled'}>${t(r.net === 0 ? 'admin.po.settle' : 'admin.po.markPaid')}</button>
+            <button class="btn btn-primary btn-sm pay-btn" ${(r.iban || r.net === 0) && !r.flagged && !r.suspended ? '' : 'disabled'}>${t(r.net === 0 ? 'admin.po.settle' : 'admin.po.markPaid')}</button>
           </div>` : ''}
       </div>`).join('');
     const hist = batches.length === 0 ? '' : `

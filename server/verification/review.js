@@ -52,6 +52,11 @@ async function decideStep({ mentorId, step, decision, reason, admin }) {
     await flags.resolveFlags(mentor.id, ['name_mismatch', 'payout_name_mismatch'], steps.adminActor(admin), text);
   }
 
+  // A renewed license closes the expiry warnings.
+  if (step === 'license' && decision === 'passed') {
+    await flags.resolveFlags(mentor.id, ['license_expiring', 'license_expired'], steps.adminActor(admin), `renewed license approved: ${text}`);
+  }
+
   // A required step that fails takes a live mentor off the site until it is sorted out.
   if (decision === 'failed' && mentor.verificationStatus === 'verified' && rules.stepNamesFor(mentor.niche).includes(step)) {
     await updateUser(mentor.id, { verificationStatus: 'pending' });
@@ -84,4 +89,44 @@ async function reject({ mentorId, reason, admin }) {
   return updated;
 }
 
-module.exports = { decideStep, approve, reject, VerificationError };
+// Suspension takes effect at once: the mentor disappears from Browse experts (only verified mentors are
+// listed), every question still waiting for their answer is refunded, and so is any answer that was
+// being held for review. Payouts already earned stay for an admin to decide.
+async function suspend({ mentorId, reason, admin }) {
+  const text = cleanReason(reason);
+  const mentor = await mentorOrThrow(mentorId);
+  if (mentor.verificationStatus === 'suspended') throw new VerificationError('invalid_state');
+  const from = mentor.verificationStatus;
+
+  await updateUser(mentor.id, { verificationStatus: 'suspended', suspendedAt: new Date(), suspensionReason: text, verificationNote: text, verificationDecidedAt: new Date() });
+  await steps.audit(mentor.id, steps.adminActor(admin), 'suspended', { from, to: 'suspended', reason: text });
+
+  const payments = require('../payments');
+  const { rows } = await require('../db').query(
+    `SELECT id, answer_review FROM bookings WHERE mentor_id = $1 AND (status = 'paid' OR (status = 'answered' AND answer_review = 'held'))`, [mentor.id]
+  );
+  let refunded = 0;
+  for (const b of rows) {
+    try {
+      if (b.answer_review === 'held') await require('../db').query(`UPDATE bookings SET answer_review = 'rejected' WHERE id = $1`, [b.id]);
+      await payments.refundBooking(b.id, 'mentor_suspended');
+      refunded += 1;
+    } catch (e) {
+      console.error(`[verification] could not refund booking ${b.id} while suspending ${mentor.id}:`, e.message); // the refund retry job picks it up
+    }
+  }
+  require('../notify').notifyMentorSuspended(mentor, text);
+  return { refunded, total: rows.length };
+}
+
+// Lifts a suspension. The mentor goes back to "pending": they must be approved again.
+async function reinstate({ mentorId, reason, admin }) {
+  const text = cleanReason(reason);
+  const mentor = await mentorOrThrow(mentorId);
+  if (mentor.verificationStatus !== 'suspended') throw new VerificationError('invalid_state');
+  const updated = await updateUser(mentor.id, { verificationStatus: 'pending', suspendedAt: null, suspensionReason: null, verificationNote: null });
+  await steps.audit(mentor.id, steps.adminActor(admin), 'reinstated', { from: 'suspended', to: 'pending', reason: text });
+  return updated;
+}
+
+module.exports = { decideStep, approve, reject, suspend, reinstate, VerificationError };

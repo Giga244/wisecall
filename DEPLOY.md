@@ -10,6 +10,7 @@ The steps use **Render** (render.com). Railway works the same way; the environme
 
 1. [Try it locally](#1-try-it-locally)
 2. [Get your bank account and API keys](#2-get-your-bank-account-and-api-keys)
+   - [2b. Set up ID verification for mentors (Didit)](#2b-set-up-id-verification-for-mentors-didit)
 3. [Test the bank connection](#3-test-the-bank-connection)
 4. [Put the code on GitHub](#4-put-the-code-on-github)
 5. [Create the database](#5-create-the-database)
@@ -49,12 +50,13 @@ Open http://localhost:4242. With `PAYMENT_PROVIDER=mock` (the default on your co
 
 The site starts empty. To click through everything:
 
-1. Sign up a **mentor**, apply in **Settings** (title, niche, price in ₾, proof link, sample answer).
-2. Put a second account's email in `ADMIN_EMAILS`, restart, and approve the mentor at `/admin.html`.
-3. As the mentor, add **payout details** (full name and a Georgian IBAN) in Settings. Without them the mentor is not listed.
-4. As a seeker, ask the mentor a question and pay at the fake bank.
-5. The mentor answers from the **Dashboard**; the seeker leaves a review.
-6. As the admin, open **Payouts**. Earnings become payable after `PAYOUT_HOLD_DAYS`; to skip the wait while testing, set `PAYOUT_HOLD_DAYS=0` and restart.
+1. Sign up a **mentor**, apply in **Settings → Mentor** (title, niche, price in ₾, proof link, sample answer).
+2. In **Settings → Verification** the mentor sees the checklist for their niche. With `KYC_PROVIDER=mock` (the default on your computer) "Start ID check" opens a **fake ID-check page** where you choose the result; nothing is really checked. Fill in the other steps (a Design mentor: a work email code and/or a portfolio link; a Medicine mentor: license details, a PDF or JPG, and a video interview slot).
+3. Put a second account's email in `ADMIN_EMAILS`, restart, and work through the mentor at `/admin.html`: pass each step with a reason (for a video interview, first add a slot in **Video interviews**), then click **Approve**. Approval is only possible when every required step has passed.
+4. As the mentor, add **payout details** (full name and a Georgian IBAN) in Settings → Payouts. Without them the mentor is not listed. The name must match the ID name, or an admin has to accept the difference.
+5. As a seeker, ask the mentor a question and pay at the fake bank.
+6. The mentor answers from the **Dashboard**. A new mentor's first 5 answers wait in `/admin.html → Review queue` (approve them there, or they are released after 24 hours); then the seeker sees the answer and can leave a review.
+7. As the admin, open **Payouts**. Earnings become payable after `PAYOUT_HOLD_DAYS`; to skip the wait while testing, set `PAYOUT_HOLD_DAYS=0` and restart.
 
 Run the automated tests (they use `TEST_DATABASE_URL`, a separate throwaway database that is wiped every run):
 
@@ -81,6 +83,22 @@ Wisecall takes card payments through **Bank of Georgia (BOG)** or **TBC Bank**. 
 3. You will use: `TBC_API_KEY`, `TBC_CLIENT_ID`, `TBC_CLIENT_SECRET`.
 
 Both banks may also ask you to **whitelist a callback URL** or to give it to them; see [step 8](#8-register-the-bank-callback-url).
+
+## 2b. Set up ID verification for mentors (Didit)
+
+Every mentor must pass a government-ID and selfie check. Wisecall uses **Didit** (https://didit.me) for it: the mentor sends the ID photos and the selfie to Didit, never to Wisecall, and Wisecall only receives the result. Didit was chosen because it names Georgian ID documents as supported, has a free tier and no monthly minimum, and signs its webhooks. **You must create the account yourself.**
+
+1. Create an account and an application at https://business.didit.me.
+2. Create a **workflow** that includes **ID verification**, **liveness** (selfie) and **face match**. Copy its id: `DIDIT_WORKFLOW_ID`. Copy the application's API key: `DIDIT_API_KEY`.
+3. Add a **webhook** pointing at `https://YOUR-PUBLIC-URL/api/kyc/webhook` and copy its signing secret: `DIDIT_WEBHOOK_SECRET`. (Use a tunnel such as ngrok while testing on your computer.)
+4. Set `KYC_PROVIDER=didit` and the three values. In production the server refuses to start with `KYC_PROVIDER=mock` or with a missing Didit value.
+5. Test with your own passport or ID: apply as a mentor, click **Start ID check** in Settings → Verification, finish it on Didit's page, and confirm the step turns to "Passed" in the mentor's settings and in `/admin.html`.
+
+How it is used: Wisecall decides nothing itself. The step passes only when a webhook that Didit **signed** says "approved" with a passed liveness check and face match, or when an admin presses "Refresh from provider" and Wisecall asks Didit directly with your API key. A forged or replayed webhook is rejected. Wisecall stores Didit's session id, the result, and the verified full name, date of birth and country (name and date of birth encrypted), never the ID images.
+
+The code was written from Didit's public documentation and tested against a simulator that follows it. **Your first real check is the true test**; watch the server logs (`[kyc]` lines). If Didit's answer looks different from what the code expects, the step does not pass (or the webhook is refused, see the log), which is the safe direction.
+
+Also sign Didit's data-processing agreement and read [LEGAL-REVIEW.md](LEGAL-REVIEW.md) (biometric data).
 
 ## 3. Test the bank connection
 
@@ -139,6 +157,8 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `PAYMENT_PROVIDER` | `bog` or `tbc` |
 | `BOG_CLIENT_ID`, `BOG_CLIENT_SECRET` | From BOG (when `PAYMENT_PROVIDER=bog`) |
 | `TBC_API_KEY`, `TBC_CLIENT_ID`, `TBC_CLIENT_SECRET` | From TBC (when `PAYMENT_PROVIDER=tbc`) |
+| `KYC_PROVIDER` | `didit` |
+| `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | From Didit ([step 2b](#2b-set-up-id-verification-for-mentors-didit)) |
 | `PLATFORM_FEE_PERCENT` | `20` (Wisecall's cut; the mentor gets the rest) |
 | `ANSWER_DEADLINE_DAYS` | `7` (also written in the Terms; keep them in step) |
 | `PAYOUT_HOLD_DAYS` | `7` (also written in the Terms) |
@@ -163,7 +183,13 @@ For example `https://wisecall.ge/api/payments/callback`. Wisecall also prints it
 - **BOG:** the callback address is sent with every order, so nothing has to be set up in a dashboard. Ask BOG whether your merchant needs the address on an allow-list, and make sure your site is reachable over HTTPS (BOG requires it).
 - **TBC:** the address is also sent with every payment, and TBC's merchant dashboard has a default callback address. Set it to the same URL. TBC sends the callbacks from the addresses 193.104.20.44, 193.104.20.45, 185.52.80.44 and 185.52.80.45; if you use a firewall, allow them.
 
-Whenever you change your domain, change this address with the bank too. If callbacks ever stop, nothing breaks: the background job checks payment status every few minutes; it just takes longer.
+The ID-check provider calls one more address, which you register in Didit's dashboard ([step 2b](#2b-set-up-id-verification-for-mentors-didit)):
+
+```
+https://YOUR-PUBLIC-URL/api/kyc/webhook
+```
+
+Whenever you change your domain, change this address with the bank too (and the webhook address in Didit). If callbacks ever stop, nothing breaks: the background job checks payment status every few minutes; it just takes longer.
 
 ## 9. Email: send from your own domain (SPF and DKIM)
 
@@ -195,7 +221,12 @@ Changing provider later? Set `EMAIL_PROVIDER=postmark` and `POSTMARK_TOKEN`. No 
 - [ ] `https://yourdomain.com/healthz` shows `{"ok":true}`
 - [ ] Sign up with a new email: the code arrives by email (not on screen)
 - [ ] "Forgot password" email arrives and the link works
-- [ ] Apply as a mentor, approve yourself at `/admin.html`, add payout details, appear in **Browse experts**
+- [ ] Apply as a mentor and do the **real ID check** with your own document; pass the other steps at `/admin.html` and approve yourself; add payout details; appear in **Browse experts** with the badges you earned
+- [ ] The Didit webhook reaches the server (a `[req] POST /api/kyc/webhook 200` line), and a forged one is refused
+- [ ] A video-interview slot: add one, book it as a Medicine mentor, send the link, and record the result
+- [ ] Upload a PDF as a mentor, download it as an admin, and confirm a non-admin cannot
+- [ ] Ask a question to yourself as a new mentor: the first answer waits in the **Review queue** and reaches the buyer only after you approve it
+- [ ] "Report this mentor" reaches the **Review queue**; **Suspend** hides a test mentor and refunds an open question
 - [ ] A second account pays a **small real amount** (set a low price, 5 ₾ is the minimum) with a real card; the mentor gets the email
 - [ ] Mentor answers; the buyer receives the answer email and can review
 - [ ] **Refund** that payment from the admin page and confirm the money returns on the card (this can take days)
@@ -210,7 +241,20 @@ Changing provider later? Set `EMAIL_PROVIDER=postmark` and `POSTMARK_TOKEN`. No 
 
 ## 12. Running the business: paying mentors and handling refunds
 
-**Approving mentors.** `/admin.html → Mentor applications`. Check the proof link and the sample answer, tick the three boxes, and approve, or reject with a reason (the mentor is emailed either way). An approved mentor appears publicly once they have saved payout details.
+**Approving mentors.** Nobody appears in Browse experts until you press **Approve**, and you can only press it when every required step for their niche has passed. The rules live in one file, [server/verification/rules.js](server/verification/rules.js): which niches are regulated, what each level requires, the registry links, the limits. Open `/admin.html → Mentor applications` and click **Review application** on a mentor:
+
+- **Everyone:** verified email (automatic), ID + selfie check (Didit only), name match (automatic; a mismatch between the ID, the profile, the license and the payout account holder is flagged and needs your decision), the sample answer and the proof link (you read them and decide).
+- **Regulated niches (Medicine, Law, Finance):** also a license or registration number (you check it in the registry links shown on the page: health-care regulator, Bar Association, National Bank), a supporting document (download it from the panel; only admins can, and each download is logged), and a **video interview** (add times in the **Video interviews** tab, send the meeting link when a mentor books, and record the result afterwards).
+- **Business:** a company ID number (check it in the Public Registry link) or proof of the person's role.
+- **Other niches:** at least one of a work-email address at a company or institution (the mentor confirms it with a code), a diploma or certificate, or a portfolio.
+
+Passing or failing a step needs a written reason, is logged, and emails the mentor what happened and what is still missing. Uploaded documents are deleted automatically 90 days after a decision. A mentor can also be **rejected** with a reason (emailed). An approved mentor appears publicly once they have saved payout details. **Check the registry links in `rules.js` before launch**; official sites change.
+
+**After approval.**
+
+- **Review queue.** A new mentor's first 5 answers are held here and the buyer cannot see them yet. **Approve** releases one at once, **Hold for a closer look** stops the automatic release, **Reject and refund** refunds the buyer. Answers nobody flagged are released by themselves after 24 hours (unless that mentor has an open flag). The mentor's payout hold starts at release. Reports from buyers ("Report this mentor" on profiles and answers) are listed below; dismiss or uphold each with a note. Two different people reporting the same mentor flags them.
+- **Flags** appear in the mentor's review panel: a low rating (average under 3.5 after 5 reviews), reports, a name mismatch, and licenses that expire within 30 days (you are emailed once). When a license expires the mentor is taken off the site until a renewed license is approved.
+- **Suspend** (bottom of the mentor's review panel) hides a mentor at once, refunds every question still waiting for their answer, tells the mentor why, and holds their payouts until you decide. **Reinstate** puts them back to "pending" so they must be approved again.
 
 **Paying mentors (manual).** Each answered question earns the mentor its price minus the platform fee. It becomes payable `PAYOUT_HOLD_DAYS` (7) days after the answer, which is the buyer's refund window.
 
@@ -251,7 +295,11 @@ Your users and money records live in the database, so back it up.
 | "payments_unavailable" or a payment error when asking a question | `PAYMENT_PROVIDER` or its keys are wrong, or the bank is down. The server log shows the bank's answer |
 | A refund stays "Refund in progress" | Banks confirm refunds later (up to days). If it shows a problem on the booking in the admin panel, the bank rejected it; Wisecall retries automatically |
 | Site works but no emails arrive | Look for `[email]` lines. Resend `403` means the domain is not verified or `EMAIL_FROM` is not on it |
-| A mentor never appears in Browse experts | They need admin approval **and** saved payout details (Settings → Payout details) |
+| A mentor never appears in Browse experts | They need every required verification step passed, the admin's final approval **and** saved payout details (Settings → Payouts). Their Settings → Verification tab shows what is missing |
+| The ID check never finishes | The webhook is not arriving: check the address in Didit's dashboard ([step 2b](#2b-set-up-id-verification-for-mentors-didit)) and the `[kyc]` log lines. An admin can press **Refresh from provider** in the mentor's review panel |
+| "Start ID check" says it is unavailable | `KYC_PROVIDER`, `DIDIT_API_KEY` or `DIDIT_WORKFLOW_ID` is wrong, or Didit is down. See the `[kyc]` log |
+| A payout button is disabled | The mentor has an open name-mismatch flag or is suspended. Resolve the flag or reinstate the mentor first |
+| A new mentor's answer never reaches the buyer | It is held in the **Review queue** (first 5 answers). It is released after 24 hours unless you or a flag stopped it |
 | "Too many requests" on login | The built-in limiter. It resets after 15 minutes |
 | Site sleeps or is slow to wake | Free instance type. Use a paid one |
 | A page shows blank or unstyled | Open the browser console: a blocked resource means the Content-Security-Policy in `server/security.js` needs updating for whatever you added |
