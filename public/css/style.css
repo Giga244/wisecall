@@ -69,6 +69,15 @@ h1, h2, h3, .logo { font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 7
 html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
+/* Breadcrumbs ------------------------------------------------------------------------------------- */
+.breadcrumb { margin: 0 0 18px; }
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; font-size: 0.85rem; font-weight: 700; }
+.breadcrumb li { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); min-width: 0; }
+.breadcrumb li + li::before { content: '›'; color: var(--ink-soft); font-weight: 800; }
+.breadcrumb a { color: var(--ink-soft); text-decoration: none; display: inline-flex; align-items: center; min-height: 32px; }
+.breadcrumb a:hover { color: var(--accent-text); text-decoration: underline; }
+.breadcrumb [aria-current="page"] { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60vw; }
+
 /* Nav */
 .nav {
   position: sticky; top: 0; z-index: 20;

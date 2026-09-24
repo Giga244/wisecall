@@ -15,7 +15,8 @@ A paid advice marketplace for Georgia: seekers pay in lari (GEL) to ask a questi
 - **Admin panel** (`/admin.html`, emails in `ADMIN_EMAILS`): mentor applications (per-step review), review queue (held answers, reports), video interviews, bookings and refunds, payouts.
 - **Reviews and ratings**, search and sort on Browse experts, real "questions answered" counts.
 - **Email** (Resend, swappable to Postmark): every message in English or Georgian, in each person's saved language. Retried once on temporary failures. Nothing is ever shown on screen instead of emailed in production.
-- **Pages**: About, Contact (emails the admin), Terms, Privacy (EN/KA), branded 404 and 500 pages, mobile menu, footer on every page.
+- **Pages**: a home page with hero, field strip, how it works, labelled example answers, trust and verification sections, pricing, expert list, mentor pitch, FAQ and call to action; full expert profiles; a dashboard with tabs, a progress line and a countdown for every question; two-column sign up / log in; settings with tabs and an application progress bar; About, Contact (emails the admin), Terms, Privacy (EN/KA); branded 404 and 500 pages; one shared header and footer (contact email and social links appear only when set in the environment). Nothing on the site is invented: examples are labelled "Example", and there are no fake reviews, ratings or user counts.
+- **Waiting list**: visitors can ask to be told when a mentor in their field joins; each gets one email (EN/KA) with an unsubscribe link, and admins can see and export the list.
 - **SEO**: `robots.txt`, `sitemap.xml` (includes approved experts), canonical links, unique titles and descriptions, share image, per-expert titles, all built from `PUBLIC_URL`.
 - **Security**: strict Content-Security-Policy, CSRF protection, rate limiting, input validation everywhere, secure cookies in production, fail-fast configuration check.
 - **Two languages everywhere**: every string lives in `public/i18n/en.json` and `ka.json`.
@@ -76,7 +77,7 @@ server/pay/       bank integrations behind one interface (bog.js, tbc.js, mock.j
 server/kyc/       ID-check providers behind one interface (didit.js, mock.js)
 server/verification/  mentor verification: rules.js (all the rules), steps, review, credentials, interviews, monitoring, badges
 server/mail/      email templates (EN/KA)
-public/           Frontend: plain HTML/CSS/JS, no build step
+public/           Frontend: plain HTML/CSS/JS, no build step (css/style.css shared, css/home.css home page, css/app.css inner pages)
 public/i18n/      en.json / ka.json dictionaries (all user-facing text)
 migrations/       SQL schema migrations (applied in filename order, each once)
 scripts/          migrate.js

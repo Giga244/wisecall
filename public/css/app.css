@@ -1,15 +1,6 @@
 /* Shared pieces of the inner pages (expert profile, dashboard, sign up / log in, settings): breadcrumbs,
    page headers, loading skeletons, and the expert profile layout. Brand tokens come from style.css. */
 
-/* Breadcrumbs ------------------------------------------------------------------------------------- */
-.breadcrumb { margin: 0 0 18px; }
-.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; font-size: 0.85rem; font-weight: 700; }
-.breadcrumb li { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); min-width: 0; }
-.breadcrumb li + li::before { content: '›'; color: var(--ink-soft); font-weight: 800; }
-.breadcrumb a { color: var(--ink-soft); text-decoration: none; display: inline-flex; align-items: center; min-height: 32px; }
-.breadcrumb a:hover { color: var(--accent-text); text-decoration: underline; }
-.breadcrumb [aria-current="page"] { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60vw; }
-
 /* Page header (title + short line) used on Dashboard, Settings and friends -------------------------- */
 .page-head { margin: 0 0 26px; }
 .page-head h1 { margin: 0 0 6px; }
