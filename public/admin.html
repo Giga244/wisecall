@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mentor review — Wisecall</title>
+<title>Admin — Wisecall</title>
 <meta name="description" content="Review and approve mentor applications on Wisecall.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -27,13 +27,12 @@
 </header>
 
 <section class="dash container">
-  <h1 data-i18n="admin.title">Mentor applications</h1>
-  <div class="filters" id="statusFilters" style="margin-bottom: 28px;">
-    <button class="chip active" data-status="pending" data-i18n="admin.filter.pending">Pending</button>
-    <button class="chip" data-status="verified" data-i18n="admin.filter.verified">Verified</button>
-    <button class="chip" data-status="rejected" data-i18n="admin.filter.rejected">Rejected</button>
-    <button class="chip" data-status="" data-i18n="admin.filter.all">All</button>
+  <h1 data-i18n="admin.pageTitle">Admin</h1>
+  <div class="filters" id="adminTabs" style="margin-bottom: 18px;" role="tablist">
+    <button class="chip active" data-tab="mentors" role="tab" data-i18n="admin.tab.mentors">Mentor applications</button>
+    <button class="chip" data-tab="bookings" role="tab" data-i18n="admin.tab.bookings">Bookings and refunds</button>
   </div>
+  <div class="filters" id="statusFilters" style="margin-bottom: 28px;"></div>
   <div id="adminContent"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
 </section>
 

@@ -20,7 +20,7 @@ function publicProfile(user) {
 function meProfile(user) {
   if (!user) return null;
   const { passwordHash, resetTokenHash, resetTokenExpiresAt, emailVerifyCodeHash, emailVerifyCodeExpiresAt, ...rest } = user;
-  return rest;
+  return { ...rest, isAdmin: Boolean(user.email) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase()) };
 }
 
 function isListable(user) {

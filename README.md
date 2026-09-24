@@ -40,7 +40,7 @@ Open http://localhost:4242. The site starts empty — no fake data. Sign up, the
 2. In Settings, they check "I'd like to offer advice as a mentor" and fill in title, niche, price, and a **proof link** (LinkedIn strongly preferred, but a company team page or portfolio also works)
 3. Saving is **rejected outright** — `email_not_verified` or `proof_required` — unless both the verified-email and proof-link conditions are already met. This is enforced before anything touches the database, so a rejected save can never leave partially-filled mentor fields behind
 4. Once saved with everything present, the application becomes `verificationStatus: "pending"` — they do **not** appear in Browse experts yet
-5. Whoever's logged in as the account matching `ADMIN_EMAIL` in `.env` opens `/admin.html`, sees the pending queue with each proof link, and clicks Approve or Reject (with an optional note the applicant will see)
+5. Whoever's logged in as the account in `ADMIN_EMAILS` (`.env`) opens `/admin.html`, sees the pending queue with each proof link, and clicks Approve or Reject (a reason is required and is emailed to the applicant; approvals are emailed too). The **Bookings and refunds** tab lists every booking and lets an admin refund one in full
 6. Only `verified` mentors are ever returned by the public `/api/experts` endpoint — enforced server-side, not just hidden in the UI
 
 This is the honest, currently-buildable answer to fraud prevention: verified email + a proof link + a human review step. There's no automated identity/credential verification here (that would mean integrating a KYC API, which is a real cost and a bigger project) — but nothing fake can go live without you personally looking at it first.
@@ -122,5 +122,5 @@ scripts/          migrate.js, import-json.js (one-off import from the old JSON f
 | `CURRENCY` | Stripe currency code for charges. |
 | `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` / `STRIPE_WEBHOOK_SECRET` | Leave blank for simulated dev-mode payments. |
 | `JWT_SECRET` | Signs login sessions — change before production. |
-| `ADMIN_EMAIL` | The one account allowed to approve/reject mentor applications at `/admin.html`. |
+| `ADMIN_EMAILS` | Comma-separated emails allowed to use `/admin.html` (mentor approval, bookings, refunds). |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Leave blank for dev-mode password resets (link shown on screen). Set both to send real reset emails via Resend. |

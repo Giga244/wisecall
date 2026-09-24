@@ -11,6 +11,10 @@
   const content = document.getElementById('adminContent');
   const filters = document.getElementById('statusFilters');
   let activeStatus = 'pending';
+  let tab = 'mentors';
+  const MENTOR_FILTERS = ['pending', 'verified', 'rejected', ''];
+  const BOOKING_FILTERS = ['paid', 'answered', 'refunded', 'pending_payment', ''];
+  const tabs = document.getElementById('adminTabs');
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -24,8 +28,13 @@
     content.innerHTML = `<p class="muted">${t('admin.loading')}</p>`;
     try {
       const qs = activeStatus ? `?status=${activeStatus}` : '';
-      const data = await SagelyAPI.apiFetch(`/admin/mentors${qs}`);
-      render(data.mentors);
+      if (tab === 'bookings') {
+        const data = await SagelyAPI.apiFetch(`/admin/bookings${qs}`);
+        renderBookings(data.bookings);
+      } else {
+        const data = await SagelyAPI.apiFetch(`/admin/mentors${qs}`);
+        render(data.mentors);
+      }
     } catch (e) {
       if (e.code === 'not_admin') {
         content.innerHTML = `<p class="muted">${t('admin.notAuthorized')}</p>`;
@@ -87,7 +96,8 @@
       });
       card.querySelector('.confirm-reject-btn').addEventListener('click', () => {
         const note = card.querySelector('.reject-note-input').value.trim();
-        review(id, false, note || null);
+        if (!note) { SagelyNav.showToast(t('admin.reasonRequired')); return; }
+        review(id, false, note);
       });
     });
   }
@@ -105,15 +115,79 @@
     }
   }
 
+  function money(cents, currency) {
+    return `$${(cents / 100).toFixed(2)} ${(currency || 'usd').toUpperCase()}`;
+  }
+
+  function fmtDate(d) {
+    return new Date(d).toLocaleString(SagelyI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  function renderBookings(list) {
+    if (list.length === 0) {
+      content.innerHTML = `<p class="muted">${t('admin.empty')}</p>`;
+      return;
+    }
+    content.innerHTML = list.map(b => `
+      <div class="booking-card" data-id="${b.id}">
+        <div class="booking-top">
+          <div>
+            <div class="card-name">${escapeHtml(b.seekerName)} → ${escapeHtml(b.mentorName)}</div>
+            <span class="muted small">${escapeHtml(b.seekerEmail)} · ${escapeHtml(b.mentorEmail)}</span>
+          </div>
+          <div class="booking-amount">${money(b.amount, b.currency)}</div>
+        </div>
+        <p class="booking-question">${escapeHtml(b.question)}</p>
+        <p class="muted small">${t('admin.bk.created')}: ${fmtDate(b.createdAt)}${b.answerDeadline && b.status === 'paid' ? ` · ${t('admin.bk.deadline')}: ${fmtDate(b.answerDeadline)}` : ''}${b.refundReason ? ` · ${t('admin.bk.reason')}: ${escapeHtml(b.refundReason)}` : ''}${b.transferError ? ` · <span class="form-error">${t('admin.bk.payoutIssue')}</span>` : ''}</p>
+        <div class="review-actions" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+          <span class="badge badge-${b.status}">${t('dash.status.' + b.status)}</span>
+          ${(b.status === 'paid' || b.status === 'answered') ? `<button class="btn btn-outline btn-sm refund-btn">${t('admin.bk.refund')}</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    content.querySelectorAll('.refund-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!window.confirm(t('admin.bk.refundConfirm'))) return;
+        btn.disabled = true;
+        try {
+          await SagelyAPI.apiFetch(`/admin/bookings/${btn.closest('.booking-card').dataset.id}/refund`, { method: 'POST' });
+          SagelyNav.showToast(t('admin.bk.refunded'));
+        } catch (e) {
+          SagelyNav.showToast(e.code === 'not_refundable' ? t('admin.bk.notRefundable') : t('toast.error'));
+        }
+        load();
+      });
+    });
+  }
+
+  function drawFilters() {
+    const list = tab === 'bookings' ? BOOKING_FILTERS : MENTOR_FILTERS;
+    filters.innerHTML = list.map(s => {
+      const label = s === '' ? t('admin.filter.all') : (tab === 'bookings' ? t('dash.status.' + s) : t('admin.filter.' + s));
+      return `<button class="chip${s === activeStatus ? ' active' : ''}" data-status="${s}">${label}</button>`;
+    }).join('');
+  }
+
   filters.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.chip');
     if (!btn) return;
-    filters.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
     activeStatus = btn.dataset.status;
+    drawFilters();
     load();
   });
 
-  document.addEventListener('sagely:lang-changed', load);
+  tabs.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.chip');
+    if (!btn || btn.dataset.tab === tab) return;
+    tabs.querySelectorAll('.chip').forEach(c => { c.classList.toggle('active', c === btn); c.setAttribute('aria-selected', c === btn); });
+    tab = btn.dataset.tab;
+    activeStatus = tab === 'bookings' ? 'paid' : 'pending';
+    drawFilters();
+    load();
+  });
+
+  document.addEventListener('sagely:lang-changed', () => { drawFilters(); load(); });
+  drawFilters();
   load();
 })();

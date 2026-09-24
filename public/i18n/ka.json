@@ -9,7 +9,6 @@
   "nav.logout": "გასვლა",
   "nav.verifyBanner": "შენი ელფოსტა ჯერ არ არის დადასტურებული.",
   "nav.verifyBannerCta": "დადასტურება ახლავე",
-
   "hero.title1": "მიიღე რჩევა მათგან,",
   "hero.title2": "ვინც ეს უკვე გაიარა.",
   "hero.sub": "ექიმები, დამფუძნებლები, მასწავლებლები, ინჟინრები და სხვები — დაჯავშნე რეალური პასუხი მისგან, ვინც უკვე გაიარა შენთვის საინტერესო გზა.",
@@ -19,7 +18,6 @@
   "hero.stat.niches": "დარგი",
   "hero.stat.mentors": "მენტორი Wisecall-ზე",
   "hero.beFirst": "Wisecall ახლახან გაეშვა — გახდი ერთ-ერთი პირველი მენტორი, ვისაც ადამიანები იპოვიან.",
-
   "how.title": "როგორ მუშაობს",
   "how.step1.title": "იპოვე შენი ადამიანი",
   "how.step1.body": "მოძებნე დარგის მიხედვით — მედიცინა, სტარტაპები, სწავლება, დიზაინი — და იპოვე ვინმე, ვინც უკვე იქ არის, სადაც შენ გინდა იყო.",
@@ -27,7 +25,6 @@
   "how.step2.body": "დაწერე, რაში გჭირდება დახმარება. რაც უფრო კონკრეტულია კითხვა, მით უკეთესი იქნება პასუხი.",
   "how.step3.title": "მიიღე რეალური პასუხი",
   "how.step3.body": "შენი მენტორი უპასუხებს პირდაპირ შენს პირად კაბინეტში, ჩვეულებრივ 48 საათში.",
-
   "experts.title": "ექსპერტების დათვალიერება",
   "niche.all": "ყველა",
   "niche.business": "ბიზნესი",
@@ -66,14 +63,11 @@
   "expert.noReviewsYet": "ჯერ არ არის შეფასებები",
   "expert.answeredCount": "{n} პასუხგაცემული კითხვა",
   "expert.reviewsTitle": "რას წერენ ადამიანები",
-
   "become.title": "შენ ხარ ის ექსპერტი, ვისაც ეძებენ?",
   "become.body": "დაწესე შენი ფასი, უპასუხე მოსახერხებელ დროს და დაეხმარე ვინმეს წლების დაზოგვაში.",
   "become.cta": "პარამეტრებზე გადასვლა",
-
   "footer.tagline": "რეალური რჩევა მათგან, ვინც ეს გაიარა.",
   "footer.lang": "ენა",
-
   "auth.login.title": "კეთილი იყოს შენი დაბრუნება",
   "auth.login.sub": "შედი სისტემაში კითხვის დასასმელად ან პასუხის გასაცემად.",
   "auth.login.cta": "შესვლა",
@@ -121,7 +115,6 @@
   "auth.field.email": "ელფოსტა",
   "auth.field.password": "პაროლი",
   "auth.field.password.hint": "მინიმუმ 8 სიმბოლო.",
-
   "dash.title": "პირადი კაბინეტი",
   "dash.asked.title": "დასმული კითხვები",
   "dash.asked.empty": "ჯერ არაფერი გკითხავს. დაათვალიერე ექსპერტები დასაწყებად.",
@@ -139,7 +132,6 @@
   "dash.review.submit": "შეფასების გაგზავნა",
   "dash.review.pickStars": "ჯერ აირჩიე ვარსკვლავების რაოდენობა.",
   "dash.review.sent": "მადლობა შეფასებისთვის!",
-
   "settings.title": "პარამეტრები",
   "settings.profile.title": "პროფილი",
   "settings.profile.name": "სრული სახელი",
@@ -174,14 +166,12 @@
   "settings.password.error": "პაროლის განახლება ვერ მოხერხდა.",
   "settings.lang.title": "ენა",
   "settings.lang.body": "აირჩიე ენა შენი Wisecall ანგარიშისთვის.",
-
   "toast.saved": "შენახულია.",
   "toast.error": "დაფიქსირდა შეცდომა.",
   "toast.passwordUpdated": "პაროლი განახლდა.",
   "toast.questionSent": "კითხვა გაგზავნილია!",
   "toast.answerSent": "პასუხი გაგზავნილია!",
   "toast.loginRequired": "ჯერ შედი სისტემაში კითხვის დასასმელად.",
-
   "expert.newMentor": "ახალი მენტორი",
   "settings.mentor.sample": "საცდელი პასუხი — უპასუხე ტიპურ კითხვას შენს სფეროში",
   "settings.mentor.sample.hint": "მინიმუმ 80 სიმბოლო. ამას ვკითხულობთ, რომ შევაფასოთ ღირს თუ არა შენი რჩევა ფულად.",
@@ -210,12 +200,25 @@
   "admin.filter.rejected": "უარყოფილი",
   "admin.filter.all": "ყველა",
   "admin.notAuthorized": "შენ არ ხარ ამ საიტის ადმინისტრატორი.",
-  "admin.notConfigured": "დააყენე ADMIN_EMAIL .env ფაილში ამ გვერდის ჩასართავად.",
+  "admin.notConfigured": "ამ გვერდის ჩასართავად სერვერის პარამეტრებში დააყენე ADMIN_EMAILS.",
   "admin.empty": "ამჟამად აქ არაფერია.",
   "admin.noProof": "დადასტურების ბმული არ არის გაგზავნილი.",
   "admin.lastNote": "შენიშვნა",
   "admin.approve": "დამტკიცება",
   "admin.reject": "უარყოფა",
   "admin.rejectReasonPlaceholder": "რატომ? (ჩანს განმცხადებლისთვის)",
-  "admin.confirmReject": "უარყოფის დადასტურება"
+  "admin.confirmReject": "უარყოფის დადასტურება",
+  "nav.admin": "ადმინი",
+  "admin.pageTitle": "ადმინისტრატორი",
+  "admin.tab.mentors": "მენტორის განაცხადები",
+  "admin.tab.bookings": "ჯავშნები და დაბრუნებები",
+  "admin.reasonRequired": "მიუთითე მიზეზი. განმცხადებელი მას დაინახავს.",
+  "admin.bk.created": "შეიქმნა",
+  "admin.bk.deadline": "პასუხის ვადა",
+  "admin.bk.reason": "დაბრუნების მიზეზი",
+  "admin.bk.payoutIssue": "მენტორის გადარიცხვას ყურადღება სჭირდება",
+  "admin.bk.refund": "სრულად დაბრუნება",
+  "admin.bk.refundConfirm": "დაბრუნდეს თანხა სრულად? მყიდველს თანხა დაუბრუნდება, მენტორი ამ გადახდას დაკარგავს. ეს ქმედება შეუქცევადია.",
+  "admin.bk.refunded": "თანხა დაბრუნდა.",
+  "admin.bk.notRefundable": "ამ ჯავშნის თანხის დაბრუნება ვეღარ ხერხდება."
 }

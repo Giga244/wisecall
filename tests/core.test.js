@@ -178,6 +178,44 @@ describe('questions, answers and reviews (simulated payments)', () => {
   });
 });
 
+describe('admin: mentor decisions and refunds', () => {
+  test('rejecting needs a reason, and the mentor is told what it was', async () => {
+    const m = await signupVerified(base, 'Reject Me', 'reject-me@example.com');
+    await m.api('/me', { method: 'PATCH', body: { becomeMentor: true } });
+    const app = await m.api('/me', { method: 'PATCH', body: { roleTitle: 'Coach', niche: 'business', price: 10, proofUrl: 'https://linkedin.com/in/rm', sampleAnswer: SAMPLE } });
+    const id = app.user.id;
+    assert.equal((await ids.admin.api(`/admin/mentors/${id}/review`, { method: 'POST', body: { approve: false } })).error, 'reason_required');
+    const rej = await ids.admin.api(`/admin/mentors/${id}/review`, { method: 'POST', body: { approve: false, note: 'Profile link is private' } });
+    assert.equal(rej.mentor.verificationStatus, 'rejected');
+    assert.equal((await m.api('/me')).user.verificationNote, 'Profile link is private');
+  });
+
+  test('admins see all bookings; nobody else can; only admins can refund', async () => {
+    const b = await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'A question that will be refunded by an admin' } });
+    assert.equal(b.status, 201);
+    assert.equal((await ids.seekerClient.api('/admin/bookings')).error, 'not_admin');
+    assert.equal((await ids.seekerClient.api(`/admin/bookings/${b.booking.id}/refund`, { method: 'POST' })).error, 'not_admin');
+
+    const all = await ids.admin.api('/admin/bookings?status=paid');
+    const row = all.bookings.find((x) => x.id === b.booking.id);
+    assert.ok(row);
+    assert.equal(row.seekerEmail, 'seeker@example.com');
+    assert.equal(row.mentorName, 'Dr Mentor');
+    assert.equal((await ids.admin.api('/admin/bookings?status=bogus')).error, 'invalid_status');
+
+    const r = await ids.admin.api(`/admin/bookings/${b.booking.id}/refund`, { method: 'POST' });
+    assert.equal(r.booking.status, 'refunded');
+    assert.equal(r.booking.refundReason, 'admin');
+    assert.equal((await ids.admin.api(`/admin/bookings/${b.booking.id}/refund`, { method: 'POST' })).booking.status, 'refunded', 'second refund is a no-op');
+    assert.equal((await ids.admin.api('/admin/bookings/not-an-id/refund', { method: 'POST' })).status, 404);
+  });
+
+  test('the account reports whether it is an admin', async () => {
+    assert.equal((await ids.admin.api('/me')).user.isAdmin, true);
+    assert.equal((await ids.seekerClient.api('/me')).user.isAdmin, false);
+  });
+});
+
 describe('production safety', () => {
   test('refuses to start without required settings and says which', () => {
     const r = spawnSync('node', ['server/index.js'], {

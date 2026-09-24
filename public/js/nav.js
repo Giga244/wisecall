@@ -11,6 +11,12 @@
     if (user) {
       if (loggedOutEl) loggedOutEl.style.display = 'none';
       if (loggedInEl) loggedInEl.style.display = 'flex';
+      if (user.isAdmin && loggedInEl && !loggedInEl.querySelector('.admin-link')) {
+        const a = document.createElement('a');
+        a.href = '/admin.html'; a.className = 'btn btn-ghost admin-link';
+        a.setAttribute('data-i18n', 'nav.admin'); a.textContent = (window.SagelyI18n && window.SagelyI18n.t('nav.admin')) || 'Admin';
+        loggedInEl.insertBefore(a, loggedInEl.firstChild);
+      }
       const logoutBtn = document.getElementById('logoutBtn');
       if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
