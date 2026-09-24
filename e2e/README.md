@@ -22,7 +22,8 @@ and an HTML report to `e2e/report/` (`npx playwright show-report e2e/report`).
 
 ## Lighthouse
 
-```n# with the site running (for example the demo data from a local server)
+```
+# with the site running (for example the demo data from a local server)
 npm run lighthouse -- --base http://localhost:4242 --login you@example.com:your-password
 ```
 
