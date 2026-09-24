@@ -18,11 +18,14 @@ const config = {
   CURRENCY: (env.CURRENCY || 'usd').toLowerCase(),
   PLATFORM_FEE_PERCENT: int(env.PLATFORM_FEE_PERCENT, 20),
   ANSWER_DEADLINE_DAYS: int(env.ANSWER_DEADLINE_DAYS, 7),
+  SWEEP_INTERVAL_SECONDS: int(env.SWEEP_INTERVAL_SECONDS, 600),
 
   STRIPE_SECRET_KEY: stripeKey,
   STRIPE_PUBLISHABLE_KEY: env.STRIPE_PUBLISHABLE_KEY || '',
   STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || '',
   STRIPE_ENABLED: Boolean(stripeKey && stripeKey.startsWith('sk_')),
+  // Set true when mentors live in a different country than your Stripe platform account.
+  STRIPE_CROSS_BORDER_PAYOUTS: env.STRIPE_CROSS_BORDER_PAYOUTS === 'true',
 
   EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
   RESEND_API_KEY: env.RESEND_API_KEY || '',

@@ -1,3 +1,5 @@
+const config = require('./config');
+
 // Only these fields are ever sent to the public (never email, Stripe ids, proof links, etc).
 function publicProfile(user) {
   if (!user) return null;
@@ -10,7 +12,7 @@ function publicProfile(user) {
     price: user.price,
     color: user.color,
     createdAt: user.createdAt,
-    payoutsReady: Boolean(user.stripeAccountId)
+    payoutsReady: Boolean(user.payoutsEnabled)
   };
 }
 
@@ -24,7 +26,8 @@ function meProfile(user) {
 function isListable(user) {
   return Boolean(user) && (user.role === 'mentor' || user.role === 'both') &&
     Boolean(user.price) && Boolean(user.niche) && Boolean(user.roleTitle) &&
-    user.verificationStatus === 'verified';
+    user.verificationStatus === 'verified' &&
+    (!config.STRIPE_ENABLED || Boolean(user.payoutsEnabled));
 }
 
 // Express 4 does not catch rejected promises from async handlers; this forwards them to

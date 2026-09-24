@@ -4,6 +4,7 @@ const path = require('path');
 const config = require('./config');
 const db = require('./db');
 const { rateLimit } = require('./rateLimit');
+const { startJobs } = require('./jobs');
 
 const app = express();
 if (config.IS_PROD) app.set('trust proxy', 1);
@@ -78,7 +79,8 @@ async function start() {
       : 'Stripe: not configured — bookings are auto-marked "paid" in simulated mode. Add STRIPE_SECRET_KEY to .env to enable real Stripe Checkout.');
   });
 
-  const shutdown = () => server.close(() => db.close().then(() => process.exit(0)));
+  const stopJobs = startJobs();
+  const shutdown = () => { stopJobs(); server.close(() => db.close().then(() => process.exit(0))); };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
 }

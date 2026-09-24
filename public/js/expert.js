@@ -87,8 +87,26 @@
   const askArea = document.getElementById('askArea');
 
   const showingSuccess = statusParam === 'success' && bookingParam;
-  if (showingSuccess) {
-    askArea.innerHTML = `<div class="booking-result success"><div class="success-icon">✓</div><p>${t('toast.questionSent')}</p></div>`;
+  // Coming back from Stripe proves nothing by itself: ask our server whether the payment was
+  // really confirmed (it only says so after Stripe has told it directly).
+  async function confirmPayment() {
+    askArea.innerHTML = `<div class="booking-result"><p class="muted">${t('expert.confirmingPayment')}</p></div>`;
+    for (let i = 0; i < 20; i++) {
+      try {
+        const { booking } = await SagelyAPI.apiFetch(`/bookings/${bookingParam}`);
+        if (booking.status === 'paid' || booking.status === 'answered') {
+          askArea.innerHTML = `<div class="booking-result success"><div class="success-icon">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+          return;
+        }
+        if (booking.status === 'expired' || booking.status === 'refunded') break;
+      } catch (e) { break; }
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+    askArea.innerHTML = `<div class="booking-result"><p class="muted">${t('expert.paymentPending')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+  }
+
+  if (showingSuccess && user) {
+    confirmPayment();
   } else if (statusParam === 'cancelled') {
     renderAskForm();
     SagelyNav.showToast(t('expert.paymentCancelled'));

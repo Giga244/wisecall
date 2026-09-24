@@ -304,6 +304,9 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 .badge-paid { color: var(--accent2); background: #e3f7ef; }
 .badge-answered { color: var(--ink); background: #ece7f7; }
 .badge-rejected { color: var(--red); background: #fbe6ee; }
+.badge-refunded { color: var(--red); background: #fbe6ee; }
+.badge-expired { color: var(--ink-soft); background: #ecebf2; }
+.booking-note { margin: 0 0 8px; font-size: 0.84rem; color: var(--ink-soft); font-weight: 600; }
 
 /* Settings */
 .settings { padding: 46px 24px 100px; max-width: 640px; }

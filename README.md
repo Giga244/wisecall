@@ -75,6 +75,18 @@ Looked at what Fiverr/Upwork/Airbnb/Cameo-style platforms do and picked the high
 - **Refunds / disputes** — no mechanism if a seeker is unhappy with an answer. Worth having before real money is involved at scale.
 - **Terms of Service / Privacy Policy pages** — still just a placeholder gap, flagged below too.
 
+## How payments work
+
+Wisecall holds the money and releases it when the question is answered:
+
+1. The buyer pays the platform through Stripe Checkout. Nothing reaches the mentor yet.
+2. Only a **signature-verified Stripe webhook** (or the server's own lookup of the Checkout Session with Stripe) marks the booking paid. The redirect back to the site never does, and the page confirms with the server before showing success.
+3. The mentor has `ANSWER_DEADLINE_DAYS` (7) to answer. When they do, their share (100% minus `PLATFORM_FEE_PERCENT`) is transferred to their Stripe account and Wisecall keeps the fee.
+4. If nobody answers in time the buyer is **refunded in full automatically**, and a reminder email goes to the mentor 48 hours before.
+5. Abandoned checkouts expire after 30 minutes. A failed payout is recorded and retried by the background job; the answer is never lost.
+6. A mentor is only listed, and can only be booked, after being approved **and** connecting a payout account (Settings -> Payouts).
+
+`npm test` covers all of this against a fake Stripe server (real webhook signatures included). To try it with real Stripe test mode and the Stripe CLI, see DEPLOY.md (written in the last step).
 ## Security notes
 
 - In `NODE_ENV=production` the server refuses to start without a strong `JWT_SECRET`, never shows verification codes / reset links on screen (that "dev mode" is local-only), and rejects Stripe webhooks unless `STRIPE_WEBHOOK_SECRET` is set.

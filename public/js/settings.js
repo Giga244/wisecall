@@ -73,7 +73,7 @@
         payoutsStatus.textContent = t('settings.payouts.connected');
         connectBtn.style.display = 'none';
       } else {
-        payoutsStatus.textContent = t('settings.payouts.notConnected');
+        payoutsStatus.textContent = t(user.verificationStatus === 'verified' ? 'settings.payouts.needForListing' : 'settings.payouts.notConnected');
         connectBtn.style.display = 'inline-flex';
       }
     } catch (e) { /* ignore */ }

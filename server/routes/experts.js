@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { userFromRow, LISTABLE_SQL, mentorStatsFor, getUserById } = require('../models');
+const { userFromRow, listableSql, mentorStatsFor, getUserById } = require('../models');
 const { publicProfile, isListable, asyncHandler } = require('../util');
 
 const router = express.Router();
@@ -15,7 +15,7 @@ const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => '\\' + c);
 router.get('/', asyncHandler(async (req, res) => {
   const { niche, q } = req.query;
   const params = [];
-  let where = LISTABLE_SQL;
+  let where = listableSql();
   if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND niche = $${params.length}`; }
   if (q && String(q).trim()) {
     params.push('%' + escapeLike(String(q).trim().slice(0, 100)) + '%');

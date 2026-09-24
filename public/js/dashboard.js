@@ -20,6 +20,24 @@
     return `$${(cents / 100).toFixed(2)} ${(currency || 'usd').toUpperCase()}`;
   }
 
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString(SagelyI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  // Deadline, refund and payout information shown under a booking's question.
+  function bookingNote(b, role) {
+    let text = '';
+    if (b.status === 'paid' && b.answerDeadline) {
+      text = role === 'mentor'
+        ? t('dash.deadline.mentor').replace('{date}', fmtDate(b.answerDeadline))
+        : t('dash.deadline.seeker').replace('{name}', b.otherPartyName).replace('{date}', fmtDate(b.answerDeadline));
+    } else if (b.status === 'refunded') {
+      text = t(b.refundReason === 'no_answer_deadline' ? 'dash.refund.no_answer_deadline' : 'dash.refund.other');
+    } else if (b.status === 'answered' && role === 'mentor' && b.mode === 'stripe' && !b.transferredAt && b.transferError) {
+      text = t('dash.payout.pending');
+    }
+    return text ? `<p class="booking-note">${escapeHtml(text)}</p>` : '';
+  }
   function statusLabel(status) {
     return t('dash.status.' + status) || status;
   }
@@ -40,6 +58,7 @@
           <div class="booking-amount">${money(b.amount, b.currency)}</div>
         </div>
         <p class="booking-question">${escapeHtml(b.question)}</p>
+        ${bookingNote(b, 'seeker')}
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
         ${b.status === 'answered' ? renderReviewArea(b) : ''}
       </div>
@@ -117,6 +136,7 @@
           </div>
         </div>
         <p class="booking-question">${escapeHtml(b.question)}</p>
+        ${bookingNote(b, 'mentor')}
         ${b.answer
           ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>`
           : (b.status === 'paid' ? `
