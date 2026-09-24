@@ -1,26 +1,35 @@
-// The same header (skip link, logo, main links, language switch, log in / account buttons) on every page.
+// The same header on every page: skip link, logo, main links, language switch, log in / account buttons, and below
+// 1024px a menu button that opens a full-height panel (built here, opened by nav.js).
 // Loaded as the first script inside <body>, so it puts the header exactly where the script tag is.
 (function () {
   const here = window.location.pathname;
   const onHome = here === '/' || here === '/index.html';
   const link = (hash) => (onHome ? '' : '/index.html') + hash; // on the home page the links just scroll
 
+  const LINKS = [
+    { hash: '#how', key: 'nav.how', text: 'How it works', extra: true },
+    { hash: '#experts', key: 'nav.browse', text: 'Browse experts' },
+    { hash: '#for-mentors', key: 'footer.forMentors', text: 'For mentors', extra: true },
+    { hash: '#faq', key: 'footer.faq', text: 'FAQ', extra: true }
+  ];
+  const langSwitch = (cls) => `
+    <div class="lang-toggle ${cls}" role="group" aria-label="Language" data-i18n-aria="nav.language">
+      <button type="button" class="lang-btn" data-lang="en">EN</button>
+      <button type="button" class="lang-btn" data-lang="ka">KA</button>
+    </div>`;
+  const ICON_MENU = '<svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+  const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
   const html = `
     <a class="skip-link" href="#main" data-i18n="a11y.skip">Skip to content</a>
-    <header class="nav">
+    <header class="nav" id="siteHeader">
       <div class="container nav-inner">
         <a href="/index.html" class="logo" aria-label="Wisecall">Wisecall<span class="dot">.</span></a>
         <nav class="nav-links" aria-label="Main">
-          <a href="${link('#how')}" data-i18n="nav.how">How it works</a>
-          <a href="${link('#experts')}" data-i18n="nav.browse">Browse experts</a>
-          <a href="${link('#for-mentors')}" data-i18n="footer.forMentors">For mentors</a>
-          <a href="${link('#faq')}" data-i18n="footer.faq">FAQ</a>
+          ${LINKS.map((l) => `<a href="${link(l.hash)}"${l.extra ? ' class="nl-extra"' : ''} data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
         </nav>
         <div class="nav-right">
-          <div class="lang-toggle">
-            <button type="button" class="lang-btn" data-lang="en">EN</button>
-            <button type="button" class="lang-btn" data-lang="ka">KA</button>
-          </div>
+          ${langSwitch('nav-lang')}
           <div class="nav-actions" id="navLoggedOut">
             <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">Log in</a>
             <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
@@ -31,8 +40,32 @@
             <button type="button" class="btn btn-outline" id="logoutBtn" data-i18n="nav.logout">Log out</button>
           </div>
         </div>
+        <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Menu" data-i18n-aria="nav.menu">${ICON_MENU}</button>
       </div>
-    </header>`;
+    </header>
+
+    <div class="mobile-menu" id="mobileMenu" hidden>
+      <div class="mm-backdrop" data-mm-close></div>
+      <div class="mm-panel" role="dialog" aria-modal="true" aria-labelledby="mmTitle" tabindex="-1">
+        <div class="mm-head">
+          <span class="logo" id="mmTitle">Wisecall<span class="dot">.</span></span>
+          <button type="button" class="mm-close" data-mm-close aria-label="Close menu" data-i18n-aria="nav.menuClose">${ICON_CLOSE}</button>
+        </div>
+        <nav class="mm-links" aria-label="Main">
+          ${LINKS.map((l) => `<a href="${link(l.hash)}" data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
+        </nav>
+        <div class="mm-lang">${langSwitch('mm-lang-toggle')}</div>
+        <div class="mm-actions" id="mmLoggedOut">
+          <a href="/signup.html" class="btn btn-primary btn-lg btn-block" data-i18n="nav.signup">Sign up</a>
+          <a href="/login.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.login">Log in</a>
+        </div>
+        <div class="mm-actions" id="mmLoggedIn" style="display:none">
+          <a href="/dashboard.html" class="btn btn-primary btn-lg btn-block" data-i18n="nav.dashboard">Dashboard</a>
+          <a href="/settings.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.settings">Settings</a>
+          <button type="button" class="btn btn-ghost btn-lg btn-block" id="mmLogoutBtn" data-i18n="nav.logout">Log out</button>
+        </div>
+      </div>
+    </div>`;
 
   const me = document.currentScript;
   me.insertAdjacentHTML('beforebegin', html);

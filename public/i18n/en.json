@@ -1059,5 +1059,16 @@
   "vt.status.verifiedPrelaunch": "You're verified. You'll appear in Browse experts on launch day",
   "dash.received.prelaunch.title": "You're ready for launch day",
   "dash.received.prelaunch.body": "Wisecall hasn't opened to buyers yet. Your profile goes live on launch day, and questions will appear here.",
-  "admin.launch.banner": "Prelaunch mode: nobody can pay yet, and visitors are joining the waiting list (see the Waiting list tab: counts per field and a CSV export). Set LAUNCH_MODE=live to open."
+  "admin.launch.banner": "Prelaunch mode: nobody can pay yet, and visitors are joining the waiting list (see the Waiting list tab: counts per field and a CSV export). Set LAUNCH_MODE=live to open.",
+  "nav.menuClose": "Close menu",
+  "nav.language": "Language",
+  "ex.dot": "Example {n} of {total}",
+  "experts.filters": "Filters",
+  "experts.filtersClear": "Clear",
+  "experts.fieldLabel": "Field",
+  "experts.showResults": "Show {n} experts",
+  "experts.showResults.one": "Show 1 expert",
+  "experts.count": "{n} experts",
+  "experts.count.one": "1 expert",
+  "sheet.close": "Close"
 }

@@ -66,8 +66,55 @@
       <path d="M122 98l12 12 26-28" fill="none" stroke="#3db88e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
 
+  // ---- Example answers: on phones a row you swipe, with dots (from 640px it is a plain grid) -----------------------
+  function initExamples() {
+    const grid = document.querySelector('.example-grid');
+    if (!grid || grid.dataset.ready) return;
+    grid.dataset.ready = '1';
+    const cards = Array.from(grid.querySelectorAll('.example-card'));
+    const phone = window.matchMedia('(max-width: 639px)');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const dots = document.createElement('div');
+    dots.className = 'ex-dots';
+    grid.after(dots);
+
+    const label = (i) => t('ex.dot').replace('{n}', i + 1).replace('{total}', cards.length);
+    function drawDots(active) {
+      dots.innerHTML = cards.map((_, i) => `<button type="button" data-i="${i}" aria-label="${esc(label(i))}"${i === active ? ' aria-current="true"' : ''}></button>`).join('');
+    }
+    function activeIndex() {
+      const mid = grid.getBoundingClientRect().left + grid.clientWidth / 2;
+      let best = 0, bestGap = Infinity;
+      cards.forEach((c, i) => { const r = c.getBoundingClientRect(); const gap = Math.abs(r.left + r.width / 2 - mid); if (gap < bestGap) { best = i; bestGap = gap; } });
+      return best;
+    }
+    // A scrollable area must be reachable with the keyboard, so it is one stop while it scrolls (phones only).
+    function mode() {
+      if (phone.matches) {
+        grid.setAttribute('tabindex', '0'); grid.setAttribute('role', 'group'); grid.setAttribute('aria-roledescription', 'carousel'); grid.setAttribute('aria-label', t('ex.title'));
+      } else {
+        ['tabindex', 'role', 'aria-roledescription', 'aria-label'].forEach((a) => grid.removeAttribute(a));
+      }
+    }
+    let ticking = false;
+    grid.addEventListener('scroll', () => {
+      if (ticking || !phone.matches) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; const i = activeIndex(); dots.querySelectorAll('button').forEach((b, k) => (k === i ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current'))); });
+    }, { passive: true });
+    dots.addEventListener('click', (ev) => {
+      const b = ev.target.closest('button[data-i]');
+      if (b) cards[Number(b.dataset.i)].scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', inline: 'center', block: 'nearest' });
+    });
+    phone.addEventListener('change', mode);
+    document.addEventListener('wisecall:lang-changed', () => { drawDots(activeIndex()); mode(); });
+    drawDots(0);
+    mode();
+  }
+
   initFaq();
   // The strip's labels need the dictionary, so main.js draws it after the language is loaded.
+  document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(initExamples));
   document.addEventListener('wisecall:lang-changed', drawStrip);
 
   window.WisecallHome = { NICHES: Object.keys(NICHES), icon, drawStrip, emptyArt: EMPTY_ART };

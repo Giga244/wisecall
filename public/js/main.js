@@ -13,6 +13,10 @@
   const searchInput = document.getElementById('searchInput');
   const sortSelect = document.getElementById('sortSelect');
   const t = WisecallI18n.t;
+  const filtersBtn = document.getElementById('filtersBtn');
+  const filtersCount = document.getElementById('filtersCount');
+  const resultCount = document.getElementById('resultCount');
+  const filtersApply = document.getElementById('filtersApply');
   let allExperts = [];
   let activeNiche = 'all';
   let searchTerm = '';
@@ -86,10 +90,21 @@
     WisecallWaitlist.wire(grid);
   }
 
+  // "8 experts" under the search, the number of filters in use on the Filters button, and the sheet's own button.
+  let shown = 0;
+  function summary() {
+    const active = (activeNiche !== 'all' ? 1 : 0) + (sortMode !== 'rating' ? 1 : 0);
+    filtersCount.hidden = active === 0;
+    filtersCount.textContent = String(active);
+    filtersBtn.setAttribute('aria-label', active ? `${t('experts.filters')} (${active})` : t('experts.filters'));
+    resultCount.textContent = loaded ? t(shown === 1 ? 'experts.count.one' : 'experts.count').replace('{n}', shown) : '';
+    filtersApply.textContent = t(shown === 1 ? 'experts.showResults.one' : 'experts.showResults').replace('{n}', shown);
+  }
+
   let loaded = false;
   function render() {
     if (prelaunch) { launchingSoon(); return; }
-    if (!loaded) { grid.innerHTML = `<p class="muted">${t('experts.loading')}</p>`; return; }
+    if (!loaded) { grid.innerHTML = `<p class="muted">${t('experts.loading')}</p>`; summary(); return; }
     let list = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
     if (searchTerm) {
       const needle = searchTerm.toLowerCase();
@@ -100,6 +115,8 @@
       );
     }
     list = sortList(list);
+    shown = list.length;
+    summary();
 
     if (allExperts.length === 0) {
       grid.innerHTML = emptyState('all');
@@ -151,6 +168,28 @@
     ev.preventDefault();
     setNiche(link.dataset.nicheLink);
     document.getElementById('experts').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
+
+  // Phones: the sort and field controls live in a bottom sheet behind a Filters button. From 640px they sit on the page.
+  const sheet = WisecallSheet.create(document.getElementById('filtersSheet'));
+  const phone = window.matchMedia('(max-width: 639px)');
+  function placeControls() {
+    if (phone.matches) {
+      document.getElementById('sheetSort').appendChild(sortSelect);
+      document.getElementById('sheetFilters').appendChild(filters);
+    } else {
+      document.getElementById('sortSlot').appendChild(sortSelect);
+      document.getElementById('filtersSlot').appendChild(filters);
+      sheet.close(false);
+    }
+  }
+  phone.addEventListener('change', placeControls);
+  placeControls();
+  filtersBtn.addEventListener('click', () => sheet.open(filtersBtn));
+  document.getElementById('filtersClear').addEventListener('click', () => {
+    sortMode = 'rating';
+    sortSelect.value = 'rating';
+    setNiche('all');
   });
 
   let searchTimer;

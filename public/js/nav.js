@@ -1,44 +1,100 @@
 (function () {
-  // Under ~720px the header links are hidden; this adds an accessible menu button that shows them.
-  function initMenu() {
-    const nav = document.querySelector('header.nav');
-    const links = nav && nav.querySelector('.nav-links');
-    if (!links || nav.querySelector('.nav-toggle')) return;
-    const t = (window.WisecallI18n && window.WisecallI18n.t) || (k => k);
-    if (!links.id) links.id = 'navLinks';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'nav-toggle';
-    btn.setAttribute('aria-controls', links.id);
-    btn.setAttribute('aria-expanded', 'false');
-    btn.innerHTML = '<svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>' +
-      '<svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-    const label = () => btn.setAttribute('aria-label', t('nav.menu'));
-    label();
-    document.addEventListener('wisecall:lang-changed', label);
-    nav.querySelector('.nav-inner').appendChild(btn);
+  const t = (k) => (window.WisecallI18n ? WisecallI18n.t(k) : k);
 
-    const setOpen = (open, returnFocus) => {
-      nav.classList.toggle('menu-open', open);
-      btn.setAttribute('aria-expanded', String(open));
-      if (!open && returnFocus) btn.focus();
-    };
-    btn.addEventListener('click', () => setOpen(!nav.classList.contains('menu-open')));
-    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && nav.classList.contains('menu-open')) setOpen(false, true); });
-    document.addEventListener('click', (ev) => { if (!nav.contains(ev.target)) setOpen(false); });
-    links.addEventListener('click', (ev) => { if (ev.target.closest('a')) setOpen(false); });
-    window.matchMedia('(min-width: 721px)').addEventListener('change', (e) => { if (e.matches) setOpen(false); });
+  // ---- The menu panel (below 1024px) ---------------------------------------------------------------------------
+  // A full-height panel that slides in from the right: big tap targets, the language switch and the account buttons.
+  // While it is open the page behind it cannot scroll or be reached with the keyboard (focus stays inside), Esc, the
+  // close button, the backdrop and choosing a link all close it, and focus goes back to the menu button.
+  const DESKTOP = window.matchMedia('(min-width: 1024px)');
+  function initMenu() {
+    const header = document.getElementById('siteHeader');
+    const toggle = document.getElementById('navToggle');
+    const menu = document.getElementById('mobileMenu');
+    if (!header || !toggle || !menu || toggle.dataset.ready) return;
+    toggle.dataset.ready = '1';
+    const panel = menu.querySelector('.mm-panel');
+    const behind = () => Array.from(document.body.children).filter((el) => el !== menu && !el.matches('script, .toast'));
+    let closing = null;
+
+    const focusable = () => Array.from(panel.querySelectorAll('a[href], button:not([disabled])')).filter((el) => el.offsetParent !== null || el === document.activeElement);
+
+    function open() {
+      clearTimeout(closing);
+      menu.hidden = false;
+      document.documentElement.classList.add('menu-open');
+      toggle.setAttribute('aria-expanded', 'true');
+      behind().forEach((el) => { el.inert = true; });
+      requestAnimationFrame(() => { menu.classList.add('is-open'); const first = panel.querySelector('.mm-close'); if (first) first.focus(); });
+    }
+    function close(returnFocus) {
+      if (menu.hidden) return;
+      menu.classList.remove('is-open');
+      document.documentElement.classList.remove('menu-open');
+      toggle.setAttribute('aria-expanded', 'false');
+      behind().forEach((el) => { el.inert = false; });
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      closing = setTimeout(() => { menu.hidden = true; }, reduce ? 0 : 260);
+      if (returnFocus !== false) toggle.focus();
+    }
+
+    toggle.addEventListener('click', () => (menu.hidden ? open() : close()));
+    menu.addEventListener('click', (ev) => {
+      if (ev.target.closest('[data-mm-close]')) close();
+      else if (ev.target.closest('a[href]')) close(false); // following a link
+    });
+    document.addEventListener('keydown', (ev) => {
+      if (menu.hidden) return;
+      if (ev.key === 'Escape') { ev.preventDefault(); close(); return; }
+      if (ev.key !== 'Tab') return;
+      const items = focusable();
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (ev.shiftKey && (document.activeElement === first || document.activeElement === panel)) { ev.preventDefault(); last.focus(); }
+      else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+    });
+    DESKTOP.addEventListener('change', (e) => { if (e.matches) close(false); });
+    document.addEventListener('wisecall:lang-changed', () => {
+      toggle.setAttribute('aria-label', t('nav.menu'));
+    });
   }
+
+  // ---- The header hides while reading down the page and comes back on the way up (phones) ---------------------
+  function initAutoHide() {
+    const header = document.getElementById('siteHeader');
+    if (!header || header.dataset.autohide) return;
+    header.dataset.autohide = '1';
+    const phone = window.matchMedia('(max-width: 767px)');
+    let last = window.scrollY, ticking = false;
+    function update() {
+      ticking = false;
+      const y = window.scrollY;
+      const delta = y - last;
+      const menuOpen = document.documentElement.classList.contains('menu-open');
+      if (!phone.matches || menuOpen || y < 80 || header.contains(document.activeElement)) header.classList.remove('nav-hidden');
+      else if (delta > 8) header.classList.add('nav-hidden');
+      else if (delta < -8) header.classList.remove('nav-hidden');
+      if (Math.abs(delta) > 8 || y < 80) last = y;
+    }
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    header.addEventListener('focusin', () => header.classList.remove('nav-hidden'));
+  }
+
   // Runs once per page, however many scripts ask for it (the header script and the page's own script both do).
   let navPromise = null;
   function initNav() {
     if (!navPromise) navPromise = setUpNav();
     return navPromise;
   }
+
+  const both = (...ids) => ids.map((id) => document.getElementById(id)).filter(Boolean);
+  const show = (el) => { el.style.display = el.classList.contains('mm-actions') ? 'grid' : 'flex'; };
+
   async function setUpNav() {
     initMenu();
-    const loggedOutEl = document.getElementById('navLoggedOut');
-    const loggedInEl = document.getElementById('navLoggedIn');
+    initAutoHide();
+    const header = document.getElementById('siteHeader');
+    const loggedOut = both('navLoggedOut', 'mmLoggedOut');
+    const loggedIn = both('navLoggedIn', 'mmLoggedIn');
     let user = null;
     try {
       const data = await WisecallAPI.apiFetch('/me');
@@ -46,38 +102,38 @@
     } catch (e) { /* not logged in */ }
 
     if (user) {
-      if (loggedOutEl) loggedOutEl.style.display = 'none';
-      if (loggedInEl) loggedInEl.style.display = 'flex';
-      if (user.isAdmin && loggedInEl && !loggedInEl.querySelector('.admin-link')) {
-        const a = document.createElement('a');
-        a.href = '/admin.html'; a.className = 'btn btn-ghost admin-link';
-        a.setAttribute('data-i18n', 'nav.admin'); a.textContent = (window.WisecallI18n && window.WisecallI18n.t('nav.admin')) || 'Admin';
-        loggedInEl.insertBefore(a, loggedInEl.firstChild);
-      }
-      const logoutBtn = document.getElementById('logoutBtn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-          await WisecallAPI.apiFetch('/auth/logout', { method: 'POST' });
-          window.location.href = '/index.html';
+      loggedOut.forEach((el) => { el.style.display = 'none'; });
+      loggedIn.forEach(show);
+      if (header) header.classList.add('is-authed');
+      if (user.isAdmin) {
+        // An Admin button next to the others, in the header and in the menu panel.
+        loggedIn.forEach((box, i) => {
+          if (box.querySelector('.admin-link')) return;
+          const a = document.createElement('a');
+          a.href = '/admin.html';
+          a.className = i === 0 ? 'btn btn-ghost admin-link' : 'btn btn-outline btn-lg btn-block admin-link';
+          a.setAttribute('data-i18n', 'nav.admin');
+          a.textContent = t('nav.admin') === 'nav.admin' ? 'Admin' : t('nav.admin');
+          box.insertBefore(a, i === 0 ? box.firstChild : box.children[1] || null);
         });
       }
+      both('logoutBtn', 'mmLogoutBtn').forEach((btn) => btn.addEventListener('click', async () => {
+        await WisecallAPI.apiFetch('/auth/logout', { method: 'POST' });
+        window.location.href = '/index.html';
+      }));
       // Emails are sent in the language saved on the account, so keep it in step with the toggle.
       document.addEventListener('wisecall:lang-changed', (ev) => {
         WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { language: ev.detail.lang } }).catch(() => {});
       });
-      if (!user.emailVerified && location.pathname !== '/verify-email.html') {
-        const nav = document.querySelector('header.nav');
-        const t = (window.WisecallI18n && window.WisecallI18n.t) || (k => k);
-        if (nav) {
-          const bar = document.createElement('div');
-          bar.className = 'verify-banner';
-          bar.innerHTML = `<span>${t('nav.verifyBanner')}</span> <a href="/verify-email.html?redirect=${encodeURIComponent(location.pathname)}">${t('nav.verifyBannerCta')}</a>`;
-          nav.insertAdjacentElement('afterend', bar);
-        }
+      if (!user.emailVerified && location.pathname !== '/verify-email.html' && header) {
+        const bar = document.createElement('div');
+        bar.className = 'verify-banner';
+        bar.innerHTML = `<span>${t('nav.verifyBanner')}</span> <a href="/verify-email.html?redirect=${encodeURIComponent(location.pathname)}">${t('nav.verifyBannerCta')}</a>`;
+        header.insertAdjacentElement('afterend', bar);
       }
     } else {
-      if (loggedOutEl) loggedOutEl.style.display = 'flex';
-      if (loggedInEl) loggedInEl.style.display = 'none';
+      loggedOut.forEach(show);
+      loggedIn.forEach((el) => { el.style.display = 'none'; });
     }
     showLaunchBanner(user);
     return user;
@@ -89,16 +145,15 @@
     if (!window.WisecallI18n || WisecallI18n.launchMode() !== 'prelaunch') return;
     const path = location.pathname;
     if (path === '/' || path === '/index.html' || path === '/admin.html' || document.querySelector('.launch-banner')) return;
-    const nav = document.querySelector('header.nav');
-    if (!nav) return;
-    const t = WisecallI18n.t;
+    const header = document.getElementById('siteHeader');
+    if (!header) return;
     const mentor = user && (user.role === 'mentor' || user.role === 'both');
     const bar = document.createElement('div');
     bar.className = 'launch-banner';
     bar.innerHTML = mentor
       ? `<span data-i18n="launch.banner.mentor">${t('launch.banner.mentor')}</span>`
       : `<span data-i18n="launch.banner">${t('launch.banner')}</span> <a href="/index.html#experts" data-i18n="wait.join">${t('wait.join')}</a>`;
-    const after = nav.nextElementSibling && nav.nextElementSibling.classList.contains('verify-banner') ? nav.nextElementSibling : nav;
+    const after = header.nextElementSibling && header.nextElementSibling.classList.contains('verify-banner') ? header.nextElementSibling : header;
     after.insertAdjacentElement('afterend', bar);
   }
 

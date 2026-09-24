@@ -95,6 +95,7 @@
     const [dict, cfg] = await Promise.all([loadDict(lang), getConfig()]);
     setVarsFrom(cfg);
     document.documentElement.dataset.launch = cfg.launchMode; // lets the stylesheet show or hide things per mode
+    if (cfg.devMode) { const s = document.createElement('script'); s.src = '/js/dev-overflow.js'; document.head.appendChild(s); } // development only
     applyDict(dict);
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.lang === lang);

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Wisecall — Advice from people who've already done it</title>
 <meta name="description" content="Book a real, paid answer from someone who's already done what you're trying to do — doctors, founders, teachers, engineers, and more.">
 <link rel="canonical" href="{{PUBLIC_URL}}/">
@@ -247,30 +247,41 @@
   <div class="container">
     <h2 id="expertsTitle" data-i18n="experts.title" data-i18n-prelaunch="experts.prelaunch.title">Browse experts</h2>
     <div class="browse-toolbar">
-      <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" data-i18n-aria="experts.searchPlaceholder" aria-label="Search by name or specialty" placeholder="Search by name or specialty…">
-      <select id="sortSelect" class="sort-select" data-i18n-aria="experts.sort.label" aria-label="Sort">
-        <option value="rating" data-i18n="experts.sort.rating">Top rated</option>
-        <option value="priceAsc" data-i18n="experts.sort.priceAsc">Price: low to high</option>
-        <option value="priceDesc" data-i18n="experts.sort.priceDesc">Price: high to low</option>
-        <option value="newest" data-i18n="experts.sort.newest">Newest</option>
-      </select>
+      <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" data-i18n-aria="experts.searchPlaceholder" aria-label="Search by name or specialty" placeholder="Search by name or specialty…" autocomplete="off" enterkeyhint="search">
+      <div class="browse-controls">
+        <button type="button" class="btn btn-outline filters-btn" id="filtersBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="filtersSheet">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+          <span data-i18n="experts.filters">Filters</span><span class="filters-count" id="filtersCount" hidden></span>
+        </button>
+        <p class="result-count" id="resultCount" role="status"></p>
+        <div class="sort-slot" id="sortSlot">
+          <select id="sortSelect" class="sort-select" data-i18n-aria="experts.sort.label" aria-label="Sort">
+            <option value="rating" data-i18n="experts.sort.rating">Top rated</option>
+            <option value="priceAsc" data-i18n="experts.sort.priceAsc">Price: low to high</option>
+            <option value="priceDesc" data-i18n="experts.sort.priceDesc">Price: high to low</option>
+            <option value="newest" data-i18n="experts.sort.newest">Newest</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <div class="filters" id="filters" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field">
-      <button type="button" class="chip active" data-niche="all" data-i18n="niche.all">All</button>
-      <button type="button" class="chip" data-niche="business" data-i18n="niche.business">Business</button>
-      <button type="button" class="chip" data-niche="medicine" data-i18n="niche.medicine">Medicine</button>
-      <button type="button" class="chip" data-niche="teaching" data-i18n="niche.teaching">Teaching</button>
-      <button type="button" class="chip" data-niche="tech" data-i18n="niche.tech">Tech</button>
-      <button type="button" class="chip" data-niche="fitness" data-i18n="niche.fitness">Fitness</button>
-      <button type="button" class="chip" data-niche="creative" data-i18n="niche.creative">Creative</button>
-      <button type="button" class="chip" data-niche="law" data-i18n="niche.law">Law</button>
-      <button type="button" class="chip" data-niche="finance" data-i18n="niche.finance">Finance</button>
-      <button type="button" class="chip" data-niche="marketing" data-i18n="niche.marketing">Marketing</button>
-      <button type="button" class="chip" data-niche="design" data-i18n="niche.design">Design</button>
-      <button type="button" class="chip" data-niche="writing" data-i18n="niche.writing">Writing</button>
-      <button type="button" class="chip" data-niche="parenting" data-i18n="niche.parenting">Parenting</button>
-      <button type="button" class="chip" data-niche="engineering" data-i18n="niche.engineering">Engineering</button>
-      <button type="button" class="chip" data-niche="science" data-i18n="niche.science">Science</button>
+    <div class="filters-slot" id="filtersSlot">
+      <div class="filters" id="filters" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field">
+        <button type="button" class="chip active" data-niche="all" data-i18n="niche.all">All</button>
+        <button type="button" class="chip" data-niche="business" data-i18n="niche.business">Business</button>
+        <button type="button" class="chip" data-niche="medicine" data-i18n="niche.medicine">Medicine</button>
+        <button type="button" class="chip" data-niche="teaching" data-i18n="niche.teaching">Teaching</button>
+        <button type="button" class="chip" data-niche="tech" data-i18n="niche.tech">Tech</button>
+        <button type="button" class="chip" data-niche="fitness" data-i18n="niche.fitness">Fitness</button>
+        <button type="button" class="chip" data-niche="creative" data-i18n="niche.creative">Creative</button>
+        <button type="button" class="chip" data-niche="law" data-i18n="niche.law">Law</button>
+        <button type="button" class="chip" data-niche="finance" data-i18n="niche.finance">Finance</button>
+        <button type="button" class="chip" data-niche="marketing" data-i18n="niche.marketing">Marketing</button>
+        <button type="button" class="chip" data-niche="design" data-i18n="niche.design">Design</button>
+        <button type="button" class="chip" data-niche="writing" data-i18n="niche.writing">Writing</button>
+        <button type="button" class="chip" data-niche="parenting" data-i18n="niche.parenting">Parenting</button>
+        <button type="button" class="chip" data-niche="engineering" data-i18n="niche.engineering">Engineering</button>
+        <button type="button" class="chip" data-niche="science" data-i18n="niche.science">Science</button>
+      </div>
     </div>
     <div class="expert-grid" id="expertGrid" aria-live="polite"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
   </div>
@@ -374,6 +385,29 @@
 
 </main>
 
+<!-- Filters (phones): the sort and field controls move in here below 640px -->
+<div class="sheet" id="filtersSheet" hidden>
+  <div class="sheet-backdrop" data-sheet-close></div>
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="filtersTitle" tabindex="-1">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="filtersTitle" data-i18n="experts.filters">Filters</h2>
+      <button type="button" class="sheet-close" data-sheet-close aria-label="Close" data-i18n-aria="sheet.close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sheet-body">
+      <p class="sheet-label" id="sortLabel" data-i18n="experts.sort.label">Sort</p>
+      <div id="sheetSort"></div>
+      <p class="sheet-label" data-i18n="experts.fieldLabel">Field</p>
+      <div id="sheetFilters"></div>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="btn btn-outline btn-lg" id="filtersClear" data-i18n="experts.filtersClear">Clear</button>
+      <button type="button" class="btn btn-primary btn-lg" id="filtersApply" data-sheet-close data-sheet-focus>Show experts</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="/js/i18n.js"></script>
@@ -381,6 +415,7 @@
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
 <script src="/js/badges.js"></script>
+<script src="/js/sheet.js"></script>
 <script src="/js/waitlist.js"></script>
 <script src="/js/home.js"></script>
 <script src="/js/main.js"></script>
