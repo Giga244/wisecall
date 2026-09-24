@@ -13,6 +13,7 @@ if (config.IS_PROD) app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
 app.use(securityHeaders);
+app.use(require('compression')()); // the pages, scripts, styles and JSON are text: about a quarter of the size on the wire
 app.use(requestLogger);
 
 // Health check for the hosting platform: also proves the database is reachable.
@@ -102,7 +103,15 @@ app.get('/api/config', (req, res) => {
 app.get('/favicon.ico', (req, res) => res.redirect(301, '/favicon.svg'));
 app.use(pages.seoRoutes());
 app.use(pages.pageRoutes());
-app.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
+// Scripts, styles and the dictionaries change with every release and are not fingerprinted, so they are kept for an
+// hour and then revalidated; the fonts and pictures never change under the same name.
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  index: false,
+  setHeaders(res, file) {
+    if (/\.(woff2|png|svg|ico|jpg|webp)$/i.test(file)) res.set('Cache-Control', 'public, max-age=2592000, immutable');
+    else if (/\.(css|js|json)$/i.test(file)) res.set('Cache-Control', 'public, max-age=3600, must-revalidate');
+  }
+}));
 app.use(pages.notFoundHandler);
 
 // Any error thrown in a route ends up here instead of crashing or hanging the request.

@@ -114,7 +114,7 @@
       return `
       <article class="booking-card" data-id="${b.id}">
         <div class="booking-top">
-          <div class="avatar" style="background:${escapeHtml(b.otherPartyColor || '#6d4de0')}" aria-hidden="true">${escapeHtml(initials(b.otherPartyName))}</div>
+          <div class="avatar" style="${WisecallAPI.avatarStyle(b.otherPartyColor)}" aria-hidden="true">${escapeHtml(initials(b.otherPartyName))}</div>
           <div>
             <div class="card-name"><a class="plain-link" href="/expert.html?id=${b.mentorId}">${escapeHtml(b.otherPartyName)}</a></div>
             <span class="badge badge-${b.status}">${statusLabel(b.status)}</span>
@@ -195,7 +195,7 @@
       return `
       <article class="booking-card" data-id="${b.id}">
         <div class="booking-top">
-          <div class="avatar" style="background:${escapeHtml(b.otherPartyColor || '#6d4de0')}" aria-hidden="true">${escapeHtml(initials(b.otherPartyName))}</div>
+          <div class="avatar" style="${WisecallAPI.avatarStyle(b.otherPartyColor)}" aria-hidden="true">${escapeHtml(initials(b.otherPartyName))}</div>
           <div>
             <div class="card-name">${escapeHtml(b.otherPartyName)}</div>
             <span class="badge badge-${b.status}">${statusLabel(b.status)}</span>

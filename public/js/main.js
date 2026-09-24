@@ -122,7 +122,7 @@
     grid.innerHTML = list.map(e => `
       <a class="expert-card" href="/expert.html?id=${e.id}">
         <div class="card-top">
-          <div class="avatar" style="background:${e.color || '#6d4de0'}" aria-hidden="true">${initials(e.name)}</div>
+          <div class="avatar" style="${WisecallAPI.avatarStyle(e.color)}" aria-hidden="true">${initials(e.name)}</div>
           <div>
             <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
             <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(t('niche.' + e.niche))}` : ''}</div>

@@ -142,7 +142,7 @@
     return `
       <div class="booking-card mv-card" data-id="${m.id}">
         <div class="booking-top">
-          <div class="avatar" style="background:${esc(m.color || '#182236')}">${esc(initials(m.name))}</div>
+          <div class="avatar" style="${WisecallAPI.avatarStyle(m.color || '#182236')}">${esc(initials(m.name))}</div>
           <div>
             <div class="card-name">${esc(m.name)}</div>
             <span class="muted small">${esc(m.email)}</span>

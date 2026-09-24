@@ -2,12 +2,12 @@
 const config = require('./config');
 
 // Scripts may only come from our own files (no inline scripts, no eval). Styles allow inline
-// attributes and Google Fonts, which the design uses. Nothing else can load or embed anything.
+// attributes. Fonts are served from this site. Nothing else can load or embed anything.
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "img-src 'self' data:",
   "connect-src 'self'",
   "form-action 'self'",

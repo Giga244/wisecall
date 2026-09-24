@@ -114,9 +114,9 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   let booking = await updateBooking(existing.id, {
     answer: String(answer).trim().slice(0, 8000),
     status: 'answered',
-    answeredAt: existing.answeredAt || new Date()
+    answeredAt: existing.answeredAt || new Date(),
+    ...(held ? probation.holdPatch() : {})
   });
-  if (held) booking = (await probation.hold(booking.id)) || booking;
 
   if (first && !held) {
     // Record the mentor's earnings in the payout ledger (once, however many times the answer is edited).

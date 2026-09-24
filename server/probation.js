@@ -19,13 +19,9 @@ async function shouldHold(mentorId) {
   return rows[0].n < rules.LIMITS.probationAnswers;
 }
 
-async function hold(bookingId) {
-  const { rows } = await query(
-    `UPDATE bookings SET answer_review = 'held', answer_held_until = $2 WHERE id = $1 AND answer_review = 'none' RETURNING *`,
-    [bookingId, new Date(Date.now() + rules.LIMITS.probationHoldHours * HOUR)]
-  );
-  return bookingFromRow(rows[0]);
-}
+// The columns that put an answer on hold. They are written in the same statement as the answer itself, so there is
+// never a moment when the answer is saved but the buyer could already read it.
+const holdPatch = () => ({ answerReview: 'held', answerHeldUntil: new Date(Date.now() + rules.LIMITS.probationHoldHours * HOUR) });
 
 // Makes a held answer visible. `actor` is an admin, or steps.SYSTEM for the automatic release.
 // Safe to call twice: only the first call does anything.
@@ -106,4 +102,4 @@ function forViewer(booking, viewerId) {
   return { ...booking, answerHeld: held };
 }
 
-module.exports = { shouldHold, hold, release, flag, reject, releaseDue, queue, forViewer };
+module.exports = { shouldHold, holdPatch, release, flag, reject, releaseDue, queue, forViewer };

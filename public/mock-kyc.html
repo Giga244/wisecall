@@ -7,14 +7,15 @@
 <meta name="description" content="A fake ID-check page used only while developing Wisecall. It does not exist in production.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <script src="/js/header.js"></script>
 
-<section class="auth-page" id="main">
+<main class="auth-page" id="main">
   <div class="auth-card">
     <p class="badge badge-pending_payment" data-i18n="mockbank.badge">Development only</p>
     <h1 data-i18n="mockkyc.title">Test ID check</h1>
@@ -37,7 +38,7 @@
       <button type="submit" class="btn btn-primary btn-block" data-i18n="mockkyc.submit">Finish the ID check</button>
     </form>
   </div>
-</section>
+</main>
 
 <script src="/js/i18n.js"></script>
 <script src="/js/footer.js"></script>

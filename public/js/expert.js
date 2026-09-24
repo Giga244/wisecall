@@ -1,14 +1,16 @@
 // A mentor's public profile: who they are and how they were checked, their reviews, and the box where a
 // buyer writes a question and goes to pay at the bank.
 (async function () {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  // Everything the page needs is asked for at the same moment (texts, who is signed in, the profile), not one after the other.
+  const profileRequest = id ? WisecallAPI.apiFetch('/experts/' + encodeURIComponent(id)).then((r) => r.expert, () => null) : null;
   await WisecallI18n.initI18n();
   const user = await WisecallNav.initNav();
   const t = WisecallI18n.t;
 
   const page = document.getElementById('expertPage');
   const crumbs = document.getElementById('crumbs');
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
   const bookingParam = params.get('booking');
   const statusParam = params.get('status');
   const MAX_QUESTION = 4000; // the server keeps at most this many characters
@@ -23,13 +25,8 @@
   }
   if (!id) { showMessage('expert.notSpecified'); return; }
 
-  let expert;
-  try {
-    expert = (await WisecallAPI.apiFetch(`/experts/${id}`)).expert;
-  } catch (e) {
-    showMessage('expert.notFound');
-    return;
-  }
+  const expert = await profileRequest;
+  if (!expert) { showMessage('expert.notFound'); return; }
 
   // ---- Small formatters ----------------------------------------------------------------------------------
   function waitText(seconds) {
@@ -62,7 +59,7 @@
       <div class="expert-layout">
         <section class="profile-card" aria-labelledby="expertName">
           <div class="profile-head">
-            <div class="avatar avatar-lg" style="background:${escapeHtml(expert.color || '#6d4de0')}" aria-hidden="true">${escapeHtml(initials(expert.name))}</div>
+            <div class="avatar avatar-lg" style="${WisecallAPI.avatarStyle(expert.color)}" aria-hidden="true">${escapeHtml(initials(expert.name))}</div>
             <div>
               <h1 id="expertName">${escapeHtml(expert.name)}</h1>
               <p class="profile-title">${escapeHtml(expert.roleTitle || '')}</p>
