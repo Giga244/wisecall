@@ -164,17 +164,146 @@ a.tag-niche:hover { background: var(--ink); color: #fff; }
 .ask-notes svg { flex: 0 0 auto; color: var(--accent2-strong); margin-top: 2px; }
 .ask-login { display: grid; gap: 10px; }
 
-@media (max-width: 900px) {
-  .expert-wrap { padding: 24px 16px 70px; }
-  /* One column: the question box comes right after the profile header. */
+/* The question bar and sheet (phones) ------------------------------------------------------------------------ */
+.ask-bar { display: none; }
+.trust-explain { display: none; }
+
+/* Tablets and phones: one column. The question box follows the profile header (tablets); phones get a bar instead. */
+@media (max-width: 899px) {
+  .expert-wrap { padding: 24px 24px 70px; }
   .expert-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "profile" "ask" "about" "checks" "reviews" "report"; grid-template-rows: none; }
   .ask-side { position: static; }
+  .profile-card { padding: 24px; }
+  .ask-panel { padding: 22px; }
+}
+@media (max-width: 639px) {
+  .expert-wrap { padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); }
   .profile-stats { grid-template-columns: 1fr 1fr; }
   .profile-card { padding: 22px; }
-  .profile-head { gap: 14px; }
+  .profile-head { gap: 14px; align-items: flex-start; }
   .profile-head h1 { font-size: 1.5rem; }
+  .avatar-lg { width: 60px; height: 60px; font-size: 1.2rem; flex: 0 0 auto; }
+  .profile-section { padding: 20px; }
+  .ask-side { display: none; } /* the box lives in the sheet */
+
+  .ask-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px); border-top: 1px solid var(--border); box-shadow: 0 -12px 30px -20px rgba(43, 36, 64, 0.5);
+  }
+  .ask-bar[hidden] { display: none; }
+  .ask-bar-price { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+  .ask-bar-price strong { font-family: 'Baloo 2', sans-serif; font-size: 1.55rem; }
+  .ask-bar-price span { font-size: 0.78rem; font-weight: 700; color: var(--ink-soft); }
+  .ask-bar .btn { flex: 1 1 auto; max-width: 250px; }
+  .has-ask-bar .footer { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+  /* the checks: a row of badges you swipe, with the explanations written out underneath (no hover on a phone) */
+  .profile-checks .trust-list {
+    flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; margin: 0 -20px 12px; padding: 4px 20px 8px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 32px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 32px), transparent 100%);
+  }
+  .profile-checks .trust-list::-webkit-scrollbar { display: none; }
+  .profile-checks .trust-list li { flex: 0 0 auto; scroll-snap-align: start; }
+  .trust-badge-lg { cursor: default; }
+  .trust-tip { display: none; }
+  .trust-explain { display: grid; gap: 8px; list-style: none; margin: 0 0 4px; padding: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .trust-explain strong { color: var(--ink); }
+  .review-summary { gap: 14px; }
+  .review-bars { flex-basis: 100%; max-width: none; }
 }
-@media (max-width: 480px) {
-  .profile-head { align-items: flex-start; }
-  .avatar-lg { width: 60px; height: 60px; font-size: 1.2rem; }
+/* the sheet holds the box: no frame of its own */
+.sheet-body #askArea > h2 { display: none; }
+.sheet-body .ask-tip { margin-top: 4px; }
+.sheet-body textarea { min-height: 150px; }
+@media (min-width: 640px) { .profile-stats { grid-template-columns: repeat(4, 1fr); } }
+
+/* Settings and dashboard on tablets and phones ---------------------------------------------------------------- */
+@media (max-width: 639px) {
+  .settings, .dash { padding: 24px 16px 72px; }
+  .settings h1, .dash h1 { font-size: 1.7rem; margin-bottom: 18px; }
+  .settings-card { padding: 20px 18px; }
+
+  /* the tab row: swipe it, with a fade at the edges (the chosen tab is scrolled into view) */
+  .tabs {
+    margin: 0 -16px 20px; padding: 2px 44px 8px 16px; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding: 0 16px;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%);
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { scroll-snap-align: center; }
+
+  /* the main button of a long form stays in reach above the keyboard */
+  .settings-card form > button[type="submit"], .contact-card form > button[type="submit"] {
+    width: 100%; position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 6;
+    box-shadow: 0 10px 24px -10px rgba(207, 65, 41, 0.6), 0 0 0 8px var(--card);
+  }
+  .vt-form .btn { justify-self: stretch; }
+
+  /* verification: a compact vertical stepper */
+  .vt-main-list { margin-left: 2px; }
+  .vt-main-list > .vt-step, .vt-main-list > .vt-group { position: relative; }
+  .vt-steps { gap: 0; }
+  .vt-main-list > .vt-step {
+    background: transparent; box-shadow: none; border-radius: 0; padding: 0 0 6px; grid-template-columns: 32px minmax(0, 1fr); gap: 12px;
+  }
+  .vt-main-list > .vt-step::before {
+    content: ''; position: absolute; left: 15px; top: 34px; bottom: 0; width: 3px; background: var(--border); border-radius: 3px;
+  }
+  .vt-main-list > .vt-step:last-child::before { display: none; }
+  .vt-main-list > .vt-passed::before { background: var(--accent2-strong); }
+  .vt-main-list > .vt-step > .vt-main { background: var(--card); border-radius: var(--radius-sm); padding: 12px 14px 8px; margin-bottom: 12px; box-shadow: 0 8px 20px -16px rgba(43, 36, 64, 0.4); }
+  .vt-step .vt-icon { position: relative; z-index: 1; margin-top: 8px; }
+  .vt-head h3 { font-size: 0.98rem; }
+  .vt-step .muted.small { font-size: 0.8rem; }
+  .vt-group { padding: 10px; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .settings, .dash { padding-left: 24px; padding-right: 24px; }
+}
+/* Sign up / log in on a tablet: one centred card, not a stretched one */
+@media (min-width: 640px) and (max-width: 860px) {
+  .auth-split { max-width: 560px; }
+}
+/* A question's progress runs down the card on phones (four steps side by side are too cramped) */
+@media (max-width: 639px) {
+  .timeline { grid-auto-flow: row; grid-auto-columns: auto; gap: 12px; margin: 8px 0 16px; }
+  .timeline li { flex-direction: row; justify-content: flex-start; text-align: left; font-size: 0.9rem; padding: 0; gap: 12px; min-height: 24px; }
+  .timeline li::before { top: -12px; left: 10.5px; right: auto; width: 3px; height: 12px; }
+  .timeline li:first-child::before { display: none; }
+  .booking-top { flex-wrap: wrap; }
+}
+/* Earnings figures: two across then one full-width card on phones (never a lone half-width card), three across on tablets */
+@media (max-width: 639px) {
+  .earn-cards { grid-template-columns: 1fr 1fr; }
+  .earn-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 640px) { .earn-cards { grid-template-columns: repeat(3, 1fr); } }
+/* Admin: the tab and filter chips are one swipe row each on phones instead of five wrapped rows */
+@media (max-width: 639px) {
+  #adminTabs, #statusFilters {
+    flex-wrap: nowrap; overflow-x: auto; margin-left: -16px; margin-right: -16px; padding: 2px 44px 8px 16px; scroll-padding: 0 16px; scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%);
+  }
+  #adminTabs::-webkit-scrollbar, #statusFilters::-webkit-scrollbar { display: none; }
+  #adminTabs .chip, #statusFilters .chip { flex: 0 0 auto; scroll-snap-align: center; }
+  #adminTabs { margin-bottom: 8px !important; }
+  #statusFilters { margin-bottom: 18px !important; }
+}
+/* Admin action rows (reason box + button, transfer reference + Mark as paid, interview slot) stack on phones */
+@media (max-width: 639px) {
+  .mv-decide, .payout-pay, .mv-reject { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-left: 0; }
+  .mv-decide input, .mv-decide .btn, .payout-pay input, .payout-pay .btn, .mv-reject input, .mv-reject .btn { width: 100%; }
+  .mv-decide .btn-sm, .payout-pay .btn-sm, .mv-reject .btn-sm { min-height: 44px; }
+  #ivMinutes, #ivWhen { width: 100% !important; }
+  .iv-add label { margin-top: 6px; }
+  .mv-final { display: grid; gap: 10px; }
+  .mv-final .btn-primary { width: 100%; }
+  .review-actions { gap: 8px !important; }
+  .review-actions .btn { min-height: 44px; }
+  .earn-list li { grid-template-columns: 1fr auto; }
+  .payout-toolbar .btn { flex: 1 1 100%; justify-content: center; }
 }

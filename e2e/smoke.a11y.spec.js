@@ -35,7 +35,7 @@ for (const lang of ['en', 'ka']) {
       const page = pages[who];
       await page.goto(url);
       await page.waitForLoadState('networkidle');
-      if (prepare) await prepare(page);
+      if (prepare) { await prepare(page); await page.waitForTimeout(250); } // let a chosen tab finish changing colour
       const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
       expect(violations.map(describeViolation), `${who} ${url}`).toEqual([]);
     }

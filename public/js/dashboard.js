@@ -278,6 +278,7 @@
       b.setAttribute('aria-selected', String(on));
       b.tabIndex = on ? 0 : -1;
     });
+    btn.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'auto' }); // on a phone the tab row scrolls: keep the chosen tab in view
     panels.forEach((p) => { p.hidden = p.dataset.panel !== activeTab; });
     if (o.push !== false) {
       const url = new URL(window.location.href);

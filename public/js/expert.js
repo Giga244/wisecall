@@ -28,6 +28,50 @@
   const expert = await profileRequest;
   if (!expert) { showMessage('expert.notFound'); return; }
 
+  // ---- Phones: the question box is a bottom sheet, opened from a bar fixed to the bottom of the screen ----------
+  // One element holds the box (askArea); it sits in the side panel on tablets and desktops and in the sheet on phones.
+  const phone = window.matchMedia('(max-width: 639px)');
+  const askAreaEl = document.createElement('div');
+  askAreaEl.id = 'askArea';
+  const bar = document.createElement('div');
+  bar.className = 'ask-bar';
+  bar.hidden = true;
+  const sheetEl = document.createElement('div');
+  sheetEl.className = 'sheet';
+  sheetEl.id = 'askSheet';
+  sheetEl.hidden = true;
+  sheetEl.innerHTML = `
+    <div class="sheet-backdrop" data-sheet-close></div>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="askSheetTitle" tabindex="-1">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="askSheetTitle"></h2>
+        <button type="button" class="sheet-close" data-sheet-close data-i18n-aria="sheet.close" aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="sheet-body" id="askSheetBody"></div>
+    </div>`;
+  document.body.append(bar, sheetEl);
+  const sheet = WisecallSheet.create(sheetEl);
+  function mountAsk() {
+    const target = phone.matches ? document.getElementById('askSheetBody') : document.getElementById('askCard');
+    if (target && askAreaEl.parentNode !== target) target.appendChild(askAreaEl);
+  }
+  function updateBar() {
+    const own = Boolean(user && user.id === expert.id);
+    const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
+    const show = phone.matches && !own;
+    bar.hidden = !show;
+    document.body.classList.toggle('has-ask-bar', show);
+    document.getElementById('askSheetTitle').textContent = prelaunch ? t('expert.prelaunch.title') : t('expert.askTitle').replace('{name}', expert.name);
+    sheetEl.querySelector('.sheet-close').setAttribute('aria-label', t('sheet.close'));
+    bar.innerHTML = `
+      <div class="ask-bar-price"><strong>${WisecallAPI.formatPrice(expert.price)}</strong><span>${t('expert.priceLabel')}</span></div>
+      <button type="button" class="btn btn-primary btn-lg" id="askOpen" aria-haspopup="dialog" aria-expanded="false" aria-controls="askSheet">${t(prelaunch ? 'wait.join' : 'expert.askCta')}</button>`;
+    const open = bar.querySelector('#askOpen');
+    open.addEventListener('click', () => sheet.open(open));
+  }
+  phone.addEventListener('change', () => { mountAsk(); if (!phone.matches) sheet.close(false); updateBar(); });
+
   // ---- Small formatters ----------------------------------------------------------------------------------
   function waitText(seconds) {
     if (seconds === null || seconds === undefined) return null;
@@ -79,7 +123,7 @@
         </section>
 
         <aside class="ask-side" aria-label="${escapeHtml(t('expert.askTitle').replace('{name}', expert.name))}">
-          <div class="ask-panel" id="askCard"><div id="askArea"></div></div>
+          <div class="ask-panel" id="askCard"></div>
         </aside>
 
         ${expert.bio ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
@@ -102,6 +146,8 @@
     crumbs.innerHTML = crumbsHtml();
     page.setAttribute('aria-busy', 'false');
     page.innerHTML = profileHtml();
+    mountAsk();
+    updateBar();
     WisecallReport.wire(page);
     loadReviews();
     if (!checking && !returnedFromBank) renderAskForm(); else if (askState) askArea().innerHTML = askState;
@@ -260,5 +306,7 @@
 
   draw();
   if (returnedFromBank && user) confirmPayment();
+  // Back from the bank, or a link to #ask: show the box straight away on a phone.
+  if (phone.matches && (returnedFromBank || location.hash === '#ask') && !bar.hidden) sheet.open(bar.querySelector('#askOpen'));
   document.addEventListener('wisecall:lang-changed', draw);
 })();

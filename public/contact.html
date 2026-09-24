@@ -23,6 +23,7 @@
 <link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
 </head><body>
 
 <script src="/js/header.js"></script>
@@ -32,10 +33,10 @@
     <p class="muted" data-i18n="contact.sub">Questions, refund requests, feedback, or a problem with the site? Send us a message and we will reply by email.</p>
     <form id="contactForm" novalidate>
       <label><span data-i18n="contact.name">Your name</span>
-        <input type="text" id="name" maxlength="100" autocomplete="name" required>
+        <input type="text" id="name" maxlength="100" autocomplete="name" autocapitalize="words" required>
       </label>
       <label><span data-i18n="contact.email">Your email</span>
-        <input type="email" id="email" maxlength="254" autocomplete="email" required>
+        <input type="email" id="email" maxlength="254" autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" required>
       </label>
       <label><span data-i18n="contact.message">Message</span>
         <textarea id="message" rows="6" maxlength="3000" required></textarea>

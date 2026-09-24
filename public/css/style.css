@@ -309,7 +309,7 @@ form label {
 }
 form input, form textarea, form select {
   width: 100%; margin-top: 6px; padding: 11px 16px; border-radius: var(--radius-sm); border: 2px solid var(--border);
-  font-family: 'Nunito', sans-serif; font-size: 0.94rem; color: var(--ink); resize: vertical; background: #fff;
+  font-family: 'Nunito', sans-serif; font-size: 1rem; color: var(--ink); resize: vertical; background: #fff;
   transition: border-color 0.15s;
 }
 form input:focus, form textarea:focus, form select:focus { border-color: var(--accent); }
@@ -398,7 +398,7 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 .verify-banner a { color: var(--accent-text); font-weight: 800; text-decoration: none; margin-left: 6px; }
 
 /* Pages that fill in after they load start tall enough for the footer to begin below the fold, so it never jumps. */
-#main { min-height: 85vh; }
+.expert-wrap, .dash, .settings { min-height: 85vh; }
 .breadcrumb { min-height: 34px; }
 
 /* Before launch (LAUNCH_MODE=prelaunch): a slim note under the header, and the home page's Browse section
@@ -738,3 +738,22 @@ img, svg, video { max-width: 100%; }
 .sheet-foot .btn-primary { flex: 2 1 0; }
 html.sheet-open, html.sheet-open body { overflow: hidden; }
 @media (min-width: 640px) { .sheet { display: none !important; } }
+/* Forms on tablets and phones: fields as wide as the card, 16px text (so iOS does not zoom in), room to tap */
+@media (max-width: 1023px) {
+  input, select, textarea { font-size: 16px; }
+  .forgot-row a, .auth-switch a { min-height: 44px; }
+  .form-error { font-size: 0.9rem; }
+}
+@media (min-width: 640px) and (max-width: 860px) {
+  .auth-page .auth-card { max-width: 560px; }
+}
+/* Tap targets on tablets and phones: the logo, language buttons and small links are at least 44px */
+.logo { display: inline-flex; align-items: center; min-height: 44px; }
+@media (max-width: 1023px), (pointer: coarse) {
+  .lang-btn { min-width: 44px; }
+  .breadcrumb a { min-height: 44px; }
+  a.tag { min-height: 44px; }
+  .plain-link { display: inline-flex; align-items: center; min-height: 44px; }
+}@media (max-width: 1023px) {
+  .search-input, .sort-select, .payout-pay input, .mv-decide input, .mv-reject input, .reject-note-input, .waitlist-form input, .waitlist-form select { font-size: 16px; }
+}

@@ -57,7 +57,7 @@
     <h2 data-i18n="settings.profile.title">Profile</h2>
     <form id="profileForm">
       <label><span data-i18n="settings.profile.name">Full name</span>
-        <input type="text" id="name" required>
+        <input type="text" id="name" autocomplete="name" autocapitalize="words" required>
       </label>
       <label><span data-i18n="settings.profile.bio">Bio</span>
         <textarea id="bio" rows="3"></textarea>
@@ -78,7 +78,7 @@
     <div id="verificationBox" style="display:none; margin: 12px 0;"></div>
     <form id="mentorForm" style="display:none">
       <label><span data-i18n="settings.mentor.roleTitle">Title</span>
-        <input type="text" id="roleTitle" placeholder="Cardiologist, 14 yrs" required>
+        <input type="text" id="roleTitle" placeholder="Cardiologist, 14 yrs" autocomplete="organization-title" required>
       </label>
       <label><span data-i18n="settings.mentor.niche">Niche</span>
         <select id="niche" required>
@@ -99,10 +99,10 @@
         </select>
       </label>
       <label><span data-i18n="settings.mentor.price">Price per question (USD)</span>
-        <input type="number" id="price" min="5" max="2000" step="1" required>
+        <input type="number" id="price" min="5" max="2000" step="1" inputmode="numeric" required>
       </label>
       <label><span data-i18n="settings.mentor.proofUrl">Proof of expertise — a LinkedIn link is strongly preferred</span>
-        <input type="url" id="proofUrl" placeholder="https://linkedin.com/in/yourname" required>
+        <input type="url" id="proofUrl" placeholder="https://linkedin.com/in/yourname" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" required>
         <span class="hint" data-i18n="settings.mentor.proofUrl.hint">Required. We check this before your profile goes public — it's how we confirm you're actually worth paying for advice.</span>
       </label>
       <label><span data-i18n="settings.mentor.sample">Sample answer — reply to a typical question in your field</span>
@@ -124,10 +124,10 @@
     <p class="muted small" data-i18n="settings.payouts.intro">This is where we send your earnings by bank transfer. Only you and the Wisecall team can see it.</p>
     <form id="payoutForm">
       <label><span data-i18n="settings.payouts.name">Account holder (full name)</span>
-        <input type="text" id="payoutName" maxlength="100" autocomplete="name">
+        <input type="text" id="payoutName" maxlength="100" autocomplete="name" autocapitalize="words">
       </label>
       <label><span data-i18n="settings.payouts.iban">Georgian IBAN</span>
-        <input type="text" id="payoutIban" maxlength="40" placeholder="GE00XX0000000000000000" autocomplete="off" spellcheck="false">
+        <input type="text" id="payoutIban" maxlength="40" placeholder="GE00XX0000000000000000" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
         <span class="hint" data-i18n="settings.payouts.ibanHint">22 characters, starting with GE. You can find it in your bank app.</span>
       </label>
       <p class="form-error" id="payoutError" role="alert"></p>
@@ -144,7 +144,7 @@
       <div class="field">
         <label for="currentPassword" data-i18n="settings.password.current">Current password</label>
         <div class="pw-wrap">
-          <input type="password" id="currentPassword" autocomplete="current-password" required>
+          <input type="password" id="currentPassword" autocomplete="current-password" autocapitalize="none" required>
           <button type="button" class="pw-toggle" aria-controls="currentPassword" aria-pressed="false" data-i18n-aria="auth.pw.show" aria-label="Show password"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
       </div>

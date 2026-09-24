@@ -14,12 +14,17 @@ module.exports = async () => {
   const db = process.env.TEST_DATABASE_URL;
   if (!db) throw new Error('Set TEST_DATABASE_URL in .env (a separate database from the real one; it is wiped).');
 
-  const pool = new Pool({ connectionString: db });
-  await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
-  await pool.end();
+  // E2E_KEEP_DATA=1 keeps the database and the mail log from the previous run, to re-run one spec (for example the
+  // responsive one) against the data the earlier specs created.
+  const keep = process.env.E2E_KEEP_DATA === '1';
+  if (!keep) {
+    const pool = new Pool({ connectionString: db });
+    await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
+    await pool.end();
+  }
 
   fs.mkdirSync(TMP, { recursive: true });
-  fs.writeFileSync(path.join(TMP, 'mail.jsonl'), '');
+  if (!keep || !fs.existsSync(path.join(TMP, 'mail.jsonl'))) fs.writeFileSync(path.join(TMP, 'mail.jsonl'), '');
   const log = fs.openSync(path.join(TMP, 'server.log'), 'w');
 
   const proc = spawn(process.execPath, ['server/index.js'], {

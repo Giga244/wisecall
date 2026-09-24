@@ -34,7 +34,8 @@
     if (!list.length) return '';
     return `<ul class="trust-list" aria-label="${esc(WisecallI18n.t('badge.title'))}">${list.map((b) => `
       <li><span class="trust-badge trust-badge-lg" tabindex="0" aria-describedby="tip-${b.key}">${icon(b.key)}<span>${esc(label(b.key))}</span>
-        <span class="trust-tip" role="tooltip" id="tip-${b.key}">${esc(tip(b))}</span></span></li>`).join('')}</ul>`;
+        <span class="trust-tip" role="tooltip" id="tip-${b.key}">${esc(tip(b))}</span></span></li>`).join('')}</ul>
+      <ul class="trust-explain">${list.map((b) => `<li><strong>${esc(label(b.key))}</strong> ${esc(tip(b))}</li>`).join('')}</ul>`;
   }
 
   // All four badges with a short explanation, for pages that explain how verification works.

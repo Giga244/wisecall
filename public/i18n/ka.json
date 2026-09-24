@@ -1070,5 +1070,6 @@
   "experts.showResults.one": "1 ექსპერტის ჩვენება",
   "experts.count": "{n} ექსპერტი",
   "experts.count.one": "1 ექსპერტი",
-  "sheet.close": "დახურვა"
+  "sheet.close": "დახურვა",
+  "expert.askCta": "დასვი კითხვა"
 }

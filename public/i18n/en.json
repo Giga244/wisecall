@@ -1070,5 +1070,6 @@
   "experts.showResults.one": "Show 1 expert",
   "experts.count": "{n} experts",
   "experts.count.one": "1 expert",
-  "sheet.close": "Close"
+  "sheet.close": "Close",
+  "expert.askCta": "Ask a question"
 }

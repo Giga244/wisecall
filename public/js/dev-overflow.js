@@ -10,7 +10,7 @@
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed') return;
       const r = el.getBoundingClientRect();
-      if (!r.width || (r.right <= vw + 1 && r.left >= -1)) return;
+      if (!r.width || (r.right <= vw + 1 && (r.left >= -1 || r.right <= 1))) return; // (entirely off to the left on purpose, like the skip link: fine)
       // inside something that scrolls sideways or clips on purpose (a swipe row, the hero's blobs): fine
       for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
         if (/auto|scroll|hidden|clip/.test(getComputedStyle(p).overflowX)) return;
