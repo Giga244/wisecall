@@ -178,8 +178,9 @@
   // ---- Questions for me (mentors) -----------------------------------------------------------------------------------
   function receivedEmpty() {
     const listed = user.verificationStatus === 'verified' && user.hasPayoutDetails;
+    const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
     return listed
-      ? emptyState('dash.received.empty.title', 'dash.received.empty.body', '')
+      ? (prelaunch ? emptyState('dash.received.prelaunch.title', 'dash.received.prelaunch.body', '') : emptyState('dash.received.empty.title', 'dash.received.empty.body', ''))
       : emptyState('dash.received.notListed.title', 'dash.received.notListed.body', `<a class="btn btn-primary" href="/settings.html?tab=verification">${t('dash.received.notListed.cta')}</a>`);
   }
 

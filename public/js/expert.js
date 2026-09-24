@@ -187,6 +187,15 @@
   function renderAskForm() {
     const area = askArea();
     if (!area) return;
+    // Before launch nobody can pay, so the box offers the waiting list instead of the question form.
+    if (WisecallI18n.launchMode() === 'prelaunch' && !(user && user.id === expert.id)) {
+      area.innerHTML = `
+        <h2>${t('expert.prelaunch.title')}</h2>
+        <p class="ask-tip">${escapeHtml(t('expert.prelaunch.body').replace('{name}', expert.name))}</p>
+        <div class="empty-wait">${WisecallWaitlist.html(expert.niche)}</div>`;
+      WisecallWaitlist.wire(area);
+      return;
+    }
     if (!user) {
       const back = encodeURIComponent(location.pathname + location.search);
       area.innerHTML = `

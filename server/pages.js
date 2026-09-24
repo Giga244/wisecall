@@ -106,7 +106,8 @@ function seoRoutes() {
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
       const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3], ['/signup.html', 0.5], ['/login.html', 0.3]];
-      const { rows } = await query(`SELECT id, created_at FROM users WHERE ${listableSql()} ORDER BY created_at DESC LIMIT 5000`);
+      // Before launch the profiles are not offered to visitors, so they are not offered to search engines either.
+      const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT id, created_at FROM users WHERE ${listableSql()} ORDER BY created_at DESC LIMIT 5000`)).rows;
       const urls = [
         ...staticPages.map(([p, prio]) => `<url><loc>${escapeHtml(config.PUBLIC_URL + p)}</loc><priority>${prio}</priority></url>`),
         ...rows.map((r) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/expert.html?id=${r.id}`)}</loc><lastmod>${new Date(r.created_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority></url>`)

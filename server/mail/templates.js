@@ -64,7 +64,8 @@ const S = {
     mentorApproved: {
       subject: "You're approved as a Wisecall mentor", heading: 'Welcome aboard',
       intro: 'Your mentor application was approved.',
-      after: 'One last step: add your name and IBAN in Settings so you appear in Browse experts and can be paid.', button: 'Add payout details'
+      after: 'One last step: add your name and IBAN in Settings so you appear in Browse experts and can be paid.', button: 'Add payout details',
+      prelaunch: "Wisecall has not opened to buyers yet. Your profile goes live on launch day, and we'll email you the day it does."
     },
     mentorRejected: {
       subject: 'About your Wisecall mentor application', heading: "We couldn't approve your application yet",
@@ -166,7 +167,8 @@ const S = {
     mentorApproved: {
       subject: 'შენ დამტკიცდი Wisecall-ის მენტორად', heading: 'კეთილი იყოს შენი მობრძანება',
       intro: 'შენი მენტორის განაცხადი დამტკიცდა.',
-      after: 'ბოლო ნაბიჯი: პარამეტრებში მიუთითე შენი სახელი და IBAN, რომ გამოჩნდე ექსპერტების სიაში და ანაზღაურება მიიღო.', button: 'გადახდის მონაცემების დამატება'
+      after: 'ბოლო ნაბიჯი: პარამეტრებში მიუთითე შენი სახელი და IBAN, რომ გამოჩნდე ექსპერტების სიაში და ანაზღაურება მიიღო.', button: 'გადახდის მონაცემების დამატება',
+      prelaunch: 'Wisecall ჯერ მყიდველებისთვის არ გახსნილა. შენი პროფილი გამოჩნდება გახსნის დღეს და იმ დღესვე მოგწერთ ელფოსტით.'
     },
     mentorRejected: {
       subject: 'შენი მენტორის განაცხადის შესახებ', heading: 'განაცხადის დამტკიცება ჯერ ვერ შევძელით',
@@ -252,7 +254,7 @@ const BUILDERS = {
   }),
   mentorApproved: (s) => ({
     heading: s.mentorApproved.heading,
-    blocks: [{ p: s.mentorApproved.intro }, { p: s.mentorApproved.after }, { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]
+    blocks: [{ p: s.mentorApproved.intro }, { p: s.mentorApproved.after }, ...(config.LAUNCH_MODE === 'prelaunch' ? [{ p: s.mentorApproved.prelaunch }] : []), { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]
   }),
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,

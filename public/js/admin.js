@@ -9,6 +9,7 @@
   }
 
   const content = document.getElementById('adminContent');
+  document.getElementById('adminLaunchNote').hidden = WisecallI18n.launchMode() !== 'prelaunch';
   const filters = document.getElementById('statusFilters');
   let activeStatus = 'pending';
   let tab = 'mentors';

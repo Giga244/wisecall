@@ -98,16 +98,7 @@ section h2 { font-size: 2rem; margin: 0 0 12px; }
 
 /* 7. Browse experts (extras: rich empty state, waiting list) ---------------------------------------- */
 .experts { padding: 10px 0 80px; }
-.empty-wait { width: 100%; margin-top: 18px; }
-.waitlist-form { background: var(--card); border-radius: var(--radius); padding: 22px; text-align: left; box-shadow: 0 10px 26px -18px rgba(43, 36, 64, 0.3); }
-.waitlist-form h3 { margin: 0 0 14px; font-size: 1.1rem; font-weight: 800; }
-.waitlist-row { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 12px; align-items: end; }
-.waitlist-row label { margin-bottom: 0; }
-.waitlist-row .btn { min-height: 46px; }
-.waitlist-form .hint { margin: 12px 0 4px; }
-.waitlist-form .hint a { color: var(--accent-text); font-weight: 800; }
-.waitlist-error { margin: 6px 0 0; }
-.waitlist-done { background: #e3f7ef; color: var(--accent2-text); padding: 16px 20px; border-radius: var(--radius-sm); font-weight: 800; margin: 0; }
+/* (The waiting-list form styles are in style.css: the expert profile uses the form too.) */
 
 /* 8. For mentors ------------------------------------------------------------------------------------ */
 .mentors { background: var(--ink); color: #fff; padding: 76px 0; position: relative; overflow: hidden; }
@@ -177,8 +168,6 @@ section h2 { font-size: 2rem; margin: 0 0 12px; }
   .how-steps { gap: 34px; }
   .how-step:not(:last-child)::after { top: calc(100% - 2px); left: 62px; width: 0; height: 34px; border-top: none; border-left: 3px dashed #9cc7b8; }
   .how-step:not(:last-child)::before { top: calc(100% + 24px); left: 57px; transform: rotate(135deg); }
-  .waitlist-row { grid-template-columns: 1fr; }
-  .waitlist-row .btn { width: 100%; }
 }
 @media (max-width: 560px) {
   section h2, .cta-band h2 { font-size: 1.6rem; }

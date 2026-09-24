@@ -91,6 +91,12 @@ async function checkLicenses() {
   if (r.reminded || r.delisted) console.log(`[jobs] license check: ${r.reminded} reminder(s), ${r.delisted} mentor(s) taken off the site`);
 }
 
+// People on the waiting list are told once the site is open and a mentor in their field is listed.
+async function notifyWaitingList() {
+  const n = await require('./waitlist').launchDay();
+  if (n) console.log(`[jobs] told ${n} person/people on the waiting list that mentors are available`);
+}
+
 async function runSweep() {
   const client = await pool.connect();
   try {
@@ -105,6 +111,7 @@ async function runSweep() {
       await purgeDocuments();
       await releaseHeldAnswers();
       await checkLicenses();
+      await notifyWaitingList();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }

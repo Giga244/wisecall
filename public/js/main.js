@@ -62,12 +62,33 @@
         <h3>${escapeHtml(title)}</h3>
         <p>${escapeHtml(body)}</p>
         <a class="btn btn-primary" href="${becomeHref}">${t('wait.mentorCta')}</a>
-        <div class="empty-wait">${WisecallHome.waitlistHtml(activeNiche === 'all' ? 'any' : activeNiche)}</div>
+        <div class="empty-wait">${WisecallWaitlist.html(activeNiche === 'all' ? 'any' : activeNiche)}</div>
       </div>`;
+  }
+
+  // Before launch nobody can ask a question, so Browse shows the waiting list instead of the experts.
+  const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
+  let prelaunchLang = null;
+  function launchingSoon() {
+    const field = activeNiche === 'all' ? 'any' : activeNiche;
+    const form = grid.querySelector('.waitlist-form');
+    // Choosing a field in the strip only changes the field; what the visitor has typed stays.
+    if (form && prelaunchLang === WisecallI18n.getLang()) { form.niche.value = field; return; }
+    prelaunchLang = WisecallI18n.getLang();
+    grid.innerHTML = `
+      <div class="empty-state empty-rich prelaunch-panel">
+        ${WisecallHome.emptyArt}
+        <h3>${escapeHtml(t('experts.prelaunch.panelTitle'))}</h3>
+        <p>${escapeHtml(t('experts.prelaunch.body'))}</p>
+        <div class="empty-wait">${WisecallWaitlist.html(field)}</div>
+        <a class="btn btn-outline" href="${becomeHref}">${t('wait.mentorCta')}</a>
+      </div>`;
+    WisecallWaitlist.wire(grid);
   }
 
   let loaded = false;
   function render() {
+    if (prelaunch) { launchingSoon(); return; }
     if (!loaded) { grid.innerHTML = `<p class="muted">${t('experts.loading')}</p>`; return; }
     let list = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
     if (searchTerm) {
@@ -82,7 +103,7 @@
 
     if (allExperts.length === 0) {
       grid.innerHTML = emptyState('all');
-      WisecallHome.wireWaitlist(grid);
+      WisecallWaitlist.wire(grid);
       return;
     }
     if (list.length === 0) {
@@ -91,7 +112,7 @@
         grid.innerHTML = `<p class="muted">${t('experts.noMatch')}</p>`;
       } else {
         grid.innerHTML = emptyState('niche');
-        WisecallHome.wireWaitlist(grid);
+        WisecallWaitlist.wire(grid);
       }
       return;
     }
@@ -149,13 +170,15 @@
   document.addEventListener('wisecall:lang-changed', render);
 
   setNiche(new URLSearchParams(window.location.search).get('niche') || 'all', { push: false });
-  try {
-    const data = await WisecallAPI.apiFetch('/experts');
-    allExperts = data.experts;
-    loaded = true;
-    render();
-  } catch (e) {
-    grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
+  if (!prelaunch) {
+    try {
+      const data = await WisecallAPI.apiFetch('/experts');
+      allExperts = data.experts;
+      loaded = true;
+      render();
+    } catch (e) {
+      grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
+    }
   }
 
   const legend = document.getElementById('badgeLegend');

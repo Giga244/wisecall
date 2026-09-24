@@ -14,6 +14,8 @@ const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('
 const router = express.Router();
 
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
+  // Before launch nobody can pay: refuse before anything is created or the bank is contacted.
+  if (config.LAUNCH_MODE === 'prelaunch') return res.status(403).json({ error: 'prelaunch', message: 'Wisecall has not opened to buyers yet. Join the waiting list and we will tell you the day it does.' });
   const { mentorId, question } = req.body || {};
   if (typeof mentorId !== 'string' || typeof question !== 'string' || question.trim().length < 5) {
     return res.status(400).json({ error: 'missing_fields' });

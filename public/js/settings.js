@@ -145,7 +145,7 @@
     const status = lastVerification.status;
     const verified = status === 'verified';
     const tone = verified ? 'answered' : (status === 'rejected' || status === 'suspended' ? 'rejected' : 'pending_payment');
-    const label = verified ? 'vt.status.verifiedListed' : (status === 'suspended' ? 'vt.status.suspended' : (status === 'rejected' ? 'vt.status.rejected' : (lastVerification.ready ? 'vt.status.pendingReady' : 'vt.status.pending')));
+    const label = verified ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : (status === 'suspended' ? 'vt.status.suspended' : (status === 'rejected' ? 'vt.status.rejected' : (lastVerification.ready ? 'vt.status.pendingReady' : 'vt.status.pending')));
     const text = t('vt.progress').replace('{done}', done).replace('{total}', total);
     progressBox.hidden = false;
     progressBox.innerHTML = `

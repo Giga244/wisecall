@@ -14,14 +14,17 @@
 
   // Public settings from the server (fee, deadline, price range, contact email, social links), fetched
   // once and shared by every script on the page. If the request fails the defaults are used.
-  const DEFAULT_CONFIG = { answerDeadlineDays: 7, platformFeePercent: 20, mentorSharePercent: 80, priceMin: 5, priceMax: 2000, currency: 'gel', contactEmail: null, social: {} };
+  const DEFAULT_CONFIG = { answerDeadlineDays: 7, platformFeePercent: 20, mentorSharePercent: 80, priceMin: 5, priceMax: 2000, currency: 'gel', contactEmail: null, social: {}, launchMode: 'live' };
   let configPromise = null;
+  let loadedConfig = DEFAULT_CONFIG;
   function getConfig() {
     if (!configPromise) {
-      configPromise = fetch('/api/config').then((r) => (r.ok ? r.json() : {})).catch(() => ({})).then((c) => Object.assign({}, DEFAULT_CONFIG, c));
+      configPromise = fetch('/api/config').then((r) => (r.ok ? r.json() : {})).catch(() => ({})).then((c) => { loadedConfig = Object.assign({}, DEFAULT_CONFIG, c); return loadedConfig; });
     }
     return configPromise;
   }
+  // "live" or "prelaunch" (buyers cannot pay yet). Known once initI18n() has finished; "live" before that.
+  const launchMode = () => loadedConfig.launchMode;
 
   // Texts may contain {answerDays}, {feePct}, {sharePct}, {priceMin} and {priceMax}; they are filled in
   // from the server's settings so the page never disagrees with what the server really does.
@@ -49,8 +52,10 @@
 
   function applyDict(dict) {
     currentDict = dict;
+    // Before launch some texts are different: data-i18n-prelaunch names the text to use instead of data-i18n.
+    const pre = launchMode() === 'prelaunch';
     document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
+      const key = (pre && el.getAttribute('data-i18n-prelaunch')) || el.getAttribute('data-i18n');
       if (dict[key] !== undefined) el.textContent = fillVars(dict[key]);
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
@@ -89,6 +94,7 @@
     document.documentElement.lang = lang;
     const [dict, cfg] = await Promise.all([loadDict(lang), getConfig()]);
     setVarsFrom(cfg);
+    document.documentElement.dataset.launch = cfg.launchMode; // lets the stylesheet show or hide things per mode
     applyDict(dict);
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.lang === lang);
@@ -98,5 +104,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, ready };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, ready };
 })();

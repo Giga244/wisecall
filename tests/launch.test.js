@@ -140,6 +140,139 @@ describe('social links', () => {
   });
 });
 
+describe('launch mode: prelaunch, then live', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { spawnSync } = require('child_process');
+  const { Pool } = require('pg');
+  const { client, addPayoutDetails, approveMentor, bookAndPay, SAMPLE, ROOT, wait } = require('./helpers');
+  const { createFakeResend, signupByEmail } = require('./fakeResend');
+  const fake = createFakeResend();
+  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+  const emailEnv = () => ({ EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: fake.url, EMAIL_FROM: 'Wisecall <hello@wisecall.example>' });
+  const row = async (email) => (await pool.query('SELECT niche, prelaunch, notified_at FROM waitlist WHERE lower(email) = $1', [email])).rows[0];
+  let pre, live, seeker, mentorId;
+
+  before(async () => {
+    await resetDatabase();
+    await fake.start();
+    pre = await startServer(4594, { LAUNCH_MODE: 'prelaunch', ...emailEnv() });
+  });
+  after(async () => {
+    [pre, live].forEach((s) => s && s.proc.kill());
+    await pool.end();
+    await fake.stop();
+  });
+
+  test('the server says which mode it is in, and logs it', async () => {
+    assert.equal((await (await fetch(`${pre.base}/api/config`)).json()).launchMode, 'prelaunch');
+    assert.match(pre.logs(), /Launch mode: PRELAUNCH/);
+  });
+
+  test('a mistyped LAUNCH_MODE stops the server with a clear message', () => {
+    const out = spawnSync('node', ['server/index.js'], { cwd: ROOT, env: { ...process.env, NODE_ENV: '', PORT: '4599', DATABASE_URL: process.env.TEST_DATABASE_URL, LAUNCH_MODE: 'soon' }, encoding: 'utf8', timeout: 15000 });
+    assert.match(out.stderr, /LAUNCH_MODE must be prelaunch or live/);
+  });
+
+  test('visitors can join the waiting list, and are marked as having joined before launch', async () => {
+    for (const [email, niche] of [['wait-any@example.com', 'any'], ['wait-med@example.com', 'medicine']]) {
+      assert.equal((await client(pre.base).api('/waitlist', { method: 'POST', body: { email, niche, language: 'ka' } })).status, 201);
+    }
+    const r = await row('wait-any@example.com');
+    assert.equal(r.prelaunch, true);
+    assert.equal(r.notified_at, null);
+  });
+
+  test('mentors can still sign up, apply, be verified and add payout details', async () => {
+    const admin = await signupByEmail(fake, pre.base, 'QA Admin', 'qa-admin@example.com');
+    const m = await signupByEmail(fake, pre.base, 'Dr Prelaunch', 'mentor@example.com');
+    assert.equal((await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Doctor', niche: 'medicine', price: 25, proofUrl: 'https://linkedin.com/in/dr-prelaunch', sampleAnswer: SAMPLE } })).status, 200);
+    await approveMentor(admin, m);
+    await addPayoutDetails(m);
+    const me = (await m.api('/me')).user;
+    assert.equal(me.verificationStatus, 'verified');
+    assert.equal(me.hasPayoutDetails, true);
+    mentorId = me.id;
+  });
+
+  test('the approval email tells the mentor the site is not open yet (English and Georgian)', async () => {
+    const mail = await fake.waitFor('mentor@example.com', 'approved');
+    assert.match(mail.body.html, /has not opened to buyers yet/);
+    const render = (lang, mode) => JSON.parse(spawnSync('node', ['-e', `const { render } = require('./server/mail/templates'); const r = render('mentorApproved', '${lang}', {}); console.log(JSON.stringify(r.html));`],
+      { cwd: ROOT, env: { ...process.env, LAUNCH_MODE: mode, NODE_ENV: '', DATABASE_URL: process.env.TEST_DATABASE_URL }, encoding: 'utf8' }).stdout.trim().split('\n').pop());
+    assert.match(render('ka', 'prelaunch'), /ჯერ მყიდველებისთვის არ გახსნილა/);
+    assert.doesNotMatch(render('en', 'live'), /not opened to buyers yet/);
+    assert.doesNotMatch(render('ka', 'live'), /ჯერ მყიდველებისთვის არ გახსნილა/);
+  });
+
+  test('nobody can pay: no booking is created and the bank is never contacted', async () => {
+    seeker = await signupByEmail(fake, pre.base, 'Sam Seeker', 'seeker@example.com');
+    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: 'Can you help me with my sleep?' } });
+    assert.equal(r.status, 403);
+    assert.equal(r.error, 'prelaunch');
+    assert.equal((await pool.query('SELECT count(*)::int AS n FROM bookings')).rows[0].n, 0);
+    assert.equal((await client(pre.base).api('/bookings', { method: 'POST', body: { mentorId, question: 'Anonymous try' } })).status, 401);
+  });
+
+  test('listing a mentor does not send the waiting list a "mentors have joined" email yet', async () => {
+    await wait(1500);
+    assert.equal(fake.to('wait-any@example.com').length, 0);
+    assert.equal(fake.to('wait-med@example.com').length, 0);
+    assert.equal((await row('wait-med@example.com')).notified_at, null, 'they are still waiting');
+  });
+
+  test('profiles are left out of the sitemap before launch', async () => {
+    const sitemap = await (await fetch(`${pre.base}/sitemap.xml`)).text();
+    assert.doesNotMatch(sitemap, /expert\.html/);
+    assert.match(sitemap, /<loc>http:\/\/localhost:4594\/<\/loc>/);
+  });
+
+  test('when the site goes live, buyers can pay and the waiting list is told once', async () => {
+    pre.proc.kill();
+    live = await startServer(4595, { LAUNCH_MODE: 'live', SWEEP_INTERVAL_SECONDS: '1', ...emailEnv() });
+    assert.equal((await (await fetch(`${live.base}/api/config`)).json()).launchMode, 'live');
+    assert.match(live.logs(), /Launch mode: live/);
+
+    // Someone who joins after launch is not in the launch-day batch.
+    assert.equal((await client(live.base).api('/waitlist', { method: 'POST', body: { email: 'later@example.com', niche: 'any' } })).status, 201);
+    assert.equal((await row('later@example.com')).prelaunch, false);
+
+    const any = await fake.waitFor('wait-any@example.com', undefined, 12000);
+    const med = await fake.waitFor('wait-med@example.com', undefined, 12000);
+    assert.match(any.body.html, /[ა-ჿ]/, 'in the language they joined with');
+    assert.match(med.body.html, /waitlist-unsubscribe\.html\?token=/);
+    await wait(2500); // two more sweeps: nobody is emailed twice
+    assert.equal(fake.to('wait-any@example.com').length, 1);
+    assert.equal(fake.to('wait-med@example.com').length, 1);
+    assert.equal(fake.to('later@example.com').length, 0);
+    assert.ok((await row('wait-any@example.com')).notified_at);
+
+    assert.match(await (await fetch(`${live.base}/sitemap.xml`)).text(), /expert\.html\?id=/);
+    const s = client(live.base);
+    assert.equal((await s.api('/auth/login', { method: 'POST', body: { email: 'seeker@example.com', password: 'test-pass-12345' } })).status, 200);
+    assert.equal((await bookAndPay(live.base, s, mentorId, 'Can you help me with my sleep?')).status, 'paid');
+  });
+
+  test('the pages and the dictionary know about prelaunch (English and Georgian)', () => {
+    const pub = (f) => fs.readFileSync(path.join(ROOT, 'public', f), 'utf8');
+    const en = JSON.parse(pub('i18n/en.json')), ka = JSON.parse(pub('i18n/ka.json'));
+    const wanted = new Set(['hero.prelaunch.cta', 'hero.prelaunch.note', 'experts.prelaunch.title', 'experts.prelaunch.panelTitle', 'experts.prelaunch.body', 'wait.prelaunch.title', 'wait.join',
+      'cta.prelaunch.title', 'cta.prelaunch.sub', 'launch.banner', 'launch.banner.mentor', 'expert.prelaunch.title', 'expert.prelaunch.body', 'vt.status.verifiedPrelaunch',
+      'dash.received.prelaunch.title', 'dash.received.prelaunch.body', 'admin.launch.banner']);
+    for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html'))) {
+      for (const m of pub(f).matchAll(/data-i18n-prelaunch="([^"]+)"/g)) wanted.add(m[1]);
+    }
+    for (const key of wanted) {
+      assert.ok(en[key], `${key} in English`);
+      assert.match(ka[key] || '', /[ა-ჿ]/, `${key} in Georgian`);
+    }
+    const home = pub('index.html');
+    assert.match(home, /data-i18n-prelaunch="hero\.prelaunch\.cta"/);
+    assert.match(home, /data-i18n-prelaunch="mentors\.cta"/);
+    for (const f of ['js/main.js', 'js/expert.js', 'js/nav.js', 'js/dashboard.js', 'js/settings.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
+  });
+});
+
 describe('development warnings', () => {
   let srv;
   before(async () => { await resetDatabase(); srv = await startServer(4587); });

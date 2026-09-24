@@ -169,7 +169,7 @@
     const pct = total ? Math.round((done / total) * 100) : 0;
 
     let headline;
-    if (v.status === 'verified') headline = user.hasPayoutDetails ? 'vt.status.verifiedListed' : 'vt.status.verifiedNoPayout';
+    if (v.status === 'verified') headline = user.hasPayoutDetails ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : 'vt.status.verifiedNoPayout';
     else if (v.status === 'suspended') headline = 'vt.status.suspended';
     else if (v.status === 'rejected') headline = 'vt.status.rejected';
     else if (v.ready) headline = 'vt.status.pendingReady';

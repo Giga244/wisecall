@@ -1,5 +1,5 @@
 // Pieces of the home page that are not the expert list: the field strip, the FAQ accordion and the
-// "get notified when mentors join" form (which main.js shows when there is nobody to list yet).
+// empty-list art (main.js shows it when there is nobody to list yet; the waiting-list form is in waitlist.js).
 (function () {
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -53,44 +53,6 @@
     });
   }
 
-  // ---- "Get notified when mentors in your field join" ----------------------------------------------------------
-  function waitlistHtml(niche) {
-    const options = ['any', ...Object.keys(NICHES)].map((k) => `<option value="${k}"${k === (niche || 'any') ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : t('niche.' + k))}</option>`).join('');
-    return `
-      <form class="waitlist-form" novalidate>
-        <h3>${t('wait.title')}</h3>
-        <div class="waitlist-row">
-          <label><span>${t('wait.email')}</span><input type="email" name="email" maxlength="254" autocomplete="email" required></label>
-          <label><span>${t('wait.niche')}</span><select name="niche">${options}</select></label>
-          <button class="btn btn-primary" type="submit">${t('wait.submit')}</button>
-        </div>
-        <p class="hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
-        <p class="form-error waitlist-error" role="alert"></p>
-      </form>`;
-  }
-  function wireWaitlist(root) {
-    root.querySelectorAll('.waitlist-form').forEach((form) => {
-      if (form.dataset.wired) return;
-      form.dataset.wired = '1';
-      form.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const error = form.querySelector('.waitlist-error');
-        error.textContent = '';
-        const email = form.email.value.trim();
-        if (!form.email.checkValidity() || !email) { error.textContent = t('wait.error'); form.email.focus(); return; }
-        const button = form.querySelector('button');
-        button.disabled = true;
-        try {
-          await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang() } });
-          form.outerHTML = `<p class="waitlist-done" role="status">${esc(t('wait.done'))}</p>`;
-        } catch (e) {
-          error.textContent = t(e.code === 'invalid_email' ? 'wait.error' : 'toast.error');
-          button.disabled = false;
-        }
-      });
-    });
-  }
-
   // A soft illustration for the empty list: two speech bubbles and a spark. Decorative only.
   const EMPTY_ART = `
     <svg class="empty-art" viewBox="0 0 220 150" aria-hidden="true">
@@ -108,5 +70,5 @@
   // The strip's labels need the dictionary, so main.js draws it after the language is loaded.
   document.addEventListener('wisecall:lang-changed', drawStrip);
 
-  window.WisecallHome = { NICHES: Object.keys(NICHES), icon, drawStrip, waitlistHtml, wireWaitlist, emptyArt: EMPTY_ART };
+  window.WisecallHome = { NICHES: Object.keys(NICHES), icon, drawStrip, emptyArt: EMPTY_ART };
 })();

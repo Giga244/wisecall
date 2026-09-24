@@ -81,6 +81,8 @@ if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 app.get('/api/config', (req, res) => {
   res.json({
     currency: config.CURRENCY,
+    // "prelaunch": buyers cannot pay yet and the pages show the waiting list; "live": normal.
+    launchMode: config.LAUNCH_MODE,
     priceMin: config.PRICE_MIN,
     priceMax: config.PRICE_MAX,
     payoutHoldDays: config.PAYOUT_HOLD_DAYS,
@@ -123,6 +125,9 @@ async function start() {
     console.log(config.KYC_PROVIDER === 'mock'
       ? 'ID check: MOCK (development only).'
       : `ID check: ${config.KYC_PROVIDER.toUpperCase()} (webhook URL ${config.PUBLIC_URL}/api/kyc/webhook)`);
+    console.log(config.LAUNCH_MODE === 'prelaunch'
+      ? 'Launch mode: PRELAUNCH. Nobody can pay yet; visitors join the waiting list and mentors can apply and be verified. Set LAUNCH_MODE=live to open.'
+      : 'Launch mode: live.');
     require('./startupWarnings').printWarnings();
   });
 

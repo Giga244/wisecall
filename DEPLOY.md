@@ -172,6 +172,15 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 
 The server will not start in production with a missing required value, with `PAYMENT_PROVIDER=mock`, or with `PUBLIC_URL` pointing at localhost.
 
+### Opening in two steps (`LAUNCH_MODE`)
+
+Recruit mentors and collect a waiting list first, open to buyers later:
+
+1. **`LAUNCH_MODE=prelaunch`.** Mentors can sign up, apply, be verified and add payout details, and visitors can join the waiting list. Nobody can pay: the home page says "Launching soon · Join the waitlist", Browse experts shows the waiting-list form instead of the experts, an expert's profile offers the waiting list instead of the question box, and the server refuses new bookings. Expert profiles are left out of `sitemap.xml`. Mentors' approval emails and their Settings / Dashboard say the site opens on launch day. The admin page shows a reminder, and `/admin.html → Waiting list` shows how many people are waiting per field, with a CSV download.
+2. **`LAUNCH_MODE=live`** (the default) on launch day. Buyers can pay, profiles appear in the sitemap, and everyone who joined the waiting list *before* launch gets one email (in their language) as soon as a mentor in their field is listed. People who join later are emailed when a mentor in their field joins, as before.
+
+`npm run check:launch` reminds you (⚠️) while the site is still in `prelaunch`.
+
 ### Check everything with one command
 
 Before you open the site, and again after any change to the settings above, run this in your host's console (Render: **Shell** tab), or on your computer with the same values in `.env` plus `NODE_ENV=production`:

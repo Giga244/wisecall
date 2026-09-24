@@ -379,6 +379,37 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 }
 .verify-banner a { color: var(--accent-text); font-weight: 800; text-decoration: none; margin-left: 6px; }
 
+/* Before launch (LAUNCH_MODE=prelaunch): a slim note under the header, and the home page's Browse section
+   shows the waiting list instead of the expert search. */
+.launch-banner {
+  background: #e9f7f1; color: #17563f; border-bottom: 1px solid var(--border);
+  text-align: center; padding: 12px 16px; font-size: 0.92rem; font-weight: 700;
+}
+.launch-banner a { color: var(--accent-text); font-weight: 800; margin-left: 6px; }
+.launch-banner-admin { border: 1px solid #bfe6d5; border-radius: var(--radius-sm); text-align: left; margin: 0 0 18px; }
+[data-launch="prelaunch"] .browse-toolbar,
+[data-launch="prelaunch"] .filters { display: none; }
+
+/* The waiting-list form (home page and expert profile) */
+.empty-wait { width: 100%; margin-top: 18px; }
+.waitlist-form { background: var(--card); border-radius: var(--radius); padding: 22px; text-align: left; box-shadow: 0 10px 26px -18px rgba(43, 36, 64, 0.3); }
+.waitlist-form h3 { margin: 0 0 14px; font-size: 1.1rem; font-weight: 800; }
+.waitlist-row { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 12px; align-items: end; }
+.waitlist-row label { margin-bottom: 0; }
+.waitlist-row .btn { min-height: 46px; }
+.waitlist-form .hint { margin: 12px 0 4px; }
+.waitlist-form .hint a { color: var(--accent-text); font-weight: 800; }
+.waitlist-error { margin: 6px 0 0; }
+.waitlist-done { background: #e3f7ef; color: var(--accent2-text); padding: 16px 20px; border-radius: var(--radius-sm); font-weight: 800; margin: 0; }
+.ask-panel .waitlist-form { padding: 0; background: none; box-shadow: none; }
+.ask-panel .waitlist-form h3 { display: none; } /* the panel's own heading already says it */
+.ask-panel .waitlist-row { grid-template-columns: 1fr; }
+.ask-panel .waitlist-row .btn { width: 100%; }
+@media (max-width: 720px) {
+  .waitlist-row { grid-template-columns: 1fr; }
+  .waitlist-row .btn { width: 100%; }
+}
+
 /* Settings tabs */
 .tabs { display: flex; gap: 8px; margin: 0 0 24px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
 .tab {

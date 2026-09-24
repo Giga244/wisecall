@@ -79,7 +79,27 @@
       if (loggedOutEl) loggedOutEl.style.display = 'flex';
       if (loggedInEl) loggedInEl.style.display = 'none';
     }
+    showLaunchBanner(user);
     return user;
+  }
+
+  // Before launch: a slim bar under the header on every page except the home page (its hero already says it) and
+  // the admin page (which has its own note). Mentors are told what to do; everyone else can join the waiting list.
+  function showLaunchBanner(user) {
+    if (!window.WisecallI18n || WisecallI18n.launchMode() !== 'prelaunch') return;
+    const path = location.pathname;
+    if (path === '/' || path === '/index.html' || path === '/admin.html' || document.querySelector('.launch-banner')) return;
+    const nav = document.querySelector('header.nav');
+    if (!nav) return;
+    const t = WisecallI18n.t;
+    const mentor = user && (user.role === 'mentor' || user.role === 'both');
+    const bar = document.createElement('div');
+    bar.className = 'launch-banner';
+    bar.innerHTML = mentor
+      ? `<span data-i18n="launch.banner.mentor">${t('launch.banner.mentor')}</span>`
+      : `<span data-i18n="launch.banner">${t('launch.banner')}</span> <a href="/index.html#experts" data-i18n="wait.join">${t('wait.join')}</a>`;
+    const after = nav.nextElementSibling && nav.nextElementSibling.classList.contains('verify-banner') ? nav.nextElementSibling : nav;
+    after.insertAdjacentElement('afterend', bar);
   }
 
   function showToast(msg) {
