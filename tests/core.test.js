@@ -249,6 +249,80 @@ describe('admin: mentor decisions and refunds', () => {
   });
 });
 
+describe('SEO, error pages and the contact form', () => {
+  const get = (p, headers = {}) => fetch(base + p, { headers, redirect: 'manual' });
+
+  test('pages carry a canonical link, share image and the right domain', async () => {
+    const html = await (await get('/')).text();
+    assert.match(html, /<link rel="canonical" href="http:\/\/localhost:4551\/">/);
+    assert.match(html, /og:image" content="http:\/\/localhost:4551\/og-image\.png"/);
+    assert.match(html, /twitter:card" content="summary_large_image"/);
+    assert.doesNotMatch(html, /\{\{/, 'no unfilled placeholders');
+    const dash = await (await get('/dashboard.html')).text();
+    assert.match(dash, /name="robots" content="noindex"/);
+    const png = Buffer.from(await (await get('/og-image.png')).arrayBuffer());
+    assert.equal(png.readUInt32BE(16), 1200);
+    assert.equal(png.readUInt32BE(20), 630);
+  });
+
+  test('every page has its own title and description', () => {
+    const fs = require('fs');
+    const seen = new Set();
+    for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html') && n !== 'expert.html')) {
+      const html = fs.readFileSync(path.join(ROOT, 'public', f), 'utf8');
+      const title = html.match(/<title>(.*?)<\/title>/)[1];
+      const desc = html.match(/name="description" content="([^"]*)"/)[1];
+      assert.ok(title && desc, f);
+      assert.ok(!seen.has(title) && !seen.has(desc), `${f} repeats a title or description`);
+      seen.add(title); seen.add(desc);
+    }
+  });
+
+  test('an expert page gets that expert\'s name in its title and canonical link', async () => {
+    const html = await (await get(`/expert.html?id=${ids.mentor}`)).text();
+    assert.match(html, /<title>Dr Mentor, Cardiologist — Wisecall<\/title>/);
+    assert.match(html, new RegExp(`rel="canonical" href="http://localhost:4551/expert.html\\?id=${ids.mentor}"`));
+    const unknown = await (await get('/expert.html?id=nope')).text();
+    assert.match(unknown, /<title>Expert — Wisecall<\/title>/);
+    assert.doesNotMatch(unknown, /\{\{/);
+  });
+
+  test('robots.txt and sitemap.xml list the site and its approved experts only', async () => {
+    const robots = await (await get('/robots.txt')).text();
+    assert.match(robots, /Disallow: \/api\//);
+    assert.match(robots, /Sitemap: http:\/\/localhost:4551\/sitemap\.xml/);
+    const res = await get('/sitemap.xml');
+    assert.match(res.headers.get('content-type'), /xml/);
+    const xml = await res.text();
+    assert.match(xml, /<loc>http:\/\/localhost:4551\/<\/loc>/);
+    assert.match(xml, /<loc>http:\/\/localhost:4551\/about\.html<\/loc>/);
+    assert.match(xml, new RegExp(`expert\\.html\\?id=${ids.mentor}`));
+    const pending = (await ids.admin.api('/admin/mentors?status=rejected')).mentors[0];
+    assert.ok(pending);
+    assert.doesNotMatch(xml, new RegExp(pending.id), 'rejected mentors are not in the sitemap');
+  });
+
+  test('unknown pages get the branded 404 for browsers and JSON for the API', async () => {
+    const page = await get('/no-such-page.html', { Accept: 'text/html' });
+    assert.equal(page.status, 404);
+    assert.match(await page.text(), /error\.404\.title/);
+    const noExt = await get('/whatever', { Accept: 'text/html' });
+    assert.equal(noExt.status, 404);
+    const api = await get('/api/nothing', { Accept: 'application/json' });
+    assert.equal(api.status, 404);
+    assert.deepEqual(await api.json(), { error: 'not_found' });
+  });
+
+  test('the contact form validates input and ignores bots', async () => {
+    const c = client(base);
+    const post = (body) => c.api('/contact', { method: 'POST', body });
+    assert.equal((await post({ name: 'A', email: 'a@example.com', message: 'short' })).error, 'missing_fields');
+    assert.equal((await post({ name: 'A', email: 'not-an-email', message: 'A long enough message' })).error, 'invalid_email');
+    assert.equal((await post({ name: 'A', email: 'a@example.com', message: 'A long enough message' })).ok, true);
+    assert.equal((await post({ name: 'Bot', email: 'b@example.com', message: 'Buy cheap pills now please', website: 'http://spam' })).ok, true);
+  });
+});
+
 describe('production safety', () => {
   test('refuses to start without required settings and says which', () => {
     const r = spawnSync('node', ['server/index.js'], {

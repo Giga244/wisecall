@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Wisecall</title>
+<meta name="description" content="Contact the Wisecall team with a question, feedback, or a refund request.">
+<link rel="canonical" href="{{APP_URL}}/contact.html">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Contact — Wisecall">
+<meta property="og:description" content="Contact the Wisecall team with a question, feedback, or a refund request.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{APP_URL}}/contact.html">
+<meta property="og:image" content="{{APP_URL}}/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall: advice from people who have already done it">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Contact — Wisecall">
+<meta name="twitter:description" content="Contact the Wisecall team with a question, feedback, or a refund request.">
+<meta name="twitter:image" content="{{APP_URL}}/og-image.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head><body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+    </div>
+  </div>
+</header>
+<section class="auth-page">
+  <div class="auth-card contact-card">
+    <h1 data-i18n="contact.title">Contact us</h1>
+    <p class="muted" data-i18n="contact.sub">Questions, refund requests, feedback, or a problem with the site? Send us a message and we will reply by email.</p>
+    <form id="contactForm" novalidate>
+      <label><span data-i18n="contact.name">Your name</span>
+        <input type="text" id="name" maxlength="100" autocomplete="name" required>
+      </label>
+      <label><span data-i18n="contact.email">Your email</span>
+        <input type="email" id="email" maxlength="254" autocomplete="email" required>
+      </label>
+      <label><span data-i18n="contact.message">Message</span>
+        <textarea id="message" rows="6" maxlength="3000" required></textarea>
+      </label>
+      <div class="hp" aria-hidden="true"><label>Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>
+      <p class="muted small" data-i18n="contact.refundHint">Asking about a refund? Include the name of the mentor and roughly when you asked.</p>
+      <p class="form-error" id="formError" role="alert"></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="contact.send">Send message</button>
+    </form>
+    <p id="contactDone" class="contact-done" style="display:none" role="status"></p>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/contact.js"></script>
+</body>
+</html>

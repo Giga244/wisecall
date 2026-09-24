@@ -419,5 +419,70 @@
   "nav.menu": "Menu",
   "experts.emptyAll.title": "The first mentors are still to come",
   "experts.emptyAll.body": "Wisecall is brand new, so nobody is listed yet. Be one of the first mentors and be the first person every new question finds.",
-  "experts.emptyAll.cta": "Become one of the first mentors"
+  "experts.emptyAll.cta": "Become one of the first mentors",
+  "footer.about": "About",
+  "footer.contact": "Contact",
+  "legal.about.title": "About Wisecall",
+  "legal.about.intro": "Wisecall lets people who are just starting out ask a real question and get a real answer from someone who has already done what they want to do.",
+  "legal.about.sections": [
+    {
+      "h": "Why we built it",
+      "p": [
+        "Most of us learned the important things about a career from one honest conversation with the right person. Not everyone has that person in their life. A student who wants to become a doctor, a first-time founder, or a new teacher often has nobody to ask.",
+        "Wisecall puts experienced people within reach and makes it worth their time. You pay a fair price, they answer properly, and both sides know what to expect."
+      ]
+    },
+    {
+      "h": "How it works",
+      "p": [
+        "1. Find a mentor in your field and read their profile and reviews.",
+        "2. Ask your question and pay. The money is held safely until you get your answer.",
+        "3. The mentor answers. You get it by email and in your dashboard, and you can leave a review.",
+        "If a mentor does not answer within 7 days, you are refunded automatically."
+      ]
+    },
+    {
+      "h": "How we check mentors",
+      "p": [
+        "Nobody appears on Wisecall just by signing up. Every mentor confirms their email, links to proof of who they are and what they have done (for example a LinkedIn profile), and writes a sample answer. A person on our team then reviews all of it before the profile goes live.",
+        "Mentors who get poor reviews are looked at again, and we remove people who mislead others."
+      ]
+    },
+    {
+      "h": "Fair for both sides",
+      "p": [
+        "Mentors set their own price and answer in their own time. Wisecall keeps a small platform fee to run the service and pays the rest out to the mentor.",
+        "Answers are personal experience and opinion, not professional medical, legal, or financial advice. See our Terms for details."
+      ]
+    },
+    {
+      "h": "Built in Georgia",
+      "p": [
+        "Wisecall is made for Georgia first, in Georgian and English. Questions, answers, and the whole site work in both languages.",
+        "Questions or ideas? We would love to hear them. Use the contact page."
+      ]
+    }
+  ],
+  "about.browse": "Browse experts",
+  "about.become": "Become a mentor",
+  "contact.title": "Contact us",
+  "contact.sub": "Questions, refund requests, feedback, or a problem with the site? Send us a message and we will reply by email.",
+  "contact.name": "Your name",
+  "contact.email": "Your email",
+  "contact.message": "Message",
+  "contact.send": "Send message",
+  "contact.sending": "Sending…",
+  "contact.sent": "Thank you! Your message was sent. We will reply to your email soon.",
+  "contact.sentDev": "Message received (development mode: no email service is set up, so it was only logged on the server).",
+  "contact.err.missing": "Please fill in your name, email, and a message of at least 10 characters.",
+  "contact.err.email": "That email address does not look right.",
+  "contact.err.rate": "You have sent a few messages already. Please try again later.",
+  "contact.err.send": "We could not send your message. Please try again in a moment.",
+  "contact.refundHint": "Asking about a refund? Include the name of the mentor and roughly when you asked.",
+  "error.404.title": "This page could not be found",
+  "error.404.body": "The link may be old or mistyped. Let us get you back on track.",
+  "error.500.title": "Something went wrong on our side",
+  "error.500.body": "We hit an unexpected problem. Please try again in a moment. If it keeps happening, tell us on the contact page.",
+  "error.home": "Back to home",
+  "error.contact": "Contact us"
 }

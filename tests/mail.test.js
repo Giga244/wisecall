@@ -133,6 +133,26 @@ describe('delivery through the email provider', () => {
   });
 });
 
+describe('contact form', () => {
+  test('is emailed to the owner, and replying goes to the visitor', async () => {
+    const r = await client(base).api('/contact', { method: 'POST', body: { name: 'Lela <b>Tabidze</b>', email: 'lela@example.com', message: 'I would like a refund for a <script>question</script>.' } });
+    assert.equal(r.ok, true);
+    assert.equal(r.devMode, undefined);
+    const mail = await waitFor(() => mailTo('help@example.com', 'contact form')[0]);
+    assert.equal(mail.replyTo, 'lela@example.com');
+    assert.match(mail.html, /lela@example\.com/);
+    assert.doesNotMatch(mail.html, /<script>/);
+    assert.match(mail.html, /&lt;script&gt;/);
+  });
+
+  test('is rate limited', async () => {
+    const c = client(base);
+    let last;
+    for (let i = 0; i < 6; i++) last = await c.api('/contact', { method: 'POST', body: { name: 'Spam', email: 'spam@example.com', message: 'This is message number ' + i } });
+    assert.equal(last.status, 429);
+  });
+});
+
 describe('providers are swappable', () => {
   const run = (env, message) => {
     const { spawnSync } = require('child_process');

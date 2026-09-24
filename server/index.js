@@ -5,6 +5,7 @@ const config = require('./config');
 const db = require('./db');
 const { rateLimit } = require('./rateLimit');
 const { startJobs } = require('./jobs');
+const pages = require('./pages');
 
 const app = express();
 if (config.IS_PROD) app.set('trust proxy', 1);
@@ -43,7 +44,9 @@ app.use('/api/auth/verify-email', authLimit(10));
 app.use('/api/auth/resend-verification', authLimit(6));
 app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
+app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/contact', require('./routes/contact'));
 app.use('/api/me', require('./routes/me'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
@@ -61,12 +64,17 @@ app.get('/api/config', (req, res) => {
 });
 
 app.get('/favicon.ico', (req, res) => res.redirect(301, '/favicon.svg'));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(pages.seoRoutes());
+app.use(pages.pageRoutes());
+app.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
+app.use(pages.notFoundHandler);
 
 // Any error thrown in a route ends up here instead of crashing or hanging the request.
 app.use((err, req, res, next) => {
   console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
   if (res.headersSent) return next(err);
+  const wantsHtml = !req.path.startsWith('/api/') && req.method === 'GET' && String(req.accepts(['html', 'json'])).startsWith('html');
+  if (wantsHtml) return pages.errorPage(req, res);
   res.status(err.status || 500).json({ error: 'server_error' });
 });
 

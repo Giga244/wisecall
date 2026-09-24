@@ -7,7 +7,8 @@
   function render() {
     const t = WisecallI18n.t;
     const sections = t(`legal.${kind}.sections`);
-    document.title = `${t(`legal.${kind}.title`)} — Wisecall`;
+    const title = t(`legal.${kind}.title`);
+    document.title = title.includes('Wisecall') ? title : `${title} — Wisecall`;
     root.innerHTML = Array.isArray(sections) ? sections.map(s => `
       <section class="legal-section">
         <h2>${esc(s.h)}</h2>

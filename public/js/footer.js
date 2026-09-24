@@ -11,7 +11,9 @@
         <div class="logo">Wisecall<span class="dot">.</span></div>
         <p data-i18n="footer.tagline">Real advice, from people who've done it.</p>
       </div>
-      <nav class="footer-links" aria-label="Legal">
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/about.html" data-i18n="footer.about">About</a>
+        <a href="/contact.html" data-i18n="footer.contact">Contact</a>
         <a href="/terms.html" data-i18n="footer.terms">Terms</a>
         <a href="/privacy.html" data-i18n="footer.privacy">Privacy</a>
       </nav>
