@@ -25,6 +25,39 @@
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
+/* Dashboard ---------------------------------------------------------------------------------------- */
+.dash { max-width: 880px; }
+.tab-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--accent-strong); color: #fff; font-size: 0.75rem; font-weight: 800; }
+.tab-count[hidden] { display: none; }
+.tab.active .tab-count { background: #fff; color: var(--ink); }
+.block { display: block; }
+.plain-link { color: inherit; text-decoration: none; }
+.plain-link:hover, .plain-link:focus-visible { color: var(--accent-text); text-decoration: underline; }
+.booking-card { margin-bottom: 16px; }
+
+/* Progress line of a question: Paid, Waiting, Answered, Reviewed */
+.timeline { list-style: none; margin: 4px 0 16px; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; }
+.timeline li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 0.78rem; font-weight: 800; color: var(--ink-soft); padding: 0 4px; }
+.timeline li::before { content: ''; position: absolute; top: 11px; left: -50%; right: 50%; height: 3px; background: var(--border); z-index: 0; }
+.timeline li:first-child::before { display: none; }
+.tl-dot { position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; background: var(--card); border: 3px solid var(--border); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; line-height: 1; }
+.timeline li.done { color: var(--ink); }
+.timeline li.done::before, .timeline li.current::before { background: var(--accent2-strong); }
+.timeline li.done .tl-dot { background: var(--accent2-strong); border-color: var(--accent2-strong); }
+.timeline li.current { color: var(--ink); }
+.timeline li.current .tl-dot { border-color: var(--accent-strong); box-shadow: 0 0 0 4px rgba(255, 111, 89, 0.22); }
+
+.countdown { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 10px 14px; border-radius: var(--radius-sm); background: #fdf0d9; color: #7a4f10; font-size: 0.92rem; }
+.countdown svg { flex: 0 0 auto; }
+.countdown.urgent { background: #fbe6ee; color: #8d2244; }
+.countdown .muted { color: inherit; opacity: 0.85; }
+.booking-amount .block { font-weight: 600; margin-top: 2px; white-space: nowrap; font-size: 0.74rem; }
+.booking-amount { white-space: nowrap; flex: 0 0 auto; }
+.booking-top > div:nth-child(2) { min-width: 0; }
+@media (max-width: 560px) {
+  .timeline li { font-size: 0.72rem; padding: 0 2px; }
+}
+
 /* Expert profile --------------------------------------------------------------------------------------- */
 .expert-wrap { padding: 36px 24px 90px; max-width: 1120px; }
 .expert-layout {

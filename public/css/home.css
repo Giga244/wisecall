@@ -98,10 +98,6 @@ section h2 { font-size: 2rem; margin: 0 0 12px; }
 
 /* 7. Browse experts (extras: rich empty state, waiting list) ---------------------------------------- */
 .experts { padding: 10px 0 80px; }
-.empty-rich { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; max-width: 640px; margin: 0 auto; padding: 20px 0; }
-.empty-rich h3 { margin: 4px 0 0; font-size: 1.5rem; }
-.empty-rich p { margin: 0; color: var(--ink-soft); max-width: 480px; }
-.empty-art { width: 220px; max-width: 70%; height: auto; }
 .empty-wait { width: 100%; margin-top: 18px; }
 .waitlist-form { background: var(--card); border-radius: var(--radius); padding: 22px; text-align: left; box-shadow: 0 10px 26px -18px rgba(43, 36, 64, 0.3); }
 .waitlist-form h3 { margin: 0 0 14px; font-size: 1.1rem; font-weight: 800; }
