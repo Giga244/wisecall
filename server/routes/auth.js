@@ -53,6 +53,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
   setAuthCookie(res, signToken(user));
   res.status(201).json({
     user: meProfile(user),
+    emailSent,
     devMode: !emailSent && !config.IS_PROD,
     devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode
   });
@@ -166,7 +167,7 @@ router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) =
     }
   }
 
-  res.json({ ok: true, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
+  res.json({ ok: true, emailSent, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
 }));
 
 function randomColor() {

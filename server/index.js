@@ -63,7 +63,9 @@ app.get('/api/config', (req, res) => {
     currency: config.CURRENCY,
     priceMin: config.PRICE_MIN,
     priceMax: config.PRICE_MAX,
-    payoutHoldDays: config.PAYOUT_HOLD_DAYS
+    payoutHoldDays: config.PAYOUT_HOLD_DAYS,
+    // Only ever true on a developer's computer: pages may then show dev-mode helpers.
+    devMode: !config.IS_PROD
   });
 });
 

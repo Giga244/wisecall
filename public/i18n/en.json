@@ -538,5 +538,6 @@
   "admin.po.nothing": "There is nothing left to pay.",
   "admin.bk.refundConfirmPaidOut": "This mentor has already been paid for this answer. The buyer will be refunded, and the amount will be recorded as owed back by the mentor and deducted from their next payout. Continue?",
   "admin.bk.refundedOwed": "Refund requested. The mentor owes this amount back.",
-  "admin.bk.refundFailed": "The bank rejected the refund. It is saved and will be retried; see the problem shown on the booking."
+  "admin.bk.refundFailed": "The bank rejected the refund. It is saved and will be retried; see the problem shown on the booking.",
+  "auth.verify.sendFailed": "We could not send the email just now. Press the resend link below to try again, or contact us if it keeps failing."
 }

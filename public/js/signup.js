@@ -28,6 +28,8 @@
       });
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}`;
       if (data.devMode && data.devVerifyCode) verifyUrl += `&devCode=${data.devVerifyCode}`;
+      // The account exists but the email could not be sent (bank-grade rule: say so, never show the code).
+      if (!data.emailSent && !data.devMode) verifyUrl += '&emailFailed=1';
       window.location.href = verifyUrl;
     } catch (e) {
       errorEl.textContent = WisecallI18n.t(ERROR_KEYS[e.code] || 'toast.error');

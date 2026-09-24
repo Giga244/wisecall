@@ -6,16 +6,27 @@
 const fs = require('fs');
 const config = require('./config');
 
+// One attempt. A failure is marked retryable when it is temporary, so sendEmail() can try once more.
 async function postJson(url, headers, body, label) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...headers },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(15000)
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...headers },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (e) {
+    const err = new Error(`email_send_failed: ${label} network error: ${e.message}`);
+    err.retryable = true;
+    throw err;
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`email_send_failed: ${label} ${res.status} ${text.slice(0, 300)}`);
+    const err = new Error(`email_send_failed: ${label} ${res.status} ${text.slice(0, 300)}`);
+    // Server errors and rate limits are worth one more try; a 4xx (bad key, unverified domain) is not.
+    err.retryable = res.status >= 500 || res.status === 429;
+    throw err;
   }
   return { sent: true };
 }
@@ -23,7 +34,7 @@ async function postJson(url, headers, body, label) {
 const providers = {
   resend: {
     configured: () => Boolean(config.RESEND_API_KEY),
-    send: (m) => postJson('https://api.resend.com/emails', { Authorization: `Bearer ${config.RESEND_API_KEY}` }, {
+    send: (m) => postJson(config.RESEND_API_URL, { Authorization: `Bearer ${config.RESEND_API_KEY}` }, {
       from: config.EMAIL_FROM, to: m.to, subject: m.subject, html: m.html, text: m.text,
       ...(m.replyTo ? { reply_to: m.replyTo } : {})
     }, 'resend')
@@ -59,7 +70,13 @@ async function sendEmail(message) {
   if (!p || !p.configured()) return { sent: false, reason: 'not_configured' };
   const clean = { ...message, subject: String(message.subject).replace(/[\r\n]+/g, ' ') };
   if (config.SUPPORT_EMAIL && !clean.replyTo) clean.replyTo = config.SUPPORT_EMAIL;
-  return p.send(clean);
+  try {
+    return await p.send(clean);
+  } catch (err) {
+    if (!err.retryable) throw err;
+    await new Promise((r) => setTimeout(r, 700));
+    return p.send(clean); // one retry after a temporary failure
+  }
 }
 
 function escapeHtml(str) {

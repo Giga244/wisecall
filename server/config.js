@@ -48,6 +48,7 @@ const config = {
 
   EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
   RESEND_API_KEY: env.RESEND_API_KEY || '',
+  RESEND_API_URL: env.RESEND_API_URL || 'https://api.resend.com/emails',
   POSTMARK_TOKEN: env.POSTMARK_TOKEN || '',
   EMAIL_LOG_FILE: env.EMAIL_LOG_FILE || '',
   EMAIL_FROM: env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',
