@@ -89,6 +89,7 @@ async function handleWebhook({ rawBody, headers }) {
   catch (e) { throw new steps.VerificationError('invalid_webhook', { detail: e.message }); }
   const out = await applyResult(provider.name, result);
   if (out.changed && out.status === 'approved') await afterApproved(out.userId);
+  await tellMentor(out);
   return out;
 }
 
@@ -101,7 +102,15 @@ async function refresh(userId) {
   const result = await provider.getStatus(s.provider_session_id);
   const out = await applyResult(s.provider, { ...result, eventId: null });
   if (out.changed && out.status === 'approved') await afterApproved(userId);
+  await tellMentor(out);
   return out;
+}
+
+// The mentor is emailed when the ID check ends (approved, declined or expired), never for "in review".
+const OUTCOME = { approved: ['passed', null], declined: ['failed', 'kyc_declined'], expired: ['failed', 'kyc_expired'] };
+async function tellMentor(out) {
+  const o = out.changed && OUTCOME[out.status];
+  if (o) await require('./updates').stepDecided(out.userId, 'id_kyc', o[0], null, o[1]);
 }
 
 // Things that depend on the verified name (the name-match step) run here once an ID check is approved.

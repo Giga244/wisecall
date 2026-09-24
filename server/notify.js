@@ -42,7 +42,9 @@ const notifyPayoutPaid = (mentor, batch) =>
 // A time written for the person receiving it, always with the zone spelled out.
 const utcDate = (date, lang) => new Date(date).toLocaleString(lang === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
 
-const notifyInterviewBooked = (mentor, slot) =>
+const notifyVerificationUpdate = (mentor, data) => safeSend('verification update', 'verificationUpdate', mentor, data);
+
+const notifyInterviewBooked =(mentor, slot) =>
   safeSend('interview booked', 'interviewBooked', mentor, { date: utcDate(slot.startsAt, mentor.language), minutes: slot.minutes });
 const notifyInterviewLink = (mentor, slot) =>
   safeSend('interview link', 'interviewLink', mentor, { date: utcDate(slot.startsAt, mentor.language), link: slot.meetingLink });
@@ -59,4 +61,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyVerificationUpdate, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyAdmins };

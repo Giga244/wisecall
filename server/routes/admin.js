@@ -8,6 +8,7 @@ const config = require('../config');
 const payments = require('../payments');
 const notify = require('../notify');
 const verificationSteps = require('../verification/steps');
+const rules = require('../verification/rules');
 const flags = require('../verification/flags');
 const ledger = require('../ledger');
 const { decrypt } = require('../cryptoBox');
@@ -23,11 +24,24 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
   const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
   const mentors = rows.map(userFromRow);
   const ids = mentors.map((m) => m.id);
-  const [stats, stepMap] = await Promise.all([mentorStatsFor(ids), verificationSteps.loadStepsFor(ids)]);
+  const [stats, stepMap, flagRows] = await Promise.all([
+    mentorStatsFor(ids), verificationSteps.loadStepsFor(ids),
+    query(`SELECT mentor_id, count(*)::int AS n FROM mentor_flags WHERE status = 'open' AND mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`, [ids])
+  ]);
+  const openFlags = Object.fromEntries(flagRows.rows.map((r) => [r.mentor_id, r.n]));
   res.json({
     mentors: mentors.map((m) => {
       const v = verificationSteps.describe(m, stepMap[m.id]);
-      return { ...meProfile(m), ...stats[m.id], verification: { level: v.level, ready: v.ready, missing: v.missing } };
+      // "waiting" = required steps a person has to look at (submitted, decided by an admin, not yet decided).
+      const waiting = rules.stepNamesFor(m.niche).filter((s) => {
+        const row = stepMap[m.id][s];
+        return row && row.status === 'pending' && ['admin', 'auto+admin'].includes(rules.STEPS[s].decider);
+      }).length;
+      const done = v.requirements.filter((r) => (r.type === 'step' ? r.status === 'passed' : r.satisfied)).length;
+      return {
+        ...meProfile(m), ...stats[m.id],
+        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0 }
+      };
     })
   });
 }));

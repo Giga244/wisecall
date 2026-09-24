@@ -648,5 +648,7 @@
   "admin.iv.notStarted": "შედეგის ჩაწერა შეგიძლია, როცა ინტერვიუს დრო გავა.",
   "admin.iv.invalidSlot": "აირჩიე მომავალი თარიღი და დრო (120 დღის ფარგლებში).",
   "admin.iv.invalidLink": "შეიყვანე სრული https:// ბმული.",
-  "verify.ev.interview": "ინტერვიუს დრო"
+  "verify.ev.interview": "ინტერვიუს დრო",
+  "admin.mv.waiting": "{n} ელოდება შენს გადაწყვეტილებას",
+  "admin.mv.flagsOpen": "{n} შესამოწმებელია"
 }

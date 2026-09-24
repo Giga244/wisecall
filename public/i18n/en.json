@@ -614,9 +614,9 @@
   "verify.ev.companyId": "Company ID",
   "verify.ev.verifiedAt": "Confirmed at",
   "admin.mv.credentials": "Credentials",
-  "admin.mv.licenseNumber": "Licence / registration number",
+  "admin.mv.licenseNumber": "License / registration number",
   "admin.mv.issuingBody": "Issued by",
-  "admin.mv.holderName": "Name on the licence",
+  "admin.mv.holderName": "Name on the license",
   "admin.mv.validUntil": "Valid until",
   "admin.mv.workEmail": "Work email",
   "admin.mv.workEmailConfirmed": "confirmed",
@@ -648,5 +648,7 @@
   "admin.iv.notStarted": "You can record the result once the interview time has passed.",
   "admin.iv.invalidSlot": "Pick a date and time in the future (within 120 days).",
   "admin.iv.invalidLink": "Enter a full https:// meeting link.",
-  "verify.ev.interview": "Interview slot"
+  "verify.ev.interview": "Interview slot",
+  "admin.mv.waiting": "{n} waiting for you",
+  "admin.mv.flagsOpen": "{n} to check"
 }

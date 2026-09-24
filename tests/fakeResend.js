@@ -23,6 +23,16 @@ function createFakeResend() {
     to: (address, subjectPart) => sent.filter((m) => m.body.to === address && (!subjectPart || m.body.subject.includes(subjectPart))),
     // The 6-digit code shown in an email.
     codeIn: (mail) => (mail.body.html.match(/letter-spacing:8px[^>]*>(\d{6})</) || [])[1],
+    // Waits for a NEW email: one more than `already` matching messages. Returns the newest.
+    waitForNew: async (address, subjectPart, already, ms = 8000) => {
+      const end = Date.now() + ms;
+      for (;;) {
+        const m = api.to(address, subjectPart);
+        if (m.length > already) return m[m.length - 1];
+        if (Date.now() > end) throw new Error(`no new email to ${address} matching "${subjectPart || ''}"`);
+        await wait(100);
+      }
+    },
     // Waits until an email matching the filter has arrived.
     waitFor: async (address, subjectPart, ms = 8000) => {
       const end = Date.now() + ms;

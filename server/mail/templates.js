@@ -58,6 +58,22 @@ const S = {
       intro: "Thanks for applying. We couldn't approve it this time.", reasonLabel: 'Reason:',
       after: 'You can update your details and apply again from Settings.', button: 'Open settings'
     },
+    verificationUpdate: {
+      subject: 'An update on your Wisecall application', heading: 'An update on your application',
+      passed: 'Approved: {step}.', failed: "We couldn't approve this yet: {step}.", reasonLabel: 'What we found:',
+      stillNeeded: 'Still needed for your application:', allDone: 'Every required step is approved. Our team will give the final approval soon.',
+      anyOf: 'At least one of: {options}', state: { todo: 'not started', pending: 'waiting for review', failed: 'needs another try' },
+      button: 'Open verification',
+      reasons: {
+        kyc_declined: 'The ID check was not approved. Please try again with a valid, undamaged ID and good lighting.',
+        kyc_expired: 'The ID check was not completed in time. Please start it again.'
+      },
+      steps: {
+        email: 'Verified email', id_kyc: 'ID and selfie check', name_match: 'Name match', sample_answer: 'Sample answer', proof_link: 'Proof link',
+        license: 'License or registration', license_document: 'License document', video_interview: 'Video interview', company_id: 'Company ID number',
+        role_proof: 'Proof of your role', work_email: 'Work email', diploma: 'Diploma or certificate', portfolio: 'Portfolio'
+      }
+    },
     workEmailCode: {
       subject: 'Your Wisecall work email code', heading: 'Confirm your work email',
       intro: 'Use this code to confirm that you can read email at your work address ({domain}):', expiry: 'The code expires in 15 minutes.',
@@ -70,7 +86,7 @@ const S = {
     },
     interviewLink: {
       subject: 'The meeting link for your Wisecall interview', heading: 'Your meeting link',
-      intro: 'Here is the meeting link for your video interview on {date}:', after: 'Please join a couple of minutes early and have your ID and licence to hand.', button: 'Join the meeting'
+      intro: 'Here is the meeting link for your video interview on {date}:', after: 'Please join a couple of minutes early and have your ID and license to hand.', button: 'Join the meeting'
     },
     interviewCancelled: {
       subject: 'Your Wisecall interview was cancelled', heading: 'We had to cancel your interview',
@@ -132,6 +148,22 @@ const S = {
       subject: 'შენი მენტორის განაცხადის შესახებ', heading: 'განაცხადის დამტკიცება ჯერ ვერ შევძელით',
       intro: 'მადლობა განაცხადისთვის. ამჯერად ვერ დავამტკიცეთ.', reasonLabel: 'მიზეზი:',
       after: 'შეგიძლია განაახლო მონაცემები და თავიდან გაგზავნო განაცხადი პარამეტრებიდან.', button: 'პარამეტრების გახსნა'
+    },
+    verificationUpdate: {
+      subject: 'სიახლე შენი Wisecall-ის განაცხადის შესახებ', heading: 'სიახლე შენი განაცხადის შესახებ',
+      passed: 'დამტკიცდა: {step}.', failed: 'ჯერ ვერ დავამტკიცეთ: {step}.', reasonLabel: 'რა აღმოვაჩინეთ:',
+      stillNeeded: 'განაცხადისთვის კიდევ საჭიროა:', allDone: 'ყველა სავალდებულო ნაბიჯი დამტკიცებულია. ჩვენი გუნდი მალე მიიღებს საბოლოო გადაწყვეტილებას.',
+      anyOf: 'სულ მცირე ერთი: {options}', state: { todo: 'არ დაწყებულა', pending: 'განხილვას ელოდება', failed: 'საჭიროა ხელახლა ცდა' },
+      button: 'ვერიფიკაციის გახსნა',
+      reasons: {
+        kyc_declined: 'პირადობის შემოწმება ვერ დამტკიცდა. სცადე თავიდან ვალიდური, დაუზიანებელი დოკუმენტით და კარგ განათებაზე.',
+        kyc_expired: 'პირადობის შემოწმება დროულად ვერ დასრულდა. დაიწყე თავიდან.'
+      },
+      steps: {
+        email: 'დადასტურებული ელფოსტა', id_kyc: 'პირადობის და სელფის შემოწმება', name_match: 'სახელის დამთხვევა', sample_answer: 'საცდელი პასუხი', proof_link: 'დამადასტურებელი ბმული',
+        license: 'ლიცენზია ან რეგისტრაცია', license_document: 'ლიცენზიის დოკუმენტი', video_interview: 'ვიდეო-ინტერვიუ', company_id: 'კომპანიის საიდენტიფიკაციო ნომერი',
+        role_proof: 'შენი როლის დადასტურება', work_email: 'სამსახურეობრივი ელფოსტა', diploma: 'დიპლომი ან სერტიფიკატი', portfolio: 'პორტფოლიო'
+      }
     },
     workEmailCode: {
       subject: 'შენი Wisecall-ის სამსახურეობრივი ელფოსტის კოდი', heading: 'დაადასტურე სამსახურეობრივი ელფოსტა',
@@ -201,6 +233,21 @@ const BUILDERS = {
     heading: s.mentorRejected.heading,
     blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.PUBLIC_URL}/settings.html` }]
   }),
+  verificationUpdate: (s, d) => {
+    const u = s.verificationUpdate;
+    const name = (k) => u.steps[k] || k;
+    const line = (m) => `• ${m.steps.length > 1 ? fill(u.anyOf, { options: m.steps.map(name).join(', ') }, false) : name(m.steps[0])} (${u.state[m.state] || m.state})`;
+    const missing = d.missing || [];
+    return {
+      heading: u.heading,
+      blocks: [
+        { p: fill(d.status === 'passed' ? u.passed : u.failed, { step: name(d.step) }), raw: true },
+        ...(d.status === 'failed' && (u.reasons[d.reasonKey] || d.reason) ? [{ quote: `${u.reasonLabel} ${u.reasons[d.reasonKey] || d.reason}` }] : []),
+        ...(missing.length ? [{ p: u.stillNeeded }, { quote: missing.map(line).join('\n') }] : [{ p: u.allDone }]),
+        { button: u.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }
+      ]
+    };
+  },
   workEmailCode: (s, d) => ({
     heading: s.workEmailCode.heading,
     blocks: [{ p: fill(s.workEmailCode.intro, d), raw: true }, { code: d.code }, { small: s.workEmailCode.expiry }, { small: s.workEmailCode.footer }]
