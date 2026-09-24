@@ -111,6 +111,35 @@ describe('the public contact address', () => {
   });
 });
 
+describe('social links', () => {
+  const fs = require('fs');
+  const path = require('path');
+  let all, none, mixed;
+  before(async () => {
+    await resetDatabase();
+    all = await startServer(4591, {
+      SOCIAL_INSTAGRAM: 'https://instagram.com/wisecall', SOCIAL_FACEBOOK: 'https://facebook.com/wisecall', SOCIAL_LINKEDIN: 'https://linkedin.com/company/wisecall', SOCIAL_TIKTOK: 'https://tiktok.com/@wisecall'
+    });
+    none = await startServer(4592, {});
+    mixed = await startServer(4593, { SOCIAL_INSTAGRAM: 'https://instagram.com/wisecall', SOCIAL_TIKTOK: 'not a url', SOCIAL_FACEBOOK: 'http://insecure.example', SOCIAL_LINKEDIN: '   ' });
+  });
+  after(() => { [all, none, mixed].forEach((s) => s && s.proc.kill()); });
+  const social = async (s) => (await (await fetch(`${s.base}/api/config`)).json()).social;
+
+  test('each network appears only when its address is set in the environment', async () => {
+    assert.deepEqual(Object.keys(await social(all)).sort(), ['facebook', 'instagram', 'linkedin', 'tiktok']);
+    assert.deepEqual(await social(none), {});
+    assert.deepEqual(await social(mixed), { instagram: 'https://instagram.com/wisecall' }, 'blank, malformed and non-https values are ignored');
+  });
+
+  test('the footer draws an icon for what the configuration returns and nothing else', () => {
+    const footer = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'footer.js'), 'utf8');
+    assert.match(footer, /cfg\.social/);
+    for (const name of ['facebook', 'instagram', 'linkedin', 'tiktok']) assert.match(footer, new RegExp(`${name}:`), `${name} has an icon`);
+    assert.doesNotMatch(footer, /instagram\.com|facebook\.com|linkedin\.com|tiktok\.com/, 'no address is hard-coded');
+  });
+});
+
 describe('development warnings', () => {
   let srv;
   before(async () => { await resetDatabase(); srv = await startServer(4587); });
