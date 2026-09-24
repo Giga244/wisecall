@@ -37,13 +37,7 @@ That applies database migrations automatically and serves http://localhost:4242.
 npm test
 ```
 
-They use `TEST_DATABASE_URL`, a separate database that is **wiped on every run**. To fill a local database with realistic demo mentors while developing (refuses to run in production or against a remote database):
-
-```bash
-npm run seed:dev
-```
-
-Undo it with `npm run seed:dev -- --remove`.
+They use `TEST_DATABASE_URL`, a separate database that is **wiped on every run**.
 
 Sign up, open **Settings** to apply as a mentor, and approve yourself at **/admin.html** using an account whose email is listed in `ADMIN_EMAILS`.
 
@@ -88,7 +82,7 @@ server/mail/      email templates (EN/KA)
 public/           Frontend: plain HTML/CSS/JS, no build step
 public/i18n/      en.json / ka.json dictionaries (all user-facing text)
 migrations/       SQL schema migrations (applied in filename order, each once)
-scripts/          migrate.js, seed-demo.js (dev only), import-json.js (one-off)
+scripts/          migrate.js
 tests/            end-to-end tests (npm test)
 DEPLOY.md         step-by-step launch guide      render.yaml   optional Render blueprint
 ```

@@ -49,14 +49,6 @@ Open http://localhost:4242. Run the automated tests (they use `TEST_DATABASE_URL
 npm test
 ```
 
-Want it to look busy while you build? Add fake demo mentors to your **local** database (it refuses to run in production or on a remote database):
-
-```bash
-npm run seed:dev
-```
-
-Remove them again with `npm run seed:dev -- --remove`.
-
 Without any Stripe keys, payments are **simulated**: a booking is marked paid instantly. That is fine for trying the site, and it is switched off for real once `STRIPE_SECRET_KEY` is set.
 
 ## 2. Test payments with Stripe test mode
