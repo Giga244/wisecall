@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('./config');
+const { SESSION_SECRET } = require('./config');
 
 const COOKIE_NAME = 'wisecall_token';
 
 function signToken(user) {
-  return jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id: user.id, email: user.email }, SESSION_SECRET, { expiresIn: '30d' });
 }
 
 function setAuthCookie(res, token) {
@@ -24,7 +24,7 @@ function requireAuth(req, res, next) {
   const token = req.cookies[COOKIE_NAME];
   if (!token) return res.status(401).json({ error: 'not_authenticated' });
   try {
-    req.userToken = jwt.verify(token, JWT_SECRET);
+    req.userToken = jwt.verify(token, SESSION_SECRET);
     next();
   } catch (e) {
     return res.status(401).json({ error: 'invalid_token' });
@@ -34,7 +34,7 @@ function requireAuth(req, res, next) {
 function optionalAuth(req, res, next) {
   const token = req.cookies[COOKIE_NAME];
   if (token) {
-    try { req.userToken = jwt.verify(token, JWT_SECRET); } catch (e) { /* ignore */ }
+    try { req.userToken = jwt.verify(token, SESSION_SECRET); } catch (e) { /* ignore */ }
   }
   next();
 }

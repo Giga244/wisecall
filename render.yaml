@@ -24,17 +24,32 @@ services:
         fromDatabase:
           name: wisecall-db
           property: connectionString
-      - key: JWT_SECRET
+      - key: SESSION_SECRET
         generateValue: true
-      - key: APP_URL
+      # Generated once here; copy it from the Render dashboard into your password manager.
+      - key: DATA_ENCRYPTION_KEY
+        generateValue: true
+      - key: PUBLIC_URL
         sync: false
       - key: PLATFORM_FEE_PERCENT
         value: "20"
-      - key: CURRENCY
-        value: usd
       - key: ANSWER_DEADLINE_DAYS
         value: "7"
+      - key: PAYOUT_HOLD_DAYS
+        value: "7"
       - key: ADMIN_EMAILS
+        sync: false
+      - key: PAYMENT_PROVIDER
+        sync: false        # bog or tbc
+      - key: BOG_CLIENT_ID
+        sync: false
+      - key: BOG_CLIENT_SECRET
+        sync: false
+      - key: TBC_API_KEY
+        sync: false
+      - key: TBC_CLIENT_ID
+        sync: false
+      - key: TBC_CLIENT_SECRET
         sync: false
       - key: EMAIL_PROVIDER
         value: resend
@@ -44,14 +59,3 @@ services:
         sync: false
       - key: SUPPORT_EMAIL
         sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: STRIPE_CROSS_BORDER_PAYOUTS
-        value: "false"
-      # Set to true only for a demo deploy before Stripe is ready (nobody is charged). Remove it for launch.
-      - key: ALLOW_SIMULATED_PAYMENTS
-        value: "false"

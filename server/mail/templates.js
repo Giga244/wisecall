@@ -137,11 +137,11 @@ const BUILDERS = {
   }),
   newQuestion: (s, d) => ({
     heading: s.newQuestion.heading,
-    blocks: [{ p: fill(s.newQuestion.intro, d), raw: true }, { quote: d.question }, { p: fill(s.newQuestion.after, d), raw: true }, { button: s.newQuestion.button, url: `${config.APP_URL}/dashboard.html` }]
+    blocks: [{ p: fill(s.newQuestion.intro, d), raw: true }, { quote: d.question }, { p: fill(s.newQuestion.after, d), raw: true }, { button: s.newQuestion.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
   }),
   answered: (s, d) => ({
     heading: s.answered.heading,
-    blocks: [{ p: fill(s.answered.intro, d), raw: true }, { quote: d.answer }, { p: s.answered.after }, { button: s.answered.button, url: `${config.APP_URL}/dashboard.html` }]
+    blocks: [{ p: fill(s.answered.intro, d), raw: true }, { quote: d.answer }, { p: s.answered.after }, { button: s.answered.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
   }),
   refundSeeker: (s, d) => ({
     heading: s.refundSeeker.heading,
@@ -153,19 +153,19 @@ const BUILDERS = {
   }),
   deadlineSoon: (s, d) => ({
     heading: s.deadlineSoon.heading,
-    blocks: [{ p: s.deadlineSoon.intro }, { quote: d.question }, { p: fill(s.deadlineSoon.after, d), raw: true }, { button: s.deadlineSoon.button, url: `${config.APP_URL}/dashboard.html` }]
+    blocks: [{ p: s.deadlineSoon.intro }, { quote: d.question }, { p: fill(s.deadlineSoon.after, d), raw: true }, { button: s.deadlineSoon.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
   }),
   mentorApproved: (s) => ({
     heading: s.mentorApproved.heading,
-    blocks: [{ p: s.mentorApproved.intro }, { p: s.mentorApproved.after }, { button: s.mentorApproved.button, url: `${config.APP_URL}/settings.html` }]
+    blocks: [{ p: s.mentorApproved.intro }, { p: s.mentorApproved.after }, { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]
   }),
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,
-    blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.APP_URL}/settings.html` }]
+    blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.PUBLIC_URL}/settings.html` }]
   }),
   payoutPaid: (s, d) => ({
     heading: s.payoutPaid.heading,
-    blocks: [{ p: fill(s.payoutPaid.intro, d), raw: true }, { quote: `${s.payoutPaid.referenceLabel} ${d.reference}` }, { p: s.payoutPaid.after }, { button: s.payoutPaid.button, url: `${config.APP_URL}/dashboard.html` }]
+    blocks: [{ p: fill(s.payoutPaid.intro, d), raw: true }, { quote: `${s.payoutPaid.referenceLabel} ${d.reference}` }, { p: s.payoutPaid.after }, { button: s.payoutPaid.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
   }),
   contact: (s, d) => ({
     heading: s.contact.heading,

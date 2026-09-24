@@ -90,7 +90,7 @@ async function start() {
     console.log(`Wisecall running at http://localhost:${config.PORT}`);
     console.log(config.PAYMENT_PROVIDER === 'mock'
       ? 'Payments: MOCK bank (development only). Set PAYMENT_PROVIDER=bog or tbc with your bank keys for real payments.'
-      : `Payments: ${config.PAYMENT_PROVIDER.toUpperCase()} (callback URL ${config.APP_URL}/api/payments/callback)`);
+      : `Payments: ${config.PAYMENT_PROVIDER.toUpperCase()} (callback URL ${config.PUBLIC_URL}/api/payments/callback)`);
   });
 
   const stopJobs = startJobs();

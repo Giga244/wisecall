@@ -1,4 +1,4 @@
-// Serves the site's HTML pages. Pages contain {{APP_URL}} and friends, which are filled in here
+// Serves the site's HTML pages. Pages contain {{PUBLIC_URL}} and friends, which are filled in here
 // so canonical links, share images and sitemaps always use the real public address. Expert
 // profile pages also get their own title and description for search engines and link previews.
 const fs = require('fs');
@@ -26,7 +26,7 @@ function fill(html, vars) {
 }
 
 function baseVars(canonicalPath) {
-  return { APP_URL: config.APP_URL, CANONICAL_URL: config.APP_URL + canonicalPath };
+  return { PUBLIC_URL: config.PUBLIC_URL, CANONICAL_URL: config.PUBLIC_URL + canonicalPath };
 }
 
 // A public mentor's name and role for the page <title>; null when they aren't listed.
@@ -59,9 +59,9 @@ function pageRoutes() {
       const m = await expertMeta(req.query.id);
       const vars = baseVars('/expert.html');
       if (m) {
-        vars.CANONICAL_URL = `${config.APP_URL}/expert.html?id=${req.query.id}`;
+        vars.CANONICAL_URL = `${config.PUBLIC_URL}/expert.html?id=${req.query.id}`;
         vars.TITLE = escapeHtml(`${m.name}, ${m.role_title} — Wisecall`);
-        vars.DESCRIPTION = escapeHtml(`Ask ${m.name} (${m.role_title}) a question on Wisecall for $${m.price}. ${(m.bio || '').slice(0, 120)}`.trim());
+        vars.DESCRIPTION = escapeHtml(`Ask ${m.name} (${m.role_title}) a question on Wisecall for ${m.price} GEL. ${(m.bio || '').slice(0, 120)}`.trim());
       } else {
         vars.TITLE = 'Expert — Wisecall';
         vars.DESCRIPTION = 'Ask a verified expert a question on Wisecall and get a real, paid answer.';
@@ -96,7 +96,7 @@ function seoRoutes() {
       'Disallow: /verify-email.html',
       'Disallow: /reset-password.html',
       'Disallow: /forgot-password.html',
-      `Sitemap: ${config.APP_URL}/sitemap.xml`,
+      `Sitemap: ${config.PUBLIC_URL}/sitemap.xml`,
       ''
     ].join('\n'));
   });
@@ -106,8 +106,8 @@ function seoRoutes() {
       const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3], ['/signup.html', 0.5], ['/login.html', 0.3]];
       const { rows } = await query(`SELECT id, created_at FROM users WHERE ${listableSql()} ORDER BY created_at DESC LIMIT 5000`);
       const urls = [
-        ...staticPages.map(([p, prio]) => `<url><loc>${escapeHtml(config.APP_URL + p)}</loc><priority>${prio}</priority></url>`),
-        ...rows.map((r) => `<url><loc>${escapeHtml(`${config.APP_URL}/expert.html?id=${r.id}`)}</loc><lastmod>${new Date(r.created_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority></url>`)
+        ...staticPages.map(([p, prio]) => `<url><loc>${escapeHtml(config.PUBLIC_URL + p)}</loc><priority>${prio}</priority></url>`),
+        ...rows.map((r) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/expert.html?id=${r.id}`)}</loc><lastmod>${new Date(r.created_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority></url>`)
       ];
       res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
     } catch (e) { next(e); }

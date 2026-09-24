@@ -10,9 +10,12 @@ const int = (v, fallback) => (Number.isFinite(Number(v)) && v !== undefined && v
 const config = {
   IS_PROD,
   PORT: int(env.PORT, 4242),
-  APP_URL: (env.APP_URL || `http://localhost:${int(env.PORT, 4242)}`).replace(/\/+$/, ''),
+  // The public address of the site. Used for canonical links, share tags, sitemap.xml, robots.txt,
+  // emailed links and the bank's return and callback URLs. (APP_URL still works as an old name.)
+  PUBLIC_URL: (env.PUBLIC_URL || env.APP_URL || `http://localhost:${int(env.PORT, 4242)}`).replace(/\/+$/, ''),
   DATABASE_URL: env.DATABASE_URL || '',
-  JWT_SECRET: env.JWT_SECRET || JWT_DEFAULT,
+  // Signs login sessions. (JWT_SECRET still works as an old name.)
+  SESSION_SECRET: env.SESSION_SECRET || env.JWT_SECRET || JWT_DEFAULT,
   // Encrypts mentors' IBANs in the database. Losing or changing it makes stored IBANs unreadable,
   // so keep a copy somewhere safe.
   DATA_ENCRYPTION_KEY: env.DATA_ENCRYPTION_KEY || 'dev-only-data-key-never-use-in-production',
@@ -77,9 +80,12 @@ if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problem
 if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
 
 if (IS_PROD) {
-  if (!env.JWT_SECRET || env.JWT_SECRET === JWT_DEFAULT || env.JWT_SECRET.length < 24) problems.push('JWT_SECRET must be set to 24+ random characters');
+  const secret = env.SESSION_SECRET || env.JWT_SECRET;
+  if (!secret || secret === JWT_DEFAULT || secret.length < 24) problems.push('SESSION_SECRET must be set to 24+ random characters');
   if (!env.DATA_ENCRYPTION_KEY || env.DATA_ENCRYPTION_KEY.length < 32) problems.push('DATA_ENCRYPTION_KEY must be set to 32+ random characters (it encrypts mentors\' IBANs)');
-  if (!/^https:\/\//.test(config.APP_URL)) problems.push('APP_URL must be your public https:// address');
+  if (!env.PUBLIC_URL && !env.APP_URL) problems.push('PUBLIC_URL is required: your site\'s public https:// address (for example https://wisecall.ge)');
+  else if (!/^https:\/\//.test(config.PUBLIC_URL)) problems.push('PUBLIC_URL must be your public https:// address');
+  else if (/\/\/(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(config.PUBLIC_URL)) problems.push('PUBLIC_URL must be your real public address, not localhost');
   if (!['resend', 'postmark'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend or postmark in production');
   if (config.EMAIL_PROVIDER === 'resend' && !config.RESEND_API_KEY) problems.push('RESEND_API_KEY is required (verification codes and password resets are sent by email)');
   if (config.EMAIL_PROVIDER === 'postmark' && !config.POSTMARK_TOKEN) problems.push('POSTMARK_TOKEN is required (verification codes and password resets are sent by email)');

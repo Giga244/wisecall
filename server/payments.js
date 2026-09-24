@@ -29,12 +29,12 @@ async function lockBooking(client, id) {
 // Sends the buyer to the bank. Returns { orderId, redirectUrl }.
 async function startPayment(booking, mentor, seeker) {
   const provider = pay.forProvider(booking.provider);
-  const back = `${config.APP_URL}/expert.html?id=${mentor.id}&booking=${booking.id}`;
+  const back = `${config.PUBLIC_URL}/expert.html?id=${mentor.id}&booking=${booking.id}`;
   return provider.createPayment({
     bookingId: booking.id,
     amount: booking.amount,
     description: 'Wisecall',
-    callbackUrl: `${config.APP_URL}/api/payments/callback`,
+    callbackUrl: `${config.PUBLIC_URL}/api/payments/callback`,
     successUrl: `${back}&status=success`,
     failUrl: `${back}&status=fail`,
     returnUrl: `${back}&status=return`,

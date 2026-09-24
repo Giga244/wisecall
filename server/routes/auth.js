@@ -91,7 +91,7 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
       resetTokenHash: await bcrypt.hash(rawToken, 10),
       resetTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000)
     });
-    resetUrl = `${config.APP_URL}/reset-password.html?token=${user.id}.${rawToken}`;
+    resetUrl = `${config.PUBLIC_URL}/reset-password.html?token=${user.id}.${rawToken}`;
   }
 
   let emailSent = false;

@@ -388,23 +388,58 @@ describe('security hardening', () => {
 });
 
 describe('production safety', () => {
+  const blank = { JWT_SECRET: '', SESSION_SECRET: '', APP_URL: '', PUBLIC_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', DATA_ENCRYPTION_KEY: '' };
+  // The smallest complete production configuration; tests remove or change one thing at a time.
+  const goodProd = {
+    PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL,
+    SESSION_SECRET: 'test-secret-that-is-long-enough-1234567890', PUBLIC_URL: 'https://wisecall.example', RESEND_API_KEY: 're_fake',
+    EMAIL_FROM: 'Wisecall <hi@wisecall.example>', ADMIN_EMAILS: 'boss@wisecall.example', PAYMENT_PROVIDER: 'bog',
+    BOG_CLIENT_ID: 'id', BOG_CLIENT_SECRET: 'secret', DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345',
+    JWT_SECRET: '', APP_URL: ''
+  };
+  const start = (env) => spawnSync('node', ['server/index.js'], { cwd: ROOT, encoding: 'utf8', timeout: 8000, env });
+
   test('refuses to start without required settings and says which', () => {
-    const r = spawnSync('node', ['server/index.js'], {
-      cwd: ROOT, encoding: 'utf8', timeout: 10000,
-      // Values are blanked (not omitted) so dotenv cannot fill them in from the real .env file.
-      env: {
-        PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL,
-        JWT_SECRET: '', APP_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', DATA_ENCRYPTION_KEY: ''
-      }
-    });
+    // Values are blanked (not omitted) so dotenv cannot fill them in from the real .env file.
+    const r = start({ PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL, ...blank });
     assert.equal(r.status, 1);
-    for (const name of ['JWT_SECRET', 'APP_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'PAYMENT_PROVIDER', 'DATA_ENCRYPTION_KEY']) assert.match(r.stderr, new RegExp(name));
+    for (const name of ['SESSION_SECRET', 'PUBLIC_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'PAYMENT_PROVIDER', 'DATA_ENCRYPTION_KEY']) assert.match(r.stderr, new RegExp(name));
   });
 
-  test('in production, codes and reset links are never returned by the API', async () => {
+  test('each required production variable is enforced on its own', () => {
+    const cases = [
+      [{ SESSION_SECRET: 'short' }, /SESSION_SECRET/],
+      [{ PUBLIC_URL: 'http://wisecall.example' }, /PUBLIC_URL must be your public https/],
+      [{ PUBLIC_URL: 'https://localhost:4242' }, /not localhost/],
+      [{ RESEND_API_KEY: '' }, /RESEND_API_KEY/],
+      [{ EMAIL_FROM: '' }, /EMAIL_FROM/],
+      [{ ADMIN_EMAILS: '' }, /ADMIN_EMAILS/],
+      [{ PAYMENT_PROVIDER: 'mock' }, /mock is a fake bank/],
+      [{ PAYMENT_PROVIDER: '' }, /PAYMENT_PROVIDER is required/],
+      [{ BOG_CLIENT_SECRET: '' }, /BOG_CLIENT_SECRET/],
+      [{ PAYMENT_PROVIDER: 'tbc' }, /TBC_API_KEY/],
+      [{ DATA_ENCRYPTION_KEY: 'short' }, /DATA_ENCRYPTION_KEY/]
+    ];
+    for (const [change, expected] of cases) {
+      const r = start({ ...goodProd, ...change });
+      assert.equal(r.status, 1, JSON.stringify(change));
+      assert.match(r.stderr, expected, JSON.stringify(change));
+    }
+  });
+
+  test('the old names APP_URL and JWT_SECRET still work as aliases', async () => {
+    const legacy = await startServer(4554, { PUBLIC_URL: '', SESSION_SECRET: '', APP_URL: 'http://localhost:4554', JWT_SECRET: 'an-old-style-secret-that-is-long-enough-1' });
+    try {
+      const html = await (await fetch(`${legacy.base}/`)).text();
+      assert.match(html, /rel="canonical" href="http:\/\/localhost:4554\/"/);
+      assert.equal((await client(legacy.base).api('/experts')).status, 200);
+    } finally { legacy.proc.kill(); }
+  });
+
+  test('in production, codes and reset links are never returned by the API, and nothing says localhost', async () => {
     const prod = await startServer(4553, {
-      NODE_ENV: 'production', APP_URL: 'https://example.com', RESEND_API_KEY: 're_fake_key_for_test', EMAIL_FROM: 'Wisecall <hi@example.com>',
-      PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test',
+      NODE_ENV: 'production', PUBLIC_URL: 'https://wisecall.example', RESEND_API_KEY: 're_fake_key_for_test', RESEND_API_URL: 'http://127.0.0.1:9/emails',
+      EMAIL_FROM: 'Wisecall <hi@wisecall.example>', PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test',
       DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345'
     });
     try {
@@ -415,10 +450,19 @@ describe('production safety', () => {
       assert.equal(su.devMode, false);
       const f = await c.api('/auth/forgot-password', { method: 'POST', body: { email: 'prod-user@example.com' } });
       assert.deepEqual({ ok: f.ok, resetUrl: f.resetUrl, devMode: f.devMode }, { ok: true, resetUrl: undefined, devMode: undefined });
+
+      // Every public address in the output comes from PUBLIC_URL, never from localhost.
+      for (const p of ['/', '/about.html', '/terms.html', '/robots.txt', '/sitemap.xml', '/no-such-page']) {
+        const text = await (await fetch(prod.base + p, { headers: { Accept: 'text/html' } })).text();
+        assert.doesNotMatch(text, /localhost|127\.0\.0\.1/, `${p} mentions localhost`);
+      }
+      assert.match(await (await fetch(`${prod.base}/`)).text(), /rel="canonical" href="https:\/\/wisecall\.example\/"/);
+      assert.match(await (await fetch(`${prod.base}/`)).text(), /og:image" content="https:\/\/wisecall\.example\/og-image\.png"/);
+      assert.match(await (await fetch(`${prod.base}/robots.txt`)).text(), /Sitemap: https:\/\/wisecall\.example\/sitemap\.xml/);
+      assert.match(await (await fetch(`${prod.base}/sitemap.xml`)).text(), /<loc>https:\/\/wisecall\.example\/<\/loc>/);
     } finally { prod.proc.kill(); }
   });
 });
-
 describe('abuse protection', () => {
   test('login is rate limited', async () => {
     const c = client(base);

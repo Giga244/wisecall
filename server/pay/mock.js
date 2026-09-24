@@ -10,12 +10,12 @@ const isConfigured = () => !config.IS_PROD;
 
 const orders = new Map();
 
-const sign = (body) => crypto.createHmac('sha256', config.JWT_SECRET).update(body).digest('hex');
+const sign = (body) => crypto.createHmac('sha256', config.SESSION_SECRET).update(body).digest('hex');
 
 async function createPayment({ bookingId, amount, callbackUrl, successUrl, failUrl }) {
   const orderId = `mock-${crypto.randomUUID()}`;
   orders.set(orderId, { orderId, bookingId, amount, status: 'pending', callbackUrl, successUrl, failUrl });
-  return { orderId, redirectUrl: `${config.APP_URL}/mock-bank.html?order=${orderId}` };
+  return { orderId, redirectUrl: `${config.PUBLIC_URL}/mock-bank.html?order=${orderId}` };
 }
 
 async function getPaymentStatus(orderId) {

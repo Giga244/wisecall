@@ -147,7 +147,7 @@ describe('reliability', () => {
 describe('production never shows codes or links on screen', () => {
   test('even when email fails, the response has no code and no dev mode; the config says so', async () => {
     const prod = await startServer(4575, {
-      NODE_ENV: 'production', APP_URL: 'https://example.com', EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resendUrl,
+      NODE_ENV: 'production', PUBLIC_URL: 'https://wisecall.example', EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resendUrl,
       EMAIL_FROM: 'Wisecall <hello@wisecall.example>', PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test',
       DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345'
     });
