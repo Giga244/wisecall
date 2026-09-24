@@ -34,6 +34,8 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
     regulated: summary.level === 'regulated',
     requirements: summary.requirements.map((r) => (r.type === 'step' ? withDetail(r) : { ...r, options: r.options.map(withDetail) })),
     ready: summary.ready,
+    // Where the ID check stands, for the progress screen: 'started', 'in_review', 'approved', ...
+    kycState: (stepRows.id_kyc && stepRows.id_kyc.evidence && stepRows.id_kyc.evidence.state) || null,
     inputs: {
       license: await credentials.ownCredentials(user.id),
       workEmailDomain: user.workEmail ? user.workEmail.split('@')[1] : null,

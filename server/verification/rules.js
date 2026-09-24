@@ -72,14 +72,14 @@ const NICHES = {
 // go to the regulators' sites. REVIEW ALL OF THEM before launch: official sites change.
 const REGISTRIES = {
   medicine: [
-    { key: 'health', label: 'State Regulation Agency for Medical Activities (health-care professionals and licences)', url: 'http://www.rama.moh.gov.ge/' },
+    { key: 'health', label: 'State Regulation Agency for Medical Activities (health-care professionals and licenses)', url: 'http://www.rama.moh.gov.ge/' },
     { key: 'moh', label: 'Ministry of Health of Georgia', url: 'https://www.moh.gov.ge/' }
   ],
   law: [
     { key: 'bar', label: 'Georgian Bar Association: members registry', url: 'https://gba.ge/en/Lawyers/Members-Registry' }
   ],
   finance: [
-    { key: 'nbg', label: 'National Bank of Georgia: registers of supervised entities and licences', url: 'https://nbg.gov.ge/en' }
+    { key: 'nbg', label: 'National Bank of Georgia: registers of supervised entities and licenses', url: 'https://nbg.gov.ge/en' }
   ],
   business: [
     { key: 'enreg', label: 'Public Registry: search a company by name or ID number', url: 'https://enreg.reestri.gov.ge/' },

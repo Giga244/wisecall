@@ -125,7 +125,7 @@ async function recompute(userId) {
 
   const candidates = [
     { source: 'profile', label: 'Profile name', name: user.name },
-    { source: 'license', label: 'Licence name', name: await licenseName(user.id) },
+    { source: 'license', label: 'License name', name: await licenseName(user.id) },
     { source: 'iban', label: 'Payout account holder', name: user.payoutName }
   ].filter((c) => c.name);
   const results = candidates.map((c) => ({ ...c, ...compareNames(idName, c.name) }));

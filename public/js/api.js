@@ -17,6 +17,24 @@
     return data;
   }
 
+  // Sends one file as the raw request body (used for private verification documents).
+  async function uploadFile(path, file) {
+    const res = await fetch('/api' + path, {
+      credentials: 'include',
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-Requested-With': 'wisecall', 'X-Filename': encodeURIComponent(file.name) },
+      body: file
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* empty body */ }
+    if (!res.ok) {
+      const err = new Error(data.error || 'request_failed');
+      err.code = data.error;
+      throw err;
+    }
+    return data;
+  }
+
   // Only ever redirect to a path on this site (never to another domain), e.g. after login.
   function safeRedirect(value, fallback) {
     return typeof value === 'string' && /^\/(?![\/\\])/.test(value) ? value : fallback;
@@ -27,5 +45,5 @@
   const formatPrice = (lari) => `${Number(lari)} ${LARI}`;
   const formatAmount = (tetri) => `${(tetri / 100).toFixed(2)} ${LARI}`;
 
-  window.WisecallAPI = { apiFetch, safeRedirect, formatPrice, formatAmount };
+  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount };
 })();

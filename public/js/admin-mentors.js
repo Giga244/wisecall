@@ -19,6 +19,7 @@
     return `<ul class="mv-evidence">${entries.map(([k, v]) => {
       if (Array.isArray(v)) return `<li><span class="muted small">${esc(labelFor(k))}:</span><ul>${v.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></li>`;
       const text = String(v);
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(text)) return `<li><span class="muted small">${esc(labelFor(k))}:</span> ${esc(fmt(text))}</li>`;
       const value = /^https?:\/\//i.test(text) ? `<a href="${esc(text)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>` : esc(typeof v === 'object' ? JSON.stringify(v) : text);
       return `<li><span class="muted small">${esc(labelFor(k))}:</span> ${value}</li>`;
     }).join('')}</ul>`;

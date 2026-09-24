@@ -51,6 +51,7 @@ describe('starting the ID check', () => {
     const step = await kycStep();
     assert.equal(step.status, 'pending');
     assert.equal(step.evidence.state, 'started');
+    assert.equal((await mentor.api('/verification')).kycState, 'started', 'the progress screen can tell the mentor where they are');
   });
 });
 

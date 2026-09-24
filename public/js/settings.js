@@ -45,9 +45,14 @@
     if (status === 'verified' && !u.hasPayoutDetails) {
       html += `<p class="form-error" style="margin-top:8px">${t('settings.payouts.needForListing')}</p>`;
     }
+    html += `<p style="margin-top:10px"><button type="button" class="btn btn-outline btn-sm" data-goto-tab="verification">${t('vt.viewProgress')}</button></p>`;
     verificationBox.innerHTML = html;
     verificationBox.style.display = 'block';
   }
+  verificationBox.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-goto-tab]');
+    if (btn) selectTab(btn.dataset.gotoTab, { focus: true });
+  });
 
   function isMentorUser(u) { return u.role === 'mentor' || u.role === 'both'; }
 
@@ -80,8 +85,58 @@
     renderVerification(u);
   }
 
+  // ---- Tabs: Profile, Mentor, Verification, Payouts, Account -------------------------------------------
+  const tabList = document.getElementById('settingsTabs');
+  const tabButtons = Array.from(tabList.querySelectorAll('.tab'));
+  const panels = Array.from(document.querySelectorAll('.tab-panel'));
+  let activeTab = null;
+
+  function selectTab(name, opts) {
+    const o = opts || {};
+    const btn = tabButtons.find((b) => b.dataset.tab === name && !b.hidden) || tabButtons[0];
+    activeTab = btn.dataset.tab;
+    tabButtons.forEach((b) => {
+      const on = b === btn;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    panels.forEach((p) => { p.hidden = p.dataset.panel !== activeTab; });
+    if (o.push !== false) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', activeTab);
+      window.history.replaceState(null, '', url);
+    }
+    if (o.focus) btn.focus();
+    if (activeTab === 'verification') SettingsVerification.init(document.getElementById('verificationPanel'), { user, goto: (n) => selectTab(n, { focus: true }) });
+  }
+
+  // Verification and Payouts only exist for mentors.
+  function updateTabVisibility() {
+    const mentor = isMentorUser(user);
+    tabButtons.forEach((b) => { if (b.hasAttribute('data-mentor-only')) b.hidden = !mentor; });
+    if (activeTab && tabButtons.find((b) => b.dataset.tab === activeTab).hidden) selectTab('profile');
+  }
+
+  tabList.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.tab');
+    if (btn) selectTab(btn.dataset.tab);
+  });
+  tabList.addEventListener('keydown', (ev) => {
+    const visible = tabButtons.filter((b) => !b.hidden);
+    const i = visible.indexOf(document.activeElement);
+    if (i < 0) return;
+    const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: visible.length - 1 }[ev.key];
+    if (next === undefined) return;
+    ev.preventDefault();
+    selectTab(visible[(next + visible.length) % visible.length].dataset.tab, { focus: true });
+  });
+
   fillForm(user);
   loadPayout();
+  updateTabVisibility();
+  selectTab(new URLSearchParams(window.location.search).get('tab') || 'profile', { push: false });
+  document.addEventListener('wisecall:lang-changed', () => { if (activeTab === 'verification') SettingsVerification.reload(); });
 
   payoutForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -121,6 +176,7 @@
       Object.assign(user, data.user);
       renderVerification(user);
       loadPayout();
+      updateTabVisibility();
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       becomeMentorCheckbox.checked = !checked;

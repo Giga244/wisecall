@@ -51,6 +51,15 @@
 <section class="settings container">
   <h1 data-i18n="settings.title">Settings</h1>
 
+  <div class="tabs" id="settingsTabs" role="tablist" aria-label="Settings">
+    <button class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" data-tab="profile" data-i18n="settings.tab.profile">Profile</button>
+    <button class="tab" role="tab" id="tab-mentor" aria-controls="panel-mentor" data-tab="mentor" data-i18n="settings.tab.mentor">Mentor</button>
+    <button class="tab" role="tab" id="tab-verification" aria-controls="panel-verification" data-tab="verification" data-mentor-only hidden data-i18n="settings.tab.verification">Verification</button>
+    <button class="tab" role="tab" id="tab-payouts" aria-controls="panel-payouts" data-tab="payouts" data-mentor-only hidden data-i18n="settings.tab.payouts">Payouts</button>
+    <button class="tab" role="tab" id="tab-account" aria-controls="panel-account" data-tab="account" data-i18n="settings.tab.account">Account</button>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" data-panel="profile">
   <div class="settings-card">
     <h2 data-i18n="settings.profile.title">Profile</h2>
     <form id="profileForm">
@@ -63,7 +72,9 @@
       <button type="submit" class="btn btn-primary" data-i18n="settings.profile.save">Save profile</button>
     </form>
   </div>
+  </div>
 
+  <div class="tab-panel" role="tabpanel" id="panel-mentor" aria-labelledby="tab-mentor" data-panel="mentor" hidden>
   <div class="settings-card">
     <h2 data-i18n="settings.mentor.title">Mentor profile</h2>
     <label class="checkbox-row">
@@ -108,7 +119,13 @@
       <button type="submit" class="btn btn-primary" data-i18n="settings.mentor.save">Save mentor profile</button>
     </form>
   </div>
+  </div>
 
+  <div class="tab-panel" role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" data-panel="verification" hidden>
+    <div id="verificationPanel"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-payouts" aria-labelledby="tab-payouts" data-panel="payouts" hidden>
   <div class="settings-card" id="payoutCard" style="display:none">
     <h2 data-i18n="settings.payouts.title">Payout details</h2>
     <p class="muted small" data-i18n="settings.payouts.intro">This is where we send your earnings by bank transfer. Only you and the Wisecall team can see it.</p>
@@ -125,6 +142,9 @@
       <button type="submit" class="btn btn-primary" data-i18n="settings.payouts.save">Save payout details</button>
     </form>
   </div>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-account" aria-labelledby="tab-account" data-panel="account" hidden>
   <div class="settings-card">
     <h2 data-i18n="settings.password.title">Change password</h2>
     <form id="passwordForm">
@@ -147,6 +167,7 @@
       <button class="lang-btn" data-lang="ka">ქართული</button>
     </div>
   </div>
+  </div>
 </section>
 
 <div class="toast" id="toast"></div>
@@ -155,6 +176,7 @@
 <script src="/js/footer.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
+<script src="/js/settings-verification.js"></script>
 <script src="/js/settings.js"></script>
 </body>
 </html>
