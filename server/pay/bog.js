@@ -134,4 +134,10 @@ function verifyCallback({ rawBody, headers }) {
   return { orderId };
 }
 
-module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback };
+// For the launch check: proves the credentials work by asking the bank for an access token.
+async function ping() {
+  await getToken(true);
+  return 'the bank issued an access token';
+}
+
+module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, ping };

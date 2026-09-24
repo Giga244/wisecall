@@ -92,4 +92,19 @@ async function getStatus(sessionId) {
   return { sessionId, vendorData: res.vendor_data || null, ...readDecision(res, res.status) };
 }
 
-module.exports = { name, isConfigured, startVerification, handleWebhook, getStatus };
+// For the launch check. Looks up a session that does not exist: Didit checks the API key before it looks
+// anything up, so "not found" proves the key is accepted and 401/403 proves it is not. With { deep: true } it
+// also opens (and never uses) one session, which proves the workflow id is right.
+async function ping({ deep = false } = {}) {
+  try {
+    await requestJson(`${config.DIDIT_API_URL}/v3/session/00000000-0000-4000-8000-000000000000/decision/`, { headers: { 'x-api-key': config.DIDIT_API_KEY } });
+  } catch (e) {
+    if (e.status === 401 || e.status === 403) throw new ProviderError('Didit rejected the API key (DIDIT_API_KEY)', { status: e.status });
+    if (e.status !== 404 && e.status !== 400) throw e;
+  }
+  if (!deep) return 'API key accepted (the workflow id is only proven by a real verification; run with --deep to test it now)';
+  const s = await startVerification({ userId: 'launch-check', callbackUrl: `${config.PUBLIC_URL}/settings.html?tab=verification` });
+  return `API key and workflow id accepted (test session ${s.sessionId} opened and left unused)`;
+}
+
+module.exports = { name, isConfigured, startVerification, handleWebhook, getStatus, ping };

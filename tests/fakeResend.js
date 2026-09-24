@@ -9,10 +9,22 @@ function createFakeResend() {
   const api = {
     sent,
     url: '',
+    // What GET /domains answers (used by the launch check): the key it accepts and the domains on the account.
+    key: 're_test_key',
+    restricted: false, // true = a sending-only key, which cannot list domains
+    domains: [{ name: 'wisecall.example', status: 'verified' }],
     start: () => new Promise((resolve) => {
       server = http.createServer(async (req, res) => {
         const chunks = [];
         for await (const c of req) chunks.push(c);
+        if (req.method === 'GET' && req.url === '/domains') {
+          const bearer = String(req.headers.authorization || '').replace(/^Bearer /, '');
+          const [status, body] = bearer !== api.key ? [401, { name: 'validation_error', message: 'API key is invalid' }]
+            : api.restricted ? [401, { name: 'restricted_api_key', message: 'This API key is restricted to only send emails' }]
+              : [200, { data: api.domains }];
+          res.writeHead(status, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify(body));
+        }
         sent.push({ headers: req.headers, body: JSON.parse(Buffer.concat(chunks).toString('utf8')) });
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end(JSON.stringify({ id: 'email_' + sent.length }));

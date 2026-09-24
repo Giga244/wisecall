@@ -42,7 +42,7 @@ const providers = {
 
   postmark: {
     configured: () => Boolean(config.POSTMARK_TOKEN),
-    send: (m) => postJson('https://api.postmarkapp.com/email', { 'X-Postmark-Server-Token': config.POSTMARK_TOKEN }, {
+    send: (m) => postJson(config.POSTMARK_API_URL + '/email', { 'X-Postmark-Server-Token': config.POSTMARK_TOKEN }, {
       From: config.EMAIL_FROM, To: m.to, Subject: m.subject, HtmlBody: m.html, TextBody: m.text,
       MessageStream: 'outbound', ...(m.replyTo ? { ReplyTo: m.replyTo } : {})
     }, 'postmark')
@@ -58,6 +58,33 @@ const providers = {
     }
   }
 };
+
+// For the launch check: proves the key works and (Resend) that the sending domain is verified, because an
+// unverified domain is the most common reason a launch day email never arrives.
+// Returns { detail, warning? }; throws when something is wrong.
+async function ping() {
+  const from = String(config.EMAIL_FROM || '');
+  const domain = (from.match(/@([^>\s]+)>?\s*$/) || [])[1];
+  if (config.EMAIL_PROVIDER === 'postmark') {
+    const res = await fetch(config.POSTMARK_API_URL + '/server', { headers: { Accept: 'application/json', 'X-Postmark-Server-Token': config.POSTMARK_TOKEN }, signal: AbortSignal.timeout(15000) }).catch((e) => { throw new Error(`network error calling Postmark: ${e.message}`); });
+    if (res.status === 401 || res.status === 403) throw new Error('Postmark rejected the server token (POSTMARK_TOKEN)');
+    if (!res.ok) throw new Error(`Postmark answered ${res.status}`);
+    return { detail: 'server token accepted', warning: `Check in Postmark that ${domain || 'the EMAIL_FROM domain'} has a confirmed sender signature or domain` };
+  }
+  if (config.EMAIL_PROVIDER !== 'resend') throw new Error(`EMAIL_PROVIDER=${config.EMAIL_PROVIDER} sends nothing`);
+  const res = await fetch(new URL(config.RESEND_API_URL).origin + '/domains', { headers: { Accept: 'application/json', Authorization: `Bearer ${config.RESEND_API_KEY}` }, signal: AbortSignal.timeout(15000) }).catch((e) => { throw new Error(`network error calling Resend: ${e.message}`); });
+  const body = await res.json().catch(() => ({}));
+  if (res.status === 401 && /restricted/i.test(`${body.name} ${body.message}`)) {
+    // A "sending access" key is the safer kind to use on a server, but it cannot list domains.
+    return { detail: 'key accepted (a sending-only key)', warning: `Cannot check that ${domain} is verified with a sending-only key. Confirm it shows "Verified" at resend.com/domains` };
+  }
+  if (res.status === 401 || res.status === 403) throw new Error('Resend rejected the API key (RESEND_API_KEY)');
+  if (!res.ok) throw new Error(`Resend answered ${res.status}`);
+  const found = (body.data || []).find((d) => String(d.name).toLowerCase() === String(domain).toLowerCase());
+  if (!found) throw new Error(`Resend accepted the key, but ${domain} is not one of its domains. Add it at resend.com/domains and set the DNS records`);
+  if (found.status !== 'verified') throw new Error(`Resend accepted the key, but ${domain} is "${found.status}", not verified. Finish the DNS records at resend.com/domains`);
+  return { detail: `key accepted and ${domain} is verified` };
+}
 
 function provider() {
   return providers[config.EMAIL_PROVIDER] || null;
@@ -83,4 +110,4 @@ function escapeHtml(str) {
   return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-module.exports = { sendEmail, escapeHtml, providerNames: Object.keys(providers) };
+module.exports = { sendEmail, ping, escapeHtml, providerNames: Object.keys(providers) };

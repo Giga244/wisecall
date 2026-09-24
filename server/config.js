@@ -67,6 +67,11 @@ const config = {
   EMAIL_LOG_FILE: env.EMAIL_LOG_FILE || '',
   EMAIL_FROM: env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',
   SUPPORT_EMAIL: env.SUPPORT_EMAIL || '',
+  POSTMARK_API_URL: (env.POSTMARK_API_URL || 'https://api.postmarkapp.com').replace(/\/+$/, ''),
+
+  // prelaunch: mentors can sign up, apply and be verified, visitors can join the waiting list, and nobody can
+  // pay yet. live: normal behaviour.
+  LAUNCH_MODE: (env.LAUNCH_MODE || 'live').trim().toLowerCase(),
 
   // ADMIN_EMAILS is a comma-separated list; the old single ADMIN_EMAIL still works.
   ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL),
@@ -97,6 +102,7 @@ if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negat
 if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
 if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
 if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');
+if (!['prelaunch', 'live'].includes(config.LAUNCH_MODE)) problems.push('LAUNCH_MODE must be prelaunch or live');
 
 if (IS_PROD) {
   const secret = env.SESSION_SECRET || env.JWT_SECRET;
@@ -132,7 +138,8 @@ if (IS_PROD) {
   }
 }
 
-if (problems.length) {
+config.PROBLEMS = problems; // read by the launch check (npm run check:launch), which sets WISECALL_NO_EXIT
+if (problems.length && !env.WISECALL_NO_EXIT) {
   console.error('\nCannot start — fix these environment variables:\n' + problems.map((p) => '  - ' + p).join('\n') + '\n');
   process.exit(1);
 }

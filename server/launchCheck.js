@@ -1,0 +1,177 @@
+// The launch check behind `npm run check:launch`. It reads the same configuration the server uses, so what it
+// says is what the server will do, and it talks to the real bank, ID-check and email providers through the
+// same code the site uses. Each check returns { status, label, detail }:
+//   ok    - fine
+//   fail  - must be fixed before launch (the command exits with code 1)
+//   warn  - worth a look, does not block
+//   skip  - not run because something it depends on failed above
+const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
+const PERSONAL_MAIL = /@(gmail|googlemail|yahoo|outlook|hotmail|live|icloud|mail)\.[a-z.]+$/i;
+const LOCAL_HOST = /\/\/(localhost|127\.|0\.0\.0\.0|\[::1\])/i;
+const PLACEHOLDER = /^(change|your|xxx|todo|example|secret|password)/i;
+
+const ok = (label, detail) => ({ status: 'ok', label, detail });
+const fail = (label, detail) => ({ status: 'fail', label, detail });
+const warn = (label, detail) => ({ status: 'warn', label, detail });
+const skip = (label, detail) => ({ status: 'skip', label, detail });
+const isEmail = (v) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(v);
+
+// Environment settings: no network involved.
+function settings(config, env) {
+  const out = [];
+  const prod = env.NODE_ENV === 'production';
+  out.push(prod ? ok('NODE_ENV is "production"') : fail('NODE_ENV is "production"', `it is ${env.NODE_ENV ? `"${env.NODE_ENV}"` : 'empty'}. Set NODE_ENV=production; without it the site runs in development mode`));
+  out.push(!config.DEV_MODE ? ok('Development mode (devMode) is off: no codes on screen, no fake bank or ID check pages') : fail('Development mode (devMode) is off', 'it is ON. It switches off by itself when NODE_ENV=production'));
+
+  const secret = env.SESSION_SECRET || env.JWT_SECRET || '';
+  out.push(secret.length >= 32 && !PLACEHOLDER.test(secret) ? ok(`SESSION_SECRET is set (${secret.length} characters)`) : fail('SESSION_SECRET is at least 32 characters', secret ? `it is ${secret.length} characters${PLACEHOLDER.test(secret) ? ' and looks like a placeholder' : ''}. Generate one: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` : 'it is not set'));
+  const key = env.DATA_ENCRYPTION_KEY || '';
+  out.push(key.length >= 32 && !PLACEHOLDER.test(key) ? ok(`DATA_ENCRYPTION_KEY is set (${key.length} characters)`) : fail('DATA_ENCRYPTION_KEY is at least 32 characters', key ? `it is ${key.length} characters` : 'it is not set (it encrypts mentors\' IBANs and ID documents; keep a safe copy)'));
+
+  const url = env.PUBLIC_URL || env.APP_URL || '';
+  if (!url) out.push(fail('PUBLIC_URL is your https:// address', 'it is not set (for example https://wisecall.ge)'));
+  else if (!/^https:\/\//i.test(url)) out.push(fail('PUBLIC_URL is your https:// address', `${url} is not https`));
+  else if (LOCAL_HOST.test(url)) out.push(fail('PUBLIC_URL is your real address', `${url} points at this computer`));
+  else out.push(ok(`PUBLIC_URL is ${config.PUBLIC_URL}`));
+
+  out.push(config.ADMIN_EMAILS.length ? ok(`ADMIN_EMAILS has ${config.ADMIN_EMAILS.length} address${config.ADMIN_EMAILS.length > 1 ? 'es' : ''} (kept private)`) : fail('ADMIN_EMAILS is set', 'nobody could approve mentors or read contact messages'));
+  if (!config.SUPPORT_EMAIL) out.push(fail('SUPPORT_EMAIL is set', 'it is the public contact address shown in the footer, Terms, Privacy Policy and emails (for example support@yourdomain.ge)'));
+  else if (!isEmail(config.SUPPORT_EMAIL)) out.push(fail('SUPPORT_EMAIL is an email address', `"${config.SUPPORT_EMAIL}" is not one`));
+  else if (PERSONAL_MAIL.test(config.SUPPORT_EMAIL)) out.push(warn('SUPPORT_EMAIL is a role address on your own domain', `${config.SUPPORT_EMAIL} looks like a personal mailbox, and it is shown to everyone`));
+  else out.push(ok(`SUPPORT_EMAIL is ${config.SUPPORT_EMAIL}`));
+
+  if (!env.EMAIL_FROM) out.push(fail('EMAIL_FROM is set', 'it is the sender of every email, on a domain you verified with your email provider'));
+  else if (/@resend\.dev>?\s*$/i.test(env.EMAIL_FROM)) out.push(fail('EMAIL_FROM is on your own domain', `${env.EMAIL_FROM} is Resend's test sender: it can only deliver to the account owner`));
+  else out.push(ok(`EMAIL_FROM is ${env.EMAIL_FROM}`));
+
+  out.push(config.DATABASE_URL ? ok('DATABASE_URL is set') : fail('DATABASE_URL is set', 'it is not set'));
+
+  out.push(config.LAUNCH_MODE === 'live'
+    ? ok('LAUNCH_MODE is "live": buyers can pay')
+    : config.LAUNCH_MODE === 'prelaunch'
+      ? warn('LAUNCH_MODE is "live"', 'it is "prelaunch": visitors join the waiting list and nobody can pay. Correct before opening; change to LAUNCH_MODE=live on launch day')
+      : fail('LAUNCH_MODE is "prelaunch" or "live"', `"${config.LAUNCH_MODE}" is neither`));
+  return out;
+}
+
+// Which providers are switched on, and whether they are real and have all their keys.
+function providers(config) {
+  const out = [];
+  const ready = {};
+  const missing = (names) => names.filter((n) => !config[n]);
+
+  const pay = config.PAYMENT_PROVIDER;
+  if (pay === 'mock') out.push(fail('Payments use a real bank', 'PAYMENT_PROVIDER=mock is the fake bank for development'));
+  else if (pay === 'bog' || pay === 'tbc') {
+    const need = pay === 'bog' ? ['BOG_CLIENT_ID', 'BOG_CLIENT_SECRET'] : ['TBC_API_KEY', 'TBC_CLIENT_ID', 'TBC_CLIENT_SECRET'];
+    const gap = missing(need);
+    ready.pay = gap.length === 0;
+    out.push(gap.length ? fail(`Payment keys for ${pay.toUpperCase()} are set`, `missing: ${gap.join(', ')}`) : ok(`Payments use ${pay === 'bog' ? 'Bank of Georgia' : 'TBC Bank'}, and its keys are set`));
+  } else out.push(fail('Payments use a real bank', 'PAYMENT_PROVIDER must be bog or tbc'));
+
+  const kyc = config.KYC_PROVIDER;
+  if (kyc === 'mock') out.push(fail('ID checks use Didit', 'KYC_PROVIDER=mock is the fake ID check for development'));
+  else if (kyc === 'didit') {
+    const gap = missing(['DIDIT_API_KEY', 'DIDIT_WORKFLOW_ID', 'DIDIT_WEBHOOK_SECRET']);
+    ready.kyc = gap.length === 0;
+    out.push(gap.length ? fail('Didit keys are set', `missing: ${gap.join(', ')}`) : ok('ID checks use Didit, and its API key, workflow id and webhook secret are set'));
+  } else out.push(fail('ID checks use Didit', 'KYC_PROVIDER must be didit'));
+
+  const mail = config.EMAIL_PROVIDER;
+  if (mail === 'log') out.push(fail('Email goes through a real provider', 'EMAIL_PROVIDER=log only writes to a file'));
+  else if (mail === 'resend') {
+    ready.mail = Boolean(config.RESEND_API_KEY);
+    out.push(ready.mail ? ok('Email uses Resend, and the API key is set') : fail('Resend API key is set', 'RESEND_API_KEY is missing'));
+  } else if (mail === 'postmark') {
+    ready.mail = Boolean(config.POSTMARK_TOKEN);
+    out.push(ready.mail ? ok('Email uses Postmark, and the server token is set') : fail('Postmark token is set', 'POSTMARK_TOKEN is missing'));
+  }
+  else out.push(fail('Email goes through a real provider', 'EMAIL_PROVIDER must be resend or postmark'));
+
+  const anyMock = pay === 'mock' || kyc === 'mock' || mail === 'log';
+  out.push(anyMock ? fail('No fake (mock) provider is active', 'see above') : ok('No fake (mock) provider is active'));
+  return { results: out, ready };
+}
+
+async function attempt(label, fn) {
+  try {
+    const r = await fn();
+    if (r && typeof r === 'object') return r.warning ? warn(label, `${r.detail}. ${r.warning}`) : ok(label, r.detail);
+    return ok(label, r);
+  } catch (e) {
+    return fail(label, e && e.message ? e.message : String(e));
+  }
+}
+
+async function checkDatabase(config) {
+  const label = 'The database is reachable and up to date';
+  if (!config.DATABASE_URL) return skip(label, 'DATABASE_URL is not set');
+  const client = new Client({ connectionString: config.DATABASE_URL, connectionTimeoutMillis: 8000 });
+  client.on('error', () => {});
+  try {
+    await client.connect();
+    await client.query('SELECT 1');
+    const files = fs.readdirSync(path.join(__dirname, '..', 'migrations')).filter((f) => f.endsWith('.sql'));
+    let applied = 0;
+    try { applied = (await client.query('SELECT count(*)::int AS n FROM schema_migrations')).rows[0].n; } catch (e) { /* a brand new database */ }
+    const detail = applied >= files.length ? `${applied} migrations applied` : `${applied} of ${files.length} migrations applied; the rest are applied automatically when the server starts`;
+    return applied >= files.length ? ok(label, detail) : ok('The database is reachable', detail);
+  } catch (e) {
+    return fail(label, `cannot connect: ${e.message}`);
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
+// Every check, in the order they are shown. `deep` also opens one unused ID-check session.
+async function runChecks(config, env, { deep = false } = {}) {
+  const sections = [];
+  const s1 = settings(config, env);
+  const { results: s2, ready } = providers(config);
+  sections.push({ title: 'Settings', results: s1 });
+  sections.push({ title: 'Providers', results: s2 });
+
+  const live = [];
+  live.push(await checkDatabase(config));
+
+  const payName = config.PAYMENT_PROVIDER === 'tbc' ? 'TBC Bank' : 'Bank of Georgia';
+
+  if (!ready.pay) live.push(skip(`${payName} answers and accepts your keys`, 'fix the payment settings first'));
+  else live.push(await attempt(`${payName} answers and accepts your keys`, () => require(`./pay/${config.PAYMENT_PROVIDER}`).ping()));
+
+  if (!ready.kyc) live.push(skip('Didit answers and accepts your key', 'fix the ID-check settings first'));
+  else live.push(await attempt('Didit answers and accepts your key', () => require('./kyc/didit').ping({ deep })));
+
+  const mailName = config.EMAIL_PROVIDER === 'postmark' ? 'Postmark' : 'Resend';
+  if (!ready.mail) live.push(skip(`${mailName} answers and can send from ${config.EMAIL_FROM}`, 'fix the email settings first'));
+  else live.push(await attempt(`${mailName} answers and can send from your domain`, () => require('./email').ping()));
+
+  sections.push({ title: 'Live connections', results: live });
+  return sections;
+}
+
+const ICON = { ok: '✅', fail: '❌', warn: '⚠️ ', skip: '➖' };
+
+function format(sections) {
+  const lines = ['', 'Wisecall launch check', '=====================', ''];
+  let fails = 0, warns = 0;
+  for (const s of sections) {
+    lines.push(s.title);
+    for (const r of s.results) {
+      if (r.status === 'fail') fails += 1;
+      if (r.status === 'warn') warns += 1;
+      lines.push(`  ${ICON[r.status]} ${r.label}${r.detail ? ` — ${r.detail}` : ''}`);
+    }
+    lines.push('');
+  }
+  lines.push(fails
+    ? `NOT READY: ${fails} thing${fails === 1 ? '' : 's'} to fix${warns ? `, ${warns} warning${warns === 1 ? '' : 's'}` : ''}.`
+    : warns ? `READY, with ${warns} warning${warns === 1 ? '' : 's'} to read above.` : 'READY: every check passed.');
+  lines.push('');
+  return { text: lines.join('\n'), fails, warns };
+}
+
+module.exports = { runChecks, format, settings, providers };

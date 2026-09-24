@@ -183,9 +183,13 @@ describe('meeting link, result and audit trail', () => {
 
   test('a failed interview lets the mentor book another one', async () => {
     const s = await newSlot(150);
-    const l = await lawyer.api('/verification/interview');
-    const mine = l.booking || null;
-    assert.ok(mine, 'the lawyer holds a booking from the earlier race');
+    let mine = (await lawyer.api('/verification/interview')).booking || null;
+    if (!mine) { // the other mentor won the same-moment race above (either may), so take a slot of our own
+      const own = await newSlot(140);
+      assert.equal((await lawyer.api('/verification/interview/book', { method: 'POST', body: { slotId: own.id } })).status, 200);
+      mine = (await lawyer.api('/verification/interview')).booking || null;
+    }
+    assert.ok(mine, 'the lawyer holds a booking');
     await pool.query(`UPDATE interview_slots SET starts_at = now() - interval '5 minutes' WHERE id = $1`, [mine.id]);
     assert.equal((await admin.api(`/admin/interviews/${mine.id}/result`, { method: 'POST', body: { result: 'failed', reason: 'Could not confirm the licence holder' } })).status, 200);
     assert.equal((await stepRow(lawyerId, 'video_interview')).status, 'failed');
