@@ -22,6 +22,12 @@ const URL_RE = /^https?:\/\/.+\..+/i;
 
 router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const updates = req.body || {};
+  // Every text field must really be text (or null), never an object or array.
+  for (const field of ['name', 'bio', 'roleTitle', 'proofUrl', 'sampleAnswer', 'niche', 'language']) {
+    const v = updates[field];
+    if (v !== undefined && v !== null && typeof v !== 'string') return res.status(400).json({ error: 'invalid_field', field });
+  }
+  if (updates.price !== undefined && typeof updates.price !== 'number' && typeof updates.price !== 'string') return res.status(400).json({ error: 'invalid_price' });
   const existing = await getUserById(req.userToken.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });
 
@@ -82,7 +88,7 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
 
 router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
-  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'missing_fields' });
+  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' || !currentPassword || !newPassword) return res.status(400).json({ error: 'missing_fields' });
   if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
 
   const user = await getUserById(req.userToken.id);

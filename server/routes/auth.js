@@ -8,6 +8,7 @@ const config = require('../config');
 const { sendTemplate } = require('../mail');
 
 const router = express.Router();
+const isStr = (v) => typeof v === 'string';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Compared against when the email is unknown so a wrong email and a wrong password take equally long.
@@ -15,7 +16,7 @@ const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
 
 router.post('/signup', asyncHandler(async (req, res) => {
   const { name, email, password, language } = req.body || {};
-  if (!name || !email || !password) return res.status(400).json({ error: 'missing_fields' });
+  if (!isStr(name) || !isStr(email) || !isStr(password) || !name.trim() || !email || !password) return res.status(400).json({ error: 'missing_fields' });
   if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
   if (String(password).length < 8 || String(password).length > 200) return res.status(400).json({ error: 'weak_password' });
 
@@ -59,10 +60,10 @@ router.post('/signup', asyncHandler(async (req, res) => {
 
 router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'missing_fields' });
+  if (!isStr(email) || !isStr(password) || !email || !password) return res.status(400).json({ error: 'missing_fields' });
 
-  const user = await getUserByEmail(String(email).trim());
-  const ok = await bcrypt.compare(String(password), user ? user.passwordHash : DUMMY_HASH);
+  const user = await getUserByEmail(email.trim());
+  const ok = await bcrypt.compare(password, user ? user.passwordHash : DUMMY_HASH);
   if (!user || !ok) return res.status(401).json({ error: 'invalid_credentials' });
 
   setAuthCookie(res, signToken(user));
@@ -78,9 +79,9 @@ router.post('/logout', (req, res) => {
 // and only a bcrypt hash of the random part is stored.
 router.post('/forgot-password', asyncHandler(async (req, res) => {
   const { email } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'missing_fields' });
+  if (!isStr(email) || !email) return res.status(400).json({ error: 'missing_fields' });
 
-  const user = await getUserByEmail(String(email).trim());
+  const user = await getUserByEmail(email.trim());
   const rawToken = crypto.randomBytes(32).toString('hex');
   let resetUrl = null;
 
@@ -111,10 +112,10 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
 
 router.post('/reset-password', asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body || {};
-  if (!token || !newPassword) return res.status(400).json({ error: 'missing_fields' });
+  if (!isStr(token) || !isStr(newPassword) || !token || !newPassword) return res.status(400).json({ error: 'missing_fields' });
   if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
 
-  const [userId, rawToken] = String(token).split('.');
+  const [userId, rawToken] = token.split('.');
   const user = rawToken ? await getUserById(userId) : null;
   const valid = user && user.resetTokenHash && user.resetTokenExpiresAt &&
     new Date(user.resetTokenExpiresAt).getTime() > Date.now() &&
@@ -131,14 +132,14 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
 
 router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
   const { code } = req.body || {};
-  if (!code) return res.status(400).json({ error: 'missing_fields' });
+  if (!isStr(code) || !code) return res.status(400).json({ error: 'missing_fields' });
 
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
   if (user.emailVerified) return res.json({ user: meProfile(user) });
   if (!user.emailVerifyCodeHash || !user.emailVerifyCodeExpiresAt) return res.status(400).json({ error: 'no_pending_code' });
   if (new Date(user.emailVerifyCodeExpiresAt).getTime() < Date.now()) return res.status(400).json({ error: 'expired' });
-  if (!(await bcrypt.compare(String(code).trim(), user.emailVerifyCodeHash))) return res.status(400).json({ error: 'invalid_code' });
+  if (!(await bcrypt.compare(code.trim(), user.emailVerifyCodeHash))) return res.status(400).json({ error: 'invalid_code' });
 
   const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null });
   res.json({ user: meProfile(updated) });

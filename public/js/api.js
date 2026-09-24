@@ -2,7 +2,7 @@
   async function apiFetch(path, opts = {}) {
     const res = await fetch('/api' + path, {
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' },
       method: opts.method || 'GET',
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
     });

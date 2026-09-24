@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
   const { mentorId, question } = req.body || {};
-  if (!mentorId || !question || String(question).trim().length < 5) {
+  if (typeof mentorId !== 'string' || typeof question !== 'string' || question.trim().length < 5) {
     return res.status(400).json({ error: 'missing_fields' });
   }
 
@@ -78,7 +78,7 @@ router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
 
 router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   const { answer } = req.body || {};
-  if (!answer || String(answer).trim().length < 2) return res.status(400).json({ error: 'missing_answer' });
+  if (typeof answer !== 'string' || answer.trim().length < 2) return res.status(400).json({ error: 'missing_answer' });
 
   const existing = await getBookingById(req.params.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });
@@ -105,6 +105,7 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
 
 router.post('/:id/review', requireAuth, asyncHandler(async (req, res) => {
   const { rating, review } = req.body || {};
+  if (review !== undefined && review !== null && typeof review !== 'string') return res.status(400).json({ error: 'invalid_review' });
   const ratingNum = Number(rating);
   if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) return res.status(400).json({ error: 'invalid_rating' });
 

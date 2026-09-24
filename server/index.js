@@ -6,19 +6,14 @@ const db = require('./db');
 const { rateLimit } = require('./rateLimit');
 const { startJobs } = require('./jobs');
 const pages = require('./pages');
+const { securityHeaders, csrfGuard, requestLogger } = require('./security');
 
 const app = express();
 if (config.IS_PROD) app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
-app.use((req, res, next) => {
-  res.set({
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'Referrer-Policy': 'strict-origin-when-cross-origin'
-  });
-  next();
-});
+app.use(securityHeaders);
+app.use(requestLogger);
 
 // Health check for the hosting platform: also proves the database is reachable.
 app.get('/healthz', async (req, res) => {
@@ -34,6 +29,8 @@ app.get('/healthz', async (req, res) => {
 // so it's mounted before the global json() body parser.
 app.use('/api/webhook', express.raw({ type: 'application/json' }), require('./routes/webhook'));
 
+// State-changing API calls must come from our own pages (see security.js).
+app.use('/api', csrfGuard);
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
 

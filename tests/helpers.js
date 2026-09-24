@@ -51,7 +51,7 @@ function client(base) {
   const call = async (p, { method = 'GET', body, headers = {} } = {}) => {
     const res = await fetch(base + p, {
       method,
-      headers: { 'Content-Type': 'application/json', ...(cookie ? { cookie } : {}), ...headers },
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall', ...(cookie ? { cookie } : {}), ...headers },
       body: body === undefined ? undefined : (typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)),
       redirect: 'manual'
     });

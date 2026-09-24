@@ -323,6 +323,63 @@ describe('SEO, error pages and the contact form', () => {
   });
 });
 
+describe('security hardening', () => {
+  const post = (p, headers, body = {}) => fetch(base + p, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
+
+  test('every response carries a strict Content-Security-Policy and the other security headers', async () => {
+    const res = await fetch(base + '/');
+    const csp = res.headers.get('content-security-policy');
+    assert.match(csp, /script-src 'self'(;|$)/, 'scripts only from our own files');
+    assert.match(csp, /frame-ancestors 'none'/);
+    assert.match(csp, /object-src 'none'/);
+    assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+    assert.ok(res.headers.get('permissions-policy'));
+    assert.equal(res.headers.get('strict-transport-security'), null, 'HSTS only in production');
+  });
+
+  test('no page uses inline scripts or inline event handlers (which the policy would block)', () => {
+    const fs = require('fs');
+    for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html'))) {
+      const html = fs.readFileSync(path.join(ROOT, 'public', f), 'utf8');
+      assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)[^>]*>/i, `${f} has an inline script`);
+      assert.doesNotMatch(html, /\son(click|change|submit|load|error)=/i, `${f} has an inline event handler`);
+    }
+  });
+
+  test('CSRF: state-changing API calls need our header and a same-site origin', async () => {
+    const login = { email: 'seeker@example.com', password: 'test-pass-12345' };
+    assert.equal((await post('/api/auth/login', {}, login)).status, 403, 'no custom header');
+    assert.equal((await post('/api/auth/login', { 'X-Requested-With': 'wisecall', Origin: 'https://evil.example' }, login)).status, 403, 'foreign origin');
+    assert.equal((await post('/api/auth/login', { 'X-Requested-With': 'wisecall', 'Sec-Fetch-Site': 'cross-site' }, login)).status, 403, 'cross-site request');
+    const ok = await post('/api/auth/login', { 'X-Requested-With': 'wisecall', Origin: base }, login);
+    assert.equal(ok.status, 200);
+    assert.equal((await fetch(base + '/api/experts')).status, 200, 'reads need no header');
+  });
+
+  test('values of the wrong type are rejected with 400, never a server error', async () => {
+    const c = client(base);
+    for (const body of [
+      { name: ['x'], email: 'a@example.com', password: 'long-enough-1' },
+      { name: 'x', email: { a: 1 }, password: 'long-enough-1' },
+      { name: 'x', email: 'a@example.com', password: ['long-enough-1'] }
+    ]) assert.equal((await c.api('/auth/signup', { method: 'POST', body })).status, 400);
+    assert.equal((await c.api('/auth/login', { method: 'POST', body: { email: 'a@example.com', password: { $ne: 1 } } })).status, 400);
+    assert.equal((await c.api('/auth/reset-password', { method: 'POST', body: { token: ['a.b'], newPassword: 'long-enough-1' } })).status, 400);
+
+    assert.equal((await ids.seekerClient.api('/me', { method: 'PATCH', body: { bio: { evil: true } } })).status, 400);
+    assert.equal((await ids.seekerClient.api('/me/password', { method: 'POST', body: { currentPassword: 'x', newPassword: ['12345678'] } })).status, 400);
+    assert.equal((await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: { a: 'long enough text' } } })).status, 400);
+    assert.equal((await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: [ids.mentor], question: 'A perfectly fine question' } })).status, 400);
+  });
+
+  test('a broken JSON body is a 400, and an oversized one is refused', async () => {
+    const bad = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: '{oops' });
+    assert.equal(bad.status, 400);
+    const big = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: JSON.stringify({ email: 'a'.repeat(80000) }) });
+    assert.equal(big.status, 413);
+  });
+});
+
 describe('production safety', () => {
   test('refuses to start without required settings and says which', () => {
     const r = spawnSync('node', ['server/index.js'], {

@@ -33,8 +33,9 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
 router.post('/mentors/:id/review', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   const { approve, note, checks } = req.body || {};
   if (typeof approve !== 'boolean') return res.status(400).json({ error: 'missing_approve' });
-  const c = checks || {};
-  const reason = note ? String(note).trim().slice(0, 1000) : '';
+  if (note !== undefined && note !== null && typeof note !== 'string') return res.status(400).json({ error: 'invalid_note' });
+  const c = checks && typeof checks === 'object' ? checks : {};
+  const reason = note ? note.trim().slice(0, 1000) : '';
   if (!approve && !reason) return res.status(400).json({ error: 'reason_required' });
   if (approve && !(c.identity && c.credential && c.sample)) return res.status(400).json({ error: 'checklist_incomplete' });
 
