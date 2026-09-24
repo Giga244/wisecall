@@ -1,51 +1,48 @@
 const express = require('express');
-const { load, withDb } = require('../db');
+const { query } = require('../db');
 const { requireAuth } = require('../auth');
-const { meProfile, mentorStats } = require('../util');
+const { meProfile, asyncHandler } = require('../util');
+const { userFromRow, getUserById, updateUser, mentorStatsFor } = require('../models');
 const config = require('../config');
 
 const router = express.Router();
 
-function requireAdmin(req, res, next) {
-  if (!config.ADMIN_EMAIL) {
-    return res.status(400).json({ error: 'admin_not_configured', message: 'Set ADMIN_EMAIL in .env to enable the admin review panel.' });
+const requireAdmin = asyncHandler(async (req, res, next) => {
+  if (config.ADMIN_EMAILS.length === 0) {
+    return res.status(400).json({ error: 'admin_not_configured', message: 'Set ADMIN_EMAILS in .env to enable the admin panel.' });
   }
-  const data = load();
-  const user = data.users.find(u => u.id === req.userToken.id);
-  if (!user || user.email !== config.ADMIN_EMAIL) {
-    return res.status(403).json({ error: 'not_admin' });
-  }
+  const user = await getUserById(req.userToken.id);
+  if (!user || !config.ADMIN_EMAILS.includes(user.email.toLowerCase())) return res.status(403).json({ error: 'not_admin' });
+  req.adminUser = user;
   next();
-}
-
-router.get('/mentors', requireAuth, requireAdmin, (req, res) => {
-  const { status } = req.query;
-  const data = load();
-  let mentors = data.users.filter(u => u.role === 'mentor' || u.role === 'both');
-  if (status) {
-    mentors = mentors.filter(u => (u.verificationStatus || 'none') === status);
-  }
-  mentors.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json({ mentors: mentors.map(m => ({ ...meProfile(m), ...mentorStats(m.id, data.bookings) })) });
 });
 
-router.post('/mentors/:id/review', requireAuth, requireAdmin, (req, res) => {
+router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const { status } = req.query;
+  const params = [];
+  let where = `role IN ('mentor', 'both')`;
+  if (status) { params.push(String(status)); where += ` AND verification_status = $${params.length}`; }
+  const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
+  const mentors = rows.map(userFromRow);
+  const stats = await mentorStatsFor(mentors.map((m) => m.id));
+  res.json({ mentors: mentors.map((m) => ({ ...meProfile(m), ...stats[m.id] })) });
+}));
+
+router.post('/mentors/:id/review', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   const { approve, note, checks } = req.body || {};
   if (typeof approve !== 'boolean') return res.status(400).json({ error: 'missing_approve' });
   const c = checks || {};
   if (approve && !(c.identity && c.credential && c.sample)) return res.status(400).json({ error: 'checklist_incomplete' });
 
-  const result = withDb(data => {
-    const mentor = data.users.find(u => u.id === req.params.id);
-    if (!mentor) return { error: 'not_found' };
-    mentor.verificationStatus = approve ? 'verified' : 'rejected';
-    mentor.verificationNote = note ? String(note).slice(0, 1000) : null;
-    mentor.verificationChecks = approve ? { identity: true, credential: true, sample: true, at: new Date().toISOString() } : null;
-    return { mentor };
-  });
+  const mentor = await getUserById(req.params.id);
+  if (!mentor) return res.status(404).json({ error: 'not_found' });
 
-  if (result.error) return res.status(404).json({ error: result.error });
-  res.json({ mentor: meProfile(result.mentor) });
-});
+  const updated = await updateUser(mentor.id, {
+    verificationStatus: approve ? 'verified' : 'rejected',
+    verificationNote: note ? String(note).slice(0, 1000) : null,
+    verificationChecks: approve ? { identity: true, credential: true, sample: true, at: new Date().toISOString() } : null
+  });
+  res.json({ mentor: meProfile(updated) });
+}));
 
 module.exports = router;

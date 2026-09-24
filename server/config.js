@@ -1,28 +1,59 @@
 require('dotenv').config();
 
-const stripeKey = process.env.STRIPE_SECRET_KEY || '';
-const resendKey = process.env.RESEND_API_KEY || '';
-
-const IS_PROD = process.env.NODE_ENV === 'production';
+const env = process.env;
+const IS_PROD = env.NODE_ENV === 'production';
 const JWT_DEFAULT = 'dev-secret-change-me-before-production';
-if (IS_PROD && (!process.env.JWT_SECRET || process.env.JWT_SECRET === JWT_DEFAULT || process.env.JWT_SECRET.length < 24)) {
-  console.error('FATAL: set JWT_SECRET (24+ random characters) before running with NODE_ENV=production.');
+
+const list = (v) => String(v || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+const int = (v, fallback) => (Number.isFinite(Number(v)) && v !== undefined && v !== '' ? Number(v) : fallback);
+
+const stripeKey = env.STRIPE_SECRET_KEY || '';
+const config = {
+  IS_PROD,
+  PORT: int(env.PORT, 4242),
+  APP_URL: (env.APP_URL || `http://localhost:${int(env.PORT, 4242)}`).replace(/\/+$/, ''),
+  DATABASE_URL: env.DATABASE_URL || '',
+  JWT_SECRET: env.JWT_SECRET || JWT_DEFAULT,
+
+  CURRENCY: (env.CURRENCY || 'usd').toLowerCase(),
+  PLATFORM_FEE_PERCENT: int(env.PLATFORM_FEE_PERCENT, 20),
+  ANSWER_DEADLINE_DAYS: int(env.ANSWER_DEADLINE_DAYS, 7),
+
+  STRIPE_SECRET_KEY: stripeKey,
+  STRIPE_PUBLISHABLE_KEY: env.STRIPE_PUBLISHABLE_KEY || '',
+  STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || '',
+  STRIPE_ENABLED: Boolean(stripeKey && stripeKey.startsWith('sk_')),
+
+  EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
+  RESEND_API_KEY: env.RESEND_API_KEY || '',
+  EMAIL_FROM: env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',
+  EMAIL_ENABLED: Boolean(env.RESEND_API_KEY),
+  SUPPORT_EMAIL: env.SUPPORT_EMAIL || '',
+
+  // ADMIN_EMAILS is a comma-separated list; the old single ADMIN_EMAIL still works.
+  ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL)
+};
+
+// Fail fast: refuse to start with a configuration that would break or be unsafe.
+const problems = [];
+if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresql://user:pass@localhost:5432/wisecall)');
+if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) problems.push('PLATFORM_FEE_PERCENT must be between 0 and 99');
+if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
+
+if (IS_PROD) {
+  if (!env.JWT_SECRET || env.JWT_SECRET === JWT_DEFAULT || env.JWT_SECRET.length < 24) problems.push('JWT_SECRET must be set to 24+ random characters');
+  if (!/^https:\/\//.test(config.APP_URL)) problems.push('APP_URL must be your public https:// address');
+  if (!config.RESEND_API_KEY) problems.push('RESEND_API_KEY is required (verification codes and password resets are sent by email)');
+  if (!env.EMAIL_FROM) problems.push('EMAIL_FROM is required (an address on a domain you verified with your email provider)');
+  if (config.ADMIN_EMAILS.length === 0) problems.push('ADMIN_EMAILS is required (who can approve mentors)');
+  if (config.STRIPE_SECRET_KEY && !config.STRIPE_SECRET_KEY.startsWith('sk_')) problems.push('STRIPE_SECRET_KEY does not look like a Stripe secret key');
+  if (config.STRIPE_ENABLED && !config.STRIPE_WEBHOOK_SECRET) problems.push('STRIPE_WEBHOOK_SECRET is required when Stripe is enabled');
+  if (config.STRIPE_ENABLED && !config.STRIPE_PUBLISHABLE_KEY) problems.push('STRIPE_PUBLISHABLE_KEY is required when Stripe is enabled');
+}
+
+if (problems.length) {
+  console.error('\nCannot start — fix these environment variables:\n' + problems.map((p) => '  - ' + p).join('\n') + '\n');
   process.exit(1);
 }
 
-module.exports = {
-  IS_PROD,
-  PORT: process.env.PORT || 4242,
-  JWT_SECRET: process.env.JWT_SECRET || JWT_DEFAULT,
-  CURRENCY: (process.env.CURRENCY || 'usd').toLowerCase(),
-  PLATFORM_FEE_PERCENT: Number(process.env.PLATFORM_FEE_PERCENT || 3),
-  STRIPE_SECRET_KEY: stripeKey,
-  STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || '',
-  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
-  STRIPE_ENABLED: Boolean(stripeKey && stripeKey.startsWith('sk_')),
-  APP_URL: process.env.APP_URL || `http://localhost:${process.env.PORT || 4242}`,
-  RESEND_API_KEY: resendKey,
-  EMAIL_FROM: process.env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',
-  EMAIL_ENABLED: Boolean(resendKey),
-  ADMIN_EMAIL: (process.env.ADMIN_EMAIL || '').trim().toLowerCase()
-};
+module.exports = config;

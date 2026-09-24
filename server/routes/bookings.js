@@ -1,11 +1,11 @@
 const express = require('express');
-const crypto = require('crypto');
-const { load, withDb } = require('../db');
+const { query } = require('../db');
 const { requireAuth } = require('../auth');
 const config = require('../config');
 const stripe = require('../stripeClient');
 const { sendEmail, escapeHtml } = require('../email');
-const { isListable } = require('../util');
+const { isListable, asyncHandler } = require('../util');
+const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('../models');
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ async function notifySeekerAnswered(seeker, mentor, booking) {
   try {
     await sendEmail({
       to: seeker.email,
-      subject: `${String(mentor.name).replace(/[\r\n]/g, " ")} answered your question on Wisecall`,
+      subject: `${String(mentor.name).replace(/[\r\n]/g, ' ')} answered your question on Wisecall`,
       html: `<p>${escapeHtml(mentor.name)} just answered your question:</p><p>"${escapeHtml(booking.answer)}"</p><p><a href="${config.APP_URL}/dashboard.html">Read it in your dashboard</a>.</p>`
     });
   } catch (e) {
@@ -35,47 +35,32 @@ async function notifySeekerAnswered(seeker, mentor, booking) {
   }
 }
 
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, asyncHandler(async (req, res) => {
   const { mentorId, question } = req.body || {};
-  if (!mentorId || !question || question.trim().length < 5) {
+  if (!mentorId || !question || String(question).trim().length < 5) {
     return res.status(400).json({ error: 'missing_fields' });
   }
 
-  const data = load();
-  const mentor = data.users.find(u => u.id === mentorId && isListable(u));
-  const seeker = data.users.find(u => u.id === req.userToken.id);
-  if (!mentor) return res.status(404).json({ error: 'mentor_not_found' });
+  const mentor = await getUserById(mentorId);
+  const seeker = await getUserById(req.userToken.id);
+  if (!seeker) return res.status(401).json({ error: 'not_authenticated' });
+  if (!isListable(mentor)) return res.status(404).json({ error: 'mentor_not_found' });
   if (mentor.id === seeker.id) return res.status(400).json({ error: 'cannot_book_self' });
-  if (!mentor.price) return res.status(400).json({ error: 'mentor_price_not_set' });
 
   const amount = Math.round(mentor.price * 100);
   const feeAmount = Math.round(amount * (config.PLATFORM_FEE_PERCENT / 100));
-  const mentorNet = amount - feeAmount;
   const simulated = !config.STRIPE_ENABLED;
+  const cleanQuestion = String(question).trim().slice(0, 4000);
 
-  const booking = {
-    id: crypto.randomUUID(),
-    seekerId: seeker.id,
-    mentorId: mentor.id,
-    question: question.trim().slice(0, 4000),
-    answer: null,
-    rating: null,
-    review: null,
-    reviewedAt: null,
-    amount,
-    currency: config.CURRENCY,
-    platformFeePercent: config.PLATFORM_FEE_PERCENT,
-    platformFeeAmount: feeAmount,
-    mentorNetAmount: mentorNet,
-    status: simulated ? 'paid' : 'pending_payment',
-    mode: simulated ? 'simulated' : 'stripe',
-    stripeSessionId: null,
-    stripePaymentIntentId: null,
-    paidAt: simulated ? new Date().toISOString() : null,
-    createdAt: new Date().toISOString()
-  };
-
-  withDb(d => { d.bookings.push(booking); });
+  const { rows } = await query(
+    `INSERT INTO bookings (seeker_id, mentor_id, question, amount, currency, platform_fee_percent,
+                           platform_fee_amount, mentor_net_amount, status, mode, paid_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+    [seeker.id, mentor.id, cleanQuestion, amount, config.CURRENCY, config.PLATFORM_FEE_PERCENT,
+      feeAmount, amount - feeAmount, simulated ? 'paid' : 'pending_payment', simulated ? 'simulated' : 'stripe',
+      simulated ? new Date() : null]
+  );
+  const booking = bookingFromRow(rows[0]);
 
   if (simulated) {
     notifyMentorNewQuestion(mentor, booking);
@@ -88,7 +73,7 @@ router.post('/', requireAuth, async (req, res) => {
       line_items: [{
         price_data: {
           currency: config.CURRENCY,
-          product_data: { name: `Advice from ${mentor.name}`, description: question.trim().slice(0, 300) },
+          product_data: { name: `Advice from ${mentor.name}`, description: cleanQuestion.slice(0, 300) },
           unit_amount: amount
         },
         quantity: 1
@@ -101,96 +86,73 @@ router.post('/', requireAuth, async (req, res) => {
       success_url: `${config.APP_URL}/expert.html?id=${mentor.id}&booking=${booking.id}&status=success`,
       cancel_url: `${config.APP_URL}/expert.html?id=${mentor.id}&booking=${booking.id}&status=cancelled`
     });
-
-    withDb(d => {
-      const b = d.bookings.find(x => x.id === booking.id);
-      if (b) b.stripeSessionId = session.id;
-    });
-
+    await updateBooking(booking.id, { stripeSessionId: session.id });
     res.status(201).json({ booking, checkoutUrl: session.url, simulated: false });
   } catch (err) {
-    withDb(d => {
-      const idx = d.bookings.findIndex(x => x.id === booking.id);
-      if (idx >= 0) d.bookings.splice(idx, 1);
-    });
+    await query('DELETE FROM bookings WHERE id = $1', [booking.id]);
     res.status(502).json({ error: 'stripe_error', message: err.message });
   }
-});
+}));
 
-router.get('/mine', requireAuth, (req, res) => {
-  const data = load();
-  const asked = data.bookings.filter(b => b.seekerId === req.userToken.id);
-  const received = data.bookings.filter(b => b.mentorId === req.userToken.id);
+router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
+  const list = async (mine, other) => {
+    const { rows } = await query(
+      `SELECT b.*, u.name AS other_name, u.color AS other_color
+         FROM bookings b JOIN users u ON u.id = b.${other}_id
+        WHERE b.${mine}_id = $1 ORDER BY b.created_at DESC LIMIT 200`,
+      [req.userToken.id]
+    );
+    return rows.map((r) => ({ ...bookingFromRow(r), otherPartyName: r.other_name, otherPartyColor: r.other_color }));
+  };
+  res.json({ asked: await list('seeker', 'mentor'), received: await list('mentor', 'seeker') });
+}));
 
-  const withNames = (list, otherKey) => list.map(b => {
-    const other = data.users.find(u => u.id === b[otherKey]);
-    return { ...b, otherPartyName: other ? other.name : 'Unknown', otherPartyColor: other ? other.color : '#999' };
-  });
-
-  res.json({
-    asked: withNames(asked, 'mentorId').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
-    received: withNames(received, 'seekerId').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  });
-});
-
-router.get('/:id', requireAuth, (req, res) => {
-  const data = load();
-  const booking = data.bookings.find(b => b.id === req.params.id);
+router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
+  const booking = await getBookingById(req.params.id);
   if (!booking) return res.status(404).json({ error: 'not_found' });
   if (booking.seekerId !== req.userToken.id && booking.mentorId !== req.userToken.id) {
     return res.status(403).json({ error: 'forbidden' });
   }
   res.json({ booking });
-});
+}));
 
-router.post('/:id/answer', requireAuth, (req, res) => {
+router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   const { answer } = req.body || {};
-  if (!answer || answer.trim().length < 2) return res.status(400).json({ error: 'missing_answer' });
+  if (!answer || String(answer).trim().length < 2) return res.status(400).json({ error: 'missing_answer' });
 
-  const result = withDb(data => {
-    const booking = data.bookings.find(b => b.id === req.params.id);
-    if (!booking) return { error: 'not_found' };
-    if (booking.mentorId !== req.userToken.id) return { error: 'forbidden' };
-    if (booking.status !== 'paid' && booking.status !== 'answered') return { error: 'not_paid' };
-    booking.answer = answer.trim().slice(0, 8000);
-    booking.status = 'answered';
-    booking.answeredAt = new Date().toISOString();
-    return { booking };
+  const existing = await getBookingById(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'not_found' });
+  if (existing.mentorId !== req.userToken.id) return res.status(400).json({ error: 'forbidden' });
+  if (existing.status !== 'paid' && existing.status !== 'answered') return res.status(400).json({ error: 'not_paid' });
+
+  const booking = await updateBooking(existing.id, {
+    answer: String(answer).trim().slice(0, 8000),
+    status: 'answered',
+    answeredAt: new Date()
   });
 
-  if (result.error === 'not_found') return res.status(404).json({ error: result.error });
-  if (result.error) return res.status(400).json({ error: result.error });
+  const [seeker, mentor] = await Promise.all([getUserById(booking.seekerId), getUserById(booking.mentorId)]);
+  if (seeker && mentor) notifySeekerAnswered(seeker, mentor, booking);
+  res.json({ booking });
+}));
 
-  const data = load();
-  const seeker = data.users.find(u => u.id === result.booking.seekerId);
-  const mentor = data.users.find(u => u.id === result.booking.mentorId);
-  if (seeker && mentor) notifySeekerAnswered(seeker, mentor, result.booking);
-
-  res.json({ booking: result.booking });
-});
-
-router.post('/:id/review', requireAuth, (req, res) => {
+router.post('/:id/review', requireAuth, asyncHandler(async (req, res) => {
   const { rating, review } = req.body || {};
   const ratingNum = Number(rating);
-  if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-    return res.status(400).json({ error: 'invalid_rating' });
-  }
+  if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) return res.status(400).json({ error: 'invalid_rating' });
 
-  const result = withDb(data => {
-    const booking = data.bookings.find(b => b.id === req.params.id);
-    if (!booking) return { error: 'not_found' };
-    if (booking.seekerId !== req.userToken.id) return { error: 'forbidden' };
-    if (booking.status !== 'answered') return { error: 'not_answered' };
-    if (booking.rating) return { error: 'already_reviewed' };
-    booking.rating = ratingNum;
-    booking.review = review ? String(review).trim().slice(0, 2000) : null;
-    booking.reviewedAt = new Date().toISOString();
-    return { booking };
+  const existing = await getBookingById(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'not_found' });
+  if (existing.seekerId !== req.userToken.id) return res.status(400).json({ error: 'forbidden' });
+  if (existing.status !== 'answered') return res.status(400).json({ error: 'not_answered' });
+  if (existing.rating) return res.status(400).json({ error: 'already_reviewed' });
+
+  const booking = await updateBooking(existing.id, {
+    rating: ratingNum,
+    review: review ? String(review).trim().slice(0, 2000) : null,
+    reviewedAt: new Date()
   });
-
-  if (result.error === 'not_found') return res.status(404).json({ error: result.error });
-  if (result.error) return res.status(400).json({ error: result.error });
-  res.json({ booking: result.booking });
-});
+  res.json({ booking });
+}));
 
 module.exports = router;

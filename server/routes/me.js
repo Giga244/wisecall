@@ -1,18 +1,16 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { load, withDb } = require('../db');
 const { requireAuth, optionalAuth } = require('../auth');
-const { meProfile } = require('../util');
+const { meProfile, asyncHandler } = require('../util');
+const { getUserById, updateUser } = require('../models');
 
 const router = express.Router();
 
-router.get('/', optionalAuth, (req, res) => {
+router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   if (!req.userToken) return res.json({ user: null });
-  const data = load();
-  const user = data.users.find(u => u.id === req.userToken.id);
-  if (!user) return res.json({ user: null });
-  res.json({ user: meProfile(user) });
-});
+  const user = await getUserById(req.userToken.id);
+  res.json({ user: user ? meProfile(user) : null });
+}));
 
 const EDITABLE_FIELDS = ['name', 'bio', 'niche', 'roleTitle', 'price', 'language', 'proofUrl', 'sampleAnswer'];
 const NICHES = [
@@ -22,15 +20,13 @@ const NICHES = [
 const MENTOR_APPLICATION_FIELDS = ['niche', 'roleTitle', 'price', 'proofUrl', 'sampleAnswer'];
 const URL_RE = /^https?:\/\/.+\..+/i;
 
-router.patch('/', requireAuth, (req, res) => {
+router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const updates = req.body || {};
-  const data = load();
-  const existingUser = data.users.find(u => u.id === req.userToken.id);
-  if (!existingUser) return res.status(404).json({ error: 'not_found' });
+  const existing = await getUserById(req.userToken.id);
+  if (!existing) return res.status(404).json({ error: 'not_found' });
 
-  // Validate every provided field up front and compute the values to apply — nothing is
-  // written to disk until every check passes, so a rejected request can never leave a
-  // partial write behind (withDb always persists, even on an error return).
+  // Validate every provided field first and build the patch; nothing is written until
+  // every check passes, so a rejected request can never leave a partial change behind.
   const patch = {};
   for (const field of EDITABLE_FIELDS) {
     if (updates[field] === undefined) continue;
@@ -46,78 +42,55 @@ router.patch('/', requireAuth, (req, res) => {
       patch.language = updates.language;
     } else if (field === 'proofUrl') {
       const value = String(updates.proofUrl || '').trim();
-      if (value && !URL_RE.test(value)) return res.status(400).json({ error: 'invalid_proof_url' });
+      if (value && (!URL_RE.test(value) || value.length > 500)) return res.status(400).json({ error: 'invalid_proof_url' });
       patch.proofUrl = value || null;
     } else if (field === 'sampleAnswer') {
       patch.sampleAnswer = String(updates.sampleAnswer || '').trim().slice(0, 3000) || null;
+    } else if (field === 'name') {
+      const value = String(updates.name || '').trim().slice(0, 100);
+      if (!value) return res.status(400).json({ error: 'missing_fields' });
+      patch.name = value;
     } else {
-      patch[field] = String(updates[field]).slice(0, 2000);
+      patch[field] = String(updates[field] || '').slice(0, 2000);
     }
   }
 
-  let nextRole = existingUser.role;
-  if (updates.becomeMentor === true && existingUser.role === 'seeker') nextRole = 'mentor';
-  if (updates.becomeMentor === false) nextRole = 'seeker';
+  if (updates.becomeMentor === true && existing.role === 'seeker') patch.role = 'mentor';
+  if (updates.becomeMentor === false) patch.role = 'seeker';
 
-  const nextProofUrl = patch.proofUrl !== undefined ? patch.proofUrl : existingUser.proofUrl;
+  const next = { ...existing, ...patch };
+  const isMentor = next.role === 'mentor' || next.role === 'both';
+  const touchedMentorFields = MENTOR_APPLICATION_FIELDS.some((f) => updates[f] !== undefined);
 
-  // Strict rule: saving mentor profile details requires a verified email AND a proof
-  // link (LinkedIn, company bio page, etc). No proof, no mentor application — full stop.
-  const touchedMentorFields = MENTOR_APPLICATION_FIELDS.some(f => updates[f] !== undefined);
-  if (touchedMentorFields && (nextRole === 'mentor' || nextRole === 'both')) {
-    if (!existingUser.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
-    if (!nextProofUrl) return res.status(400).json({ error: 'proof_required' });
-    const nextSample = patch.sampleAnswer !== undefined ? patch.sampleAnswer : existingUser.sampleAnswer;
-    if (!nextSample || nextSample.length < 80) return res.status(400).json({ error: 'sample_required' });
+  // Strict rule: saving mentor details needs a verified email, a proof link and a real sample answer.
+  if (touchedMentorFields && isMentor) {
+    if (!existing.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
+    if (!next.proofUrl) return res.status(400).json({ error: 'proof_required' });
+    if (!next.sampleAnswer || next.sampleAnswer.length < 80) return res.status(400).json({ error: 'sample_required' });
   }
 
-  const result = withDb(d => {
-    const user = d.users.find(u => u.id === req.userToken.id);
-    if (!user) return { error: 'not_found' };
+  // A complete (or edited) application goes back into the review queue.
+  const complete = Boolean(next.roleTitle && next.niche && next.price && next.proofUrl && next.sampleAnswer);
+  if (touchedMentorFields && isMentor && complete && existing.verificationStatus !== 'pending') {
+    patch.verificationStatus = 'pending';
+    patch.verificationNote = null;
+  }
 
-    Object.assign(user, patch);
+  const user = await updateUser(existing.id, patch);
+  res.json({ user: meProfile(user) });
+}));
 
-    if (updates.becomeMentor === true && user.role === 'seeker') {
-      user.role = 'mentor';
-      user.rating = user.rating || null;
-      user.verificationStatus = user.verificationStatus || 'none';
-    }
-    if (updates.becomeMentor === false) {
-      user.role = 'seeker';
-    }
-
-    // Submitting a complete mentor application (or editing an already-listed one)
-    // sends it back into the review queue — nobody appears publicly without a human check.
-    const applicationComplete = Boolean(user.roleTitle && user.niche && user.price && user.proofUrl && user.sampleAnswer);
-    if (touchedMentorFields && (user.role === 'mentor' || user.role === 'both') && applicationComplete) {
-      if (user.verificationStatus !== 'pending') {
-        user.verificationStatus = 'pending';
-        user.verificationNote = null;
-      }
-    }
-
-    return { user };
-  });
-
-  if (result.error) return res.status(400).json({ error: result.error });
-  res.json({ user: meProfile(result.user) });
-});
-
-router.post('/password', requireAuth, (req, res) => {
+router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
   if (!currentPassword || !newPassword) return res.status(400).json({ error: 'missing_fields' });
-  if (newPassword.length < 8) return res.status(400).json({ error: 'weak_password' });
+  if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
 
-  const result = withDb(data => {
-    const user = data.users.find(u => u.id === req.userToken.id);
-    if (!user) return { error: 'not_found' };
-    if (!bcrypt.compareSync(currentPassword, user.passwordHash)) return { error: 'wrong_password' };
-    user.passwordHash = bcrypt.hashSync(newPassword, 10);
-    return { ok: true };
-  });
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (!(await bcrypt.compare(String(currentPassword), user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
 
-  if (result.error) return res.status(400).json({ error: result.error });
+  await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
   res.json({ ok: true });
-});
+}));
 
 module.exports = router;

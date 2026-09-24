@@ -1,20 +1,16 @@
 const express = require('express');
-const { load } = require('../db');
-const { isListable } = require('../util');
+const { query } = require('../db');
+const { LISTABLE_SQL } = require('../models');
+const { asyncHandler } = require('../util');
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  const data = load();
-  const mentors = data.users.filter(isListable);
-  const answered = data.bookings.filter(b => b.status === 'answered');
-  const niches = new Set(mentors.map(m => m.niche).filter(Boolean));
-
-  res.json({
-    mentorCount: mentors.length,
-    answeredCount: answered.length,
-    nicheCount: niches.size
-  });
-});
+router.get('/', asyncHandler(async (req, res) => {
+  const [{ rows: [m] }, { rows: [a] }] = await Promise.all([
+    query(`SELECT count(*) AS mentors, count(DISTINCT niche) AS niches FROM users WHERE ${LISTABLE_SQL}`),
+    query(`SELECT count(*) AS answered FROM bookings WHERE status = 'answered'`)
+  ]);
+  res.json({ mentorCount: Number(m.mentors), nicheCount: Number(m.niches), answeredCount: Number(a.answered) });
+}));
 
 module.exports = router;

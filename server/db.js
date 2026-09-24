@@ -1,24 +1,59 @@
 const fs = require('fs');
 const path = require('path');
+const { Pool } = require('pg');
+const config = require('./config');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'db.json');
+// For hosted Postgres that needs TLS, put ?sslmode=require on DATABASE_URL.
+const pool = new Pool({ connectionString: config.DATABASE_URL, max: 10 });
+pool.on('error', (e) => console.error('[db] idle client error:', e.message));
 
-function load() {
-  if (!fs.existsSync(DB_PATH)) {
-    return { users: [], bookings: [] };
+const query = (text, params) => pool.query(text, params);
+
+async function tx(fn) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (e) { /* connection already gone */ }
+    throw err;
+  } finally {
+    client.release();
   }
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
 }
 
-function save(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+// Applies every migrations/*.sql file once, in filename order. An advisory lock keeps two
+// instances starting at the same time (e.g. during a deploy) from racing each other.
+async function migrate() {
+  const client = await pool.connect();
+  try {
+    await client.query('SELECT pg_advisory_lock(7272001)');
+    await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+    const dir = path.join(__dirname, '..', 'migrations');
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+    const done = new Set((await client.query('SELECT name FROM schema_migrations')).rows.map((r) => r.name));
+    for (const file of files) {
+      if (done.has(file)) continue;
+      const sql = fs.readFileSync(path.join(dir, file), 'utf8');
+      try {
+        await client.query('BEGIN');
+        await client.query(sql);
+        await client.query('INSERT INTO schema_migrations (name) VALUES ($1)', [file]);
+        await client.query('COMMIT');
+        console.log(`[db] applied migration ${file}`);
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw new Error(`Migration ${file} failed: ${err.message}`);
+      }
+    }
+  } finally {
+    try { await client.query('SELECT pg_advisory_unlock(7272001)'); } catch (e) { /* ignore */ }
+    client.release();
+  }
 }
 
-function withDb(fn) {
-  const data = load();
-  const result = fn(data);
-  save(data);
-  return result;
-}
+const close = () => pool.end();
 
-module.exports = { load, save, withDb, DB_PATH };
+module.exports = { pool, query, tx, migrate, close };

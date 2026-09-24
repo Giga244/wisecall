@@ -1,18 +1,16 @@
 const express = require('express');
-const { load, withDb } = require('../db');
 const { requireAuth } = require('../auth');
+const { asyncHandler } = require('../util');
+const { getUserById, updateUser } = require('../models');
 const config = require('../config');
 const stripe = require('../stripeClient');
 
 const router = express.Router();
 
-router.get('/status', requireAuth, async (req, res) => {
-  if (!config.STRIPE_ENABLED) {
-    return res.json({ enabled: false, payoutsReady: false });
-  }
-  const data = load();
-  const user = data.users.find(u => u.id === req.userToken.id);
-  if (!user.stripeAccountId) return res.json({ enabled: true, payoutsReady: false });
+router.get('/status', requireAuth, asyncHandler(async (req, res) => {
+  if (!config.STRIPE_ENABLED) return res.json({ enabled: false, payoutsReady: false });
+  const user = await getUserById(req.userToken.id);
+  if (!user || !user.stripeAccountId) return res.json({ enabled: true, payoutsReady: false });
 
   try {
     const account = await stripe.accounts.retrieve(user.stripeAccountId);
@@ -20,18 +18,16 @@ router.get('/status', requireAuth, async (req, res) => {
   } catch (err) {
     res.json({ enabled: true, payoutsReady: false, error: err.message });
   }
-});
+}));
 
-router.post('/onboard', requireAuth, async (req, res) => {
+router.post('/onboard', requireAuth, asyncHandler(async (req, res) => {
   if (!config.STRIPE_ENABLED) {
     return res.status(400).json({ error: 'stripe_not_configured', message: 'Add STRIPE_SECRET_KEY to .env to enable mentor payouts.' });
   }
 
-  const data = load();
-  let user = data.users.find(u => u.id === req.userToken.id);
-  if (user.role !== 'mentor' && user.role !== 'both') {
-    return res.status(400).json({ error: 'not_a_mentor' });
-  }
+  let user = await getUserById(req.userToken.id);
+  if (!user) return res.status(401).json({ error: 'not_authenticated' });
+  if (user.role !== 'mentor' && user.role !== 'both') return res.status(400).json({ error: 'not_a_mentor' });
 
   try {
     if (!user.stripeAccountId) {
@@ -40,11 +36,7 @@ router.post('/onboard', requireAuth, async (req, res) => {
         email: user.email,
         capabilities: { transfers: { requested: true }, card_payments: { requested: true } }
       });
-      withDb(d => {
-        const u = d.users.find(x => x.id === user.id);
-        u.stripeAccountId = account.id;
-      });
-      user = { ...user, stripeAccountId: account.id };
+      user = await updateUser(user.id, { stripeAccountId: account.id });
     }
 
     const link = await stripe.accountLinks.create({
@@ -53,11 +45,10 @@ router.post('/onboard', requireAuth, async (req, res) => {
       return_url: `${config.APP_URL}/settings.html?connect=success`,
       type: 'account_onboarding'
     });
-
     res.json({ url: link.url });
   } catch (err) {
     res.status(502).json({ error: 'stripe_error', message: err.message });
   }
-});
+}));
 
 module.exports = router;

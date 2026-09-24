@@ -1,65 +1,40 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { load, withDb } = require('../db');
 const { signToken, setAuthCookie, clearAuthCookie, requireAuth } = require('../auth');
-const { meProfile } = require('../util');
+const { meProfile, asyncHandler } = require('../util');
+const { getUserById, getUserByEmail, insertUser, updateUser } = require('../models');
 const config = require('../config');
 const { sendEmail } = require('../email');
 
 const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Compared against when the email is unknown so a wrong email and a wrong password take equally long.
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', asyncHandler(async (req, res) => {
   const { name, email, password } = req.body || {};
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'missing_fields' });
-  }
-  if (!EMAIL_RE.test(email)) {
-    return res.status(400).json({ error: 'invalid_email' });
-  }
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'weak_password' });
-  }
+  if (!name || !email || !password) return res.status(400).json({ error: 'missing_fields' });
+  if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
+  if (String(password).length < 8 || String(password).length > 200) return res.status(400).json({ error: 'weak_password' });
 
   const normalizedEmail = email.trim().toLowerCase();
   const verifyCode = String(crypto.randomInt(100000, 1000000));
 
-  const result = withDb(data => {
-    const exists = data.users.find(u => u.email === normalizedEmail);
-    if (exists) return { error: 'email_taken' };
-
-    const user = {
-      id: crypto.randomUUID(),
-      name: name.trim(),
+  let user;
+  try {
+    user = await insertUser({
+      name: String(name).trim().slice(0, 100),
       email: normalizedEmail,
-      passwordHash: bcrypt.hashSync(password, 10),
-      role: 'seeker',
-      niche: null,
-      roleTitle: null,
-      bio: null,
-      price: null,
-      rating: null,
+      passwordHash: await bcrypt.hash(password, 10),
       color: randomColor(),
-      stripeAccountId: null,
-      language: 'en',
-      verificationStatus: 'none',
-      proofUrl: null,
-      verificationNote: null,
-      resetTokenHash: null,
-      resetTokenExpiresAt: null,
-      emailVerified: false,
-      emailVerifyCodeHash: bcrypt.hashSync(verifyCode, 10),
-      emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      createdAt: new Date().toISOString()
-    };
-    data.users.push(user);
-    return { user };
-  });
-
-  if (result.error) {
-    return res.status(409).json({ error: result.error });
+      emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10),
+      emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000)
+    });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
+    throw err;
   }
 
   let emailSent = false;
@@ -72,149 +47,126 @@ router.post('/signup', async (req, res) => {
       });
       emailSent = true;
     } catch (e) {
-      // Fall through to the dev-mode fallback below — a failed send should never
-      // strand someone with a code they can't get to any other way.
+      // Fall through to the dev-mode fallback below (local development only).
       console.error('[email] signup verification send failed:', e.message);
     }
   }
 
-  const token = signToken(result.user);
-  setAuthCookie(res, token);
+  setAuthCookie(res, signToken(user));
   res.status(201).json({
-    user: meProfile(result.user),
+    user: meProfile(user),
     devMode: !emailSent && !config.IS_PROD,
     devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode
   });
-});
+}));
 
-router.post('/login', (req, res) => {
+router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_fields' });
 
-  const data = load();
-  const user = data.users.find(u => u.email === email.trim().toLowerCase());
-  if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
-    return res.status(401).json({ error: 'invalid_credentials' });
-  }
+  const user = await getUserByEmail(String(email).trim());
+  const ok = await bcrypt.compare(String(password), user ? user.passwordHash : DUMMY_HASH);
+  if (!user || !ok) return res.status(401).json({ error: 'invalid_credentials' });
 
-  const token = signToken(user);
-  setAuthCookie(res, token);
+  setAuthCookie(res, signToken(user));
   res.json({ user: meProfile(user) });
-});
+}));
 
 router.post('/logout', (req, res) => {
   clearAuthCookie(res);
   res.json({ ok: true });
 });
 
-router.post('/forgot-password', async (req, res) => {
+// Reset tokens look like "<userId>.<random>": the id lets us find the one account to check,
+// and only a bcrypt hash of the random part is stored.
+router.post('/forgot-password', asyncHandler(async (req, res) => {
   const { email } = req.body || {};
   if (!email) return res.status(400).json({ error: 'missing_fields' });
 
-  const normalizedEmail = email.trim().toLowerCase();
+  const user = await getUserByEmail(String(email).trim());
   const rawToken = crypto.randomBytes(32).toString('hex');
+  let resetUrl = null;
 
-  const found = withDb(data => {
-    const user = data.users.find(u => u.email === normalizedEmail);
-    if (!user) return false;
-    user.resetTokenHash = bcrypt.hashSync(rawToken, 10);
-    user.resetTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-    return true;
-  });
-
-  const resetUrl = `${config.APP_URL}/reset-password.html?token=${rawToken}`;
+  if (user) {
+    await updateUser(user.id, {
+      resetTokenHash: await bcrypt.hash(rawToken, 10),
+      resetTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000)
+    });
+    resetUrl = `${config.APP_URL}/reset-password.html?token=${user.id}.${rawToken}`;
+  }
 
   let emailSent = false;
-  if (found && config.EMAIL_ENABLED) {
+  if (user && config.EMAIL_ENABLED) {
     try {
       await sendEmail({
-        to: normalizedEmail,
+        to: user.email,
         subject: 'Reset your Wisecall password',
         html: `<p>Someone (hopefully you) asked to reset your Wisecall password.</p><p><a href="${resetUrl}">Click here to set a new password</a>. This link expires in 1 hour.</p><p>If you didn't request this, you can ignore this email.</p>`
       });
       emailSent = true;
     } catch (e) {
-      // Fall through to the dev-mode fallback below — logged so a bad Resend setup
-      // (unverified domain, wrong sender, etc.) doesn't fail silently.
       console.error('[email] password reset send failed:', e.message);
     }
   }
 
   // Always respond the same way whether or not the email exists, so this endpoint
   // can't be used to check which emails are registered.
-  if (emailSent || config.IS_PROD) {
-    res.json({ ok: true });
-  } else {
-    // No email service configured yet, or the send failed — hand back the link
-    // directly so it's still testable / not a dead end.
-    res.json({ ok: true, devMode: true, resetUrl: found ? resetUrl : null });
-  }
-});
+  if (emailSent || config.IS_PROD) return res.json({ ok: true });
+  // Local development only: hand the link back so it is testable without email.
+  res.json({ ok: true, devMode: true, resetUrl });
+}));
 
-router.post('/reset-password', (req, res) => {
+router.post('/reset-password', asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body || {};
   if (!token || !newPassword) return res.status(400).json({ error: 'missing_fields' });
-  if (newPassword.length < 8) return res.status(400).json({ error: 'weak_password' });
+  if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
 
-  const result = withDb(data => {
-    const now = Date.now();
-    const user = data.users.find(u =>
-      u.resetTokenHash &&
-      u.resetTokenExpiresAt &&
-      new Date(u.resetTokenExpiresAt).getTime() > now &&
-      bcrypt.compareSync(token, u.resetTokenHash)
-    );
-    if (!user) return { error: 'invalid_or_expired' };
-    user.passwordHash = bcrypt.hashSync(newPassword, 10);
-    user.resetTokenHash = null;
-    user.resetTokenExpiresAt = null;
-    return { ok: true };
+  const [userId, rawToken] = String(token).split('.');
+  const user = rawToken ? await getUserById(userId) : null;
+  const valid = user && user.resetTokenHash && user.resetTokenExpiresAt &&
+    new Date(user.resetTokenExpiresAt).getTime() > Date.now() &&
+    await bcrypt.compare(rawToken, user.resetTokenHash);
+  if (!valid) return res.status(400).json({ error: 'invalid_or_expired' });
+
+  await updateUser(user.id, {
+    passwordHash: await bcrypt.hash(newPassword, 10),
+    resetTokenHash: null,
+    resetTokenExpiresAt: null
   });
-
-  if (result.error) return res.status(400).json({ error: result.error });
   res.json({ ok: true });
-});
+}));
 
-router.post('/verify-email', requireAuth, (req, res) => {
+router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
   const { code } = req.body || {};
   if (!code) return res.status(400).json({ error: 'missing_fields' });
 
-  const result = withDb(data => {
-    const user = data.users.find(u => u.id === req.userToken.id);
-    if (!user) return { error: 'not_found' };
-    if (user.emailVerified) return { user };
-    if (!user.emailVerifyCodeHash || !user.emailVerifyCodeExpiresAt) return { error: 'no_pending_code' };
-    if (new Date(user.emailVerifyCodeExpiresAt).getTime() < Date.now()) return { error: 'expired' };
-    if (!bcrypt.compareSync(String(code).trim(), user.emailVerifyCodeHash)) return { error: 'invalid_code' };
-    user.emailVerified = true;
-    user.emailVerifyCodeHash = null;
-    user.emailVerifyCodeExpiresAt = null;
-    return { user };
-  });
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (user.emailVerified) return res.json({ user: meProfile(user) });
+  if (!user.emailVerifyCodeHash || !user.emailVerifyCodeExpiresAt) return res.status(400).json({ error: 'no_pending_code' });
+  if (new Date(user.emailVerifyCodeExpiresAt).getTime() < Date.now()) return res.status(400).json({ error: 'expired' });
+  if (!(await bcrypt.compare(String(code).trim(), user.emailVerifyCodeHash))) return res.status(400).json({ error: 'invalid_code' });
 
-  if (result.error) return res.status(400).json({ error: result.error });
-  res.json({ user: meProfile(result.user) });
-});
+  const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null });
+  res.json({ user: meProfile(updated) });
+}));
 
-router.post('/resend-verification', requireAuth, async (req, res) => {
+router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (user.emailVerified) return res.status(400).json({ error: 'already_verified' });
+
   const verifyCode = String(crypto.randomInt(100000, 1000000));
-
-  const result = withDb(data => {
-    const user = data.users.find(u => u.id === req.userToken.id);
-    if (!user) return { error: 'not_found' };
-    if (user.emailVerified) return { error: 'already_verified' };
-    user.emailVerifyCodeHash = bcrypt.hashSync(verifyCode, 10);
-    user.emailVerifyCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    return { user };
+  await updateUser(user.id, {
+    emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10),
+    emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000)
   });
-
-  if (result.error) return res.status(400).json({ error: result.error });
 
   let emailSent = false;
   if (config.EMAIL_ENABLED) {
     try {
       await sendEmail({
-        to: result.user.email,
+        to: user.email,
         subject: 'Your new Wisecall verification code',
         html: `<p>Your new Wisecall verification code is:</p><h2 style="letter-spacing:4px">${verifyCode}</h2><p>It expires in 15 minutes.</p>`
       });
@@ -225,10 +177,10 @@ router.post('/resend-verification', requireAuth, async (req, res) => {
   }
 
   res.json({ ok: true, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
-});
+}));
 
 function randomColor() {
-  const palette = ['#b8502e', '#1f4b43', '#b8862f', '#5b6b8c', '#8c5b3f', '#6b7d4f', '#a1543f', '#3f6b6b'];
+  const palette = ['#ff6f59', '#3db88e', '#f4a93b', '#5b6b8c', '#8c5b9f', '#3f8fc4', '#d1567e', '#3f6b6b'];
   return palette[Math.floor(Math.random() * palette.length)];
 }
 

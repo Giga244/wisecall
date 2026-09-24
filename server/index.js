@@ -2,6 +2,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const config = require('./config');
+const db = require('./db');
 const { rateLimit } = require('./rateLimit');
 
 const app = express();
@@ -15,6 +16,16 @@ app.use((req, res, next) => {
     'Referrer-Policy': 'strict-origin-when-cross-origin'
   });
   next();
+});
+
+// Health check for the hosting platform: also proves the database is reachable.
+app.get('/healthz', async (req, res) => {
+  try {
+    await db.query('SELECT 1');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(503).json({ ok: false });
+  }
 });
 
 // Webhook route needs the raw body for Stripe signature verification,
@@ -51,9 +62,32 @@ app.get('/api/config', (req, res) => {
 app.get('/favicon.ico', (req, res) => res.redirect(301, '/favicon.svg'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.listen(config.PORT, () => {
-  console.log(`Wisecall running at http://localhost:${config.PORT}`);
-  console.log(config.STRIPE_ENABLED
-    ? 'Stripe: LIVE test-mode integration active.'
-    : 'Stripe: not configured — bookings are auto-marked "paid" in simulated dev mode. Add STRIPE_SECRET_KEY to .env to enable real Stripe Checkout.');
+// Any error thrown in a route ends up here instead of crashing or hanging the request.
+app.use((err, req, res, next) => {
+  console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
+  if (res.headersSent) return next(err);
+  res.status(err.status || 500).json({ error: 'server_error' });
 });
+
+async function start() {
+  await db.migrate();
+  const server = app.listen(config.PORT, () => {
+    console.log(`Wisecall running at http://localhost:${config.PORT}`);
+    console.log(config.STRIPE_ENABLED
+      ? 'Stripe: enabled.'
+      : 'Stripe: not configured — bookings are auto-marked "paid" in simulated mode. Add STRIPE_SECRET_KEY to .env to enable real Stripe Checkout.');
+  });
+
+  const shutdown = () => server.close(() => db.close().then(() => process.exit(0)));
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+}
+
+process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
+
+start().catch((err) => {
+  console.error('Failed to start:', err.message);
+  process.exit(1);
+});
+
+module.exports = app;

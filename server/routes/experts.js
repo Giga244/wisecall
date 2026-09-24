@@ -1,55 +1,54 @@
 const express = require('express');
-const { load } = require('../db');
-const { publicProfile, isListable, mentorStats } = require('../util');
+const { query } = require('../db');
+const { userFromRow, LISTABLE_SQL, mentorStatsFor, getUserById } = require('../models');
+const { publicProfile, isListable, asyncHandler } = require('../util');
 
 const router = express.Router();
 
-function withStats(mentor, bookings) {
-  return { ...publicProfile(mentor), ...mentorStats(mentor.id, bookings) };
+async function withStats(users) {
+  const stats = await mentorStatsFor(users.map((u) => u.id));
+  return users.map((u) => ({ ...publicProfile(u), ...stats[u.id] }));
 }
 
-router.get('/', (req, res) => {
+const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => '\\' + c);
+
+router.get('/', asyncHandler(async (req, res) => {
   const { niche, q } = req.query;
-  const data = load();
-  let mentors = data.users.filter(isListable);
-  if (niche && niche !== 'all') {
-    mentors = mentors.filter(u => u.niche === niche);
+  const params = [];
+  let where = LISTABLE_SQL;
+  if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND niche = $${params.length}`; }
+  if (q && String(q).trim()) {
+    params.push('%' + escapeLike(String(q).trim().slice(0, 100)) + '%');
+    where += ` AND (name ILIKE $${params.length} OR role_title ILIKE $${params.length} OR bio ILIKE $${params.length})`;
   }
-  if (q && q.trim()) {
-    const needle = q.trim().toLowerCase();
-    mentors = mentors.filter(u =>
-      (u.name && u.name.toLowerCase().includes(needle)) ||
-      (u.roleTitle && u.roleTitle.toLowerCase().includes(needle)) ||
-      (u.bio && u.bio.toLowerCase().includes(needle))
-    );
-  }
-  res.json({ experts: mentors.map(m => withStats(m, data.bookings)) });
-});
+  const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
+  res.json({ experts: await withStats(rows.map(userFromRow)) });
+}));
 
-router.get('/:id', (req, res) => {
-  const data = load();
-  const mentor = data.users.find(u => u.id === req.params.id && isListable(u));
-  if (!mentor) return res.status(404).json({ error: 'not_found' });
-  res.json({ expert: withStats(mentor, data.bookings) });
-});
+router.get('/:id', asyncHandler(async (req, res) => {
+  const mentor = await getUserById(req.params.id);
+  if (!isListable(mentor)) return res.status(404).json({ error: 'not_found' });
+  const [expert] = await withStats([mentor]);
+  res.json({ expert });
+}));
 
-router.get('/:id/reviews', (req, res) => {
-  const data = load();
-  const mentor = data.users.find(u => u.id === req.params.id && isListable(u));
-  if (!mentor) return res.status(404).json({ error: 'not_found' });
+router.get('/:id/reviews', asyncHandler(async (req, res) => {
+  const mentor = await getUserById(req.params.id);
+  if (!isListable(mentor)) return res.status(404).json({ error: 'not_found' });
 
-  const reviews = data.bookings
-    .filter(b => b.mentorId === mentor.id && typeof b.rating === 'number')
-    .map(b => {
-      const seeker = data.users.find(u => u.id === b.seekerId);
-      const name = seeker ? seeker.name : 'Anonymous';
-      const parts = name.trim().split(' ');
-      const displayName = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0];
-      return { rating: b.rating, review: b.review, reviewedAt: b.reviewedAt, reviewerName: displayName };
-    })
-    .sort((a, b) => new Date(b.reviewedAt) - new Date(a.reviewedAt));
-
+  const { rows } = await query(
+    `SELECT b.rating, b.review, b.reviewed_at, u.name AS seeker_name
+       FROM bookings b JOIN users u ON u.id = b.seeker_id
+      WHERE b.mentor_id = $1 AND b.rating IS NOT NULL
+      ORDER BY b.reviewed_at DESC LIMIT 100`,
+    [mentor.id]
+  );
+  const reviews = rows.map((r) => {
+    const parts = String(r.seeker_name || 'Anonymous').trim().split(/\s+/);
+    const reviewerName = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0];
+    return { rating: r.rating, review: r.review, reviewedAt: r.reviewed_at, reviewerName };
+  });
   res.json({ reviews });
-});
+}));
 
 module.exports = router;

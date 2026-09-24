@@ -23,9 +23,13 @@ A paid advice marketplace: seekers pay to ask a question, mentors answer it, the
 
 ## Run it
 
+Requires Node 20+ and a PostgreSQL database.
+
 ```bash
 npm install
-npm start
+cp .env.example .env   # then fill in DATABASE_URL and JWT_SECRET at minimum
+npm start            # applies database migrations automatically, then serves http://localhost:4242
+npm test             # end-to-end tests against TEST_DATABASE_URL (a throwaway database)
 ```
 
 Open http://localhost:4242. The site starts empty — no fake data. Sign up, then go to **Settings** to become a mentor (fill in title/niche/price/proof link), and approve yourself at **/admin.html** using the account whose email matches `ADMIN_EMAIL` in `.env`.
@@ -83,7 +87,7 @@ Looked at what Fiverr/Upwork/Airbnb/Cameo-style platforms do and picked the high
 
 - **Change `JWT_SECRET`** in `.env` to a long random string
 - **Get the Georgian translations reviewed by a native speaker** — `public/i18n/ka.json` was AI-translated. The everyday UI text is probably fine; anything touching money, legal terms, or payment consent should be checked by a human before real users see it
-- **Swap the data store** — `data/db.json` is a flat JSON file. Fine for building/testing, not for concurrent production writes. Move to a real database (Postgres is the standard pick) before real traffic
+- **Database backups** — use your host's automated Postgres backups (Render/Railway paid Postgres plans include daily backups and point-in-time restore) and test a restore once. Schema changes go in `migrations/*.sql` (applied automatically at start, each file once; never edit an applied file, add a new one)
 - **Deploy somewhere with HTTPS** and set `NODE_ENV=production` so auth cookies get the `secure` flag
 - Decide on `CURRENCY` in `.env` — defaults to `usd`; only switch to `gel` once you've confirmed your Stripe account supports it
 
@@ -93,7 +97,9 @@ Looked at what Fiverr/Upwork/Airbnb/Cameo-style platforms do and picked the high
 server/           Express API — auth, users, experts, bookings, Stripe Connect, webhook
 public/           Static frontend — plain HTML/CSS/JS, no build step
 public/i18n/      en.json / ka.json UI dictionaries
-data/db.json      Local JSON "database" (gitignored, auto-created)
+migrations/       SQL schema migrations (applied in filename order)
+tests/            end-to-end tests (npm test)
+scripts/          migrate.js, import-json.js (one-off import from the old JSON file)
 ```
 
 ## Config (`.env`)
