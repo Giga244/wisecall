@@ -78,7 +78,8 @@
         body: {
           name: document.getElementById('name').value.trim(),
           email: document.getElementById('email').value.trim(),
-          password: document.getElementById('password').value
+          password: document.getElementById('password').value,
+          language: SagelyI18n.getLang()
         }
       });
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}`;

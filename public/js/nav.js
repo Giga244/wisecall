@@ -18,6 +18,10 @@
           window.location.href = '/index.html';
         });
       }
+      // Emails are sent in the language saved on the account, so keep it in step with the toggle.
+      document.addEventListener('sagely:lang-changed', (ev) => {
+        SagelyAPI.apiFetch('/me', { method: 'PATCH', body: { language: ev.detail.lang } }).catch(() => {});
+      });
       if (!user.emailVerified && location.pathname !== '/verify-email.html') {
         const nav = document.querySelector('header.nav');
         const t = (window.SagelyI18n && window.SagelyI18n.t) || (k => k);

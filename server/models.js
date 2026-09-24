@@ -117,9 +117,9 @@ async function updateUser(id, patch, client) {
 
 async function insertUser(u) {
   const { rows } = await query(
-    `INSERT INTO users (name, email, password_hash, color, email_code_hash, email_code_expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [u.name, u.email, u.passwordHash, u.color, u.emailVerifyCodeHash, u.emailVerifyCodeExpiresAt]
+    `INSERT INTO users (name, email, password_hash, color, language, email_code_hash, email_code_expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [u.name, u.email, u.passwordHash, u.color, u.language || 'en', u.emailVerifyCodeHash, u.emailVerifyCodeExpiresAt]
   );
   return userFromRow(rows[0]);
 }

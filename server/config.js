@@ -29,24 +29,36 @@ const config = {
 
   EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
   RESEND_API_KEY: env.RESEND_API_KEY || '',
+  POSTMARK_TOKEN: env.POSTMARK_TOKEN || '',
+  EMAIL_LOG_FILE: env.EMAIL_LOG_FILE || '',
   EMAIL_FROM: env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',
-  EMAIL_ENABLED: Boolean(env.RESEND_API_KEY),
   SUPPORT_EMAIL: env.SUPPORT_EMAIL || '',
 
   // ADMIN_EMAILS is a comma-separated list; the old single ADMIN_EMAIL still works.
   ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL)
 };
 
+config.EMAIL_ENABLED = (() => {
+  const p = config.EMAIL_PROVIDER;
+  if (p === 'resend') return Boolean(config.RESEND_API_KEY);
+  if (p === 'postmark') return Boolean(config.POSTMARK_TOKEN);
+  if (p === 'log') return !IS_PROD;
+  return false;
+})();
+
 // Fail fast: refuse to start with a configuration that would break or be unsafe.
 const problems = [];
 if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresql://user:pass@localhost:5432/wisecall)');
+if (!['resend', 'postmark', 'log'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend, postmark or log');
 if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) problems.push('PLATFORM_FEE_PERCENT must be between 0 and 99');
 if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
 
 if (IS_PROD) {
   if (!env.JWT_SECRET || env.JWT_SECRET === JWT_DEFAULT || env.JWT_SECRET.length < 24) problems.push('JWT_SECRET must be set to 24+ random characters');
   if (!/^https:\/\//.test(config.APP_URL)) problems.push('APP_URL must be your public https:// address');
-  if (!config.RESEND_API_KEY) problems.push('RESEND_API_KEY is required (verification codes and password resets are sent by email)');
+  if (!['resend', 'postmark'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend or postmark in production');
+  if (config.EMAIL_PROVIDER === 'resend' && !config.RESEND_API_KEY) problems.push('RESEND_API_KEY is required (verification codes and password resets are sent by email)');
+  if (config.EMAIL_PROVIDER === 'postmark' && !config.POSTMARK_TOKEN) problems.push('POSTMARK_TOKEN is required (verification codes and password resets are sent by email)');
   if (!env.EMAIL_FROM) problems.push('EMAIL_FROM is required (an address on a domain you verified with your email provider)');
   if (config.ADMIN_EMAILS.length === 0) problems.push('ADMIN_EMAILS is required (who can approve mentors)');
   if (config.STRIPE_SECRET_KEY && !config.STRIPE_SECRET_KEY.startsWith('sk_')) problems.push('STRIPE_SECRET_KEY does not look like a Stripe secret key');

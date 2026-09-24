@@ -5,7 +5,7 @@ const { signToken, setAuthCookie, clearAuthCookie, requireAuth } = require('../a
 const { meProfile, asyncHandler } = require('../util');
 const { getUserById, getUserByEmail, insertUser, updateUser } = require('../models');
 const config = require('../config');
-const { sendEmail } = require('../email');
+const { sendTemplate } = require('../mail');
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
 
 router.post('/signup', asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body || {};
+  const { name, email, password, language } = req.body || {};
   if (!name || !email || !password) return res.status(400).json({ error: 'missing_fields' });
   if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
   if (String(password).length < 8 || String(password).length > 200) return res.status(400).json({ error: 'weak_password' });
@@ -29,6 +29,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
       email: normalizedEmail,
       passwordHash: await bcrypt.hash(password, 10),
       color: randomColor(),
+      language: language === 'ka' ? 'ka' : 'en',
       emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10),
       emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000)
     });
@@ -40,11 +41,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
   let emailSent = false;
   if (config.EMAIL_ENABLED) {
     try {
-      await sendEmail({
-        to: normalizedEmail,
-        subject: 'Verify your Wisecall email',
-        html: `<p>Your Wisecall verification code is:</p><h2 style="letter-spacing:4px">${verifyCode}</h2><p>It expires in 15 minutes.</p>`
-      });
+      await sendTemplate('verify', { to: normalizedEmail, lang: user.language, data: { code: verifyCode } });
       emailSent = true;
     } catch (e) {
       // Fall through to the dev-mode fallback below (local development only).
@@ -98,11 +95,7 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
   let emailSent = false;
   if (user && config.EMAIL_ENABLED) {
     try {
-      await sendEmail({
-        to: user.email,
-        subject: 'Reset your Wisecall password',
-        html: `<p>Someone (hopefully you) asked to reset your Wisecall password.</p><p><a href="${resetUrl}">Click here to set a new password</a>. This link expires in 1 hour.</p><p>If you didn't request this, you can ignore this email.</p>`
-      });
+      await sendTemplate('reset', { to: user.email, lang: user.language, data: { url: resetUrl } });
       emailSent = true;
     } catch (e) {
       console.error('[email] password reset send failed:', e.message);
@@ -165,11 +158,7 @@ router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) =
   let emailSent = false;
   if (config.EMAIL_ENABLED) {
     try {
-      await sendEmail({
-        to: user.email,
-        subject: 'Your new Wisecall verification code',
-        html: `<p>Your new Wisecall verification code is:</p><h2 style="letter-spacing:4px">${verifyCode}</h2><p>It expires in 15 minutes.</p>`
-      });
+      await sendTemplate('verify', { to: user.email, lang: user.language, data: { code: verifyCode } });
       emailSent = true;
     } catch (e) {
       console.error('[email] resend verification send failed:', e.message);

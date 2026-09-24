@@ -1,58 +1,47 @@
-// Every email the platform sends about bookings lives here, so wording and layout can be
-// changed in one place. Failures are logged and never break the action that triggered them.
+// Emails about bookings and mentor applications. Each goes out in the recipient's own language
+// (users.language). Failures are logged and never break the action that triggered them.
 const config = require('./config');
-const { sendEmail, escapeHtml } = require('./email');
+const { sendTemplate } = require('./mail');
 
 const money = (b) => `${(b.amount / 100).toFixed(2)} ${String(b.currency).toUpperCase()}`;
-const oneLine = (s) => String(s).replace(/[\r\n]+/g, ' ');
 
-async function safeSend(label, message) {
-  if (!config.EMAIL_ENABLED) return;
+async function safeSend(label, name, user, data) {
+  if (!config.EMAIL_ENABLED || !user) return;
   try {
-    await sendEmail(message);
+    await sendTemplate(name, { to: user.email, lang: user.language, data });
   } catch (e) {
     console.error(`[email] ${label} failed:`, e.message);
   }
 }
 
-const dashboardLink = `<a href="${config.APP_URL}/dashboard.html">your dashboard</a>`;
+const notifyMentorNewQuestion = (mentor, booking) =>
+  safeSend('new-question notify', 'newQuestion', mentor, { amount: money(booking), question: booking.question });
 
-const notifyMentorNewQuestion = (mentor, booking) => safeSend('new-question notify', {
-  to: mentor.email,
-  subject: 'You have a new paid question on Wisecall',
-  html: `<p>Someone paid ${escapeHtml(money(booking))} to ask you a question:</p><p>"${escapeHtml(booking.question)}"</p><p>Answer it in ${dashboardLink} within ${config.ANSWER_DEADLINE_DAYS} days, or the payment is refunded automatically.</p>`
-});
+const notifySeekerAnswered = (seeker, mentor, booking) =>
+  safeSend('answer notify', 'answered', seeker, { mentor: mentor.name, answer: booking.answer });
 
-const notifySeekerAnswered = (seeker, mentor, booking) => safeSend('answer notify', {
-  to: seeker.email,
-  subject: `${oneLine(mentor.name)} answered your question on Wisecall`,
-  html: `<p>${escapeHtml(mentor.name)} just answered your question:</p><p>"${escapeHtml(booking.answer)}"</p><p>Read it in ${dashboardLink}.</p>`
-});
+const notifyRefund = (seeker, mentor, booking, reason) => Promise.all([
+  safeSend('refund notify (seeker)', 'refundSeeker', seeker, { amount: money(booking), mentor: mentor.name, reason }),
+  safeSend('refund notify (mentor)', 'refundMentor', mentor, { question: booking.question, reason })
+]);
 
-const notifyRefund = (seeker, mentor, booking, reason) => {
-  const why = reason === 'no_answer_deadline'
-    ? `${escapeHtml(mentor.name)} did not answer within ${config.ANSWER_DEADLINE_DAYS} days`
-    : 'the payment was refunded by our team';
-  return Promise.all([
-    safeSend('refund notify (seeker)', {
-      to: seeker.email,
-      subject: 'Your Wisecall payment was refunded',
-      html: `<p>We refunded ${escapeHtml(money(booking))} for your question to ${escapeHtml(mentor.name)} because ${why}.</p><p>It can take 5–10 business days to appear on your statement.</p>`
-    }),
-    safeSend('refund notify (mentor)', {
-      to: mentor.email,
-      subject: 'A question was refunded on Wisecall',
-      html: `<p>The question "${escapeHtml(booking.question)}" was refunded to the buyer because ${why}. You will not receive a payout for it.</p>`
-    })
-  ]);
+const notifyMentorDeadlineSoon = (mentor, booking) => {
+  const locale = mentor.language === 'ka' ? 'ka-GE' : 'en-GB';
+  const date = new Date(booking.answerDeadline).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
+  return safeSend('deadline reminder', 'deadlineSoon', mentor, { question: booking.question, date });
 };
 
-const notifyMentorDeadlineSoon = (mentor, booking) => safeSend('deadline reminder', {
-  to: mentor.email,
-  subject: 'Answer soon or the question will be refunded',
-  html: `<p>You have a paid question waiting: "${escapeHtml(booking.question)}"</p><p>If it is not answered by ${escapeHtml(new Date(booking.answerDeadline).toUTCString())}, the buyer is refunded automatically.</p><p>Answer it in ${dashboardLink}.</p>`
-});
+const notifyMentorDecision = (mentor, approved, note) =>
+  safeSend('mentor decision', approved ? 'mentorApproved' : 'mentorRejected', mentor, { note });
 
-const notifyAdmins = (subject, html) => Promise.all(config.ADMIN_EMAILS.map((to) => safeSend('admin notify', { to, subject, html })));
+// Plain notice to the site admins (English), e.g. card disputes.
+const notifyAdmins = (subject, html) => {
+  if (!config.EMAIL_ENABLED) return Promise.resolve();
+  const { sendEmail } = require('./email');
+  return Promise.all(config.ADMIN_EMAILS.map(async (to) => {
+    try { await sendEmail({ to, subject, html, text: html.replace(/<[^>]+>/g, '') }); }
+    catch (e) { console.error('[email] admin notify failed:', e.message); }
+  }));
+};
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyAdmins };

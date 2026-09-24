@@ -18,7 +18,7 @@ A paid advice marketplace: seekers pay to ask a question, mentors answer it, the
 - **Real reviews & ratings** — after a mentor answers, the seeker can leave a 1–5 star rating and a comment. Mentor cards and profiles show a computed average + review count, pulled live from actual bookings — nothing is a fake static number
 - **Search + sort** on Browse experts — search by name/title/bio, sort by top rated / price / newest
 - **Real "questions answered" count** per mentor, computed from actual booking data
-- **Email notifications** — a mentor gets emailed when someone pays to ask them a question; a seeker gets emailed when their question is answered (uses the same Resend setup as verification/reset emails; silently skipped if email isn't configured)
+- **Email notifications** — a mentor gets emailed when someone pays to ask them a question; a seeker gets emailed when their question is answered (branded English/Georgian templates sent in each person's saved language; provider is swappable via `EMAIL_PROVIDER` = `resend` / `postmark` / `log`; skipped if email isn't configured)
 - Basic SEO/Open Graph tags on the landing page so shared links show a title + description
 
 ## Run it
