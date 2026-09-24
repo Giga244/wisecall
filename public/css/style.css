@@ -757,3 +757,10 @@ html.sheet-open, html.sheet-open body { overflow: hidden; }
 }@media (max-width: 1023px) {
   .search-input, .sort-select, .payout-pay input, .mv-decide input, .mv-reject input, .reject-note-input, .waitlist-form input, .waitlist-form select { font-size: 16px; }
 }
+/* Before launch the panel is the waiting-list form: no card inside a card */
+.prelaunch-panel .waitlist-form { background: transparent; box-shadow: none; padding: 6px 0 0; }
+.prelaunch-panel .waitlist-form h3 { font-size: 1.05rem; }
+/* On a phone the footer starts below the fold while the page fills in, so it never jumps into view */
+@media (max-width: 639px) {
+  .expert-wrap, .dash, .settings { min-height: 100vh; min-height: 100svh; }
+}@media (max-width: 1023px) { .breadcrumb { min-height: 44px; } }
