@@ -29,6 +29,7 @@ async function startServer(port, extraEnv = {}) {
     BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', TBC_CLIENT_ID: '', TBC_CLIENT_SECRET: '',
     ADMIN_EMAILS: 'qa-admin@example.com',
     ADMIN_EMAIL: '',
+    SUPPORT_EMAIL: '', SOCIAL_FACEBOOK: '', SOCIAL_INSTAGRAM: '', SOCIAL_LINKEDIN: '', SOCIAL_X: '', SOCIAL_TIKTOK: '', SOCIAL_YOUTUBE: '',
     PLATFORM_FEE_PERCENT: '20',
     PROBATION_ANSWERS: '0', // the probation tests turn it on; every other test answers straight away
     ...extraEnv

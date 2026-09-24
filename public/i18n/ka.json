@@ -1040,5 +1040,7 @@
   "auth.pw.s.strong": "ძლიერი",
   "settings.sub": "შენი პროფილი, მენტორის განაცხადი, გადახდები და ანგარიში.",
   "settings.progress.title": "მენტორის განაცხადი",
-  "settings.progress.continue": "განაცხადის გაგრძელება"
+  "settings.progress.continue": "განაცხადის გაგრძელება",
+  "contact.emailLine": "ელფოსტა გირჩევნია? შეგიძლია მოგვწერო მისამართზე {email}.",
+  "legal.contactLine": "შეგიძლია ელფოსტითაც მოგვწერო მისამართზე {email}."
 }

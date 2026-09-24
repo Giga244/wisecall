@@ -165,7 +165,7 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `EMAIL_PROVIDER` | `resend` |
 | `RESEND_API_KEY` | From resend.com. **Create a new key**; do not reuse one that was ever pasted into a chat |
 | `EMAIL_FROM` | `Wisecall <hello@yourdomain.com>` (an address on the domain you verify in step 9) |
-| `SUPPORT_EMAIL` | Optional. Where contact-form messages go, and the Reply-To on every email. **It is also shown as the contact address in the site footer**, so use a public one. If empty they go to the first `ADMIN_EMAILS` address and no address is shown |
+| `SUPPORT_EMAIL` | Your **public** contact address, for example `support@yourdomain.com`. It is shown in the footer, the contact page, the Terms and the Privacy Policy, and is the Reply-To of every email. If empty, no address is shown anywhere. Contact-form messages do **not** go here: they go to `ADMIN_EMAILS`, which stays private |
 | `SOCIAL_FACEBOOK`, `SOCIAL_INSTAGRAM`, `SOCIAL_LINKEDIN`, `SOCIAL_X`, `SOCIAL_TIKTOK`, `SOCIAL_YOUTUBE` | Optional. Full `https://` addresses of your pages. Each one that is set gets an icon in the footer; empty ones are simply not shown |
 | `ADMIN_EMAILS` | Your email (comma-separated for more people). These accounts can approve mentors, refund bookings and record payouts |
 

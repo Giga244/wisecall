@@ -136,11 +136,12 @@ describe('delivery through the email provider', () => {
 });
 
 describe('contact form', () => {
-  test('is emailed to the owner, and replying goes to the visitor', async () => {
+  test('is emailed to the private admin address (never to the public SUPPORT_EMAIL), and replying goes to the visitor', async () => {
     const r = await client(base).api('/contact', { method: 'POST', body: { name: 'Lela <b>Tabidze</b>', email: 'lela@example.com', message: 'I would like a refund for a <script>question</script>.' } });
     assert.equal(r.ok, true);
     assert.equal(r.devMode, undefined);
-    const mail = await waitFor(() => mailTo('help@example.com', 'contact form')[0]);
+    const mail = await waitFor(() => mailTo('qa-admin@example.com', 'contact form')[0]);
+    assert.equal(mailTo('help@example.com', 'contact form').length, 0, 'the public address does not receive form messages');
     assert.equal(mail.replyTo, 'lela@example.com');
     assert.match(mail.html, /lela@example\.com/);
     assert.doesNotMatch(mail.html, /<script>/);

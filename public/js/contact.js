@@ -9,6 +9,22 @@
   const submitBtn = form.querySelector('button[type="submit"]');
   const submitKey = 'contact.send';
 
+  // The public support address (SUPPORT_EMAIL), shown only when one is configured. Messages from this
+  // form go to the private admin addresses instead.
+  const direct = document.getElementById('contactDirect');
+  function drawDirect(cfg) {
+    if (!cfg.contactEmail) { direct.hidden = true; return; }
+    const [before, after] = t('contact.emailLine').split('{email}');
+    direct.textContent = '';
+    direct.append(before || '');
+    const a = document.createElement('a');
+    a.href = 'mailto:' + cfg.contactEmail;
+    a.textContent = cfg.contactEmail;
+    direct.append(a, after || '');
+    direct.hidden = false;
+  }
+  WisecallI18n.getConfig().then((cfg) => { drawDirect(cfg); document.addEventListener('wisecall:lang-changed', () => drawDirect(cfg)); });
+
   if (user) {
     document.getElementById('name').value = user.name || '';
     document.getElementById('email').value = user.email || '';

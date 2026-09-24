@@ -74,6 +74,43 @@ describe('PUBLIC_URL is the only address the site ever gives out', () => {
   });
 });
 
+describe('the public contact address', () => {
+  const fs = require('fs');
+  const path = require('path');
+  let withEmail, without;
+  before(async () => {
+    await resetDatabase();
+    withEmail = await startServer(4589, { SUPPORT_EMAIL: 'support@wisecall.example', ADMIN_EMAILS: 'private-owner@example.com' });
+    without = await startServer(4590, { SUPPORT_EMAIL: '' });
+  });
+  after(() => { if (withEmail) withEmail.proc.kill(); if (without) without.proc.kill(); });
+
+  test('SUPPORT_EMAIL is what the pages get; the admin address is never sent to the browser', async () => {
+    const cfg = await (await fetch(`${withEmail.base}/api/config`)).json();
+    assert.equal(cfg.contactEmail, 'support@wisecall.example');
+    const everything = [cfg, ...await Promise.all(['/api/stats', '/api/experts'].map(async (p) => (await fetch(withEmail.base + p)).json()))];
+    assert.doesNotMatch(JSON.stringify(everything), /private-owner@example\.com/);
+    for (const p of ['/', '/contact.html', '/terms.html', '/privacy.html', '/about.html']) {
+      assert.doesNotMatch(await (await fetch(withEmail.base + p)).text(), /private-owner@example\.com/, `${p} leaks the admin address`);
+    }
+  });
+
+  test('with no SUPPORT_EMAIL nothing is shown and no address is invented', async () => {
+    const cfg = await (await fetch(`${without.base}/api/config`)).json();
+    assert.equal(cfg.contactEmail, null);
+  });
+
+  test('the footer, contact page, Terms and Privacy pages read it from the configuration (and never hard-code an address)', () => {
+    const read = (f) => fs.readFileSync(path.join(__dirname, '..', 'public', f), 'utf8');
+    assert.match(read('js/footer.js'), /cfg\.contactEmail/);
+    assert.match(read('js/contact.js'), /cfg\.contactEmail/);
+    assert.match(read('js/legal.js'), /cfg\.contactEmail/);
+    for (const f of ['index.html', 'contact.html', 'terms.html', 'privacy.html', 'about.html', 'js/footer.js', 'js/legal.js', 'js/contact.js', 'i18n/en.json', 'i18n/ka.json']) {
+      assert.doesNotMatch(read(f), /[\w.+-]+@(gmail|yahoo|outlook|hotmail)\.com/i, `${f} hard-codes a personal address`);
+    }
+  });
+});
+
 describe('development warnings', () => {
   let srv;
   before(async () => { await resetDatabase(); srv = await startServer(4587); });

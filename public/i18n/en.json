@@ -1040,5 +1040,7 @@
   "auth.pw.s.strong": "Strong",
   "settings.sub": "Your profile, mentor application, payouts and account.",
   "settings.progress.title": "Mentor application",
-  "settings.progress.continue": "Continue your application"
+  "settings.progress.continue": "Continue your application",
+  "contact.emailLine": "Prefer email? You can also write to us at {email}.",
+  "legal.contactLine": "You can also email us at {email}."
 }

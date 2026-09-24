@@ -166,7 +166,7 @@ describe('production never shows codes or links on screen', () => {
       const f = await c.api('/auth/forgot-password', { method: 'POST', body: { email: 'prod@example.com' } });
       assert.equal(f.devMode, undefined);
       assert.equal(f.resetUrl, undefined);
-      assert.equal((await client(prod.base).api('/config')).devMode, false);
+      assert.ok(!('devMode' in (await client(prod.base).api('/config'))), 'production does not expose devMode at all');
       assert.equal((await fetch(`${prod.base}/mock-bank.html`)).status, 404, 'the fake bank page does not exist in production');
       assert.equal((await client(prod.base).api('/mock-bank/orders/x')).status, 404);
     } finally { prod.proc.kill(); behavior.failures = []; }
