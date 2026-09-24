@@ -107,6 +107,7 @@ function seoRoutes() {
     try {
       const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3], ['/signup.html', 0.5], ['/login.html', 0.3]];
       // Before launch the profiles are not offered to visitors, so they are not offered to search engines either.
+      await require('./launch').ensureFresh(5000);
       const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT id, created_at FROM users WHERE ${listableSql()} ORDER BY created_at DESC LIMIT 5000`)).rows;
       const urls = [
         ...staticPages.map(([p, prio]) => `<url><loc>${escapeHtml(config.PUBLIC_URL + p)}</loc><priority>${prio}</priority></url>`),

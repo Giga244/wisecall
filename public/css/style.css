@@ -706,7 +706,7 @@ img, svg, video { max-width: 100%; }
   .search-input { width: 100%; min-width: 0; font-size: 1rem; }
   .filters-btn { display: inline-flex; }
   .browse-controls { justify-content: space-between; }
-  .sort-slot:empty { display: none; }
+  .sort-slot:not(:has(select)) { display: none; }
   .filters-slot { display: none; }
 }
 

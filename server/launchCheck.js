@@ -38,7 +38,7 @@ function settings(config, env) {
   else out.push(ok(`PUBLIC_URL is ${config.PUBLIC_URL}`));
 
   out.push(config.ADMIN_EMAILS.length ? ok(`ADMIN_EMAILS has ${config.ADMIN_EMAILS.length} address${config.ADMIN_EMAILS.length > 1 ? 'es' : ''} (kept private)`) : fail('ADMIN_EMAILS is set', 'nobody could approve mentors or read contact messages'));
-  if (!config.SUPPORT_EMAIL) out.push(fail('SUPPORT_EMAIL is set', 'it is the public contact address shown in the footer, Terms, Privacy Policy and emails (for example support@yourdomain.ge)'));
+  if (!config.SUPPORT_EMAIL) out.push(warn('SUPPORT_EMAIL is set', 'it is empty, so no public contact address appears in the footer, Terms, Privacy Policy or emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@yourdomain.ge before launch'));
   else if (!isEmail(config.SUPPORT_EMAIL)) out.push(fail('SUPPORT_EMAIL is an email address', `"${config.SUPPORT_EMAIL}" is not one`));
   else if (PERSONAL_MAIL.test(config.SUPPORT_EMAIL)) out.push(warn('SUPPORT_EMAIL is a role address on your own domain', `${config.SUPPORT_EMAIL} looks like a personal mailbox, and it is shown to everyone`));
   else out.push(ok(`SUPPORT_EMAIL is ${config.SUPPORT_EMAIL}`));
@@ -49,11 +49,11 @@ function settings(config, env) {
 
   out.push(config.DATABASE_URL ? ok('DATABASE_URL is set') : fail('DATABASE_URL is set', 'it is not set'));
 
-  out.push(config.LAUNCH_MODE === 'live'
-    ? ok('LAUNCH_MODE is "live": buyers can pay')
-    : config.LAUNCH_MODE === 'prelaunch'
-      ? warn('LAUNCH_MODE is "live"', 'it is "prelaunch": visitors join the waiting list and nobody can pay. Correct before opening; change to LAUNCH_MODE=live on launch day')
-      : fail('LAUNCH_MODE is "prelaunch" or "live"', `"${config.LAUNCH_MODE}" is neither`));
+  // An explicit mode is judged here; the automatic one (LAUNCH_MODE empty) needs the database, see launchModeCheck().
+  const setting = config.LAUNCH_MODE_SETTING;
+  if (setting === 'live') out.push(ok('LAUNCH_MODE is "live": buyers can pay'));
+  else if (setting === 'prelaunch') out.push(warn('LAUNCH_MODE is "live"', 'it is "prelaunch": visitors join the waiting list and nobody can pay. Correct before opening; change to LAUNCH_MODE=live on launch day (or empty it, and the site opens by itself when the first mentor is listed)'));
+  else if (setting !== 'auto') out.push(fail('LAUNCH_MODE is "prelaunch" or "live"', `"${setting}" is neither (or leave it empty for automatic)`));
   return out;
 }
 
@@ -126,6 +126,33 @@ async function checkDatabase(config) {
   }
 }
 
+// How many mentors can be booked right now (null when the database has no tables yet).
+async function countListed(config) {
+  if (!config.DATABASE_URL) return null;
+  const client = new Client({ connectionString: config.DATABASE_URL, connectionTimeoutMillis: 8000 });
+  client.on('error', () => {});
+  try {
+    await client.connect();
+    const { listableSql } = require('./models');
+    return (await client.query(`SELECT count(*)::int AS n FROM users WHERE ${listableSql()}`)).rows[0].n;
+  } catch (e) {
+    return null;
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
+// The launch mode is judged against the mentors that can really be booked.
+function launchModeCheck(config, listed) {
+  const s = config.LAUNCH_MODE_SETTING;
+  if (s === 'live' && listed === 0) return warn('LAUNCH_MODE is "live" and there is somebody to book', 'no mentor is listed yet, so buyers would see an empty Browse page. Use prelaunch, or leave LAUNCH_MODE empty so the site opens by itself when the first mentor is listed');
+  if (s !== 'auto') return null;
+  if (listed === null) return ok('Launch mode is automatic', 'the database has no mentors yet, so the site starts in prelaunch and opens by itself when the first mentor is listed');
+  return listed === 0
+    ? warn('Launch mode is automatic', '0 listed mentors, so the site is in prelaunch (visitors join the waiting list, nobody can pay). It opens by itself when the first mentor is listed')
+    : ok('Launch mode is automatic', `${listed} listed mentor${listed === 1 ? '' : 's'}, so the site is live`);
+}
+
 // Every check, in the order they are shown. `deep` also opens one unused ID-check session.
 async function runChecks(config, env, { deep = false } = {}) {
   const sections = [];
@@ -136,6 +163,8 @@ async function runChecks(config, env, { deep = false } = {}) {
 
   const live = [];
   live.push(await checkDatabase(config));
+  const modeLine = launchModeCheck(config, await countListed(config));
+  if (modeLine) live.push(modeLine);
 
   const payName = config.PAYMENT_PROVIDER === 'tbc' ? 'TBC Bank' : 'Bank of Georgia';
 

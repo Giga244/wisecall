@@ -21,13 +21,13 @@
     <h1 data-i18n="mockkyc.title">Test ID check</h1>
     <p class="muted" data-i18n="mockkyc.sub">This pretends to be the ID-verification provider. No document is looked at. Choose what result you want to simulate.</p>
     <form id="mockKycForm">
-      <label><span data-i18n="mockkyc.name">Full name on the ID</span>
+      <label for="fullName"><span data-i18n="mockkyc.name">Full name on the ID</span>
         <input type="text" id="fullName" maxlength="100" autocomplete="off">
       </label>
-      <label><span data-i18n="mockkyc.dob">Date of birth</span>
+      <label for="dob"><span data-i18n="mockkyc.dob">Date of birth</span>
         <input type="date" id="dob" value="1990-01-01">
       </label>
-      <label><span data-i18n="mockkyc.outcome">Result</span>
+      <label for="outcome"><span data-i18n="mockkyc.outcome">Result</span>
         <select id="outcome">
           <option value="approve" data-i18n="mockkyc.approve">Approved</option>
           <option value="review" data-i18n="mockkyc.review">Needs manual review at the provider</option>

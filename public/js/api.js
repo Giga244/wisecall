@@ -61,5 +61,25 @@
     return `background:${hex};color:${onWhite(hex) >= onInk(hex) ? '#fff' : ink}`;
   }
 
-  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount, avatarStyle };
+  // Every form control has a real <label for="id">: a label that wraps a control (in a page or in a template a script draws
+  // later) is tied to it by id, so a screen reader reads the label text and not the placeholder or a bare "on".
+  let controlCount = 0;
+  function linkLabels(root) {
+    root.querySelectorAll('label:not([for])').forEach((label) => {
+      const control = label.querySelector('input, select, textarea');
+      if (!control) return;
+      if (!control.id) control.id = 'control-' + (++controlCount);
+      label.htmlFor = control.id;
+    });
+  }
+  let linkQueued = false;
+  const scheduleLinking = () => {
+    if (linkQueued) return;
+    linkQueued = true;
+    requestAnimationFrame(() => { linkQueued = false; linkLabels(document); });
+  };
+  scheduleLinking();
+  new MutationObserver(scheduleLinking).observe(document.documentElement, { childList: true, subtree: true });
+
+  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount, avatarStyle, linkLabels };
 })();

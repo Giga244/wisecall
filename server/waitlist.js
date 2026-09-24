@@ -84,6 +84,7 @@ async function launchDay() {
 // Call after anything that could make a mentor visible (final approval, saving payout details).
 async function afterMaybeListed(userId) {
   try {
+    await require('./launch').refresh(); // the first listed mentor can open the site (LAUNCH_MODE left empty)
     const mentor = await getUserById(userId);
     if (isListable(mentor)) return await mentorJoined(mentor);
   } catch (e) {

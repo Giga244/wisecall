@@ -135,18 +135,18 @@ for (const lang of ['en', 'ka']) {
         expect(silent, `${file}: error areas that a screen reader would not announce`).toEqual([]);
       }
     });
-    test('every form control has an accessible name', async () => {
-      const page = pages.visitor;
-      for (const url of ['/', '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', `/expert.html?id=${mentorId}`]) {
+    test('every form control has a real <label> (not just a placeholder), on the pages people fill in', async () => {
+      const check = async (page, url) => {
         await page.goto(url);
         await page.waitForLoadState('networkidle');
         const unnamed = await page.evaluate(() => Array.from(document.querySelectorAll('input:not([type=hidden]), select, textarea')).filter((el) => {
-          if (el.closest('[hidden]')) return false;
-          const name = (el.getAttribute('aria-label') || '').trim() || (el.getAttribute('aria-labelledby') ? 'x' : '') || (el.labels && el.labels.length ? el.labels[0].textContent.trim() : '');
-          return !name;
-        }).map((el) => `${el.tagName.toLowerCase()}#${el.id || el.name}`));
+          if (el.closest('[hidden]') || el.closest('.hp')) return false;
+          return !(el.labels && el.labels.length && el.labels[0].textContent.trim());
+        }).map((el) => `${el.tagName.toLowerCase()}#${el.id || el.name}[${el.type}]`));
         expect(unnamed, `${url}: controls without a label`).toEqual([]);
-      }
+      };
+      for (const url of ['/', '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', `/expert.html?id=${mentorId}`]) await check(pages.visitor, url);
+      for (const tab of ['profile', 'mentor', 'verification', 'payouts', 'account']) await check(pages.mentor, `/settings.html?tab=${tab}`);
     });
   });
 }

@@ -247,6 +247,7 @@
   <div class="container">
     <h2 id="expertsTitle" data-i18n="experts.title" data-i18n-prelaunch="experts.prelaunch.title">Browse experts</h2>
     <div class="browse-toolbar">
+      <label for="searchInput" class="sr-only" data-i18n="experts.searchPlaceholder">Search by name or specialty…</label>
       <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" data-i18n-aria="experts.searchPlaceholder" aria-label="Search by name or specialty" placeholder="Search by name or specialty…" autocomplete="off" enterkeyhint="search">
       <div class="browse-controls">
         <button type="button" class="btn btn-outline filters-btn" id="filtersBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="filtersSheet">
@@ -255,6 +256,7 @@
         </button>
         <p class="result-count" id="resultCount" role="status"></p>
         <div class="sort-slot" id="sortSlot">
+          <label for="sortSelect" class="sr-only" data-i18n="experts.sort.label">Sort</label>
           <select id="sortSelect" class="sort-select" data-i18n-aria="experts.sort.label" aria-label="Sort">
             <option value="rating" data-i18n="experts.sort.rating">Top rated</option>
             <option value="priceAsc" data-i18n="experts.sort.priceAsc">Price: low to high</option>

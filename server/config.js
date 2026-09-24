@@ -70,8 +70,10 @@ const config = {
   POSTMARK_API_URL: (env.POSTMARK_API_URL || 'https://api.postmarkapp.com').replace(/\/+$/, ''),
 
   // prelaunch: mentors can sign up, apply and be verified, visitors can join the waiting list, and nobody can
-  // pay yet. live: normal behaviour.
-  LAUNCH_MODE: (env.LAUNCH_MODE || 'live').trim().toLowerCase(),
+  // pay yet. live: normal behaviour. Left empty (or "auto"), the site is in prelaunch until at least one mentor is
+  // listed and live from then on; config.LAUNCH_MODE below is the mode in force right now.
+  LAUNCH_MODE_SETTING: (env.LAUNCH_MODE || 'auto').trim().toLowerCase(),
+  LISTED_MENTORS: null, // how many mentors can be booked; filled in by server/launch.js
 
   // ADMIN_EMAILS is a comma-separated list; the old single ADMIN_EMAIL still works.
   ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL),
@@ -83,6 +85,15 @@ const config = {
       .filter(([, url]) => /^https:\/\/[^\s]+$/i.test(url))
   )
 };
+
+Object.defineProperty(config, 'LAUNCH_MODE', {
+  enumerable: true,
+  get() {
+    const s = this.LAUNCH_MODE_SETTING;
+    if (s === 'prelaunch' || s === 'live') return s;
+    return this.LISTED_MENTORS > 0 ? 'live' : 'prelaunch';
+  }
+});
 
 config.EMAIL_ENABLED = (() => {
   const p = config.EMAIL_PROVIDER;
@@ -102,7 +113,7 @@ if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negat
 if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
 if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
 if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');
-if (!['prelaunch', 'live'].includes(config.LAUNCH_MODE)) problems.push('LAUNCH_MODE must be prelaunch or live');
+if (!['prelaunch', 'live', 'auto'].includes(config.LAUNCH_MODE_SETTING)) problems.push('LAUNCH_MODE must be prelaunch or live (or empty: prelaunch until a mentor is listed)');
 
 if (IS_PROD) {
   const secret = env.SESSION_SECRET || env.JWT_SECRET;

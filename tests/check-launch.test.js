@@ -102,10 +102,11 @@ describe('a development setup is refused, with every reason listed', () => {
     assert.equal(r.code, 1);
     assert.match(r.out, /NOT READY: \d+ things? to fix/);
     for (const text of ['NODE_ENV is "production"', 'Development mode (devMode) is off', 'SESSION_SECRET is at least 32', 'DATA_ENCRYPTION_KEY is at least 32', 'PUBLIC_URL is your https:// address',
-      'ADMIN_EMAILS is set', 'SUPPORT_EMAIL is set', 'EMAIL_FROM is set', 'DATABASE_URL is set', 'Payments use a real bank', 'ID checks use Didit', 'No fake (mock) provider is active']) {
+      'ADMIN_EMAILS is set', 'EMAIL_FROM is set', 'DATABASE_URL is set', 'Payments use a real bank', 'ID checks use Didit', 'No fake (mock) provider is active']) {
       assert.match(line(r.out, text), /^ {2}❌/, `${text}\n${r.out}`);
     }
     assert.match(line(r.out, 'answers'), /^ {2}➖/, 'nothing is contacted with no keys');
+    assert.match(line(r.out, 'SUPPORT_EMAIL is set'), /^ {2}⚠️/, 'a missing public address is a warning, not a blocker');
   });
 
   test('the fake bank, the fake ID check and the email log are each named', async () => {
@@ -125,7 +126,6 @@ describe('each setting is judged on its own', () => {
     ['DATA_ENCRYPTION_KEY shorter than 32 characters', { DATA_ENCRYPTION_KEY: 'x'.repeat(20) }, /❌ DATA_ENCRYPTION_KEY is at least 32 characters/],
     ['a PUBLIC_URL that is not https', { PUBLIC_URL: 'http://wisecall.example' }, /❌ PUBLIC_URL is your https:\/\/ address — http:\/\/wisecall\.example is not https/],
     ['a PUBLIC_URL on this computer', { PUBLIC_URL: 'https://localhost:4242' }, /❌ PUBLIC_URL is your real address/],
-    ['a missing SUPPORT_EMAIL', { SUPPORT_EMAIL: '' }, /❌ SUPPORT_EMAIL is set/],
     ['a missing bank secret', { BOG_CLIENT_SECRET: '' }, /❌ Payment keys for BOG are set — missing: BOG_CLIENT_SECRET/],
     ['a missing Didit webhook secret', { DIDIT_WEBHOOK_SECRET: '' }, /❌ Didit keys are set — missing: DIDIT_WEBHOOK_SECRET/],
     ['a missing Resend key', { RESEND_API_KEY: '' }, /❌ Resend API key is set/],
@@ -198,5 +198,50 @@ describe('providers that are configured but not answering correctly', () => {
     const r = await check({ DATABASE_URL: 'postgresql://nobody:nothing@127.0.0.1:9/none' });
     assert.equal(r.code, 1);
     assert.match(line(r.out, 'database'), /^ {2}❌.*cannot connect/);
+  });
+});
+
+describe('a missing SUPPORT_EMAIL', () => {
+  test('is a clear warning that does not block, and says what the site does without it', async () => {
+    const r = await check({ SUPPORT_EMAIL: '' });
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.out, /⚠️ +SUPPORT_EMAIL is set — it is empty, so no public contact address appears in the footer, Terms, Privacy Policy or emails, and the contact page shows only the form/);
+    assert.match(r.out, /READY, with 1 warning/);
+  });
+});
+
+// These run last: they need the tables, which the tests above do not (an empty database is fine for them).
+describe('the launch mode against the mentors that can be booked', () => {
+  const { spawnSync } = require('child_process');
+  const { Pool } = require('pg');
+  before(() => {
+    const m = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'migrate.js')], { env: { ...process.env, DATABASE_URL: process.env.TEST_DATABASE_URL }, encoding: 'utf8' });
+    assert.equal(m.status, 0, m.stderr);
+  });
+
+  test('empty LAUNCH_MODE with nobody listed: a warning that the site is in prelaunch, and it opens by itself', async () => {
+    const r = await check({ LAUNCH_MODE: '' });
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.out, /⚠️ +Launch mode is automatic — 0 listed mentors, so the site is in prelaunch/);
+    assert.match(r.out, /opens by itself when the first mentor is listed/);
+  });
+
+  test('LAUNCH_MODE=live with nobody listed is a warning too', async () => {
+    const r = await check({ LAUNCH_MODE: 'live' });
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.out, /⚠️ +LAUNCH_MODE is "live" and there is somebody to book — no mentor is listed yet/);
+  });
+
+  test('once a mentor is listed, automatic means live and the warnings go away', async () => {
+    const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+    await pool.query(`INSERT INTO users (name, email, password_hash, role, niche, role_title, price, verification_status, payout_iban_enc, email_verified)
+                      VALUES ('Listed Mentor', 'listed@example.com', 'x', 'mentor', 'business', 'Founder', 20, 'verified', 'enc', true)`);
+    await pool.end();
+    const auto = await check({ LAUNCH_MODE: '' });
+    assert.equal(auto.code, 0, auto.out);
+    assert.match(auto.out, /✅ Launch mode is automatic — 1 listed mentor, so the site is live/);
+    const live = await check({ LAUNCH_MODE: 'live' });
+    assert.doesNotMatch(live.out, /somebody to book/);
+    assert.match(live.out, /READY: every check passed/);
   });
 });

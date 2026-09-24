@@ -16,10 +16,10 @@
         <summary>${t('report.link')}</summary>
         <form class="report-form" novalidate>
           <p class="muted small">${t('report.intro')}</p>
-          <label><span>${t('report.reason')}</span>
-            <select name="reason" required>${REASONS.map((r) => `<option value="${r}">${t('report.reasons.' + r)}</option>`).join('')}</select>
+          <label for="rp-reason-${esc(bookingId || mentorId)}"><span>${t('report.reason')}</span>
+            <select id="rp-reason-${esc(bookingId || mentorId)}" name="reason" required>${REASONS.map((r) => `<option value="${r}">${t('report.reasons.' + r)}</option>`).join('')}</select>
           </label>
-          <label><span>${t('report.details')}</span><textarea name="details" rows="3" maxlength="1000"></textarea></label>
+          <label for="rp-details-${esc(bookingId || mentorId)}"><span>${t('report.details')}</span><textarea id="rp-details-${esc(bookingId || mentorId)}" name="details" rows="3" maxlength="1000"></textarea></label>
           <p class="form-error report-error" role="alert"></p>
           <button class="btn btn-outline btn-sm" type="submit">${t('report.send')}</button>
         </form>

@@ -6,6 +6,7 @@ const db = require('./db');
 const { rateLimit } = require('./rateLimit');
 const { startJobs } = require('./jobs');
 const pages = require('./pages');
+const launch = require('./launch');
 const { securityHeaders, csrfGuard, requestLogger } = require('./security');
 
 const app = express();
@@ -79,7 +80,8 @@ app.use('/api/admin', require('./routes/adminVerification'));
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
 if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 
-app.get('/api/config', (req, res) => {
+app.get('/api/config', async (req, res) => {
+  await launch.ensureFresh(5000);
   res.json({
     currency: config.CURRENCY,
     // "prelaunch": buyers cannot pay yet and the pages show the waiting list; "live": normal.
@@ -126,6 +128,7 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await db.migrate();
+  await launch.refresh();
   const server = app.listen(config.PORT, () => {
     console.log(`Wisecall running at http://localhost:${config.PORT}`);
     console.log(config.PAYMENT_PROVIDER === 'mock'
@@ -134,9 +137,11 @@ async function start() {
     console.log(config.KYC_PROVIDER === 'mock'
       ? 'ID check: MOCK (development only).'
       : `ID check: ${config.KYC_PROVIDER.toUpperCase()} (webhook URL ${config.PUBLIC_URL}/api/kyc/webhook)`);
+    const how = config.LAUNCH_MODE_SETTING === 'auto' ? `automatic: ${config.LISTED_MENTORS} listed mentor(s)` : 'set by LAUNCH_MODE';
     console.log(config.LAUNCH_MODE === 'prelaunch'
-      ? 'Launch mode: PRELAUNCH. Nobody can pay yet; visitors join the waiting list and mentors can apply and be verified. Set LAUNCH_MODE=live to open.'
-      : 'Launch mode: live.');
+      ? `Launch mode: PRELAUNCH (${how}). Nobody can pay yet; visitors join the waiting list and mentors can apply and be verified. It opens when the first mentor is listed, or set LAUNCH_MODE=live.`
+      : `Launch mode: live (${how}).`);
+    launch.warnings().forEach((w) => console.warn('[WARNING] ' + w));
     require('./startupWarnings').printWarnings();
   });
 

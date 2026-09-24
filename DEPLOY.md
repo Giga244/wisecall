@@ -168,7 +168,7 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `SUPPORT_EMAIL` | Your **public** contact address, for example `support@yourdomain.com`. It is shown in the footer, the contact page, the Terms and the Privacy Policy, and is the Reply-To of every email. If empty, no address is shown anywhere. Contact-form messages do **not** go here: they go to `ADMIN_EMAILS`, which stays private |
 | `SOCIAL_FACEBOOK`, `SOCIAL_INSTAGRAM`, `SOCIAL_LINKEDIN`, `SOCIAL_X`, `SOCIAL_TIKTOK`, `SOCIAL_YOUTUBE` | Optional. Full `https://` addresses of your pages. Each one that is set gets an icon in the footer; empty ones are simply not shown |
 | `ADMIN_EMAILS` | Your email (comma-separated for more people). These accounts can approve mentors, refund bookings and record payouts |
-| `LAUNCH_MODE` | `live` (default) or `prelaunch`. In `prelaunch` mentors can sign up, apply and be verified, and visitors join the waiting list, but nobody can pay yet. Switch to `live` on launch day |
+| `LAUNCH_MODE` | Leave it **empty** (recommended): the site is in `prelaunch` while no mentor is listed, and goes `live` by itself when the first mentor is verified and has payout details. Or force `prelaunch` / `live`. In `prelaunch` mentors can sign up, apply and be verified, and visitors join the waiting list, but nobody can pay yet. The server warns at startup (and `npm run check:launch` warns) if you force `live` with no mentor listed |
 
 The server will not start in production with a missing required value, with `PAYMENT_PROVIDER=mock`, or with `PUBLIC_URL` pointing at localhost.
 
@@ -177,7 +177,7 @@ The server will not start in production with a missing required value, with `PAY
 Recruit mentors and collect a waiting list first, open to buyers later:
 
 1. **`LAUNCH_MODE=prelaunch`.** Mentors can sign up, apply, be verified and add payout details, and visitors can join the waiting list. Nobody can pay: the home page says "Launching soon · Join the waitlist", Browse experts shows the waiting-list form instead of the experts, an expert's profile offers the waiting list instead of the question box, and the server refuses new bookings. Expert profiles are left out of `sitemap.xml`. Mentors' approval emails and their Settings / Dashboard say the site opens on launch day. The admin page shows a reminder, and `/admin.html → Waiting list` shows how many people are waiting per field, with a CSV download.
-2. **`LAUNCH_MODE=live`** (the default) on launch day. Buyers can pay, profiles appear in the sitemap, and everyone who joined the waiting list *before* launch gets one email (in their language) as soon as a mentor in their field is listed. People who join later are emailed when a mentor in their field joins, as before.
+2. **`LAUNCH_MODE=live`** on launch day, or simply leave `LAUNCH_MODE` empty and the site opens by itself when the first mentor is listed. Buyers can pay, profiles appear in the sitemap, and everyone who joined the waiting list *before* launch gets one email (in their language) as soon as a mentor in their field is listed. People who join later are emailed when a mentor in their field joins, as before.
 
 `npm run check:launch` reminds you (⚠️) while the site is still in `prelaunch`.
 

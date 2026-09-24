@@ -32,6 +32,7 @@ async function startServer(port, extraEnv = {}) {
     SUPPORT_EMAIL: '', SOCIAL_FACEBOOK: '', SOCIAL_INSTAGRAM: '', SOCIAL_LINKEDIN: '', SOCIAL_X: '', SOCIAL_TIKTOK: '', SOCIAL_YOUTUBE: '',
     PLATFORM_FEE_PERCENT: '20',
     PROBATION_ANSWERS: '0', // the probation tests turn it on; every other test answers straight away
+    LAUNCH_MODE: 'live', // (left empty the site starts in prelaunch until a mentor is listed; the launch tests cover that)
     ...extraEnv
   };
   const proc = spawn('node', ['server/index.js'], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });

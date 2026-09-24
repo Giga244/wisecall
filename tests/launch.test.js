@@ -273,6 +273,47 @@ describe('launch mode: prelaunch, then live', () => {
   });
 });
 
+describe('LAUNCH_MODE left empty: prelaunch until the first mentor is listed', () => {
+  const { client, signupVerified, addPayoutDetails, approveMentor, bookAndPay, SAMPLE } = require('./helpers');
+  let auto, forced;
+  before(async () => {
+    await resetDatabase();
+    auto = await startServer(4596, { LAUNCH_MODE: '' });
+    forced = await startServer(4597, { LAUNCH_MODE: 'live' });
+  });
+  after(() => { [auto, forced].forEach((s) => s && s.proc.kill()); });
+  const mode = async (s) => (await (await fetch(`${s.base}/api/config`)).json()).launchMode;
+
+  test('with nobody listed the site starts in prelaunch and says why; nobody can pay', async () => {
+    assert.equal(await mode(auto), 'prelaunch');
+    assert.match(auto.logs(), /Launch mode: PRELAUNCH \(automatic: 0 listed mentor/);
+    const seeker = await signupVerified(auto.base, 'Sam Seeker', 'sam@example.com');
+    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId: '11111111-1111-1111-1111-111111111111', question: 'Is anyone there?' } });
+    assert.equal(r.status, 403);
+    assert.equal(r.error, 'prelaunch');
+  });
+
+  test('forcing live with nobody listed logs a warning', () => {
+    assert.match(forced.logs(), /\[WARNING\] LAUNCH_MODE=live, but no mentor is listed yet/);
+    assert.doesNotMatch(auto.logs(), /LAUNCH_MODE=live, but no mentor/);
+  });
+
+  test('the first listed mentor opens the site by itself, and buyers can then pay', async () => {
+    const admin = await signupVerified(auto.base, 'QA Admin', 'qa-admin@example.com');
+    const m = await signupVerified(auto.base, 'First Mentor', 'first@example.com');
+    await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Founder', niche: 'business', price: 15, proofUrl: 'https://linkedin.com/in/first', sampleAnswer: SAMPLE } });
+    await approveMentor(admin, m);
+    assert.equal(await mode(auto), 'prelaunch', 'approved but without payout details nobody can be paid yet');
+    await addPayoutDetails(m);
+    assert.equal(await mode(auto), 'live');
+    assert.match(auto.logs(), /the site is now in LIVE mode \(1 listed mentor/);
+    const mentorId = (await m.api('/me')).user.id;
+    const seeker = client(auto.base);
+    assert.equal((await seeker.api('/auth/login', { method: 'POST', body: { email: 'sam@example.com', password: 'test-pass-12345' } })).status, 200);
+    assert.equal((await bookAndPay(auto.base, seeker, mentorId, 'How do I find my first customer?')).status, 'paid');
+  });
+});
+
 describe('development warnings', () => {
   let srv;
   before(async () => { await resetDatabase(); srv = await startServer(4587); });

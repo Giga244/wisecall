@@ -7,6 +7,7 @@ const pay = require('../pay');
 const ledger = require('../ledger');
 const notify = require('../notify');
 const probation = require('../probation');
+const launch = require('../launch');
 const monitoring = require('../verification/monitoring');
 const { isListable, asyncHandler } = require('../util');
 const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('../models');
@@ -15,6 +16,7 @@ const router = express.Router();
 
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
   // Before launch nobody can pay: refuse before anything is created or the bank is contacted.
+  await launch.refresh(); // the mode can depend on the number of listed mentors, so it is read fresh
   if (config.LAUNCH_MODE === 'prelaunch') return res.status(403).json({ error: 'prelaunch', message: 'Wisecall has not opened to buyers yet. Join the waiting list and we will tell you the day it does.' });
   const { mentorId, question } = req.body || {};
   if (typeof mentorId !== 'string' || typeof question !== 'string' || question.trim().length < 5) {

@@ -8,14 +8,16 @@
   const FIELDS = ['business', 'medicine', 'teaching', 'tech', 'fitness', 'creative', 'law', 'finance', 'marketing', 'design', 'writing', 'parenting', 'engineering', 'science'];
   const prelaunch = () => WisecallI18n.launchMode() === 'prelaunch';
 
+  let counter = 0;
   function html(niche) {
+    const n = ++counter;
     const options = ['any', ...FIELDS].map((k) => `<option value="${k}"${k === (niche || 'any') ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : t('niche.' + k))}</option>`).join('');
     return `
       <form class="waitlist-form" novalidate>
         <h3>${t(prelaunch() ? 'wait.prelaunch.title' : 'wait.title')}</h3>
         <div class="waitlist-row">
-          <label><span>${t('wait.email')}</span><input type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" required></label>
-          <label><span>${t('wait.niche')}</span><select name="niche">${options}</select></label>
+          <label for="wl${n}-email"><span>${t('wait.email')}</span><input id="wl${n}-email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" required></label>
+          <label for="wl${n}-niche"><span>${t('wait.niche')}</span><select id="wl${n}-niche" name="niche">${options}</select></label>
           <button class="btn btn-primary" type="submit">${t('wait.submit')}</button>
         </div>
         <p class="hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>

@@ -15,6 +15,7 @@
   const MAX_BYTES = 10 * 1024 * 1024;
 
   let root = null;
+  let devWorkEmailCode = null; // development only: the server sends the code back when no email is sent
   let data = null; // { v: /verification, iv: /verification/interview, user }
   let options = {};
 
@@ -85,6 +86,7 @@
       ${waiting ? `
         <form class="vt-form" data-form="workEmailConfirm" novalidate>
           <p class="muted small">${t('vt.we.sent').replace('{domain}', esc(domain))}</p>
+          ${devWorkEmailCode ? `<div class="hero-cta-banner dev-code" role="status">${esc(t('vt.we.devCode').replace('{code}', devWorkEmailCode))}</div>` : ''}
           <label><span>${t('vt.we.code')}</span><input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required></label>
           <p class="form-error vt-error" role="alert"></p>
           <button class="btn btn-primary btn-sm" type="submit">${t('vt.we.confirm')}</button>
@@ -226,10 +228,10 @@
     companyId: (f) => WisecallAPI.apiFetch('/verification/company-id', { method: 'POST', body: { companyId: f.companyId.value } }),
     workEmailSend: async (f) => {
       const r = await WisecallAPI.apiFetch('/verification/work-email', { method: 'POST', body: { email: f.email.value.trim() } });
-      if (r.devCode) WisecallNav.showToast(t('vt.we.devCode').replace('{code}', r.devCode));
+      devWorkEmailCode = r.devCode || null; // shown under the code box (never sent in production)
       return r;
     },
-    workEmailConfirm: (f) => WisecallAPI.apiFetch('/verification/work-email/verify', { method: 'POST', body: { code: f.code.value.trim() } }),
+    workEmailConfirm: async (f) => { const r = await WisecallAPI.apiFetch('/verification/work-email/verify', { method: 'POST', body: { code: f.code.value.trim() } }); devWorkEmailCode = null; return r; },
     document: (f) => {
       const file = f.file.files[0];
       if (!file) throw Object.assign(new Error('empty_file'), { code: 'empty_file' });

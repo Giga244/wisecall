@@ -32,16 +32,16 @@
     <h1 data-i18n="contact.title">Contact us</h1>
     <p class="muted" data-i18n="contact.sub">Questions, refund requests, feedback, or a problem with the site? Send us a message and we will reply by email.</p>
     <form id="contactForm" novalidate>
-      <label><span data-i18n="contact.name">Your name</span>
+      <label for="name"><span data-i18n="contact.name">Your name</span>
         <input type="text" id="name" maxlength="100" autocomplete="name" autocapitalize="words" required>
       </label>
-      <label><span data-i18n="contact.email">Your email</span>
+      <label for="email"><span data-i18n="contact.email">Your email</span>
         <input type="email" id="email" maxlength="254" autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" required>
       </label>
-      <label><span data-i18n="contact.message">Message</span>
+      <label for="message"><span data-i18n="contact.message">Message</span>
         <textarea id="message" rows="6" maxlength="3000" required></textarea>
       </label>
-      <div class="hp" aria-hidden="true"><label>Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>
+      <div class="hp" aria-hidden="true"><label for="website">Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>
       <p class="muted small" data-i18n="contact.refundHint">Asking about a refund? Include the name of the mentor and roughly when you asked.</p>
       <p class="form-error" id="formError" role="alert"></p>
       <button type="submit" class="btn btn-primary btn-block" data-i18n="contact.send">Send message</button>

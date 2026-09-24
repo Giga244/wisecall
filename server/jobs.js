@@ -103,6 +103,7 @@ async function runSweep() {
     const { rows } = await client.query('SELECT pg_try_advisory_lock($1) AS got', [LOCK_ID]);
     if (!rows[0].got) return;
     try {
+      await require('./launch').refresh();
       await refundOverdue();
       await sendReminders();
       await retryRefunds();
