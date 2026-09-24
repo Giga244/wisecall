@@ -18,6 +18,10 @@ function userFromRow(r) {
     price: r.price,
     color: r.color,
     language: r.language,
+    payoutName: r.payout_name,
+    payoutIbanEnc: r.payout_iban_enc,
+    payoutIbanLast4: r.payout_iban_last4,
+    payoutUpdatedAt: r.payout_updated_at,
     verificationStatus: r.verification_status,
     proofUrl: r.proof_url,
     sampleAnswer: r.sample_answer,
@@ -68,6 +72,7 @@ const USER_COLUMNS = {
   name: 'name', email: 'email', passwordHash: 'password_hash', role: 'role', niche: 'niche',
   roleTitle: 'role_title', bio: 'bio', price: 'price', color: 'color',
   language: 'language', verificationStatus: 'verification_status',
+  payoutName: 'payout_name', payoutIbanEnc: 'payout_iban_enc', payoutIbanLast4: 'payout_iban_last4', payoutUpdatedAt: 'payout_updated_at',
   proofUrl: 'proof_url', sampleAnswer: 'sample_answer', verificationNote: 'verification_note',
   verificationChecks: 'verification_checks', emailVerified: 'email_verified', emailVerifyCodeHash: 'email_code_hash',
   emailVerifyCodeExpiresAt: 'email_code_expires_at', resetTokenHash: 'reset_token_hash',
@@ -130,10 +135,11 @@ async function updateBooking(id, patch, client) {
   return res ? bookingFromRow((await res).rows[0]) : getBookingById(id, client);
 }
 
-// A mentor shows up publicly (and can be booked) only when this is true.
+// A mentor shows up publicly (and can be booked) only when this is true: approved by an admin AND
+// payout details saved, so a question can never be paid to someone we cannot pay.
 function listableSql() {
   return `role IN ('mentor', 'both') AND price IS NOT NULL AND niche IS NOT NULL
-    AND role_title IS NOT NULL AND verification_status = 'verified'`;
+    AND role_title IS NOT NULL AND verification_status = 'verified' AND payout_iban_enc IS NOT NULL`;
 }
 
 // { [mentorId]: { ratingAvg, reviewCount, answeredCount } } for the given mentor ids.

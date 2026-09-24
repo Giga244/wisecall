@@ -34,6 +34,11 @@ const notifyMentorDeadlineSoon = (mentor, booking) => {
 const notifyMentorDecision = (mentor, approved, note) =>
   safeSend('mentor decision', approved ? 'mentorApproved' : 'mentorRejected', mentor, { note });
 
+const notifyPayoutPaid = (mentor, batch) =>
+  safeSend('payout notify', 'payoutPaid', mentor, {
+    amount: money(batch), last4: batch.iban_last4 || '----', reference: batch.reference
+  });
+
 // Plain notice to the site admins (English), e.g. card disputes.
 const notifyAdmins = (subject, html) => {
   if (!config.EMAIL_ENABLED) return Promise.resolve();
@@ -44,4 +49,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyAdmins };

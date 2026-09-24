@@ -18,6 +18,12 @@
   const proofUrlInput = document.getElementById('proofUrl');
   const sampleInput = document.getElementById('sampleAnswer');
   const verificationBox = document.getElementById('verificationBox');
+  const payoutCard = document.getElementById('payoutCard');
+  const payoutForm = document.getElementById('payoutForm');
+  const payoutNameInput = document.getElementById('payoutName');
+  const payoutIbanInput = document.getElementById('payoutIban');
+  const payoutError = document.getElementById('payoutError');
+  const payoutStatus = document.getElementById('payoutStatus');
 
   function renderVerification(u) {
     const isMentor = u.role === 'mentor' || u.role === 'both';
@@ -30,12 +36,30 @@
       rejected: { cls: 'badge-rejected', key: 'settings.verify.rejected' }
     };
     const info = map[status] || map.none;
-    let html = `<span class="badge ${info.cls}">${t(info.key)}</span>`;
+    const needsPayout = status === 'verified' && !u.hasPayoutDetails;
+    let html = `<span class="badge ${info.cls}">${t(needsPayout ? 'settings.verify.approvedNoPayout' : info.key)}</span>`;
     if (status === 'rejected' && u.verificationNote) {
       html += `<p class="muted small" style="margin-top:8px">${escapeHtml(u.verificationNote)}</p>`;
     }
+    // Approved mentors only appear in Browse experts once their payout details are saved.
+    if (status === 'verified' && !u.hasPayoutDetails) {
+      html += `<p class="form-error" style="margin-top:8px">${t('settings.payouts.needForListing')}</p>`;
+    }
     verificationBox.innerHTML = html;
     verificationBox.style.display = 'block';
+  }
+
+  function isMentorUser(u) { return u.role === 'mentor' || u.role === 'both'; }
+
+  async function loadPayout() {
+    payoutCard.style.display = isMentorUser(user) ? 'block' : 'none';
+    if (!isMentorUser(user)) return;
+    try {
+      const data = await WisecallAPI.apiFetch('/me/payout');
+      payoutNameInput.value = data.name || '';
+      payoutIbanInput.value = data.iban || '';
+      payoutStatus.textContent = data.hasPayoutDetails ? t('settings.payouts.saved') : t('settings.payouts.notSaved');
+    } catch (e) { /* the form still works */ }
   }
 
   function escapeHtml(str) {
@@ -57,6 +81,24 @@
   }
 
   fillForm(user);
+  loadPayout();
+
+  payoutForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    payoutError.textContent = '';
+    try {
+      const data = await WisecallAPI.apiFetch('/me/payout', { method: 'PUT', body: { name: payoutNameInput.value, iban: payoutIbanInput.value } });
+      Object.assign(user, data.user);
+      payoutIbanInput.value = data.iban;
+      payoutNameInput.value = data.name;
+      payoutStatus.textContent = t('settings.payouts.saved');
+      renderVerification(user);
+      WisecallNav.showToast(t('toast.saved'));
+    } catch (e) {
+      const map = { invalid_iban: 'settings.payouts.err.iban', invalid_payout_name: 'settings.payouts.err.name' };
+      payoutError.textContent = t(map[e.code] || 'toast.error');
+    }
+  });
 
   document.getElementById('profileForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -78,6 +120,7 @@
       mentorForm.style.display = checked ? 'grid' : 'none';
       Object.assign(user, data.user);
       renderVerification(user);
+      loadPayout();
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       becomeMentorCheckbox.checked = !checked;

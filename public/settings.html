@@ -109,6 +109,22 @@
     </form>
   </div>
 
+  <div class="settings-card" id="payoutCard" style="display:none">
+    <h2 data-i18n="settings.payouts.title">Payout details</h2>
+    <p class="muted small" data-i18n="settings.payouts.intro">This is where we send your earnings by bank transfer. Only you and the Wisecall team can see it.</p>
+    <form id="payoutForm">
+      <label><span data-i18n="settings.payouts.name">Account holder (full name)</span>
+        <input type="text" id="payoutName" maxlength="100" autocomplete="name">
+      </label>
+      <label><span data-i18n="settings.payouts.iban">Georgian IBAN</span>
+        <input type="text" id="payoutIban" maxlength="40" placeholder="GE00XX0000000000000000" autocomplete="off" spellcheck="false">
+        <span class="hint" data-i18n="settings.payouts.ibanHint">22 characters, starting with GE. You can find it in your bank app.</span>
+      </label>
+      <p class="form-error" id="payoutError" role="alert"></p>
+      <p class="muted small" id="payoutStatus"></p>
+      <button type="submit" class="btn btn-primary" data-i18n="settings.payouts.save">Save payout details</button>
+    </form>
+  </div>
   <div class="settings-card">
     <h2 data-i18n="settings.password.title">Change password</h2>
     <form id="passwordForm">

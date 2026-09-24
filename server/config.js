@@ -13,6 +13,9 @@ const config = {
   APP_URL: (env.APP_URL || `http://localhost:${int(env.PORT, 4242)}`).replace(/\/+$/, ''),
   DATABASE_URL: env.DATABASE_URL || '',
   JWT_SECRET: env.JWT_SECRET || JWT_DEFAULT,
+  // Encrypts mentors' IBANs in the database. Losing or changing it makes stored IBANs unreadable,
+  // so keep a copy somewhere safe.
+  DATA_ENCRYPTION_KEY: env.DATA_ENCRYPTION_KEY || 'dev-only-data-key-never-use-in-production',
 
   // All money is Georgian lari. Amounts are stored as whole tetri (1/100 lari).
   CURRENCY: 'gel',
@@ -74,6 +77,7 @@ if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_P
 
 if (IS_PROD) {
   if (!env.JWT_SECRET || env.JWT_SECRET === JWT_DEFAULT || env.JWT_SECRET.length < 24) problems.push('JWT_SECRET must be set to 24+ random characters');
+  if (!env.DATA_ENCRYPTION_KEY || env.DATA_ENCRYPTION_KEY.length < 32) problems.push('DATA_ENCRYPTION_KEY must be set to 32+ random characters (it encrypts mentors\' IBANs)');
   if (!/^https:\/\//.test(config.APP_URL)) problems.push('APP_URL must be your public https:// address');
   if (!['resend', 'postmark'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend or postmark in production');
   if (config.EMAIL_PROVIDER === 'resend' && !config.RESEND_API_KEY) problems.push('RESEND_API_KEY is required (verification codes and password resets are sent by email)');

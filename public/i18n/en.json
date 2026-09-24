@@ -146,12 +146,13 @@
   "settings.verify.none": "Not submitted yet",
   "settings.verify.pending": "Pending review",
   "settings.verify.verified": "Verified ✓ — visible publicly",
+  "settings.verify.approvedNoPayout": "Approved ✓ — hidden until you add your payout details",
   "settings.verify.rejected": "Not approved",
   "settings.mentor.niche": "Niche",
   "settings.mentor.roleTitle": "Title (e.g. \"Cardiologist, 14 yrs\")",
   "settings.mentor.price": "Price per question (GEL ₾, whole lari, 5 to 2000)",
   "settings.mentor.save": "Save mentor profile",
-  "settings.payouts.title": "Payouts",
+  "settings.payouts.title": "Payout details",
   "settings.password.title": "Change password",
   "settings.password.current": "Current password",
   "settings.password.new": "New password",
@@ -210,7 +211,6 @@
   "admin.bk.reason": "Refund reason",
   "admin.bk.refund": "Refund in full",
   "admin.bk.refundConfirm": "Refund this booking in full? The buyer is repaid and the mentor loses this payout. This cannot be undone.",
-  "admin.bk.refunded": "Refunded.",
   "admin.bk.notRefundable": "This booking can no longer be refunded.",
   "footer.terms": "Terms",
   "footer.privacy": "Privacy",
@@ -249,8 +249,9 @@
     {
       "h": "4. Asking a question and paying",
       "p": [
-        "The price of a question is set by the mentor and shown before you pay. You pay when you send the question. Payments are processed by Stripe; Wisecall never sees or stores your full card details.",
-        "Your payment is held until the mentor answers. The mentor is paid only after they have answered."
+        "The price of a question is set by the mentor in Georgian lari (GEL) and shown before you pay. You pay when you send the question, by card on the secure payment page of our payment bank. Wisecall never sees or stores your full card details.",
+        "Your payment is held until the mentor answers. The mentor is paid only after they have answered.",
+        "Wisecall is not a bank. The payment is taken by a licensed Georgian bank that processes it for us. The amount you see is the amount you pay in lari, and any currency conversion by your own card issuer is outside our control."
       ]
     },
     {
@@ -268,8 +269,9 @@
         "If you apply to be a mentor, you promise that everything you tell us about yourself is true, including your job title, experience, qualifications, and the proof link you provide. Pretending to be someone you are not, or claiming credentials you do not have, leads to removal and may lead to legal action.",
         "Mentors must: answer honestly and in good faith; answer within the deadline; stay within their real area of expertise; not present an answer as a diagnosis, legal opinion, or financial recommendation for a specific person; keep what seekers tell them confidential; and follow the laws that apply to them, including any licensing rules in their profession.",
         "Mentors must not ask seekers to pay outside Wisecall, must not share a seeker’s question publicly without permission, and must not send spam or promote unrelated services.",
-        "Mentors are responsible for their own taxes on the money they earn. To be paid, a mentor must finish payout setup with our payment provider, Stripe. Until then their profile stays hidden and they cannot receive questions.",
-        "We may approve or reject mentor applications and remove a mentor at any time, for example if they get poor reviews, break these terms, or we cannot verify them."
+        "Mentors are responsible for their own taxes on the money they earn. To be paid, a mentor must give Wisecall their full name and a valid Georgian IBAN in Settings. Until then their profile stays hidden and they cannot receive questions.",
+        "We may approve or reject mentor applications and remove a mentor at any time, for example if they get poor reviews, break these terms, or we cannot verify them.",
+        "How mentor payouts work: for each answered question, the mentor earns the price minus the Wisecall platform fee. This becomes payable 7 days after the answer, which is the period in which a buyer can ask for a refund. Wisecall then pays it by bank transfer to the IBAN the mentor gave, in periodic manual transfers. If a buyer is refunded after the mentor has already been paid, the refunded amount is deducted from the mentor’s next payout."
       ]
     },
     {
@@ -339,7 +341,7 @@
         "Account data: your name, email address, and a password (stored only as a one-way hash, never in readable form), plus your language choice.",
         "Mentor data: if you apply to be a mentor, your job title, field, bio, price, the proof link you give us (for example a LinkedIn profile), and your sample answer. Your title, field, bio, and price become public once you are approved. Your proof link, sample answer, and email are never public.",
         "Questions and answers: the questions you send, the answers you receive, and reviews you write.",
-        "Payment data: Stripe handles your card details. We receive only the payment status, amount, and Stripe reference numbers. We never see or store your full card number. Mentors who get paid also give Stripe identity and bank details directly, not to us.",
+        "Payment data: your card details are entered on our payment bank’s secure page and processed by the bank. We receive only the payment status, amount and the bank’s reference numbers. We never see or store your full card number. Mentors give us their full name and IBAN so we can pay them; the IBAN is stored encrypted and is visible only to the mentor and to Wisecall administrators who make the payouts.",
         "Technical data: your IP address and basic request information appear in server logs and are used to prevent abuse (for example, limiting repeated login attempts)."
       ]
     },
@@ -363,7 +365,7 @@
       "h": "5. Who we share it with",
       "p": [
         "The mentor you ask receives your name and your question. A seeker receives the mentor’s answer.",
-        "Service providers that work for us: Stripe (payments and payouts), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us.",
+        "Service providers that work for us: our payment bank (card payments and refunds), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us.",
         "Authorities, when the law requires it.",
         "The public can see mentor profiles, ratings, and reviews (with the reviewer’s first name and last initial)."
       ]
@@ -488,5 +490,53 @@
   "mockbank.pay": "Pay",
   "mockbank.fail": "Simulate a failed payment",
   "mockbank.cancel": "Cancel",
-  "mockbank.notFound": "This test payment does not exist (the development server may have restarted)."
+  "mockbank.notFound": "This test payment does not exist (the development server may have restarted).",
+  "settings.payouts.intro": "This is where we send your earnings by bank transfer. Only you and the Wisecall team can see it.",
+  "settings.payouts.name": "Account holder (full name)",
+  "settings.payouts.iban": "Georgian IBAN",
+  "settings.payouts.ibanHint": "22 characters, starting with GE. You can find it in your bank app.",
+  "settings.payouts.save": "Save payout details",
+  "settings.payouts.saved": "Payout details saved.",
+  "settings.payouts.notSaved": "No payout details yet. You won't appear in Browse experts until you add them.",
+  "settings.payouts.needForListing": "You're approved! Add your payout details below so you appear in Browse experts and can receive questions.",
+  "settings.payouts.err.iban": "That IBAN isn't valid. A Georgian IBAN has 22 characters and starts with GE.",
+  "settings.payouts.err.name": "Please enter your full name (first and last name) as it appears on your bank account.",
+  "dash.earnings.title": "Your earnings",
+  "dash.earnings.available": "Available for payout",
+  "dash.earnings.holding": "On hold ({days} days after answering)",
+  "dash.earnings.paid": "Paid to you so far",
+  "dash.earnings.debt": "Owed back (refunds)",
+  "dash.earnings.note": "Your share of each answered question (after Wisecall's fee) becomes payable {days} days after you answer, in case the buyer asks for a refund. Wisecall then sends it to your bank account.",
+  "dash.earnings.history": "Payouts sent to you",
+  "dash.earnings.items": "Earnings by question",
+  "dash.earnings.empty": "Answer a paid question and your earnings will appear here.",
+  "dash.earnings.void": "Refunded, so no payout",
+  "dash.earnings.paidOn": "Paid on {date} (ref. {ref})",
+  "dash.earnings.owedBack": "refunded afterwards, deducted from your next payout",
+  "dash.earnings.owedSettled": "refund settled",
+  "dash.earnings.payableNow": "Ready to be paid out",
+  "dash.earnings.payableFrom": "Payable from {date}",
+  "admin.tab.payouts": "Payouts",
+  "admin.po.csv": "Download transfers to make (CSV)",
+  "admin.po.historyCsv": "Download history (CSV)",
+  "admin.po.help": "Mentors' earnings become payable {days} days after they answer. Send each bank transfer yourself, then click Mark as paid and enter the bank reference.",
+  "admin.po.empty": "Nobody is owed anything right now.",
+  "admin.po.noIban": "This mentor has no payout details yet.",
+  "admin.po.payable": "Payable now",
+  "admin.po.holding": "On hold",
+  "admin.po.debt": "Owed back",
+  "admin.po.debtExceeds": "Refunds after payout are larger than new earnings. Nothing can be paid until they are covered.",
+  "admin.po.refPlaceholder": "Bank transfer reference",
+  "admin.po.settle": "Settle (no transfer)",
+  "admin.po.markPaid": "Mark as paid",
+  "admin.po.history": "Recent payouts",
+  "admin.po.refRequired": "Enter the bank transfer reference first.",
+  "admin.po.confirmPaid": "Record that you have sent {amount} to this mentor's bank account? Only do this after the transfer is made.",
+  "admin.po.confirmSettle": "This mentor’s earnings and refunds cancel each other out, so no transfer is needed. Record this settlement?",
+  "admin.po.recorded": "Payout recorded.",
+  "admin.po.changed": "The amount changed since you loaded this page. It has been reloaded, so please check it again.",
+  "admin.po.nothing": "There is nothing left to pay.",
+  "admin.bk.refundConfirmPaidOut": "This mentor has already been paid for this answer. The buyer will be refunded, and the amount will be recorded as owed back by the mentor and deducted from their next payout. Continue?",
+  "admin.bk.refundedOwed": "Refund requested. The mentor owes this amount back.",
+  "admin.bk.refundFailed": "The bank rejected the refund. It is saved and will be retried; see the problem shown on the booking."
 }

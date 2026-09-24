@@ -2,6 +2,10 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { requireAuth, optionalAuth } = require('../auth');
 const { meProfile, asyncHandler } = require('../util');
+const { query } = require('../db');
+const { encrypt, decrypt } = require('../cryptoBox');
+const { isValidGeorgianIban, normalize, pretty } = require('../iban');
+const ledger = require('../ledger');
 const { getUserById, updateUser } = require('../models');
 const config = require('../config');
 
@@ -85,6 +89,62 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
 
   const user = await updateUser(existing.id, patch);
   res.json({ user: meProfile(user) });
+}));
+
+const isMentor = (u) => u.role === 'mentor' || u.role === 'both';
+
+// A mentor's payout details: full name and Georgian IBAN. Only the mentor (and admins, through the
+// admin panel) can ever read the IBAN back.
+router.get('/payout', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  const iban = decrypt(user.payoutIbanEnc);
+  res.json({ hasPayoutDetails: Boolean(user.payoutIbanEnc), name: user.payoutName || '', iban: iban ? pretty(iban) : '', last4: user.payoutIbanLast4 || '' });
+}));
+
+router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
+  const { name, iban } = req.body || {};
+  if (typeof name !== 'string' || typeof iban !== 'string') return res.status(400).json({ error: 'missing_fields' });
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (!isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
+
+  const cleanName = name.trim().replace(/\s+/g, ' ');
+  if (cleanName.length < 5 || cleanName.length > 100 || !cleanName.includes(' ')) return res.status(400).json({ error: 'invalid_payout_name' });
+  if (!isValidGeorgianIban(iban)) return res.status(400).json({ error: 'invalid_iban' });
+
+  const normalized = normalize(iban);
+  const updated = await updateUser(user.id, {
+    payoutName: cleanName,
+    payoutIbanEnc: encrypt(normalized),
+    payoutIbanLast4: normalized.slice(-4),
+    payoutUpdatedAt: new Date()
+  });
+  res.json({ user: meProfile(updated), name: cleanName, iban: pretty(normalized), last4: normalized.slice(-4) });
+}));
+
+// What the mentor has earned, what is payable, and what has been paid (for the dashboard).
+router.get('/earnings', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  const [balance, items, batches] = await Promise.all([
+    ledger.balanceFor(user.id),
+    query(
+      `SELECT p.booking_id, p.amount, p.status, p.payable_at, p.debt_flagged_at, p.debt_settled_batch_id, pb.paid_at, pb.reference, b.question
+         FROM payouts p JOIN bookings b ON b.id = p.booking_id LEFT JOIN payout_batches pb ON pb.id = p.batch_id
+        WHERE p.mentor_id = $1 ORDER BY p.created_at DESC LIMIT 200`, [user.id]),
+    query('SELECT id, amount, reference, paid_at FROM payout_batches WHERE mentor_id = $1 ORDER BY paid_at DESC LIMIT 100', [user.id])
+  ]);
+  res.json({
+    currency: config.CURRENCY,
+    holdDays: config.PAYOUT_HOLD_DAYS,
+    balance,
+    items: items.rows.map((r) => ({
+      bookingId: r.booking_id, amount: r.amount, status: r.status, payableAt: r.payable_at, paidAt: r.paid_at, reference: r.reference,
+      question: String(r.question).slice(0, 90), owedBack: Boolean(r.debt_flagged_at), owedBackSettled: Boolean(r.debt_settled_batch_id)
+    })),
+    batches: batches.rows.map((r) => ({ id: r.id, amount: r.amount, reference: r.reference, paidAt: r.paid_at }))
+  });
 }));
 
 router.post('/password', requireAuth, asyncHandler(async (req, res) => {

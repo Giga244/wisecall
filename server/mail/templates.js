@@ -51,12 +51,17 @@ const S = {
     mentorApproved: {
       subject: "You're approved as a Wisecall mentor", heading: 'Welcome aboard',
       intro: 'Your mentor application was approved.',
-      after: 'One last step: connect your payout account so you appear in Browse experts and get paid.', button: 'Connect payouts'
+      after: 'One last step: add your name and IBAN in Settings so you appear in Browse experts and can be paid.', button: 'Add payout details'
     },
     mentorRejected: {
       subject: 'About your Wisecall mentor application', heading: "We couldn't approve your application yet",
       intro: "Thanks for applying. We couldn't approve it this time.", reasonLabel: 'Reason:',
       after: 'You can update your details and apply again from Settings.', button: 'Open settings'
+    },
+    payoutPaid: {
+      subject: 'Your Wisecall payout has been sent', heading: 'Your payout is on its way',
+      intro: 'We sent {amount} to your bank account ending in {last4}.', referenceLabel: 'Bank transfer reference:',
+      after: 'Bank transfers usually arrive within 1 to 3 working days. You can see all your earnings in your dashboard.', button: 'Open dashboard'
     },
     contact: { subject: 'New message from the Wisecall contact form', heading: 'New contact message' }
   },
@@ -102,12 +107,17 @@ const S = {
     mentorApproved: {
       subject: 'შენ დამტკიცდი Wisecall-ის მენტორად', heading: 'კეთილი იყოს შენი მობრძანება',
       intro: 'შენი მენტორის განაცხადი დამტკიცდა.',
-      after: 'ბოლო ნაბიჯი: დააკავშირე გადახდის ანგარიში, რომ გამოჩნდე ექსპერტების სიაში და მიიღო ანაზღაურება.', button: 'გადახდების დაკავშირება'
+      after: 'ბოლო ნაბიჯი: პარამეტრებში მიუთითე შენი სახელი და IBAN, რომ გამოჩნდე ექსპერტების სიაში და ანაზღაურება მიიღო.', button: 'გადახდის მონაცემების დამატება'
     },
     mentorRejected: {
       subject: 'შენი მენტორის განაცხადის შესახებ', heading: 'განაცხადის დამტკიცება ჯერ ვერ შევძელით',
       intro: 'მადლობა განაცხადისთვის. ამჯერად ვერ დავამტკიცეთ.', reasonLabel: 'მიზეზი:',
       after: 'შეგიძლია განაახლო მონაცემები და თავიდან გაგზავნო განაცხადი პარამეტრებიდან.', button: 'პარამეტრების გახსნა'
+    },
+    payoutPaid: {
+      subject: 'შენი Wisecall-ის ანაზღაურება გაიგზავნა', heading: 'შენი ანაზღაურება გზაშია',
+      intro: '{amount} გავგზავნეთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.', referenceLabel: 'საბანკო გადარიცხვის რეფერენსი:',
+      after: 'საბანკო გადარიცხვა ჩვეულებრივ 1-3 სამუშაო დღეში აისახება. ყველა შემოსავალი შეგიძლია იხილო დაფაზე.', button: 'დაფის გახსნა'
     },
     contact: { subject: 'ახალი შეტყობინება Wisecall-ის საკონტაქტო ფორმიდან', heading: 'ახალი შეტყობინება' }
   }
@@ -152,6 +162,10 @@ const BUILDERS = {
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,
     blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.APP_URL}/settings.html` }]
+  }),
+  payoutPaid: (s, d) => ({
+    heading: s.payoutPaid.heading,
+    blocks: [{ p: fill(s.payoutPaid.intro, d), raw: true }, { quote: `${s.payoutPaid.referenceLabel} ${d.reference}` }, { p: s.payoutPaid.after }, { button: s.payoutPaid.button, url: `${config.APP_URL}/dashboard.html` }]
   }),
   contact: (s, d) => ({
     heading: s.contact.heading,

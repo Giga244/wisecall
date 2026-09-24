@@ -173,6 +173,41 @@
     return (name || '?').split(' ').map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   }
 
+  // What the mentor has earned, what is payable, and the bank transfers already made.
+  async function loadEarnings() {
+    const box = document.getElementById('earnings');
+    try {
+      const e = await WisecallAPI.apiFetch('/me/earnings');
+      const b = e.balance;
+      const day = (d) => fmtDate(d);
+      const itemNote = (i) => {
+        if (i.status === 'void') return t('dash.earnings.void');
+        if (i.status === 'paid') {
+          const base = t('dash.earnings.paidOn').replace('{date}', i.paidAt ? day(i.paidAt) : '').replace('{ref}', i.reference || '');
+          return i.owedBack ? `${base} · ${t(i.owedBackSettled ? 'dash.earnings.owedSettled' : 'dash.earnings.owedBack')}` : base;
+        }
+        return new Date(i.payableAt) <= new Date() ? t('dash.earnings.payableNow') : t('dash.earnings.payableFrom').replace('{date}', day(i.payableAt));
+      };
+      box.innerHTML = `
+        <div class="earn-cards">
+          <div class="earn-card"><span>${t('dash.earnings.available')}</span><strong>${money(Math.max(b.net, 0))}</strong></div>
+          <div class="earn-card"><span>${t('dash.earnings.holding').replace('{days}', e.holdDays)}</span><strong>${money(b.holding)}</strong></div>
+          <div class="earn-card"><span>${t('dash.earnings.paid')}</span><strong>${money(b.paid)}</strong></div>
+          ${b.debt > 0 ? `<div class="earn-card warn"><span>${t('dash.earnings.debt')}</span><strong>${money(b.debt)}</strong></div>` : ''}
+        </div>
+        <p class="muted small">${t('dash.earnings.note').replace('{days}', e.holdDays)}</p>
+        ${e.batches.length ? `
+          <h3 class="earn-h">${t('dash.earnings.history')}</h3>
+          <ul class="earn-list">${e.batches.map(x => `<li><span>${day(x.paidAt)}</span><span>${escapeHtml(x.reference)}</span><strong>${money(x.amount)}</strong></li>`).join('')}</ul>` : ''}
+        ${e.items.length ? `
+          <h3 class="earn-h">${t('dash.earnings.items')}</h3>
+          <ul class="earn-list">${e.items.map(i => `<li><span>${escapeHtml(i.question)}</span><span class="muted small">${escapeHtml(itemNote(i))}</span><strong>${money(i.amount)}</strong></li>`).join('')}</ul>` : `<p class="muted">${t('dash.earnings.empty')}</p>`}
+      `;
+    } catch (err) {
+      box.innerHTML = `<p class="muted">${t('toast.error')}</p>`;
+    }
+  }
+
   async function load() {
     try {
       const data = await WisecallAPI.apiFetch('/bookings/mine');
@@ -180,6 +215,7 @@
       if (user.role === 'mentor' || user.role === 'both') {
         mentorSection.style.display = 'block';
         renderReceived(data.received);
+        loadEarnings();
       }
     } catch (e) {
       askedList.innerHTML = `<p class="muted">${t('toast.error')}</p>`;

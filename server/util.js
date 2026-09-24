@@ -18,14 +18,15 @@ function publicProfile(user) {
 // What a logged-in user may see about themselves (no secrets or hashes).
 function meProfile(user) {
   if (!user) return null;
-  const { passwordHash, resetTokenHash, resetTokenExpiresAt, emailVerifyCodeHash, emailVerifyCodeExpiresAt, ...rest } = user;
-  return { ...rest, isAdmin: Boolean(user.email) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase()) };
+  // The encrypted IBAN never leaves the server through this; owners fetch it from /api/me/payout.
+  const { passwordHash, resetTokenHash, resetTokenExpiresAt, emailVerifyCodeHash, emailVerifyCodeExpiresAt, payoutIbanEnc, ...rest } = user;
+  return { ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), isAdmin: Boolean(user.email) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase()) };
 }
 
 function isListable(user) {
   return Boolean(user) && (user.role === 'mentor' || user.role === 'both') &&
     Boolean(user.price) && Boolean(user.niche) && Boolean(user.roleTitle) &&
-    user.verificationStatus === 'verified';
+    user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc);
 }
 
 // Express 4 does not catch rejected promises from async handlers; this forwards them to

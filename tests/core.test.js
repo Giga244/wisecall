@@ -2,7 +2,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 const path = require('path');
-const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, SAMPLE } = require('./helpers');
+const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, SAMPLE } = require('./helpers');
 
 let srv, base;
 const ids = {};
@@ -119,6 +119,12 @@ describe('mentor application and approval', () => {
     assert.equal(noChecks.error, 'checklist_incomplete');
     const ok = await ids.admin.api(`/admin/mentors/${ids.mentor}/review`, { method: 'POST', body: { approve: true, checks: { identity: true, credential: true, sample: true } } });
     assert.equal(ok.mentor.verificationStatus, 'verified');
+
+    // Approved is not enough: without payout details the mentor stays hidden and cannot be booked.
+    assert.equal((await client(base).api('/experts')).experts.length, 0);
+    const early = await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'Is a mentor without payout details bookable?' } });
+    assert.equal(early.status, 404);
+    await addPayoutDetails(ids.mentorClient);
   });
 
   test('approved mentor is public, and public data never leaks private fields', async () => {
@@ -388,17 +394,18 @@ describe('production safety', () => {
       // Values are blanked (not omitted) so dotenv cannot fill them in from the real .env file.
       env: {
         PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL,
-        JWT_SECRET: '', APP_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: ''
+        JWT_SECRET: '', APP_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', DATA_ENCRYPTION_KEY: ''
       }
     });
     assert.equal(r.status, 1);
-    for (const name of ['JWT_SECRET', 'APP_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'PAYMENT_PROVIDER']) assert.match(r.stderr, new RegExp(name));
+    for (const name of ['JWT_SECRET', 'APP_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'PAYMENT_PROVIDER', 'DATA_ENCRYPTION_KEY']) assert.match(r.stderr, new RegExp(name));
   });
 
   test('in production, codes and reset links are never returned by the API', async () => {
     const prod = await startServer(4553, {
       NODE_ENV: 'production', APP_URL: 'https://example.com', RESEND_API_KEY: 're_fake_key_for_test', EMAIL_FROM: 'Wisecall <hi@example.com>',
-      PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test'
+      PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test',
+      DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345'
     });
     try {
       const c = client(prod.base);

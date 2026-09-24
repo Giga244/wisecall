@@ -92,6 +92,14 @@ async function bookAndPay(base, seekerClient, mentorId, question, outcome = 'suc
   return booking;
 }
 
+
+const GOOD_IBAN = 'GE29NB0000000101904917';
+// Mentors only appear in listings (and can be booked) once they have saved payout details.
+async function addPayoutDetails(mentorClient, iban = GOOD_IBAN, name = 'Test Mentor') {
+  const r = await mentorClient.api('/me/payout', { method: 'PUT', body: { name: name + ' Name', iban } });
+  if (r.status !== 200) throw new Error('payout details failed: ' + r.text);
+  return r;
+}
 const SAMPLE = 'This is a detailed sample answer that is comfortably longer than eighty characters to pass validation.';
 
-module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, wait, SAMPLE };
+module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, GOOD_IBAN, wait, SAMPLE };

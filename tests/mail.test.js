@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { resetDatabase, startServer, client, bookAndPay, SAMPLE } = require('./helpers');
+const { resetDatabase, startServer, client, bookAndPay, addPayoutDetails, SAMPLE } = require('./helpers');
 
 const OUTBOX = path.join(os.tmpdir(), `wisecall-outbox-${process.pid}.jsonl`);
 let srv, base;
@@ -38,7 +38,7 @@ after(() => { if (srv) srv.proc.kill(); fs.rmSync(OUTBOX, { force: true }); });
 
 describe('templates', () => {
   const { render, TEMPLATE_NAMES } = require('../server/mail/templates');
-  const sample = { code: '123456', url: 'https://example.com/reset?token=a.b', amount: '25.00 USD', question: 'Is <b>this</b> escaped?', answer: 'An <script>alert(1)</script> answer', mentor: 'Dr <i>Who</i>', reason: 'no_answer_deadline', date: '1 Oct 2026, 10:00 UTC', note: 'Please add a LinkedIn link', name: 'Ann', email: 'ann@example.com', message: 'Hello' };
+  const sample = { last4: '4917', reference: 'TR-1', code: '123456', url: 'https://example.com/reset?token=a.b', amount: '25.00 USD', question: 'Is <b>this</b> escaped?', answer: 'An <script>alert(1)</script> answer', mentor: 'Dr <i>Who</i>', reason: 'no_answer_deadline', date: '1 Oct 2026, 10:00 UTC', note: 'Please add a LinkedIn link', name: 'Ann', email: 'ann@example.com', message: 'Hello' };
 
   test('every template renders in English and Georgian with no unfilled placeholders', () => {
     for (const name of TEMPLATE_NAMES) {
@@ -107,6 +107,7 @@ describe('delivery through the email provider', () => {
     const mentor = await signupViaOutbox('Dr English', 'mentor-en@example.com');
     await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Doctor', niche: 'medicine', price: 25, proofUrl: 'https://linkedin.com/in/de', sampleAnswer: SAMPLE } });
     const mid = (await mentor.api('/me')).user.id;
+    await addPayoutDetails(mentor);
     await admin.api(`/admin/mentors/${mid}/review`, { method: 'POST', body: { approve: true, checks: { identity: true, credential: true, sample: true } } });
 
     const seeker = await signupViaOutbox('Ka Seeker', 'ka-seeker@example.com', 'ka');
