@@ -4,6 +4,76 @@ const assert = require('node:assert/strict');
 const { startServer } = require('./helpers');
 const { resetDatabase } = require('./helpers');
 
+describe('PUBLIC_URL is the only address the site ever gives out', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { spawnSync } = require('child_process');
+  const ROOT = path.join(__dirname, '..');
+  let srv;
+  before(async () => {
+    await resetDatabase();
+    srv = await startServer(4588, { PUBLIC_URL: 'https://wisecall.example', SUPPORT_EMAIL: 'help@wisecall.example' });
+  });
+  after(() => { if (srv) srv.proc.kill(); });
+
+  test('every page (except the fake-provider pages) fills in canonical, og:url, og:image and twitter:image from it', async () => {
+    const pages = fs.readdirSync(path.join(ROOT, 'public')).filter((f) => f.endsWith('.html') && !f.startsWith('mock-'));
+    assert.ok(pages.length >= 15);
+    for (const f of pages) {
+      const url = f === 'index.html' ? '/' : `/${f}`;
+      const html = await (await fetch(srv.base + url)).text();
+      assert.doesNotMatch(html, /localhost|127\.0\.0\.1/, `${f} mentions localhost`);
+      assert.doesNotMatch(html, /\{\{\w+\}\}/, `${f} has an unfilled placeholder`);
+      assert.match(html, /rel="canonical" href="https:\/\/wisecall\.example\//, `${f} canonical`);
+      assert.match(html, /og:url" content="https:\/\/wisecall\.example\//, `${f} og:url`);
+      assert.match(html, /og:image" content="https:\/\/wisecall\.example\/og-image\.png"/, `${f} og:image`);
+      assert.match(html, /twitter:image" content="https:\/\/wisecall\.example\/og-image\.png"/, `${f} twitter:image`);
+    }
+    const ids = await (await fetch(`${srv.base}/expert.html?id=11111111-1111-1111-1111-111111111111`)).text();
+    assert.match(ids, /rel="canonical" href="https:\/\/wisecall\.example\/expert\.html/);
+  });
+
+  test('robots.txt, sitemap.xml and the error pages use it too', async () => {
+    assert.match(await (await fetch(`${srv.base}/robots.txt`)).text(), /Sitemap: https:\/\/wisecall\.example\/sitemap\.xml/);
+    const sitemap = await (await fetch(`${srv.base}/sitemap.xml`)).text();
+    assert.match(sitemap, /<loc>https:\/\/wisecall\.example\/<\/loc>/);
+    assert.doesNotMatch(sitemap, /localhost/);
+    assert.doesNotMatch(await (await fetch(`${srv.base}/no-such-page`, { headers: { Accept: 'text/html' } })).text(), /localhost/);
+  });
+
+  test('every email template links to it, and the bank and ID-check return and callback addresses are built from it', () => {
+    const env = { ...process.env, PUBLIC_URL: 'https://wisecall.example', APP_URL: '', NODE_ENV: '' };
+    const out = spawnSync('node', ['-e', `
+      const { render, TEMPLATE_NAMES } = require('./server/mail/templates');
+      const d = { code: '123456', url: 'https://wisecall.example/x', question: 'q', answer: 'a', mentor: 'm', reason: 'other', date: 'd', note: 'n', name: 'n', email: 'e@e.co', message: 'm', amount: '1', last4: '1', reference: 'r', link: 'https://meet.example/x', minutes: 20, domain: 'd.co', niche: 'design', mentorField: 'design', unsubscribeUrl: 'https://wisecall.example/u', step: 'license', status: 'failed', missing: [] };
+      let all = '';
+      for (const n of TEMPLATE_NAMES) for (const l of ['en', 'ka']) { const r = render(n, l, d); all += r.html + r.text; }
+      console.log(JSON.stringify({ localhost: /localhost|127\\.0\\.0\\.1/.test(all), links: (all.match(/https:\\/\\/wisecall\\.example/g) || []).length }));
+    `], { cwd: ROOT, env, encoding: 'utf8' });
+    const r = JSON.parse(out.stdout.trim().split('\n').pop());
+    assert.equal(r.localhost, false);
+    assert.ok(r.links > 20, 'the buttons carry the public address');
+    const src = ['server/payments.js', 'server/verification/kyc.js', 'server/routes/auth.js'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+    assert.match(src, /config\.PUBLIC_URL\}\/api\/payments\/callback/);
+    assert.match(src, /config\.PUBLIC_URL\}\/expert\.html\?id=/);
+    assert.match(src, /config\.PUBLIC_URL\}\/settings\.html\?tab=verification/);
+    assert.match(src, /config\.PUBLIC_URL\}\/reset-password\.html/);
+  });
+
+  test('production refuses to start when PUBLIC_URL is missing, not https, or points at this computer', () => {
+    const base = {
+      ...process.env, NODE_ENV: 'production', PORT: '4599', DATABASE_URL: process.env.TEST_DATABASE_URL, SESSION_SECRET: 'x'.repeat(40), DATA_ENCRYPTION_KEY: 'y'.repeat(40),
+      RESEND_API_KEY: 're_x', EMAIL_FROM: 'Wisecall <a@wisecall.example>', ADMIN_EMAILS: 'a@wisecall.example', PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'i', BOG_CLIENT_SECRET: 's',
+      KYC_PROVIDER: 'didit', DIDIT_API_KEY: 'k', DIDIT_WORKFLOW_ID: 'w', DIDIT_WEBHOOK_SECRET: 's'
+    };
+    const run = (extra) => spawnSync('node', ['server/index.js'], { cwd: ROOT, env: { ...base, PUBLIC_URL: '', APP_URL: '', ...extra }, encoding: 'utf8', timeout: 15000 });
+    assert.match(run({}).stderr, /PUBLIC_URL is required/);
+    assert.match(run({ PUBLIC_URL: 'http://wisecall.example' }).stderr, /PUBLIC_URL must be your public https/);
+    assert.match(run({ PUBLIC_URL: 'https://localhost:4242' }).stderr, /not localhost/);
+    assert.match(run({ PUBLIC_URL: 'https://127.0.0.1' }).stderr, /not localhost/);
+  });
+});
+
 describe('development warnings', () => {
   let srv;
   before(async () => { await resetDatabase(); srv = await startServer(4587); });

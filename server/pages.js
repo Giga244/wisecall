@@ -73,8 +73,9 @@ function pageRoutes() {
   router.get(/^\/([\w-]+)\.html$/, async (req, res, next) => {
     try {
       const name = req.params[0];
-      // The error pages are served by the error handlers, not by their own address.
-      if (name === '404' || name === '500') return next();
+      // The error pages are served by the error handlers, not by their own address. (Asking for them
+      // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
+      if (name === '404' || name === '500') return notFoundHandler(req, res);
       if (!(await sendPage(res, `${name}.html`, baseVars(`/${name}.html`)))) next();
     } catch (e) { next(e); }
   });
