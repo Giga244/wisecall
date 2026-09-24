@@ -40,6 +40,16 @@
       </div>`;
   }
 
+  // The person as the ID provider verified them. Only admins ever see this.
+  function kycBlock(k) {
+    if (!k) return `<p class="muted small">${t('admin.mv.kycNone')}</p>`;
+    return `
+      <div class="mv-kyc">
+        <p><strong>${t('admin.mv.kyc')}</strong> ${esc(k.provider)} · ${t('verify.kyc.' + k.status)}</p>
+        ${k.verifiedName ? `<p>${t('admin.mv.kycName')}: <strong>${esc(k.verifiedName)}</strong> · ${t('admin.mv.kycDob')}: ${esc(k.dateOfBirth || '—')} · ${t('admin.mv.kycCountry')}: ${esc(k.country || '—')}</p>` : ''}
+        <button class="btn btn-ghost btn-sm mv-kyc-refresh">${t('admin.mv.kycRefresh')}</button>
+      </div>`;
+  }
   function panelHtml(d) {
     const rows = d.requirements.map((r) => (r.type === 'step'
       ? stepRow(r)
@@ -52,6 +62,7 @@
         <div class="booking-answer"><strong>${t('admin.sampleTitle')}</strong> ${esc(d.mentor.sampleAnswer || '')}</div>
         ${d.mentor.proofUrl ? `<p>${t('admin.mv.proofLink')}: <a href="${esc(d.mentor.proofUrl)}" target="_blank" rel="noopener noreferrer">${esc(d.mentor.proofUrl)}</a></p>` : ''}
         ${d.registries.length ? `<p class="small"><strong>${t('admin.mv.registries')}</strong> ${d.registries.map((r) => `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.label)}</a>`).join(' · ')}</p>` : ''}
+        ${kycBlock(d.kyc)}
         <div class="mv-steps">${rows}</div>
         <div class="mv-final">
           <button class="btn btn-primary mv-approve" ${d.ready && d.mentor.verificationStatus === 'pending' ? '' : 'disabled'}>${t('admin.approve')}</button>
@@ -129,6 +140,12 @@
           const fail = row.querySelector('.mv-fail');
           if (pass) pass.addEventListener('click', () => decide('passed'));
           if (fail) fail.addEventListener('click', () => decide('failed'));
+        });
+        const refresh = body.querySelector('.mv-kyc-refresh');
+        if (refresh) refresh.addEventListener('click', async () => {
+          refresh.disabled = true;
+          try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/kyc/refresh`, { method: 'POST' }); await loadPanel(); onChange({ soft: true }); }
+          catch (e) { WisecallNav.showToast(t('toast.error')); refresh.disabled = false; }
         });
         const approve = body.querySelector('.mv-approve');
         if (approve) approve.addEventListener('click', async () => {

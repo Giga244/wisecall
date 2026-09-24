@@ -463,14 +463,15 @@ describe('security hardening', () => {
 });
 
 describe('production safety', () => {
-  const blank = { JWT_SECRET: '', SESSION_SECRET: '', APP_URL: '', PUBLIC_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', DATA_ENCRYPTION_KEY: '' };
+  const blank = { JWT_SECRET: '', SESSION_SECRET: '', APP_URL: '', PUBLIC_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', DATA_ENCRYPTION_KEY: '', KYC_PROVIDER: '', DIDIT_API_KEY: '', DIDIT_WORKFLOW_ID: '', DIDIT_WEBHOOK_SECRET: '' };
   // The smallest complete production configuration; tests remove or change one thing at a time.
   const goodProd = {
     PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL,
     SESSION_SECRET: 'test-secret-that-is-long-enough-1234567890', PUBLIC_URL: 'https://wisecall.example', RESEND_API_KEY: 're_fake',
     EMAIL_FROM: 'Wisecall <hi@wisecall.example>', ADMIN_EMAILS: 'boss@wisecall.example', PAYMENT_PROVIDER: 'bog',
     BOG_CLIENT_ID: 'id', BOG_CLIENT_SECRET: 'secret', DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345',
-    JWT_SECRET: '', APP_URL: ''
+    JWT_SECRET: '', APP_URL: '',
+    KYC_PROVIDER: 'didit', DIDIT_API_KEY: 'key_for_test', DIDIT_WORKFLOW_ID: 'workflow_for_test', DIDIT_WEBHOOK_SECRET: 'whsec_for_test'
   };
   const start = (env) => spawnSync('node', ['server/index.js'], { cwd: ROOT, encoding: 'utf8', timeout: 8000, env });
 
@@ -478,7 +479,7 @@ describe('production safety', () => {
     // Values are blanked (not omitted) so dotenv cannot fill them in from the real .env file.
     const r = start({ PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL, ...blank });
     assert.equal(r.status, 1);
-    for (const name of ['SESSION_SECRET', 'PUBLIC_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'PAYMENT_PROVIDER', 'DATA_ENCRYPTION_KEY']) assert.match(r.stderr, new RegExp(name));
+    for (const name of ['SESSION_SECRET', 'PUBLIC_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'PAYMENT_PROVIDER', 'DATA_ENCRYPTION_KEY', 'KYC_PROVIDER']) assert.match(r.stderr, new RegExp(name));
   });
 
   test('each required production variable is enforced on its own', () => {
@@ -493,7 +494,12 @@ describe('production safety', () => {
       [{ PAYMENT_PROVIDER: '' }, /PAYMENT_PROVIDER is required/],
       [{ BOG_CLIENT_SECRET: '' }, /BOG_CLIENT_SECRET/],
       [{ PAYMENT_PROVIDER: 'tbc' }, /TBC_API_KEY/],
-      [{ DATA_ENCRYPTION_KEY: 'short' }, /DATA_ENCRYPTION_KEY/]
+      [{ DATA_ENCRYPTION_KEY: 'short' }, /DATA_ENCRYPTION_KEY/],
+      [{ KYC_PROVIDER: 'mock' }, /KYC_PROVIDER=mock is a fake/],
+      [{ KYC_PROVIDER: '' }, /KYC_PROVIDER is required/],
+      [{ DIDIT_API_KEY: '' }, /DIDIT_API_KEY/],
+      [{ DIDIT_WORKFLOW_ID: '' }, /DIDIT_WORKFLOW_ID/],
+      [{ DIDIT_WEBHOOK_SECRET: '' }, /DIDIT_WEBHOOK_SECRET/]
     ];
     for (const [change, expected] of cases) {
       const r = start({ ...goodProd, ...change });
@@ -515,7 +521,8 @@ describe('production safety', () => {
     const prod = await startServer(4553, {
       NODE_ENV: 'production', PUBLIC_URL: 'https://wisecall.example', RESEND_API_KEY: 're_fake_key_for_test', RESEND_API_URL: 'http://127.0.0.1:9/emails',
       EMAIL_FROM: 'Wisecall <hi@wisecall.example>', PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test',
-      DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345'
+      DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345',
+      KYC_PROVIDER: 'didit', DIDIT_API_KEY: 'key_for_test', DIDIT_WORKFLOW_ID: 'workflow_for_test', DIDIT_WEBHOOK_SECRET: 'whsec_for_test'
     });
     try {
       const c = client(prod.base);

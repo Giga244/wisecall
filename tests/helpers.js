@@ -25,6 +25,7 @@ async function startServer(port, extraEnv = {}) {
     SESSION_SECRET: 'test-secret-that-is-long-enough-1234567890',
     RESEND_API_KEY: '',
     PAYMENT_PROVIDER: 'mock',
+    KYC_PROVIDER: 'mock', DIDIT_API_KEY: '', DIDIT_WORKFLOW_ID: '', DIDIT_WEBHOOK_SECRET: '',
     BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', TBC_CLIENT_ID: '', TBC_CLIENT_SECRET: '',
     ADMIN_EMAILS: 'qa-admin@example.com',
     ADMIN_EMAIL: '',

@@ -49,6 +49,14 @@ const config = {
   TBC_CLIENT_SECRET: env.TBC_CLIENT_SECRET || '',
   TBC_API_URL: (env.TBC_API_URL || 'https://api.tbcbank.ge').replace(/\/+$/, ''),
 
+  // ID verification (KYC) for mentors: didit | mock. "mock" is a fake for local development only and is
+  // refused in production.
+  KYC_PROVIDER: (env.KYC_PROVIDER || (IS_PROD ? '' : 'mock')).toLowerCase(),
+  DIDIT_API_KEY: env.DIDIT_API_KEY || '',
+  DIDIT_WORKFLOW_ID: env.DIDIT_WORKFLOW_ID || '',
+  DIDIT_WEBHOOK_SECRET: env.DIDIT_WEBHOOK_SECRET || '',
+  DIDIT_API_URL: (env.DIDIT_API_URL || 'https://verification.didit.me').replace(/\/+$/, ''),
+
   EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
   RESEND_API_KEY: env.RESEND_API_KEY || '',
   RESEND_API_URL: env.RESEND_API_URL || 'https://api.resend.com/emails',
@@ -78,6 +86,7 @@ if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be
 if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negative');
 if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
 if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
+if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');
 
 if (IS_PROD) {
   const secret = env.SESSION_SECRET || env.JWT_SECRET;
@@ -91,6 +100,14 @@ if (IS_PROD) {
   if (config.EMAIL_PROVIDER === 'postmark' && !config.POSTMARK_TOKEN) problems.push('POSTMARK_TOKEN is required (verification codes and password resets are sent by email)');
   if (!env.EMAIL_FROM) problems.push('EMAIL_FROM is required (an address on a domain you verified with your email provider)');
   if (config.ADMIN_EMAILS.length === 0) problems.push('ADMIN_EMAILS is required (who can approve mentors)');
+
+  if (config.KYC_PROVIDER === 'mock') problems.push('KYC_PROVIDER=mock is a fake ID check for development and is not allowed in production');
+  else if (config.KYC_PROVIDER !== 'didit') problems.push('KYC_PROVIDER is required in production: didit');
+  if (config.KYC_PROVIDER === 'didit') {
+    if (!config.DIDIT_API_KEY) problems.push('DIDIT_API_KEY is required when KYC_PROVIDER=didit');
+    if (!config.DIDIT_WORKFLOW_ID) problems.push('DIDIT_WORKFLOW_ID is required when KYC_PROVIDER=didit');
+    if (!config.DIDIT_WEBHOOK_SECRET) problems.push('DIDIT_WEBHOOK_SECRET is required when KYC_PROVIDER=didit (webhooks are refused without it)');
+  }
 
   if (config.PAYMENT_PROVIDER === 'mock') problems.push('PAYMENT_PROVIDER=mock is a fake bank for development and is not allowed in production');
   else if (!['bog', 'tbc'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER is required in production: bog or tbc');

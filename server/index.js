@@ -30,6 +30,15 @@ app.get('/healthz', async (req, res) => {
 // header rule; its authenticity is checked in server/pay/ instead.
 app.use('/api/payments', express.raw({ type: '*/*', limit: '100kb' }), require('./routes/paymentCallback'));
 
+// ID-verification webhook: raw body (the signature covers the exact bytes), exempt from the CSRF header.
+app.use('/api/kyc', express.raw({ type: '*/*', limit: '200kb' }), require('./routes/kycWebhook'));
+
+// Development only: the fake ID-check page. Never exists in production.
+const useMockKyc = config.KYC_PROVIDER === 'mock' && !config.IS_PROD;
+if (!useMockKyc) {
+  app.use(['/mock-kyc.html', '/js/mock-kyc.js', '/api/mock-kyc'], pages.notFoundHandler);
+}
+
 // Development only: the fake bank's payment page. Never exists in production.
 const useMockBank = config.PAYMENT_PROVIDER === 'mock' && !config.IS_PROD;
 if (!useMockBank) {
@@ -49,6 +58,7 @@ app.use('/api/auth/resend-verification', authLimit(6));
 app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
 app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
+app.use('/api/verification/kyc/start', rateLimit({ windowMs: 60 * 60 * 1000, max: 15 }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/me', require('./routes/me'));
@@ -59,6 +69,7 @@ app.use('/api/stats', require('./routes/stats'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin', require('./routes/adminVerification'));
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
+if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 
 app.get('/api/config', (req, res) => {
   res.json({

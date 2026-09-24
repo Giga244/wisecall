@@ -8,6 +8,7 @@ const notify = require('../notify');
 const rules = require('../verification/rules');
 const steps = require('../verification/steps');
 const review = require('../verification/review');
+const kycService = require('../verification/kyc');
 
 const router = express.Router();
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -33,7 +34,8 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
   const mentor = await getUserById(req.params.id);
   if (!mentor || !(mentor.role === 'mentor' || mentor.role === 'both')) return res.status(404).json({ error: 'not_found' });
 
-  const [stepRows, auditRows] = await Promise.all([
+  const [kycSummary, stepRows, auditRows] = await Promise.all([
+    kycService.summaryFor(mentor.id),
     query(`SELECT s.*, u.email AS decided_by_email FROM verification_steps s LEFT JOIN users u ON u.id = s.decided_by WHERE s.user_id = $1`, [mentor.id]),
     query(`SELECT * FROM verification_audit WHERE mentor_id = $1 ORDER BY created_at DESC LIMIT 200`, [mentor.id])
   ]);
@@ -52,6 +54,7 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
       ...meProfile(mentor), sampleAnswer: mentor.sampleAnswer, proofUrl: mentor.proofUrl
     },
     level: summary.level,
+    kyc: kycSummary,
     requirements: summary.requirements.map((r) => (r.type === 'step'
       ? { ...r, ...(detail[r.step] || {}), status: r.status }
       : { ...r, options: r.options.map((o) => ({ ...o, ...(detail[o.step] || {}), status: o.status })) })),
@@ -92,6 +95,18 @@ router.post('/mentors/:id/reject', requireAuth, requireAdmin, asyncHandler(async
     notify.notifyMentorDecision(mentor, false, mentor.verificationNote);
     res.json({ mentor: meProfile(mentor) });
   } catch (e) { fail(res, e); }
+}));
+
+// Asks the ID-verification provider for the latest result (for example when a webhook was lost).
+router.post('/mentors/:id/kyc/refresh', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try {
+    const out = await kycService.refresh(req.params.id);
+    res.json({ known: out.known, changed: Boolean(out.changed), kycStatus: out.status || null });
+  } catch (e) {
+    console.error('[kyc] refresh failed:', e.message);
+    res.status(502).json({ error: 'kyc_error' });
+  }
 }));
 
 module.exports = router;

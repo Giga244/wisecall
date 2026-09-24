@@ -149,7 +149,8 @@ describe('production never shows codes or links on screen', () => {
     const prod = await startServer(4575, {
       NODE_ENV: 'production', PUBLIC_URL: 'https://wisecall.example', EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resendUrl,
       EMAIL_FROM: 'Wisecall <hello@wisecall.example>', PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test',
-      DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345'
+      DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345',
+      KYC_PROVIDER: 'didit', DIDIT_API_KEY: 'key_for_test', DIDIT_WORKFLOW_ID: 'workflow_for_test', DIDIT_WEBHOOK_SECRET: 'whsec_for_test'
     });
     try {
       behavior.failures = [403, 403, 403];
