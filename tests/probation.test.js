@@ -135,6 +135,11 @@ describe('probation: the first answers are held', () => {
     assert.equal((await asked(seeker, third.id)).answer, 'Start from your hourly rate and add a margin for revisions.');
     assert.ok(await payoutOf(third.id), 'the payout is recorded at once');
     await resend.waitFor('sam@example.com', 'answered your question');
+    // The public profile shows how long buyers really waited (held time counts; refunded and held answers do not).
+    const expert = (await client(base).api(`/experts/${mentorId}`)).expert;
+    assert.equal(typeof expert.avgAnswerSeconds, 'number');
+    assert.ok(expert.avgAnswerSeconds >= 0);
+    assert.equal(expert.answeredCount, 2, 'the released first answer and this one (the rejected one is not counted)');
   });
 
   test('an unflagged answer is released automatically once the window has passed', async () => {

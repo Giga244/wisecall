@@ -26,29 +26,9 @@
 </head>
 <body>
 
-<header class="nav">
-  <div class="container nav-inner">
-    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
-    <nav class="nav-links">
-      <a href="/dashboard.html" data-i18n="nav.dashboard">Dashboard</a>
-    </nav>
-    <div class="nav-right">
-      <div class="lang-toggle">
-        <button class="lang-btn" data-lang="en">EN</button>
-        <button class="lang-btn" data-lang="ka">KA</button>
-      </div>
-      <div class="nav-actions" id="navLoggedOut">
-        <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">Log in</a>
-        <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
-      </div>
-      <div class="nav-actions" id="navLoggedIn" style="display:none">
-        <button class="btn btn-outline" id="logoutBtn" data-i18n="nav.logout">Log out</button>
-      </div>
-    </div>
-  </div>
-</header>
+<script src="/js/header.js"></script>
 
-<section class="settings container">
+<section class="settings container" id="main">
   <h1 data-i18n="settings.title">Settings</h1>
 
   <div class="tabs" id="settingsTabs" role="tablist" aria-label="Settings">

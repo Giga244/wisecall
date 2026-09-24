@@ -80,6 +80,10 @@
     return dict;
   }
 
+  // Resolves once the first language has been loaded and applied, so other scripts can wait for real texts.
+  let markReady;
+  const ready = new Promise((resolve) => { markReady = resolve; });
+
   async function initI18n() {
     const lang = getLang();
     document.documentElement.lang = lang;
@@ -90,8 +94,9 @@
       btn.classList.toggle('active', btn.dataset.lang === lang);
       btn.addEventListener('click', () => setLang(btn.dataset.lang));
     });
+    markReady();
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, ready };
 })();

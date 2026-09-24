@@ -29,7 +29,13 @@
     links.addEventListener('click', (ev) => { if (ev.target.closest('a')) setOpen(false); });
     window.matchMedia('(min-width: 721px)').addEventListener('change', (e) => { if (e.matches) setOpen(false); });
   }
-  async function initNav() {
+  // Runs once per page, however many scripts ask for it (the header script and the page's own script both do).
+  let navPromise = null;
+  function initNav() {
+    if (!navPromise) navPromise = setUpNav();
+    return navPromise;
+  }
+  async function setUpNav() {
     initMenu();
     const loggedOutEl = document.getElementById('navLoggedOut');
     const loggedInEl = document.getElementById('navLoggedIn');

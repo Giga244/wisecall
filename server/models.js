@@ -154,13 +154,16 @@ function listableSql() {
 // { [mentorId]: { ratingAvg, reviewCount, answeredCount } } for the given mentor ids.
 async function mentorStatsFor(ids) {
   const out = {};
-  ids.forEach((id) => { out[id] = { ratingAvg: null, reviewCount: 0, answeredCount: 0 }; });
+  ids.forEach((id) => { out[id] = { ratingAvg: null, reviewCount: 0, answeredCount: 0, avgAnswerSeconds: null }; });
   if (!ids.length) return out;
   const { rows } = await query(
     `SELECT mentor_id,
             count(*) FILTER (WHERE status = 'answered' AND answer_review <> 'held') AS answered,
             count(rating) AS reviews,
-            round(avg(rating)::numeric, 1) AS avg
+            round(avg(rating)::numeric, 1) AS avg,
+            -- how long buyers really waited: from payment to the moment they could read the answer
+            avg(EXTRACT(EPOCH FROM (COALESCE(answer_released_at, answered_at) - paid_at)))
+              FILTER (WHERE status = 'answered' AND answer_review <> 'held' AND paid_at IS NOT NULL AND answered_at IS NOT NULL) AS avg_seconds
        FROM bookings WHERE mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`,
     [ids]
   );
@@ -168,7 +171,8 @@ async function mentorStatsFor(ids) {
     out[r.mentor_id] = {
       ratingAvg: r.avg === null ? null : Number(r.avg),
       reviewCount: Number(r.reviews),
-      answeredCount: Number(r.answered)
+      answeredCount: Number(r.answered),
+      avgAnswerSeconds: r.avg_seconds === null ? null : Math.max(0, Math.round(Number(r.avg_seconds)))
     };
   });
   return out;

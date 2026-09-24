@@ -511,14 +511,26 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 .nav.menu-open .nav-toggle .icon-open { display: none; }
 .nav.menu-open .nav-toggle .icon-close { display: block; }
 @media (max-width: 720px) {
-  .nav-toggle { display: inline-flex; }
-  .nav.menu-open .nav-links {
-    display: flex; flex-direction: column; gap: 0; position: absolute; top: 100%; left: 0; right: 0;
-    background: var(--card); border-bottom: 1px solid var(--border); padding: 8px 16px 14px;
-    box-shadow: 0 18px 30px -18px rgba(43, 36, 64, 0.35);
-  }
-  .nav.menu-open .nav-links a { padding: 14px 4px; font-size: 1rem; border-bottom: 1px solid var(--border); }
+  /* One row: logo, language, menu button. The links and the account buttons open under it. */
+  .nav-inner { display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: 8px; row-gap: 0; padding: 10px 16px; }
+  .nav-right { display: contents; }
+  .nav-inner > .logo { grid-row: 1; grid-column: 1; }
+  .lang-toggle { grid-row: 1; grid-column: 2; }
+  .nav-toggle { display: inline-flex; grid-row: 1; grid-column: 3; margin-left: 0; }
+  .nav-actions { display: none !important; grid-row: 3; }
+  .nav.menu-open .nav-links { display: flex; flex-direction: column; gap: 0; grid-row: 2; grid-column: 1 / -1; padding: 8px 0 0; }
+  .nav.menu-open .nav-links a { padding: 14px 4px; font-size: 1rem; min-height: 44px; border-bottom: 1px solid var(--border); }
   .nav.menu-open .nav-links a:last-child { border-bottom: none; }
+  .nav.menu-open .nav-actions:not([style*="display: none"]):not([style*="display:none"]) { display: flex !important; grid-column: 1 / -1; flex-wrap: wrap; gap: 10px; padding: 8px 0 6px; }
+  .nav.menu-open .nav-actions .btn { flex: 1 1 auto; min-height: 44px; }
+}
+/* Touch targets: everything you can tap is at least 44 px high on phones and tablets. */
+@media (max-width: 720px), (pointer: coarse) {
+  .btn, .btn-sm, .chip, .tab, .lang-btn, .sort-select, .search-input { min-height: 44px; }
+  .nav-toggle { width: 44px; height: 44px; }
+  .lang-btn { padding: 8px 14px; }
+  .checkbox-row { min-height: 44px; }
+  .star-btn { min-width: 44px; min-height: 44px; }
 }
 
 /* Empty marketplace */
@@ -529,12 +541,6 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 .empty-state h3 { margin: 0 0 8px; font-size: 1.3rem; }
 .empty-state p { margin: 0 auto 20px; max-width: 460px; color: var(--ink-soft); }
 .logo { white-space: nowrap; }
-@media (max-width: 560px) {
-  .nav-inner { flex-wrap: wrap; row-gap: 10px; padding: 12px 16px; }
-  .nav-toggle { margin-left: auto; }
-  .nav-right { order: 3; width: 100%; justify-content: space-between; flex-wrap: nowrap; }
-  .nav-actions { flex-wrap: nowrap; }
-}
 /* About, contact, error pages */
 .about-actions, .error-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

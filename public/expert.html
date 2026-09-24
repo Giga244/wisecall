@@ -22,38 +22,29 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
 
-<header class="nav">
-  <div class="container nav-inner">
-    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
-    <nav class="nav-links">
-      <a href="/index.html#experts" data-i18n="nav.browse">Browse experts</a>
-    </nav>
-    <div class="nav-right">
-      <div class="lang-toggle">
-        <button class="lang-btn" data-lang="en">EN</button>
-        <button class="lang-btn" data-lang="ka">KA</button>
+<script src="/js/header.js"></script>
+
+<main class="expert-wrap container" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb" id="crumbs"></nav>
+  <div id="expertPage" aria-live="polite" aria-busy="true">
+    <div class="expert-layout" aria-hidden="true">
+      <div class="profile-card">
+        <div class="profile-head">
+          <span class="skeleton skeleton-avatar"></span>
+          <div style="flex:1"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line w60"></span></div>
+        </div>
+        <span class="skeleton skeleton-line w80" style="margin-top:24px"></span>
       </div>
-      <div class="nav-actions" id="navLoggedOut">
-        <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">Log in</a>
-        <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
-      </div>
-      <div class="nav-actions" id="navLoggedIn" style="display:none">
-        <a href="/dashboard.html" class="btn btn-ghost" data-i18n="nav.dashboard">Dashboard</a>
-        <a href="/settings.html" class="btn btn-ghost" data-i18n="nav.settings">Settings</a>
-        <button class="btn btn-outline" id="logoutBtn" data-i18n="nav.logout">Log out</button>
-      </div>
+      <div class="ask-side"><div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w60"></span></div></div>
     </div>
   </div>
-</header>
+</main>
 
-<section class="expert-page container" id="expertPage">
-  <p class="muted" data-i18n="experts.loading">Loading…</p>
-</section>
-
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="/js/i18n.js"></script>
 <script src="/js/footer.js"></script>

@@ -1,109 +1,171 @@
+// A mentor's public profile: who they are and how they were checked, their reviews, and the box where a
+// buyer writes a question and goes to pay at the bank.
 (async function () {
   await WisecallI18n.initI18n();
   const user = await WisecallNav.initNav();
+  const t = WisecallI18n.t;
 
   const page = document.getElementById('expertPage');
+  const crumbs = document.getElementById('crumbs');
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
   const bookingParam = params.get('booking');
   const statusParam = params.get('status');
+  const MAX_QUESTION = 4000; // the server keeps at most this many characters
+  const MIN_QUESTION = 5;
 
-  if (!id) {
-    page.innerHTML = `<p class="muted">${WisecallI18n.t('expert.notSpecified')}</p>`;
-    return;
-  }
+  const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const initials = (name) => name.split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
-  function initials(name) {
-    return name.split(' ').map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+  function showMessage(key) {
+    page.setAttribute('aria-busy', 'false');
+    page.innerHTML = `<div class="empty-state"><h1 style="font-size:1.4rem">${t(key)}</h1><a class="btn btn-primary" href="/index.html#experts">${t('nav.browse')}</a></div>`;
   }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
+  if (!id) { showMessage('expert.notSpecified'); return; }
 
   let expert;
   try {
-    const data = await WisecallAPI.apiFetch(`/experts/${id}`);
-    expert = data.expert;
+    expert = (await WisecallAPI.apiFetch(`/experts/${id}`)).expert;
   } catch (e) {
-    page.innerHTML = `<p class="muted">${WisecallI18n.t('expert.notFound')}</p>`;
+    showMessage('expert.notFound');
     return;
   }
 
-  const t = WisecallI18n.t;
-
-  const ratingLine = expert.ratingAvg
-    ? `★ ${expert.ratingAvg} (${expert.reviewCount} ${t('expert.reviewsShort')})`
-    : t('expert.noReviewsYet');
-
-  page.innerHTML = `
-    <div class="expert-hero">
-      <div class="avatar avatar-lg" style="background:${expert.color || '#6d4de0'}">${initials(expert.name)}</div>
-      <div>
-        <h1>${escapeHtml(expert.name)}</h1>${(expert.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}
-        <p class="muted">${escapeHtml(expert.roleTitle || '')}</p>
-        <p class="rating">${ratingLine}</p>
-        <p class="muted small">${t('expert.answeredCount').replace('{n}', expert.answeredCount || 0)}</p>
-      </div>
-    </div>
-    ${WisecallBadges.full(expert.badges)}
-    <p class="expert-bio">${escapeHtml(expert.bio || '')}</p>
-
-    <div class="ask-card" id="askCard">
-      <div class="ask-card-head">
-        <span>${t('expert.ask')}</span>
-        <span class="price">${WisecallAPI.formatPrice(expert.price)}<span> ${t('expert.perQuestion')}</span></span>
-      </div>
-      <div id="askArea"></div>
-    </div>
-
-    <div class="reviews-section" id="reviewsSection"></div>
-    <div class="report-section">${WisecallReport.html(expert.id, null, Boolean(user))}</div>
-  `;
-  WisecallReport.wire(page);
-
-  loadReviews();
-
-  async function loadReviews() {
-    const section = document.getElementById('reviewsSection');
-    try {
-      const data = await WisecallAPI.apiFetch(`/experts/${id}/reviews`);
-      if (data.reviews.length === 0) {
-        section.innerHTML = '';
-        return;
-      }
-      section.innerHTML = `
-        <h2 class="reviews-title">${t('expert.reviewsTitle')}</h2>
-        ${data.reviews.map(r => `
-          <div class="review-card">
-            <div class="review-top">
-              <span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
-              <span class="muted small">${escapeHtml(r.reviewerName)}</span>
-            </div>
-            ${r.review ? `<p class="review-text">${escapeHtml(r.review)}</p>` : ''}
-          </div>
-        `).join('')}
-      `;
-    } catch (e) { /* reviews are optional */ }
+  // ---- Small formatters ----------------------------------------------------------------------------------
+  function waitText(seconds) {
+    if (seconds === null || seconds === undefined) return null;
+    const hours = seconds / 3600;
+    if (hours < 1) return t('expert.wait.minutes');
+    if (hours < 48) return t('expert.wait.hours').replace('{n}', Math.max(1, Math.round(hours)));
+    return t('expert.wait.days').replace('{n}', Math.round(hours / 24));
   }
 
-  const askArea = document.getElementById('askArea');
+  function crumbsHtml() {
+    return `<ol>
+      <li><a href="/index.html">${t('expert.crumb.home')}</a></li>
+      <li><a href="/index.html#experts">${t('nav.browse')}</a></li>
+      ${expert.niche ? `<li><a href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a></li>` : ''}
+      <li><span aria-current="page">${escapeHtml(expert.name)}</span></li>
+    </ol>`;
+  }
 
+  const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const REVIEW_ART = `<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="8" y="10" width="70" height="42" rx="14" fill="#ff6f59"/><path d="M24 50 Q20 64 10 68 Q34 66 40 50 Z" fill="#ff6f59"/><path d="M28 30l5 5 10-11" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="52" y="30" width="58" height="36" rx="12" fill="#fff" stroke="#2b2440" stroke-width="3.5"/><path d="M72 40l4 8 9 1-7 6 2 9-8-4-8 4 2-9-7-6 9-1z" fill="#f4a93b"/></svg>`;
+
+  // ---- The page ------------------------------------------------------------------------------------------------
+  function profileHtml() {
+    const rating = expert.ratingAvg
+      ? `<span class="rating">★ ${expert.ratingAvg}</span> <span class="muted">(${expert.reviewCount} ${t('expert.reviewsShort')})</span>`
+      : `<span class="muted">${t('expert.noReviewsYet')}</span>`;
+    const wait = waitText(expert.avgAnswerSeconds);
+    return `
+      <div class="expert-layout">
+        <section class="profile-card" aria-labelledby="expertName">
+          <div class="profile-head">
+            <div class="avatar avatar-lg" style="background:${escapeHtml(expert.color || '#6d4de0')}" aria-hidden="true">${escapeHtml(initials(expert.name))}</div>
+            <div>
+              <h1 id="expertName">${escapeHtml(expert.name)}</h1>
+              <p class="profile-title">${escapeHtml(expert.roleTitle || '')}</p>
+              <div class="profile-tags">
+                ${expert.niche ? `<a class="tag tag-niche" href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a>` : ''}
+                <span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>
+                ${(expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <dl class="profile-stats">
+            <div><dt>${t('expert.stat.price')}</dt><dd>${WisecallAPI.formatPrice(expert.price)}</dd></div>
+            <div><dt>${t('expert.stat.rating')}</dt><dd>${rating}</dd></div>
+            <div><dt>${t('expert.stat.answered')}</dt><dd>${expert.answeredCount || 0}</dd></div>
+            <div><dt>${t('expert.stat.wait')}</dt><dd>${wait ? escapeHtml(wait) : `<span class="muted">${t('expert.wait.none')}</span>`}</dd></div>
+          </dl>
+        </section>
+
+        <aside class="ask-side" aria-label="${escapeHtml(t('expert.askTitle').replace('{name}', expert.name))}">
+          <div class="ask-panel" id="askCard"><div id="askArea"></div></div>
+        </aside>
+
+        ${expert.bio ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
+
+        ${(expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')}</p></section>` : ''}
+
+        <section class="profile-section profile-reviews" aria-labelledby="reviewsTitle">
+          <h2 id="reviewsTitle">${t('expert.reviewsTitle')}</h2>
+          <div id="reviewsBody"><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w60"></span></div>
+        </section>
+
+        <div class="report-section">${WisecallReport.html(expert.id, null, Boolean(user))}</div>
+      </div>`;
+  }
+
+  function draw() {
+    const typed = document.getElementById('question');
+    if (typed) draft = typed.value;
+    document.title = `${expert.name}, ${expert.roleTitle || ''} — Wisecall`.replace(', —', ' —');
+    crumbs.innerHTML = crumbsHtml();
+    page.setAttribute('aria-busy', 'false');
+    page.innerHTML = profileHtml();
+    WisecallReport.wire(page);
+    loadReviews();
+    if (!checking && !returnedFromBank) renderAskForm(); else if (askState) askArea().innerHTML = askState;
+  }
+  const askArea = () => document.getElementById('askArea');
+
+  // ---- Reviews ------------------------------------------------------------------------------------------------
+  async function loadReviews() {
+    const body = document.getElementById('reviewsBody');
+    if (!body) return;
+    let reviews = [];
+    try { reviews = (await WisecallAPI.apiFetch(`/experts/${id}/reviews`)).reviews; } catch (e) { body.innerHTML = `<p class="muted">${t('toast.error')}</p>`; return; }
+    if (!reviews.length) {
+      body.innerHTML = `<div class="reviews-empty">${REVIEW_ART}<h3>${t('expert.reviews.empty.title')}</h3><p>${t('expert.reviews.empty.body')}</p></div>`;
+      return;
+    }
+    const counts = [5, 4, 3, 2, 1].map((n) => reviews.filter((r) => r.rating === n).length);
+    body.innerHTML = `
+      <div class="review-summary">
+        <div><strong>${expert.ratingAvg}</strong><div class="review-stars" aria-hidden="true">${'★'.repeat(Math.round(expert.ratingAvg))}${'☆'.repeat(5 - Math.round(expert.ratingAvg))}</div><span class="muted small">${t('expert.reviews.count').replace('{n}', reviews.length)}</span></div>
+        <div class="review-bars" aria-hidden="true">${counts.map((c, i) => `<div class="review-bar"><span>${5 - i}★</span><i><b style="width:${Math.round((c / reviews.length) * 100)}%"></b></i><span>${c}</span></div>`).join('')}</div>
+      </div>
+      ${reviews.map((r) => `
+        <article class="review-card">
+          <div class="review-top">
+            <span class="review-stars" role="img" aria-label="${escapeHtml(t('expert.reviews.stars').replace('{n}', r.rating))}">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+            <span class="muted small">${escapeHtml(r.reviewerName)}</span>
+          </div>
+          ${r.review ? `<p class="review-text">${escapeHtml(r.review)}</p>` : ''}
+        </article>`).join('')}`;
+  }
+
+  // ---- Asking a question -----------------------------------------------------------------------------------------
   // The bank sends the buyer back with ?status=success|fail|return, but that is only a hint.
   const returnedFromBank = Boolean(bookingParam) && ['success', 'fail', 'return'].includes(statusParam);
   let checking = false;
+  let askState = ''; // the message that replaces the form after a payment, kept when the language changes
+  let draft = ''; // what the buyer has typed so far, kept when the page is redrawn
+  const NOTE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>';
+
+  const askHeader = () => `
+    <h2>${escapeHtml(t('expert.askTitle').replace('{name}', expert.name))}</h2>
+    <p class="ask-price"><strong>${WisecallAPI.formatPrice(expert.price)}</strong><span>${t('expert.priceLabel')}</span></p>`;
+  const askNotes = () => `
+    <ul class="ask-notes">
+      <li>${NOTE_ICON}<span>${t('expert.refundNote')}</span></li>
+      <li>${NOTE_ICON}<span>${t('expert.secureNote')}</span></li>
+    </ul>`;
 
   // Ask our server to check the payment with the bank; only its answer decides what we show.
   async function confirmPayment() {
     checking = true;
-    askArea.innerHTML = `<div class="booking-result"><p class="muted">${t('expert.confirmingPayment')}</p></div>`;
+    askArea().innerHTML = `<div class="booking-result"><p class="muted">${t('expert.confirmingPayment')}</p></div>`;
     let last = null;
     for (let i = 0; i < 20; i++) {
       try {
         const { booking } = await WisecallAPI.apiFetch(`/bookings/${bookingParam}/sync`, { method: 'POST' });
         last = booking;
         if (booking.status === 'paid' || booking.status === 'answered') {
-          askArea.innerHTML = `<div class="booking-result success"><div class="success-icon">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+          askState = `<div class="booking-result success"><div class="success-icon" aria-hidden="true">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+          askArea().innerHTML = askState;
           return;
         }
         if (booking.status === 'expired' || booking.status === 'refunded') break;
@@ -118,41 +180,53 @@
       WisecallNav.showToast(t('expert.paymentFailed'));
       return;
     }
-    askArea.innerHTML = `<div class="booking-result"><p class="muted">${t('expert.paymentPending')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+    askState = `<div class="booking-result"><p class="muted">${t('expert.paymentPending')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+    askArea().innerHTML = askState;
   }
 
-  if (returnedFromBank && user) {
-    confirmPayment();
-  } else {
-    renderAskForm();
-  }
-
-  document.addEventListener('wisecall:lang-changed', () => {
-    const headSpan = document.querySelector('.ask-card-head span');
-    if (headSpan) headSpan.textContent = t('expert.ask');
-    if (!checking && !returnedFromBank) renderAskForm();
-  });
   function renderAskForm() {
+    const area = askArea();
+    if (!area) return;
     if (!user) {
-      askArea.innerHTML = `
-        <p class="muted">${t('expert.loginToAsk').replace('{name}', () => escapeHtml(expert.name))}</p>
-        <a class="btn btn-primary btn-block" href="/login.html?redirect=${encodeURIComponent(location.pathname + location.search)}">${t('nav.login')}</a>
-      `;
+      const back = encodeURIComponent(location.pathname + location.search);
+      area.innerHTML = `
+        ${askHeader()}
+        <p class="ask-tip">${t('expert.askTip')}</p>
+        <div class="ask-login">
+          <p class="muted" style="margin:0">${escapeHtml(t('expert.loginToAsk').replace('{name}', expert.name))}</p>
+          <a class="btn btn-primary btn-block" href="/login.html?redirect=${back}">${t('nav.login')}</a>
+          <a class="btn btn-outline btn-block" href="/signup.html?redirect=${back}">${t('nav.signup')}</a>
+        </div>
+        ${askNotes()}`;
       return;
     }
     if (user.id === expert.id) {
-      askArea.innerHTML = `<p class="muted">${t('expert.ownProfile')}</p>`;
+      area.innerHTML = `${askHeader()}<p class="muted">${t('expert.ownProfile')}</p>`;
       return;
     }
-    askArea.innerHTML = `
-      <form id="askForm">
-        <label>
-          <textarea id="question" rows="4" required minlength="5" placeholder="${t('expert.questionPlaceholder')}"></textarea>
+    area.innerHTML = `
+      ${askHeader()}
+      <p class="ask-tip">${t('expert.askTip')}</p>
+      <form id="askForm" novalidate>
+        <label for="question"><span>${t('expert.question.label')}</span>
+          <textarea id="question" rows="5" maxlength="${MAX_QUESTION}" placeholder="${escapeHtml(t('expert.questionPlaceholder'))}" aria-describedby="qMeta askError" required></textarea>
         </label>
-        <p class="form-error" id="askError"></p>
-        <button type="submit" class="btn btn-primary btn-block">${t('expert.ask')} — ${WisecallAPI.formatPrice(expert.price)}</button>
+        <div class="q-meta" id="qMeta"><span>${t('expert.question.min').replace('{n}', MIN_QUESTION)}</span><span id="qCount"></span></div>
+        <p class="form-error" id="askError" role="alert"></p>
+        <button type="submit" class="btn btn-primary btn-block" id="askBtn">${t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
       </form>
-    `;
+      ${askNotes()}`;
+    const box = document.getElementById('question');
+    box.value = draft;
+    box.addEventListener('input', () => { draft = box.value; });
+    const count = () => {
+      const n = box.value.length;
+      const el = document.getElementById('qCount');
+      el.textContent = `${n} / ${MAX_QUESTION}`;
+      el.classList.toggle('over', n > MAX_QUESTION - 200);
+    };
+    box.addEventListener('input', count);
+    count();
     document.getElementById('askForm').addEventListener('submit', onAsk);
   }
 
@@ -161,13 +235,11 @@
     const errorEl = document.getElementById('askError');
     errorEl.textContent = '';
     const question = document.getElementById('question').value.trim();
-    const submitBtn = ev.target.querySelector('button[type="submit"]');
+    if (question.length < MIN_QUESTION) { errorEl.textContent = t('expert.question.tooShort').replace('{n}', MIN_QUESTION); document.getElementById('question').focus(); return; }
+    const submitBtn = document.getElementById('askBtn');
     submitBtn.disabled = true;
     try {
-      const res = await WisecallAPI.apiFetch('/bookings', {
-        method: 'POST',
-        body: { mentorId: expert.id, question }
-      });
+      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question } });
       if (res.checkoutUrl) {
         window.location.href = res.checkoutUrl;
         return;
@@ -179,4 +251,8 @@
       submitBtn.disabled = false;
     }
   }
+
+  draw();
+  if (returnedFromBank && user) confirmPayment();
+  document.addEventListener('wisecall:lang-changed', draw);
 })();
