@@ -26,3 +26,14 @@ Wisecall collects card payments from buyers into **its own bank account** and la
 13. **Cookies.** The text says only one essential login cookie and a language setting are used. If you add analytics or ads later, update this and add a consent banner.
 14. **Age limit.** 18+. Confirm.
 15. **Georgian wording.** Have a native speaker with legal experience review the Georgian text, not only the English.
+
+## Mentor verification (Privacy Policy section 3, About page) — needs lawyer review
+
+The Privacy Policy now has a section "Mentor verification" (and the ID provider is named in "Who we share it with"). It describes what the code really does; a lawyer must confirm it is sufficient and lawful:
+
+16. **Biometric and ID data.** Mentors send a government ID and a live selfie to the identity provider (**Didit**), not to Wisecall. Wisecall keeps the provider's verification ID, the result, and the verified full name, date of birth and country (name and date of birth encrypted), plus the time. A selfie/face match can count as **biometric data**, which is a special category under GDPR and probably under Georgian personal-data law. Confirm the legal basis (consent?), whether a written consent step must be added before "Start ID check", and whether Wisecall or Didit is the controller for that data.
+17. **The provider agreement.** Sign Didit's data-processing agreement, check where it stores data (EU/US) and how long, and update the "Where data is processed" paragraph if needed. Name the provider's legal entity in the policy.
+18. **Retention.** Uploaded documents are deleted automatically 90 days after a decision. The ID result, verified name/date of birth/country and licence details are kept while the mentor account exists and "as long as the law requires" afterwards. There is no automatic deletion of these yet: decide the exact period after closure and tell the developer so a purge can be added.
+19. **Licence numbers and uploaded documents.** Stored encrypted, visible only to admins, every download audit-logged. Confirm the lawful basis (verifying a professional's qualifications) and that checking public registers by hand is fine.
+20. **Video interviews.** The policy says the time, result and reviewers' notes are kept. If your team records calls, the policy and a consent step must say so.
+21. **Terms.** The Terms do not yet say that a mentor's profile can be suspended (and open questions refunded) when a check fails, a report is upheld or a licence expires. Add this to the mentor section of the Terms.

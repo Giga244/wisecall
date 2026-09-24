@@ -2,12 +2,14 @@ const express = require('express');
 const { query } = require('../db');
 const { userFromRow, listableSql, mentorStatsFor, getUserById } = require('../models');
 const { publicProfile, isListable, asyncHandler } = require('../util');
+const { badgesFor } = require('../verification/badges');
 
 const router = express.Router();
 
 async function withStats(users) {
-  const stats = await mentorStatsFor(users.map((u) => u.id));
-  return users.map((u) => ({ ...publicProfile(u), ...stats[u.id] }));
+  const ids = users.map((u) => u.id);
+  const [stats, badges] = await Promise.all([mentorStatsFor(ids), badgesFor(ids)]);
+  return users.map((u) => ({ ...publicProfile(u), ...stats[u.id], badges: badges[u.id] }));
 }
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => '\\' + c);

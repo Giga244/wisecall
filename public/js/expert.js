@@ -46,6 +46,7 @@
         <p class="muted small">${t('expert.answeredCount').replace('{n}', expert.answeredCount || 0)}</p>
       </div>
     </div>
+    ${WisecallBadges.full(expert.badges)}
     <p class="expert-bio">${escapeHtml(expert.bio || '')}</p>
 
     <div class="ask-card" id="askCard">

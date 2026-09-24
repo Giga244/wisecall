@@ -346,13 +346,26 @@
       ]
     },
     {
-      "h": "3. Cookies and browser storage",
+      "h": "3. Mentor verification",
+      "p": [
+        "Every mentor is checked before they appear on Wisecall. This section explains what that involves and applies only to people who apply to be mentors.",
+        "ID and selfie check: we use an identity verification provider, Didit (didit.me), to check a government ID document and a live selfie. You send your ID photos and selfie directly to the provider. Wisecall does not receive or store them. We receive and keep only the provider’s verification ID, the result (approved, declined or in review), your verified full name, date of birth and country, and the time of the check. Your verified name and date of birth are stored encrypted. The provider handles your data under its own privacy policy and its agreement with us.",
+        "Names: we compare the name on your ID with your profile name, the name on your license or registry entry, and the name of your payout account holder. If they do not match, a member of our team looks at it before anything is approved.",
+        "Professional proof: depending on your field we ask for your license or registration number, who issued it and when it expires; a supporting document (a PDF or JPG such as a scan of your license, diploma or proof of your role); a company identification number; a work email address (we send a confirmation code to it); and a link to your portfolio. Your license number and uploaded documents are stored encrypted and are visible only to the Wisecall administrators who review applications. Uploaded documents are deleted 90 days after we make a decision.",
+        "Video interview: in regulated fields (such as medicine, law and finance) we hold a short video call with you. We keep the time of the call, the result and our reviewers’ notes.",
+        "Records: every decision is written to an audit log with who made it, when and why. Your public profile shows only badges for the checks you passed (for example “ID verified”) and the date of the check. It never shows your ID, date of birth, license number or documents.",
+        "Ongoing checks: after approval we keep watching quality. Your first answers may be reviewed before they reach the buyer, reports from buyers and low ratings are reviewed by our team, and license expiry dates are tracked. We may suspend a profile if a check fails or a serious problem is reported.",
+        "How long we keep it: uploaded documents are deleted 90 days after a decision. The result of your ID check, your verified name, date of birth and country, and your license details are kept while your mentor account exists, and afterwards for as long as the law requires."
+      ]
+    },
+    {
+      "h": "4. Cookies and browser storage",
       "p": [
         "We use one essential cookie to keep you logged in. It is not used for advertising or tracking. We also store your language choice in your browser. We do not use advertising or analytics cookies."
       ]
     },
     {
-      "h": "4. Why we use your data",
+      "h": "5. Why we use your data",
       "p": [
         "To create and secure your account, and to send the emails you need: verification codes, password resets, and notifications about your questions and answers.",
         "To run the marketplace: show mentor profiles, deliver questions and answers, take payments, pay mentors, and issue refunds.",
@@ -362,48 +375,48 @@
       ]
     },
     {
-      "h": "5. Who we share it with",
+      "h": "6. Who we share it with",
       "p": [
         "The mentor you ask receives your name and your question. A seeker receives the mentor’s answer.",
-        "Service providers that work for us: our payment bank (card payments and refunds), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us.",
+        "Service providers that work for us: our payment bank (card payments and refunds), our identity verification provider (mentors only), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us.",
         "Authorities, when the law requires it.",
         "The public can see mentor profiles, ratings, and reviews (with the reviewer’s first name and last initial)."
       ]
     },
     {
-      "h": "6. Where data is processed",
+      "h": "7. Where data is processed",
       "p": [
         "Our providers may process data outside Georgia, for example in the European Union or the United States. When that happens, we rely on providers that protect data to a suitable standard."
       ]
     },
     {
-      "h": "7. How long we keep it",
+      "h": "8. How long we keep it",
       "p": [
         "We keep your account data while your account exists. If you ask us to delete your account, we delete or anonymise your personal data, except records we must keep by law, such as payment records, and data needed to handle a dispute.",
         "Login verification codes and password reset tokens expire within minutes or hours and are stored only as hashes."
       ]
     },
     {
-      "h": "8. Your rights",
+      "h": "9. Your rights",
       "p": [
         "You can ask us to give you a copy of your data, correct it, delete it, limit how we use it, or stop using it for something you object to. You can also withdraw a consent you gave. Contact us and we will answer within a reasonable time.",
         "If you believe we handled your data unlawfully, you can complain to the Personal Data Protection Service of Georgia."
       ]
     },
     {
-      "h": "9. Security",
+      "h": "10. Security",
       "p": [
         "Passwords are hashed, connections use HTTPS, and access to data is limited. No system is perfectly secure, so please use a strong, unique password."
       ]
     },
     {
-      "h": "10. Children",
+      "h": "11. Children",
       "p": [
         "Wisecall is for people 18 and over. We do not knowingly collect data from children. If you think a child has given us data, contact us and we will delete it."
       ]
     },
     {
-      "h": "11. Changes",
+      "h": "12. Changes",
       "p": [
         "We may update this policy. When we make a meaningful change, we will tell you by email or on the site."
       ]
@@ -435,10 +448,12 @@
       ]
     },
     {
-      "h": "How we check mentors",
+      "h": "How we verify mentors",
       "p": [
-        "Nobody appears on Wisecall just by signing up. Every mentor confirms their email, links to proof of who they are and what they have done (for example a LinkedIn profile), and writes a sample answer. A person on our team then reviews all of it before the profile goes live.",
-        "Mentors who get poor reviews are looked at again, and we remove people who mislead others."
+        "Nobody appears on Wisecall just by signing up. Every mentor confirms their email, passes a government ID and live selfie check with our identity partner (the name has to match their profile and payout account), links to proof of what they have done, and writes a sample answer. They also give at least one more proof of their background, such as a work email, a diploma or a portfolio.",
+        "In regulated fields such as medicine, law and finance we go further: we check the professional license against the official register, and our team holds a short video interview before approving anyone. Business mentors show their company or their role in it.",
+        "A person on our team reviews every step and writes down why. Your ID photos never reach Wisecall, and a mentor’s license number and documents are never public. Profiles show only badges for the checks passed, with the date.",
+        "After approval we keep checking: a new mentor’s first answers are reviewed before you see them, buyers can report a mentor, low ratings are looked at again, and we can suspend a profile at once. We remove people who mislead others."
       ]
     },
     {
@@ -757,5 +772,29 @@
   "vt.why.2": "Your ID photos and selfie go to our identity partner, not to us. We keep only the result, your verified name, date of birth and country, and the date.",
   "vt.why.3": "Your license number is visible only to our review team. Uploaded files are encrypted, opened only by our review team, and deleted 90 days after we decide.",
   "vt.why.4": "Your public profile shows only badges for the checks you passed. It never shows your ID, license number or documents.",
-  "vt.why.privacy": "Read the Privacy Policy"
+  "vt.why.privacy": "Read the Privacy Policy",
+  "badge.title": "Verified checks",
+  "badge.id": "ID verified",
+  "badge.id.tip": "Their government ID and a live selfie were checked by our identity partner. Verified {date}.",
+  "badge.license": "License verified",
+  "badge.license.tip": "Their professional license or registration was checked against the official register. Verified {date}.",
+  "badge.workEmail": "Work email verified",
+  "badge.workEmail.tip": "They confirmed an email address at their company or institution. Verified {date}.",
+  "badge.interview": "Video interviewed",
+  "badge.interview.tip": "Our team met them on a video call. Verified {date}.",
+  "hv.title": "How we verify mentors",
+  "hv.sub": "Nobody appears in Browse experts just by signing up. Every mentor goes through these checks first, and a person on our team approves each one.",
+  "hv.1.title": "A real person",
+  "hv.1.body": "A government ID and a live selfie, checked by our identity partner. The name on the ID has to match their profile and payout account.",
+  "hv.2.title": "Real experience",
+  "hv.2.body": "A proof link, a sample answer, and at least one more proof of background: a work email, a diploma or a portfolio. Our team reads all of it.",
+  "hv.3.title": "Licensed where it matters",
+  "hv.3.body": "Doctors, lawyers and financial advisers also give us their license or registration, and we check it against the official register.",
+  "hv.4.title": "Met on video",
+  "hv.4.body": "In regulated fields, our team also holds a short video interview before approving anyone.",
+  "hv.5.title": "Watched after approval",
+  "hv.5.body": "A new mentor's first answers are checked before you see them. Reports and low ratings are reviewed, and we can suspend a profile at once.",
+  "hv.badges": "Look for these badges on a mentor’s profile:",
+  "hv.more": "Read more about how Wisecall works",
+  "hv.privacy": "We never show an ID, a license number or a document. Only the badge and the date of the check."
 }

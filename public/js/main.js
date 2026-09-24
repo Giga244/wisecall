@@ -64,6 +64,7 @@
           </div>
         </div>
         <div class="card-bio">${escapeHtml(e.bio || '')}</div>
+        ${WisecallBadges.row(e.badges)}
         <div class="card-bottom">
           <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : WisecallI18n.t('expert.noReviewsYet')}</span>
           <span class="price">${WisecallAPI.formatPrice(e.price)}<span> ${perQ}</span></span>
@@ -96,8 +97,13 @@
     render();
   });
 
+  const legend = document.getElementById('badgeLegend');
+  const drawLegend = () => { if (legend) legend.innerHTML = WisecallBadges.legend(); };
+  drawLegend();
+
   let lastStats = null;
   document.addEventListener('wisecall:lang-changed', () => {
+    drawLegend();
     render();
     if (lastStats) renderHeroStats(lastStats);
   });
