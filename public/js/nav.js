@@ -1,5 +1,36 @@
 (function () {
+  // Under ~720px the header links are hidden; this adds an accessible menu button that shows them.
+  function initMenu() {
+    const nav = document.querySelector('header.nav');
+    const links = nav && nav.querySelector('.nav-links');
+    if (!links || nav.querySelector('.nav-toggle')) return;
+    const t = (window.WisecallI18n && window.WisecallI18n.t) || (k => k);
+    if (!links.id) links.id = 'navLinks';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nav-toggle';
+    btn.setAttribute('aria-controls', links.id);
+    btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>' +
+      '<svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    const label = () => btn.setAttribute('aria-label', t('nav.menu'));
+    label();
+    document.addEventListener('wisecall:lang-changed', label);
+    nav.querySelector('.nav-inner').appendChild(btn);
+
+    const setOpen = (open, returnFocus) => {
+      nav.classList.toggle('menu-open', open);
+      btn.setAttribute('aria-expanded', String(open));
+      if (!open && returnFocus) btn.focus();
+    };
+    btn.addEventListener('click', () => setOpen(!nav.classList.contains('menu-open')));
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && nav.classList.contains('menu-open')) setOpen(false, true); });
+    document.addEventListener('click', (ev) => { if (!nav.contains(ev.target)) setOpen(false); });
+    links.addEventListener('click', (ev) => { if (ev.target.closest('a')) setOpen(false); });
+    window.matchMedia('(min-width: 721px)').addEventListener('change', (e) => { if (e.matches) setOpen(false); });
+  }
   async function initNav() {
+    initMenu();
     const loggedOutEl = document.getElementById('navLoggedOut');
     const loggedInEl = document.getElementById('navLoggedIn');
     let user = null;

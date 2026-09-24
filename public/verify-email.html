@@ -56,7 +56,7 @@
   if (!user) { window.location.href = '/login.html?redirect=/verify-email.html'; return; }
 
   const params = new URLSearchParams(location.search);
-  const redirect = params.get('redirect') || '/dashboard.html';
+  const redirect = WisecallAPI.safeRedirect(params.get('redirect'), '/dashboard.html');
   const form = document.getElementById('verifyForm');
   const errorEl = document.getElementById('formError');
   const devCodeBox = document.getElementById('devCodeBox');

@@ -415,5 +415,9 @@
         "We may update this policy. When we make a meaningful change, we will tell you by email or on the site."
       ]
     }
-  ]
+  ],
+  "nav.menu": "Menu",
+  "experts.emptyAll.title": "The first mentors are still to come",
+  "experts.emptyAll.body": "Wisecall is brand new, so nobody is listed yet. Be one of the first mentors and be the first person every new question finds.",
+  "experts.emptyAll.cta": "Become one of the first mentors"
 }

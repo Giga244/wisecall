@@ -1,6 +1,9 @@
 (async function () {
   await WisecallI18n.initI18n();
-  await WisecallNav.initNav();
+  const currentUser = await WisecallNav.initNav();
+  // Logged-in visitors go straight to Settings; logged-out ones sign up first and land there afterwards.
+  const becomeHref = currentUser ? '/settings.html' : '/signup.html?redirect=/settings.html';
+  document.querySelectorAll('.become-link').forEach(a => { a.href = becomeHref; });
 
   const grid = document.getElementById('expertGrid');
   const filters = document.getElementById('filters');
@@ -40,6 +43,10 @@
     }
     list = sortList(list);
 
+    if (allExperts.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><h3>${WisecallI18n.t('experts.emptyAll.title')}</h3><p>${WisecallI18n.t('experts.emptyAll.body')}</p><a class="btn btn-primary" href="${becomeHref}">${WisecallI18n.t('experts.emptyAll.cta')}</a></div>`;
+      return;
+    }
     if (list.length === 0) {
       grid.innerHTML = `<p class="muted">${WisecallI18n.t('experts.empty')}</p>`;
       return;
@@ -112,7 +119,7 @@
     const el = document.getElementById('heroStats');
     if (!el) return;
     if (stats.mentorCount === 0) {
-      el.innerHTML = `<div class="hero-cta-banner">${WisecallI18n.t('hero.beFirst')} <a href="/signup.html">${WisecallI18n.t('hero.become')}</a></div>`;
+      el.innerHTML = `<div class="hero-cta-banner">${WisecallI18n.t('hero.beFirst')} <a href="${becomeHref}">${WisecallI18n.t('hero.become')}</a></div>`;
       return;
     }
     el.innerHTML = `

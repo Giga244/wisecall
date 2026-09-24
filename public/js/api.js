@@ -17,5 +17,10 @@
     return data;
   }
 
-  window.WisecallAPI = { apiFetch };
+  // Only ever redirect to a path on this site (never to another domain), e.g. after login.
+  function safeRedirect(value, fallback) {
+    return typeof value === 'string' && /^\/(?![\/\\])/.test(value) ? value : fallback;
+  }
+
+  window.WisecallAPI = { apiFetch, safeRedirect };
 })();
