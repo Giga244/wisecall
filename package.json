@@ -1,5 +1,5 @@
 {
-  "name": "sagely-platform",
+  "name": "wisecall",
   "version": "1.0.0",
   "description": "Wisecall - paid advice marketplace (EN/KA)",
   "main": "server/index.js",

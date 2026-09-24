@@ -1,6 +1,6 @@
 (async function () {
-  await SagelyI18n.initI18n();
-  await SagelyNav.initNav();
+  await WisecallI18n.initI18n();
+  await WisecallNav.initNav();
 
   const grid = document.getElementById('expertGrid');
   const filters = document.getElementById('filters');
@@ -41,24 +41,24 @@
     list = sortList(list);
 
     if (list.length === 0) {
-      grid.innerHTML = `<p class="muted">${SagelyI18n.t('experts.empty')}</p>`;
+      grid.innerHTML = `<p class="muted">${WisecallI18n.t('experts.empty')}</p>`;
       return;
     }
-    const perQ = SagelyI18n.t('expert.perQuestion');
-    const askLabel = SagelyI18n.t('expert.ask');
-    const reviewsLabel = SagelyI18n.t('expert.reviewsShort');
+    const perQ = WisecallI18n.t('expert.perQuestion');
+    const askLabel = WisecallI18n.t('expert.ask');
+    const reviewsLabel = WisecallI18n.t('expert.reviewsShort');
     grid.innerHTML = list.map(e => `
       <a class="expert-card" href="/expert.html?id=${e.id}">
         <div class="card-top">
           <div class="avatar" style="background:${e.color || '#6d4de0'}">${initials(e.name)}</div>
           <div>
-            <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${SagelyI18n.t('expert.newMentor')}</span>` : ''}</div>
+            <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${WisecallI18n.t('expert.newMentor')}</span>` : ''}</div>
             <div class="card-role">${escapeHtml(e.roleTitle || '')}</div>
           </div>
         </div>
         <div class="card-bio">${escapeHtml(e.bio || '')}</div>
         <div class="card-bottom">
-          <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : SagelyI18n.t('expert.noReviewsYet')}</span>
+          <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : WisecallI18n.t('expert.noReviewsYet')}</span>
           <span class="price">$${e.price}<span> ${perQ}</span></span>
         </div>
         <span class="btn btn-primary btn-sm btn-block">${askLabel}</span>
@@ -90,21 +90,21 @@
   });
 
   let lastStats = null;
-  document.addEventListener('sagely:lang-changed', () => {
+  document.addEventListener('wisecall:lang-changed', () => {
     render();
     if (lastStats) renderHeroStats(lastStats);
   });
 
   try {
-    const data = await SagelyAPI.apiFetch('/experts');
+    const data = await WisecallAPI.apiFetch('/experts');
     allExperts = data.experts;
     render();
   } catch (e) {
-    grid.innerHTML = `<p class="muted">${SagelyI18n.t('experts.loadError')}</p>`;
+    grid.innerHTML = `<p class="muted">${WisecallI18n.t('experts.loadError')}</p>`;
   }
 
   try {
-    lastStats = await SagelyAPI.apiFetch('/stats');
+    lastStats = await WisecallAPI.apiFetch('/stats');
     renderHeroStats(lastStats);
   } catch (e) { /* stats are optional */ }
 
@@ -112,14 +112,14 @@
     const el = document.getElementById('heroStats');
     if (!el) return;
     if (stats.mentorCount === 0) {
-      el.innerHTML = `<div class="hero-cta-banner">${SagelyI18n.t('hero.beFirst')} <a href="/signup.html">${SagelyI18n.t('hero.become')}</a></div>`;
+      el.innerHTML = `<div class="hero-cta-banner">${WisecallI18n.t('hero.beFirst')} <a href="/signup.html">${WisecallI18n.t('hero.become')}</a></div>`;
       return;
     }
     el.innerHTML = `
       <div class="hero-stats">
-        <div><strong>${stats.mentorCount}</strong><span>${SagelyI18n.t('hero.stat.mentors')}</span></div>
-        <div><strong>${stats.nicheCount}</strong><span>${SagelyI18n.t('hero.stat.niches')}</span></div>
-        <div><strong>${stats.answeredCount}</strong><span>${SagelyI18n.t('hero.stat.answers')}</span></div>
+        <div><strong>${stats.mentorCount}</strong><span>${WisecallI18n.t('hero.stat.mentors')}</span></div>
+        <div><strong>${stats.nicheCount}</strong><span>${WisecallI18n.t('hero.stat.niches')}</span></div>
+        <div><strong>${stats.answeredCount}</strong><span>${WisecallI18n.t('hero.stat.answers')}</span></div>
       </div>
     `;
   }

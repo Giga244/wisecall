@@ -1,7 +1,7 @@
 (async function () {
-  await SagelyI18n.initI18n();
-  const user = await SagelyNav.initNav();
-  const t = SagelyI18n.t;
+  await WisecallI18n.initI18n();
+  const user = await WisecallNav.initNav();
+  const t = WisecallI18n.t;
 
   if (!user) {
     window.location.href = '/login.html?redirect=/settings.html';
@@ -65,7 +65,7 @@
   async function refreshPayoutStatus() {
     if (!(user.role === 'mentor' || user.role === 'both')) return;
     try {
-      const status = await SagelyAPI.apiFetch('/connect/status');
+      const status = await WisecallAPI.apiFetch('/connect/status');
       if (!status.enabled) {
         payoutsStatus.textContent = t('settings.payouts.disabled');
         connectBtn.style.display = 'none';
@@ -83,36 +83,36 @@
   document.getElementById('profileForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
     try {
-      await SagelyAPI.apiFetch('/me', {
+      await WisecallAPI.apiFetch('/me', {
         method: 'PATCH',
         body: { name: nameInput.value.trim(), bio: bioInput.value.trim() }
       });
-      SagelyNav.showToast(t('toast.saved'));
+      WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
-      SagelyNav.showToast(t('toast.error'));
+      WisecallNav.showToast(t('toast.error'));
     }
   });
 
   becomeMentorCheckbox.addEventListener('change', async () => {
     const checked = becomeMentorCheckbox.checked;
     try {
-      const data = await SagelyAPI.apiFetch('/me', { method: 'PATCH', body: { becomeMentor: checked } });
+      const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { becomeMentor: checked } });
       mentorForm.style.display = checked ? 'grid' : 'none';
       payoutsBox.style.display = checked ? 'block' : 'none';
       Object.assign(user, data.user);
       renderVerification(user);
       refreshPayoutStatus();
-      SagelyNav.showToast(t('toast.saved'));
+      WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       becomeMentorCheckbox.checked = !checked;
-      SagelyNav.showToast(t('toast.error'));
+      WisecallNav.showToast(t('toast.error'));
     }
   });
 
   mentorForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     try {
-      const data = await SagelyAPI.apiFetch('/me', {
+      const data = await WisecallAPI.apiFetch('/me', {
         method: 'PATCH',
         body: {
           roleTitle: roleTitleInput.value.trim(),
@@ -124,7 +124,7 @@
       });
       Object.assign(user, data.user);
       renderVerification(user);
-      SagelyNav.showToast(t('toast.saved'));
+      WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       const map = {
         invalid_proof_url: 'settings.mentor.proofUrl.invalid',
@@ -132,14 +132,14 @@
         sample_required: 'settings.mentor.sample.required',
         email_not_verified: 'settings.mentor.emailNotVerified'
       };
-      SagelyNav.showToast(t(map[e.code] || 'toast.error'));
+      WisecallNav.showToast(t(map[e.code] || 'toast.error'));
     }
   });
 
   connectBtn.addEventListener('click', async () => {
     connectBtn.disabled = true;
     try {
-      const data = await SagelyAPI.apiFetch('/connect/onboard', { method: 'POST' });
+      const data = await WisecallAPI.apiFetch('/connect/onboard', { method: 'POST' });
       if (data.url) {
         window.location.href = data.url;
       }
@@ -154,7 +154,7 @@
     const errorEl = document.getElementById('passwordError');
     errorEl.textContent = '';
     try {
-      await SagelyAPI.apiFetch('/me/password', {
+      await WisecallAPI.apiFetch('/me/password', {
         method: 'POST',
         body: {
           currentPassword: document.getElementById('currentPassword').value,
@@ -162,7 +162,7 @@
         }
       });
       ev.target.reset();
-      SagelyNav.showToast(t('toast.passwordUpdated'));
+      WisecallNav.showToast(t('toast.passwordUpdated'));
     } catch (e) {
       errorEl.textContent = t(e.code === 'wrong_password' ? 'settings.password.wrong' : 'settings.password.error');
     }
@@ -170,13 +170,13 @@
 
   document.querySelectorAll('.lang-toggle-lg .lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      SagelyAPI.apiFetch('/me', { method: 'PATCH', body: { language: btn.dataset.lang } }).catch(() => {});
+      WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { language: btn.dataset.lang } }).catch(() => {});
     });
   });
 
   const params = new URLSearchParams(location.search);
   if (params.get('connect') === 'success') {
-    SagelyNav.showToast(t('settings.payouts.connected'));
+    WisecallNav.showToast(t('settings.payouts.connected'));
     refreshPayoutStatus();
   }
 })();

@@ -1,7 +1,7 @@
 (async function () {
-  await SagelyI18n.initI18n();
-  const user = await SagelyNav.initNav();
-  const t = SagelyI18n.t;
+  await WisecallI18n.initI18n();
+  const user = await WisecallNav.initNav();
+  const t = WisecallI18n.t;
 
   if (!user) {
     window.location.href = '/login.html?redirect=/dashboard.html';
@@ -21,7 +21,7 @@
   }
 
   function fmtDate(d) {
-    return new Date(d).toLocaleDateString(SagelyI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(d).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   // Deadline, refund and payout information shown under a booking's question.
@@ -76,20 +76,20 @@
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         if (!selectedRating) {
-          SagelyNav.showToast(t('dash.review.pickStars'));
+          WisecallNav.showToast(t('dash.review.pickStars'));
           return;
         }
         const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
         try {
-          await SagelyAPI.apiFetch(`/bookings/${form.dataset.id}/review`, {
+          await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/review`, {
             method: 'POST',
             body: { rating: selectedRating, review: form.querySelector('textarea').value.trim() }
           });
-          SagelyNav.showToast(t('dash.review.sent'));
+          WisecallNav.showToast(t('dash.review.sent'));
           load();
         } catch (e) {
-          SagelyNav.showToast(t('toast.error'));
+          WisecallNav.showToast(t('toast.error'));
           btn.disabled = false;
         }
       });
@@ -155,14 +155,14 @@
         const btn = form.querySelector('button');
         btn.disabled = true;
         try {
-          await SagelyAPI.apiFetch(`/bookings/${form.dataset.id}/answer`, {
+          await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/answer`, {
             method: 'POST',
             body: { answer: textarea.value.trim() }
           });
-          SagelyNav.showToast(t('toast.answerSent'));
+          WisecallNav.showToast(t('toast.answerSent'));
           load();
         } catch (e) {
-          SagelyNav.showToast(t('toast.error'));
+          WisecallNav.showToast(t('toast.error'));
           btn.disabled = false;
         }
       });
@@ -175,7 +175,7 @@
 
   async function load() {
     try {
-      const data = await SagelyAPI.apiFetch('/bookings/mine');
+      const data = await WisecallAPI.apiFetch('/bookings/mine');
       renderAsked(data.asked);
       if (user.role === 'mentor' || user.role === 'both') {
         mentorSection.style.display = 'block';
@@ -186,6 +186,6 @@
     }
   }
 
-  document.addEventListener('sagely:lang-changed', load);
+  document.addEventListener('wisecall:lang-changed', load);
   load();
 })();

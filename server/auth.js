@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('./config');
 
-const COOKIE_NAME = 'sagely_token';
+const COOKIE_NAME = 'wisecall_token';
 
 function signToken(user) {
   return jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });

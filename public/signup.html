@@ -57,7 +57,7 @@
 <script src="/js/nav.js"></script>
 <script>
 (async function () {
-  await SagelyI18n.initI18n();
+  await WisecallI18n.initI18n();
   const form = document.getElementById('signupForm');
   const errorEl = document.getElementById('formError');
 
@@ -75,20 +75,20 @@
     ev.preventDefault();
     errorEl.textContent = '';
     try {
-      const data = await SagelyAPI.apiFetch('/auth/signup', {
+      const data = await WisecallAPI.apiFetch('/auth/signup', {
         method: 'POST',
         body: {
           name: document.getElementById('name').value.trim(),
           email: document.getElementById('email').value.trim(),
           password: document.getElementById('password').value,
-          language: SagelyI18n.getLang()
+          language: WisecallI18n.getLang()
         }
       });
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}`;
       if (data.devMode && data.devVerifyCode) verifyUrl += `&devCode=${data.devVerifyCode}`;
       window.location.href = verifyUrl;
     } catch (e) {
-      errorEl.textContent = SagelyI18n.t(ERROR_KEYS[e.code] || 'toast.error');
+      errorEl.textContent = WisecallI18n.t(ERROR_KEYS[e.code] || 'toast.error');
     }
   });
 })();

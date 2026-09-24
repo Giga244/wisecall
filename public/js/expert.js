@@ -1,6 +1,6 @@
 (async function () {
-  await SagelyI18n.initI18n();
-  const user = await SagelyNav.initNav();
+  await WisecallI18n.initI18n();
+  const user = await WisecallNav.initNav();
 
   const page = document.getElementById('expertPage');
   const params = new URLSearchParams(location.search);
@@ -9,7 +9,7 @@
   const statusParam = params.get('status');
 
   if (!id) {
-    page.innerHTML = `<p class="muted">${SagelyI18n.t('expert.notSpecified')}</p>`;
+    page.innerHTML = `<p class="muted">${WisecallI18n.t('expert.notSpecified')}</p>`;
     return;
   }
 
@@ -23,14 +23,14 @@
 
   let expert;
   try {
-    const data = await SagelyAPI.apiFetch(`/experts/${id}`);
+    const data = await WisecallAPI.apiFetch(`/experts/${id}`);
     expert = data.expert;
   } catch (e) {
-    page.innerHTML = `<p class="muted">${SagelyI18n.t('expert.notFound')}</p>`;
+    page.innerHTML = `<p class="muted">${WisecallI18n.t('expert.notFound')}</p>`;
     return;
   }
 
-  const t = SagelyI18n.t;
+  const t = WisecallI18n.t;
 
   const ratingLine = expert.ratingAvg
     ? `★ ${expert.ratingAvg} (${expert.reviewCount} ${t('expert.reviewsShort')})`
@@ -64,7 +64,7 @@
   async function loadReviews() {
     const section = document.getElementById('reviewsSection');
     try {
-      const data = await SagelyAPI.apiFetch(`/experts/${id}/reviews`);
+      const data = await WisecallAPI.apiFetch(`/experts/${id}/reviews`);
       if (data.reviews.length === 0) {
         section.innerHTML = '';
         return;
@@ -93,7 +93,7 @@
     askArea.innerHTML = `<div class="booking-result"><p class="muted">${t('expert.confirmingPayment')}</p></div>`;
     for (let i = 0; i < 20; i++) {
       try {
-        const { booking } = await SagelyAPI.apiFetch(`/bookings/${bookingParam}`);
+        const { booking } = await WisecallAPI.apiFetch(`/bookings/${bookingParam}`);
         if (booking.status === 'paid' || booking.status === 'answered') {
           askArea.innerHTML = `<div class="booking-result success"><div class="success-icon">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
           return;
@@ -109,12 +109,12 @@
     confirmPayment();
   } else if (statusParam === 'cancelled') {
     renderAskForm();
-    SagelyNav.showToast(t('expert.paymentCancelled'));
+    WisecallNav.showToast(t('expert.paymentCancelled'));
   } else {
     renderAskForm();
   }
 
-  document.addEventListener('sagely:lang-changed', () => {
+  document.addEventListener('wisecall:lang-changed', () => {
     const headSpan = document.querySelector('.ask-card-head span');
     if (headSpan) headSpan.textContent = t('expert.ask');
     if (!showingSuccess) renderAskForm();
@@ -152,7 +152,7 @@
     const submitBtn = ev.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     try {
-      const res = await SagelyAPI.apiFetch('/bookings', {
+      const res = await WisecallAPI.apiFetch('/bookings', {
         method: 'POST',
         body: { mentorId: expert.id, question }
       });

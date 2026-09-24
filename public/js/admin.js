@@ -1,7 +1,7 @@
 (async function () {
-  await SagelyI18n.initI18n();
-  const user = await SagelyNav.initNav();
-  const t = SagelyI18n.t;
+  await WisecallI18n.initI18n();
+  const user = await WisecallNav.initNav();
+  const t = WisecallI18n.t;
 
   if (!user) {
     window.location.href = '/login.html?redirect=/admin.html';
@@ -29,10 +29,10 @@
     try {
       const qs = activeStatus ? `?status=${activeStatus}` : '';
       if (tab === 'bookings') {
-        const data = await SagelyAPI.apiFetch(`/admin/bookings${qs}`);
+        const data = await WisecallAPI.apiFetch(`/admin/bookings${qs}`);
         renderBookings(data.bookings);
       } else {
-        const data = await SagelyAPI.apiFetch(`/admin/mentors${qs}`);
+        const data = await WisecallAPI.apiFetch(`/admin/mentors${qs}`);
         render(data.mentors);
       }
     } catch (e) {
@@ -88,7 +88,7 @@
       const id = card.dataset.id;
       card.querySelector('.approve-btn').addEventListener('click', () => {
         const checks = { identity: card.querySelector('.chk-identity').checked, credential: card.querySelector('.chk-credential').checked, sample: card.querySelector('.chk-sample').checked };
-        if (!(checks.identity && checks.credential && checks.sample)) { SagelyNav.showToast(t('admin.checklistNeeded')); return; }
+        if (!(checks.identity && checks.credential && checks.sample)) { WisecallNav.showToast(t('admin.checklistNeeded')); return; }
         review(id, true, null, checks);
       });
       card.querySelector('.reject-btn').addEventListener('click', () => {
@@ -96,7 +96,7 @@
       });
       card.querySelector('.confirm-reject-btn').addEventListener('click', () => {
         const note = card.querySelector('.reject-note-input').value.trim();
-        if (!note) { SagelyNav.showToast(t('admin.reasonRequired')); return; }
+        if (!note) { WisecallNav.showToast(t('admin.reasonRequired')); return; }
         review(id, false, note);
       });
     });
@@ -104,14 +104,14 @@
 
   async function review(id, approve, note, checks) {
     try {
-      await SagelyAPI.apiFetch(`/admin/mentors/${id}/review`, {
+      await WisecallAPI.apiFetch(`/admin/mentors/${id}/review`, {
         method: 'POST',
         body: { approve, note, checks }
       });
-      SagelyNav.showToast(t('toast.saved'));
+      WisecallNav.showToast(t('toast.saved'));
       load();
     } catch (e) {
-      SagelyNav.showToast(t('toast.error'));
+      WisecallNav.showToast(t('toast.error'));
     }
   }
 
@@ -120,7 +120,7 @@
   }
 
   function fmtDate(d) {
-    return new Date(d).toLocaleString(SagelyI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+    return new Date(d).toLocaleString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
   }
 
   function renderBookings(list) {
@@ -151,10 +151,10 @@
         if (!window.confirm(t('admin.bk.refundConfirm'))) return;
         btn.disabled = true;
         try {
-          await SagelyAPI.apiFetch(`/admin/bookings/${btn.closest('.booking-card').dataset.id}/refund`, { method: 'POST' });
-          SagelyNav.showToast(t('admin.bk.refunded'));
+          await WisecallAPI.apiFetch(`/admin/bookings/${btn.closest('.booking-card').dataset.id}/refund`, { method: 'POST' });
+          WisecallNav.showToast(t('admin.bk.refunded'));
         } catch (e) {
-          SagelyNav.showToast(e.code === 'not_refundable' ? t('admin.bk.notRefundable') : t('toast.error'));
+          WisecallNav.showToast(e.code === 'not_refundable' ? t('admin.bk.notRefundable') : t('toast.error'));
         }
         load();
       });
@@ -187,7 +187,7 @@
     load();
   });
 
-  document.addEventListener('sagely:lang-changed', () => { drawFilters(); load(); });
+  document.addEventListener('wisecall:lang-changed', () => { drawFilters(); load(); });
   drawFilters();
   load();
 })();

@@ -1,5 +1,15 @@
 (function () {
-  const STORAGE_KEY = 'sagely_lang';
+  const STORAGE_KEY = 'wisecall_lang';
+  const OLD_STORAGE_KEY = 'sagely_lang';
+
+  // Carry a language chosen before the rename over to the new key.
+  try {
+    const old = localStorage.getItem(OLD_STORAGE_KEY);
+    if (old !== null) {
+      if (!localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, old);
+      localStorage.removeItem(OLD_STORAGE_KEY);
+    }
+  } catch (e) { /* storage unavailable */ }
   let currentDict = {};
 
   function getLang() {
@@ -35,7 +45,7 @@
     const dict = await loadDict(lang);
     applyDict(dict);
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-    document.dispatchEvent(new CustomEvent('sagely:lang-changed', { detail: { lang, dict } }));
+    document.dispatchEvent(new CustomEvent('wisecall:lang-changed', { detail: { lang, dict } }));
     return dict;
   }
 
@@ -51,5 +61,5 @@
     return dict;
   }
 
-  window.SagelyI18n = { initI18n, getLang, setLang, loadDict, applyDict, t };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t };
 })();

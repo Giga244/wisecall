@@ -17,5 +17,5 @@
     return data;
   }
 
-  window.SagelyAPI = { apiFetch };
+  window.WisecallAPI = { apiFetch };
 })();

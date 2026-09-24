@@ -53,7 +53,7 @@
 <script src="/js/nav.js"></script>
 <script>
 (async function () {
-  await SagelyI18n.initI18n();
+  await WisecallI18n.initI18n();
   const form = document.getElementById('loginForm');
   const errorEl = document.getElementById('formError');
 
@@ -64,7 +64,7 @@
     ev.preventDefault();
     errorEl.textContent = '';
     try {
-      await SagelyAPI.apiFetch('/auth/login', {
+      await WisecallAPI.apiFetch('/auth/login', {
         method: 'POST',
         body: {
           email: document.getElementById('email').value.trim(),
@@ -73,7 +73,7 @@
       });
       window.location.href = redirect;
     } catch (e) {
-      errorEl.textContent = SagelyI18n.t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error');
+      errorEl.textContent = WisecallI18n.t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error');
     }
   });
 })();
