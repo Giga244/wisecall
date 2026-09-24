@@ -4,6 +4,7 @@
 const rules = require('./rules');
 const steps = require('./steps');
 const flags = require('./flags');
+const credentials = require('./credentials');
 const { VerificationError } = steps;
 const { getUserById, updateUser } = require('../models');
 
@@ -35,7 +36,15 @@ async function decideStep({ mentorId, step, decision, reason, admin }) {
   // A person can only judge what the mentor actually submitted.
   if (!existing) throw new VerificationError('not_submitted');
 
-  await steps.setStep(mentor.id, step, decision, { reason: text, actor: steps.adminActor(admin) });
+  // A passed licence is only good until the date on it; after that it stops counting (see steps.effectiveStatus).
+  let expiresAt = null;
+  if (step === 'license' && decision === 'passed') {
+    const c = await credentials.credentialsFor(mentor.id);
+    if (c && c.validUntil) expiresAt = new Date(c.validUntil + 'T23:59:59Z');
+  }
+  await steps.setStep(mentor.id, step, decision, { reason: text, actor: steps.adminActor(admin), expiresAt });
+  // Uploaded documents for a decided step are deleted 90 days later.
+  if (credentials.DOCUMENT_STEPS.includes(step)) await credentials.scheduleDeletion(mentor.id, step);
   // An admin who accepts the names as they are closes the mismatch flags.
   if (step === 'name_match' && decision === 'passed') {
     await flags.resolveFlags(mentor.id, ['name_mismatch', 'payout_name_mismatch'], steps.adminActor(admin), text);
@@ -58,6 +67,7 @@ async function approve({ mentorId, admin }) {
 
   const updated = await updateUser(mentor.id, { verificationStatus: 'verified', verificationNote: null, verificationDecidedAt: new Date() });
   await steps.audit(mentor.id, steps.adminActor(admin), 'approved', { from: 'pending', to: 'verified' });
+  await credentials.scheduleDeletion(mentor.id, null);
   return updated;
 }
 
@@ -67,6 +77,7 @@ async function reject({ mentorId, reason, admin }) {
   if (!['pending', 'verified'].includes(mentor.verificationStatus)) throw new VerificationError('invalid_state');
   const updated = await updateUser(mentor.id, { verificationStatus: 'rejected', verificationNote: text, verificationDecidedAt: new Date() });
   await steps.audit(mentor.id, steps.adminActor(admin), 'rejected', { from: mentor.verificationStatus, to: 'rejected', reason: text });
+  await credentials.scheduleDeletion(mentor.id, null);
   return updated;
 }
 

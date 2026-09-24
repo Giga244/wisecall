@@ -58,6 +58,11 @@ const S = {
       intro: "Thanks for applying. We couldn't approve it this time.", reasonLabel: 'Reason:',
       after: 'You can update your details and apply again from Settings.', button: 'Open settings'
     },
+    workEmailCode: {
+      subject: 'Your Wisecall work email code', heading: 'Confirm your work email',
+      intro: 'Use this code to confirm that you can read email at your work address ({domain}):', expiry: 'The code expires in 15 minutes.',
+      footer: "If you didn't ask for this, you can safely ignore this email."
+    },
     payoutPaid: {
       subject: 'Your Wisecall payout has been sent', heading: 'Your payout is on its way',
       intro: 'We sent {amount} to your bank account ending in {last4}.', referenceLabel: 'Bank transfer reference:',
@@ -114,6 +119,11 @@ const S = {
       intro: 'მადლობა განაცხადისთვის. ამჯერად ვერ დავამტკიცეთ.', reasonLabel: 'მიზეზი:',
       after: 'შეგიძლია განაახლო მონაცემები და თავიდან გაგზავნო განაცხადი პარამეტრებიდან.', button: 'პარამეტრების გახსნა'
     },
+    workEmailCode: {
+      subject: 'შენი Wisecall-ის სამსახურეობრივი ელფოსტის კოდი', heading: 'დაადასტურე სამსახურეობრივი ელფოსტა',
+      intro: 'გამოიყენე ეს კოდი, რომ დაადასტურო, რომ შენს სამსახურეობრივ მისამართზე ({domain}) წერილების წაკითხვა შეგიძლია:', expiry: 'კოდი მოქმედია 15 წუთის განმავლობაში.',
+      footer: 'თუ ეს შენ არ მოგითხოვია, უბრალოდ უგულებელყავი ეს წერილი.'
+    },
     payoutPaid: {
       subject: 'შენი Wisecall-ის ანაზღაურება გაიგზავნა', heading: 'შენი ანაზღაურება გზაშია',
       intro: '{amount} გავგზავნეთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.', referenceLabel: 'საბანკო გადარიცხვის რეფერენსი:',
@@ -162,6 +172,10 @@ const BUILDERS = {
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,
     blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.PUBLIC_URL}/settings.html` }]
+  }),
+  workEmailCode: (s, d) => ({
+    heading: s.workEmailCode.heading,
+    blocks: [{ p: fill(s.workEmailCode.intro, d), raw: true }, { code: d.code }, { small: s.workEmailCode.expiry }, { small: s.workEmailCode.footer }]
   }),
   payoutPaid: (s, d) => ({
     heading: s.payoutPaid.heading,

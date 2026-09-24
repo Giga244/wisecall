@@ -29,4 +29,24 @@ function decrypt(stored) {
   }
 }
 
-module.exports = { encrypt, decrypt };
+// Files. Layout of the stored bytes: 12-byte nonce, 16-byte authentication tag, then the ciphertext.
+function encryptBytes(buffer) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const data = Buffer.concat([cipher.update(buffer), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), data]);
+}
+
+// Returns the original bytes, or null if they cannot be decrypted (wrong key, tampering).
+function decryptBytes(stored) {
+  if (!stored || stored.length < 29) return null;
+  try {
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, stored.subarray(0, 12));
+    decipher.setAuthTag(stored.subarray(12, 28));
+    return Buffer.concat([decipher.update(stored.subarray(28)), decipher.final()]);
+  } catch (e) {
+    return null;
+  }
+}
+
+module.exports = { encrypt, decrypt, encryptBytes, decryptBytes };

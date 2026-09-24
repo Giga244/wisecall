@@ -53,6 +53,30 @@
         <button class="btn btn-ghost btn-sm mv-kyc-refresh">${t('admin.mv.kycRefresh')}</button>
       </div>`;
   }
+  // What the mentor submitted as proof of qualification. Only admins ever see the full licence number,
+  // and the documents open through an admin-only download that is written to the audit log.
+  function credentialsBlock(d) {
+    const c = d.credentials;
+    const docs = d.documents || [];
+    if (!c && !d.workEmail && !docs.length) return '';
+    const line = (label, value) => `<li><span class="muted small">${esc(label)}:</span> ${value}</li>`;
+    return `
+      <div class="mv-credentials">
+        <p><strong>${t('admin.mv.credentials')}</strong></p>
+        <ul class="mv-evidence">
+          ${c ? line(t('admin.mv.licenseNumber'), `<strong>${esc(c.licenseNumber || '—')}</strong>`) + line(t('admin.mv.issuingBody'), esc(c.issuingBody)) + line(t('admin.mv.holderName'), esc(c.holderName)) + line(t('admin.mv.validUntil'), esc(c.validUntil || '—')) : ''}
+          ${d.workEmail ? line(t('admin.mv.workEmail'), `${esc(d.workEmail.address)} · ${d.workEmail.verifiedAt ? t('admin.mv.workEmailConfirmed') : t('admin.mv.workEmailWaiting')}`) : ''}
+        </ul>
+        ${docs.length ? `
+          <p class="muted small">${t('admin.mv.documents')}: ${t('admin.mv.docsNote')}</p>
+          <ul class="mv-docs">${docs.map((f) => `
+            <li>
+              <span>${esc(stepTitle(f.step))} · ${esc(f.filename)} · ${Math.max(1, Math.round(f.size / 1024))} KB</span>
+              <a class="btn btn-outline btn-sm" href="/api/admin/documents/${esc(f.id)}" download>${t('admin.mv.download')}</a>
+              ${f.deleteAfter ? `<span class="muted small">${t('admin.mv.deleteOn').replace('{date}', new Date(f.deleteAfter).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB'))}</span>` : ''}
+            </li>`).join('')}</ul>` : ''}
+      </div>`;
+  }
   // Open flags the system raised for this mentor (for example a name that does not match the ID).
   function flagsBlock(list) {
     if (!list || !list.length) return '';
@@ -80,6 +104,7 @@
         ${d.registries.length ? `<p class="small"><strong>${t('admin.mv.registries')}</strong> ${d.registries.map((r) => `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.label)}</a>`).join(' · ')}</p>` : ''}
         ${flagsBlock(d.flags)}
         ${kycBlock(d.kyc)}
+        ${credentialsBlock(d)}
         <div class="mv-steps">${rows}</div>
         <div class="mv-final">
           <button class="btn btn-primary mv-approve" ${d.ready && d.mentor.verificationStatus === 'pending' ? '' : 'disabled'}>${t('admin.approve')}</button>

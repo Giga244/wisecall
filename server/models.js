@@ -29,6 +29,8 @@ function userFromRow(r) {
     verificationDecidedAt: r.verification_decided_at,
     suspendedAt: r.suspended_at,
     suspensionReason: r.suspension_reason,
+    workEmail: r.work_email,
+    workEmailVerifiedAt: r.work_email_verified_at,
     emailVerified: r.email_verified,
     emailVerifyCodeHash: r.email_code_hash,
     emailVerifyCodeExpiresAt: r.email_code_expires_at,

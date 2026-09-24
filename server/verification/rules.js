@@ -68,22 +68,24 @@ const NICHES = {
 };
 
 // Official registries the admin checks by hand. Each is a link to open, not an integration.
-// REVIEW THESE LINKS before launch: the official sites change.
+// The Bar Association and Public Registry links were confirmed; the health-care and National Bank links
+// go to the regulators' sites. REVIEW ALL OF THEM before launch: official sites change.
 const REGISTRIES = {
   medicine: [
-    { key: 'medical', label: 'Georgian health-care professionals register', url: 'https://www.moh.gov.ge' }
+    { key: 'health', label: 'State Regulation Agency for Medical Activities (health-care professionals and licences)', url: 'http://www.rama.moh.gov.ge/' },
+    { key: 'moh', label: 'Ministry of Health of Georgia', url: 'https://www.moh.gov.ge/' }
   ],
   law: [
-    { key: 'bar', label: 'Georgian Bar Association: list of lawyers', url: 'https://www.gba.ge' }
+    { key: 'bar', label: 'Georgian Bar Association: members registry', url: 'https://gba.ge/en/Lawyers/Members-Registry' }
   ],
   finance: [
-    { key: 'nbg', label: 'National Bank of Georgia: registers of supervised entities', url: 'https://www.nbg.gov.ge' }
+    { key: 'nbg', label: 'National Bank of Georgia: registers of supervised entities and licences', url: 'https://nbg.gov.ge/en' }
   ],
   business: [
-    { key: 'napr', label: 'National Agency of Public Registry (company search)', url: 'https://napr.gov.ge' }
+    { key: 'enreg', label: 'Public Registry: search a company by name or ID number', url: 'https://enreg.reestri.gov.ge/' },
+    { key: 'napr', label: 'National Agency of Public Registry', url: 'https://napr.gov.ge/en' }
   ]
 };
-
 // ---- Limits and timings ---------------------------------------------------------------------
 const LIMITS = {
   // Uploaded documents (licences, diplomas): stored privately, admin-only, deleted after a decision.

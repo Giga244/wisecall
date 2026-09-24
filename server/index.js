@@ -59,6 +59,10 @@ app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
 app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
 app.use('/api/verification/kyc/start', rateLimit({ windowMs: 60 * 60 * 1000, max: 15 }));
+app.use('/api/verification/work-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 12 }));
+app.use('/api/verification/documents', rateLimit({ windowMs: 60 * 60 * 1000, max: 40 }));
+// Uploaded verification documents arrive as raw file bytes (PDF or JPEG, up to 10 MB).
+app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/me', require('./routes/me'));
@@ -90,6 +94,7 @@ app.use(pages.notFoundHandler);
 
 // Any error thrown in a route ends up here instead of crashing or hanging the request.
 app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large' && !res.headersSent) return res.status(413).json({ error: 'file_too_large' });
   console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
   if (res.headersSent) return next(err);
   const wantsHtml = !req.path.startsWith('/api/') && req.method === 'GET' && String(req.accepts(['html', 'json'])).startsWith('html');

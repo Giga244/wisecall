@@ -73,6 +73,12 @@ async function reconcilePending() {
     } catch (err) { console.error(`[jobs] could not reconcile booking ${row.id}:`, err.message); }
   }
 }
+// Verification documents are deleted 90 days after a decision.
+async function purgeDocuments() {
+  const n = await require('./verification/credentials').purgeExpiredDocuments();
+  if (n) console.log(`[jobs] deleted ${n} verification document(s) past their retention date`);
+}
+
 async function runSweep() {
   const client = await pool.connect();
   try {
@@ -84,6 +90,7 @@ async function runSweep() {
       await retryRefunds();
       await confirmRefunds();
       await reconcilePending();
+      await purgeDocuments();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }

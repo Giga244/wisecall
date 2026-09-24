@@ -63,6 +63,8 @@ function client(base) {
     return { status: res.status, headers: res.headers, text, ...json };
   };
   call.api = (p, o) => call('/api' + p, o);
+  // For binary downloads: the raw fetch Response, signed in as this client.
+  call.raw = (p) => fetch(base + p, { headers: cookie ? { cookie } : {}, redirect: 'manual' });
   return call;
 }
 

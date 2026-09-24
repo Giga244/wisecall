@@ -10,6 +10,7 @@ const steps = require('../verification/steps');
 const review = require('../verification/review');
 const kycService = require('../verification/kyc');
 const flags = require('../verification/flags');
+const credentials = require('../verification/credentials');
 
 const router = express.Router();
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -35,9 +36,11 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
   const mentor = await getUserById(req.params.id);
   if (!mentor || !(mentor.role === 'mentor' || mentor.role === 'both')) return res.status(404).json({ error: 'not_found' });
 
-  const [kycSummary, openFlags, stepRows, auditRows] = await Promise.all([
+  const [kycSummary, openFlags, creds, docs, stepRows, auditRows] = await Promise.all([
     kycService.summaryFor(mentor.id),
     flags.openFlagsFor(mentor.id),
+    credentials.credentialsFor(mentor.id),
+    credentials.listDocuments(mentor.id),
     query(`SELECT s.*, u.email AS decided_by_email FROM verification_steps s LEFT JOIN users u ON u.id = s.decided_by WHERE s.user_id = $1`, [mentor.id]),
     query(`SELECT * FROM verification_audit WHERE mentor_id = $1 ORDER BY created_at DESC LIMIT 200`, [mentor.id])
   ]);
@@ -58,6 +61,9 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
     level: summary.level,
     kyc: kycSummary,
     flags: openFlags,
+    credentials: creds,
+    workEmail: mentor.workEmail ? { address: mentor.workEmail, verifiedAt: mentor.workEmailVerifiedAt } : null,
+    documents: docs,
     requirements: summary.requirements.map((r) => (r.type === 'step'
       ? { ...r, ...(detail[r.step] || {}), status: r.status }
       : { ...r, options: r.options.map((o) => ({ ...o, ...(detail[o.step] || {}), status: o.status })) })),
@@ -120,6 +126,20 @@ router.post('/flags/:id/resolve', requireAuth, requireAdmin, asyncHandler(async 
   const done = await flags.resolveById(req.params.id, steps.adminActor(req.adminUser), reason.trim().slice(0, 1000));
   if (!done) return res.status(404).json({ error: 'not_found' });
   res.json({ ok: true });
+}));
+
+// Download one uploaded document. Admins only, never cached, and every download is written to the audit log.
+router.get('/documents/:id', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const doc = await credentials.getDocument(req.params.id);
+  if (!doc) return res.status(404).json({ error: 'not_found' });
+  await steps.audit(doc.meta.userId, steps.adminActor(req.adminUser), 'document_viewed', { step: doc.meta.step, reason: doc.meta.filename });
+  res.set({
+    'Content-Type': doc.meta.mime,
+    'Content-Disposition': `attachment; filename="${doc.meta.filename.replace(/"/g, '')}"`,
+    'Cache-Control': 'no-store, private',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  res.send(doc.bytes);
 }));
 
 module.exports = router;
