@@ -132,8 +132,46 @@
     selectTab(visible[(next + visible.length) % visible.length].dataset.tab, { focus: true });
   });
 
+  // ---- Mentor application progress, shown above the tabs ------------------------------------------------------------
+  const progressBox = document.getElementById('appProgress');
+  let lastVerification = null;
+  function drawProgress(v) {
+    if (v) lastVerification = v;
+    if (!isMentorUser(user) || !lastVerification) { progressBox.hidden = true; return; }
+    const reqs = lastVerification.requirements;
+    const total = reqs.length;
+    const done = reqs.filter((r) => (r.type === 'step' ? r.status === 'passed' : r.satisfied)).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const status = lastVerification.status;
+    const verified = status === 'verified';
+    const tone = verified ? 'answered' : (status === 'rejected' || status === 'suspended' ? 'rejected' : 'pending_payment');
+    const label = verified ? 'vt.status.verifiedListed' : (status === 'suspended' ? 'vt.status.suspended' : (status === 'rejected' ? 'vt.status.rejected' : (lastVerification.ready ? 'vt.status.pendingReady' : 'vt.status.pending')));
+    const text = t('vt.progress').replace('{done}', done).replace('{total}', total);
+    progressBox.hidden = false;
+    progressBox.innerHTML = `
+      <div class="app-progress-head">
+        <strong>${t('settings.progress.title')}</strong>
+        <span class="badge badge-${tone}">${t(verified && !user.hasPayoutDetails ? 'vt.status.verifiedNoPayout' : label)}</span>
+      </div>
+      <div class="vt-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="${escapeHtml(text)}"><span style="width:${pct}%"></span></div>
+      <p class="small app-progress-foot"><strong>${escapeHtml(text)}</strong>
+        ${verified ? '' : `<button type="button" class="linklike" data-goto-tab="verification">${t('settings.progress.continue')}</button>`}</p>`;
+  }
+  progressBox.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-goto-tab]');
+    if (btn) selectTab(btn.dataset.gotoTab, { focus: true });
+  });
+  document.addEventListener('wisecall:verification-changed', (ev) => drawProgress(ev.detail));
+  document.addEventListener('wisecall:lang-changed', () => drawProgress());
+  async function loadProgress() {
+    if (!isMentorUser(user)) { progressBox.hidden = true; return; }
+    try { drawProgress(await WisecallAPI.apiFetch('/verification')); } catch (e) { /* the tab still works */ }
+  }
+
+  AuthUI.init();
   fillForm(user);
   loadPayout();
+  loadProgress();
   updateTabVisibility();
   selectTab(new URLSearchParams(window.location.search).get('tab') || 'profile', { push: false });
   document.addEventListener('wisecall:lang-changed', () => { if (activeTab === 'verification') SettingsVerification.reload(); });
@@ -177,6 +215,7 @@
       renderVerification(user);
       loadPayout();
       updateTabVisibility();
+      loadProgress();
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       becomeMentorCheckbox.checked = !checked;

@@ -318,6 +318,7 @@
       return;
     }
     render();
+    document.dispatchEvent(new CustomEvent('wisecall:verification-changed', { detail: data.v }));
     // Keep the sections the mentor had open, open.
     open.forEach((s) => { const d = root.querySelector(`.vt-step[data-step="${s}"] details.vt-action`); if (d) d.open = true; });
   }

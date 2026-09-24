@@ -1037,5 +1037,8 @@
   "auth.pw.s.common": "Too common: choose something less obvious",
   "auth.pw.s.weak": "Weak: make it longer or mix in numbers and symbols",
   "auth.pw.s.ok": "Okay",
-  "auth.pw.s.strong": "Strong"
+  "auth.pw.s.strong": "Strong",
+  "settings.sub": "Your profile, mentor application, payouts and account.",
+  "settings.progress.title": "Mentor application",
+  "settings.progress.continue": "Continue your application"
 }

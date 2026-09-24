@@ -23,13 +23,25 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
 
 <script src="/js/header.js"></script>
 
-<section class="settings container" id="main">
-  <h1 data-i18n="settings.title">Settings</h1>
+<main class="settings container" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/index.html" data-i18n="expert.crumb.home">Home</a></li>
+      <li><span aria-current="page" data-i18n="settings.title">Settings</span></li>
+    </ol>
+  </nav>
+  <div class="page-head">
+    <h1 data-i18n="settings.title">Settings</h1>
+    <p data-i18n="settings.sub">Your profile, mentor application, payouts and account.</p>
+  </div>
+
+  <div class="app-progress" id="appProgress" hidden></div>
 
   <div class="tabs" id="settingsTabs" role="tablist" aria-label="Settings">
     <button class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" data-tab="profile" data-i18n="settings.tab.profile">Profile</button>
@@ -102,7 +114,7 @@
   </div>
 
   <div class="tab-panel" role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" data-panel="verification" hidden>
-    <div id="verificationPanel"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+    <div id="verificationPanel"><div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span></div></div>
   </div>
 
   <div class="tab-panel" role="tabpanel" id="panel-payouts" aria-labelledby="tab-payouts" data-panel="payouts" hidden>
@@ -128,13 +140,22 @@
   <div class="settings-card">
     <h2 data-i18n="settings.password.title">Change password</h2>
     <form id="passwordForm">
-      <label><span data-i18n="settings.password.current">Current password</span>
-        <input type="password" id="currentPassword" required>
-      </label>
-      <label><span data-i18n="settings.password.new">New password</span>
-        <input type="password" id="newPassword" required minlength="8">
-      </label>
-      <p class="form-error" id="passwordError"></p>
+      <div class="field">
+        <label for="currentPassword" data-i18n="settings.password.current">Current password</label>
+        <div class="pw-wrap">
+          <input type="password" id="currentPassword" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" aria-controls="currentPassword" aria-pressed="false" data-i18n-aria="auth.pw.show" aria-label="Show password"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="newPassword" data-i18n="settings.password.new">New password</label>
+        <div class="pw-wrap">
+          <input type="password" id="newPassword" autocomplete="new-password" required minlength="8" aria-describedby="pwStrength">
+          <button type="button" class="pw-toggle" aria-controls="newPassword" aria-pressed="false" data-i18n-aria="auth.pw.show" aria-label="Show password"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="pw-strength" id="pwStrength" data-for="newPassword" aria-live="polite"></div>
+      </div>
+      <p class="form-error" id="passwordError" role="alert"></p>
       <button type="submit" class="btn btn-primary" data-i18n="settings.password.save">Update password</button>
     </form>
   </div>
@@ -148,14 +169,15 @@
     </div>
   </div>
   </div>
-</section>
+</main>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="/js/i18n.js"></script>
 <script src="/js/footer.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
+<script src="/js/auth-ui.js"></script>
 <script src="/js/settings-verification.js"></script>
 <script src="/js/settings.js"></script>
 </body>
