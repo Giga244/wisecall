@@ -24,9 +24,8 @@ async function startServer(port, extraEnv = {}) {
     DATABASE_URL: TEST_DB,
     JWT_SECRET: 'test-secret-that-is-long-enough-1234567890',
     RESEND_API_KEY: '',
-    STRIPE_SECRET_KEY: '',
-    STRIPE_PUBLISHABLE_KEY: '',
-    STRIPE_WEBHOOK_SECRET: '',
+    PAYMENT_PROVIDER: 'mock',
+    BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', TBC_CLIENT_ID: '', TBC_CLIENT_SECRET: '',
     ADMIN_EMAILS: 'qa-admin@example.com',
     ADMIN_EMAIL: '',
     PLATFORM_FEE_PERCENT: '20',
@@ -75,6 +74,24 @@ async function signupVerified(base, name, email, password = 'test-pass-12345') {
   return c;
 }
 
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Creates a booking and pays it at the FAKE bank (PAYMENT_PROVIDER=mock), then waits until the
+// server has confirmed the payment with the bank. Returns the booking as the seeker sees it.
+async function bookAndPay(base, seekerClient, mentorId, question, outcome = 'success') {
+  const r = await seekerClient.api('/bookings', { method: 'POST', body: { mentorId, question } });
+  if (r.status !== 201) throw new Error('booking failed: ' + r.text);
+  await client(base).api(`/mock-bank/orders/${r.booking.providerOrderId}/complete`, { method: 'POST', body: { outcome } });
+  await seekerClient.api(`/bookings/${r.booking.id}/sync`, { method: 'POST' });
+  let booking = r.booking;
+  for (let i = 0; i < 40 && booking.status === 'pending_payment'; i++) {
+    await wait(100);
+    booking = (await seekerClient.api(`/bookings/${r.booking.id}`)).booking;
+  }
+  return booking;
+}
+
 const SAMPLE = 'This is a detailed sample answer that is comfortably longer than eighty characters to pass validation.';
 
-module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, SAMPLE };
+module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, wait, SAMPLE };

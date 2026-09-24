@@ -51,7 +51,7 @@ router.post('/mentors/:id/review', requireAuth, requireAdmin, asyncHandler(async
   res.json({ mentor: meProfile(updated) });
 }));
 
-const BOOKING_STATUSES = ['pending_payment', 'paid', 'answered', 'refunded', 'expired'];
+const BOOKING_STATUSES = ['pending_payment', 'paid', 'answered', 'refund_pending', 'refunded', 'expired'];
 
 // All bookings, newest first, with both people's names so support can see what happened.
 router.get('/bookings', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
@@ -82,7 +82,7 @@ router.post('/bookings/:id/refund', requireAuth, requireAdmin, asyncHandler(asyn
     res.json({ booking });
   } catch (e) {
     if (e instanceof payments.PaymentError) {
-      return res.status(e.code === 'not_found' ? 404 : 409).json({ error: e.code });
+      return res.status(e.code === 'not_found' ? 404 : (e.code === 'refund_failed' ? 502 : 409)).json({ error: e.code, message: e.code === 'refund_failed' ? e.message : undefined });
     }
     throw e;
   }

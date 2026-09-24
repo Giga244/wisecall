@@ -1,22 +1,23 @@
 // Payment lifecycle. Money model: "hold, then release".
-//   1. The buyer pays the platform through Stripe Checkout (nothing goes to the mentor yet).
-//   2. Only a signature-verified Stripe webhook (or our own server-side lookup of the Checkout
-//      Session) can mark a booking paid; the browser redirect never does.
-//   3. When the mentor answers, their share is transferred to their connected account and the
-//      platform keeps its fee.
-//   4. If the mentor does not answer before the deadline, the buyer is refunded in full.
+//   1. The buyer pays the platform through a Georgian bank (see server/pay/). The money sits in
+//      Wisecall's bank account; nothing goes to the mentor yet.
+//   2. A booking becomes "paid" only when the BANK says so: we ask the bank's API for the payment
+//      status (after a signed callback, from the sweep job, or when the buyer returns to the site).
+//      The browser redirect alone never marks anything paid.
+//   3. When the mentor answers, the mentor's share is recorded in the payout ledger (server/ledger.js)
+//      and paid out by hand by an admin.
+//   4. If the mentor does not answer before the deadline, the buyer is refunded in full through the
+//      bank's refund API. Refunds are asynchronous: "refund_pending" until the bank confirms.
 const { tx, query } = require('./db');
 const config = require('./config');
-const stripe = require('./stripeClient');
+const pay = require('./pay');
 const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('./models');
 const notify = require('./notify');
+const ledger = require('./ledger');
 
 class PaymentError extends Error {
   constructor(code, message) { super(message || code); this.code = code; }
 }
-
-// A connected account can be paid when Stripe says payouts are enabled and transfers are active.
-const accountIsReady = (account) => Boolean(account.payouts_enabled && (!account.capabilities || account.capabilities.transfers === 'active'));
 
 const deadlineFromNow = () => new Date(Date.now() + config.ANSWER_DEADLINE_DAYS * 24 * 60 * 60 * 1000);
 
@@ -25,46 +26,21 @@ async function lockBooking(client, id) {
   return rows[0] ? bookingFromRow(rows[0]) : null;
 }
 
-async function createCheckoutSession(booking, mentor, seeker) {
-  return stripe.checkout.sessions.create({
-    mode: 'payment',
-    customer_email: seeker.email,
-    client_reference_id: booking.id,
-    line_items: [{
-      price_data: {
-        currency: booking.currency,
-        product_data: { name: `Advice from ${mentor.name}`, description: booking.question.slice(0, 300) },
-        unit_amount: booking.amount
-      },
-      quantity: 1
-    }],
-    payment_intent_data: { transfer_group: `booking_${booking.id}`, metadata: { bookingId: booking.id } },
-    metadata: { bookingId: booking.id },
-    // Stripe's minimum lifetime is 30 minutes; unpaid bookings are closed when it lapses.
-    expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-    success_url: `${config.APP_URL}/expert.html?id=${mentor.id}&booking=${booking.id}&status=success`,
-    cancel_url: `${config.APP_URL}/expert.html?id=${mentor.id}&booking=${booking.id}&status=cancelled`
-  }, { idempotencyKey: `checkout-${booking.id}` });
-}
-
-// Marks a booking paid from a Checkout Session object that came from Stripe (webhook payload
-// or a direct API lookup). Safe to call repeatedly. Returns the booking only when it changed.
-async function markPaidFromSession(client, session) {
-  const bookingId = (session.metadata && session.metadata.bookingId) || session.client_reference_id;
-  if (!bookingId || session.payment_status !== 'paid') return null;
-  const booking = await lockBooking(client, bookingId);
-  if (!booking || booking.status !== 'pending_payment') return null;
-
-  if (session.amount_total !== booking.amount || String(session.currency).toLowerCase() !== booking.currency) {
-    console.error(`[payments] amount mismatch for booking ${booking.id}: expected ${booking.amount} ${booking.currency}, got ${session.amount_total} ${session.currency}. Not marking paid.`);
-    return null;
-  }
-  return updateBooking(booking.id, {
-    status: 'paid',
-    paidAt: new Date(),
-    answerDeadline: deadlineFromNow(),
-    stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent && session.payment_intent.id) || null
-  }, client);
+// Sends the buyer to the bank. Returns { orderId, redirectUrl }.
+async function startPayment(booking, mentor, seeker) {
+  const provider = pay.forProvider(booking.provider);
+  const back = `${config.APP_URL}/expert.html?id=${mentor.id}&booking=${booking.id}`;
+  return provider.createPayment({
+    bookingId: booking.id,
+    amount: booking.amount,
+    description: 'Wisecall',
+    callbackUrl: `${config.APP_URL}/api/payments/callback`,
+    successUrl: `${back}&status=success`,
+    failUrl: `${back}&status=fail`,
+    returnUrl: `${back}&status=return`,
+    ttlMinutes: config.PAYMENT_TTL_MINUTES,
+    language: seeker.language
+  });
 }
 
 async function expirePending(client, bookingId) {
@@ -74,149 +50,117 @@ async function expirePending(client, bookingId) {
   return rows.length > 0;
 }
 
-// Refunds a paid/answered booking in full. If the mentor was already paid, that transfer is
-// reversed first. Idempotency keys make every step safe to retry.
+// Applies what the bank reported to one (locked) booking. Runs inside a transaction and returns
+// the follow-up work (emails) to run only after the transaction has committed.
+// Every branch checks the current status first, so repeating it changes nothing.
+async function applyBankStatus(client, booking, s) {
+  const after = [];
+
+  if (booking.status === 'pending_payment') {
+    if (s.status === 'paid') {
+      // Never trust a paid status for the wrong amount or currency.
+      if (s.amount !== booking.amount || (s.currency && s.currency !== booking.currency)) {
+        console.error(`[payments] amount mismatch for booking ${booking.id}: expected ${booking.amount} ${booking.currency}, bank says ${s.amount} ${s.currency}. Not marking paid.`);
+        return { booking, after };
+      }
+      const updated = await updateBooking(booking.id, { status: 'paid', paidAt: new Date(), answerDeadline: deadlineFromNow() }, client);
+      after.push(async () => {
+        const mentor = await getUserById(updated.mentorId);
+        if (mentor) notify.notifyMentorNewQuestion(mentor, updated);
+      });
+      return { booking: updated, after };
+    }
+    if (s.status === 'failed' || s.status === 'expired') {
+      await expirePending(client, booking.id);
+      return { booking: { ...booking, status: 'expired' }, after };
+    }
+    return { booking, after };
+  }
+
+  // A refund we asked for (or one made in the bank's own dashboard) has completed.
+  if (s.status === 'refunded' && ['paid', 'answered', 'refund_pending'].includes(booking.status)) {
+    const updated = await updateBooking(booking.id, {
+      status: 'refunded', refundedAt: new Date(), refundReason: booking.refundReason || 'refunded_at_bank', refundError: null
+    }, client);
+    await ledger.onRefundRequested(client, updated);
+    after.push(async () => {
+      const [seeker, mentor] = await Promise.all([getUserById(updated.seekerId), getUserById(updated.mentorId)]);
+      if (seeker && mentor) notify.notifyRefund(seeker, mentor, updated, updated.refundReason);
+    });
+    return { booking: updated, after };
+  }
+  return { booking, after };
+}
+
+// Asks the bank what really happened to this booking's payment and records it. This is the ONLY
+// way a booking becomes paid. Safe to call any number of times, from any number of places.
+async function syncBooking(bookingId) {
+  const booking = await getBookingById(bookingId);
+  if (!booking || !booking.providerOrderId) return booking;
+  if (!['pending_payment', 'paid', 'answered', 'refund_pending'].includes(booking.status)) return booking;
+
+  const status = await pay.forProvider(booking.provider).getPaymentStatus(booking.providerOrderId); // network call, outside the transaction
+  let result = { booking, after: [] };
+  await tx(async (client) => {
+    const locked = await lockBooking(client, bookingId);
+    if (locked) result = await applyBankStatus(client, locked, status);
+  });
+  for (const fn of result.after) fn().catch((e) => console.error('[payments] follow-up failed:', e.message));
+  return result.booking;
+}
+
+// The bank called our callback URL. Authenticity is checked by the provider (a signature for BOG);
+// either way the payment status is then read from the bank's API, never from the callback body.
+async function handleCallback({ rawBody, headers }) {
+  const provider = pay.current();
+  let orderId;
+  try { ({ orderId } = provider.verifyCallback({ rawBody, headers })); } // throws if not genuine
+  catch (e) { throw new PaymentError('invalid_callback', e.message); }
+  const { rows } = await query('SELECT id FROM bookings WHERE provider = $1 AND provider_order_id = $2', [provider.name, orderId]);
+  if (!rows[0]) return { known: false };
+  await syncBooking(rows[0].id);
+  return { known: true, bookingId: rows[0].id };
+}
+
+// Asks the bank to return a booking's money in full. Idempotent: calling it again for a booking
+// already refunded (or with a refund in progress) does nothing new. If the bank rejects the
+// request, the booking stays "refund_pending" with the error recorded and the sweep retries.
 async function refundBooking(bookingId, reason) {
-  let refunded = null;
-  let already = false;
+  let claimed = null;
+  let alreadyDone = null;
   await tx(async (client) => {
     const booking = await lockBooking(client, bookingId);
     if (!booking) throw new PaymentError('not_found');
-    if (booking.status === 'refunded') { refunded = booking; already = true; return; }
-    if (booking.status !== 'paid' && booking.status !== 'answered') throw new PaymentError('not_refundable');
+    if (booking.status === 'refunded') { alreadyDone = booking; return; }
+    if (booking.status === 'refund_pending' && !booking.refundError) { alreadyDone = booking; return; }
+    if (!['paid', 'answered', 'refund_pending'].includes(booking.status)) throw new PaymentError('not_refundable');
+    try { pay.forProvider(booking.provider); } catch (e) { throw new PaymentError('provider_unavailable', e.message); }
+    if (!booking.providerOrderId) throw new PaymentError('missing_order');
 
-    let stripeRefundId = null;
-    if (booking.mode === 'stripe') {
-      if (!booking.stripePaymentIntentId) throw new PaymentError('missing_payment_intent');
-      if (booking.stripeTransferId) {
-        await stripe.transfers.createReversal(
-          booking.stripeTransferId,
-          { amount: booking.mentorNetAmount, metadata: { bookingId: booking.id } },
-          { idempotencyKey: `reverse-${booking.id}` }
-        );
-      }
-      const refund = await stripe.refunds.create(
-        { payment_intent: booking.stripePaymentIntentId, reason: 'requested_by_customer', metadata: { bookingId: booking.id } },
-        { idempotencyKey: `refund-${booking.id}` }
-      );
-      stripeRefundId = refund.id;
-    }
-    refunded = await updateBooking(booking.id, {
-      status: 'refunded', refundedAt: new Date(), refundReason: reason, stripeRefundId
+    claimed = await updateBooking(booking.id, {
+      status: 'refund_pending',
+      refundRequestedAt: booking.refundRequestedAt || new Date(),
+      refundReason: booking.refundReason || reason,
+      refundError: null
     }, client);
+    await ledger.onRefundRequested(client, claimed);
   });
+  if (alreadyDone) return alreadyDone;
 
-  if (!already) {
-    const [seeker, mentor] = await Promise.all([getUserById(refunded.seekerId), getUserById(refunded.mentorId)]);
-    if (seeker && mentor) notify.notifyRefund(seeker, mentor, refunded, reason);
+  try {
+    const r = await pay.forProvider(claimed.provider).refund({
+      orderId: claimed.providerOrderId, amount: claimed.amount, idempotencyKey: `refund-${claimed.id}`
+    });
+    await updateBooking(claimed.id, { providerRefundId: r.refundId });
+  } catch (err) {
+    console.error(`[payments] bank refused or failed the refund for booking ${claimed.id}:`, err.message);
+    await updateBooking(claimed.id, { refundError: String(err.message).slice(0, 300) });
+    throw new PaymentError('refund_failed', err.message);
   }
-  return refunded;
-}
-
-// Pays the mentor's share once the question is answered. Failures are recorded on the booking
-// and retried by the background job, so an answer is never lost because a payout hiccuped.
-async function transferToMentor(bookingId) {
-  return tx(async (client) => {
-    const booking = await lockBooking(client, bookingId);
-    if (!booking || booking.mode !== 'stripe' || booking.status !== 'answered' || booking.stripeTransferId) return booking;
-
-    const mentor = await getUserById(booking.mentorId, client);
-    if (!mentor || !mentor.stripeAccountId || !mentor.payoutsEnabled) {
-      return updateBooking(booking.id, { transferError: 'mentor_payouts_not_ready' }, client);
-    }
-    try {
-      const intent = await stripe.paymentIntents.retrieve(booking.stripePaymentIntentId);
-      const transfer = await stripe.transfers.create({
-        amount: booking.mentorNetAmount,
-        currency: booking.currency,
-        destination: mentor.stripeAccountId,
-        source_transaction: intent.latest_charge,
-        transfer_group: `booking_${booking.id}`,
-        metadata: { bookingId: booking.id }
-      }, { idempotencyKey: `transfer-${booking.id}` });
-      return updateBooking(booking.id, { stripeTransferId: transfer.id, transferredAt: new Date(), transferError: null }, client);
-    } catch (err) {
-      console.error(`[payments] transfer for booking ${booking.id} failed (will retry):`, err.message);
-      return updateBooking(booking.id, { transferError: String(err.message).slice(0, 300) }, client);
-    }
-  });
-}
-
-// Applies one verified Stripe event. Runs inside the webhook transaction; returns callbacks
-// (emails) to run only after that transaction has committed.
-async function applyStripeEvent(client, event) {
-  const after = [];
-  const obj = event.data.object;
-
-  switch (event.type) {
-    case 'checkout.session.completed':
-    case 'checkout.session.async_payment_succeeded': {
-      const booking = await markPaidFromSession(client, obj);
-      if (booking) after.push(async () => {
-        const mentor = await getUserById(booking.mentorId);
-        if (mentor) notify.notifyMentorNewQuestion(mentor, booking);
-      });
-      break;
-    }
-    case 'checkout.session.expired':
-    case 'checkout.session.async_payment_failed': {
-      const id = (obj.metadata && obj.metadata.bookingId) || obj.client_reference_id;
-      if (id) await expirePending(client, id);
-      break;
-    }
-    case 'charge.refunded': {
-      // A refund made directly in the Stripe dashboard: keep our records in step.
-      if (obj.refunded && obj.payment_intent) {
-        const { rows } = await client.query(
-          `UPDATE bookings SET status = 'refunded', refunded_at = now(), refund_reason = COALESCE(refund_reason, 'refunded_in_stripe')
-            WHERE stripe_payment_intent_id = $1 AND status IN ('paid', 'answered') RETURNING *`, [obj.payment_intent]
-        );
-        if (rows[0]) {
-          const booking = bookingFromRow(rows[0]);
-          if (booking.stripeTransferId) console.error(`[payments] booking ${booking.id} was refunded in Stripe but its mentor transfer was NOT reversed. Reverse it manually.`);
-          after.push(async () => {
-            const [seeker, mentor] = await Promise.all([getUserById(booking.seekerId), getUserById(booking.mentorId)]);
-            if (seeker && mentor) notify.notifyRefund(seeker, mentor, booking, 'refunded_in_stripe');
-          });
-        }
-      }
-      break;
-    }
-    case 'account.updated': {
-      const ready = accountIsReady(obj);
-      await client.query('UPDATE users SET payouts_enabled = $2 WHERE stripe_account_id = $1', [obj.id, ready]);
-      break;
-    }
-    case 'charge.dispute.created':
-      console.error(`[payments] DISPUTE opened on charge ${obj.charge} (${obj.amount} ${obj.currency}). Respond in the Stripe dashboard.`);
-      after.push(() => notify.notifyAdmins('A payment was disputed on Wisecall', `<p>A card dispute was opened on charge ${obj.charge}. Respond in the Stripe dashboard before the deadline.</p>`));
-      break;
-    default:
-      break;
-  }
-  return after;
-}
-
-// Safety net for a missed webhook: asks Stripe directly (never trusts the browser) about
-// bookings that are still unpaid after the checkout window.
-async function reconcilePendingBooking(booking) {
-  if (!stripe || !booking.stripeSessionId) {
-    await tx((client) => expirePending(client, booking.id));
-    return;
-  }
-  const session = await stripe.checkout.sessions.retrieve(booking.stripeSessionId);
-  let paid = null;
-  await tx(async (client) => {
-    if (session.payment_status === 'paid') paid = await markPaidFromSession(client, session);
-    else if (session.status === 'expired' || session.status === 'complete') await expirePending(client, booking.id);
-  });
-  if (paid) {
-    const mentor = await getUserById(paid.mentorId);
-    if (mentor) notify.notifyMentorNewQuestion(mentor, paid);
-  }
+  // Some banks confirm at once, so look straight away instead of waiting for the sweep.
+  try { return (await syncBooking(claimed.id)) || claimed; } catch (e) { return claimed; }
 }
 
 module.exports = {
-  PaymentError, accountIsReady, deadlineFromNow, createCheckoutSession, refundBooking, transferToMentor,
-  applyStripeEvent, reconcilePendingBooking, expirePending, markPaidFromSession
+  PaymentError, deadlineFromNow, startPayment, syncBooking, handleCallback, refundBooking, expirePending, applyBankStatus
 };

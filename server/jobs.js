@@ -1,7 +1,7 @@
 // Background housekeeping, run on a timer inside the web process. A Postgres advisory lock
 // makes sure only one running instance does the work at a time, and every action is
 // idempotent, so overlapping runs during a deploy are harmless.
-const { pool, query } = require('./db');
+const { pool, query, tx } = require('./db');
 const config = require('./config');
 const { bookingFromRow, getUserById } = require('./models');
 const payments = require('./payments');
@@ -34,24 +34,45 @@ async function sendReminders() {
   }
 }
 
-async function retryTransfers() {
+// Refund requests the bank rejected or that failed to reach it: ask again.
+async function retryRefunds() {
   const { rows } = await query(
-    `SELECT id FROM bookings WHERE status = 'answered' AND mode = 'stripe' AND stripe_transfer_id IS NULL
-        AND answered_at < now() - interval '10 seconds' ORDER BY answered_at LIMIT 50`
+    `SELECT id, refund_reason FROM bookings WHERE status = 'refund_pending' AND refund_error IS NOT NULL ORDER BY refund_requested_at LIMIT 50`
   );
-  for (const { id } of rows) await payments.transferToMentor(id);
-}
-
-async function reconcilePending() {
-  const { rows } = await query(
-    `SELECT * FROM bookings WHERE status = 'pending_payment' AND created_at < now() - interval '40 minutes' LIMIT 50`
-  );
-  for (const row of rows) {
-    try { await payments.reconcilePendingBooking(bookingFromRow(row)); }
-    catch (err) { console.error(`[jobs] could not reconcile booking ${row.id}:`, err.message); }
+  for (const { id, refund_reason: reason } of rows) {
+    try { await payments.refundBooking(id, reason || 'no_answer_deadline'); }
+    catch (err) { console.error(`[jobs] refund retry for ${id} failed:`, err.message); }
   }
 }
 
+// Refunds the bank accepted: check whether the money has actually been returned yet.
+async function confirmRefunds() {
+  const { rows } = await query(
+    `SELECT id FROM bookings WHERE status = 'refund_pending' AND refund_error IS NULL AND refund_requested_at < now() - interval '1 minute'
+      ORDER BY refund_requested_at LIMIT 50`
+  );
+  for (const { id } of rows) {
+    try { await payments.syncBooking(id); }
+    catch (err) { console.error(`[jobs] could not confirm refund for ${id}:`, err.message); }
+  }
+}
+
+// Safety net for missed callbacks: ask the bank about bookings still waiting for payment. The bank
+// order lives PAYMENT_TTL_MINUTES; once that (plus a margin) has passed, the booking is closed.
+async function reconcilePending() {
+  const { rows } = await query(
+    `SELECT id, created_at FROM bookings WHERE status = 'pending_payment' AND created_at < now() - interval '3 minutes' LIMIT 50`
+  );
+  const give_up_ms = (config.PAYMENT_TTL_MINUTES + 10) * 60 * 1000;
+  for (const row of rows) {
+    try {
+      const b = await payments.syncBooking(row.id);
+      if (b && b.status === 'pending_payment' && Date.now() - new Date(row.created_at).getTime() > give_up_ms) {
+        await tx((client) => payments.expirePending(client, row.id));
+      }
+    } catch (err) { console.error(`[jobs] could not reconcile booking ${row.id}:`, err.message); }
+  }
+}
 async function runSweep() {
   const client = await pool.connect();
   try {
@@ -60,7 +81,8 @@ async function runSweep() {
     try {
       await refundOverdue();
       await sendReminders();
-      await retryTransfers();
+      await retryRefunds();
+      await confirmRefunds();
       await reconcilePending();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);

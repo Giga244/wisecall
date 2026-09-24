@@ -17,7 +17,7 @@
   }
 
   function money(cents, currency) {
-    return `$${(cents / 100).toFixed(2)} ${(currency || 'usd').toUpperCase()}`;
+    return WisecallAPI.formatAmount(cents);
   }
 
   function fmtDate(d) {
@@ -31,10 +31,10 @@
       text = role === 'mentor'
         ? t('dash.deadline.mentor').replace('{date}', fmtDate(b.answerDeadline))
         : t('dash.deadline.seeker').replace('{name}', b.otherPartyName).replace('{date}', fmtDate(b.answerDeadline));
+    } else if (b.status === 'refund_pending') {
+      text = t('dash.refund.pending');
     } else if (b.status === 'refunded') {
       text = t(b.refundReason === 'no_answer_deadline' ? 'dash.refund.no_answer_deadline' : 'dash.refund.other');
-    } else if (b.status === 'answered' && role === 'mentor' && b.mode === 'stripe' && !b.transferredAt && b.transferError) {
-      text = t('dash.payout.pending');
     }
     return text ? `<p class="booking-note">${escapeHtml(text)}</p>` : '';
   }

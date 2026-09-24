@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { requireAuth, optionalAuth } = require('../auth');
 const { meProfile, asyncHandler } = require('../util');
 const { getUserById, updateUser } = require('../models');
+const config = require('../config');
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     if (updates[field] === undefined) continue;
     if (field === 'price') {
       const n = Number(updates.price);
-      if (!Number.isFinite(n) || n < 1 || n > 5000) return res.status(400).json({ error: 'invalid_price' });
+      if (!Number.isFinite(n) || n < config.PRICE_MIN || n > config.PRICE_MAX) return res.status(400).json({ error: 'invalid_price' });
       patch.price = Math.round(n);
     } else if (field === 'niche') {
       if (updates.niche !== null && !NICHES.includes(updates.niche)) return res.status(400).json({ error: 'invalid_niche' });

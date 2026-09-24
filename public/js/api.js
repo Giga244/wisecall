@@ -22,5 +22,10 @@
     return typeof value === 'string' && /^\/(?![\/\\])/.test(value) ? value : fallback;
   }
 
-  window.WisecallAPI = { apiFetch, safeRedirect };
+  // Money is Georgian lari. The server stores amounts as whole tetri (1/100 lari).
+  const LARI = '₾';
+  const formatPrice = (lari) => `${Number(lari)} ${LARI}`;
+  const formatAmount = (tetri) => `${(tetri / 100).toFixed(2)} ${LARI}`;
+
+  window.WisecallAPI = { apiFetch, safeRedirect, formatPrice, formatAmount };
 })();

@@ -17,8 +17,6 @@ function userFromRow(r) {
     bio: r.bio,
     price: r.price,
     color: r.color,
-    stripeAccountId: r.stripe_account_id,
-    payoutsEnabled: r.payouts_enabled,
     language: r.language,
     verificationStatus: r.verification_status,
     proofUrl: r.proof_url,
@@ -51,27 +49,25 @@ function bookingFromRow(r) {
     platformFeeAmount: r.platform_fee_amount,
     mentorNetAmount: r.mentor_net_amount,
     status: r.status,
-    mode: r.mode,
-    stripeSessionId: r.stripe_session_id,
-    stripePaymentIntentId: r.stripe_payment_intent_id,
-    stripeTransferId: r.stripe_transfer_id,
-    transferredAt: r.transferred_at,
-    transferError: r.transfer_error,
+    provider: r.provider,
+    providerOrderId: r.provider_order_id,
     reminderSentAt: r.reminder_sent_at,
     paidAt: r.paid_at,
     answeredAt: r.answered_at,
     answerDeadline: r.answer_deadline,
     refundedAt: r.refunded_at,
     refundReason: r.refund_reason,
-    stripeRefundId: r.stripe_refund_id,
+    providerRefundId: r.provider_refund_id,
+    refundRequestedAt: r.refund_requested_at,
+    refundError: r.refund_error,
     createdAt: r.created_at
   };
 }
 
 const USER_COLUMNS = {
   name: 'name', email: 'email', passwordHash: 'password_hash', role: 'role', niche: 'niche',
-  roleTitle: 'role_title', bio: 'bio', price: 'price', color: 'color', stripeAccountId: 'stripe_account_id',
-  payoutsEnabled: 'payouts_enabled', language: 'language', verificationStatus: 'verification_status',
+  roleTitle: 'role_title', bio: 'bio', price: 'price', color: 'color',
+  language: 'language', verificationStatus: 'verification_status',
   proofUrl: 'proof_url', sampleAnswer: 'sample_answer', verificationNote: 'verification_note',
   verificationChecks: 'verification_checks', emailVerified: 'email_verified', emailVerifyCodeHash: 'email_code_hash',
   emailVerifyCodeExpiresAt: 'email_code_expires_at', resetTokenHash: 'reset_token_hash',
@@ -80,10 +76,9 @@ const USER_COLUMNS = {
 
 const BOOKING_COLUMNS = {
   answer: 'answer', rating: 'rating', review: 'review', reviewedAt: 'reviewed_at', status: 'status',
-  stripeSessionId: 'stripe_session_id', stripePaymentIntentId: 'stripe_payment_intent_id', paidAt: 'paid_at',
-  answeredAt: 'answered_at', answerDeadline: 'answer_deadline', refundedAt: 'refunded_at',
-  refundReason: 'refund_reason', stripeRefundId: 'stripe_refund_id', stripeTransferId: 'stripe_transfer_id',
-  transferredAt: 'transferred_at', transferError: 'transfer_error', reminderSentAt: 'reminder_sent_at'
+  providerOrderId: 'provider_order_id', paidAt: 'paid_at', answeredAt: 'answered_at', answerDeadline: 'answer_deadline',
+  refundedAt: 'refunded_at', refundReason: 'refund_reason', providerRefundId: 'provider_refund_id',
+  refundRequestedAt: 'refund_requested_at', refundError: 'refund_error', reminderSentAt: 'reminder_sent_at'
 };
 
 // `client` may be a transaction client; otherwise the shared pool is used.
@@ -135,12 +130,10 @@ async function updateBooking(id, patch, client) {
   return res ? bookingFromRow((await res).rows[0]) : getBookingById(id, client);
 }
 
-// A mentor shows up publicly (and can be booked) only when this is true. When Stripe is on,
-// they must also have finished payout onboarding so a question can never be paid to someone
-// we cannot pay out.
+// A mentor shows up publicly (and can be booked) only when this is true.
 function listableSql() {
   return `role IN ('mentor', 'both') AND price IS NOT NULL AND niche IS NOT NULL
-    AND role_title IS NOT NULL AND verification_status = 'verified'` + (config.STRIPE_ENABLED ? ' AND payouts_enabled' : '');
+    AND role_title IS NOT NULL AND verification_status = 'verified'`;
 }
 
 // { [mentorId]: { ratingAvg, reviewCount, answeredCount } } for the given mentor ids.

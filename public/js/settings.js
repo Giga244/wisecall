@@ -18,9 +18,6 @@
   const proofUrlInput = document.getElementById('proofUrl');
   const sampleInput = document.getElementById('sampleAnswer');
   const verificationBox = document.getElementById('verificationBox');
-  const payoutsBox = document.getElementById('payoutsBox');
-  const payoutsStatus = document.getElementById('payoutsStatus');
-  const connectBtn = document.getElementById('connectBtn');
 
   function renderVerification(u) {
     const isMentor = u.role === 'mentor' || u.role === 'both';
@@ -51,7 +48,6 @@
     const isMentor = u.role === 'mentor' || u.role === 'both';
     becomeMentorCheckbox.checked = isMentor;
     mentorForm.style.display = isMentor ? 'grid' : 'none';
-    payoutsBox.style.display = isMentor ? 'block' : 'none';
     roleTitleInput.value = u.roleTitle || '';
     nicheSelect.value = u.niche || 'business';
     priceInput.value = u.price || '';
@@ -61,24 +57,6 @@
   }
 
   fillForm(user);
-
-  async function refreshPayoutStatus() {
-    if (!(user.role === 'mentor' || user.role === 'both')) return;
-    try {
-      const status = await WisecallAPI.apiFetch('/connect/status');
-      if (!status.enabled) {
-        payoutsStatus.textContent = t('settings.payouts.disabled');
-        connectBtn.style.display = 'none';
-      } else if (status.payoutsReady) {
-        payoutsStatus.textContent = t('settings.payouts.connected');
-        connectBtn.style.display = 'none';
-      } else {
-        payoutsStatus.textContent = t(user.verificationStatus === 'verified' ? 'settings.payouts.needForListing' : 'settings.payouts.notConnected');
-        connectBtn.style.display = 'inline-flex';
-      }
-    } catch (e) { /* ignore */ }
-  }
-  refreshPayoutStatus();
 
   document.getElementById('profileForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -98,10 +76,8 @@
     try {
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { becomeMentor: checked } });
       mentorForm.style.display = checked ? 'grid' : 'none';
-      payoutsBox.style.display = checked ? 'block' : 'none';
       Object.assign(user, data.user);
       renderVerification(user);
-      refreshPayoutStatus();
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       becomeMentorCheckbox.checked = !checked;
@@ -136,19 +112,6 @@
     }
   });
 
-  connectBtn.addEventListener('click', async () => {
-    connectBtn.disabled = true;
-    try {
-      const data = await WisecallAPI.apiFetch('/connect/onboard', { method: 'POST' });
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (e) {
-      payoutsStatus.textContent = (e.message2) || t('toast.error');
-      connectBtn.disabled = false;
-    }
-  });
-
   document.getElementById('passwordForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const errorEl = document.getElementById('passwordError');
@@ -174,9 +137,4 @@
     });
   });
 
-  const params = new URLSearchParams(location.search);
-  if (params.get('connect') === 'success') {
-    WisecallNav.showToast(t('settings.payouts.connected'));
-    refreshPayoutStatus();
-  }
 })();

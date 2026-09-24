@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { resetDatabase, startServer, client, SAMPLE } = require('./helpers');
+const { resetDatabase, startServer, client, bookAndPay, SAMPLE } = require('./helpers');
 
 const OUTBOX = path.join(os.tmpdir(), `wisecall-outbox-${process.pid}.jsonl`);
 let srv, base;
@@ -111,10 +111,11 @@ describe('delivery through the email provider', () => {
 
     const seeker = await signupViaOutbox('Ka Seeker', 'ka-seeker@example.com', 'ka');
 
-    const b = await seeker.api('/bookings', { method: 'POST', body: { mentorId: mid, question: 'Is this <em>question</em> safe?' } });
-    assert.equal(b.status, 201);
+    const paid = await bookAndPay(base, seeker, mid, 'Is this <em>question</em> safe?');
+    assert.equal(paid.status, 'paid');
+    const b = { booking: paid };
     const q = await waitFor(() => mailTo('mentor-en@example.com', 'new paid question')[0]);
-    assert.match(q.html, /25\.00 USD/);
+    assert.match(q.html, /25\.00 GEL/);
     assert.match(q.html, /&lt;em&gt;question&lt;\/em&gt;/);
     assert.match(q.html, /within 7 days/);
 

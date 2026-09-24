@@ -51,7 +51,7 @@
     <div class="ask-card" id="askCard">
       <div class="ask-card-head">
         <span>${t('expert.ask')}</span>
-        <span class="price">$${expert.price}<span> ${t('expert.perQuestion')}</span></span>
+        <span class="price">${WisecallAPI.formatPrice(expert.price)}<span> ${t('expert.perQuestion')}</span></span>
       </div>
       <div id="askArea"></div>
     </div>
@@ -86,30 +86,40 @@
 
   const askArea = document.getElementById('askArea');
 
-  const showingSuccess = statusParam === 'success' && bookingParam;
-  // Coming back from Stripe proves nothing by itself: ask our server whether the payment was
-  // really confirmed (it only says so after Stripe has told it directly).
+  // The bank sends the buyer back with ?status=success|fail|return, but that is only a hint.
+  const returnedFromBank = Boolean(bookingParam) && ['success', 'fail', 'return'].includes(statusParam);
+  let checking = false;
+
+  // Ask our server to check the payment with the bank; only its answer decides what we show.
   async function confirmPayment() {
+    checking = true;
     askArea.innerHTML = `<div class="booking-result"><p class="muted">${t('expert.confirmingPayment')}</p></div>`;
+    let last = null;
     for (let i = 0; i < 20; i++) {
       try {
-        const { booking } = await WisecallAPI.apiFetch(`/bookings/${bookingParam}`);
+        const { booking } = await WisecallAPI.apiFetch(`/bookings/${bookingParam}/sync`, { method: 'POST' });
+        last = booking;
         if (booking.status === 'paid' || booking.status === 'answered') {
           askArea.innerHTML = `<div class="booking-result success"><div class="success-icon">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
           return;
         }
         if (booking.status === 'expired' || booking.status === 'refunded') break;
+        // The bank said the payment failed or was cancelled: no need to keep waiting.
+        if (statusParam === 'fail' && i >= 2) break;
       } catch (e) { break; }
       await new Promise((r) => setTimeout(r, 1500));
+    }
+    checking = false;
+    if (last && (last.status === 'expired' || statusParam === 'fail')) {
+      renderAskForm();
+      WisecallNav.showToast(t('expert.paymentFailed'));
+      return;
     }
     askArea.innerHTML = `<div class="booking-result"><p class="muted">${t('expert.paymentPending')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
   }
 
-  if (showingSuccess && user) {
+  if (returnedFromBank && user) {
     confirmPayment();
-  } else if (statusParam === 'cancelled') {
-    renderAskForm();
-    WisecallNav.showToast(t('expert.paymentCancelled'));
   } else {
     renderAskForm();
   }
@@ -117,9 +127,8 @@
   document.addEventListener('wisecall:lang-changed', () => {
     const headSpan = document.querySelector('.ask-card-head span');
     if (headSpan) headSpan.textContent = t('expert.ask');
-    if (!showingSuccess) renderAskForm();
+    if (!checking && !returnedFromBank) renderAskForm();
   });
-
   function renderAskForm() {
     if (!user) {
       askArea.innerHTML = `
@@ -138,7 +147,7 @@
           <textarea id="question" rows="4" required minlength="5" placeholder="${t('expert.questionPlaceholder')}"></textarea>
         </label>
         <p class="form-error" id="askError"></p>
-        <button type="submit" class="btn btn-primary btn-block">${t('expert.ask')} — $${expert.price}</button>
+        <button type="submit" class="btn btn-primary btn-block">${t('expert.ask')} — ${WisecallAPI.formatPrice(expert.price)}</button>
       </form>
     `;
     document.getElementById('askForm').addEventListener('submit', onAsk);
@@ -160,7 +169,8 @@
         window.location.href = res.checkoutUrl;
         return;
       }
-      askArea.innerHTML = `<div class="booking-result success"><div class="success-icon">✓</div><p>${t('toast.questionSent')}</p><p class="muted small">${t('expert.simulatedNote')} <a href="/dashboard.html">${t('nav.dashboard')}</a>.</p></div>`;
+      // The server always answers with the bank's payment page; if it did not, something is wrong.
+      throw new Error('no_checkout_url');
     } catch (e) {
       errorEl.textContent = e.message2 || t('expert.sendError');
       submitBtn.disabled = false;

@@ -7,7 +7,6 @@ const JWT_DEFAULT = 'dev-secret-change-me-before-production';
 const list = (v) => String(v || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const int = (v, fallback) => (Number.isFinite(Number(v)) && v !== undefined && v !== '' ? Number(v) : fallback);
 
-const stripeKey = env.STRIPE_SECRET_KEY || '';
 const config = {
   IS_PROD,
   PORT: int(env.PORT, 4242),
@@ -15,20 +14,34 @@ const config = {
   DATABASE_URL: env.DATABASE_URL || '',
   JWT_SECRET: env.JWT_SECRET || JWT_DEFAULT,
 
-  CURRENCY: (env.CURRENCY || 'usd').toLowerCase(),
+  // All money is Georgian lari. Amounts are stored as whole tetri (1/100 lari).
+  CURRENCY: 'gel',
   PLATFORM_FEE_PERCENT: int(env.PLATFORM_FEE_PERCENT, 20),
   ANSWER_DEADLINE_DAYS: int(env.ANSWER_DEADLINE_DAYS, 7),
+  // A mentor's earnings become payable this many days after the answer (the buyer's refund window).
+  PAYOUT_HOLD_DAYS: int(env.PAYOUT_HOLD_DAYS, 7),
   SWEEP_INTERVAL_SECONDS: int(env.SWEEP_INTERVAL_SECONDS, 600),
+  PRICE_MIN: 5,
+  PRICE_MAX: 2000,
 
-  STRIPE_SECRET_KEY: stripeKey,
-  STRIPE_PUBLISHABLE_KEY: env.STRIPE_PUBLISHABLE_KEY || '',
-  STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || '',
-  STRIPE_ENABLED: Boolean(stripeKey && stripeKey.startsWith('sk_')),
-  // Set true when mentors live in a different country than your Stripe platform account.
-  STRIPE_CROSS_BORDER_PAYOUTS: env.STRIPE_CROSS_BORDER_PAYOUTS === 'true',
-  // Without Stripe keys every question is marked paid instantly and nobody is charged. Fine for a
-  // demo, but in production it must be switched on deliberately.
-  ALLOW_SIMULATED_PAYMENTS: env.ALLOW_SIMULATED_PAYMENTS === 'true',
+  // Which bank takes the money: bog | tbc | mock. "mock" is a fake bank for local development
+  // only and is refused in production.
+  PAYMENT_PROVIDER: (env.PAYMENT_PROVIDER || (IS_PROD ? '' : 'mock')).toLowerCase(),
+  PAYMENT_TTL_MINUTES: int(env.PAYMENT_TTL_MINUTES, 30),
+
+  // Bank of Georgia (BOG Payments API)
+  BOG_CLIENT_ID: env.BOG_CLIENT_ID || '',
+  BOG_CLIENT_SECRET: env.BOG_CLIENT_SECRET || '',
+  BOG_API_URL: (env.BOG_API_URL || 'https://api.bog.ge').replace(/\/+$/, ''),
+  BOG_AUTH_URL: env.BOG_AUTH_URL || 'https://oauth2.bog.ge/auth/realms/bog/protocol/openid-connect/token',
+  // Leave empty to use the public key BOG publishes for callback signatures.
+  BOG_CALLBACK_PUBLIC_KEY: (env.BOG_CALLBACK_PUBLIC_KEY || '').replace(/\\n/g, '\n'),
+
+  // TBC Bank (tpay / E-Commerce API)
+  TBC_API_KEY: env.TBC_API_KEY || '',
+  TBC_CLIENT_ID: env.TBC_CLIENT_ID || '',
+  TBC_CLIENT_SECRET: env.TBC_CLIENT_SECRET || '',
+  TBC_API_URL: (env.TBC_API_URL || 'https://api.tbcbank.ge').replace(/\/+$/, ''),
 
   EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
   RESEND_API_KEY: env.RESEND_API_KEY || '',
@@ -55,6 +68,9 @@ if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresq
 if (!['resend', 'postmark', 'log'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend, postmark or log');
 if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) problems.push('PLATFORM_FEE_PERCENT must be between 0 and 99');
 if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
+if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negative');
+if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
+if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
 
 if (IS_PROD) {
   if (!env.JWT_SECRET || env.JWT_SECRET === JWT_DEFAULT || env.JWT_SECRET.length < 24) problems.push('JWT_SECRET must be set to 24+ random characters');
@@ -64,10 +80,18 @@ if (IS_PROD) {
   if (config.EMAIL_PROVIDER === 'postmark' && !config.POSTMARK_TOKEN) problems.push('POSTMARK_TOKEN is required (verification codes and password resets are sent by email)');
   if (!env.EMAIL_FROM) problems.push('EMAIL_FROM is required (an address on a domain you verified with your email provider)');
   if (config.ADMIN_EMAILS.length === 0) problems.push('ADMIN_EMAILS is required (who can approve mentors)');
-  if (!config.STRIPE_ENABLED && !config.ALLOW_SIMULATED_PAYMENTS && !config.STRIPE_SECRET_KEY) problems.push('STRIPE_SECRET_KEY is required in production, or nobody is charged. To run a demo with fake payments on purpose, set ALLOW_SIMULATED_PAYMENTS=true');
-  if (config.STRIPE_SECRET_KEY && !config.STRIPE_SECRET_KEY.startsWith('sk_')) problems.push('STRIPE_SECRET_KEY does not look like a Stripe secret key');
-  if (config.STRIPE_ENABLED && !config.STRIPE_WEBHOOK_SECRET) problems.push('STRIPE_WEBHOOK_SECRET is required when Stripe is enabled');
-  if (config.STRIPE_ENABLED && !config.STRIPE_PUBLISHABLE_KEY) problems.push('STRIPE_PUBLISHABLE_KEY is required when Stripe is enabled');
+
+  if (config.PAYMENT_PROVIDER === 'mock') problems.push('PAYMENT_PROVIDER=mock is a fake bank for development and is not allowed in production');
+  else if (!['bog', 'tbc'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER is required in production: bog or tbc');
+  if (config.PAYMENT_PROVIDER === 'bog') {
+    if (!config.BOG_CLIENT_ID) problems.push('BOG_CLIENT_ID is required when PAYMENT_PROVIDER=bog');
+    if (!config.BOG_CLIENT_SECRET) problems.push('BOG_CLIENT_SECRET is required when PAYMENT_PROVIDER=bog');
+  }
+  if (config.PAYMENT_PROVIDER === 'tbc') {
+    if (!config.TBC_API_KEY) problems.push('TBC_API_KEY is required when PAYMENT_PROVIDER=tbc');
+    if (!config.TBC_CLIENT_ID) problems.push('TBC_CLIENT_ID is required when PAYMENT_PROVIDER=tbc');
+    if (!config.TBC_CLIENT_SECRET) problems.push('TBC_CLIENT_SECRET is required when PAYMENT_PROVIDER=tbc');
+  }
 }
 
 if (problems.length) {

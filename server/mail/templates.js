@@ -37,12 +37,12 @@ const S = {
       subject: 'Your Wisecall payment was refunded', heading: 'Your payment was refunded',
       intro: 'We refunded {amount} for your question to {mentor} because {reason}.',
       after: 'It can take 5–10 business days to appear on your statement.',
-      reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_in_stripe: 'the payment was refunded by our payment provider', other: 'our team refunded it' }
+      reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', other: 'our team refunded it' }
     },
     refundMentor: {
       subject: 'A question was refunded on Wisecall', heading: 'A question was refunded',
       intro: 'The question below was refunded to the buyer because {reason}. You will not receive a payout for it.',
-      reasons: { no_answer_deadline: 'it was not answered within {days} days', refunded_in_stripe: 'the payment was refunded by our payment provider', other: 'our team refunded it' }
+      reasons: { no_answer_deadline: 'it was not answered within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', other: 'our team refunded it' }
     },
     deadlineSoon: {
       subject: 'Answer soon or the question will be refunded', heading: 'A paid question is waiting',
@@ -88,12 +88,12 @@ const S = {
       subject: 'შენი Wisecall-ის გადახდა დაგიბრუნდა', heading: 'თანხა დაგიბრუნდა',
       intro: '{mentor}-სთვის დასმულ კითხვაზე {amount} დაგიბრუნეთ, რადგან {reason}.',
       after: 'თანხა ბანკის ამონაწერში 5–10 სამუშაო დღეში გამოჩნდება.',
-      reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_in_stripe: 'გადახდა დაბრუნდა გადახდის სისტემიდან', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+      reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
     },
     refundMentor: {
       subject: 'Wisecall-ზე კითხვის თანხა დაბრუნდა', heading: 'კითხვის თანხა დაბრუნდა',
       intro: 'ქვემოთ მოცემული კითხვის თანხა დაუბრუნდა მყიდველს, რადგან {reason}. ამ კითხვაზე ანაზღაურებას ვერ მიიღებ.',
-      reasons: { no_answer_deadline: 'პასუხი {days} დღის განმავლობაში არ გაიცა', refunded_in_stripe: 'გადახდა დაბრუნდა გადახდის სისტემიდან', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+      reasons: { no_answer_deadline: 'პასუხი {days} დღის განმავლობაში არ გაიცა', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
     },
     deadlineSoon: {
       subject: 'უპასუხე მალე, თორემ კითხვის თანხა დაბრუნდება', heading: 'ფასიანი კითხვა გელოდება',

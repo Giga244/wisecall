@@ -2,7 +2,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 const path = require('path');
-const { ROOT, resetDatabase, startServer, client, signupVerified, SAMPLE } = require('./helpers');
+const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, SAMPLE } = require('./helpers');
 
 let srv, base;
 const ids = {};
@@ -125,25 +125,25 @@ describe('mentor application and approval', () => {
     const pub = await client(base).api('/experts');
     assert.equal(pub.experts.length, 1);
     const e = pub.experts[0];
-    for (const k of ['email', 'stripeAccountId', 'proofUrl', 'sampleAnswer', 'passwordHash']) assert.equal(e[k], undefined, k + ' must not be public');
+    for (const k of ['email', 'payoutIban', 'payoutName', 'proofUrl', 'sampleAnswer', 'passwordHash']) assert.equal(e[k], undefined, k + ' must not be public');
     assert.equal(e.roleTitle, 'Cardiologist');
   });
 });
 
-describe('questions, answers and reviews (simulated payments)', () => {
+describe('questions, answers and reviews (paid at the test bank)', () => {
   test('cannot book yourself; short questions rejected', async () => {
     assert.equal((await ids.mentorClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'Booking myself here' } })).error, 'cannot_book_self');
     assert.equal((await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'hi' } })).error, 'missing_fields');
   });
 
   test('book -> only the mentor can answer -> seeker reviews once', async () => {
-    const b = await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'How do I get into a good residency?' } });
-    assert.equal(b.status, 201);
-    assert.equal(b.booking.status, 'paid');
-    assert.equal(b.booking.amount, 2500);
-    assert.equal(b.booking.platformFeeAmount, 500, '20% fee');
-    assert.equal(b.booking.mentorNetAmount, 2000);
-    ids.booking = b.booking.id;
+    const b = await bookAndPay(base, ids.seekerClient, ids.mentor, 'How do I get into a good residency?');
+    assert.equal(b.status, 'paid');
+    assert.equal(b.currency, 'gel');
+    assert.equal(b.amount, 2500, '25 GEL is 2500 tetri');
+    assert.equal(b.platformFeeAmount, 500, '20% fee');
+    assert.equal(b.mentorNetAmount, 2000);
+    ids.booking = b.id;
 
     assert.notEqual((await ids.seekerClient.api(`/bookings/${ids.booking}/answer`, { method: 'POST', body: { answer: 'I am not the mentor' } })).status, 200);
     const ans = await ids.mentorClient.api(`/bookings/${ids.booking}/answer`, { method: 'POST', body: { answer: 'Focus on research and strong letters.' } });
@@ -224,8 +224,9 @@ describe('admin: mentor decisions and refunds', () => {
   });
 
   test('admins see all bookings; nobody else can; only admins can refund', async () => {
-    const b = await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'A question that will be refunded by an admin' } });
-    assert.equal(b.status, 201);
+    const paid = await bookAndPay(base, ids.seekerClient, ids.mentor, 'A question that will be refunded by an admin');
+    assert.equal(paid.status, 'paid');
+    const b = { booking: paid };
     assert.equal((await ids.seekerClient.api('/admin/bookings')).error, 'not_admin');
     assert.equal((await ids.seekerClient.api(`/admin/bookings/${b.booking.id}/refund`, { method: 'POST' })).error, 'not_admin');
 
@@ -387,17 +388,17 @@ describe('production safety', () => {
       // Values are blanked (not omitted) so dotenv cannot fill them in from the real .env file.
       env: {
         PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL,
-        JWT_SECRET: '', APP_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', STRIPE_SECRET_KEY: '', ALLOW_SIMULATED_PAYMENTS: ''
+        JWT_SECRET: '', APP_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: ''
       }
     });
     assert.equal(r.status, 1);
-    for (const name of ['JWT_SECRET', 'APP_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'STRIPE_SECRET_KEY']) assert.match(r.stderr, new RegExp(name));
+    for (const name of ['JWT_SECRET', 'APP_URL', 'RESEND_API_KEY', 'ADMIN_EMAILS', 'PAYMENT_PROVIDER']) assert.match(r.stderr, new RegExp(name));
   });
 
   test('in production, codes and reset links are never returned by the API', async () => {
     const prod = await startServer(4553, {
       NODE_ENV: 'production', APP_URL: 'https://example.com', RESEND_API_KEY: 're_fake_key_for_test', EMAIL_FROM: 'Wisecall <hi@example.com>',
-      ALLOW_SIMULATED_PAYMENTS: 'true'
+      PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: 'id_for_test', BOG_CLIENT_SECRET: 'secret_for_test'
     });
     try {
       const c = client(prod.base);

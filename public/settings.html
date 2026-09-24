@@ -95,7 +95,7 @@
         </select>
       </label>
       <label><span data-i18n="settings.mentor.price">Price per question (USD)</span>
-        <input type="number" id="price" min="1" max="5000" step="1" required>
+        <input type="number" id="price" min="5" max="2000" step="1" required>
       </label>
       <label><span data-i18n="settings.mentor.proofUrl">Proof of expertise — a LinkedIn link is strongly preferred</span>
         <input type="url" id="proofUrl" placeholder="https://linkedin.com/in/yourname" required>
@@ -107,12 +107,6 @@
       </label>
       <button type="submit" class="btn btn-primary" data-i18n="settings.mentor.save">Save mentor profile</button>
     </form>
-
-    <div class="payouts-box" id="payoutsBox" style="display:none">
-      <h3 data-i18n="settings.payouts.title">Payouts</h3>
-      <p class="muted" id="payoutsStatus"></p>
-      <button class="btn btn-outline" id="connectBtn" data-i18n="settings.payouts.connect">Connect payout account</button>
-    </div>
   </div>
 
   <div class="settings-card">

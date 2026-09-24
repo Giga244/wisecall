@@ -66,7 +66,7 @@
         <div class="card-bio">${escapeHtml(e.bio || '')}</div>
         <div class="card-bottom">
           <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : WisecallI18n.t('expert.noReviewsYet')}</span>
-          <span class="price">$${e.price}<span> ${perQ}</span></span>
+          <span class="price">${WisecallAPI.formatPrice(e.price)}<span> ${perQ}</span></span>
         </div>
         <span class="btn btn-primary btn-sm btn-block">${askLabel}</span>
       </a>

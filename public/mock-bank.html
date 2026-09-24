@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test bank — Wisecall (development only)</title>
+<meta name="description" content="A fake bank payment page used only while developing Wisecall. It does not exist in production.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="/index.html" class="logo">Wisecall<span class="dot">.</span></a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ka">KA</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="auth-page">
+  <div class="auth-card">
+    <p class="badge badge-pending_payment" data-i18n="mockbank.badge">Development only</p>
+    <h1 data-i18n="mockbank.title">Test bank</h1>
+    <p class="muted" data-i18n="mockbank.sub">This is a fake bank page for trying Wisecall without a real bank. No money moves.</p>
+    <p class="mock-amount" id="mockAmount" aria-live="polite"></p>
+    <p class="form-error" id="mockError" role="alert"></p>
+    <div class="mock-actions">
+      <button class="btn btn-primary btn-block" id="payBtn" data-i18n="mockbank.pay">Pay</button>
+      <button class="btn btn-outline btn-block" id="failBtn" data-i18n="mockbank.fail">Simulate a failed payment</button>
+      <button class="btn btn-ghost btn-block" id="cancelBtn" data-i18n="mockbank.cancel">Cancel</button>
+    </div>
+  </div>
+</section>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/mock-bank.js"></script>
+</body>
+</html>

@@ -25,9 +25,16 @@ app.get('/healthz', async (req, res) => {
   }
 });
 
-// Webhook route needs the raw body for Stripe signature verification,
-// so it's mounted before the global json() body parser.
-app.use('/api/webhook', express.raw({ type: 'application/json' }), require('./routes/webhook'));
+// The bank's callback needs the raw body (BOG signs the exact bytes), so it is mounted before the
+// global json() body parser. It also comes from the bank's servers, so it is exempt from the CSRF
+// header rule; its authenticity is checked in server/pay/ instead.
+app.use('/api/payments', express.raw({ type: '*/*', limit: '100kb' }), require('./routes/paymentCallback'));
+
+// Development only: the fake bank's payment page. Never exists in production.
+const useMockBank = config.PAYMENT_PROVIDER === 'mock' && !config.IS_PROD;
+if (!useMockBank) {
+  app.use(['/mock-bank.html', '/js/mock-bank.js', '/api/mock-bank'], pages.notFoundHandler);
+}
 
 // State-changing API calls must come from our own pages (see security.js).
 app.use('/api', csrfGuard);
@@ -47,16 +54,16 @@ app.use('/api/contact', require('./routes/contact'));
 app.use('/api/me', require('./routes/me'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
-app.use('/api/connect', require('./routes/connect'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/admin', require('./routes/admin'));
+if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
 
 app.get('/api/config', (req, res) => {
   res.json({
     currency: config.CURRENCY,
-    platformFeePercent: config.PLATFORM_FEE_PERCENT,
-    stripeEnabled: config.STRIPE_ENABLED,
-    stripePublishableKey: config.STRIPE_PUBLISHABLE_KEY
+    priceMin: config.PRICE_MIN,
+    priceMax: config.PRICE_MAX,
+    payoutHoldDays: config.PAYOUT_HOLD_DAYS
   });
 });
 
@@ -79,10 +86,9 @@ async function start() {
   await db.migrate();
   const server = app.listen(config.PORT, () => {
     console.log(`Wisecall running at http://localhost:${config.PORT}`);
-    console.log(config.STRIPE_ENABLED
-      ? 'Stripe: enabled.'
-      : 'Stripe: not configured — bookings are auto-marked "paid" in simulated mode. Add STRIPE_SECRET_KEY to .env to enable real Stripe Checkout.');
-    if (config.IS_PROD && !config.STRIPE_ENABLED) console.warn('WARNING: production is running with SIMULATED payments (ALLOW_SIMULATED_PAYMENTS=true). Nobody is being charged.');
+    console.log(config.PAYMENT_PROVIDER === 'mock'
+      ? 'Payments: MOCK bank (development only). Set PAYMENT_PROVIDER=bog or tbc with your bank keys for real payments.'
+      : `Payments: ${config.PAYMENT_PROVIDER.toUpperCase()} (callback URL ${config.APP_URL}/api/payments/callback)`);
   });
 
   const stopJobs = startJobs();

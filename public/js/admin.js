@@ -59,7 +59,7 @@
             <div class="card-name">${escapeHtml(m.name)}</div>
             <span class="muted small">${escapeHtml(m.email)}</span>
           </div>
-          <div class="booking-amount">${m.price ? '$' + m.price : '—'}</div>
+          <div class="booking-amount">${m.price ? WisecallAPI.formatPrice(m.price) : '—'}</div>
         </div>
         <p class="booking-question">
           <strong>${escapeHtml(m.roleTitle || '—')}</strong> · ${m.niche ? t('niche.' + m.niche) : '—'}<br>
@@ -116,7 +116,7 @@
   }
 
   function money(cents, currency) {
-    return `$${(cents / 100).toFixed(2)} ${(currency || 'usd').toUpperCase()}`;
+    return WisecallAPI.formatAmount(cents);
   }
 
   function fmtDate(d) {
@@ -138,10 +138,10 @@
           <div class="booking-amount">${money(b.amount, b.currency)}</div>
         </div>
         <p class="booking-question">${escapeHtml(b.question)}</p>
-        <p class="muted small">${t('admin.bk.created')}: ${fmtDate(b.createdAt)}${b.answerDeadline && b.status === 'paid' ? ` · ${t('admin.bk.deadline')}: ${fmtDate(b.answerDeadline)}` : ''}${b.refundReason ? ` · ${t('admin.bk.reason')}: ${escapeHtml(b.refundReason)}` : ''}${b.transferError ? ` · <span class="form-error">${t('admin.bk.payoutIssue')}</span>` : ''}</p>
+        <p class="muted small">${t('admin.bk.created')}: ${fmtDate(b.createdAt)}${b.answerDeadline && b.status === 'paid' ? ` · ${t('admin.bk.deadline')}: ${fmtDate(b.answerDeadline)}` : ''}${b.refundReason ? ` · ${t('admin.bk.reason')}: ${escapeHtml(b.refundReason)}` : ''}${b.refundError ? ` · <span class="form-error">${t('admin.bk.refundError')}: ${escapeHtml(b.refundError)}</span>` : ''}</p>
         <div class="review-actions" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
           <span class="badge badge-${b.status}">${t('dash.status.' + b.status)}</span>
-          ${(b.status === 'paid' || b.status === 'answered') ? `<button class="btn btn-outline btn-sm refund-btn">${t('admin.bk.refund')}</button>` : ''}
+          ${(b.status === 'paid' || b.status === 'answered' || (b.status === 'refund_pending' && b.refundError)) ? `<button class="btn btn-outline btn-sm refund-btn">${t(b.status === 'refund_pending' ? 'admin.bk.retryRefund' : 'admin.bk.refund')}</button>` : ''}
         </div>
       </div>
     `).join('');
