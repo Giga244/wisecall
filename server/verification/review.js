@@ -3,6 +3,7 @@
 // because each step already carries one) and every one is written to the audit log.
 const rules = require('./rules');
 const steps = require('./steps');
+const flags = require('./flags');
 const { VerificationError } = steps;
 const { getUserById, updateUser } = require('../models');
 
@@ -35,6 +36,10 @@ async function decideStep({ mentorId, step, decision, reason, admin }) {
   if (!existing) throw new VerificationError('not_submitted');
 
   await steps.setStep(mentor.id, step, decision, { reason: text, actor: steps.adminActor(admin) });
+  // An admin who accepts the names as they are closes the mismatch flags.
+  if (step === 'name_match' && decision === 'passed') {
+    await flags.resolveFlags(mentor.id, ['name_mismatch', 'payout_name_mismatch'], steps.adminActor(admin), text);
+  }
 
   // A required step that fails takes a live mentor off the site until it is sorted out.
   if (decision === 'failed' && mentor.verificationStatus === 'verified' && rules.stepNamesFor(mentor.niche).includes(step)) {

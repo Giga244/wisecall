@@ -597,5 +597,14 @@
   "verify.kyc.declined": "უარყოფილია",
   "verify.kyc.in_review": "პროვაიდერთან განიხილება",
   "verify.kyc.expired": "ვადაგასულია",
-  "verify.kyc.not_finished": "დაუსრულებელია"
+  "verify.kyc.not_finished": "დაუსრულებელია",
+  "admin.mv.flag.name_mismatch": "რომელიმე სახელი არ ემთხვევა პირადობას. შეამოწმე ხელით; ავტომატურად არ დამტკიცებულა.",
+  "admin.mv.flag.payout_name_mismatch": "ანგარიშის მფლობელი არ ემთხვევა პირადობას. გადარიცხვები შეჩერებულია, სანამ ეს არ გადაწყდება.",
+  "admin.mv.resolve": "გადაწყვეტა",
+  "admin.po.flagged": "გადარიცხვა შეჩერებულია: ანგარიშის მფლობელის სახელი არ ემთხვევა პირადობას. ჯერ მენტორის განხილვაში გადაწყვიტე ეს.",
+  "verify.ev.idName": "სახელი პირადობაზე",
+  "verify.ev.results": "სახელების შედარება",
+  "verify.ev.state": "სტატუსი",
+  "verify.ev.provider": "პროვაიდერი",
+  "verify.ev.country": "ქვეყანა"
 }

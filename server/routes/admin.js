@@ -8,6 +8,7 @@ const config = require('../config');
 const payments = require('../payments');
 const notify = require('../notify');
 const verificationSteps = require('../verification/steps');
+const flags = require('../verification/flags');
 const ledger = require('../ledger');
 const { decrypt } = require('../cryptoBox');
 const { pretty } = require('../iban');
@@ -80,7 +81,8 @@ async function payoutRows() {
             COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND p.payable_at <= now()), 0)::int AS payable,
             COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND p.payable_at > now()), 0)::int AS holding,
             COALESCE(sum(p.amount) FILTER (WHERE p.status = 'paid' AND p.debt_flagged_at IS NOT NULL AND p.debt_settled_batch_id IS NULL), 0)::int AS debt,
-            count(*) FILTER (WHERE p.status = 'pending' AND p.payable_at <= now())::int AS payable_count
+            count(*) FILTER (WHERE p.status = 'pending' AND p.payable_at <= now())::int AS payable_count,
+            EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = u.id AND f.status = 'open' AND f.kind IN ('name_mismatch', 'payout_name_mismatch')) AS flagged
        FROM users u JOIN payouts p ON p.mentor_id = u.id
       GROUP BY u.id ORDER BY u.name`
   );
@@ -90,7 +92,7 @@ async function payoutRows() {
       return {
         mentorId: r.id, name: r.name, email: r.email, payoutName: r.payout_name || null,
         iban: iban ? pretty(iban) : null, ibanLast4: r.payout_iban_last4 || null,
-        payable: r.payable, holding: r.holding, debt: r.debt, net: r.payable - r.debt, payableCount: r.payable_count
+        payable: r.payable, holding: r.holding, debt: r.debt, net: r.payable - r.debt, payableCount: r.payable_count, flagged: r.flagged
       };
     })
     .filter((r) => r.payable > 0 || r.holding > 0 || r.debt > 0);
@@ -115,7 +117,8 @@ router.get('/payouts', requireAuth, requireAdmin, asyncHandler(async (req, res) 
 
 // The transfers to make today, ready for a spreadsheet or bulk upload at the bank.
 router.get('/payouts.csv', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
-  const rows = (await payoutRows()).filter((r) => r.net > 0);
+  // Mentors with an open name-mismatch flag are left out: nothing is sent until an admin resolves it.
+  const rows = (await payoutRows()).filter((r) => r.net > 0 && !r.flagged);
   sendCsv(res, `wisecall-payouts-${new Date().toISOString().slice(0, 10)}.csv`,
     ['mentor_name', 'mentor_email', 'account_holder', 'iban', 'amount_gel', 'currency', 'answered_bookings', 'note'],
     rows.map((r) => [r.name, r.email, r.payoutName, (r.iban || '').replace(/\s/g, ''), lari(r.net), 'GEL', r.payableCount, `Wisecall payout ${new Date().toISOString().slice(0, 10)}`]));
@@ -158,6 +161,8 @@ router.post('/payouts/:mentorId/pay', requireAuth, requireAdmin, asyncHandler(as
 
   const mentor = await getUserById(req.params.mentorId);
   if (!mentor) return res.status(404).json({ error: 'not_found' });
+  // Never send money to an account whose holder does not match the verified ID.
+  if (await flags.hasOpenFlag(mentor.id, ['name_mismatch', 'payout_name_mismatch'])) return res.status(409).json({ error: 'name_mismatch' });
   try {
     const batch = await ledger.markPaid({ mentorId: mentor.id, expectedAmount: amount, reference: reference.trim(), adminId: req.adminUser.id });
     console.log(`[admin] ${req.adminUser.email} recorded a payout of ${batch.amount} tetri to mentor ${mentor.id} (${batch.reference})`);

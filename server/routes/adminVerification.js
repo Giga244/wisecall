@@ -9,6 +9,7 @@ const rules = require('../verification/rules');
 const steps = require('../verification/steps');
 const review = require('../verification/review');
 const kycService = require('../verification/kyc');
+const flags = require('../verification/flags');
 
 const router = express.Router();
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -34,8 +35,9 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
   const mentor = await getUserById(req.params.id);
   if (!mentor || !(mentor.role === 'mentor' || mentor.role === 'both')) return res.status(404).json({ error: 'not_found' });
 
-  const [kycSummary, stepRows, auditRows] = await Promise.all([
+  const [kycSummary, openFlags, stepRows, auditRows] = await Promise.all([
     kycService.summaryFor(mentor.id),
+    flags.openFlagsFor(mentor.id),
     query(`SELECT s.*, u.email AS decided_by_email FROM verification_steps s LEFT JOIN users u ON u.id = s.decided_by WHERE s.user_id = $1`, [mentor.id]),
     query(`SELECT * FROM verification_audit WHERE mentor_id = $1 ORDER BY created_at DESC LIMIT 200`, [mentor.id])
   ]);
@@ -55,6 +57,7 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
     },
     level: summary.level,
     kyc: kycSummary,
+    flags: openFlags,
     requirements: summary.requirements.map((r) => (r.type === 'step'
       ? { ...r, ...(detail[r.step] || {}), status: r.status }
       : { ...r, options: r.options.map((o) => ({ ...o, ...(detail[o.step] || {}), status: o.status })) })),
@@ -107,6 +110,16 @@ router.post('/mentors/:id/kyc/refresh', requireAuth, requireAdmin, asyncHandler(
     console.error('[kyc] refresh failed:', e.message);
     res.status(502).json({ error: 'kyc_error' });
   }
+}));
+
+// An admin closes a flag (for example after checking a name mismatch by hand). A reason is required.
+router.post('/flags/:id/resolve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const reason = req.body && req.body.reason;
+  if (typeof reason !== 'string' || reason.trim().length < 5) return res.status(400).json({ error: 'reason_required' });
+  const done = await flags.resolveById(req.params.id, steps.adminActor(req.adminUser), reason.trim().slice(0, 1000));
+  if (!done) return res.status(404).json({ error: 'not_found' });
+  res.json({ ok: true });
 }));
 
 module.exports = router;

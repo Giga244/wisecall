@@ -8,6 +8,7 @@ const { isValidGeorgianIban, normalize, pretty } = require('../iban');
 const ledger = require('../ledger');
 const rules = require('../verification/rules');
 const verification = require('../verification/steps');
+const names = require('../verification/names');
 const { getUserById, updateUser } = require('../models');
 const config = require('../config');
 
@@ -99,6 +100,8 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     if (!current.sample_answer || changed.includes('sampleAnswer')) await verification.setStep(user.id, 'sample_answer', 'pending', { evidence: { length: user.sampleAnswer.length }, replaceEvidence: true, actor });
     await verification.syncEmailStep(user);
   }
+  // A changed name is compared with the ID again.
+  if (isMentor && patch.name !== undefined && patch.name !== existing.name) await names.recompute(user.id);
   res.json({ user: meProfile(user) });
 }));
 
@@ -131,6 +134,8 @@ router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
     payoutIbanLast4: normalized.slice(-4),
     payoutUpdatedAt: new Date()
   });
+  // The account holder's name is compared with the name on the ID.
+  await names.recompute(user.id);
   res.json({ user: meProfile(updated), name: cleanName, iban: pretty(normalized), last4: normalized.slice(-4) });
 }));
 

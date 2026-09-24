@@ -112,11 +112,12 @@
         <p class="muted small">
           ${t('admin.po.payable')}: ${money(r.payable, 'gel')} · ${t('admin.po.holding')}: ${money(r.holding, 'gel')}${r.debt ? ` · <span class="form-error">${t('admin.po.debt')}: ${money(r.debt, 'gel')}</span>` : ''}
         </p>
+        ${r.flagged ? `<p class="form-error">${t('admin.po.flagged')}</p>` : ''}
         ${r.net < 0 ? `<p class="form-error">${t('admin.po.debtExceeds')}</p>` : ''}
         ${(r.payable > 0 || r.debt > 0) && r.net >= 0 ? `
           <div class="payout-pay">
             <input type="text" class="payout-ref" maxlength="100" placeholder="${t('admin.po.refPlaceholder')}" aria-label="${t('admin.po.refPlaceholder')}">
-            <button class="btn btn-primary btn-sm pay-btn" ${r.iban || r.net === 0 ? '' : 'disabled'}>${t(r.net === 0 ? 'admin.po.settle' : 'admin.po.markPaid')}</button>
+            <button class="btn btn-primary btn-sm pay-btn" ${(r.iban || r.net === 0) && !r.flagged ? '' : 'disabled'}>${t(r.net === 0 ? 'admin.po.settle' : 'admin.po.markPaid')}</button>
           </div>` : ''}
       </div>`).join('');
     const hist = batches.length === 0 ? '' : `

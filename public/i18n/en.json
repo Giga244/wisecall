@@ -597,5 +597,14 @@
   "verify.kyc.declined": "declined",
   "verify.kyc.in_review": "in review at the provider",
   "verify.kyc.expired": "expired",
-  "verify.kyc.not_finished": "not finished"
+  "verify.kyc.not_finished": "not finished",
+  "admin.mv.flag.name_mismatch": "A name does not match the ID. Check it by hand; it was not approved automatically.",
+  "admin.mv.flag.payout_name_mismatch": "The payout account holder does not match the ID. Payouts are held until this is resolved.",
+  "admin.mv.resolve": "Resolve",
+  "admin.po.flagged": "Payout on hold: the account holder name does not match the ID. Resolve the flag in the mentor review first.",
+  "verify.ev.idName": "Name on the ID",
+  "verify.ev.results": "Name comparison",
+  "verify.ev.state": "Status",
+  "verify.ev.provider": "Provider",
+  "verify.ev.country": "Country"
 }

@@ -11,13 +11,16 @@
 
   // Evidence is shown as plain "label: value" lines. Nothing here is ever a link the admin could
   // click by accident except URLs the mentor supplied, which open in a new tab without a referrer.
+  const labelFor = (k) => (t('verify.ev.' + k) === 'verify.ev.' + k ? k : t('verify.ev.' + k));
+
   function evidenceHtml(ev) {
-    const entries = Object.entries(ev || {}).filter(([, v]) => v !== null && v !== undefined && v !== '');
+    const entries = Object.entries(ev || {}).filter(([k, v]) => v !== null && v !== undefined && v !== '' && k !== 'inputsHash' && k !== 'mismatch');
     if (!entries.length) return '';
     return `<ul class="mv-evidence">${entries.map(([k, v]) => {
+      if (Array.isArray(v)) return `<li><span class="muted small">${esc(labelFor(k))}:</span><ul>${v.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></li>`;
       const text = String(v);
       const value = /^https?:\/\//i.test(text) ? `<a href="${esc(text)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>` : esc(typeof v === 'object' ? JSON.stringify(v) : text);
-      return `<li><span class="muted small">${esc(t('verify.ev.' + k) === 'verify.ev.' + k ? k : t('verify.ev.' + k))}:</span> ${value}</li>`;
+      return `<li><span class="muted small">${esc(labelFor(k))}:</span> ${value}</li>`;
     }).join('')}</ul>`;
   }
 
@@ -50,6 +53,19 @@
         <button class="btn btn-ghost btn-sm mv-kyc-refresh">${t('admin.mv.kycRefresh')}</button>
       </div>`;
   }
+  // Open flags the system raised for this mentor (for example a name that does not match the ID).
+  function flagsBlock(list) {
+    if (!list || !list.length) return '';
+    return `<div class="mv-flags">${list.map((f) => `
+      <div class="mv-flag" data-flag="${f.id}">
+        <p><strong>${t('admin.mv.flag.' + f.kind)}</strong></p>
+        ${f.detail && f.detail.mismatches ? `<ul class="mv-evidence">${f.detail.mismatches.map((m) => `<li>${esc(m.source)}: “${esc(m.name)}” (${Math.round(m.score * 100)}%)</li>`).join('')}</ul>` : ''}
+        <div class="mv-decide">
+          <input type="text" class="mv-flag-reason" maxlength="300" placeholder="${esc(t('admin.mv.reasonPlaceholder'))}" aria-label="${esc(t('admin.mv.reasonPlaceholder'))}">
+          <button class="btn btn-outline btn-sm mv-flag-resolve">${t('admin.mv.resolve')}</button>
+        </div>
+      </div>`).join('')}</div>`;
+  }
   function panelHtml(d) {
     const rows = d.requirements.map((r) => (r.type === 'step'
       ? stepRow(r)
@@ -62,6 +78,7 @@
         <div class="booking-answer"><strong>${t('admin.sampleTitle')}</strong> ${esc(d.mentor.sampleAnswer || '')}</div>
         ${d.mentor.proofUrl ? `<p>${t('admin.mv.proofLink')}: <a href="${esc(d.mentor.proofUrl)}" target="_blank" rel="noopener noreferrer">${esc(d.mentor.proofUrl)}</a></p>` : ''}
         ${d.registries.length ? `<p class="small"><strong>${t('admin.mv.registries')}</strong> ${d.registries.map((r) => `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.label)}</a>`).join(' · ')}</p>` : ''}
+        ${flagsBlock(d.flags)}
         ${kycBlock(d.kyc)}
         <div class="mv-steps">${rows}</div>
         <div class="mv-final">
@@ -140,6 +157,14 @@
           const fail = row.querySelector('.mv-fail');
           if (pass) pass.addEventListener('click', () => decide('passed'));
           if (fail) fail.addEventListener('click', () => decide('failed'));
+        });
+        body.querySelectorAll('.mv-flag').forEach((el) => {
+          el.querySelector('.mv-flag-resolve').addEventListener('click', async () => {
+            const reason = el.querySelector('.mv-flag-reason').value.trim();
+            if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+            try { await WisecallAPI.apiFetch(`/admin/flags/${el.dataset.flag}/resolve`, { method: 'POST', body: { reason } }); await loadPanel(); onChange({ soft: true }); }
+            catch (e) { WisecallNav.showToast(t('toast.error')); }
+          });
         });
         const refresh = body.querySelector('.mv-kyc-refresh');
         if (refresh) refresh.addEventListener('click', async () => {
