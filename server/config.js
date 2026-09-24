@@ -9,6 +9,9 @@ const int = (v, fallback) => (Number.isFinite(Number(v)) && v !== undefined && v
 
 const config = {
   IS_PROD,
+  // Development helpers (codes shown on screen, fake bank, fake ID check) exist only outside production.
+  // There is no setting that turns them on in production: this is derived from NODE_ENV alone.
+  DEV_MODE: !IS_PROD,
   PORT: int(env.PORT, 4242),
   // The public address of the site. Used for canonical links, share tags, sitemap.xml, robots.txt,
   // emailed links and the bank's return and callback URLs. (APP_URL still works as an old name.)

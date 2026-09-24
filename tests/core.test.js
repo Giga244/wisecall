@@ -533,6 +533,15 @@ describe('production safety', () => {
       const f = await c.api('/auth/forgot-password', { method: 'POST', body: { email: 'prod-user@example.com' } });
       assert.deepEqual({ ok: f.ok, resetUrl: f.resetUrl, devMode: f.devMode }, { ok: true, resetUrl: undefined, devMode: undefined });
 
+      // Development helpers do not exist in production: no devMode key, no fake bank or ID-check pages or routes.
+      const cfg = await (await fetch(`${prod.base}/api/config`)).json();
+      assert.ok(!('devMode' in cfg), 'the config does not mention devMode at all');
+      for (const p of ['/mock-bank.html', '/mock-kyc.html', '/js/mock-bank.js', '/js/mock-kyc.js']) {
+        assert.equal((await fetch(prod.base + p, { headers: { Accept: 'text/html' } })).status, 404, `${p} is not served`);
+      }
+      assert.equal((await client(prod.base).api('/mock-bank/orders/x/complete', { method: 'POST', body: {} })).status, 404);
+      assert.equal((await client(prod.base).api('/mock-kyc/sessions/x', {})).status, 404);
+
       // Every public address in the output comes from PUBLIC_URL, never from localhost.
       for (const p of ['/', '/about.html', '/terms.html', '/robots.txt', '/sitemap.xml', '/no-such-page']) {
         const text = await (await fetch(prod.base + p, { headers: { Accept: 'text/html' } })).text();

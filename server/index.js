@@ -91,8 +91,9 @@ app.get('/api/config', (req, res) => {
     // Shown in the footer only when set.
     contactEmail: config.SUPPORT_EMAIL || null,
     social: config.SOCIAL_URLS,
-    // Only ever true on a developer's computer: pages may then show dev-mode helpers.
-    devMode: !config.IS_PROD
+    // Only present on a developer's computer, where pages may show dev-mode helpers. In production the
+    // key does not exist at all.
+    ...(config.DEV_MODE ? { devMode: true } : {})
   });
 });
 
@@ -119,6 +120,10 @@ async function start() {
     console.log(config.PAYMENT_PROVIDER === 'mock'
       ? 'Payments: MOCK bank (development only). Set PAYMENT_PROVIDER=bog or tbc with your bank keys for real payments.'
       : `Payments: ${config.PAYMENT_PROVIDER.toUpperCase()} (callback URL ${config.PUBLIC_URL}/api/payments/callback)`);
+    console.log(config.KYC_PROVIDER === 'mock'
+      ? 'ID check: MOCK (development only).'
+      : `ID check: ${config.KYC_PROVIDER.toUpperCase()} (webhook URL ${config.PUBLIC_URL}/api/kyc/webhook)`);
+    require('./startupWarnings').printWarnings();
   });
 
   const stopJobs = startJobs();
