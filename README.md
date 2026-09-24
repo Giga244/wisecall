@@ -32,7 +32,7 @@ npm start            # applies database migrations automatically, then serves ht
 npm test             # end-to-end tests against TEST_DATABASE_URL (a throwaway database)
 ```
 
-Open http://localhost:4242. The site starts empty — no fake data. Sign up, then go to **Settings** to become a mentor (fill in title/niche/price/proof link), and approve yourself at **/admin.html** using the account whose email matches `ADMIN_EMAIL` in `.env`.
+Open http://localhost:4242. The site starts empty — no fake data. Sign up, then go to **Settings** to become a mentor (fill in title/niche/price/proof link), and approve yourself at **/admin.html** using the account whose email is listed in `ADMIN_EMAILS` in `.env`.
 
 ## The mentor verification & admin review flow
 
