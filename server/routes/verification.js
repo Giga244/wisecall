@@ -6,6 +6,7 @@ const rules = require('../verification/rules');
 const steps = require('../verification/steps');
 const kycService = require('../verification/kyc');
 const credentials = require('../verification/credentials');
+const interviews = require('../verification/interviews');
 const { query } = require('../db');
 
 const router = express.Router();
@@ -68,7 +69,8 @@ router.get('/kyc', requireAuth, asyncHandler(async (req, res) => {
 // ---- Credentials the mentor submits --------------------------------------------------------------
 const CODE_STATUS = {
   not_required: 409, invalid_state: 409, no_pending_code: 409, not_found: 404, unknown_step: 404,
-  too_many_files: 409, file_too_large: 413, unsupported_file_type: 415
+  too_many_files: 409, file_too_large: 413, unsupported_file_type: 415,
+  slot_unavailable: 409, already_booked: 409, id_check_first: 409, already_passed: 409, too_late: 409
 };
 
 // Turns a VerificationError into a JSON reply (400 unless mapped above); anything else is a real error.
@@ -108,6 +110,14 @@ router.post('/documents/:step', requireAuth, asyncHandler(async (req, res) => {
     res.status(201).json(out);
   } catch (e) { fail(res, e); }
 }));
+
+// ---- Video interview (regulated niches) ------------------------------------------------------------
+router.get('/interview', requireAuth, asyncHandler(async (req, res) => {
+  const user = await mentorOr(req, res);
+  if (user) res.json(await interviews.overview(user));
+}));
+router.post('/interview/book', ...submit(async (user, b) => ({ booking: await interviews.book(user, b.slotId) })));
+router.post('/interview/cancel', ...submit((user) => interviews.cancel(user)));
 
 router.delete('/documents/:id', requireAuth, asyncHandler(async (req, res) => {
   const user = await mentorOr(req, res);

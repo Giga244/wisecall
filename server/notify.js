@@ -39,6 +39,16 @@ const notifyPayoutPaid = (mentor, batch) =>
     amount: money(batch), last4: batch.iban_last4 || '----', reference: batch.reference
   });
 
+// A time written for the person receiving it, always with the zone spelled out.
+const utcDate = (date, lang) => new Date(date).toLocaleString(lang === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
+
+const notifyInterviewBooked = (mentor, slot) =>
+  safeSend('interview booked', 'interviewBooked', mentor, { date: utcDate(slot.startsAt, mentor.language), minutes: slot.minutes });
+const notifyInterviewLink = (mentor, slot) =>
+  safeSend('interview link', 'interviewLink', mentor, { date: utcDate(slot.startsAt, mentor.language), link: slot.meetingLink });
+const notifyInterviewCancelled = (mentor, slot, reason) =>
+  safeSend('interview cancelled', 'interviewCancelled', mentor, { date: utcDate(slot.startsAt, mentor.language), reason });
+
 // Plain notice to the site admins (English), e.g. card disputes.
 const notifyAdmins = (subject, html) => {
   if (!config.EMAIL_ENABLED) return Promise.resolve();
@@ -49,4 +59,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyAdmins };

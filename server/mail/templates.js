@@ -63,6 +63,20 @@ const S = {
       intro: 'Use this code to confirm that you can read email at your work address ({domain}):', expiry: 'The code expires in 15 minutes.',
       footer: "If you didn't ask for this, you can safely ignore this email."
     },
+    interviewBooked: {
+      subject: 'Your Wisecall video interview is booked', heading: 'Your interview is booked',
+      intro: 'Your video interview is booked for {date}. It takes about {minutes} minutes.',
+      after: "We'll email you the meeting link before then. You can change the time in your verification settings up to 12 hours before it starts.", button: 'Open verification'
+    },
+    interviewLink: {
+      subject: 'The meeting link for your Wisecall interview', heading: 'Your meeting link',
+      intro: 'Here is the meeting link for your video interview on {date}:', after: 'Please join a couple of minutes early and have your ID and licence to hand.', button: 'Join the meeting'
+    },
+    interviewCancelled: {
+      subject: 'Your Wisecall interview was cancelled', heading: 'We had to cancel your interview',
+      intro: 'We are sorry: we had to cancel your video interview on {date}.', reasonLabel: 'Reason:',
+      after: 'Please choose another time in your verification settings.', button: 'Choose a new time'
+    },
     payoutPaid: {
       subject: 'Your Wisecall payout has been sent', heading: 'Your payout is on its way',
       intro: 'We sent {amount} to your bank account ending in {last4}.', referenceLabel: 'Bank transfer reference:',
@@ -124,6 +138,20 @@ const S = {
       intro: 'გამოიყენე ეს კოდი, რომ დაადასტურო, რომ შენს სამსახურეობრივ მისამართზე ({domain}) წერილების წაკითხვა შეგიძლია:', expiry: 'კოდი მოქმედია 15 წუთის განმავლობაში.',
       footer: 'თუ ეს შენ არ მოგითხოვია, უბრალოდ უგულებელყავი ეს წერილი.'
     },
+    interviewBooked: {
+      subject: 'შენი Wisecall-ის ვიდეო ინტერვიუ დაჯავშნილია', heading: 'ინტერვიუ დაჯავშნილია',
+      intro: 'შენი ვიდეო ინტერვიუ დაჯავშნილია: {date}. გრძელდება დაახლოებით {minutes} წუთი.',
+      after: 'შეხვედრის ბმულს ამ დრომდე გამოგიგზავნით ელფოსტაზე. დროის შეცვლა შეგიძლია ვერიფიკაციის პარამეტრებში, დაწყებამდე არაუგვიანეს 12 საათით ადრე.', button: 'ვერიფიკაციის გახსნა'
+    },
+    interviewLink: {
+      subject: 'შენი Wisecall-ის ინტერვიუს ბმული', heading: 'შეხვედრის ბმული',
+      intro: 'აი, შეხვედრის ბმული შენი ვიდეო ინტერვიუსთვის ({date}):', after: 'გთხოვთ, რამდენიმე წუთით ადრე შემოხვიდე და პირადობა და ლიცენზია ხელთ გქონდეს.', button: 'შეხვედრაში შესვლა'
+    },
+    interviewCancelled: {
+      subject: 'შენი Wisecall-ის ინტერვიუ გაუქმდა', heading: 'ინტერვიუ გავაუქმეთ',
+      intro: 'ბოდიში: შენი ვიდეო ინტერვიუ ({date}) გაუქმებული გვქონდა.', reasonLabel: 'მიზეზი:',
+      after: 'გთხოვთ, ვერიფიკაციის პარამეტრებში სხვა დრო აირჩიო.', button: 'ახალი დროის არჩევა'
+    },
     payoutPaid: {
       subject: 'შენი Wisecall-ის ანაზღაურება გაიგზავნა', heading: 'შენი ანაზღაურება გზაშია',
       intro: '{amount} გავგზავნეთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.', referenceLabel: 'საბანკო გადარიცხვის რეფერენსი:',
@@ -176,6 +204,18 @@ const BUILDERS = {
   workEmailCode: (s, d) => ({
     heading: s.workEmailCode.heading,
     blocks: [{ p: fill(s.workEmailCode.intro, d), raw: true }, { code: d.code }, { small: s.workEmailCode.expiry }, { small: s.workEmailCode.footer }]
+  }),
+  interviewBooked: (s, d) => ({
+    heading: s.interviewBooked.heading,
+    blocks: [{ p: fill(s.interviewBooked.intro, d), raw: true }, { p: s.interviewBooked.after }, { button: s.interviewBooked.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
+  }),
+  interviewLink: (s, d) => ({
+    heading: s.interviewLink.heading,
+    blocks: [{ p: fill(s.interviewLink.intro, d), raw: true }, { button: s.interviewLink.button, url: d.link }, { small: s.linkFallback }, { link: d.link }, { p: s.interviewLink.after }]
+  }),
+  interviewCancelled: (s, d) => ({
+    heading: s.interviewCancelled.heading,
+    blocks: [{ p: fill(s.interviewCancelled.intro, d), raw: true }, ...(d.reason ? [{ quote: `${s.interviewCancelled.reasonLabel} ${d.reason}` }] : []), { p: s.interviewCancelled.after }, { button: s.interviewCancelled.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
   }),
   payoutPaid: (s, d) => ({
     heading: s.payoutPaid.heading,

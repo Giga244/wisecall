@@ -96,6 +96,11 @@ const LIMITS = {
   // Work email: free/personal mailbox providers are refused.
   workEmailCodeMinutes: 15,
 
+  // Video interview: how long it takes, and how far ahead a slot must be to book or cancel it.
+  interviewMinutes: 20,
+  interviewMinNoticeHours: 12,
+  interviewMaxDaysAhead: 120,
+
   // Probation: a new mentor's first answers wait for an admin before the buyer sees them.
   probationAnswers: 5,
   probationHoldHours: 24,

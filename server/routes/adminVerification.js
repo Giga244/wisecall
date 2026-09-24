@@ -11,6 +11,7 @@ const review = require('../verification/review');
 const kycService = require('../verification/kyc');
 const flags = require('../verification/flags');
 const credentials = require('../verification/credentials');
+const interviews = require('../verification/interviews');
 
 const router = express.Router();
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -18,7 +19,8 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const STATUS_FOR_CODE = {
   not_found: 404, unknown_step: 404,
   reason_required: 400, invalid_decision: 400,
-  not_manual: 409, not_submitted: 409, invalid_state: 409, steps_incomplete: 409
+  not_manual: 409, not_submitted: 409, invalid_state: 409, steps_incomplete: 409,
+  invalid_slot: 400, invalid_link: 400, not_started: 409
 };
 
 // Turns a VerificationError into a JSON reply; anything else is a real error.
@@ -127,6 +129,25 @@ router.post('/flags/:id/resolve', requireAuth, requireAdmin, asyncHandler(async 
   if (!done) return res.status(404).json({ error: 'not_found' });
   res.json({ ok: true });
 }));
+
+// ---- Video interview slots ----------------------------------------------------------------------------
+router.get('/interviews', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ slots: await interviews.listForAdmin() });
+}));
+
+router.post('/interviews', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { res.status(201).json({ slots: await interviews.createSlots(req.adminUser, b.startsAt, b.minutes) }); } catch (e) { fail(res, e); }
+}));
+
+const slotRoute = (path, method, handler) => router[method](`/interviews/:id${path}`, requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try { res.json((await handler(req)) || { ok: true }); } catch (e) { fail(res, e); }
+}));
+slotRoute('', 'delete', (req) => interviews.deleteOpenSlot(req.params.id));
+slotRoute('/link', 'post', async (req) => ({ slot: await interviews.setMeetingLink(req.adminUser, req.params.id, (req.body || {}).link) }));
+slotRoute('/cancel', 'post', (req) => interviews.adminCancel(req.adminUser, req.params.id, (req.body || {}).reason));
+slotRoute('/result', 'post', (req) => interviews.recordResult(req.adminUser, req.params.id, req.body || {}));
 
 // Download one uploaded document. Admins only, never cached, and every download is written to the audit log.
 router.get('/documents/:id', requireAuth, requireAdmin, asyncHandler(async (req, res) => {

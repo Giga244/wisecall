@@ -14,6 +14,7 @@
   let tab = 'mentors';
   const MENTOR_FILTERS = ['pending', 'verified', 'rejected', ''];
   const BOOKING_FILTERS = ['paid', 'answered', 'refund_pending', 'refunded', 'pending_payment', ''];
+  const NO_FILTERS = ['payouts', 'interviews']; // tabs that have no status chips
   const tabs = document.getElementById('adminTabs');
 
   function escapeHtml(str) {
@@ -28,7 +29,9 @@
     content.innerHTML = `<p class="muted">${t('admin.loading')}</p>`;
     try {
       const qs = activeStatus ? `?status=${activeStatus}` : '';
-      if (tab === 'payouts') {
+      if (tab === 'interviews') {
+        await AdminInterviews.render(content);
+      } else if (tab === 'payouts') {
         const [owed, history] = await Promise.all([WisecallAPI.apiFetch('/admin/payouts'), WisecallAPI.apiFetch('/admin/payouts/history')]);
         renderPayouts(owed, history.batches);
       } else if (tab === 'bookings') {
@@ -145,7 +148,7 @@
   }
 
   function drawFilters() {
-    filters.style.display = tab === 'payouts' ? 'none' : '';
+    filters.style.display = NO_FILTERS.includes(tab) ? 'none' : '';
     const list = tab === 'bookings' ? BOOKING_FILTERS : MENTOR_FILTERS;
     filters.innerHTML = list.map(s => {
       const label = s === '' ? t('admin.filter.all') : (tab === 'bookings' ? t('dash.status.' + s) : t('admin.filter.' + s));
@@ -166,7 +169,7 @@
     if (!btn || btn.dataset.tab === tab) return;
     tabs.querySelectorAll('.chip').forEach(c => { c.classList.toggle('active', c === btn); c.setAttribute('aria-selected', c === btn); });
     tab = btn.dataset.tab;
-    activeStatus = tab === 'bookings' ? 'paid' : (tab === 'payouts' ? '' : 'pending');
+    activeStatus = tab === 'bookings' ? 'paid' : (NO_FILTERS.includes(tab) ? '' : 'pending');
     drawFilters();
     load();
   });
