@@ -30,6 +30,8 @@ const config = {
   // A mentor's earnings become payable this many days after the answer (the buyer's refund window).
   PAYOUT_HOLD_DAYS: int(env.PAYOUT_HOLD_DAYS, 7),
   SWEEP_INTERVAL_SECONDS: int(env.SWEEP_INTERVAL_SECONDS, 600),
+  // Attempts to ask a question that were never paid (cancelled, failed, timed out) are deleted after this many days.
+  UNPAID_ATTEMPT_DAYS: int(env.UNPAID_ATTEMPT_DAYS, 7),
   PRICE_MIN: 5,
   PRICE_MAX: 2000,
 
@@ -120,6 +122,7 @@ if (!['resend', 'postmark', 'log'].includes(config.EMAIL_PROVIDER)) problems.pus
 if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) problems.push('PLATFORM_FEE_PERCENT must be between 0 and 99');
 if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
 if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negative');
+if (config.UNPAID_ATTEMPT_DAYS < 1) problems.push('UNPAID_ATTEMPT_DAYS must be at least 1');
 if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
 if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
 if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');

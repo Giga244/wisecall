@@ -14,7 +14,7 @@
 
   // Public settings from the server (fee, deadline, price range, contact email, social links), fetched
   // once and shared by every script on the page. If the request fails the defaults are used.
-  const DEFAULT_CONFIG = { answerDeadlineDays: 7, platformFeePercent: 20, mentorSharePercent: 80, priceMin: 5, priceMax: 2000, questionMin: 50, questionMax: 4000, answerMin: 150, answerMax: 8000, currency: 'gel', contactEmail: null, social: {}, launchMode: 'live' };
+  const DEFAULT_CONFIG = { answerDeadlineDays: 7, platformFeePercent: 20, mentorSharePercent: 80, priceMin: 5, priceMax: 2000, questionMin: 50, questionMax: 4000, answerMin: 150, answerMax: 8000, unpaidAttemptDays: 7, currency: 'gel', contactEmail: null, social: {}, launchMode: 'live' };
   let configPromise = null;
   let loadedConfig = DEFAULT_CONFIG;
   function getConfig() {
@@ -32,13 +32,13 @@
   // from the server's settings so the page never disagrees with what the server really does.
   let vars = {};
   function fillVars(s) {
-    return typeof s === 'string' ? s.replace(/\{(answerDays|holdDays|feePct|sharePct|priceMin|priceMax|questionMin|questionMax|answerMin|answerMax)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m)) : s;
+    return typeof s === 'string' ? s.replace(/\{(answerDays|holdDays|feePct|sharePct|priceMin|priceMax|questionMin|questionMax|answerMin|answerMax|unpaidDays)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m)) : s;
   }
   function setVarsFrom(cfg) {
     vars = {
       answerDays: cfg.answerDeadlineDays, holdDays: cfg.payoutHoldDays === undefined ? 7 : cfg.payoutHoldDays,
       feePct: cfg.platformFeePercent, sharePct: cfg.mentorSharePercent, priceMin: cfg.priceMin, priceMax: cfg.priceMax,
-      questionMin: cfg.questionMin, questionMax: cfg.questionMax, answerMin: cfg.answerMin, answerMax: cfg.answerMax
+      questionMin: cfg.questionMin, questionMax: cfg.questionMax, answerMin: cfg.answerMin, answerMax: cfg.answerMax, unpaidDays: cfg.unpaidAttemptDays
     };
   }
 

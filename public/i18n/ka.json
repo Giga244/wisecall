@@ -1114,5 +1114,8 @@
   "dash.answer.err.already": "ამ კითხვას უკვე უპასუხეს. გაგზავნილი პასუხის შეცვლა შეუძლებელია.",
   "expert.paymentCancelled": "გადახდა გაუქმდა. თანხა არ ჩამოგჭრიათ. შენი კითხვა აქ დარჩა.",
   "expert.question.needMore": "კიდევ {left} სიმბოლოა საჭირო (მინიმუმ {questionMin})",
-  "expert.question.enough": "საკმარისად გრძელია."
+  "expert.question.enough": "საკმარისად გრძელია.",
+  "dash.unfinished.show": "დაუსრულებელი გადახდების ჩვენება ({n})",
+  "dash.unfinished.hide": "დაუსრულებელი გადახდების დამალვა ({n})",
+  "dash.unfinished.note": "ეს გადახდები გაუქმდა, ვერ განხორციელდა ან არ დასრულდა. თანხა არ ჩამოგჭრიათ. ისინი {unpaidDays} დღის შემდეგ იშლება."
 }

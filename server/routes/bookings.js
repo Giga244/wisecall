@@ -57,11 +57,12 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   }
 }));
 router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
+  // (A mentor only ever sees questions that were paid: an attempt that was cancelled, failed or never finished is between the buyer and the bank.)
   const list = async (mine, other) => {
     const { rows } = await query(
       `SELECT b.*, u.name AS other_name, u.color AS other_color, u.username AS other_username, u.photo_updated_at AS other_photo_at
          FROM bookings b JOIN users u ON u.id = b.${other}_id
-        WHERE b.${mine}_id = $1 ORDER BY b.created_at DESC LIMIT 200`,
+        WHERE b.${mine}_id = $1 ${mine === 'mentor' ? `AND b.status NOT IN ('pending_payment', 'expired')` : ''} ORDER BY b.created_at DESC LIMIT 200`,
       [req.userToken.id]
     );
     return rows.map((r) => ({

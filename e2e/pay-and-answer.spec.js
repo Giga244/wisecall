@@ -92,6 +92,30 @@ test('Paying works from the returned question, and then the saved text is gone',
   expect(paid).toHaveLength(1);
 });
 
+test('the buyer\'s dashboard shows the paid question, and hides the two unfinished attempts behind a small toggle; the mentor never sees them', async () => {
+  await buyerPage.goto('/dashboard.html');
+  const cards = buyerPage.locator('#askedList > .booking-card');
+  await expect(cards).toHaveCount(1); // only the paid question is a full card
+  await expect(cards.first()).toContainText(QUESTION.slice(0, 30));
+  const toggle = buyerPage.locator('.unfinished-toggle');
+  await expect(toggle).toHaveText('Show unfinished payments (2)');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(buyerPage.locator('#unfinishedList')).toBeHidden();
+  await toggle.click();
+  await expect(toggle).toHaveText('Hide unfinished payments (2)');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  const shown = buyerPage.locator('#unfinishedList .booking-card');
+  await expect(shown).toHaveCount(2);
+  await expect(shown.first()).toContainText('Payment not completed');
+  await expect(buyerPage.locator('#unfinishedList')).toContainText('Nothing was charged. They are deleted after 7 days.');
+  await toggle.click();
+  await expect(buyerPage.locator('#unfinishedList')).toBeHidden();
+
+  // the mentor's list has only the paid question
+  const mine = await (await mentorPage.request.get('/api/bookings/mine')).json();
+  expect(mine.received.map((b) => b.status)).toEqual(['paid']);
+});
+
 test('the answer form counts, checks before sending, and refuses what is not a real answer', async () => {
   await mentorPage.goto('/dashboard.html');
   await mentorPage.click('#tab-received');

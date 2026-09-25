@@ -104,12 +104,39 @@
   const showsTimeline = (b) => ['paid', 'answered'].includes(b.status);
 
   // ---- My questions ------------------------------------------------------------------------------------------------
+  // Attempts that were never paid ("Payment not completed") are not questions: they are hidden behind a small toggle, and the server
+  // deletes them after a week. Nothing was charged for them.
+  let showUnfinished = false;
   function renderAsked(list) {
-    if (!list.length) {
-      askedList.innerHTML = emptyState('dash.asked.empty.title', 'dash.asked.empty.body', `<a class="btn btn-primary" href="/index.html#experts">${t('nav.browse')}</a>`);
-      return;
+    const unfinished = list.filter((b) => b.status === 'expired');
+    const real = list.filter((b) => b.status !== 'expired');
+    const toggleText = (open) => t(open ? 'dash.unfinished.hide' : 'dash.unfinished.show').replace('{n}', unfinished.length);
+    const unfinishedHtml = unfinished.length ? `
+      <div class="unfinished">
+        <button type="button" class="btn btn-ghost btn-sm unfinished-toggle" aria-expanded="${showUnfinished}" aria-controls="unfinishedList">${escapeHtml(toggleText(showUnfinished))}</button>
+        <div id="unfinishedList"${showUnfinished ? '' : ' hidden'}>
+          <p class="muted small">${escapeHtml(t('dash.unfinished.note'))}</p>
+          ${unfinished.map(askedCard).join('')}
+        </div>
+      </div>` : '';
+    askedList.innerHTML = (real.length
+      ? real.map(askedCard).join('')
+      : emptyState('dash.asked.empty.title', 'dash.asked.empty.body', `<a class="btn btn-primary" href="/index.html#experts">${t('nav.browse')}</a>`)) + unfinishedHtml;
+    const toggle = askedList.querySelector('.unfinished-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        showUnfinished = !showUnfinished;
+        toggle.setAttribute('aria-expanded', String(showUnfinished));
+        toggle.textContent = toggleText(showUnfinished);
+        document.getElementById('unfinishedList').hidden = !showUnfinished;
+      });
     }
-    askedList.innerHTML = list.map((b) => {
+    WisecallReport.wire(askedList);
+
+    WisecallRatings.wire(askedList, { reload: load });
+  }
+
+  function askedCard(b) {
       b.__role = 'seeker';
       return `
       <article class="booking-card" data-id="${b.id}">
@@ -125,15 +152,11 @@
         <p class="booking-question">${escapeHtml(b.question)}</p>
         ${b.status === 'paid' && b.answerDeadline ? countdownHtml(b, 'seeker') : ''}
         ${bookingNote(b)}
-        ${b.status === 'pending_payment' ? `<a class="btn btn-outline btn-sm" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${t('dash.retry')}</a>` : ''}
+        ${b.status === 'pending_payment' || b.status === 'expired' ? `<a class="btn btn-outline btn-sm" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${t('dash.retry')}</a>` : ''}
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
       </article>`;
-    }).join('');
-    WisecallReport.wire(askedList);
-
-    WisecallRatings.wire(askedList, { reload: load });
   }
 
   // ---- Questions for me (mentors) -----------------------------------------------------------------------------------

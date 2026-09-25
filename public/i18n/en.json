@@ -1114,5 +1114,8 @@
   "dash.answer.err.already": "This question was already answered. An answer can't be changed after it is sent.",
   "expert.paymentCancelled": "Payment cancelled. You have not been charged. Your question is still here.",
   "expert.question.needMore": "{left} more characters needed (at least {questionMin})",
-  "expert.question.enough": "Long enough."
+  "expert.question.enough": "Long enough.",
+  "dash.unfinished.show": "Show unfinished payments ({n})",
+  "dash.unfinished.hide": "Hide unfinished payments ({n})",
+  "dash.unfinished.note": "These payments were cancelled, failed or never finished. Nothing was charged. They are deleted after {unpaidDays} days."
 }

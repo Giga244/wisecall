@@ -73,6 +73,17 @@ async function reconcilePending() {
     } catch (err) { console.error(`[jobs] could not reconcile booking ${row.id}:`, err.message); }
   }
 }
+// Attempts to ask a question that were never paid (cancelled, failed or timed out at the bank) are deleted after a week: nobody was charged,
+// there is nothing to pay out or refund, and the buyer's dashboard hides them anyway. A booking that was ever paid is never touched.
+async function purgeUnpaid() {
+  const { rowCount } = await query(
+    `DELETE FROM bookings b
+      WHERE b.paid_at IS NULL AND b.status IN ('expired', 'pending_payment') AND b.created_at < now() - make_interval(days => $1)
+        AND NOT EXISTS (SELECT 1 FROM payouts p WHERE p.booking_id = b.id)`, [config.UNPAID_ATTEMPT_DAYS]
+  );
+  if (rowCount) console.log(`[jobs] deleted ${rowCount} unpaid attempt(s) older than ${config.UNPAID_ATTEMPT_DAYS} days`);
+  return rowCount;
+}
 // Verification documents are deleted 90 days after a decision.
 async function purgeDocuments() {
   const n = await require('./verification/credentials').purgeExpiredDocuments();
@@ -121,6 +132,7 @@ async function runSweep({ wait = false } = {}) {
       await retryRefunds();
       await confirmRefunds();
       await reconcilePending();
+      await purgeUnpaid();
       await purgeDocuments();
       await releaseHeldAnswers();
       await checkLicenses();
@@ -145,4 +157,4 @@ function startJobs() {
   return () => { clearInterval(timer); clearTimeout(first); };
 }
 
-module.exports = { startJobs, runSweep };
+module.exports = { startJobs, runSweep, purgeUnpaid };
