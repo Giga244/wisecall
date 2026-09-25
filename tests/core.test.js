@@ -350,7 +350,7 @@ describe('SEO, error pages and the contact form', () => {
   test('every page has its own title and description', () => {
     const fs = require('fs');
     const seen = new Set();
-    for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html') && n !== 'expert.html')) {
+    for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html') && n !== 'profile.html')) {
       const html = fs.readFileSync(path.join(ROOT, 'public', f), 'utf8');
       const title = html.match(/<title>(.*?)<\/title>/)[1];
       const desc = html.match(/name="description" content="([^"]*)"/)[1];
@@ -360,13 +360,24 @@ describe('SEO, error pages and the contact form', () => {
     }
   });
 
-  test('an expert page gets that expert\'s name in its title and canonical link', async () => {
-    const html = await (await get(`/expert.html?id=${ids.mentor}`)).text();
+  test('a mentor\'s profile page gets their name in its title and canonical link; the old expert address moves to it', async () => {
+    const { username } = (await ids.mentorClient.api('/me')).user;
+    assert.match(username, /^dr-mentor/);
+    const html = await (await get(`/u/${username}`)).text();
     assert.match(html, /<title>Dr Mentor, Cardiologist — Wisecall<\/title>/);
-    assert.match(html, new RegExp(`rel="canonical" href="http://localhost:4551/expert.html\\?id=${ids.mentor}"`));
-    const unknown = await (await get('/expert.html?id=nope')).text();
-    assert.match(unknown, /<title>Expert — Wisecall<\/title>/);
+    assert.match(html, new RegExp(`rel="canonical" href="http://localhost:4551/u/${username}"`));
+    assert.match(html, /name="robots" content="index, follow"/);
+    const unknownRes = await get('/u/nobody-by-this-name');
+    assert.equal(unknownRes.status, 404);
+    const unknown = await unknownRes.text();
+    assert.match(unknown, /<title>Profile — Wisecall<\/title>/);
+    assert.match(unknown, /name="robots" content="noindex"/);
     assert.doesNotMatch(unknown, /\{\{/);
+    // the old address (bank return links and shared links) lives on, keeping the rest of the query
+    const old = await fetch(`http://localhost:4551/expert.html?id=${ids.mentor}&booking=abc&status=success`, { redirect: 'manual' });
+    assert.equal(old.status, 301);
+    assert.equal(old.headers.get('location'), `/u/${username}?booking=abc&status=success`);
+    assert.equal((await get('/expert.html?id=nope')).status, 200, 'an unknown expert gets the page that says nobody was found');
   });
 
   test('robots.txt and sitemap.xml list the site and its approved experts only', async () => {
@@ -378,7 +389,7 @@ describe('SEO, error pages and the contact form', () => {
     const xml = await res.text();
     assert.match(xml, /<loc>http:\/\/localhost:4551\/<\/loc>/);
     assert.match(xml, /<loc>http:\/\/localhost:4551\/about\.html<\/loc>/);
-    assert.match(xml, new RegExp(`expert\\.html\\?id=${ids.mentor}`));
+    assert.match(xml, new RegExp(`/u/${(await ids.mentorClient.api('/me')).user.username}<`));
     const pending = (await ids.admin.api('/admin/mentors?status=rejected')).mentors[0];
     assert.ok(pending);
     assert.doesNotMatch(xml, new RegExp(pending.id), 'rejected mentors are not in the sitemap');

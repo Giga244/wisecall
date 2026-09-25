@@ -9,7 +9,7 @@ const notify = require('../notify');
 const probation = require('../probation');
 const launch = require('../launch');
 const monitoring = require('../verification/monitoring');
-const { isListable, asyncHandler } = require('../util');
+const { isListable, asyncHandler, photoUrl } = require('../util');
 const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('../models');
 
 const router = express.Router();
@@ -58,12 +58,15 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   const list = async (mine, other) => {
     const { rows } = await query(
-      `SELECT b.*, u.name AS other_name, u.color AS other_color
+      `SELECT b.*, u.name AS other_name, u.color AS other_color, u.username AS other_username, u.photo_updated_at AS other_photo_at
          FROM bookings b JOIN users u ON u.id = b.${other}_id
         WHERE b.${mine}_id = $1 ORDER BY b.created_at DESC LIMIT 200`,
       [req.userToken.id]
     );
-    return rows.map((r) => ({ ...bookingFromRow(r), otherPartyName: r.other_name, otherPartyColor: r.other_color }));
+    return rows.map((r) => ({
+      ...bookingFromRow(r), otherPartyName: r.other_name, otherPartyColor: r.other_color, otherPartyUsername: r.other_username,
+      otherPartyPhotoUrl: photoUrl({ id: r[`${other}_id`], photoUpdatedAt: r.other_photo_at })
+    }));
   };
   const me = req.userToken.id;
   // A buyer never sees an answer that is still being checked (see server/probation.js).

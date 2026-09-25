@@ -7,6 +7,7 @@ const { getUserById, getUserByEmail, insertUser, updateUser } = require('../mode
 const config = require('../config');
 const { sendTemplate } = require('../mail');
 const verification = require('../verification/steps');
+const usernames = require('../usernames');
 
 const router = express.Router();
 const isStr = (v) => typeof v === 'string';
@@ -16,10 +17,19 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
 
 router.post('/signup', asyncHandler(async (req, res) => {
-  const { name, email, password, language } = req.body || {};
+  const { name, email, password, language, username } = req.body || {};
   if (!isStr(name) || !isStr(email) || !isStr(password) || !name.trim() || !email || !password) return res.status(400).json({ error: 'missing_fields' });
   if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
   if (String(password).length < 8 || String(password).length > 200) return res.status(400).json({ error: 'weak_password' });
+  // The username is their choice (checked before anything is created); without one we make one from their name.
+  let wantedUsername = null;
+  if (username !== undefined && username !== null && username !== '') {
+    if (!isStr(username)) return res.status(400).json({ error: 'invalid_username' });
+    const problem = usernames.check(username);
+    if (problem) return res.status(400).json({ error: problem });
+    if (await usernames.isTaken(username)) return res.status(409).json({ error: 'username_taken' });
+    wantedUsername = username.trim().toLowerCase();
+  }
 
   const normalizedEmail = email.trim().toLowerCase();
   const verifyCode = String(crypto.randomInt(100000, 1000000));
@@ -39,6 +49,13 @@ router.post('/signup', asyncHandler(async (req, res) => {
     if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
     throw err;
   }
+  try {
+    await usernames.assignNew(user.id, user.name, wantedUsername);
+  } catch (e) {
+    if (!(e instanceof usernames.UsernameError)) throw e;
+    await usernames.assignNew(user.id, user.name, null); // somebody took it a moment ago: use one made from their name
+  }
+  user = await getUserById(user.id);
 
   let emailSent = false;
   if (config.EMAIL_ENABLED) {
@@ -65,7 +82,8 @@ router.post('/login', asyncHandler(async (req, res) => {
   if (!isStr(email) || !isStr(password) || !email || !password) return res.status(400).json({ error: 'missing_fields' });
 
   const user = await getUserByEmail(email.trim());
-  const ok = await bcrypt.compare(password, user ? user.passwordHash : DUMMY_HASH);
+  // (Someone who only ever signed in with Google has no password: the comparison still runs, and fails.)
+  const ok = await bcrypt.compare(password, user && user.passwordHash ? user.passwordHash : DUMMY_HASH) && Boolean(user && user.passwordHash);
   if (!user || !ok) return res.status(401).json({ error: 'invalid_credentials' });
 
   setAuthCookie(res, signToken(user));

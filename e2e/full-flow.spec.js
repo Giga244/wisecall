@@ -15,7 +15,7 @@ const ANSWER = 'Not before you reach the threshold, but register early if your c
 
 let contexts = [];
 let seekerPage, mentorPage, adminPage;
-let mentorId, bookingId;
+let mentorId, mentorUsername, bookingId;
 
 test.beforeAll(async ({ browser }) => {
   contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()]);
@@ -54,7 +54,7 @@ test('a mentor signs up, confirms their email and applies in the Law field', asy
   await mentorPage.fill('#sampleAnswer', 'Register as soon as your turnover is close to the limit, keep every invoice, and ask an accountant to confirm the date. Late registration is the costly mistake, early registration is not.');
   await mentorPage.click('#mentorForm button[type="submit"]');
   await expect.poll(async () => (await S.sql('SELECT verification_status, niche, price FROM users WHERE email = $1', [mentor.email]))[0]).toMatchObject({ verification_status: 'pending', niche: 'law', price: 30 });
-  mentorId = (await S.sql('SELECT id FROM users WHERE email = $1', [mentor.email]))[0].id;
+  ({ id: mentorId, username: mentorUsername } = (await S.sql('SELECT id, username FROM users WHERE email = $1', [mentor.email]))[0]);
 });
 
 test('the mentor does the ID check, then submits their licence and its document', async () => {
@@ -162,7 +162,7 @@ test('the seeker asks a question and pays at the bank; the mentor is told', asyn
   await seekerPage.waitForURL(/mock-bank\.html/);
   await expect(seekerPage.locator('#mockAmount')).toContainText('30');
   await seekerPage.click('#payBtn');
-  await seekerPage.waitForURL(/expert\.html\?.*booking=/);
+  await seekerPage.waitForURL(/\/u\/[^?]+\?.*booking=/);
   bookingId = new URL(seekerPage.url()).searchParams.get('booking');
   await expect(seekerPage.locator('.booking-result.success')).toBeVisible();
 
@@ -215,7 +215,7 @@ test('the seeker rates the answer, and the review shows on the mentor\'s profile
   const b = await S.bookingRow(bookingId);
   expect(b.rating).toBe(5);
 
-  await seekerPage.goto(`/expert.html?id=${mentorId}`);
+  await seekerPage.goto(`/u/${mentorUsername}`);
   await expect(seekerPage.locator('#reviewsBody')).toContainText('Clear and practical');
 });
 

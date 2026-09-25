@@ -15,10 +15,10 @@ const WRONG = /something went wrong|დაფიქსირდა შეცდ�
 
 for (const lang of ['en', 'ka']) {
   test.describe(`every page and tab in ${lang === 'en' ? 'English' : 'Georgian'}`, () => {
-    let ctxs = [], pages = {}, problems = {}, mentorId;
+    let ctxs = [], pages = {}, problems = {}, mentorUsername;
 
     test.beforeAll(async ({ browser }) => {
-      mentorId = (await S.sql(`SELECT id FROM users WHERE email = 'ana@e2e.test'`))[0].id;
+      mentorUsername = (await S.sql(`SELECT username FROM users WHERE email = 'ana@e2e.test'`))[0].username;
       for (const who of ['visitor', 'seeker', 'mentor', 'admin']) {
         const ctx = await browser.newContext();
         await ctx.addInitScript((l) => { try { localStorage.setItem('wisecall_lang', l); } catch (e) { /* ignore */ } }, lang);
@@ -43,7 +43,7 @@ for (const lang of ['en', 'ka']) {
     }
 
     test('public pages', async () => {
-      for (const url of ['/', `/expert.html?id=${mentorId}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/waitlist-unsubscribe.html', '/no-such-page']) {
+      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/waitlist-unsubscribe.html', '/no-such-page']) {
         await visit('visitor', url);
       }
       await expect(pages.visitor.locator('html')).toHaveAttribute('lang', lang);

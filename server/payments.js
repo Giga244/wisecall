@@ -29,7 +29,7 @@ async function lockBooking(client, id) {
 // Sends the buyer to the bank. Returns { orderId, redirectUrl }.
 async function startPayment(booking, mentor, seeker) {
   const provider = pay.forProvider(booking.provider);
-  const back = `${config.PUBLIC_URL}/expert.html?id=${mentor.id}&booking=${booking.id}`;
+  const back = `${config.PUBLIC_URL}/u/${mentor.username}?booking=${booking.id}`;
   return provider.createPayment({
     bookingId: booking.id,
     amount: booking.amount,

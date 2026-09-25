@@ -15,10 +15,10 @@ const describeViolation = (v) => `${v.id} (${v.impact}): ${v.help}\n    ` + v.no
 
 for (const lang of ['en', 'ka']) {
   test.describe(`accessibility in ${lang === 'en' ? 'English' : 'Georgian'}`, () => {
-    let ctxs = [], pages = {}, mentorId;
+    let ctxs = [], pages = {}, mentorUsername;
 
     test.beforeAll(async ({ browser }) => {
-      mentorId = (await S.sql(`SELECT id FROM users WHERE email = 'ana@e2e.test'`))[0].id;
+      mentorUsername = (await S.sql(`SELECT username FROM users WHERE email = 'ana@e2e.test'`))[0].username;
       for (const who of ['visitor', 'seeker', 'mentor', 'admin']) {
         const ctx = await browser.newContext({ reducedMotion: 'reduce' }); // no animation in flight while axe reads the colours
         await ctx.addInitScript((l) => { try { localStorage.setItem('wisecall_lang', l); } catch (e) { /* ignore */ } }, lang);
@@ -41,7 +41,7 @@ for (const lang of ['en', 'ka']) {
     }
 
     test('axe finds no WCAG A/AA problem on any public page', async () => {
-      for (const url of ['/', `/expert.html?id=${mentorId}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/no-such-page']) {
+      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/no-such-page']) {
         await audit('visitor', url);
       }
     });
@@ -69,7 +69,7 @@ for (const lang of ['en', 'ka']) {
 
     test('keyboard: a skip link, and every control is reachable and shows a focus ring', async () => {
       const page = pages.visitor;
-      for (const url of ['/', '/signup.html', '/login.html', '/contact.html', `/expert.html?id=${mentorId}`]) {
+      for (const url of ['/', '/signup.html', '/login.html', '/contact.html', `/u/${mentorUsername}`]) {
         await page.goto(url);
         await page.waitForLoadState('networkidle');
         await page.evaluate(() => document.activeElement && document.activeElement.blur());
@@ -145,7 +145,7 @@ for (const lang of ['en', 'ka']) {
         }).map((el) => `${el.tagName.toLowerCase()}#${el.id || el.name}[${el.type}]`));
         expect(unnamed, `${url}: controls without a label`).toEqual([]);
       };
-      for (const url of ['/', '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', `/expert.html?id=${mentorId}`]) await check(pages.visitor, url);
+      for (const url of ['/', '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', `/u/${mentorUsername}`]) await check(pages.visitor, url);
       for (const tab of ['profile', 'mentor', 'verification', 'payouts', 'account']) await check(pages.mentor, `/settings.html?tab=${tab}`);
     });
   });

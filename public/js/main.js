@@ -22,10 +22,6 @@
   let searchTerm = '';
   let sortMode = 'rating';
 
-  function initials(name) {
-    return name.split(' ').map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
-  }
-
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -137,9 +133,9 @@
     const askLabel = t('expert.ask');
     const reviewsLabel = t('expert.reviewsShort');
     grid.innerHTML = list.map(e => `
-      <a class="expert-card" href="/expert.html?id=${e.id}">
+      <a class="expert-card" href="/u/${encodeURIComponent(e.username)}">
         <div class="card-top">
-          <div class="avatar" style="${WisecallAPI.avatarStyle(e.color)}" aria-hidden="true">${initials(e.name)}</div>
+          ${WisecallAPI.avatar(e)}
           <div>
             <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
             <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(t('niche.' + e.niche))}` : ''}</div>

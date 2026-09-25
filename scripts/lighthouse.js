@@ -26,7 +26,7 @@ async function signedInCookie() {
   const experts = await (await fetch(`${BASE}/api/experts`)).json().catch(() => ({ experts: [] }));
   const pages = {
     home: '/',
-    expert: experts.experts && experts.experts[0] ? `/expert.html?id=${experts.experts[0].id}` : null,
+    expert: experts.experts && experts.experts[0] ? `/u/${experts.experts[0].username}` : null,
     signup: '/signup.html',
     login: '/login.html',
     contact: '/contact.html',

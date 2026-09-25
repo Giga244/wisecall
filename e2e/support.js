@@ -69,17 +69,18 @@ async function listedMentor(admin, { name, email, niche = 'business', price = 20
   if (r.status !== 200) throw new Error('mentor setup failed: ' + r.text);
   await approveMentor(admin, m);
   await addPayoutDetails(m, GOOD_IBAN, name);
-  return { client: m, id: (await m.api('/me')).user.id, name, email, price };
+  const me = (await m.api('/me')).user;
+  return { client: m, id: me.id, username: me.username, name, email, price };
 }
 
 // Asks a question in the browser and pays (or not) on the fake bank's page. Returns the page's booking id.
 async function askAndPay(page, mentor, question, outcome = 'pay') {
-  await page.goto(`/expert.html?id=${mentor.id}`);
+  await page.goto(`/u/${mentor.username}`);
   await page.fill('#question', question);
   await page.click('#askBtn');
   await page.waitForURL(/mock-bank\.html/);
   await page.click({ pay: '#payBtn', fail: '#failBtn', cancel: '#cancelBtn' }[outcome]);
-  await page.waitForURL(/expert\.html\?.*booking=/);
+  await page.waitForURL(/\/u\/[^?]+\?.*booking=/);
   return new URL(page.url()).searchParams.get('booking');
 }
 

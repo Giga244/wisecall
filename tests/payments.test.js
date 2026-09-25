@@ -33,10 +33,11 @@ async function setup(port, env) {
   const seeker = await signupVerified(base, 'Sam Seeker', 'seeker@example.com');
   const mentor = await signupVerified(base, 'Dr Mentor', 'mentor@example.com');
   await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Cardiologist', niche: 'medicine', price: 25, proofUrl: 'https://linkedin.com/in/drmentor', sampleAnswer: SAMPLE } });
-  const mentorId = (await mentor.api('/me')).user.id;
+  const me = (await mentor.api('/me')).user;
+  const mentorId = me.id, mentorUsername = me.username;
   await approveMentor(admin, mentor);
   await addPayoutDetails(mentor);
-  return { srv, base, admin, seeker, mentor, mentorId };
+  return { srv, base, admin, seeker, mentor, mentorId, mentorUsername };
 }
 
 const row = async (id) => (await pool.query('SELECT * FROM bookings WHERE id = $1', [id])).rows[0];
@@ -44,7 +45,7 @@ const refundCalls = (orderId) => fake.state.calls.filter((c) => /refund|cancel/.
 
 // ---------------------------------------------------------------- Bank of Georgia
 describe('Bank of Georgia (BOG)', () => {
-  let ctx, base, admin, seeker, mentor, mentorId;
+  let ctx, base, admin, seeker, mentor, mentorId, mentorUsername;
   const callback = (payload) => fetch(`${base}/api/payments/callback`, { method: 'POST', headers: payload.headers, body: payload.body });
   const create = async (question = 'How do I choose a specialty?') => {
     const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question } });
@@ -65,7 +66,7 @@ describe('Bank of Georgia (BOG)', () => {
       BOG_API_URL: fake.url, BOG_AUTH_URL: `${fake.url}/bog-oauth/token`,
       BOG_CALLBACK_PUBLIC_KEY: fake.publicKeyPem.replace(/\n/g, '\\n')
     });
-    ({ base, admin, seeker, mentor, mentorId } = ctx);
+    ({ base, admin, seeker, mentor, mentorId, mentorUsername } = ctx);
   });
   after(() => { if (ctx) ctx.srv.proc.kill(); });
 
@@ -88,8 +89,8 @@ describe('Bank of Georgia (BOG)', () => {
       assert.equal(req.external_order_id, b.id);
       assert.equal(req.capture, 'automatic');
       assert.equal(req.ttl, 30);
-      assert.equal(req.redirect_urls.success, `${base}/expert.html?id=${mentorId}&booking=${b.id}&status=success`);
-      assert.equal(req.redirect_urls.fail, `${base}/expert.html?id=${mentorId}&booking=${b.id}&status=fail`);
+      assert.equal(req.redirect_urls.success, `${base}/u/${mentorUsername}?booking=${b.id}&status=success`);
+      assert.equal(req.redirect_urls.fail, `${base}/u/${mentorUsername}?booking=${b.id}&status=fail`);
     });
 
     test('the access token is fetched once and reused; an expired token is replaced transparently', async () => {
@@ -115,7 +116,7 @@ describe('Bank of Georgia (BOG)', () => {
   describe('a booking is paid only when the bank confirms it', () => {
     test('coming back from the bank (browser redirect) does not mark it paid', async () => {
       const { booking } = await create('Redirect only, no payment');
-      await fetch(`${base}/expert.html?id=${mentorId}&booking=${booking.id}&status=success`);
+      await fetch(`${base}/u/${mentorUsername}?booking=${booking.id}&status=success`);
       const s = await seeker.api(`/bookings/${booking.id}/sync`, { method: 'POST' });
       assert.equal(s.booking.status, 'pending_payment', 'bank says the order is only "created"');
     });
@@ -273,7 +274,7 @@ describe('Bank of Georgia (BOG)', () => {
 
 // ---------------------------------------------------------------- TBC
 describe('TBC Bank (tpay)', () => {
-  let ctx, base, admin, seeker, mentorId;
+  let ctx, base, admin, seeker, mentorId, mentorUsername;
   const callback = (body) => fetch(`${base}/api/payments/callback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: typeof body === 'string' ? body : JSON.stringify(body) });
   const create = async (question = 'How do I choose a specialty?') => {
     const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question } });
@@ -287,7 +288,7 @@ describe('TBC Bank (tpay)', () => {
       PAYMENT_PROVIDER: 'tbc', TBC_API_KEY: fake.TBC_KEY, TBC_CLIENT_ID: fake.TBC_ID, TBC_CLIENT_SECRET: fake.TBC_SECRET,
       TBC_API_URL: fake.url
     });
-    ({ base, admin, seeker, mentorId } = ctx);
+    ({ base, admin, seeker, mentorId, mentorUsername } = ctx);
   });
   after(() => { if (ctx) ctx.srv.proc.kill(); });
 
@@ -299,7 +300,7 @@ describe('TBC Bank (tpay)', () => {
     const req = fake.state.tbc.get(r.booking.providerOrderId).request;
     assert.deepEqual(req.amount, { currency: 'GEL', total: 25, subtotal: 25, tax: 0, shipping: 0 });
     assert.equal(req.callbackUrl, `${base}/api/payments/callback`);
-    assert.equal(req.returnurl, `${base}/expert.html?id=${mentorId}&booking=${r.booking.id}&status=return`);
+    assert.equal(req.returnurl, `${base}/u/${mentorUsername}?booking=${r.booking.id}&status=return`);
     assert.equal(req.merchantPaymentId, r.booking.id);
     assert.equal(req.expirationMinutes, 30);
     assert.equal(req.language, 'EN');

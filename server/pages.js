@@ -38,6 +38,30 @@ async function expertMeta(id) {
   return rows[0] || null;
 }
 
+// The profile page. Its title, description and share tags come from the person, but only from what is public: a private
+// profile shows just "Wisecall", and only listed mentors with a public profile may be indexed by search engines.
+async function sendProfile(res, row, asked) {
+  const html = readPage('profile.html');
+  if (html === null) return false;
+  const { userFromRow } = require('./models');
+  const { isListable } = require('./util');
+  const u = row ? userFromRow(row) : null;
+  const listable = Boolean(u) && isListable(u);
+  const isPublic = Boolean(u) && u.profileVisibility === 'public';
+  const vars = baseVars(u ? `/u/${u.username}` : '/profile.html');
+  if (u && isPublic) {
+    const title = listable ? `${u.name}, ${u.roleTitle} — Wisecall` : `${u.name} — Wisecall`;
+    vars.TITLE = escapeHtml(title);
+    vars.DESCRIPTION = escapeHtml((listable ? `Ask ${u.name} (${u.roleTitle}) a question on Wisecall for ${u.price} GEL. ${(u.bio || '').slice(0, 120)}` : `${u.name} on Wisecall. ${u.headline || u.bio || ''}`).trim().slice(0, 300));
+  } else {
+    vars.TITLE = 'Profile — Wisecall';
+    vars.DESCRIPTION = 'A profile on Wisecall, where people ask verified experts and get real, paid answers.';
+  }
+  vars.ROBOTS = listable && isPublic ? 'index, follow' : 'noindex';
+  res.status(u || asked === undefined ? 200 : 404).type('html').send(fill(html, vars));
+  return true;
+}
+
 async function sendPage(res, file, vars, status = 200) {
   const html = readPage(file);
   if (html === null) return false;
@@ -52,21 +76,28 @@ function pageRoutes() {
     try { if (!(await sendPage(res, 'index.html', baseVars('/')))) next(); } catch (e) { next(e); }
   });
 
+  // The old address of a mentor's page (/expert.html?id=...) lives on: it moves to the profile, keeping the rest of the query
+  // (the bank sends buyers back with ?booking=&status=).
   router.get('/expert.html', async (req, res, next) => {
     try {
-      const html = readPage('expert.html');
-      if (html === null) return next();
-      const m = await expertMeta(req.query.id);
-      const vars = baseVars('/expert.html');
-      if (m) {
-        vars.CANONICAL_URL = `${config.PUBLIC_URL}/expert.html?id=${req.query.id}`;
-        vars.TITLE = escapeHtml(`${m.name}, ${m.role_title} — Wisecall`);
-        vars.DESCRIPTION = escapeHtml(`Ask ${m.name} (${m.role_title}) a question on Wisecall for ${m.price} GEL. ${(m.bio || '').slice(0, 120)}`.trim());
-      } else {
-        vars.TITLE = 'Expert — Wisecall';
-        vars.DESCRIPTION = 'Ask a verified expert a question on Wisecall and get a real, paid answer.';
+      const { id, ...rest } = req.query;
+      const { getUserById } = require('./models');
+      const user = UUID_RE.test(String(id)) ? await getUserById(String(id)) : null;
+      if (!user || !user.username) return sendProfile(res, null);
+      const qs = new URLSearchParams(rest).toString();
+      res.redirect(301, `/u/${user.username}${qs ? '?' + qs : ''}`);
+    } catch (e) { next(e); }
+  });
+
+  // A profile: /u/<username>. An old username moves to the new one.
+  router.get(/^\/u\/([\w-]{1,60})\/?$/, async (req, res, next) => {
+    try {
+      const found = await require('./usernames').resolve(req.params[0]);
+      if (found && found.redirectTo) {
+        const qs = new URLSearchParams(req.query).toString();
+        return res.redirect(301, `/u/${found.redirectTo}${qs ? '?' + qs : ''}`);
       }
-      res.type('html').send(fill(html, vars));
+      await sendProfile(res, found ? found.row : null, req.params[0]);
     } catch (e) { next(e); }
   });
 
@@ -76,6 +107,7 @@ function pageRoutes() {
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
       if (name === '404' || name === '500') return notFoundHandler(req, res);
+      if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (!(await sendPage(res, `${name}.html`, baseVars(`/${name}.html`)))) next();
     } catch (e) { next(e); }
   });
@@ -108,10 +140,10 @@ function seoRoutes() {
       const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3], ['/signup.html', 0.5], ['/login.html', 0.3]];
       // Before launch the profiles are not offered to visitors, so they are not offered to search engines either.
       await require('./launch').ensureFresh(5000);
-      const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT id, created_at FROM users WHERE ${listableSql()} ORDER BY created_at DESC LIMIT 5000`)).rows;
+      const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT username, created_at FROM users WHERE ${listableSql()} AND username IS NOT NULL AND profile_visibility = 'public' ORDER BY created_at DESC LIMIT 5000`)).rows;
       const urls = [
         ...staticPages.map(([p, prio]) => `<url><loc>${escapeHtml(config.PUBLIC_URL + p)}</loc><priority>${prio}</priority></url>`),
-        ...rows.map((r) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/expert.html?id=${r.id}`)}</loc><lastmod>${new Date(r.created_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority></url>`)
+        ...rows.map((r) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/u/${r.username}`)}</loc><lastmod>${new Date(r.created_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority></url>`)
       ];
       res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
     } catch (e) { next(e); }

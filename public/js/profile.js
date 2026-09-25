@@ -1,10 +1,10 @@
-// A mentor's public profile: who they are and how they were checked, their reviews, and the box where a
-// buyer writes a question and goes to pay at the bank.
+// A person's public profile, at /u/<username>: who they are (photo, headline, work or study, city, languages, bio, links) and,
+// for a mentor, how they were checked, their reviews, and the box where a buyer writes a question and goes to pay at the bank.
 (async function () {
   const params = new URLSearchParams(location.search);
-  const id = params.get('id');
+  const username = (location.pathname.match(/^\/u\/([\w-]+)/) || [])[1] || '';
   // Everything the page needs is asked for at the same moment (texts, who is signed in, the profile), not one after the other.
-  const profileRequest = id ? WisecallAPI.apiFetch('/experts/' + encodeURIComponent(id)).then((r) => r.expert, () => null) : null;
+  const profileRequest = username ? WisecallAPI.apiFetch('/users/' + encodeURIComponent(username)).catch((e) => ({ error: e.code || 'error' })) : Promise.resolve({ error: 'not_found' });
   await WisecallI18n.initI18n();
   const user = await WisecallNav.initNav();
   const t = WisecallI18n.t;
@@ -17,17 +17,23 @@
   const MIN_QUESTION = 5;
 
   const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const initials = (name) => name.split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
-  function showMessage(key) {
+  function showMessage(key, extra) {
     page.setAttribute('aria-busy', 'false');
-    page.innerHTML = `<div class="empty-state"><h1 style="font-size:1.4rem">${t(key)}</h1><a class="btn btn-primary" href="/index.html#experts">${t('nav.browse')}</a></div>`;
+    page.innerHTML = `<div class="empty-state"><h1 style="font-size:1.4rem">${t(key)}</h1>${extra || ''}<a class="btn btn-primary" href="/index.html#experts">${t('nav.browse')}</a></div>`;
   }
-  if (!id) { showMessage('expert.notSpecified'); return; }
 
-  const expert = await profileRequest;
-  if (!expert) { showMessage('expert.notFound'); return; }
-
+  let answer = await profileRequest;
+  if (answer.redirectTo) { // an old username: go to the new one (the server does this for pages; this covers a link followed from a script)
+    history.replaceState(null, '', `/u/${answer.redirectTo}${location.search}`);
+    answer = await WisecallAPI.apiFetch('/users/' + encodeURIComponent(answer.redirectTo)).catch((e) => ({ error: e.code || 'error' }));
+  }
+  if (answer.private) { document.title = `${t('profile.private.title')} — Wisecall`; showMessage('profile.private.title', `<p class="muted">${t('profile.private.body')}</p>`); return; }
+  if (!answer.profile) { showMessage('profile.notFound'); return; }
+  // One object for the page: the person, plus (for a mentor) what buyers need.
+  const expert = { ...answer.profile, ...(answer.profile.mentor || {}) };
+  const isMentor = Boolean(answer.profile.isMentor);
+  const isSelf = Boolean(user && user.id === expert.id);
   // ---- Phones: the question box is a bottom sheet, opened from a bar fixed to the bottom of the screen ----------
   // One element holds the box (askArea); it sits in the side panel on tablets and desktops and in the sheet on phones.
   const phone = window.matchMedia('(max-width: 639px)');
@@ -53,11 +59,13 @@
   document.body.append(bar, sheetEl);
   const sheet = WisecallSheet.create(sheetEl);
   function mountAsk() {
+    if (!isMentor) return;
     const target = phone.matches ? document.getElementById('askSheetBody') : document.getElementById('askCard');
     if (target && askAreaEl.parentNode !== target) target.appendChild(askAreaEl);
   }
   function updateBar() {
-    const own = Boolean(user && user.id === expert.id);
+    if (!isMentor) { bar.hidden = true; return; }
+    const own = isSelf;
     const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
     const show = phone.matches && !own;
     bar.hidden = !show;
@@ -84,10 +92,25 @@
   function crumbsHtml() {
     return `<ol>
       <li><a href="/index.html">${t('expert.crumb.home')}</a></li>
-      <li><a href="/index.html#experts">${t('nav.browse')}</a></li>
-      ${expert.niche ? `<li><a href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a></li>` : ''}
+      ${isMentor ? `<li><a href="/index.html#experts">${t('nav.browse')}</a></li>
+      ${expert.niche ? `<li><a href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a></li>` : ''}` : ''}
       <li><span aria-current="page">${escapeHtml(expert.name)}</span></li>
     </ol>`;
+  }
+
+  // ---- The details every profile has: work or study, city, languages, links, member since -----------------------------
+  const LINK_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
+  const monthYear = (d) => new Date(d).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { month: 'long', year: 'numeric' });
+  function detailsHtml() {
+    const rows = [];
+    if (expert.currentWork) rows.push(`<li><span class="muted small">${t('profile.currentWork')}</span><strong>${escapeHtml(expert.currentWork)}</strong></li>`);
+    if (expert.city) rows.push(`<li><span class="muted small">${t('profile.city')}</span><strong>${escapeHtml(expert.city)}</strong></li>`);
+    if ((expert.languages || []).length) rows.push(`<li><span class="muted small">${t('profile.languages')}</span><strong>${expert.languages.map((l) => escapeHtml(t('lang.' + l))).join(', ')}</strong></li>`);
+    rows.push(`<li><span class="muted small">${t('profile.memberSince')}</span><strong>${escapeHtml(monthYear(expert.memberSince))}</strong></li>`);
+    const links = [];
+    if (expert.linkedinUrl) links.push(`<a class="profile-link" href="${escapeHtml(expert.linkedinUrl)}" target="_blank" rel="noopener noreferrer nofollow ugc">${LINK_ICON}LinkedIn</a>`);
+    if (expert.websiteUrl) links.push(`<a class="profile-link" href="${escapeHtml(expert.websiteUrl)}" target="_blank" rel="noopener noreferrer nofollow ugc">${LINK_ICON}${escapeHtml(new URL(expert.websiteUrl).hostname.replace(/^www\./, ''))}</a>`);
+    return `<ul class="profile-facts">${rows.join('')}</ul>${links.length ? `<p class="profile-links">${links.join('')}</p>` : ''}`;
   }
 
   const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -99,53 +122,58 @@
       ? `<span class="rating">★ ${expert.ratingAvg}</span> <span class="muted">(${expert.reviewCount} ${t('expert.reviewsShort')})</span>`
       : `<span class="muted">${t('expert.noReviewsYet')}</span>`;
     const wait = waitText(expert.avgAnswerSeconds);
+    const title = isMentor ? (expert.roleTitle || '') : (expert.headline || '');
     return `
-      <div class="expert-layout">
+      <div class="expert-layout${isMentor ? '' : ' profile-plain'}">
         <section class="profile-card" aria-labelledby="expertName">
           <div class="profile-head">
-            <div class="avatar avatar-lg" style="${WisecallAPI.avatarStyle(expert.color)}" aria-hidden="true">${escapeHtml(initials(expert.name))}</div>
+            ${WisecallAPI.avatar(expert, { cls: 'avatar-lg', size: 76 })}
             <div>
               <h1 id="expertName">${escapeHtml(expert.name)}</h1>
-              <p class="profile-title">${escapeHtml(expert.roleTitle || '')}</p>
+              ${title ? `<p class="profile-title">${escapeHtml(title)}</p>` : ''}
+              ${isMentor && expert.headline ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
               <div class="profile-tags">
-                ${expert.niche ? `<a class="tag tag-niche" href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a>` : ''}
-                <span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>
-                ${(expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
+                ${isMentor && expert.niche ? `<a class="tag tag-niche" href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a>` : ''}
+                ${isMentor ? `<span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>` : ''}
+                ${isMentor && (expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
               </div>
             </div>
           </div>
-          <dl class="profile-stats">
+          ${isSelf ? `<p class="profile-self small"><a class="btn btn-outline btn-sm" href="/settings.html?tab=profile">${t('profile.edit')}</a> ${expert.visibility === 'contacts' ? `<span class="muted">${t('profile.visibleToContacts')}</span>` : ''}</p>` : ''}
+          ${detailsHtml()}
+          ${isMentor ? `<dl class="profile-stats">
             <div><dt>${t('expert.stat.price')}</dt><dd>${WisecallAPI.formatPrice(expert.price)}</dd></div>
             <div><dt>${t('expert.stat.rating')}</dt><dd>${rating}</dd></div>
             <div><dt>${t('expert.stat.answered')}</dt><dd>${expert.answeredCount || 0}</dd></div>
             <div><dt>${t('expert.stat.wait')}</dt><dd>${wait ? escapeHtml(wait) : `<span class="muted">${t('expert.wait.none')}</span>`}</dd></div>
-          </dl>
+          </dl>` : ''}
         </section>
 
-        <aside class="ask-side" aria-label="${escapeHtml(t('expert.askTitle').replace('{name}', expert.name))}">
+        ${isMentor ? `<aside class="ask-side" aria-label="${escapeHtml(t('expert.askTitle').replace('{name}', expert.name))}">
           <div class="ask-panel" id="askCard"></div>
-        </aside>
+        </aside>` : ''}
 
         ${expert.bio ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
 
-        ${(expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')}</p></section>` : ''}
+        ${isMentor && (expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')}</p></section>` : ''}
 
-        <section class="profile-section profile-reviews" aria-labelledby="reviewsTitle">
+        ${isMentor ? `<section class="profile-section profile-reviews" aria-labelledby="reviewsTitle">
           <h2 id="reviewsTitle">${t('expert.reviewsTitle')}</h2>
           <div id="reviewsBody"><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w60"></span></div>
         </section>
 
-        <div class="report-section">${WisecallReport.html(expert.id, null, Boolean(user))}</div>
+        <div class="report-section">${WisecallReport.html(expert.id, null, Boolean(user))}</div>` : ''}
       </div>`;
   }
 
   function draw() {
     const typed = document.getElementById('question');
     if (typed) draft = typed.value;
-    document.title = `${expert.name}, ${expert.roleTitle || ''} — Wisecall`.replace(', —', ' —');
+    document.title = isMentor ? `${expert.name}, ${expert.roleTitle || ''} — Wisecall`.replace(', —', ' —') : `${expert.name} — Wisecall`;
     crumbs.innerHTML = crumbsHtml();
     page.setAttribute('aria-busy', 'false');
     page.innerHTML = profileHtml();
+    if (!isMentor) return;
     mountAsk();
     updateBar();
     WisecallReport.wire(page);
@@ -153,13 +181,12 @@
     if (!checking && !returnedFromBank) renderAskForm(); else if (askState) askArea().innerHTML = askState;
   }
   const askArea = () => document.getElementById('askArea');
-
   // ---- Reviews ------------------------------------------------------------------------------------------------
   async function loadReviews() {
     const body = document.getElementById('reviewsBody');
     if (!body) return;
     let reviews = [];
-    try { reviews = (await WisecallAPI.apiFetch(`/experts/${id}/reviews`)).reviews; } catch (e) { body.innerHTML = `<p class="muted">${t('toast.error')}</p>`; return; }
+    try { reviews = (await WisecallAPI.apiFetch(`/experts/${expert.id}/reviews`)).reviews; } catch (e) { body.innerHTML = `<p class="muted">${t('toast.error')}</p>`; return; }
     if (!reviews.length) {
       body.innerHTML = `<div class="reviews-empty">${REVIEW_ART}<h3>${t('expert.reviews.empty.title')}</h3><p>${t('expert.reviews.empty.body')}</p></div>`;
       return;

@@ -29,8 +29,8 @@ describe('PUBLIC_URL is the only address the site ever gives out', () => {
       assert.match(html, /og:image" content="https:\/\/wisecall\.example\/og-image\.png"/, `${f} og:image`);
       assert.match(html, /twitter:image" content="https:\/\/wisecall\.example\/og-image\.png"/, `${f} twitter:image`);
     }
-    const ids = await (await fetch(`${srv.base}/expert.html?id=11111111-1111-1111-1111-111111111111`)).text();
-    assert.match(ids, /rel="canonical" href="https:\/\/wisecall\.example\/expert\.html/);
+    const profile = await (await fetch(`${srv.base}/u/nobody-by-this-name`)).text();
+    assert.match(profile, /rel="canonical" href="https:\/\/wisecall\.example\/profile\.html/);
   });
 
   test('robots.txt, sitemap.xml and the error pages use it too', async () => {
@@ -55,7 +55,7 @@ describe('PUBLIC_URL is the only address the site ever gives out', () => {
     assert.ok(r.links > 20, 'the buttons carry the public address');
     const src = ['server/payments.js', 'server/verification/kyc.js', 'server/routes/auth.js'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
     assert.match(src, /config\.PUBLIC_URL\}\/api\/payments\/callback/);
-    assert.match(src, /config\.PUBLIC_URL\}\/expert\.html\?id=/);
+    assert.match(src, /config\.PUBLIC_URL\}\/u\/\$\{mentor\.username\}\?booking=/);
     assert.match(src, /config\.PUBLIC_URL\}\/settings\.html\?tab=verification/);
     assert.match(src, /config\.PUBLIC_URL\}\/reset-password\.html/);
   });
@@ -223,7 +223,7 @@ describe('launch mode: prelaunch, then live', () => {
 
   test('profiles are left out of the sitemap before launch', async () => {
     const sitemap = await (await fetch(`${pre.base}/sitemap.xml`)).text();
-    assert.doesNotMatch(sitemap, /expert\.html/);
+    assert.doesNotMatch(sitemap, /\/u\//);
     assert.match(sitemap, /<loc>http:\/\/localhost:4594\/<\/loc>/);
   });
 
@@ -247,7 +247,7 @@ describe('launch mode: prelaunch, then live', () => {
     assert.equal(fake.to('later@example.com').length, 0);
     assert.ok((await row('wait-any@example.com')).notified_at);
 
-    assert.match(await (await fetch(`${live.base}/sitemap.xml`)).text(), /expert\.html\?id=/);
+    assert.match(await (await fetch(`${live.base}/sitemap.xml`)).text(), /\/u\/dr-prelaunch</);
     const s = client(live.base);
     assert.equal((await s.api('/auth/login', { method: 'POST', body: { email: 'seeker@example.com', password: 'test-pass-12345' } })).status, 200);
     assert.equal((await bookAndPay(live.base, s, mentorId, 'Can you help me with my sleep?')).status, 'paid');
@@ -269,7 +269,7 @@ describe('launch mode: prelaunch, then live', () => {
     const home = pub('index.html');
     assert.match(home, /data-i18n-prelaunch="hero\.prelaunch\.cta"/);
     assert.match(home, /data-i18n-prelaunch="mentors\.cta"/);
-    for (const f of ['js/main.js', 'js/expert.js', 'js/nav.js', 'js/dashboard.js', 'js/settings.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
+    for (const f of ['js/main.js', 'js/profile.js','js/nav.js', 'js/dashboard.js', 'js/settings.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
   });
 });
 

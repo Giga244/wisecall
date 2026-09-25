@@ -111,6 +111,10 @@ html { scroll-behavior: smooth; scroll-padding-top: 84px; }
   .nav.is-authed .nl-extra { display: none; }
   .nav-links { gap: 18px; }
 }
+/* Georgian words are longer: a signed-in header needs the same relief a little further up. */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  html[lang="ka"] .nav.is-authed .nl-extra { display: none; }
+}
 
 .lang-toggle {
   display: flex; border: none; background: #fff; border-radius: 999px; padding: 3px; gap: 2px;

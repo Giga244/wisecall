@@ -11,8 +11,8 @@ const WIDTHS = [360, 390, 430, 768, 834, 1024, 1280];
 const PHONES = WIDTHS.filter((w) => w < 640);
 const heightFor = (w) => (w < 500 ? 844 : w < 1000 ? 1024 : 800);
 
-let mentorId;
-test.beforeAll(async () => { mentorId = (await S.sql(`SELECT id FROM users WHERE email = 'ana@e2e.test'`))[0].id; });
+let mentorUsername;
+test.beforeAll(async () => { mentorUsername = (await S.sql(`SELECT username FROM users WHERE email = 'ana@e2e.test'`))[0].username; });
 
 function watch(page) {
   const layout = [];
@@ -33,7 +33,7 @@ const sideways = (page) => page.evaluate(() => ({ page: document.documentElement
 
 // ---- Nothing sticks out -------------------------------------------------------------------------------------
 const PAGES = [
-  ['visitor', null, ['/', () => `/expert.html?id=${mentorId}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/no-such-page']],
+  ['visitor', null, ['/', () => `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/no-such-page']],
   ['seeker', 'sam@e2e.test', ['/dashboard.html', '/settings.html?tab=profile', '/settings.html?tab=account']],
   ['mentor', 'ana@e2e.test', ['/dashboard.html', '/settings.html?tab=mentor', '/settings.html?tab=verification', '/settings.html?tab=payouts']],
   ['admin', 'e2e-admin@example.com', ['/admin.html']]
@@ -240,7 +240,7 @@ test('Browse on a phone: the Filters sheet holds sort and fields, and the list f
 
 test('the expert profile on a phone: a bar with the price and Ask, opening the question sheet', async ({ browser }) => {
   const { ctx, page } = await newPage(browser, 390, { login: 'sam@e2e.test' });
-  await page.goto(`/expert.html?id=${mentorId}`);
+  await page.goto(`/u/${mentorUsername}`);
   await page.waitForLoadState('networkidle');
   const bar = page.locator('.ask-bar');
   await expect(bar).toBeVisible();
@@ -265,7 +265,7 @@ test('the expert profile on a phone: a bar with the price and Ask, opening the q
 
   // a tablet shows the panel next to / under the profile, and no bar
   const tablet = await newPage(browser, 768, { login: 'sam@e2e.test' });
-  await tablet.page.goto(`/expert.html?id=${mentorId}`);
+  await tablet.page.goto(`/u/${mentorUsername}`);
   await tablet.page.waitForLoadState('networkidle');
   await expect(tablet.page.locator('.ask-bar')).toBeHidden();
   await expect(tablet.page.locator('.ask-side #question')).toBeVisible();

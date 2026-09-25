@@ -8,8 +8,6 @@
     return;
   }
 
-  const nameInput = document.getElementById('name');
-  const bioInput = document.getElementById('bio');
   const becomeMentorCheckbox = document.getElementById('becomeMentor');
   const mentorForm = document.getElementById('mentorForm');
   const roleTitleInput = document.getElementById('roleTitle');
@@ -72,8 +70,6 @@
   }
 
   function fillForm(u) {
-    nameInput.value = u.name || '';
-    bioInput.value = u.bio || '';
     const isMentor = u.role === 'mentor' || u.role === 'both';
     becomeMentorCheckbox.checked = isMentor;
     mentorForm.style.display = isMentor ? 'grid' : 'none';
@@ -171,6 +167,7 @@
 
   AuthUI.init();
   fillForm(user);
+  SettingsProfile.init(user);
   loadPayout();
   loadProgress();
   updateTabVisibility();
@@ -191,19 +188,6 @@
     } catch (e) {
       const map = { invalid_iban: 'settings.payouts.err.iban', invalid_payout_name: 'settings.payouts.err.name' };
       payoutError.textContent = t(map[e.code] || 'toast.error');
-    }
-  });
-
-  document.getElementById('profileForm').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    try {
-      await WisecallAPI.apiFetch('/me', {
-        method: 'PATCH',
-        body: { name: nameInput.value.trim(), bio: bioInput.value.trim() }
-      });
-      WisecallNav.showToast(t('toast.saved'));
-    } catch (e) {
-      WisecallNav.showToast(t('toast.error'));
     }
   });
 

@@ -1,7 +1,10 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { requireAuth, optionalAuth } = require('../auth');
-const { meProfile, asyncHandler } = require('../util');
+const { meProfile, asyncHandler, isListable } = require('../util');
+const { parseProfileUpdates, setPhoto, removePhoto } = require('../profiles');
+const { processPhoto, ImageError } = require('../images');
+const usernames = require('../usernames');
 const { query } = require('../db');
 const { encrypt, decrypt } = require('../cryptoBox');
 const { isValidGeorgianIban, normalize, pretty } = require('../iban');
@@ -20,7 +23,7 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   res.json({ user: user ? meProfile(user) : null });
 }));
 
-const EDITABLE_FIELDS = ['name', 'bio', 'niche', 'roleTitle', 'price', 'language', 'proofUrl', 'sampleAnswer'];
+const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'proofUrl', 'sampleAnswer'];
 const NICHES = rules.nicheKeys();
 const MENTOR_APPLICATION_FIELDS = ['niche', 'roleTitle', 'price', 'proofUrl', 'sampleAnswer'];
 const URL_RE = /^https?:\/\/.+\..+/i;
@@ -66,6 +69,11 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     }
   }
 
+  // The public profile: headline, current work, city, languages, bio, links, who may see it.
+  const profile = parseProfileUpdates(updates, { listable: isListable(existing) });
+  if (profile.error) return res.status(400).json({ error: profile.error, field: profile.field });
+  Object.assign(patch, profile.patch);
+
   if (updates.becomeMentor === true && existing.role === 'seeker') patch.role = 'mentor';
   if (updates.becomeMentor === false) patch.role = 'seeker';
 
@@ -103,6 +111,38 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   // A changed name is compared with the ID again.
   if (isMentor && patch.name !== undefined && patch.name !== existing.name) await names.recompute(user.id);
   res.json({ user: meProfile(user) });
+}));
+
+// The username (the /u/<name> address): once every 30 days; the old one keeps redirecting.
+const USERNAME_STATUS = { invalid_username: 400, reserved_username: 400, username_taken: 409, username_change_too_soon: 429, not_found: 404 };
+router.put('/username', requireAuth, asyncHandler(async (req, res) => {
+  const wanted = (req.body || {}).username;
+  if (typeof wanted !== 'string') return res.status(400).json({ error: 'missing_fields' });
+  try {
+    const r = await usernames.change(req.userToken.id, wanted);
+    res.json({ user: meProfile(await getUserById(req.userToken.id)), changed: r.changed });
+  } catch (e) {
+    if (e instanceof usernames.UsernameError) return res.status(USERNAME_STATUS[e.code] || 400).json({ error: e.code, ...(e.nextChangeAt ? { nextChangeAt: e.nextChangeAt } : {}) });
+    throw e;
+  }
+}));
+
+// The profile photo: the raw file is the request body. It is checked, resized, stripped of its metadata and re-encoded.
+const PHOTO_STATUS = { empty_file: 400, unsupported_image_type: 400, invalid_image: 400, file_too_large: 413 };
+router.post('/photo', requireAuth, asyncHandler(async (req, res) => {
+  try {
+    const img = await processPhoto(Buffer.isBuffer(req.body) ? req.body : null);
+    await setPhoto(req.userToken.id, img, 'upload');
+    res.json({ user: meProfile(await getUserById(req.userToken.id)) });
+  } catch (e) {
+    if (e instanceof ImageError) return res.status(PHOTO_STATUS[e.code] || 400).json({ error: e.code });
+    throw e;
+  }
+}));
+
+router.delete('/photo', requireAuth, asyncHandler(async (req, res) => {
+  await removePhoto(req.userToken.id);
+  res.json({ user: meProfile(await getUserById(req.userToken.id)) });
 }));
 
 const isMentor = (u) => u.role === 'mentor' || u.role === 'both';
@@ -166,12 +206,13 @@ router.get('/earnings', requireAuth, asyncHandler(async (req, res) => {
 
 router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
-  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' || !currentPassword || !newPassword) return res.status(400).json({ error: 'missing_fields' });
-  if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
-
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
-  if (!(await bcrypt.compare(String(currentPassword), user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
+  // Someone who signed in with Google and never had a password can set one without a "current" password.
+  const hasPassword = Boolean(user.passwordHash);
+  if (typeof newPassword !== 'string' || !newPassword || (hasPassword && (typeof currentPassword !== 'string' || !currentPassword))) return res.status(400).json({ error: 'missing_fields' });
+  if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
+  if (hasPassword && !(await bcrypt.compare(String(currentPassword), user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
 
   await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
   res.json({ ok: true });

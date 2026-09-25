@@ -65,12 +65,18 @@ app.use('/api/verification/kyc/start', rateLimit({ windowMs: 60 * 60 * 1000, max
 app.use('/api/verification/work-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 12 }));
 app.use('/api/verification/documents', rateLimit({ windowMs: 60 * 60 * 1000, max: 40 }));
 app.use(/^\/api\/experts\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.use('/api/me/photo', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
+app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
+app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 // Uploaded verification documents arrive as raw file bytes (PDF or JPEG, up to 10 MB).
 app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
+// A profile photo arrives as raw file bytes too (JPEG, PNG or WebP, up to 5 MB; it is re-encoded on the server).
+app.use('/api/me/photo', express.raw({ type: ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'], limit: '5mb' }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/waitlist', require('./routes/waitlist'));
 app.use('/api/me', require('./routes/me'));
+app.use('/api', require('./routes/profiles'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/verification', require('./routes/verification'));
@@ -128,6 +134,8 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await db.migrate();
+  const made = await require('./usernames').backfill(); // people who signed up before profiles existed get a username
+  if (made) console.log(`[profiles] gave ${made} existing user(s) a username made from their name`);
   await launch.refresh();
   const server = app.listen(config.PORT, () => {
     console.log(`Wisecall running at http://localhost:${config.PORT}`);

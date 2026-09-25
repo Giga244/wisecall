@@ -36,6 +36,17 @@ function userFromRow(r) {
     emailVerifyCodeExpiresAt: r.email_code_expires_at,
     resetTokenHash: r.reset_token_hash,
     resetTokenExpiresAt: r.reset_token_expires_at,
+    username: r.username,
+    usernameChangedAt: r.username_changed_at,
+    usernameConfirmed: r.username_confirmed,
+    headline: r.headline,
+    currentWork: r.current_work,
+    city: r.city,
+    languages: r.languages || [],
+    linkedinUrl: r.linkedin_url,
+    websiteUrl: r.website_url,
+    profileVisibility: r.profile_visibility,
+    photoUpdatedAt: r.photo_updated_at,
     createdAt: r.created_at
   };
 }
@@ -84,7 +95,9 @@ const USER_COLUMNS = {
   proofUrl: 'proof_url', sampleAnswer: 'sample_answer', verificationNote: 'verification_note',
   verificationDecidedAt: 'verification_decided_at', suspendedAt: 'suspended_at', suspensionReason: 'suspension_reason', emailVerified: 'email_verified', emailVerifyCodeHash: 'email_code_hash',
   emailVerifyCodeExpiresAt: 'email_code_expires_at', resetTokenHash: 'reset_token_hash',
-  resetTokenExpiresAt: 'reset_token_expires_at'
+  resetTokenExpiresAt: 'reset_token_expires_at',
+  headline: 'headline', currentWork: 'current_work', city: 'city', languages: 'languages', linkedinUrl: 'linkedin_url', websiteUrl: 'website_url',
+  profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at'
 };
 
 const BOOKING_COLUMNS = {

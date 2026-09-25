@@ -61,6 +61,15 @@
     return `background:${hex};color:${onWhite(hex) >= onInk(hex) ? '#fff' : ink}`;
   }
 
+  // The round picture of a person: their photo when they have one, otherwise their initials on their colour.
+  // p: { name, color, photoUrl }. size is the width in pixels (48 by default; the page's CSS class may change it).
+  const escapeAttr = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const initialsOf = (name) => String(name || '?').split(' ').map((w) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+  function avatar(p, { cls = '', size = 48 } = {}) {
+    if (p && p.photoUrl) return `<img class="avatar avatar-photo ${cls}" src="${escapeAttr(p.photoUrl)}" alt="" width="${size}" height="${size}" decoding="async">`;
+    return `<div class="avatar ${cls}" style="${avatarStyle(p && p.color)}" aria-hidden="true">${escapeAttr(initialsOf(p && p.name))}</div>`;
+  }
+
   // Every form control has a real <label for="id">: a label that wraps a control (in a page or in a template a script draws
   // later) is tied to it by id, so a screen reader reads the label text and not the placeholder or a bare "on".
   let controlCount = 0;
@@ -81,5 +90,5 @@
   scheduleLinking();
   new MutationObserver(scheduleLinking).observe(document.documentElement, { childList: true, subtree: true });
 
-  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount, avatarStyle, linkLabels };
+  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount, avatarStyle, avatar, initialsOf, linkLabels };
 })();

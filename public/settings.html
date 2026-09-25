@@ -53,20 +53,80 @@
   </div>
 
   <div class="tab-panel" role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" data-panel="profile">
-  <div class="settings-card">
-    <h2 data-i18n="settings.profile.title">Profile</h2>
-    <form id="profileForm">
-      <label for="name"><span data-i18n="settings.profile.name">Full name</span>
-        <input type="text" id="name" autocomplete="name" autocapitalize="words" required>
-      </label>
-      <label for="bio"><span data-i18n="settings.profile.bio">Bio</span>
-        <textarea id="bio" rows="3"></textarea>
-      </label>
-      <button type="submit" class="btn btn-primary" data-i18n="settings.profile.save">Save profile</button>
-    </form>
-  </div>
-  </div>
+  <div class="profile-editor">
+    <div class="settings-card">
+      <h2 data-i18n="profile.title">Public profile</h2>
+      <form id="profileForm" novalidate>
+        <div class="photo-edit">
+          <div class="photo-preview" id="photoPreview"></div>
+          <div class="photo-actions">
+            <p class="photo-label" id="photoLabel" data-i18n="profile.photo.label">Profile photo</p>
+            <div class="photo-buttons">
+              <label class="btn btn-outline btn-sm file-btn" id="photoChoose"><span id="photoChooseText" data-i18n="profile.photo.choose">Upload a photo</span>
+                <input type="file" id="photoFile" class="file-input" accept="image/jpeg,image/png,image/webp" aria-describedby="photoHint photoError">
+              </label>
+              <button type="button" class="btn btn-ghost btn-sm" id="photoRemove" data-i18n="profile.photo.remove" hidden>Remove photo</button>
+            </div>
+            <p class="hint" id="photoHint" data-i18n="profile.photo.hint">JPG, PNG or WebP, up to 5 MB. We crop it to a square, resize it and remove hidden data such as the place it was taken.</p>
+            <p class="form-error" id="photoError" role="alert"></p>
+          </div>
+        </div>
 
+        <div class="username-edit">
+          <label for="username"><span data-i18n="profile.username">Username</span>
+            <input type="text" id="username" maxlength="30" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="usernameHint usernameStatus">
+          </label>
+          <p class="hint" id="usernameHint"></p>
+          <p class="username-status" id="usernameStatus" role="status" aria-live="polite"></p>
+          <button type="button" class="btn btn-outline btn-sm" id="usernameSave" data-i18n="profile.username.change">Change username</button>
+        </div>
+
+        <label for="name"><span data-i18n="settings.profile.name">Full name</span>
+          <input type="text" id="name" autocomplete="name" autocapitalize="words" maxlength="100" required>
+        </label>
+        <label for="headline"><span data-i18n="profile.headline">What I do</span>
+          <input type="text" id="headline" maxlength="100" autocomplete="off" aria-describedby="headlineHint">
+          <span class="hint" id="headlineHint" data-i18n="profile.headline.hint">A short line under your name, for example “Medical student at TSMU” or “Marketing manager”.</span>
+        </label>
+        <label for="currentWork"><span data-i18n="profile.currentWork">Current work or study</span>
+          <input type="text" id="currentWork" maxlength="120" autocomplete="organization">
+        </label>
+        <label for="city"><span><span data-i18n="profile.city">City</span> <span class="muted" data-i18n="profile.optional">(optional)</span></span>
+          <input type="text" id="city" maxlength="80" autocomplete="address-level2">
+        </label>
+        <fieldset class="lang-fieldset">
+          <legend data-i18n="profile.languages">Languages I speak</legend>
+          <div class="lang-checks" id="languageChecks"></div>
+        </fieldset>
+        <label for="bio"><span data-i18n="profile.bio">About me</span>
+          <textarea id="bio" rows="4" maxlength="500" aria-describedby="bioCount"></textarea>
+          <span class="hint" id="bioCount"></span>
+        </label>
+        <label for="linkedinUrl"><span data-i18n="profile.linkedin">LinkedIn link (optional)</span>
+          <input type="url" id="linkedinUrl" maxlength="200" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://www.linkedin.com/in/yourname">
+        </label>
+        <label for="websiteUrl"><span data-i18n="profile.website">Website (optional)</span>
+          <input type="url" id="websiteUrl" maxlength="200" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://">
+        </label>
+        <label for="profileVisibility"><span data-i18n="profile.visibility">Who can see my profile</span>
+          <select id="profileVisibility" aria-describedby="visibilityHint">
+            <option value="public" data-i18n="profile.visibility.public">Everyone (public)</option>
+            <option value="contacts" data-i18n="profile.visibility.contacts">Only people I've had a question with</option>
+          </select>
+          <span class="hint" id="visibilityHint"></span>
+        </label>
+        <p class="form-error" id="profileError" role="alert"></p>
+        <button type="submit" class="btn btn-primary" data-i18n="profile.save">Save profile</button>
+      </form>
+    </div>
+
+    <aside class="profile-preview" aria-labelledby="previewTitle">
+      <h2 id="previewTitle" data-i18n="profile.preview.title">How others see your profile</h2>
+      <div class="preview-card" id="profilePreview" aria-live="off"></div>
+      <a class="btn btn-outline btn-sm" id="viewPublic" href="#" data-i18n="profile.preview.view">View my public profile</a>
+    </aside>
+  </div>
+  </div>
   <div class="tab-panel" role="tabpanel" id="panel-mentor" aria-labelledby="tab-mentor" data-panel="mentor" hidden>
   <div class="settings-card">
     <h2 data-i18n="settings.mentor.title">Mentor profile</h2>
@@ -180,6 +240,7 @@
 <script src="/js/nav.js"></script>
 <script src="/js/auth-ui.js"></script>
 <script src="/js/settings-verification.js"></script>
+<script src="/js/settings-profile.js"></script>
 <script src="/js/settings.js"></script>
 </body>
 </html>

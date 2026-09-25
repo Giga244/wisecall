@@ -22,7 +22,6 @@
   const money = (cents) => WisecallAPI.formatAmount(cents);
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
   const fmtDate = (d) => new Date(d).toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' });
-  const initials = (name) => (name || '?').split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   const HOUR = 3600000;
 
   const skeleton = () => `<div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span></div>`.repeat(2);
@@ -114,9 +113,9 @@
       return `
       <article class="booking-card" data-id="${b.id}">
         <div class="booking-top">
-          <div class="avatar" style="${WisecallAPI.avatarStyle(b.otherPartyColor)}" aria-hidden="true">${escapeHtml(initials(b.otherPartyName))}</div>
+          ${WisecallAPI.avatar({ name: b.otherPartyName, color: b.otherPartyColor, photoUrl: b.otherPartyPhotoUrl })}
           <div>
-            <div class="card-name"><a class="plain-link" href="/expert.html?id=${b.mentorId}">${escapeHtml(b.otherPartyName)}</a></div>
+            <div class="card-name"><a class="plain-link" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${escapeHtml(b.otherPartyName)}</a></div>
             <span class="badge badge-${b.status}">${statusLabel(b.status)}</span>
           </div>
           <div class="booking-amount">${money(b.amount)}<span class="muted small block">${b.paidAt ? t('dash.paidOn').replace('{date}', fmtDate(b.paidAt)) : ''}</span></div>
@@ -125,7 +124,7 @@
         <p class="booking-question">${escapeHtml(b.question)}</p>
         ${b.status === 'paid' && b.answerDeadline ? countdownHtml(b, 'seeker') : ''}
         ${bookingNote(b)}
-        ${b.status === 'pending_payment' ? `<a class="btn btn-outline btn-sm" href="/expert.html?id=${b.mentorId}">${t('dash.retry')}</a>` : ''}
+        ${b.status === 'pending_payment' ? `<a class="btn btn-outline btn-sm" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${t('dash.retry')}</a>` : ''}
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
         ${b.status === 'answered' && !b.answerHeld ? renderReviewArea(b) : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
@@ -195,9 +194,9 @@
       return `
       <article class="booking-card" data-id="${b.id}">
         <div class="booking-top">
-          <div class="avatar" style="${WisecallAPI.avatarStyle(b.otherPartyColor)}" aria-hidden="true">${escapeHtml(initials(b.otherPartyName))}</div>
+          ${WisecallAPI.avatar({ name: b.otherPartyName, color: b.otherPartyColor, photoUrl: b.otherPartyPhotoUrl })}
           <div>
-            <div class="card-name">${escapeHtml(b.otherPartyName)}</div>
+            <div class="card-name"><a class="plain-link" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${escapeHtml(b.otherPartyName)}</a></div>
             <span class="badge badge-${b.status}">${statusLabel(b.status)}</span>
           </div>
           <div class="booking-amount">${money(b.mentorNetAmount)}<span class="muted small block">${t('dash.fee.note')}: ${money(b.platformFeeAmount)}</span></div>
