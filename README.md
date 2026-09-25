@@ -2,6 +2,8 @@
 
 A paid advice marketplace for Georgia: seekers pay in lari (GEL) to ask a question, mentors answer it, the platform keeps a fee and pays mentors by bank transfer. Built in English and Georgian (EN/KA).
 
+**Trying the whole flow on your own computer?** Read [LOCAL-TESTING.md](LOCAL-TESTING.md): the accounts to make, the fake bank, and a fast-forward for the 7-day rules.
+
 **Going live?** Read [DEPLOY.md](DEPLOY.md): bank account, database, environment variables, callback URL, email DNS, domain, and a launch checklist. Legal text needs a lawyer: see [LEGAL-REVIEW.md](LEGAL-REVIEW.md).
 
 ## What it does
