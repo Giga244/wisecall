@@ -26,7 +26,8 @@ function fill(html, vars) {
 }
 
 function baseVars(canonicalPath) {
-  return { PUBLIC_URL: config.PUBLIC_URL, CANONICAL_URL: config.PUBLIC_URL + canonicalPath };
+  // GOOGLE_HIDDEN: the "Continue with Google" block on the login and sign-up pages exists only when Google sign-in is set up.
+  return { PUBLIC_URL: config.PUBLIC_URL, CANONICAL_URL: config.PUBLIC_URL + canonicalPath, GOOGLE_HIDDEN: config.GOOGLE_ENABLED ? '' : 'hidden' };
 }
 
 // A public mentor's name and role for the page <title>; null when they aren't listed.
@@ -127,6 +128,7 @@ function seoRoutes() {
       'Disallow: /dashboard.html',
       'Disallow: /settings.html',
       'Disallow: /verify-email.html',
+      'Disallow: /choose-username.html',
       'Disallow: /reset-password.html',
       'Disallow: /forgot-password.html',
       'Disallow: /waitlist-unsubscribe.html',

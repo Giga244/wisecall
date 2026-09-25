@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Choose your username — Wisecall</title>
+<meta name="description" content="Pick the address of your Wisecall profile.">
+<link rel="canonical" href="{{PUBLIC_URL}}/choose-username.html">
+<meta name="robots" content="noindex">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Choose your username — Wisecall">
+<meta property="og:description" content="Pick the address of your Wisecall profile.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{PUBLIC_URL}}/choose-username.html">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall: advice from people who have already done it">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Choose your username — Wisecall">
+<meta name="twitter:description" content="Pick the address of your Wisecall profile.">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+
+<main class="auth-page" id="main">
+  <div class="auth-card choose-card">
+    <div class="choose-who" id="chooseWho" aria-hidden="true"></div>
+    <h1 data-i18n="choose.title">Choose your username</h1>
+    <p class="muted" id="chooseWelcome" data-i18n="choose.sub">This is the address of your public profile. We made a suggestion from your name: keep it, or type another one.</p>
+    <form id="chooseForm" novalidate>
+      <div class="field">
+        <label for="username" data-i18n="profile.username">Username</label>
+        <input type="text" id="username" maxlength="30" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="usernameHint usernameStatus">
+        <span class="hint" id="usernameHint"></span>
+        <span class="hint username-status" id="usernameStatus" role="status" aria-live="polite"></span>
+      </div>
+      <p class="form-error" id="formError" role="alert"></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="choose.cta">Continue</button>
+    </form>
+    <p class="auth-switch"><span data-i18n="choose.later">You can change it later in Settings, once every 30 days.</span></p>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/choose-username.js"></script>
+</body>
+</html>

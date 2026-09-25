@@ -168,6 +168,7 @@
   AuthUI.init();
   fillForm(user);
   SettingsProfile.init(user);
+  SettingsAccounts.init();
   loadPayout();
   loadProgress();
   updateTabVisibility();
@@ -248,6 +249,7 @@
         }
       });
       ev.target.reset();
+      document.dispatchEvent(new CustomEvent('wisecall:password-set'));
       WisecallNav.showToast(t('toast.passwordUpdated'));
     } catch (e) {
       errorEl.textContent = t(e.code === 'wrong_password' ? 'settings.password.wrong' : 'settings.password.error');

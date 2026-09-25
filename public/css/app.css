@@ -367,3 +367,32 @@ form .check-chip input { position: absolute; opacity: 0; width: 100%; height: 10
   .profile-facts { grid-template-columns: 1fr; }
   .profile-preview { padding: 18px; }
 }
+/* Continue with Google (Google's button: white, thin grey outline, the four-colour G, Roboto-style medium text) ----------- */
+.google-block { margin: 0 0 4px; }
+.google-block[hidden] { display: none; }
+.google-error { margin: 0 0 12px; }
+.google-error:empty { display: none; }
+.btn-google {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 16px;
+  background: #fff; border: 1px solid #747775; border-radius: 999px; color: #1f1f1f; text-decoration: none; cursor: pointer;
+  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: 0.25px;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+.btn-google:hover { background: #f0f0f0; box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3); }
+.btn-google:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.btn-google:active { background: #e6e6e6; }
+.btn-google-logo { display: inline-flex; width: 20px; height: 20px; flex: 0 0 auto; }
+.or-divider { display: flex; align-items: center; gap: 14px; margin: 18px 0 14px; color: var(--ink-soft); font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Settings → Account: connected accounts */
+.connected-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius-sm); }
+.connected-logo { display: inline-flex; flex: 0 0 auto; }
+.connected-info { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.connected-info .muted { overflow-wrap: anywhere; }
+#googleAccountError { margin: 10px 0 0; }
+@media (max-width: 479px) { .connected-row { flex-wrap: wrap; } .connected-row .btn { width: 100%; } }
+/* The page a new person from Google passes through to confirm a username */
+.choose-who { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; }
+.choose-who strong { font-family: 'Baloo 2', sans-serif; font-size: 1.15rem; overflow-wrap: anywhere; }
+.choose-card .field { margin-top: 18px; }

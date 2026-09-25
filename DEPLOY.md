@@ -100,6 +100,33 @@ The code was written from Didit's public documentation and tested against a simu
 
 Also sign Didit's data-processing agreement and read [LEGAL-REVIEW.md](LEGAL-REVIEW.md) (biometric data).
 
+## 2c. Sign in with Google (optional)
+
+"Continue with Google" lets people sign up and log in with their Google account. It is **off until you set two values**; without them the button is simply not shown and everything else works as before. **You must create the Google credentials yourself** (it is free, and takes about 15 minutes):
+
+1. Go to https://console.cloud.google.com and sign in with the Google account that should own this. Click the project picker at the top → **New project** → name it `Wisecall` → **Create**, and make sure it is selected.
+2. Open the menu → **APIs & Services** → **OAuth consent screen** (Google now also calls this **Google Auth Platform**). Click **Get started** and fill in:
+   - **App name**: `Wisecall`. **User support email**: your support address.
+   - **Audience**: **External**. **Contact information**: your email. Accept the policy and **Create**.
+3. In **Branding** (or the same wizard) set the **Application home page** to `https://YOUR-DOMAIN`, the **Privacy policy link** to `https://YOUR-DOMAIN/privacy.html` and the **Terms of service link** to `https://YOUR-DOMAIN/terms.html`, and add your domain (for example `wisecall.ge`) under **Authorized domains**. Add a logo if you like.
+4. In **Data Access** click **Add or remove scopes** and tick exactly these three (they are the basic ones: no Google review is needed for them): `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile`. Save. Wisecall asks for nothing else.
+5. In **Audience** the app starts in **Testing**: then only the Google accounts you list as **Test users** can sign in. When you are ready for everyone, click **Publish app** (**In production**). With only these three basic scopes it needs no further Google verification.
+6. Open **Clients** (or **APIs & Services → Credentials → Create credentials → OAuth client ID**). **Application type: Web application**, name `Wisecall web`. Leave **Authorized JavaScript origins** empty (the whole sign-in happens on the server, and no Google script is ever loaded on your pages). Under **Authorized redirect URIs** add **every** address the site can run on, written exactly like this (the same scheme and host as `PUBLIC_URL`, no slash at the end of the host, nothing else):
+   - `https://YOUR-DOMAIN/api/auth/google/callback` (production)
+   - `https://wisecall.onrender.com/api/auth/google/callback` (only if you also use the Render address)
+   - `http://localhost:4242/api/auth/google/callback` (to try it on your own computer)
+   Click **Create**.
+7. Google shows a **Client ID** and a **Client secret**. Copy them into the environment: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (in Render → Environment; on your computer in `.env`). The secret is a password: never paste it into a chat, an email or the code. If it leaks, create a new secret in the same place and change it here.
+8. Restart the site, then run `npm run check:launch`: it says "Google sign-in is on" and prints the exact redirect URI Google must have. Open `/login.html`: the button appears above the email form. Try it with your own Google account, then with a second one.
+
+How it behaves (all decided on the server):
+
+- It is the standard "authorization code" flow with PKCE, a random `state` and a `nonce`; the ID token's signature, issuer, audience and expiry are all checked. `redirect_uri_mismatch` from Google means step 6 does not match `PUBLIC_URL` exactly.
+- A **new** Google account gets a Wisecall account with the name, email address and picture Google gives (the picture is copied to Wisecall's own database). Their email counts as verified **only** if Google says `email_verified` is true; otherwise Wisecall emails the usual code.
+- An email that **already has an account** is linked and signed in only when the address is verified on **both** sides (Wisecall's and Google's). Otherwise nothing is linked and the person is asked to log in with their password first and press **Connect** in Settings → Account. This stops anyone from taking over an account by creating a Google account with somebody else's address.
+- Google never skips **mentor verification**: the ID check, licence, interview and the other steps are decided separately, exactly as for email sign-ups.
+- Someone whose only way in is Google has no password: they cannot disconnect Google until they set one in Settings → Account.
+
 ## 3. Test the bank connection
 
 Do this before real customers, with the bank's test access.
@@ -159,6 +186,7 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `TBC_API_KEY`, `TBC_CLIENT_ID`, `TBC_CLIENT_SECRET` | From TBC (when `PAYMENT_PROVIDER=tbc`) |
 | `KYC_PROVIDER` | `didit` |
 | `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | From Didit ([step 2b](#2b-set-up-id-verification-for-mentors-didit)) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional: both, or neither. From Google Cloud Console ([step 2c](#2c-sign-in-with-google-optional)). Empty = no "Continue with Google" button |
 | `PLATFORM_FEE_PERCENT` | `20` (Wisecall's cut; the mentor gets the rest) |
 | `ANSWER_DEADLINE_DAYS` | `7` (also written in the Terms; keep them in step) |
 | `PAYOUT_HOLD_DAYS` | `7` (also written in the Terms) |

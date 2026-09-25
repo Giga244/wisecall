@@ -5,6 +5,7 @@ const { meProfile, asyncHandler, isListable } = require('../util');
 const { parseProfileUpdates, setPhoto, removePhoto } = require('../profiles');
 const { processPhoto, ImageError } = require('../images');
 const usernames = require('../usernames');
+const identities = require('../identities');
 const { query } = require('../db');
 const { encrypt, decrypt } = require('../cryptoBox');
 const { isValidGeorgianIban, normalize, pretty } = require('../iban');
@@ -216,6 +217,31 @@ router.post('/password', requireAuth, asyncHandler(async (req, res) => {
 
   await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
   res.json({ ok: true });
+}));
+
+// Connected accounts (Settings > Account): is Google connected, can it be disconnected.
+async function identitiesFor(user) {
+  const g = await identities.googleFor(user.id);
+  return {
+    googleEnabled: config.GOOGLE_ENABLED,
+    hasPassword: Boolean(user.passwordHash),
+    google: g ? { email: g.email, since: g.created_at } : null
+  };
+}
+router.get('/identities', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  res.json(await identitiesFor(user));
+}));
+
+// Disconnecting Google is refused when it is the only way to sign in: the person must set a password first.
+router.delete('/identities/google', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (!(await identities.googleFor(user.id))) return res.status(404).json({ error: 'not_connected' });
+  if (!user.passwordHash) return res.status(400).json({ error: 'set_password_first' });
+  await identities.unlinkGoogle(user.id);
+  res.json(await identitiesFor(user));
 }));
 
 module.exports = router;

@@ -9,6 +9,7 @@ require('dotenv').config();
 const ROOT = path.join(__dirname, '..');
 const TMP = path.join(__dirname, '.tmp');
 const PORT = 4620;
+const GOOGLE_PORT = 4630; // the fake Google (tests/fakeGoogle.js): a real OpenID Connect provider with a page where the person picks an account
 
 module.exports = async () => {
   const db = process.env.TEST_DATABASE_URL;
@@ -27,6 +28,12 @@ module.exports = async () => {
   if (!keep || !fs.existsSync(path.join(TMP, 'mail.jsonl'))) fs.writeFileSync(path.join(TMP, 'mail.jsonl'), '');
   const log = fs.openSync(path.join(TMP, 'server.log'), 'w');
 
+  const google = spawn(process.execPath, ['tests/fakeGoogle.js', String(GOOGLE_PORT)], { cwd: ROOT, stdio: 'ignore' });
+  for (let i = 0; i < 40; i++) {
+    try { if ((await fetch('http://localhost:' + GOOGLE_PORT + '/.well-known/openid-configuration')).ok) break; } catch (e) { /* not up yet */ }
+    await new Promise((r) => setTimeout(r, 150));
+  }
+
   const proc = spawn(process.execPath, ['server/index.js'], {
     cwd: ROOT,
     stdio: ['ignore', log, log],
@@ -38,6 +45,7 @@ module.exports = async () => {
       EMAIL_PROVIDER: 'log', EMAIL_LOG_FILE: path.join(TMP, 'mail.jsonl'), EMAIL_FROM: 'Wisecall <e2e@wisecall.example>', RESEND_API_KEY: '',
       ADMIN_EMAILS: 'e2e-admin@example.com', ADMIN_EMAIL: '', SUPPORT_EMAIL: 'support@wisecall.example',
       LAUNCH_MODE: 'live', SWEEP_INTERVAL_SECONDS: '1', RATE_LIMIT_MULTIPLIER: '100',
+      GOOGLE_CLIENT_ID: 'fake-google-client-id.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'fake-google-client-secret', GOOGLE_ISSUER: 'http://localhost:' + GOOGLE_PORT,
       BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', TBC_CLIENT_ID: '', TBC_CLIENT_SECRET: '',
       DIDIT_API_KEY: '', DIDIT_WORKFLOW_ID: '', DIDIT_WEBHOOK_SECRET: ''
     }
@@ -49,5 +57,5 @@ module.exports = async () => {
     await new Promise((r) => setTimeout(r, 250));
   }
 
-  return async () => { proc.kill(); };
+  return async () => { proc.kill(); google.kill(); };
 };

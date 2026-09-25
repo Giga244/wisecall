@@ -8,7 +8,8 @@ const requireAdmin = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ error: 'admin_not_configured', message: 'Set ADMIN_EMAILS in .env to enable the admin panel.' });
   }
   const user = await getUserById(req.userToken.id);
-  if (!user || !config.ADMIN_EMAILS.includes(user.email.toLowerCase())) return res.status(403).json({ error: 'not_admin' });
+  // (The address must also be verified: otherwise anybody could sign up with an admin's address before the admin does.)
+  if (!user || !user.emailVerified || !config.ADMIN_EMAILS.includes(user.email.toLowerCase())) return res.status(403).json({ error: 'not_admin' });
   req.adminUser = user;
   next();
 });

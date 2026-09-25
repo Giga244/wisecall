@@ -9,7 +9,7 @@ const { isListable, photoUrl } = require('./util');
 const LANGUAGES = ['ka', 'en', 'ru', 'tr', 'az', 'hy', 'uk', 'de', 'fr', 'es', 'it', 'ar'];
 const LIMITS = { headline: 100, currentWork: 120, city: 80, bio: 500, url: 200, languages: 6 };
 
-const isAdmin = (user) => Boolean(user && user.email && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase()));
+const isAdmin = (user) => Boolean(user && user.email && user.emailVerified && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase()));
 
 // One line of plain text: no control characters, no line breaks, spaces collapsed.
 function oneLine(v, max) {

@@ -53,6 +53,7 @@ app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
 
 const authLimit = (max) => rateLimit({ windowMs: 15 * 60 * 1000, max });
+app.use('/api/auth/google', authLimit(40));
 app.use('/api/auth/login', authLimit(15));
 app.use('/api/auth/signup', authLimit(15));
 app.use('/api/auth/verify-email', authLimit(10));
@@ -72,6 +73,7 @@ app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
 // A profile photo arrives as raw file bytes too (JPEG, PNG or WebP, up to 5 MB; it is re-encoded on the server).
 app.use('/api/me/photo', express.raw({ type: ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'], limit: '5mb' }));
+app.use('/api/auth/google', require('./routes/google'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/waitlist', require('./routes/waitlist'));
@@ -92,6 +94,8 @@ app.get('/api/config', async (req, res) => {
     currency: config.CURRENCY,
     // "prelaunch": buyers cannot pay yet and the pages show the waiting list; "live": normal.
     launchMode: config.LAUNCH_MODE,
+    // Whether the "Continue with Google" button is shown (both Google keys are set).
+    googleEnabled: config.GOOGLE_ENABLED,
     priceMin: config.PRICE_MIN,
     priceMax: config.PRICE_MAX,
     payoutHoldDays: config.PAYOUT_HOLD_DAYS,
@@ -149,6 +153,9 @@ async function start() {
     console.log(config.LAUNCH_MODE === 'prelaunch'
       ? `Launch mode: PRELAUNCH (${how}). Nobody can pay yet; visitors join the waiting list and mentors can apply and be verified. It opens when the first mentor is listed, or set LAUNCH_MODE=live.`
       : `Launch mode: live (${how}).`);
+    console.log(config.GOOGLE_ENABLED
+      ? `Google sign-in: on (add ${config.GOOGLE_CALLBACK_URL} as an authorised redirect URI in Google Cloud Console).`
+      : 'Google sign-in: off (set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to show "Continue with Google").');
     launch.warnings().forEach((w) => console.warn('[WARNING] ' + w));
     require('./startupWarnings').printWarnings();
   });

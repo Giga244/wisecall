@@ -27,6 +27,7 @@ async function startServer(port, extraEnv = {}) {
     PAYMENT_PROVIDER: 'mock',
     KYC_PROVIDER: 'mock', DIDIT_API_KEY: '', DIDIT_WORKFLOW_ID: '', DIDIT_WEBHOOK_SECRET: '',
     BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', TBC_CLIENT_ID: '', TBC_CLIENT_SECRET: '',
+    GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '', GOOGLE_ISSUER: '', // (off unless a test switches it on with its own fake Google)
     ADMIN_EMAILS: 'qa-admin@example.com',
     ADMIN_EMAIL: '',
     SUPPORT_EMAIL: '', SOCIAL_FACEBOOK: '', SOCIAL_INSTAGRAM: '', SOCIAL_LINKEDIN: '', SOCIAL_X: '', SOCIAL_TIKTOK: '', SOCIAL_YOUTUBE: '',

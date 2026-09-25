@@ -69,6 +69,13 @@ const config = {
   SUPPORT_EMAIL: env.SUPPORT_EMAIL || '',
   POSTMARK_API_URL: (env.POSTMARK_API_URL || 'https://api.postmarkapp.com').replace(/\/+$/, ''),
 
+  // Sign in with Google (OAuth 2 / OpenID Connect, done on the server). Both empty = the button is not shown.
+  // Create them in Google Cloud Console (see DEPLOY.md). GOOGLE_ISSUER can only be changed outside production (tests
+  // point it at a fake Google); in production it is always Google's own address.
+  GOOGLE_CLIENT_ID: (env.GOOGLE_CLIENT_ID || '').trim(),
+  GOOGLE_CLIENT_SECRET: (env.GOOGLE_CLIENT_SECRET || '').trim(),
+  GOOGLE_ISSUER: (IS_PROD ? '' : (env.GOOGLE_ISSUER || '')).trim().replace(/\/+$/, '') || 'https://accounts.google.com',
+
   // prelaunch: mentors can sign up, apply and be verified, visitors can join the waiting list, and nobody can
   // pay yet. live: normal behaviour. Left empty (or "auto"), the site is in prelaunch until at least one mentor is
   // listed and live from then on; config.LAUNCH_MODE below is the mode in force right now.
@@ -95,6 +102,9 @@ Object.defineProperty(config, 'LAUNCH_MODE', {
   }
 });
 
+config.GOOGLE_ENABLED = Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET);
+config.GOOGLE_CALLBACK_URL = `${config.PUBLIC_URL}/api/auth/google/callback`; // must be listed in Google Cloud Console
+
 config.EMAIL_ENABLED = (() => {
   const p = config.EMAIL_PROVIDER;
   if (p === 'resend') return Boolean(config.RESEND_API_KEY);
@@ -113,6 +123,7 @@ if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negat
 if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
 if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
 if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');
+if (Boolean(config.GOOGLE_CLIENT_ID) !== Boolean(config.GOOGLE_CLIENT_SECRET)) problems.push('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must both be set (Google sign-in) or both be empty (no Google button)');
 if (!['prelaunch', 'live', 'auto'].includes(config.LAUNCH_MODE_SETTING)) problems.push('LAUNCH_MODE must be prelaunch or live (or empty: prelaunch until a mentor is listed)');
 
 if (IS_PROD) {

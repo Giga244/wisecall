@@ -220,7 +220,7 @@
   "auth.consent.and": " and ",
   "auth.consent.privacy": "Privacy Policy",
   "auth.consent.after": ".",
-  "legal.updated": "Last updated: 24 September 2026",
+  "legal.updated": "Last updated: 25 September 2026",
   "legal.back": "Back to home",
   "legal.terms.title": "Terms of Service",
   "legal.terms.intro": "These terms are the agreement between you and Wisecall. Please read them before you use the site. If you do not agree, please do not use it.",
@@ -339,6 +339,8 @@
       "h": "2. What we collect",
       "p": [
         "Account data: your name, email address, and a password (stored only as a one-way hash, never in readable form), plus your language choice.",
+        "Profile data: your username, photo, headline, current work or study, city, languages, short bio, and optional LinkedIn and website links. You choose who can see them: everyone, or only people you have had a question with (the profile of a mentor who is listed on Wisecall is always public). Photos are resized and stripped of hidden data such as the place they were taken. Your email address, bank details and verification documents are never shown on a profile.",
+        "Sign in with Google: if you choose “Continue with Google”, Google tells us your name, your email address, whether Google has verified that address, your picture, and an identifier of your Google account. We do not receive your Google password, and we get no access to your Google data beyond these basics. You can disconnect Google in Settings once you have set a password.",
         "Mentor data: if you apply to be a mentor, your job title, field, bio, price, the proof link you give us (for example a LinkedIn profile), and your sample answer. Your title, field, bio, and price become public once you are approved. Your proof link, sample answer, and email are never public.",
         "Questions and answers: the questions you send, the answers you receive, and reviews you write.",
         "Payment data: your card details are entered on our payment bank’s secure page and processed by the bank. We receive only the payment status, amount and the bank’s reference numbers. We never see or store your full card number. Mentors give us their full name and IBAN so we can pay them; the IBAN is stored encrypted and is visible only to the mentor and to Wisecall administrators who make the payouts.",
@@ -379,6 +381,7 @@
       "p": [
         "The mentor you ask receives your name and your question. A seeker receives the mentor’s answer.",
         "Service providers that work for us: our payment bank (card payments and refunds), our identity verification provider (mentors only), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us.",
+        "Google: if you use Google sign-in, Google learns that you signed in to Wisecall, under Google’s own privacy policy. Nothing about your questions or answers is sent to Google.",
         "Authorities, when the law requires it.",
         "The public can see mentor profiles, ratings, and reviews (with the reviewer’s first name and last initial)."
       ]
@@ -1138,5 +1141,29 @@
   "lang.fr": "French",
   "lang.es": "Spanish",
   "lang.it": "Italian",
-  "lang.ar": "Arabic"
+  "lang.ar": "Arabic",
+  "auth.google.continue": "Continue with Google",
+  "auth.or": "or",
+  "auth.google.err.cancelled": "You cancelled the Google sign-in, so nothing was changed. You can try again, or use your email.",
+  "auth.google.err.error": "We couldn’t sign you in with Google. Please try again, or use your email and password.",
+  "auth.google.err.bad_state": "That sign-in link expired, or it was opened in a different browser. Please start again.",
+  "auth.google.err.link_needed": "An account with this email address already exists. To keep it safe, log in with your password first, then connect Google in Settings → Account.",
+  "auth.google.err.no_email": "Google did not share an email address with us, so we could not sign you in. Please sign up with your email instead.",
+  "auth.google.err.unavailable": "Google sign-in is not available right now. Please use your email and password.",
+  "settings.connected.title": "Connected accounts",
+  "settings.connected.body": "Sign in faster by connecting your Google account. Wisecall only learns your name, email address and picture, and Google learns nothing about your questions.",
+  "settings.connected.as": "Connected as {email}",
+  "settings.connected.not": "Not connected",
+  "settings.connected.connect": "Connect",
+  "settings.connected.disconnect": "Disconnect",
+  "settings.connected.done": "Google is connected to your account",
+  "settings.connected.removed": "Google was disconnected",
+  "settings.connected.err.setPassword": "Google is currently the only way you can log in. Set a password below first, then disconnect Google.",
+  "settings.connected.err.alreadyLinked": "That Google account is already connected to another Wisecall account.",
+  "settings.connected.err.hasOther": "A different Google account is already connected. Disconnect it first.",
+  "settings.password.setTitle": "Set a password",
+  "choose.title": "Choose your username",
+  "choose.sub": "This is the address of your public profile. We made a suggestion from your name: keep it, or type another one.",
+  "choose.cta": "Continue",
+  "choose.later": "You can change it later in Settings, once every 30 days."
 }

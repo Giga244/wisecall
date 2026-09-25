@@ -91,6 +91,11 @@ function providers(config) {
   }
   else out.push(fail('Email goes through a real provider', 'EMAIL_PROVIDER must be resend or postmark'));
 
+  // Google sign-in is optional: off is fine, half-configured is not.
+  if (Boolean(config.GOOGLE_CLIENT_ID) !== Boolean(config.GOOGLE_CLIENT_SECRET)) out.push(fail('Google sign-in keys are complete', 'set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or leave both empty'));
+  else if (config.GOOGLE_ENABLED) out.push(ok('Google sign-in is on', `in Google Cloud Console the authorised redirect URI must be exactly ${config.GOOGLE_CALLBACK_URL}`));
+  else out.push(ok('Google sign-in is off', 'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are empty, so people sign up with email and password only (DEPLOY.md explains how to add Google)'));
+
   const anyMock = pay === 'mock' || kyc === 'mock' || mail === 'log';
   out.push(anyMock ? fail('No fake (mock) provider is active', 'see above') : ok('No fake (mock) provider is active'));
   return { results: out, ready };

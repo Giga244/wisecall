@@ -28,7 +28,7 @@ function meProfile(user) {
   const { passwordHash, resetTokenHash, resetTokenExpiresAt, emailVerifyCodeHash, emailVerifyCodeExpiresAt, payoutIbanEnc, ...rest } = user;
   return {
     ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), hasPassword: Boolean(passwordHash), photoUrl: photoUrl(user), isListedMentor: isListable(user),
-    isAdmin: Boolean(user.email) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase())
+    isAdmin: Boolean(user.email) && Boolean(user.emailVerified) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase())
   };
 }
 
