@@ -2,7 +2,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 const path = require('path');
-const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
+const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, rate, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
 
 let srv, base;
 const ids = {};
@@ -229,10 +229,13 @@ describe('questions, answers and reviews (paid at the test bank)', () => {
     const ans = await ids.mentorClient.api(`/bookings/${ids.booking}/answer`, { method: 'POST', body: { answer: 'Focus on research and strong letters.' } });
     assert.equal(ans.booking.status, 'answered');
 
-    assert.equal((await ids.seekerClient.api(`/bookings/${ids.booking}/review`, { method: 'POST', body: { rating: 9 } })).error, 'invalid_rating');
-    const rv = await ids.seekerClient.api(`/bookings/${ids.booking}/review`, { method: 'POST', body: { rating: 5, review: 'Very helpful' } });
-    assert.equal(rv.booking.rating, 5);
-    assert.equal((await ids.seekerClient.api(`/bookings/${ids.booking}/review`, { method: 'POST', body: { rating: 1 } })).error, 'already_reviewed');
+    assert.equal((await ids.seekerClient.api(`/bookings/${ids.booking}/ratings`, { method: 'POST', body: { stars: 9 } })).error, 'invalid_rating');
+    // (double-blind: the rating is private for now; `rate` makes the answer look 8 days old so it counts at once. See tests/ratings.test.js.)
+    const rv = await rate(ids.seekerClient, ids.booking, 5, { review: 'Very helpful' });
+    assert.equal(rv.status, 201);
+    assert.equal(rv.rating.mine.stars, 5);
+    assert.equal(rv.rating.mine.revealed, true);
+    assert.equal((await ids.seekerClient.api(`/bookings/${ids.booking}/ratings`, { method: 'POST', body: { stars: 1 } })).error, 'already_revealed', 'a revealed rating cannot be changed');
   });
 
   test('stats, anonymised reviews and search reflect the real data', async () => {
@@ -241,7 +244,9 @@ describe('questions, answers and reviews (paid at the test bank)', () => {
     assert.equal(e.reviewCount, 1);
     assert.equal(e.answeredCount, 1);
     const rev = (await client(base).api(`/experts/${ids.mentor}/reviews`)).reviews;
-    assert.equal(rev[0].reviewerName, 'Sam S.');
+    assert.equal(rev[0].reviewer.name, 'Sam Seeker', 'the reviewer is shown with their name (their profile is public)');
+    assert.equal(rev[0].stars, 5);
+    assert.equal(rev[0].review, 'Very helpful');
     assert.equal((await client(base).api('/experts?q=cardio')).experts.length, 1);
     assert.equal((await client(base).api('/experts?q=zzz')).experts.length, 0);
     assert.equal((await client(base).api('/experts?q=%25')).experts.length, 0, 'wildcards are escaped');

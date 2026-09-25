@@ -67,6 +67,8 @@ app.use('/api/verification/work-email', rateLimit({ windowMs: 15 * 60 * 1000, ma
 app.use('/api/verification/documents', rateLimit({ windowMs: 60 * 60 * 1000, max: 40 }));
 app.use(/^\/api\/experts\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.use('/api/me/photo', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
+app.use(/^\/api\/ratings\/[^/]+\/(report|reply)$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
+app.use(/^\/api\/bookings\/[^/]+\/ratings$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
 app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 // Uploaded verification documents arrive as raw file bytes (PDF or JPEG, up to 10 MB).
@@ -79,6 +81,7 @@ app.use('/api/contact', require('./routes/contact'));
 app.use('/api/waitlist', require('./routes/waitlist'));
 app.use('/api/me', require('./routes/me'));
 app.use('/api', require('./routes/profiles'));
+app.use('/api', require('./routes/ratings'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/verification', require('./routes/verification'));

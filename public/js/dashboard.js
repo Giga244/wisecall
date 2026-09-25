@@ -69,7 +69,7 @@
     const paid = ['paid', 'answered', 'refund_pending', 'refunded'].includes(b.status) || Boolean(b.paidAt);
     const answered = b.status === 'answered';
     const held = answered && b.answerHeld;
-    const reviewed = Boolean(b.rating);
+    const reviewed = Boolean(b.rating && b.rating.mine);
     const steps = role === 'mentor'
       ? [
         { key: 'paid', label: t('dash.tl.paid'), done: paid },
@@ -126,52 +126,13 @@
         ${bookingNote(b)}
         ${b.status === 'pending_payment' ? `<a class="btn btn-outline btn-sm" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${t('dash.retry')}</a>` : ''}
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
-        ${b.status === 'answered' && !b.answerHeld ? renderReviewArea(b) : ''}
+        ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
       </article>`;
     }).join('');
     WisecallReport.wire(askedList);
 
-    askedList.querySelectorAll('.review-form').forEach((form) => {
-      const stars = form.querySelectorAll('.star-btn');
-      let selectedRating = 0;
-      stars.forEach((star) => {
-        star.addEventListener('click', () => {
-          selectedRating = Number(star.dataset.value);
-          stars.forEach((s) => {
-            const on = Number(s.dataset.value) <= selectedRating;
-            s.classList.toggle('filled', on);
-            s.setAttribute('aria-pressed', String(Number(s.dataset.value) === selectedRating));
-          });
-        });
-      });
-      form.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        if (!selectedRating) { WisecallNav.showToast(t('dash.review.pickStars')); return; }
-        const btn = form.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        try {
-          await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/review`, { method: 'POST', body: { rating: selectedRating, review: form.querySelector('textarea').value.trim() } });
-          WisecallNav.showToast(t('dash.review.sent'));
-          load();
-        } catch (e) { WisecallNav.showToast(t('toast.error')); btn.disabled = false; }
-      });
-    });
-  }
-
-  function renderReviewArea(b) {
-    if (b.rating) {
-      return `<div class="review-submitted"><span class="review-stars" role="img" aria-label="${escapeHtml(t('expert.reviews.stars').replace('{n}', b.rating))}">${'★'.repeat(b.rating)}${'☆'.repeat(5 - b.rating)}</span>${b.review ? `<p class="review-text">${escapeHtml(b.review)}</p>` : ''}</div>`;
-    }
-    return `
-      <form class="review-form" data-id="${b.id}">
-        <p class="muted small" style="margin: 10px 0 6px">${t('dash.review.prompt')}</p>
-        <div class="star-picker" role="group" aria-label="${escapeHtml(t('dash.review.prompt'))}">
-          ${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="star-btn" data-value="${n}" aria-label="${escapeHtml(t('expert.reviews.stars').replace('{n}', n))}" aria-pressed="false">★</button>`).join('')}
-        </div>
-        <textarea rows="2" placeholder="${escapeHtml(t('dash.review.placeholder'))}" aria-label="${escapeHtml(t('dash.review.placeholder'))}"></textarea>
-        <button type="submit" class="btn btn-outline btn-sm">${t('dash.review.submit')}</button>
-      </form>`;
+    WisecallRatings.wire(askedList, { reload: load });
   }
 
   // ---- Questions for me (mentors) -----------------------------------------------------------------------------------
@@ -201,6 +162,7 @@
           </div>
           <div class="booking-amount">${money(b.mentorNetAmount)}<span class="muted small block">${t('dash.fee.note')}: ${money(b.platformFeeAmount)}</span></div>
         </div>
+        ${['paid', 'answered'].includes(b.status) ? WisecallRatings.askerLineHtml(b.askerRating) : ''}
         ${showsTimeline(b) ? timelineHtml(b, 'mentor') : ''}
         <p class="booking-question">${escapeHtml(b.question)}</p>
         ${b.status === 'paid' && b.answerDeadline ? countdownHtml(b, 'mentor') : ''}
@@ -213,8 +175,10 @@
               <textarea id="answer-${b.id}" rows="4" placeholder="${escapeHtml(t('dash.answer.placeholder'))}" required minlength="2"></textarea>
               <button type="submit" class="btn btn-primary btn-sm">${t('dash.answer.send')}</button>
             </form>` : '')}
+        ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
       </article>`;
     }).join('');
+    WisecallRatings.wire(receivedList, { reload: load });
 
     receivedList.querySelectorAll('.answer-form').forEach((form) => {
       form.addEventListener('submit', async (ev) => {

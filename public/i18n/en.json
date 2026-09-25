@@ -295,32 +295,43 @@
       ]
     },
     {
-      "h": "10. Suspension and closing accounts",
+      "h": "10. Ratings and reviews",
+      "p": [
+        "After a paid question has been answered, the person who asked and the mentor can each rate the other once: 1 to 5 stars and a few tags. The person who asked can also write a review of the mentor. The mentor can add a private note for the Wisecall team, which the asker never sees.",
+        "Ratings stay hidden until both people have rated, or until 7 days after the answer became readable for the buyer, whichever comes first. Until then you can change your rating; after that you cannot. You can rate for up to 30 days after the answer.",
+        "A mentor’s average, number of ratings, tags and written reviews are public on their profile, with the reviewer’s name and photo (or “Anonymous asker” if the reviewer’s profile is private). A mentor may reply to a review once, in public. An asker’s average is never shown under 3 ratings; after that only a badge and the most common tags are shown. Mentors can see an asker’s rating on the question.",
+        "Rate honestly and only from your own experience of that question. A rating or review must not contain insults, threats, hate, personal data (yours or anybody else’s), advertising, or claims you know to be untrue. Mentors may not ask for, pay for or trade ratings, and may not pressure people to change them.",
+        "Anyone who is logged in can report a review. Wisecall may hide a review that breaks these rules, and records who decided and why. We do not remove a review only because it is critical. Hidden reviews do not count towards averages.",
+        "A very low average, for a mentor or for an asker, is checked by our team. It can lead to a warning, a limit or, for a mentor, suspension under the section on suspending and closing accounts."
+      ]
+    },
+    {
+      "h": "11. Suspension and closing accounts",
       "p": [
         "We may suspend or close an account that breaks these terms or puts others at risk. You can stop using Wisecall at any time. If we close your account without a breach on your part, we will refund any question you paid for that was not answered."
       ]
     },
     {
-      "h": "11. Our responsibility",
+      "h": "12. Our responsibility",
       "p": [
         "We try to keep Wisecall available and accurate, but we provide it “as is”. We cannot promise that every answer is correct, useful, or suitable for you, and we are not responsible for decisions you make based on an answer.",
         "To the extent the law allows, Wisecall’s total responsibility to you for any claim about the service is limited to the amount you paid for the question involved. Nothing in these terms removes rights that the law says cannot be removed."
       ]
     },
     {
-      "h": "12. Changes to these terms",
+      "h": "13. Changes to these terms",
       "p": [
         "We may update these terms. If a change matters, we will tell you by email or on the site before it applies. If you keep using Wisecall after that, you accept the new terms."
       ]
     },
     {
-      "h": "13. Governing law",
+      "h": "14. Governing law",
       "p": [
         "These terms are governed by the laws of Georgia. Disputes go to the competent courts of Georgia, unless the law gives you the right to go elsewhere as a consumer."
       ]
     },
     {
-      "h": "14. Contact",
+      "h": "15. Contact",
       "p": [
         "Questions about these terms, or a refund request? Use the contact page on this site."
       ]
@@ -344,7 +355,8 @@
         "Mentor data: if you apply to be a mentor, your job title, field, bio, price, the proof link you give us (for example a LinkedIn profile), and your sample answer. Your title, field, bio, and price become public once you are approved. Your proof link, sample answer, and email are never public.",
         "Questions and answers: the questions you send, the answers you receive, and reviews you write.",
         "Payment data: your card details are entered on our payment bank’s secure page and processed by the bank. We receive only the payment status, amount and the bank’s reference numbers. We never see or store your full card number. Mentors give us their full name and IBAN so we can pay them; the IBAN is stored encrypted and is visible only to the mentor and to Wisecall administrators who make the payouts.",
-        "Technical data: your IP address and basic request information appear in server logs and are used to prevent abuse (for example, limiting repeated login attempts)."
+        "Technical data: your IP address and basic request information appear in server logs and are used to prevent abuse (for example, limiting repeated login attempts).",
+        "Ratings and reviews: the stars, tags and written reviews you give or receive, and (for mentors) any private note to our team. A mentor’s ratings and written reviews are public. An asker’s rating is shown only as a badge, after 3 ratings. Private notes are read only by the Wisecall team."
       ]
     },
     {
@@ -383,7 +395,7 @@
         "Service providers that work for us: our payment bank (card payments and refunds), our identity verification provider (mentors only), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us.",
         "Google: if you use Google sign-in, Google learns that you signed in to Wisecall, under Google’s own privacy policy. Nothing about your questions or answers is sent to Google.",
         "Authorities, when the law requires it.",
-        "The public can see mentor profiles, ratings, and reviews (with the reviewer’s first name and last initial)."
+        "The public can see public profiles, and a mentor’s ratings and reviews (with the reviewer’s name and photo, or “Anonymous asker” when the reviewer’s profile is private)."
       ]
     },
     {
@@ -1165,5 +1177,99 @@
   "choose.title": "Choose your username",
   "choose.sub": "This is the address of your public profile. We made a suggestion from your name: keep it, or type another one.",
   "choose.cta": "Continue",
-  "choose.later": "You can change it later in Settings, once every 30 days."
+  "choose.later": "You can change it later in Settings, once every 30 days.",
+  "rate.tag.helpful": "Helpful",
+  "rate.tag.detailed": "Detailed",
+  "rate.tag.clear": "Clear",
+  "rate.tag.fast": "Fast",
+  "rate.tag.clear_question": "Clear question",
+  "rate.tag.gave_context": "Gave context",
+  "rate.tag.respectful": "Respectful",
+  "rate.tag.thankful": "Thankful",
+  "dash.rate.mentorTitle": "Rate your mentor",
+  "dash.rate.askerTitle": "Rate this asker",
+  "dash.rate.newAsker": "New asker (no ratings yet)",
+  "dash.rate.askerRating": "Asker rating: ★ {avg} ({n})",
+  "rate.mentor.hint": "How was the answer from {name}?",
+  "rate.asker.hint": "Was this a clear, respectful question from {name}?",
+  "rate.mentor.stars": "Your rating of the mentor",
+  "rate.asker.stars": "Clear, respectful question",
+  "rate.tags.label": "What stood out? (optional)",
+  "rate.review.label": "Write a short review (optional)",
+  "rate.review.hint": "Your review becomes public on the mentor’s profile once the ratings are revealed, with your name and photo (or as “Anonymous asker” if your profile is private).",
+  "rate.review.placeholder": "What did you find helpful? What could be better?",
+  "rate.note.label": "A private note to the Wisecall team (optional)",
+  "rate.note.hint": "Only the Wisecall team can read this. The asker never sees it.",
+  "rate.note.placeholder": "Anything our team should know about this question?",
+  "rate.submit": "Send rating",
+  "rate.update": "Update my rating",
+  "rate.change": "Change my rating",
+  "rate.cancel": "Cancel",
+  "rate.blind": "Ratings stay private until you have both rated, or until {date} (7 days after the answer). Until then you can change yours.",
+  "rate.saved": "Rating saved",
+  "rate.waiting": "Thank you! Your rating is saved and stays private until {name} has rated too, or until {date}. You can change it until then.",
+  "rate.yours": "Your rating",
+  "rate.theirs": "{name}’s rating",
+  "rate.revealed": "Both ratings are now visible.",
+  "rate.theirNone": "{name} did not rate this question.",
+  "rate.closed": "The time to rate this question has ended.",
+  "rate.pickStars": "Please choose the stars.",
+  "rate.err.revealed": "This rating was already revealed, so it can no longer be changed.",
+  "rate.err.closed": "The time to rate this question has ended.",
+  "rate.err.tooLong": "That text is too long.",
+  "rate.err.notRateable": "This question cannot be rated.",
+  "rate.err.generic": "We could not save your rating. Please try again.",
+  "rate.reviews.anonymous": "Anonymous asker",
+  "rate.reviews.ratings": "{n} ratings",
+  "rate.reviews.oneRating": "1 rating",
+  "rate.reviews.tags": "What people say",
+  "rate.reply.summary": "Reply to this review",
+  "rate.reply.hint": "You can reply once, and your reply is public.",
+  "rate.reply.placeholder": "Thank the reviewer, or add some context, politely.",
+  "rate.reply.send": "Publish reply",
+  "rate.reply.from": "Reply from {name}",
+  "rate.reply.sent": "Reply published",
+  "rate.reply.err.already": "You have already replied to this review.",
+  "rate.reply.err.generic": "We could not publish the reply. Please try again.",
+  "rate.asker.label": "Asker",
+  "rate.asker.great": "Great asker",
+  "rate.asker.badge": "{label} ★ {avg} · {n} questions",
+  "rate.asker.tags": "Mentors often say: {tags}",
+  "report.review.link": "Report this review",
+  "report.review.intro": "Tell the Wisecall team what is wrong with this review. Who reported it stays private.",
+  "report.review.reason": "Reason",
+  "report.review.details": "Details (optional)",
+  "report.review.send": "Send report",
+  "report.review.sent": "Thank you. The Wisecall team will look at this review.",
+  "report.review.already": "You have already reported this review.",
+  "report.review.error": "We could not send the report. Please try again.",
+  "report.review.login": "Log in to report this review",
+  "report.review.reason.abusive": "Abusive or rude",
+  "report.review.reason.false": "Untrue, or about something else",
+  "report.review.reason.personal_info": "Contains personal information",
+  "report.review.reason.spam": "Spam or advertising",
+  "report.review.reason.other": "Something else",
+  "admin.tab.reviews": "Reviews",
+  "admin.rv.reports": "Reported reviews",
+  "admin.rv.noReports": "No reported reviews.",
+  "admin.rv.hidden": "Hidden reviews",
+  "admin.rv.noHidden": "No hidden reviews.",
+  "admin.rv.askers": "Askers with a low rating",
+  "admin.rv.askersHelp": "Their average from mentors is under 2.5, after at least 3 ratings.",
+  "admin.rv.noAskers": "No askers are flagged.",
+  "admin.rv.stars": "{n} stars",
+  "admin.rv.from": "Written by {name} ({email}) about {ratee}",
+  "admin.rv.reportedBy": "Reported by {name} ({email}): {reason}",
+  "admin.rv.reply": "The mentor replied: {text}",
+  "admin.rv.reason": "Reason (required, at least 5 characters)",
+  "admin.rv.hide": "Hide the review",
+  "admin.rv.dismiss": "Dismiss the report",
+  "admin.rv.unhide": "Show it again",
+  "admin.rv.hiddenBy": "Hidden by {by} on {date}: {reason}",
+  "admin.rv.askerAvg": "Average ★ {avg} from {n} mentors",
+  "admin.rv.resolve": "Close the flag",
+  "admin.rv.hideConfirm": "Hide this review? It disappears from the profile and from the average. Your reason is logged.",
+  "admin.rv.direction.asker_to_mentor": "Asker → mentor",
+  "admin.rv.direction.mentor_to_asker": "Mentor → asker",
+  "admin.rv.noText": "(no written review)"
 }

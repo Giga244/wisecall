@@ -53,6 +53,10 @@ const notifyInterviewLink = (mentor, slot) =>
 const notifyInterviewCancelled = (mentor, slot, reason) =>
   safeSend('interview cancelled', 'interviewCancelled', mentor, { date: utcDate(slot.startsAt, mentor.language), reason });
 
+// "Please rate" (after 2 and 6 days). data: { role: 'asker' | 'mentor', name (the other person), revealsAt, final }.
+const notifyRateReminder = (user, data) =>
+  safeSend('rating reminder', 'rateReminder', user, { role: data.role, name: data.name, date: utcDate(data.revealsAt, user.language), final: data.final ? '1' : '' });
+
 // Plain notice to the site admins (English), e.g. card disputes.
 const notifyAdmins = (subject, html) => {
   if (!config.EMAIL_ENABLED) return Promise.resolve();
@@ -63,4 +67,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

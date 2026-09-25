@@ -8,7 +8,7 @@ const ledger = require('../ledger');
 const notify = require('../notify');
 const probation = require('../probation');
 const launch = require('../launch');
-const monitoring = require('../verification/monitoring');
+const ratings = require('../ratings');
 const { isListable, asyncHandler, photoUrl } = require('../util');
 const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('../models');
 
@@ -70,8 +70,9 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   };
   const me = req.userToken.id;
   // A buyer never sees an answer that is still being checked (see server/probation.js).
-  const asked = (await list('seeker', 'mentor')).map((b) => probation.forViewer(b, me));
-  res.json({ asked, received: (await list('mentor', 'seeker')).map((b) => ({ ...b, answerHeld: b.answerReview === 'held' })) });
+  const asked = await ratings.attach((await list('seeker', 'mentor')).map((b) => probation.forViewer(b, me)), me, 'asker');
+  const received = await ratings.attach((await list('mentor', 'seeker')).map((b) => ({ ...b, answerHeld: b.answerReview === 'held' })), me, 'mentor');
+  res.json({ asked, received });
 }));
 
 router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
@@ -130,28 +131,6 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
     if (seeker && mentor) notify.notifySeekerAnswered(seeker, mentor, booking);
   }
   res.json({ booking: probation.forViewer(booking, req.userToken.id) });
-}));
-
-router.post('/:id/review', requireAuth, asyncHandler(async (req, res) => {
-  const { rating, review } = req.body || {};
-  if (review !== undefined && review !== null && typeof review !== 'string') return res.status(400).json({ error: 'invalid_review' });
-  const ratingNum = Number(rating);
-  if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) return res.status(400).json({ error: 'invalid_rating' });
-
-  const existing = await getBookingById(req.params.id);
-  if (!existing) return res.status(404).json({ error: 'not_found' });
-  if (existing.seekerId !== req.userToken.id) return res.status(400).json({ error: 'forbidden' });
-  if (existing.status !== 'answered' || existing.answerReview === 'held') return res.status(400).json({ error: 'not_answered' });
-  if (existing.rating) return res.status(400).json({ error: 'already_reviewed' });
-
-  const booking = await updateBooking(existing.id, {
-    rating: ratingNum,
-    review: review ? String(review).trim().slice(0, 2000) : null,
-    reviewedAt: new Date()
-  });
-  // A mentor whose average drops below the limit after enough reviews is flagged for an admin.
-  await monitoring.afterReview(existing.mentorId);
-  res.json({ booking });
 }));
 
 module.exports = router;

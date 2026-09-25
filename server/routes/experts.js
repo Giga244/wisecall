@@ -5,6 +5,7 @@ const { publicProfile, isListable, asyncHandler } = require('../util');
 const { badgesFor } = require('../verification/badges');
 const { requireAuth } = require('../auth');
 const reports = require('../reports');
+const ratings = require('../ratings');
 
 const router = express.Router();
 
@@ -52,23 +53,12 @@ router.post('/:id/report', requireAuth, asyncHandler(async (req, res) => {
   }
 }));
 
+// A mentor's public reviews: the summary (average, count, tag counts) and the written reviews, newest first. Only ratings that were
+// revealed (both people rated, or 7 days after the answer) and not hidden by an admin are counted or shown.
 router.get('/:id/reviews', asyncHandler(async (req, res) => {
   const mentor = await getUserById(req.params.id);
   if (!isListable(mentor)) return res.status(404).json({ error: 'not_found' });
-
-  const { rows } = await query(
-    `SELECT b.rating, b.review, b.reviewed_at, u.name AS seeker_name
-       FROM bookings b JOIN users u ON u.id = b.seeker_id
-      WHERE b.mentor_id = $1 AND b.rating IS NOT NULL
-      ORDER BY b.reviewed_at DESC LIMIT 100`,
-    [mentor.id]
-  );
-  const reviews = rows.map((r) => {
-    const parts = String(r.seeker_name || 'Anonymous').trim().split(/\s+/);
-    const reviewerName = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0];
-    return { rating: r.rating, review: r.review, reviewedAt: r.reviewed_at, reviewerName };
-  });
-  res.json({ reviews });
+  const [summary, reviews] = await Promise.all([ratings.mentorSummary(mentor.id), ratings.reviewsForMentor(mentor.id)]);
+  res.json({ summary, reviews });
 }));
-
 module.exports = router;

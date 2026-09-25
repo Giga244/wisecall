@@ -4,7 +4,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, signupVerified, client, bookAndPay, SAMPLE } = require('./helpers');
+const { resetDatabase, startServer, signupVerified, client, bookAndPay, rate, SAMPLE } = require('./helpers');
 const { createFakeDidit } = require('./fakeDidit');
 
 const didit = createFakeDidit();
@@ -104,7 +104,7 @@ describe('a new Medicine mentor (regulated)', () => {
     assert.equal((await seeker.api(`/bookings/${b.id}`)).booking.answer, null);
     assert.equal((await admin.api(`/admin/answers/${b.id}/approve`, { method: 'POST' })).status, 200);
     assert.match((await seeker.api(`/bookings/${b.id}`)).booking.answer, /Chest pain/);
-    assert.equal((await seeker.api(`/bookings/${b.id}/review`, { method: 'POST', body: { rating: 5, review: 'Clear.' } })).status, 200);
+    assert.equal((await rate(seeker, b.id, 5, { review: 'Clear.' })).status, 201);
     const earnings = await doc.api('/me/earnings');
     assert.equal(earnings.items.length, 1);
   });

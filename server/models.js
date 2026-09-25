@@ -59,9 +59,6 @@ function bookingFromRow(r) {
     mentorId: r.mentor_id,
     question: r.question,
     answer: r.answer,
-    rating: r.rating,
-    review: r.review,
-    reviewedAt: r.reviewed_at,
     amount: r.amount,
     currency: r.currency,
     platformFeePercent: Number(r.platform_fee_percent),
@@ -101,7 +98,7 @@ const USER_COLUMNS = {
 };
 
 const BOOKING_COLUMNS = {
-  answer: 'answer', rating: 'rating', review: 'review', reviewedAt: 'reviewed_at', status: 'status',
+  answer: 'answer', status: 'status',
   providerOrderId: 'provider_order_id', paidAt: 'paid_at', answeredAt: 'answered_at', answerDeadline: 'answer_deadline',
   refundedAt: 'refunded_at', refundReason: 'refund_reason', providerRefundId: 'provider_refund_id',
   refundRequestedAt: 'refund_requested_at', refundError: 'refund_error', reminderSentAt: 'reminder_sent_at',
@@ -169,11 +166,17 @@ async function mentorStatsFor(ids) {
   const out = {};
   ids.forEach((id) => { out[id] = { ratingAvg: null, reviewCount: 0, answeredCount: 0, avgAnswerSeconds: null }; });
   if (!ids.length) return out;
+  // The rating numbers come from the ratings table: only ratings that were revealed (see server/ratings.js), not hidden by an
+  // admin, and given for a booking that stayed answered.
+  const ratings = await query(
+    `SELECT r.ratee_id, count(*)::int AS n, round(avg(r.stars)::numeric, 1) AS avg
+       FROM ratings r JOIN bookings b ON b.id = r.booking_id
+      WHERE r.direction = 'asker_to_mentor' AND r.ratee_id = ANY($1::uuid[]) AND r.revealed_at IS NOT NULL AND r.hidden_at IS NULL AND b.status = 'answered'
+      GROUP BY r.ratee_id`, [ids]
+  );
   const { rows } = await query(
     `SELECT mentor_id,
             count(*) FILTER (WHERE status = 'answered' AND answer_review <> 'held') AS answered,
-            count(rating) AS reviews,
-            round(avg(rating)::numeric, 1) AS avg,
             -- how long buyers really waited: from payment to the moment they could read the answer
             avg(EXTRACT(EPOCH FROM (COALESCE(answer_released_at, answered_at) - paid_at)))
               FILTER (WHERE status = 'answered' AND answer_review <> 'held' AND paid_at IS NOT NULL AND answered_at IS NOT NULL) AS avg_seconds
@@ -182,11 +185,16 @@ async function mentorStatsFor(ids) {
   );
   rows.forEach((r) => {
     out[r.mentor_id] = {
-      ratingAvg: r.avg === null ? null : Number(r.avg),
-      reviewCount: Number(r.reviews),
+      ratingAvg: null,
+      reviewCount: 0,
       answeredCount: Number(r.answered),
       avgAnswerSeconds: r.avg_seconds === null ? null : Math.max(0, Math.round(Number(r.avg_seconds)))
     };
+  });
+  ratings.rows.forEach((r) => {
+    if (!out[r.ratee_id]) out[r.ratee_id] = { ratingAvg: null, reviewCount: 0, answeredCount: 0, avgAnswerSeconds: null };
+    out[r.ratee_id].ratingAvg = Number(r.avg);
+    out[r.ratee_id].reviewCount = r.n;
   });
   return out;
 }

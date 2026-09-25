@@ -396,3 +396,41 @@ form .check-chip input { position: absolute; opacity: 0; width: 100%; height: 10
 .choose-who { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; }
 .choose-who strong { font-family: 'Baloo 2', sans-serif; font-size: 1.15rem; overflow-wrap: anywhere; }
 .choose-card .field { margin-top: 18px; }
+/* Ratings: the panel on a question, the tags, the reviews on a profile, the reply, the asker badge ------------------------ */
+.rate-card { margin-top: 14px; padding: 16px 18px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: #fff; }
+.rate-card.rate-prompt { border-color: var(--accent); background: #fff9f7; }
+.rate-card .rate-h { margin: 0 0 6px; font-size: 1rem; }
+.rate-card .muted.small { margin: 0 0 8px; }
+.rate-label { margin: 10px 0 4px; font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+.rate-form fieldset { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; }
+.rate-form legend { font-size: 0.85rem; font-weight: 800; color: var(--ink-soft); padding: 0; margin-bottom: 6px; }
+.rate-form textarea { margin: 6px 0 4px; }
+.tag-checks { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-list { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px; border-radius: 999px; background: #ece7f7; color: var(--ink); font-size: 0.8rem; font-weight: 800; }
+.chip-tag b { color: var(--accent-text); }
+.rate-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.rate-edit { margin-top: 10px; }
+.rate-change[hidden], .rate-edit[hidden] { display: none; }
+.review-reply { margin: 10px 0 0; padding: 10px 14px; background: var(--bg); border-left: 4px solid var(--accent2-strong); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 0.9rem; }
+.review-reply p { margin: 4px 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+.review-text { white-space: pre-line; overflow-wrap: anywhere; }
+.reply-box { margin-top: 8px; }
+.reply-box summary { cursor: pointer; color: var(--ink-soft); font-size: 0.85rem; font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+.reply-box summary:hover { color: var(--accent-text); }
+.reply-box summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.reply-form { display: grid; gap: 4px; max-width: 520px; }
+.reply-form .btn { justify-self: start; }
+.review-top { flex-wrap: wrap; row-gap: 4px; }
+.reviewer { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: inherit; text-decoration: none; font-weight: 800; font-size: 0.92rem; min-width: 0; }
+a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
+.avatar-sm { width: 36px; height: 36px; font-size: 0.8rem; }
+.avatar-anon { background: var(--border); color: var(--ink-soft); }
+.rate-tag-summary { margin: 0 0 14px; }
+.rate-tag-summary h3 { margin: 0 0 4px; font-size: 0.95rem; }
+.asker-badge { margin: 2px 0 6px; }
+.asker-pill { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: 999px; background: #eef6f2; color: var(--ink); font-size: 0.82rem; font-weight: 800; border: 2px solid var(--border); }
+.asker-pill.great { background: #e3f7ef; color: var(--accent2-text); border-color: #bfe8d6; }
+.asker-tags { margin: 0 0 8px; }
+.asker-line { margin: 2px 0 8px; }
+@media (max-width: 639px) { .rate-card { padding: 14px; } .rate-actions .btn { flex: 1 1 auto; } }

@@ -132,6 +132,7 @@
               <h1 id="expertName">${escapeHtml(expert.name)}</h1>
               ${title ? `<p class="profile-title">${escapeHtml(title)}</p>` : ''}
               ${isMentor && expert.headline ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
+              ${WisecallRatings.askerBadgeHtml(expert.asker)}
               <div class="profile-tags">
                 ${isMentor && expert.niche ? `<a class="tag tag-niche" href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a>` : ''}
                 ${isMentor ? `<span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>` : ''}
@@ -185,28 +186,18 @@
   async function loadReviews() {
     const body = document.getElementById('reviewsBody');
     if (!body) return;
-    let reviews = [];
-    try { reviews = (await WisecallAPI.apiFetch(`/experts/${expert.id}/reviews`)).reviews; } catch (e) { body.innerHTML = `<p class="muted">${t('toast.error')}</p>`; return; }
-    if (!reviews.length) {
+    let data;
+    try { data = await WisecallAPI.apiFetch(`/experts/${expert.id}/reviews`); } catch (e) { body.innerHTML = `<p class="muted">${t('toast.error')}</p>`; return; }
+    const { summary, reviews } = data;
+    if (!summary.count) {
       body.innerHTML = `<div class="reviews-empty">${REVIEW_ART}<h3>${t('expert.reviews.empty.title')}</h3><p>${t('expert.reviews.empty.body')}</p></div>`;
       return;
     }
-    const counts = [5, 4, 3, 2, 1].map((n) => reviews.filter((r) => r.rating === n).length);
-    body.innerHTML = `
-      <div class="review-summary">
-        <div><strong>${expert.ratingAvg}</strong><div class="review-stars" aria-hidden="true">${'★'.repeat(Math.round(expert.ratingAvg))}${'☆'.repeat(5 - Math.round(expert.ratingAvg))}</div><span class="muted small">${t('expert.reviews.count').replace('{n}', reviews.length)}</span></div>
-        <div class="review-bars" aria-hidden="true">${counts.map((c, i) => `<div class="review-bar"><span>${5 - i}★</span><i><b style="width:${Math.round((c / reviews.length) * 100)}%"></b></i><span>${c}</span></div>`).join('')}</div>
-      </div>
-      ${reviews.map((r) => `
-        <article class="review-card">
-          <div class="review-top">
-            <span class="review-stars" role="img" aria-label="${escapeHtml(t('expert.reviews.stars').replace('{n}', r.rating))}">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
-            <span class="muted small">${escapeHtml(r.reviewerName)}</span>
-          </div>
-          ${r.review ? `<p class="review-text">${escapeHtml(r.review)}</p>` : ''}
-        </article>`).join('')}`;
+    // (the numbers count every revealed rating; the cards are the ones that came with a written review)
+    body.innerHTML = `${WisecallRatings.summaryHtml(summary)}${reviews.map((r) => WisecallRatings.reviewCardHtml(r, { owner: isSelf, loggedIn: Boolean(user), mentorName: expert.name })).join('')}`;
+    WisecallRatings.wireReplies(body, { reload: loadReviews });
+    WisecallRatings.wireReports(body);
   }
-
   // ---- Asking a question -----------------------------------------------------------------------------------------
   // The bank sends the buyer back with ?status=success|fail|return, but that is only a hint.
   const returnedFromBank = Boolean(bookingParam) && ['success', 'fail', 'return'].includes(statusParam);

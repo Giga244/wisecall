@@ -205,17 +205,20 @@ test('after the check window the answer is released automatically and the buyer 
   await expect(seekerPage.locator('#askedList')).toContainText(ANSWER);
 });
 
-test('the seeker rates the answer, and the review shows on the mentor\'s profile', async () => {
-  const form = seekerPage.locator('.review-form').first();
+test('the seeker rates the answer; the rating stays private until it is revealed, then shows on the mentor\'s profile', async () => {
+  const form = seekerPage.locator('.rate-form').first();
   await form.locator('.star-btn[data-value="5"]').click();
-  const text = form.locator('textarea');
-  if (await text.count()) await text.fill('Clear and practical, exactly what I needed.');
+  await form.locator('textarea').fill('Clear and practical, exactly what I needed.');
   await form.locator('button[type="submit"]').click();
-  await expect(seekerPage.locator('.review-submitted')).toBeVisible();
-  const b = await S.bookingRow(bookingId);
-  expect(b.rating).toBe(5);
+  await expect(seekerPage.locator('.rate-card').first()).toContainText(/stays private|saved/i);
+  expect((await S.sql('SELECT stars, revealed_at FROM ratings WHERE booking_id = $1', [bookingId]))[0]).toMatchObject({ stars: 5, revealed_at: null });
 
+  // double-blind: nobody sees it yet
   await seekerPage.goto(`/u/${mentorUsername}`);
+  await expect(seekerPage.locator('#reviewsBody')).not.toContainText('Clear and practical');
+  // 7 days after the answer became readable it is revealed
+  await S.sql(`UPDATE bookings SET answered_at = now() - interval '8 days', answer_released_at = now() - interval '8 days' WHERE id = $1`, [bookingId]);
+  await seekerPage.reload();
   await expect(seekerPage.locator('#reviewsBody')).toContainText('Clear and practical');
 });
 

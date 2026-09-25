@@ -3,7 +3,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, client, addPayoutDetails, approveMentor, bookAndPay, wait, SAMPLE } = require('./helpers');
+const { resetDatabase, startServer, client, addPayoutDetails, approveMentor, bookAndPay, rate, wait, SAMPLE } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const resend = createFakeResend();
@@ -28,7 +28,7 @@ async function waitFor(fn, ms = 8000) {
 async function rated(mentor, mentorId, stars, n) {
   const b = await bookAndPay(base, seeker, mentorId, `Question number ${n} about my work?`);
   assert.equal((await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: 'A thorough answer to that question.' } })).status, 200);
-  assert.equal((await seeker.api(`/bookings/${b.id}/review`, { method: 'POST', body: { rating: stars } })).status, 200);
+  assert.equal((await rate(seeker, b.id, stars)).status, 201);
 }
 
 before(async () => {

@@ -72,7 +72,7 @@ describe('probation: the first answers are held', () => {
     assert.doesNotMatch((await seeker.api('/bookings/mine')).text, /detailed answer/);
     assert.equal(await payoutOf(first.id), undefined, 'no payout row while held');
     assert.equal(resend.to('sam@example.com', 'answered your question').length, 0, 'the buyer is not emailed yet');
-    assert.equal((await seeker.api(`/bookings/${first.id}/review`, { method: 'POST', body: { rating: 5 } })).error, 'not_answered', 'no review of an answer they cannot see');
+    assert.equal((await seeker.api(`/bookings/${first.id}/ratings`, { method: 'POST', body: { stars: 5 } })).error, 'not_rateable', 'no rating of an answer they cannot see');
 
     const mine = (await mentor.api('/bookings/mine')).received.find((x) => x.id === first.id);
     assert.equal(mine.answerHeld, true);
@@ -102,7 +102,7 @@ describe('probation: the first answers are held', () => {
     const days = (new Date(p.payable_at) - Date.now()) / 86400000;
     assert.ok(days > 6.9 && days <= 7.01, `payable in about 7 days (${days})`);
     assert.equal((await admin.api(`/admin/answers/${first.id}/approve`, { method: 'POST' })).error, 'not_found', 'nothing to approve twice');
-    assert.equal((await seeker.api(`/bookings/${first.id}/review`, { method: 'POST', body: { rating: 5, review: 'Helpful' } })).status, 200);
+    assert.equal((await seeker.api(`/bookings/${first.id}/ratings`, { method: 'POST', body: { stars: 5, review: 'Helpful' } })).status, 201);
     const log = (await admin.api(`/admin/mentors/${mentorId}/verification`)).audit.map((a) => a.action);
     assert.ok(log.includes('answer_released'));
   });

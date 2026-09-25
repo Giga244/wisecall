@@ -61,6 +61,13 @@ const S = {
       subject: 'Answer soon or the question will be refunded', heading: 'A paid question is waiting',
       intro: 'You have a paid question waiting:', after: "If it isn't answered by {date}, the buyer is refunded automatically.", button: 'Answer now'
     },
+    rateReminder: {
+      subject: 'Please rate your Wisecall question', headingAsker: 'How was the answer?', headingMentor: 'How was the question?',
+      introAsker: 'How was the answer from {name}? Your rating helps other people find great mentors.',
+      introMentor: 'How was the question from {name}? Your rating tells other mentors whether the question was clear and respectful.',
+      after: 'Ratings are private until you have both rated, or until {date}, whichever comes first. You can change yours until then.',
+      final: 'This is the last reminder.', button: 'Rate now'
+    },
     mentorApproved: {
       subject: "You're approved as a Wisecall mentor", heading: 'Welcome aboard',
       intro: 'Your mentor application was approved.',
@@ -164,6 +171,13 @@ const S = {
       subject: 'უპასუხე მალე, თორემ კითხვის თანხა დაბრუნდება', heading: 'ფასიანი კითხვა გელოდება',
       intro: 'გელოდება ფასიანი კითხვა:', after: 'თუ {date}-მდე არ უპასუხე, თანხა ავტომატურად დაუბრუნდება მყიდველს.', button: 'უპასუხე ახლა'
     },
+    rateReminder: {
+      subject: 'შეაფასე შენი Wisecall-ის კითხვა', headingAsker: 'როგორი იყო პასუხი?', headingMentor: 'როგორი იყო კითხვა?',
+      introAsker: 'როგორი იყო {name}-ის პასუხი? შენი შეფასება სხვებს ეხმარება კარგი მენტორების პოვნაში.',
+      introMentor: 'როგორი იყო {name}-ის კითხვა? შენი შეფასება სხვა მენტორებს ეუბნება, იყო თუ არა კითხვა გასაგები და პატივისცემით დაწერილი.',
+      after: 'შეფასებები დახურულია, სანამ ორივე არ შეაფასებთ ან სანამ {date} არ დადგება — რომელიც უფრო ადრე მოხდება. მანამდე შეგიძლია შენი შეფასება შეცვალო.',
+      final: 'ეს ბოლო შეხსენებაა.', button: 'შეაფასე ახლა'
+    },
     mentorApproved: {
       subject: 'შენ დამტკიცდი Wisecall-ის მენტორად', heading: 'კეთილი იყოს შენი მობრძანება',
       intro: 'შენი მენტორის განაცხადი დამტკიცდა.',
@@ -252,6 +266,18 @@ const BUILDERS = {
     heading: s.deadlineSoon.heading,
     blocks: [{ p: s.deadlineSoon.intro }, { quote: d.question }, { p: fill(s.deadlineSoon.after, d), raw: true }, { button: s.deadlineSoon.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
   }),
+  rateReminder: (s, d) => {
+    const asker = d.role !== 'mentor';
+    return {
+      heading: asker ? s.rateReminder.headingAsker : s.rateReminder.headingMentor,
+      blocks: [
+        { p: fill(asker ? s.rateReminder.introAsker : s.rateReminder.introMentor, d), raw: true },
+        { p: fill(s.rateReminder.after, d), raw: true },
+        ...(d.final ? [{ small: s.rateReminder.final }] : []),
+        { button: s.rateReminder.button, url: `${config.PUBLIC_URL}/dashboard.html` }
+      ]
+    };
+  },
   mentorApproved: (s) => ({
     heading: s.mentorApproved.heading,
     blocks: [{ p: s.mentorApproved.intro }, { p: s.mentorApproved.after }, ...(config.LAUNCH_MODE === 'prelaunch' ? [{ p: s.mentorApproved.prelaunch }] : []), { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]

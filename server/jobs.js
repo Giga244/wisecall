@@ -97,6 +97,15 @@ async function notifyWaitingList() {
   if (n) console.log(`[jobs] told ${n} person/people on the waiting list that mentors are available`);
 }
 
+// Ratings become visible once both people have rated or 7 days after the answer; "please rate" emails after 2 and 6 days.
+async function ratingsHousekeeping() {
+  const ratings = require('./ratings');
+  const revealed = await ratings.revealDue();
+  if (revealed) console.log(`[jobs] revealed ${revealed} rating(s)`);
+  const reminded = await ratings.sendReminders();
+  if (reminded) console.log(`[jobs] sent ${reminded} rating reminder(s)`);
+}
+
 async function runSweep() {
   const client = await pool.connect();
   try {
@@ -113,6 +122,7 @@ async function runSweep() {
       await releaseHeldAnswers();
       await checkLicenses();
       await notifyWaitingList();
+      await ratingsHousekeeping();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }

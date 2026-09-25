@@ -100,6 +100,23 @@ async function bookAndPay(base, seekerClient, mentorId, question, outcome = 'suc
 }
 
 
+// Ratings are double-blind (see server/ratings.js): neither person sees the other's until both have rated, or 7 days after the
+// answer became readable. To let a rating count at once, the tests first make the answer look 8 days old, then rate.
+async function ageAnswer(bookingId, days = 8) {
+  const { Pool } = require('pg');
+  const pool = new Pool({ connectionString: TEST_DB });
+  try {
+    await pool.query(
+      `UPDATE bookings SET answered_at = LEAST(answered_at, now() - ($2 * interval '1 day')),
+                           answer_released_at = CASE WHEN answer_released_at IS NULL THEN NULL ELSE LEAST(answer_released_at, now() - ($2 * interval '1 day')) END
+        WHERE id = $1`, [bookingId, days]);
+  } finally { await pool.end(); }
+}
+async function rate(clientOfRater, bookingId, stars, extra = {}) {
+  await ageAnswer(bookingId);
+  return clientOfRater.api(`/bookings/${bookingId}/ratings`, { method: 'POST', body: { stars, ...extra } });
+}
+
 const GOOD_IBAN = 'GE29NB0000000101904917';
 // Mentors only appear in listings (and can be booked) once they have saved payout details.
 async function addPayoutDetails(mentorClient, iban = GOOD_IBAN, name = 'Test Mentor') {
@@ -130,4 +147,4 @@ async function approveMentor(adminClient, mentorClient) {
 }
 const SAMPLE = 'This is a detailed sample answer that is comfortably longer than eighty characters to pass validation.';
 
-module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, addPayoutDetails, approveMentor, GOOD_IBAN, wait, SAMPLE };
+module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, ageAnswer, rate, addPayoutDetails, approveMentor, GOOD_IBAN, wait, SAMPLE };

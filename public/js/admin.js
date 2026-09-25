@@ -15,7 +15,7 @@
   let tab = 'mentors';
   const MENTOR_FILTERS = ['pending', 'verified', 'rejected', 'suspended', ''];
   const BOOKING_FILTERS = ['paid', 'answered', 'refund_pending', 'refunded', 'pending_payment', ''];
-  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'waitlist']; // tabs that have no status chips
+  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist']; // tabs that have no status chips
   const tabs = document.getElementById('adminTabs');
 
   function escapeHtml(str) {
@@ -37,6 +37,8 @@
         await AdminInterviews.render(content);
       } else if (tab === 'queue') {
         await AdminQueue.render(content);
+      } else if (tab === 'reviews') {
+        await AdminReviews.render(content);
       } else if (tab === 'waitlist') {
         await AdminWaitlist.render(content);
       } else if (tab === 'payouts') {
