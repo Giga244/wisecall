@@ -176,5 +176,16 @@
   "admin.rv.hideConfirm": "Hide this review? It disappears from the profile and from the average. Your reason is logged.",
   "admin.rv.direction.asker_to_mentor": "Asker → mentor",
   "admin.rv.direction.mentor_to_asker": "Mentor → asker",
-  "admin.rv.noText": "(no written review)"
+  "admin.rv.noText": "(no written review)",
+  "admin.dev.badge": "Development only",
+  "admin.dev.days": "Days to fast-forward",
+  "admin.dev.ff": "Fast-forward",
+  "admin.dev.help": "Moves this booking's clock forward, then runs the daily checks now: an unanswered question is refunded, a held answer is released, ratings are revealed, earnings become payable.",
+  "admin.dev.done": "Moved {days} day(s) forward.",
+  "admin.dev.changed.status": "Status: {from} → {to}.",
+  "admin.dev.changed.released": "The held answer was released.",
+  "admin.dev.changed.payable": "The mentor's earnings are now payable.",
+  "admin.dev.changed.revealed": "The ratings were revealed.",
+  "admin.dev.nothing": "Nothing else changed yet.",
+  "admin.dev.err": "Fast-forward did not work."
 }

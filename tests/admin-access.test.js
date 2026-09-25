@@ -34,6 +34,7 @@ function adminRoutes() {
   scan('server/routes/admin.js', '/api/admin');
   scan('server/routes/adminVerification.js', '/api/admin');
   scan('server/routes/ratings.js', '/api', '/admin/');
+  scan('server/routes/adminDev.js', '/api/admin/dev'); // (development only, but this test server is a development one)
   return found;
 }
 

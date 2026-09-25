@@ -80,8 +80,35 @@
           <span class="badge badge-${b.status}">${t('dash.status.' + b.status)}</span>
           ${(b.status === 'paid' || b.status === 'answered' || (b.status === 'refund_pending' && b.refundError)) ? `<button class="btn btn-outline btn-sm refund-btn">${t(b.status === 'refund_pending' ? 'admin.bk.retryRefund' : 'admin.bk.refund')}</button>` : ''}
         </div>
+        ${WisecallI18n.devMode() ? `
+        <div class="payout-pay dev-ff" role="group" aria-label="${t('admin.dev.badge')}">
+          <span class="badge badge-pending_payment">${t('admin.dev.badge')}</span>
+          <input type="number" class="ff-days" min="1" max="90" step="1" value="7" aria-label="${t('admin.dev.days')}" title="${t('admin.dev.help')}">
+          <button type="button" class="btn btn-outline btn-sm ff-btn" title="${t('admin.dev.help')}">${t('admin.dev.ff')}</button>
+        </div>` : ''}
       </div>
     `).join('');
+
+    // Development only (the buttons exist only on a developer's computer): move this booking's clock forward, then run the checks now.
+    content.querySelectorAll('.ff-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const card = btn.closest('.booking-card');
+        const days = Number(card.querySelector('.ff-days').value);
+        btn.disabled = true;
+        try {
+          const r = await WisecallAPI.apiFetch(`/admin/dev/bookings/${card.dataset.id}/fast-forward`, { method: 'POST', body: { days } });
+          const changes = [];
+          if (r.before.status !== r.after.status) changes.push(t('admin.dev.changed.status').replace('{from}', t('dash.status.' + r.before.status)).replace('{to}', t('dash.status.' + r.after.status)));
+          if (r.before.answerReview === 'held' && r.after.answerReview === 'released') changes.push(t('admin.dev.changed.released'));
+          if (!r.before.payableNow && r.after.payableNow) changes.push(t('admin.dev.changed.payable'));
+          if (r.after.ratingsRevealed > r.before.ratingsRevealed) changes.push(t('admin.dev.changed.revealed'));
+          WisecallNav.showToast([t('admin.dev.done').replace('{days}', days), ...(changes.length ? changes : [t('admin.dev.nothing')])].join(' '));
+        } catch (e) {
+          WisecallNav.showToast(t('admin.dev.err'));
+        }
+        load();
+      });
+    });
 
     content.querySelectorAll('.refund-btn').forEach(btn => {
       btn.addEventListener('click', async () => {

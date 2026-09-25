@@ -87,6 +87,7 @@ app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/stats', require('./routes/stats'));
+if (config.DEV_MODE) app.use('/api/admin/dev', require('./routes/adminDev')); // development only: never exists in production
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin', require('./routes/adminVerification'));
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));

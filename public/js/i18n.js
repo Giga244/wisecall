@@ -25,6 +25,8 @@
   }
   // "live" or "prelaunch" (buyers cannot pay yet). Known once initI18n() has finished; "live" before that.
   const launchMode = () => loadedConfig.launchMode;
+  // True only on a developer's computer (the server does not send the setting at all in production).
+  const devMode = () => Boolean(loadedConfig.devMode);
 
   // Texts may contain {answerDays}, {feePct}, {sharePct}, {priceMin} and {priceMax}; they are filled in
   // from the server's settings so the page never disagrees with what the server really does.
@@ -112,5 +114,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, ready };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, ready };
 })();

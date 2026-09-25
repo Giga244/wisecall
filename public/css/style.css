@@ -747,6 +747,8 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 .payout-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .payout-pay { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
 .payout-pay input { flex: 1 1 220px; }
+.dev-ff { border-top: 1px dashed var(--border); padding-top: 10px; }
+.dev-ff input { flex: 0 0 96px; width: 96px; }
 .iban-line { letter-spacing: 0.04em; user-select: all; }
 @media (max-width: 560px) {
   .earn-list li { grid-template-columns: 1fr auto; }

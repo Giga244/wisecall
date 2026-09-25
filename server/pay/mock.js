@@ -25,8 +25,10 @@ async function getPaymentStatus(orderId) {
 }
 
 async function refund({ orderId }) {
+  // The fake bank forgets its orders when the server restarts: a payment made before that is still refundable (nothing real to check).
+  if (!orders.has(orderId)) orders.set(orderId, { orderId, status: 'paid' });
   const o = orders.get(orderId);
-  if (!o || o.status !== 'paid') throw new Error('mock bank: order is not refundable');
+  if (o.status !== 'paid') throw new Error('mock bank: order is not refundable');
   o.status = 'refunded';
   return { refundId: `mock-refund-${orderId}` };
 }

@@ -106,10 +106,13 @@ async function ratingsHousekeeping() {
   if (reminded) console.log(`[jobs] sent ${reminded} rating reminder(s)`);
 }
 
-async function runSweep() {
+// `wait` (used by the development-only fast-forward tool): if another run is in progress, wait for it and then run, instead of skipping.
+async function runSweep({ wait = false } = {}) {
   const client = await pool.connect();
   try {
-    const { rows } = await client.query('SELECT pg_try_advisory_lock($1) AS got', [LOCK_ID]);
+    const { rows } = wait
+      ? (await client.query('SELECT pg_advisory_lock($1)', [LOCK_ID]), { rows: [{ got: true }] })
+      : await client.query('SELECT pg_try_advisory_lock($1) AS got', [LOCK_ID]);
     if (!rows[0].got) return;
     try {
       await require('./launch').refresh();
