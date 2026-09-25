@@ -10,6 +10,7 @@
     return;
   }
   const isMentor = user.role === 'mentor' || user.role === 'both';
+  const { answerMin, answerMax } = await WisecallI18n.getConfig(); // how long an answer must be (the server decides)
 
   const askedList = document.getElementById('askedList');
   const receivedList = document.getElementById('receivedList');
@@ -170,27 +171,73 @@
         ${b.answer
           ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>`
           : (b.status === 'paid' ? `
-            <form class="answer-form" data-id="${b.id}">
-              <label class="sr-only" for="answer-${b.id}">${t('dash.answer.placeholder')}</label>
-              <textarea id="answer-${b.id}" rows="4" placeholder="${escapeHtml(t('dash.answer.placeholder'))}" required minlength="2"></textarea>
-              <button type="submit" class="btn btn-primary btn-sm">${t('dash.answer.send')}</button>
+            <form class="answer-form" data-id="${b.id}" novalidate>
+              <div class="answer-edit">
+                <label class="sr-only" for="answer-${b.id}">${t('dash.answer.placeholder')}</label>
+                <textarea id="answer-${b.id}" rows="7" maxlength="${answerMax}" placeholder="${escapeHtml(t('dash.answer.placeholder'))}" aria-describedby="answer-meta-${b.id} answer-error-${b.id}" required></textarea>
+                <div class="q-meta" id="answer-meta-${b.id}"><span class="a-help"></span><span class="a-count"></span></div>
+                <p class="form-error" id="answer-error-${b.id}" role="alert"></p>
+                <button type="submit" class="btn btn-primary btn-sm">${t('dash.answer.check')}</button>
+              </div>
+              <div class="answer-review" hidden>
+                <h3 class="answer-review-title" tabindex="-1">${t('dash.answer.reviewTitle')}</h3>
+                <p class="answer-warn">${t('dash.answer.reviewWarn')}</p>
+                <blockquote class="answer-preview"></blockquote>
+                <p class="form-error answer-send-error" role="alert"></p>
+                <div class="answer-actions">
+                  <button type="button" class="btn btn-outline btn-sm answer-back">${t('dash.answer.back')}</button>
+                  <button type="button" class="btn btn-primary btn-sm answer-send">${t('dash.answer.send')}</button>
+                </div>
+              </div>
             </form>` : '')}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
       </article>`;
     }).join('');
     WisecallRatings.wire(receivedList, { reload: load });
 
+    // The answer form: a live count, then a check step ("you can't change it after sending"), then send. The server has the last word
+    // (at least answerMin characters, real writing, and one answer only).
     receivedList.querySelectorAll('.answer-form').forEach((form) => {
-      form.addEventListener('submit', async (ev) => {
+      const textarea = form.querySelector('textarea');
+      const edit = form.querySelector('.answer-edit');
+      const review = form.querySelector('.answer-review');
+      const errorEl = form.querySelector('.answer-edit .form-error');
+      const sendError = form.querySelector('.answer-send-error');
+      const help = form.querySelector('.a-help');
+      const counter = form.querySelector('.a-count');
+      const count = () => {
+        const n = WisecallAPI.textLength(textarea.value);
+        help.textContent = n >= answerMin ? t('dash.answer.longEnough') : t('dash.answer.needMore').replace('{left}', answerMin - n);
+        help.classList.toggle('ok', n >= answerMin);
+        counter.textContent = `${n} / ${answerMax}`;
+        counter.classList.toggle('over', n > answerMax - 500);
+      };
+      textarea.addEventListener('input', () => { errorEl.textContent = ''; count(); });
+      count();
+
+      form.addEventListener('submit', (ev) => {
         ev.preventDefault();
-        const textarea = form.querySelector('textarea');
-        const btn = form.querySelector('button');
+        errorEl.textContent = '';
+        if (WisecallAPI.textLength(textarea.value) < answerMin) { errorEl.textContent = t('dash.answer.tooShort'); textarea.focus(); return; }
+        form.querySelector('.answer-preview').textContent = textarea.value.trim();
+        edit.hidden = true; review.hidden = false;
+        form.querySelector('.answer-review-title').focus();
+      });
+      form.querySelector('.answer-back').addEventListener('click', () => { review.hidden = true; edit.hidden = false; sendError.textContent = ''; textarea.focus(); });
+      form.querySelector('.answer-send').addEventListener('click', async (ev) => {
+        const btn = ev.currentTarget;
         btn.disabled = true;
+        sendError.textContent = '';
         try {
           await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/answer`, { method: 'POST', body: { answer: textarea.value.trim() } });
           WisecallNav.showToast(t('toast.answerSent'));
           load();
-        } catch (e) { WisecallNav.showToast(t('toast.error')); btn.disabled = false; }
+        } catch (e) {
+          const map = { answer_too_short: 'dash.answer.tooShort', answer_repetitive: 'dash.answer.err.repetitive', answer_too_long: 'dash.answer.err.long', already_answered: 'dash.answer.err.already' };
+          sendError.textContent = t(map[e.code] || 'toast.error');
+          btn.disabled = false;
+          if (e.code === 'already_answered') load();
+        }
       });
     });
   }

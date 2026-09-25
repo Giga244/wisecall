@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const { ROOT, resetDatabase, startServer, signupVerified, client, bookAndPay, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
+const { longAnswer } = require('./helpers');
 
 let srv, base, admin, seeker, mentor, mentorId;
 const started = [];
@@ -60,7 +61,7 @@ describe('what a fast-forward makes happen', () => {
 
   test('a held first answer is released, ratings stay hidden until both have rated or 7 days pass, and the earnings become payable', async () => {
     const b = await bookAndPay(base, seeker, mentorId, 'A question with an answer, so its whole life can be followed?');
-    const answered = await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: SAMPLE } });
+    const answered = await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer(SAMPLE) } });
     assert.equal(answered.booking.answerReview, 'held', 'a new mentor\'s first answer waits for a check');
     const asker = (await seeker.api(`/bookings/${b.id}`)).booking;
     assert.equal(asker.answer, null, 'the buyer cannot read it yet');
@@ -70,7 +71,7 @@ describe('what a fast-forward makes happen', () => {
     const released = await ff(b.id, 1);
     assert.equal(released.before.answerReview, 'held');
     assert.equal(released.after.answerReview, 'released');
-    assert.equal((await seeker.api(`/bookings/${b.id}`)).booking.answer, SAMPLE);
+    assert.equal((await seeker.api(`/bookings/${b.id}`)).booking.answer, longAnswer(SAMPLE));
 
     // the earnings are on hold for 7 days after the buyer could read the answer
     assert.equal(released.after.payableNow, false);
@@ -99,7 +100,7 @@ describe('what a fast-forward makes happen', () => {
 
   test('both rating before the 7 days reveals at once (no fast-forward needed), so it is the days that were being tested above', async () => {
     const b = await bookAndPay(base, seeker, mentorId, 'A second answered question, this time rated by both people?');
-    await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: SAMPLE } }); // (not the first answer any more: not held)
+    await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer(SAMPLE) } }); // (not the first answer any more: not held)
     assert.equal((await seeker.api(`/bookings/${b.id}/ratings`, { method: 'POST', body: { stars: 4 } })).status, 201);
     assert.equal((await mentor.api(`/bookings/${b.id}/ratings`)).rating.theirs, null);
     assert.equal((await mentor.api(`/bookings/${b.id}/ratings`, { method: 'POST', body: { stars: 5 } })).status, 201);

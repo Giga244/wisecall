@@ -155,6 +155,21 @@ async function updateBooking(id, patch, client) {
   return res ? bookingFromRow((await res).rows[0]) : getBookingById(id, client);
 }
 
+// A mentor answers ONCE. This is the only way an answer is ever written: the update happens only if the question is paid and has no answer
+// yet, so two requests at the same moment (or a second one later) can never replace it. `hold` (from probation.holdPatch) puts a new
+// mentor's answer on hold in the same statement, so there is never a moment when it is saved but the buyer could already read it.
+// Returns the booking, or null when it was not there to be answered (already answered, refunded, not paid).
+async function claimAnswer(id, answer, hold) {
+  if (!isUuid(id)) return null;
+  const { rows } = await query(
+    `UPDATE bookings SET answer = $2, status = 'answered', answered_at = now(),
+            answer_review = COALESCE($3, answer_review), answer_held_until = COALESCE($4, answer_held_until)
+      WHERE id = $1 AND status = 'paid' AND answered_at IS NULL RETURNING *`,
+    [id, answer, hold ? hold.answerReview : null, hold ? hold.answerHeldUntil : null]
+  );
+  return bookingFromRow(rows[0]);
+}
+
 // A mentor shows up publicly (and can be booked) only when this is true: approved by an admin AND
 // payout details saved, so a question can never be paid to someone we cannot pay.
 function listableSql() {
@@ -202,5 +217,5 @@ async function mentorStatsFor(ids) {
 
 module.exports = {
   userFromRow, bookingFromRow, getUserById, getUserByEmail, updateUser, insertUser,
-  getBookingById, updateBooking, listableSql, mentorStatsFor
+  getBookingById, updateBooking, claimAnswer, listableSql, mentorStatsFor
 };

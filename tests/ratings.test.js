@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const { resetDatabase, startServer, client, addPayoutDetails, approveMentor, bookAndPay, ageAnswer, wait, SAMPLE } = require('./helpers');
+const { longAnswer } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const resend = createFakeResend();
@@ -25,7 +26,7 @@ async function newAsker(key, name = key) {
 async function answered(asker, m = mentor, mid = mentorId, q = 'How do I plan my first year in this field?') {
   const b = await bookAndPay(base, asker, mid, q);
   assert.equal(b.status, 'paid', JSON.stringify(b));
-  const a = await m.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: 'Start with the basics, then build a small project every month.' } });
+  const a = await m.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer('Start with the basics, then build a small project every month.') } });
   assert.equal(a.status, 200, a.text);
   return b.id;
 }
@@ -70,7 +71,7 @@ describe('who can rate, and what', () => {
     const v = await view(askers.sam, b.id);
     assert.equal(v.rateable, false);
     assert.equal(v.canRate, false);
-    await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: 'Here is the answer, a little late.' } });
+    await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer('Here is the answer, a little late.') } });
   });
 
   test('a refunded question cannot be rated', async () => {

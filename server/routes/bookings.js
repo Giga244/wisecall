@@ -10,7 +10,8 @@ const probation = require('../probation');
 const launch = require('../launch');
 const ratings = require('../ratings');
 const { isListable, asyncHandler, photoUrl } = require('../util');
-const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('../models');
+const content = require('../content');
+const { bookingFromRow, getUserById, getBookingById, updateBooking, claimAnswer } = require('../models');
 
 const router = express.Router();
 
@@ -19,9 +20,9 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   await launch.refresh(); // the mode can depend on the number of listed mentors, so it is read fresh
   if (config.LAUNCH_MODE === 'prelaunch') return res.status(403).json({ error: 'prelaunch', message: 'Wisecall has not opened to buyers yet. Join the waiting list and we will tell you the day it does.' });
   const { mentorId, question } = req.body || {};
-  if (typeof mentorId !== 'string' || typeof question !== 'string' || question.trim().length < 5) {
-    return res.status(400).json({ error: 'missing_fields' });
-  }
+  if (typeof mentorId !== 'string' || typeof question !== 'string') return res.status(400).json({ error: 'missing_fields' });
+  const checked = content.checkQuestion(question); // at least 50 characters (server/content.js)
+  if (checked.error) return res.status(400).json({ error: checked.error, ...(checked.min ? { min: checked.min } : {}), ...(checked.max ? { max: checked.max } : {}) });
 
   const mentor = await getUserById(mentorId);
   const seeker = await getUserById(req.userToken.id);
@@ -31,7 +32,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 
   const amount = Math.round(mentor.price * 100);
   const feeAmount = Math.round(amount * (config.PLATFORM_FEE_PERCENT / 100));
-  const cleanQuestion = question.trim().slice(0, 4000);
+  const cleanQuestion = checked.text;
 
   let providerName;
   try { providerName = pay.current().name; } catch (e) { return res.status(503).json({ error: 'payments_unavailable' }); }
@@ -102,30 +103,32 @@ router.post('/:id/sync', requireAuth, asyncHandler(async (req, res) => {
   }
   res.json({ booking: probation.forViewer(booking, req.userToken.id) });
 }));
+// A mentor answers ONCE. There is no way to change an answer afterwards, held for a check or not: a second request gets 409
+// "already_answered" and the first answer stays exactly as it was (a wrong answer is dealt with by an admin: reject it, and the buyer is
+// refunded). The answer must be a real one (server/content.js: at least 150 characters, not the same few characters over and over).
 router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
-  const { answer } = req.body || {};
-  if (typeof answer !== 'string' || answer.trim().length < 2) return res.status(400).json({ error: 'missing_answer' });
-
   const existing = await getBookingById(req.params.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });
   if (existing.mentorId !== req.userToken.id) return res.status(400).json({ error: 'forbidden' });
-  if (existing.status !== 'paid' && existing.status !== 'answered') return res.status(400).json({ error: 'not_paid' });
   // A suspended mentor cannot answer (their open questions were refunded).
   const mentorNow = await getUserById(existing.mentorId);
   if (!mentorNow || mentorNow.verificationStatus === 'suspended') return res.status(403).json({ error: 'suspended' });
+  if (existing.status === 'answered' || existing.answeredAt) return res.status(409).json({ error: 'already_answered' });
+  if (existing.status !== 'paid') return res.status(400).json({ error: 'not_paid' });
 
-  const first = !existing.answeredAt;
+  const checked = content.checkAnswer((req.body || {}).answer);
+  if (checked.error) return res.status(400).json({ error: checked.error, ...(checked.min ? { min: checked.min } : {}), ...(checked.max ? { max: checked.max } : {}) });
+
   // One of a new mentor's first answers? Then it waits for an admin before the buyer sees it.
-  const held = first && await probation.shouldHold(existing.mentorId);
-  let booking = await updateBooking(existing.id, {
-    answer: String(answer).trim().slice(0, 8000),
-    status: 'answered',
-    answeredAt: existing.answeredAt || new Date(),
-    ...(held ? probation.holdPatch() : {})
-  });
+  const held = await probation.shouldHold(existing.mentorId);
+  const booking = await claimAnswer(existing.id, checked.text, held ? probation.holdPatch() : null);
+  if (!booking) { // somebody (the same mentor, twice) answered a moment before, or the question was refunded meanwhile
+    const now = await getBookingById(existing.id);
+    return res.status(now && (now.status === 'answered' || now.answeredAt) ? 409 : 400).json({ error: now && (now.status === 'answered' || now.answeredAt) ? 'already_answered' : 'not_paid' });
+  }
 
-  if (first && !held) {
-    // Record the mentor's earnings in the payout ledger (once, however many times the answer is edited).
+  if (!held) {
+    // Record the mentor's earnings in the payout ledger.
     await ledger.onAnswered(booking);
     const [seeker, mentor] = await Promise.all([getUserById(booking.seekerId), getUserById(booking.mentorId)]);
     if (seeker && mentor) notify.notifySeekerAnswered(seeker, mentor, booking);

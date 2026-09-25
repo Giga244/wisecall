@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { Pool } = require('pg');
 const names = require('../server/verification/names');
 const { resetDatabase, startServer, signupVerified, client, bookAndPay, addPayoutDetails, approveMentor, SAMPLE, wait } = require('./helpers');
+const { longAnswer } = require('./helpers');
 
 describe('the matcher', () => {
   const same = (a, b) => assert.equal(names.compareNames(a, b).match, true, `${a} should match ${b}`);
@@ -135,7 +136,7 @@ describe('name match in the verification flow (with the fake ID check)', () => {
   test('a payout account holder who does not match holds the payout until an admin resolves it', async () => {
     // The mentor answers a paid question, and the earnings become payable.
     const b = await bookAndPay(base, seeker, mentorId, 'A question for a payout test');
-    await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: 'An answer.' } });
+    await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer('An answer.') } });
     await pool.query(`UPDATE payouts SET payable_at = now() - interval '1 minute' WHERE mentor_id = $1`, [mentorId]);
     const before = (await admin.api('/admin/payouts')).mentors.find((m) => m.mentorId === mentorId);
     assert.equal(before.flagged, false);

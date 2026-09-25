@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 const path = require('path');
 const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, rate, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
+const { longAnswer, longQuestion } = require('./helpers');
 
 let srv, base;
 const ids = {};
@@ -105,7 +106,7 @@ describe('mentor application and approval', () => {
     assert.equal((await client(base).api(`/experts/${ids.mentor}`)).status, 404);
     const s = await signupVerified(base, 'Sam Seeker', 'seeker@example.com');
     ids.seekerClient = s;
-    const b = await s.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'Can I book a pending mentor?' } });
+    const b = await s.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: longQuestion('Can I book a pending mentor?') } });
     assert.equal(b.status, 404);
   });
 
@@ -168,7 +169,7 @@ describe('mentor application and approval', () => {
 
     // Approved is not enough: without payout details the mentor stays hidden and cannot be booked.
     assert.equal((await client(base).api('/experts')).experts.length, 0);
-    const early = await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'Is a mentor without payout details bookable?' } });
+    const early = await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: longQuestion('Is a mentor without payout details bookable?') } });
     assert.equal(early.status, 404);
     await addPayoutDetails(ids.mentorClient);
   });
@@ -212,8 +213,8 @@ describe('mentor application and approval', () => {
 
 describe('questions, answers and reviews (paid at the test bank)', () => {
   test('cannot book yourself; short questions rejected', async () => {
-    assert.equal((await ids.mentorClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'Booking myself here' } })).error, 'cannot_book_self');
-    assert.equal((await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'hi' } })).error, 'missing_fields');
+    assert.equal((await ids.mentorClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: longQuestion('Booking myself here') } })).error, 'cannot_book_self');
+    assert.equal((await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: 'hi' } })).error, 'question_too_short');
   });
 
   test('book -> only the mentor can answer -> seeker reviews once', async () => {
@@ -225,8 +226,8 @@ describe('questions, answers and reviews (paid at the test bank)', () => {
     assert.equal(b.mentorNetAmount, 2000);
     ids.booking = b.id;
 
-    assert.notEqual((await ids.seekerClient.api(`/bookings/${ids.booking}/answer`, { method: 'POST', body: { answer: 'I am not the mentor' } })).status, 200);
-    const ans = await ids.mentorClient.api(`/bookings/${ids.booking}/answer`, { method: 'POST', body: { answer: 'Focus on research and strong letters.' } });
+    assert.notEqual((await ids.seekerClient.api(`/bookings/${ids.booking}/answer`, { method: 'POST', body: { answer: longAnswer('I am not the mentor') } })).status, 200);
+    const ans = await ids.mentorClient.api(`/bookings/${ids.booking}/answer`, { method: 'POST', body: { answer: longAnswer('Focus on research and strong letters.') } });
     assert.equal(ans.booking.status, 'answered');
 
     assert.equal((await ids.seekerClient.api(`/bookings/${ids.booking}/ratings`, { method: 'POST', body: { stars: 9 } })).error, 'invalid_rating');

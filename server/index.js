@@ -105,6 +105,8 @@ app.get('/api/config', async (req, res) => {
     priceMax: config.PRICE_MAX,
     payoutHoldDays: config.PAYOUT_HOLD_DAYS,
     answerDeadlineDays: config.ANSWER_DEADLINE_DAYS,
+    // How long a question and an answer must be (the forms show these; the server decides, see server/content.js).
+    ...require('./content').LIMITS,
     // What the platform keeps, and what a mentor keeps of each paid question.
     platformFeePercent: config.PLATFORM_FEE_PERCENT,
     mentorSharePercent: 100 - config.PLATFORM_FEE_PERCENT,

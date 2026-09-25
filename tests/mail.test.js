@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { resetDatabase, startServer, client, bookAndPay, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
+const { longAnswer } = require('./helpers');
 
 const OUTBOX = path.join(os.tmpdir(), `wisecall-outbox-${process.pid}.jsonl`);
 let srv, base;
@@ -120,7 +121,7 @@ describe('delivery through the email provider', () => {
     assert.match(q.html, /&lt;em&gt;question&lt;\/em&gt;/);
     assert.match(q.html, /within 7 days/);
 
-    await mentor.api(`/bookings/${b.booking.id}/answer`, { method: 'POST', body: { answer: 'Yes, it is safe.' } });
+    await mentor.api(`/bookings/${b.booking.id}/answer`, { method: 'POST', body: { answer: longAnswer('Yes, it is safe.') } });
     const a = await waitFor(() => mailTo('ka-seeker@example.com', 'უპასუხა')[0]);
     assert.match(a.subject, /Dr English/);
     assert.match(a.html, /Yes, it is safe\./);

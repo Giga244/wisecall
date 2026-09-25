@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const { Pool } = require('pg');
 const { resetDatabase, startServer, signupVerified, client, bookAndPay, addPayoutDetails, approveMentor, GOOD_IBAN, SAMPLE, wait } = require('./helpers');
+const { longAnswer, longQuestion } = require('./helpers');
 
 const OUTBOX = path.join(os.tmpdir(), `wisecall-payout-outbox-${process.pid}.jsonl`);
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
@@ -17,7 +18,7 @@ let srv, base, admin, seeker, mentorA, mentorB, aId, bId;
 async function answered(mentor, mentorId, question) {
   const b = await bookAndPay(base, seeker, mentorId, question);
   assert.equal(b.status, 'paid');
-  const a = await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: 'Here is a helpful answer.' } });
+  const a = await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer('Here is a helpful answer.') } });
   assert.equal(a.booking.status, 'answered');
   return b.id;
 }
@@ -69,7 +70,7 @@ describe('payout details', () => {
   test('a mentor without payout details is approved but hidden and not bookable', async () => {
     assert.equal((await client(base).api('/experts')).experts.length, 0);
     assert.equal((await client(base).api(`/experts/${aId}`)).status, 404);
-    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId: aId, question: 'Can I book someone with no payout details?' } });
+    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId: aId, question: longQuestion('Can I book someone with no payout details?') } });
     assert.equal(r.status, 404);
     const me = (await mentorA.api('/me')).user;
     assert.equal(me.verificationStatus, 'verified');
@@ -119,7 +120,7 @@ describe('earnings ledger and manual payouts', () => {
     assert.ok(days > 6.9 && days < 7.1, `payable in ~7 days (${days})`);
 
     // Editing the answer must not create a second payout.
-    await mentorA.api(`/bookings/${bookingA1}/answer`, { method: 'POST', body: { answer: 'A better answer.' } });
+    await mentorA.api(`/bookings/${bookingA1}/answer`, { method: 'POST', body: { answer: longAnswer('A better answer.') } });
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM payouts WHERE booking_id = $1', [bookingA1])).rows[0].n, 1);
   });
 

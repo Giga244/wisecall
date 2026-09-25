@@ -3,6 +3,7 @@
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
 const { client } = require('../tests/helpers');
+const { longAnswer } = require('../tests/helpers');
 
 test.describe.configure({ mode: 'serial' });
 
@@ -45,7 +46,7 @@ test('a paid, answered question: both people are asked to rate', async () => {
   bookingId = await S.askAndPay(askerPage, mentor, 'How do I price my first consulting project?');
   await S.untilBooking(bookingId, (b) => b.status === 'paid', 'not paid');
   // (a new mentor's first answers are checked by an admin before the buyer sees them)
-  expect((await mentor.client.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: 'Price by the outcome, not the hours: start from what the result is worth to them.' } })).status).toBe(200);
+  expect((await mentor.client.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: longAnswer('Price by the outcome, not the hours: start from what the result is worth to them.') } })).status).toBe(200);
   expect((await admin.api(`/admin/answers/${bookingId}/approve`, { method: 'POST' })).status).toBe(200);
 
   const asked = await openAsked(askerPage);

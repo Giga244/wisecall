@@ -5,6 +5,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
 const { resetDatabase, startServer, signupVerified, client, addPayoutDetails, approveMentor, SAMPLE, wait } = require('./helpers');
+const { longAnswer, longQuestion } = require('./helpers');
 const { createFakeBank } = require('./fakeBank');
 
 const fake = createFakeBank();
@@ -48,7 +49,7 @@ describe('Bank of Georgia (BOG)', () => {
   let ctx, base, admin, seeker, mentor, mentorId, mentorUsername;
   const callback = (payload) => fetch(`${base}/api/payments/callback`, { method: 'POST', headers: payload.headers, body: payload.body });
   const create = async (question = 'How do I choose a specialty?') => {
-    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question } });
+    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion(question) } });
     assert.equal(r.status, 201, JSON.stringify(r));
     return r;
   };
@@ -104,12 +105,12 @@ describe('Bank of Georgia (BOG)', () => {
 
     test('if the bank is down the booking is closed and the buyer gets an error', async () => {
       fake.state.failOrders = true;
-      const res = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: 'This will hit an outage' } });
+      const res = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion('This will hit an outage') } });
       fake.state.failOrders = false;
       assert.equal(res.status, 502);
       assert.equal(res.error, 'payment_error');
       const mine = (await seeker.api('/bookings/mine')).asked;
-      assert.equal(mine.find((x) => x.question === 'This will hit an outage').status, 'expired');
+      assert.equal(mine.find((x) => x.question === longQuestion('This will hit an outage')).status, 'expired');
     });
   });
 
@@ -229,7 +230,7 @@ describe('Bank of Georgia (BOG)', () => {
     test('an admin can refund an answered booking; asking twice sends one request; the bank\'s callback finishes it', async () => {
       const r = await create('Answered, then refunded by an admin');
       await payAtBank(r);
-      await mentor.api(`/bookings/${r.booking.id}/answer`, { method: 'POST', body: { answer: 'Here is my answer.' } });
+      await mentor.api(`/bookings/${r.booking.id}/answer`, { method: 'POST', body: { answer: longAnswer('Here is my answer.') } });
 
       const first = await admin.api(`/admin/bookings/${r.booking.id}/refund`, { method: 'POST' });
       assert.equal(first.booking.status, 'refund_pending');
@@ -277,7 +278,7 @@ describe('TBC Bank (tpay)', () => {
   let ctx, base, admin, seeker, mentorId, mentorUsername;
   const callback = (body) => fetch(`${base}/api/payments/callback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: typeof body === 'string' ? body : JSON.stringify(body) });
   const create = async (question = 'How do I choose a specialty?') => {
-    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question } });
+    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion(question) } });
     assert.equal(r.status, 201, JSON.stringify(r));
     return r;
   };

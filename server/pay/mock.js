@@ -12,9 +12,9 @@ const orders = new Map();
 
 const sign = (body) => crypto.createHmac('sha256', config.SESSION_SECRET).update(body).digest('hex');
 
-async function createPayment({ bookingId, amount, callbackUrl, successUrl, failUrl }) {
+async function createPayment({ bookingId, amount, callbackUrl, successUrl, failUrl, cancelUrl }) {
   const orderId = `mock-${crypto.randomUUID()}`;
-  orders.set(orderId, { orderId, bookingId, amount, status: 'pending', callbackUrl, successUrl, failUrl });
+  orders.set(orderId, { orderId, bookingId, amount, status: 'pending', callbackUrl, successUrl, failUrl, cancelUrl });
   return { orderId, redirectUrl: `${config.PUBLIC_URL}/mock-bank.html?order=${orderId}` };
 }
 
@@ -53,7 +53,8 @@ async function complete(orderId, outcome) {
   // Like a real bank, tell the server in the background (fire and forget).
   fetch(o.callbackUrl, { method: 'POST', headers: { 'content-type': 'application/json', 'x-mock-signature': sign(body) }, body })
     .catch((e) => console.error('[mock-bank] callback failed:', e.message));
-  return outcome === 'success' ? o.successUrl : o.failUrl;
+  // Cancel and fail are different to the buyer: the page they come back to says "cancelled" or "failed" (the bank's status is "failed" for both).
+  return outcome === 'success' ? o.successUrl : (outcome === 'cancel' && o.cancelUrl ? o.cancelUrl : o.failUrl);
 }
 
 module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, getOrder, complete };

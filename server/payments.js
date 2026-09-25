@@ -37,6 +37,8 @@ async function startPayment(booking, mentor, seeker) {
     callbackUrl: `${config.PUBLIC_URL}/api/payments/callback`,
     successUrl: `${back}&status=success`,
     failUrl: `${back}&status=fail`,
+    // Where a buyer who presses "cancel" is sent back to (the fake bank uses it; the real banks send a cancelled payment to failUrl).
+    cancelUrl: `${back}&status=cancel`,
     returnUrl: `${back}&status=return`,
     ttlMinutes: config.PAYMENT_TTL_MINUTES,
     language: seeker.language

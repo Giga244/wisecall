@@ -2,6 +2,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { startServer } = require('./helpers');
+const { longQuestion } = require('./helpers');
 const { resetDatabase } = require('./helpers');
 
 describe('PUBLIC_URL is the only address the site ever gives out', () => {
@@ -207,11 +208,11 @@ describe('launch mode: prelaunch, then live', () => {
 
   test('nobody can pay: no booking is created and the bank is never contacted', async () => {
     seeker = await signupByEmail(fake, pre.base, 'Sam Seeker', 'seeker@example.com');
-    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: 'Can you help me with my sleep?' } });
+    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion('Can you help me with my sleep?') } });
     assert.equal(r.status, 403);
     assert.equal(r.error, 'prelaunch');
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM bookings')).rows[0].n, 0);
-    assert.equal((await client(pre.base).api('/bookings', { method: 'POST', body: { mentorId, question: 'Anonymous try' } })).status, 401);
+    assert.equal((await client(pre.base).api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion('Anonymous try') } })).status, 401);
   });
 
   test('listing a mentor does not send the waiting list a "mentors have joined" email yet', async () => {
@@ -289,7 +290,7 @@ describe('LAUNCH_MODE left empty: prelaunch until the first mentor is listed', (
     assert.equal(await mode(auto), 'prelaunch');
     assert.match(auto.logs(), /Launch mode: PRELAUNCH \(automatic: 0 listed mentor/);
     const seeker = await signupVerified(auto.base, 'Sam Seeker', 'sam@example.com');
-    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId: '11111111-1111-1111-1111-111111111111', question: 'Is anyone there?' } });
+    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId: '11111111-1111-1111-1111-111111111111', question: longQuestion('Is anyone there?') } });
     assert.equal(r.status, 403);
     assert.equal(r.error, 'prelaunch');
   });

@@ -88,7 +88,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // Creates a booking and pays it at the FAKE bank (PAYMENT_PROVIDER=mock), then waits until the
 // server has confirmed the payment with the bank. Returns the booking as the seeker sees it.
 async function bookAndPay(base, seekerClient, mentorId, question, outcome = 'success') {
-  const r = await seekerClient.api('/bookings', { method: 'POST', body: { mentorId, question } });
+  const r = await seekerClient.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion(question) } });
   if (r.status !== 201) throw new Error('booking failed: ' + r.text);
   await client(base).api(`/mock-bank/orders/${r.booking.providerOrderId}/complete`, { method: 'POST', body: { outcome } });
   await seekerClient.api(`/bookings/${r.booking.id}/sync`, { method: 'POST' });
@@ -117,6 +117,14 @@ async function rate(clientOfRater, bookingId, stars, extra = {}) {
   await ageAnswer(bookingId);
   return clientOfRater.api(`/bookings/${bookingId}/ratings`, { method: 'POST', body: { stars, ...extra } });
 }
+
+// A question must be at least 50 characters and an answer at least 150 (server/content.js). Tests write short ones for readability:
+// these keep the words they wrote at the start and add real-looking text after them until the minimum is reached.
+const { LIMITS, size } = require('../server/content');
+const QUESTION_TAIL = ' Please tell me exactly what you would do in my situation.';
+const ANSWER_TAIL = ' Start by writing down who is stuck, what they already tried and what a good outcome would look like. Then take the smallest step that tests it, and check the result before you build anything bigger.';
+const longQuestion = (text) => (size(text) >= LIMITS.questionMin ? text : text + QUESTION_TAIL);
+const longAnswer = (text) => (size(text) >= LIMITS.answerMin ? text : text + ANSWER_TAIL);
 
 const GOOD_IBAN = 'GE29NB0000000101904917';
 // Mentors only appear in listings (and can be booked) once they have saved payout details.
@@ -148,4 +156,4 @@ async function approveMentor(adminClient, mentorClient) {
 }
 const SAMPLE = 'This is a detailed sample answer that is comfortably longer than eighty characters to pass validation.';
 
-module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, ageAnswer, rate, addPayoutDetails, approveMentor, GOOD_IBAN, wait, SAMPLE };
+module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, ageAnswer, rate, addPayoutDetails, approveMentor, GOOD_IBAN, wait, SAMPLE, longQuestion, longAnswer };

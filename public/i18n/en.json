@@ -479,7 +479,7 @@
   "error.500.body": "We hit an unexpected problem. Please try again in a moment. If it keeps happening, tell us on the contact page.",
   "error.home": "Back to home",
   "error.contact": "Contact us",
-  "expert.paymentFailed": "The payment didn't go through, so you have not been charged. You can try again.",
+  "expert.paymentFailed": "Payment failed. You have not been charged. Your question is still here: you can try again.",
   "dash.refund.pending": "Your refund has been requested from the bank. It can take a few days to show on your card.",
   "dash.status.refund_pending": "Refund in progress",
   "mockbank.badge": "Development only",
@@ -1101,5 +1101,18 @@
   "theme.light": "Light",
   "theme.dark": "Dark",
   "settings.appearance.title": "Appearance",
-  "settings.appearance.body": "Choose how Wisecall looks. “System” follows your device and changes with it."
+  "settings.appearance.body": "Choose how Wisecall looks. “System” follows your device and changes with it.",
+  "dash.answer.check": "Check your answer",
+  "dash.answer.needMore": "{left} more characters needed (at least {answerMin})",
+  "dash.answer.longEnough": "Long enough. Read it through, then check and send.",
+  "dash.answer.tooShort": "Your answer is too short: write at least {answerMin} characters.",
+  "dash.answer.reviewTitle": "Check your answer before sending",
+  "dash.answer.reviewWarn": "You can't change your answer after sending.",
+  "dash.answer.back": "Go back and edit",
+  "dash.answer.err.repetitive": "This does not look like a real answer. Write a helpful, specific answer in your own words.",
+  "dash.answer.err.long": "Your answer is too long (at most {answerMax} characters).",
+  "dash.answer.err.already": "This question was already answered. An answer can't be changed after it is sent.",
+  "expert.paymentCancelled": "Payment cancelled. You have not been charged. Your question is still here.",
+  "expert.question.needMore": "{left} more characters needed (at least {questionMin})",
+  "expert.question.enough": "Long enough."
 }

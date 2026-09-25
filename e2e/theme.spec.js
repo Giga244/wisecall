@@ -338,7 +338,7 @@ test.describe('the pieces that appear on top of a page, in dark', () => {
     expect(readable(await surface(page, '#toast'))).toBeGreaterThanOrEqual(4.5);
     await shot(page, 'toast-1280');
     await page.goto(`/u/${ana}`);
-    await page.fill('#question', 'A question for the payment page, written in dark mode?');
+    await page.fill('#question', 'A question for the payment page, written in dark mode, long enough?');
     await page.click('#askBtn');
     await page.waitForURL(/mock-bank\.html/);
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });

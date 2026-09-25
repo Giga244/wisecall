@@ -11,7 +11,7 @@ const admin = { name: 'E2E Admin', email: 'e2e-admin@example.com' };
 const seeker = { name: 'Sam Seeker', email: 'sam@e2e.test' };
 const mentor = { name: 'Ana Lomidze', email: 'ana@e2e.test' };
 const QUESTION = 'I run a small shop. Do I need to register for VAT before my turnover reaches the limit?';
-const ANSWER = 'Not before you reach the threshold, but register early if your customers are businesses that can claim the VAT back.';
+const ANSWER = 'Not before you reach the threshold, but register early if your customers are businesses that can claim the VAT back. Keep every invoice from the start, and ask an accountant to confirm the date.';
 
 let contexts = [];
 let seekerPage, mentorPage, adminPage;
@@ -176,7 +176,9 @@ test('the mentor answers; a new mentor\'s first answer is held and the buyer can
   await mentorPage.click('#tab-received');
   const form = mentorPage.locator('.answer-form').first();
   await form.locator('textarea').fill(ANSWER);
-  await form.locator('button[type="submit"]').click();
+  await form.locator('.answer-edit button[type="submit"]').click();
+  await expect(form.locator('.answer-warn')).toContainText("can't change your answer after sending"); // the check step comes first
+  await form.locator('.answer-send').click();
   const b = await S.untilBooking(bookingId, (x) => x.status === 'answered', 'the answer was not saved');
   expect(b.answer_review).toBe('held');
 

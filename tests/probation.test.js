@@ -6,6 +6,7 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 const { Pool } = require('pg');
 const { resetDatabase, startServer, client, addPayoutDetails, approveMentor, bookAndPay, wait, SAMPLE } = require('./helpers');
+const { longAnswer } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const resend = createFakeResend();
@@ -19,7 +20,8 @@ async function listedMentor(name, email, niche = 'design') {
   await addPayoutDetails(c);
   return { c, id: await approveMentor(admin, c) };
 }
-const answer = (m, bookingId, text = 'Here is my detailed answer to your question.') => m.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: text } });
+const ANS1 = longAnswer('Here is my detailed answer to your question.'); // (answers must be at least 150 characters)
+const answer = (m, bookingId, text = ANS1) => m.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: longAnswer(text) } });
 const row = async (id) => (await pool.query('SELECT * FROM bookings WHERE id = $1', [id])).rows[0];
 const payoutOf = async (id) => (await pool.query('SELECT * FROM payouts WHERE booking_id = $1', [id])).rows[0];
 async function waitFor(fn, ms = 8000) {
@@ -62,7 +64,7 @@ describe('probation: the first answers are held', () => {
     const r = await answer(mentor, first.id);
     assert.equal(r.status, 200, r.text);
     assert.equal(r.booking.answerHeld, true);
-    assert.equal(r.booking.answer, 'Here is my detailed answer to your question.', 'the mentor sees their own answer');
+    assert.equal(r.booking.answer, ANS1, 'the mentor sees their own answer');
 
     const b = await asked(seeker, first.id);
     assert.equal(b.status, 'answered');
@@ -86,7 +88,7 @@ describe('probation: the first answers are held', () => {
     assert.equal(q.answers[0].answerNumber, 1);
     assert.equal(q.answers[0].of, 2);
     assert.equal(q.answers[0].mentor.email, 'nino@example.com');
-    assert.equal(q.answers[0].answer, 'Here is my detailed answer to your question.');
+    assert.equal(q.answers[0].answer, ANS1);
     assert.ok(new Date(q.answers[0].heldUntil) > new Date(Date.now() + 23 * 3600000), 'held for about 24 hours');
   });
 
@@ -94,7 +96,7 @@ describe('probation: the first answers are held', () => {
     assert.equal((await mentor.api(`/admin/answers/${first.id}/approve`, { method: 'POST' })).error, 'not_admin');
     assert.equal((await admin.api(`/admin/answers/${first.id}/approve`, { method: 'POST' })).status, 200);
     const b = await asked(seeker, first.id);
-    assert.equal(b.answer, 'Here is my detailed answer to your question.');
+    assert.equal(b.answer, ANS1);
     assert.equal(b.answerHeld, false);
     await resend.waitFor('sam@example.com', 'answered your question');
     const p = await payoutOf(first.id);
@@ -132,7 +134,7 @@ describe('probation: the first answers are held', () => {
     third = await bookAndPay(base, seeker, mentorId, 'How much should I charge per project?');
     const r = await answer(mentor, third.id, 'Start from your hourly rate and add a margin for revisions.');
     assert.equal(r.booking.answerHeld, false);
-    assert.equal((await asked(seeker, third.id)).answer, 'Start from your hourly rate and add a margin for revisions.');
+    assert.equal((await asked(seeker, third.id)).answer, longAnswer('Start from your hourly rate and add a margin for revisions.'));
     assert.ok(await payoutOf(third.id), 'the payout is recorded at once');
     await resend.waitFor('sam@example.com', 'answered your question');
     // The public profile shows how long buyers really waited (held time counts; refunded and held answers do not).
@@ -147,7 +149,7 @@ describe('probation: the first answers are held', () => {
     assert.equal((await answer(other, b.id, 'It depends on what you want to do next.')).booking.answerHeld, true);
     await pool.query(`UPDATE bookings SET answer_held_until = now() - interval '1 minute' WHERE id = $1`, [b.id]);
     await waitFor(async () => (await row(b.id)).answer_review === 'released');
-    assert.equal((await asked(seeker, b.id)).answer, 'It depends on what you want to do next.');
+    assert.equal((await asked(seeker, b.id)).answer, longAnswer('It depends on what you want to do next.'));
     assert.ok(await payoutOf(b.id));
     const log = (await admin.api(`/admin/mentors/${otherId}/verification`)).audit.find((a) => a.action === 'answer_released');
     assert.equal(log.by, 'system');

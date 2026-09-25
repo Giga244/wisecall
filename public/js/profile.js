@@ -13,8 +13,7 @@
   const crumbs = document.getElementById('crumbs');
   const bookingParam = params.get('booking');
   const statusParam = params.get('status');
-  const MAX_QUESTION = 4000; // the server keeps at most this many characters
-  const MIN_QUESTION = 5;
+  const { questionMin: MIN_QUESTION, questionMax: MAX_QUESTION } = await WisecallI18n.getConfig(); // how long a question must be (the server decides)
 
   const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -179,7 +178,7 @@
     updateBar();
     WisecallReport.wire(page);
     loadReviews();
-    if (!checking && !returnedFromBank) renderAskForm(); else if (askState) askArea().innerHTML = askState;
+    if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState;
   }
   const askArea = () => document.getElementById('askArea');
   // ---- Reviews ------------------------------------------------------------------------------------------------
@@ -199,11 +198,20 @@
     WisecallRatings.wireReports(body);
   }
   // ---- Asking a question -----------------------------------------------------------------------------------------
-  // The bank sends the buyer back with ?status=success|fail|return, but that is only a hint.
-  const returnedFromBank = Boolean(bookingParam) && ['success', 'fail', 'return'].includes(statusParam);
+  // The bank sends the buyer back with ?status=success|fail|cancel|return, but that is only a hint (the server asks the bank).
+  const returnedFromBank = Boolean(bookingParam) && ['success', 'fail', 'cancel', 'return'].includes(statusParam);
   let checking = false;
   let askState = ''; // the message that replaces the form after a payment, kept when the language changes
-  let draft = ''; // what the buyer has typed so far, kept when the page is redrawn
+  let noticeKey = ''; // "Payment cancelled" / "Payment failed", shown above the form that comes back
+  let formBack = false; // the payment did not happen: the form is shown again (also after the language changes)
+  // What the buyer has typed so far, kept when the page is redrawn and (per mentor, for this visit) while they are at the bank, so a
+  // cancelled or failed payment does not cost them their question.
+  const draftKey = `wisecall_question_${expert.id}`;
+  const stored = {
+    get() { try { return sessionStorage.getItem(draftKey) || ''; } catch (e) { return ''; } },
+    set(v) { try { if (v) sessionStorage.setItem(draftKey, v); else sessionStorage.removeItem(draftKey); } catch (e) { /* storage not available */ } }
+  };
+  let draft = stored.get();
   const NOTE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>';
 
   const askHeader = () => `
@@ -225,20 +233,26 @@
         const { booking } = await WisecallAPI.apiFetch(`/bookings/${bookingParam}/sync`, { method: 'POST' });
         last = booking;
         if (booking.status === 'paid' || booking.status === 'answered') {
+          stored.set(''); draft = ''; // it was sent: nothing to keep
           askState = `<div class="booking-result success"><div class="success-icon" aria-hidden="true">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
           askArea().innerHTML = askState;
           return;
         }
         if (booking.status === 'expired' || booking.status === 'refunded') break;
         // The bank said the payment failed or was cancelled: no need to keep waiting.
-        if (statusParam === 'fail' && i >= 2) break;
+        if ((statusParam === 'fail' || statusParam === 'cancel') && i >= 2) break;
       } catch (e) { break; }
       await new Promise((r) => setTimeout(r, 1500));
     }
     checking = false;
-    if (last && (last.status === 'expired' || statusParam === 'fail')) {
+    if (last && (last.status === 'expired' || statusParam === 'fail' || statusParam === 'cancel')) {
+      // Cancelled and failed are different things to the buyer: "you cancelled" vs "it did not go through". Either way nothing was charged,
+      // and the question comes back in the form.
+      noticeKey = statusParam === 'cancel' ? 'expert.paymentCancelled' : 'expert.paymentFailed';
+      if (!draft) draft = stored.get() || (last.question || '');
+      formBack = true;
       renderAskForm();
-      WisecallNav.showToast(t('expert.paymentFailed'));
+      WisecallNav.showToast(t(noticeKey));
       return;
     }
     askState = `<div class="booking-result"><p class="muted">${t('expert.paymentPending')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
@@ -276,28 +290,34 @@
     }
     area.innerHTML = `
       ${askHeader()}
+      ${noticeKey ? `<p class="pay-notice ${noticeKey === 'expert.paymentCancelled' ? 'cancelled' : 'failed'}" id="payNotice" role="status" tabindex="-1">${escapeHtml(t(noticeKey))}</p>` : ''}
       <p class="ask-tip">${t('expert.askTip')}</p>
       <form id="askForm" novalidate>
         <label for="question"><span>${t('expert.question.label')}</span>
           <textarea id="question" rows="5" maxlength="${MAX_QUESTION}" placeholder="${escapeHtml(t('expert.questionPlaceholder'))}" aria-describedby="qMeta askError" required></textarea>
         </label>
-        <div class="q-meta" id="qMeta"><span>${t('expert.question.min').replace('{n}', MIN_QUESTION)}</span><span id="qCount"></span></div>
+        <div class="q-meta" id="qMeta"><span id="qHelp"></span><span id="qCount"></span></div>
         <p class="form-error" id="askError" role="alert"></p>
         <button type="submit" class="btn btn-primary btn-block" id="askBtn">${t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
       </form>
       ${askNotes()}`;
     const box = document.getElementById('question');
     box.value = draft;
-    box.addEventListener('input', () => { draft = box.value; });
+    box.addEventListener('input', () => { draft = box.value; stored.set(draft); });
     const count = () => {
-      const n = box.value.length;
+      const n = WisecallAPI.textLength(box.value);
       const el = document.getElementById('qCount');
       el.textContent = `${n} / ${MAX_QUESTION}`;
       el.classList.toggle('over', n > MAX_QUESTION - 200);
+      const help = document.getElementById('qHelp');
+      help.textContent = n >= MIN_QUESTION ? t('expert.question.enough') : t('expert.question.needMore').replace('{left}', MIN_QUESTION - n);
+      help.classList.toggle('ok', n >= MIN_QUESTION);
     };
-    box.addEventListener('input', count);
+    box.addEventListener('input', () => { document.getElementById('askError').textContent = ''; count(); });
     count();
     document.getElementById('askForm').addEventListener('submit', onAsk);
+    const notice = document.getElementById('payNotice');
+    if (notice && !checking) notice.focus({ preventScroll: false });
   }
 
   async function onAsk(ev) {
@@ -305,10 +325,11 @@
     const errorEl = document.getElementById('askError');
     errorEl.textContent = '';
     const question = document.getElementById('question').value.trim();
-    if (question.length < MIN_QUESTION) { errorEl.textContent = t('expert.question.tooShort').replace('{n}', MIN_QUESTION); document.getElementById('question').focus(); return; }
+    if (WisecallAPI.textLength(question) < MIN_QUESTION) { errorEl.textContent = t('expert.question.tooShort').replace('{n}', MIN_QUESTION); document.getElementById('question').focus(); return; }
     const submitBtn = document.getElementById('askBtn');
     submitBtn.disabled = true;
     try {
+      stored.set(question); // (kept while the buyer is at the bank)
       const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question } });
       if (res.checkoutUrl) {
         window.location.href = res.checkoutUrl;
@@ -317,7 +338,7 @@
       // The server always answers with the bank's payment page; if it did not, something is wrong.
       throw new Error('no_checkout_url');
     } catch (e) {
-      errorEl.textContent = e.message2 || t('expert.sendError');
+      errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION) : (e.message2 || t('expert.sendError'));
       submitBtn.disabled = false;
     }
   }

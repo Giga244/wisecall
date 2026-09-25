@@ -5,7 +5,7 @@ const path = require('path');
 const { Pool } = require('pg');
 const { expect } = require('@playwright/test');
 require('dotenv').config();
-const { client, approveMentor, addPayoutDetails, SAMPLE, GOOD_IBAN } = require('../tests/helpers');
+const { client, approveMentor, addPayoutDetails, SAMPLE, GOOD_IBAN, longQuestion } = require('../tests/helpers');
 
 const BASE = 'http://localhost:4620';
 const MAIL = path.join(__dirname, '.tmp', 'mail.jsonl');
@@ -76,7 +76,7 @@ async function listedMentor(admin, { name, email, niche = 'business', price = 20
 // Asks a question in the browser and pays (or not) on the fake bank's page. Returns the page's booking id.
 async function askAndPay(page, mentor, question, outcome = 'pay') {
   await page.goto(`/u/${mentor.username}`);
-  await page.fill('#question', question);
+  await page.fill('#question', longQuestion(question)); // (a question must be at least 50 characters)
   await page.click('#askBtn');
   await page.waitForURL(/mock-bank\.html/);
   await page.click({ pay: '#payBtn', fail: '#failBtn', cancel: '#cancelBtn' }[outcome]);

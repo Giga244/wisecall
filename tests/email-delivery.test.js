@@ -5,6 +5,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('http');
 const { resetDatabase, startServer, client, bookAndPay, addPayoutDetails, approveMentor, SAMPLE, wait } = require('./helpers');
+const { longAnswer } = require('./helpers');
 
 const sent = []; // every request Resend received
 const behavior = { failures: [] }; // statuses to answer with before succeeding, e.g. [500]
@@ -101,7 +102,7 @@ describe('every email goes out through the Resend API', () => {
     assert.match(q.body.html, /25\.00 GEL/, 'amounts are in lari');
     assert.match(q.body.html, /&lt;b&gt;safe&lt;\/b&gt;/, 'user text is escaped');
 
-    await mentor.api(`/bookings/${paid.id}/answer`, { method: 'POST', body: { answer: 'It is safe.' } });
+    await mentor.api(`/bookings/${paid.id}/answer`, { method: 'POST', body: { answer: longAnswer('It is safe.') } });
     const a = await waitFor(() => mailTo('seeker@example.com', 'უპასუხა')[0]);
     assert.match(a.body.subject, /Dr English/);
 

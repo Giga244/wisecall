@@ -4,6 +4,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
 const { resetDatabase, startServer, client, addPayoutDetails, approveMentor, bookAndPay, rate, wait, SAMPLE } = require('./helpers');
+const { longAnswer, longQuestion } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const resend = createFakeResend();
@@ -27,7 +28,7 @@ async function waitFor(fn, ms = 8000) {
 // A buyer asks, the mentor answers, the buyer rates it.
 async function rated(mentor, mentorId, stars, n) {
   const b = await bookAndPay(base, seeker, mentorId, `Question number ${n} about my work?`);
-  assert.equal((await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: 'A thorough answer to that question.' } })).status, 200);
+  assert.equal((await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer('A thorough answer to that question.') } })).status, 200);
   assert.equal((await rate(seeker, b.id, stars)).status, 201);
 }
 
@@ -138,7 +139,7 @@ describe('suspension', () => {
     const m = await listedMentor('Nino Beridze', 'nino@example.com');
     mentor = m.c; mentorId = m.id;
     done = await bookAndPay(base, seeker, mentorId, 'A question that was already answered?');
-    assert.equal((await mentor.api(`/bookings/${done.id}/answer`, { method: 'POST', body: { answer: 'Here is the answer you needed.' } })).status, 200);
+    assert.equal((await mentor.api(`/bookings/${done.id}/answer`, { method: 'POST', body: { answer: longAnswer('Here is the answer you needed.') } })).status, 200);
     waiting = await bookAndPay(base, seeker, mentorId, 'A question still waiting for an answer?');
   });
 
@@ -158,7 +159,7 @@ describe('suspension', () => {
     assert.equal(await status(mentorId), 'suspended');
     assert.equal(await listed(mentorId), false, 'hidden from search');
     assert.equal((await client(base).api(`/experts/${mentorId}`)).status, 404);
-    assert.equal((await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: 'Can I still ask you something?' } })).error, 'mentor_not_found');
+    assert.equal((await seeker.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion('Can I still ask you something?') } })).error, 'mentor_not_found');
 
     const w = (await pool.query('SELECT * FROM bookings WHERE id = $1', [waiting.id])).rows[0];
     assert.ok(['refund_pending', 'refunded'].includes(w.status), `the waiting question is refunded (${w.status})`);
@@ -178,7 +179,7 @@ describe('suspension', () => {
     const own = await mentor.api('/verification');
     assert.equal(own.status, 'suspended');
     assert.match(own.note, /fake credentials/);
-    assert.equal((await mentor.api(`/bookings/${done.id}/answer`, { method: 'POST', body: { answer: 'An edited answer after suspension.' } })).error, 'suspended');
+    assert.equal((await mentor.api(`/bookings/${done.id}/answer`, { method: 'POST', body: { answer: longAnswer('An edited answer after suspension.') } })).error, 'suspended');
 
     await pool.query(`UPDATE payouts SET payable_at = now() - interval '1 day' WHERE mentor_id = $1`, [mentorId]);
     const row = (await admin.api('/admin/payouts')).mentors.find((m) => m.mentorId === mentorId);

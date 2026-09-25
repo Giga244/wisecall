@@ -4,6 +4,7 @@
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
 const { client } = require('../tests/helpers');
+const { longAnswer, longQuestion } = require('../tests/helpers');
 const { SAMPLE } = require('../tests/helpers');
 
 test.describe.configure({ mode: 'serial' });
@@ -38,7 +39,7 @@ test.afterAll(async () => { await Promise.all(contexts.map((c) => c.close())); }
 
 test('the fake bank page offers paid, failed and cancelled; a failed payment creates no paid question', async () => {
   await buyerPage.goto(`/u/${mentor.username}`);
-  await buyerPage.fill('#question', 'A question whose payment will fail at the bank?');
+  await buyerPage.fill('#question', longQuestion('A question whose payment will fail at the bank?'));
   await buyerPage.click('#askBtn');
   await buyerPage.waitForURL(/mock-bank\.html/);
   await expect(buyerPage.locator('#payBtn')).toHaveText('Pay');
@@ -75,7 +76,7 @@ test('an answer is held for a check, then released; the ratings stay hidden; aft
   const q = 'A question that will be answered and then rated by both people?';
   const bookingId = await S.askAndPay(buyerPage, mentor, q, 'pay');
   await S.untilBooking(bookingId, (x) => x.status === 'paid', 'the payment was not confirmed');
-  const answered = await mentor.client.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: SAMPLE } });
+  const answered = await mentor.client.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: longAnswer(SAMPLE) } });
   expect(answered.status).toBe(200);
   const buyerApi = client(S.BASE);
   await buyerApi.api('/auth/login', { method: 'POST', body: { email: 'fay@e2e.test', password: S.PASSWORD } });
@@ -114,7 +115,7 @@ test('an admin can refund a question from the list (the answer is not needed)', 
   const q = 'A question the admin will refund by hand after the answer?';
   const bookingId = await S.askAndPay(buyerPage, mentor, q, 'pay');
   await S.untilBooking(bookingId, (x) => x.status === 'paid', 'the payment was not confirmed');
-  expect((await mentor.client.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: SAMPLE } })).status).toBe(200);
+  expect((await mentor.client.api(`/bookings/${bookingId}/answer`, { method: 'POST', body: { answer: longAnswer(SAMPLE) } })).status).toBe(200);
 
   const card = await openBooking('answered', q);
   await card.locator('.refund-btn').click();

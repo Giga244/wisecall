@@ -5,6 +5,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
 const { resetDatabase, startServer, signupVerified, client, bookAndPay, rate, SAMPLE } = require('./helpers');
+const { longAnswer } = require('./helpers');
 const { createFakeDidit } = require('./fakeDidit');
 
 const didit = createFakeDidit();
@@ -99,7 +100,7 @@ describe('a new Medicine mentor (regulated)', () => {
 
   test('the first answer is held, then released, and only then does the buyer see it', async () => {
     const b = await bookAndPay(base, seeker, id, 'What are the warning signs of a heart problem?');
-    const a = await doc.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: 'Chest pain, shortness of breath and dizziness all need a doctor.' } });
+    const a = await doc.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer('Chest pain, shortness of breath and dizziness all need a doctor.') } });
     assert.equal(a.booking.answerHeld, true);
     assert.equal((await seeker.api(`/bookings/${b.id}`)).booking.answer, null);
     assert.equal((await admin.api(`/admin/answers/${b.id}/approve`, { method: 'POST' })).status, 200);

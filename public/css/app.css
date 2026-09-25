@@ -159,6 +159,7 @@ a.tag-niche:hover { background: var(--inverse); color: var(--on-inverse); }
 .ask-panel textarea { min-height: 130px; }
 .q-meta { display: flex; justify-content: space-between; gap: 10px; font-size: 0.78rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 12px; }
 .q-meta .over { color: var(--red-strong); }
+.q-meta .ok { color: var(--accent2-text); }
 .ask-notes { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; font-size: 0.82rem; color: var(--ink-soft); font-weight: 600; }
 .ask-notes li { display: flex; gap: 8px; align-items: flex-start; }
 .ask-notes svg { flex: 0 0 auto; color: var(--accent2-strong); margin-top: 2px; }

@@ -44,6 +44,8 @@
   const LARI = '₾';
   const formatPrice = (lari) => `${Number(lari)} ${LARI}`;
   const formatAmount = (tetri) => `${(tetri / 100).toFixed(2)} ${LARI}`;
+  // The length the server counts for a question or an answer: blanks at both ends removed, a run of blanks counted once.
+  const textLength = (s) => [...String(s).replace(/\r\n?/g, '\n').trim().replace(/\s+/g, ' ')].length;
 
   // The style attribute for a round initials badge: the person's colour, with white or dark text, whichever is
   // easier to read on it (WCAG AA, 4.5:1). Only #rrggbb colours are used, so the value is safe to put in HTML.
@@ -90,5 +92,5 @@
   scheduleLinking();
   new MutationObserver(scheduleLinking).observe(document.documentElement, { childList: true, subtree: true });
 
-  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount, avatarStyle, avatar, initialsOf, linkLabels };
+  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount, textLength, avatarStyle, avatar, initialsOf, linkLabels };
 })();
