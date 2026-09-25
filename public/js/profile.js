@@ -114,7 +114,7 @@
   }
 
   const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-  const REVIEW_ART = `<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="8" y="10" width="70" height="42" rx="14" fill="#ff6f59"/><path d="M24 50 Q20 64 10 68 Q34 66 40 50 Z" fill="#ff6f59"/><path d="M28 30l5 5 10-11" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><rect x="52" y="30" width="58" height="36" rx="12" fill="#fff" stroke="#25213b" stroke-width="3.5"/><path d="M72 40l4 8 9 1-7 6 2 9-8-4-8 4 2-9-7-6 9-1z" fill="#f4a93b"/></svg>`;
+  const REVIEW_ART = `<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="8" y="10" width="70" height="42" rx="14" style="fill:var(--accent)"/><path d="M24 50 Q20 64 10 68 Q34 66 40 50 Z" style="fill:var(--accent)"/><path d="M28 30l5 5 10-11" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--on-accent)"/><rect x="52" y="30" width="58" height="36" rx="12" stroke-width="3.5" style="fill:var(--card);stroke:var(--ink)"/><path d="M72 40l4 8 9 1-7 6 2 9-8-4-8 4 2-9-7-6 9-1z" style="fill:var(--gold)"/></svg>`;
 
   // ---- The page ------------------------------------------------------------------------------------------------
   function profileHtml() {
