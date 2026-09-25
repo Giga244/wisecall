@@ -6,6 +6,7 @@ const db = require('./db');
 const { rateLimit } = require('./rateLimit');
 const { startJobs } = require('./jobs');
 const pages = require('./pages');
+const assets = require('./assets');
 const launch = require('./launch');
 const { securityHeaders, csrfGuard, requestLogger } = require('./security');
 
@@ -122,17 +123,10 @@ app.use(require('./adminAuth').adminOnlyFile);
 app.use(pages.seoRoutes());
 app.use(pages.pageRoutes());
 app.use(pages.blockRawHtml);
-// Scripts, styles and the dictionaries change with every release and are not fingerprinted, so they are kept for an
-// hour and then revalidated; the fonts and pictures never change under the same name.
-app.use(express.static(path.join(__dirname, '..', 'public'), {
-  index: false,
-  setHeaders(res, file) {
-    // The logo, the icons and the share picture keep their names when the brand changes, so they are checked once a day.
-    if (/[\\/](brand[\\/][^\\/]+|favicon\.(svg|ico)|apple-touch-icon\.png|icon-[\w-]+\.png|og-image[\w-]*\.png|site\.webmanifest)$/i.test(file)) res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
-    else if (/\.(woff2|png|svg|ico|jpg|webp)$/i.test(file)) res.set('Cache-Control', 'public, max-age=2592000, immutable');
-    else if (/\.(css|js|json)$/i.test(file)) res.set('Cache-Control', 'public, max-age=3600, must-revalidate');
-  }
-}));
+// Stylesheets, scripts, pictures, icons and fonts are asked for with ?v=<hash of the file>, which the pages, styles and scripts get as
+// they are sent (server/assets.js): a changed file has a new address and shows at once, an unchanged one is kept for a year.
+app.use(assets.serveText);
+app.use(express.static(path.join(__dirname, '..', 'public'), { index: false, setHeaders: assets.staticHeaders }));
 app.use(pages.notFoundHandler);
 
 // Any error thrown in a route ends up here instead of crashing or hanging the request.

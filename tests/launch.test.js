@@ -26,8 +26,8 @@ describe('PUBLIC_URL is the only address the site ever gives out', () => {
       assert.doesNotMatch(html, /\{\{\w+\}\}/, `${f} has an unfilled placeholder`);
       assert.match(html, /rel="canonical" href="https:\/\/wisecall\.example\//, `${f} canonical`);
       assert.match(html, /og:url" content="https:\/\/wisecall\.example\//, `${f} og:url`);
-      assert.match(html, /og:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png"/, `${f} og:image`);
-      assert.match(html, /twitter:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png"/, `${f} twitter:image`);
+      assert.match(html, /og:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/, `${f} og:image`);
+      assert.match(html, /twitter:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/, `${f} twitter:image`);
     }
     const profile = await (await fetch(`${srv.base}/u/nobody-by-this-name`)).text();
     assert.match(profile, /rel="canonical" href="https:\/\/wisecall\.example\/profile\.html/);

@@ -336,7 +336,7 @@ describe('profiles', () => {
       const p = await page(`/u/${mentorMe.username}`);
       assert.equal(p.status, 200);
       assert.doesNotMatch(p.text, /\{\{/);
-      assert.match(p.text, /<script src="\/js\/profile\.js">/);
+      assert.match(p.text, /<script src="\/js\/profile\.js(\?v=[0-9a-f]{10})?">/);
       const old = await page(`/expert.html?id=${mentorMe.id}&booking=x&status=success`);
       assert.equal(old.status, 301);
       assert.equal(old.location, `/u/${mentorMe.username}?booking=x&status=success`);

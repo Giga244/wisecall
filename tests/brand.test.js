@@ -76,19 +76,20 @@ describe('the brand files are used as they are', () => {
 });
 
 describe('every page carries the icons, the manifest and the theme colour', () => {
-  const pages = fs.readdirSync(PUB).filter((f) => f.endsWith('.html') && !/^(500|404)\.html$/.test(f));
+  const pages = fs.readdirSync(PUB).filter((f) => f.endsWith('.html') && !/^(500|404|403)\.html$/.test(f));
 
   test('the same tags, once each, on every page (added by the server from one file)', async () => {
     assert.ok(pages.length >= 15);
     for (const f of [...pages, '404.html']) {
       const url = f === 'index.html' ? '/' : (f === '404.html' ? '/no-such-page-here' : `/${f}`);
       const html = await (await fetch(base + url, { headers: { Accept: 'text/html' } })).text();
-      for (const tag of ['<link rel="icon" href="/favicon.ico" sizes="48x48">', '<link rel="icon" href="/favicon.svg" type="image/svg+xml">', '<link rel="apple-touch-icon" href="/apple-touch-icon.png">', '<link rel="manifest" href="/site.webmanifest">', '<meta name="theme-color" content="#F4FBF8" media="(prefers-color-scheme: light)">', '<meta name="theme-color" content="#15131F" media="(prefers-color-scheme: dark)">', '<meta name="color-scheme" content="light dark">', '<script src="/js/theme-init.js"></script>']) {
-        assert.equal(html.split(tag).length - 1, 1, `${f}: ${tag}`);
+      // (every address of one of our files carries ?v=<hash of the file>, see assets.test.js)
+      for (const tag of [/<link rel="icon" href="\/favicon\.ico\?v=[0-9a-f]{10}" sizes="48x48">/g, /<link rel="icon" href="\/favicon\.svg\?v=[0-9a-f]{10}" type="image\/svg\+xml">/g, /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png\?v=[0-9a-f]{10}">/g, /<link rel="manifest" href="\/site\.webmanifest\?v=[0-9a-f]{10}">/g, /<meta name="theme-color" content="#F4FBF8" media="\(prefers-color-scheme: light\)">/g, /<meta name="theme-color" content="#15131F" media="\(prefers-color-scheme: dark\)">/g, /<meta name="color-scheme" content="light dark">/g, /<script src="\/js\/theme-init\.js\?v=[0-9a-f]{10}"><\/script>/g]) {
+        assert.equal((html.match(tag) || []).length, 1, `${f}: ${tag}`);
       }
       assert.equal((html.match(/rel="icon"/g) || []).length, 2, `${f}: exactly two icon links`);
       if (f !== 'mock-bank.html' && f !== 'mock-kyc.html') {
-        assert.match(html, /og:image" content="[^"]*\/og-image-1200x630\.png"/, `${f} og:image`);
+        assert.match(html, /og:image" content="[^"]*\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/, `${f} og:image`);
         assert.match(html, /og:image:width" content="1200"/);
         assert.match(html, /og:image:height" content="630"/);
         assert.match(html, /og:image:alt" content="Wisecall — Advice from people who've already done it\."/);
@@ -115,7 +116,7 @@ describe('every page carries the icons, the manifest and the theme colour', () =
     assert.equal(m.display, 'standalone');
     assert.equal(m.background_color, '#F4FBF8');
     assert.equal(m.theme_color, '#25213B');
-    assert.deepEqual(m.icons.map((i) => [i.src, i.sizes, i.purpose || 'any']), [['/icon-192.png', '192x192', 'any'], ['/icon-512.png', '512x512', 'any'], ['/icon-maskable-512.png', '512x512', 'maskable']]);
+    assert.deepEqual(m.icons.map((i) => [i.src.replace(/\?v=[0-9a-f]{10}$/, ''), i.sizes, i.purpose || 'any']), [['/icon-192.png', '192x192', 'any'], ['/icon-512.png', '512x512', 'any'], ['/icon-maskable-512.png', '512x512', 'maskable']]);
     for (const i of m.icons) assert.equal((await fetch(base + i.src)).status, 200);
     assert.match(r.headers.get('content-security-policy'), /manifest-src 'self'/);
     assert.match(r.headers.get('content-security-policy'), /script-src 'self'(;|$)/, 'scripts are still only ours');
@@ -128,7 +129,7 @@ describe('every page carries the icons, the manifest and the theme colour', () =
     const ld = JSON.parse(m[1]);
     assert.equal(ld['@type'], 'Organization');
     assert.equal(ld.name, 'Wisecall');
-    assert.equal(ld.logo, `${base}/brand/wisecall-mark.svg`);
+    assert.match(ld.logo, new RegExp(`^${base.replace(/[.:\/]/g, '\\$&')}/brand/wisecall-mark\\.svg(\\?v=[0-9a-f]{10})?$`));
   });
 });
 

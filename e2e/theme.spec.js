@@ -1,4 +1,4 @@
-﻿// The colour theme in a real browser: System follows the device (live), a choice made by hand is kept (after a reload, and on the
+// The colour theme in a real browser: System follows the device (live), a choice made by hand is kept (after a reload, and on the
 // account after signing in elsewhere), the right theme is there from the first paint, and every main page works in both themes.
 // Runs after the other specs so the pages have real data. E2E_SHOTS=<folder> keeps a picture of each page in both themes.
 const { test, expect } = require('@playwright/test');
@@ -8,7 +8,7 @@ const DARK_BG = 'rgb(21, 19, 31)';
 const LIGHT_BG = 'rgb(234, 246, 241)';
 const theme = (page) => page.evaluate(() => ({ theme: document.documentElement.dataset.theme, pref: document.documentElement.dataset.themePref }));
 const bodyBg = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-const logo = (page) => page.locator('.nav .logo img').evaluate((i) => i.currentSrc.split('/').pop());
+const logo = (page) => page.locator('.nav .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0]);
 const barColor = (page) => page.evaluate(() => { const el = document.getElementById('themeColorOverride'); return el ? el.content : null; });
 
 test.describe('System follows the device', () => {
@@ -66,7 +66,7 @@ test.describe('a choice made by hand', () => {
     await expect.poll(() => bodyBg(page)).toBe(DARK_BG); // after the short fade
     expect(await barColor(page)).toBe('#15131F'); // the phone's address bar follows
     expect(await logo(page)).toBe('wisecall-logo-on-dark-transparent.svg');
-    expect(await page.locator('.footer .logo img').evaluate((i) => i.currentSrc.split('/').pop())).toBe('wisecall-logo-on-dark-transparent.svg');
+    expect(await page.locator('.footer .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
     await expect(page.locator('#themeMenu')).toBeHidden();
     expect(await page.evaluate(() => localStorage.getItem('wisecall_theme'))).toBe('dark');
 
@@ -104,7 +104,7 @@ test.describe('a choice made by hand', () => {
     await seg.nth(2).click();
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
     await expect(seg.nth(2)).toHaveAttribute('aria-checked', 'true');
-    expect(await page.locator('#mmTitle img').evaluate((i) => i.currentSrc.split('/').pop())).toBe('wisecall-logo-on-dark-transparent.svg');
+    expect(await page.locator('#mmTitle img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
     await ctx.close();
   });
 
@@ -172,7 +172,7 @@ test.describe('no flash of the wrong theme', () => {
     const res = await page.request.get('/');
     const html = await res.text();
     const head = html.slice(0, html.indexOf('</head>'));
-    expect(head).toMatch(/<script src="\/js\/theme-init\.js"><\/script>/);
+    expect(head).toMatch(/<script src="\/js\/theme-init\.js\?v=[0-9a-f]{10}"><\/script>/);
     expect(res.headers()['content-security-policy']).toMatch(/script-src 'self'(;|$)/);
     const violations = [];
     page.on('console', (m) => { if (/content security policy/i.test(m.text())) violations.push(m.text()); });

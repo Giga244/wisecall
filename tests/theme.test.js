@@ -49,11 +49,11 @@ describe('colours are tokens', () => {
 
 describe('the theme is set before the page paints', () => {
   test('every page loads /js/theme-init.js in the <head>, as a plain external script (no defer, no async), with the two theme-color tags', async () => {
-    const pages = fs.readdirSync(path.join(ROOT, 'public')).filter((f) => f.endsWith('.html') && !/^(404|500)\.html$/.test(f));
+    const pages = fs.readdirSync(path.join(ROOT, 'public')).filter((f) => f.endsWith('.html') && !/^(403|404|500)\.html$/.test(f));
     for (const f of [...pages, '404.html']) {
       const html = await (await fetch(base + (f === 'index.html' ? '/' : f === '404.html' ? '/nope-nothing-here' : `/${f}`), { headers: { Accept: 'text/html' } })).text();
       const head = html.slice(0, html.indexOf('</head>'));
-      assert.match(head, /<script src="\/js\/theme-init\.js"><\/script>/, `${f}: theme-init.js is in the head, not deferred`);
+      assert.match(head, /<script src="\/js\/theme-init\.js\?v=[0-9a-f]{10}"><\/script>/, `${f}: theme-init.js is in the head, not deferred`);
       assert.match(head, /<meta name="color-scheme" content="light dark">/, f);
       assert.match(head, /<meta name="theme-color" content="#F4FBF8" media="\(prefers-color-scheme: light\)">/, f);
       assert.match(head, /<meta name="theme-color" content="#15131F" media="\(prefers-color-scheme: dark\)">/, f);

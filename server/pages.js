@@ -8,6 +8,7 @@ const config = require('./config');
 const { query } = require('./db');
 const { listableSql } = require('./models');
 const { escapeHtml } = require('./email');
+const assets = require('./assets');
 
 const PUBLIC = path.join(__dirname, '..', 'public');
 const UUID_RE = /^[0-9a-f-]{36}$/i;
@@ -21,9 +22,19 @@ function readPage(file) {
   if (cache.has(file)) return cache.get(file);
   const full = path.join(PUBLIC, file);
   let html = fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : null;
-  if (html !== null) html = html.replace('</head>', () => fs.readFileSync(HEAD_TAGS, 'utf8') + '</head>');
+  if (html !== null) {
+    html = html.replace('</head>', () => fs.readFileSync(HEAD_TAGS, 'utf8') + '</head>');
+    html = assets.rewrite(html); // every stylesheet, script, logo, icon and font address gets ?v=<hash of the file> (see assets.js)
+  }
   if (config.IS_PROD) cache.set(file, html);
   return html;
+}
+
+// HTML is always asked for again (the answer is a small 304 when nothing changed), so a new release shows at once; the files it names
+// carry a version in their address and are kept for a year.
+function sendHtml(res, status, html) {
+  if (!res.get('Cache-Control')) res.set('Cache-Control', 'no-cache');
+  res.status(status).type('html').send(html);
 }
 
 function fill(html, vars) {
@@ -64,14 +75,14 @@ async function sendProfile(res, row, asked) {
     vars.DESCRIPTION = 'A profile on Wisecall, where people ask verified experts and get real, paid answers.';
   }
   vars.ROBOTS = listable && isPublic ? 'index, follow' : 'noindex';
-  res.status(u || asked === undefined ? 200 : 404).type('html').send(fill(html, vars));
+  sendHtml(res, u || asked === undefined ? 200 : 404, fill(html, vars));
   return true;
 }
 
 async function sendPage(res, file, vars, status = 200) {
   const html = readPage(file);
   if (html === null) return false;
-  res.status(status).type('html').send(fill(html, vars));
+  sendHtml(res, status, fill(html, vars));
   return true;
 }
 
@@ -186,20 +197,21 @@ function notFoundHandler(req, res) {
   }
   const html = readPage('404.html');
   if (html === null) return res.status(404).send('Not found');
-  res.status(404).type('html').send(fill(html, baseVars(req.path)));
+  sendHtml(res, 404, fill(html, baseVars(req.path)));
 }
 
 // "You don't have access to this page", in the site's design (nothing of the page that was asked for is in it).
 function sendForbidden(res) {
   const html = readPage('403.html');
   if (html === null) return res.status(403).send('Forbidden');
-  res.status(403).type('html').send(fill(html, baseVars('/403.html')));
+  res.set('Cache-Control', 'no-store'); // (what one person may not see must not be kept for the next)
+  sendHtml(res, 403, fill(html, baseVars('/403.html')));
 }
 
 function errorPage(req, res) {
   const html = readPage('500.html');
   if (html === null) return res.status(500).send('Something went wrong');
-  res.status(500).type('html').send(fill(html, baseVars(req.path)));
+  sendHtml(res, 500, fill(html, baseVars(req.path)));
 }
 
 module.exports = { pageRoutes, seoRoutes, blockRawHtml, notFoundHandler, errorPage };
