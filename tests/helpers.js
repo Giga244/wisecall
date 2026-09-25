@@ -30,6 +30,9 @@ async function startServer(port, extraEnv = {}) {
     GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '', GOOGLE_ISSUER: '', // (off unless a test switches it on with its own fake Google)
     ADMIN_EMAILS: 'qa-admin@example.com',
     ADMIN_EMAIL: '',
+    // (admins sign in with a password in the tests that are not about two-step verification; tests/two-factor.test.js turns it on. A
+    // production server never gets "off": it would refuse to start.)
+    ...(extraEnv.NODE_ENV === 'production' ? { ADMIN_2FA: 'required' } : { ADMIN_2FA: 'off' }),
     SUPPORT_EMAIL: '', SOCIAL_FACEBOOK: '', SOCIAL_INSTAGRAM: '', SOCIAL_LINKEDIN: '', SOCIAL_X: '', SOCIAL_TIKTOK: '', SOCIAL_YOUTUBE: '',
     PLATFORM_FEE_PERCENT: '20',
     PROBATION_ANSWERS: '0', // the probation tests turn it on; every other test answers straight away

@@ -86,7 +86,7 @@ test('an answer is held for a check, then released; the ratings stay hidden; aft
   let card = await openBooking('answered', q);
   await card.locator('.ff-btn').first().click();
   await expect(toast()).toContainText('The held answer was released.');
-  expect((await buyerApi.api(`/bookings/${bookingId}`)).booking.answer).toBe(SAMPLE);
+  expect((await buyerApi.api(`/bookings/${bookingId}`)).booking.answer).toBe(longAnswer(SAMPLE));
 
   // both rate: nothing is visible until both have rated
   expect((await buyerApi.api(`/bookings/${bookingId}/ratings`, { method: 'POST', body: { stars: 5, tags: ['clear'], review: 'Clear and to the point.' } })).status).toBe(201);

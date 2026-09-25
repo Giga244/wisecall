@@ -160,6 +160,21 @@ a.tag-niche:hover { background: var(--inverse); color: var(--on-inverse); }
 .q-meta { display: flex; justify-content: space-between; gap: 10px; font-size: 0.78rem; font-weight: 700; color: var(--ink-soft); margin: 0 0 12px; }
 .q-meta .over { color: var(--red-strong); }
 .q-meta .ok { color: var(--accent2-text); }
+
+/* Two-step verification (admins) */
+.tf-card { max-width: 520px; }
+.tf-qr { width: 232px; max-width: 100%; margin: 6px auto 12px; border-radius: var(--radius-sm); overflow: hidden; }
+.tf-qr svg { display: block; width: 100%; height: auto; } /* (the code is black on white in both themes: a QR reader needs that) */
+.tf-dev { margin: 0 0 12px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); color: var(--sun-ink); font-weight: 800; font-size: 0.88rem; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.tf-key { text-align: center; }
+.tf-key code { font-size: 1.05rem; letter-spacing: 0.06em; user-select: all; overflow-wrap: anywhere; }
+.tf-codes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 12px 0; padding-left: 1.4rem; }
+.tf-codes code { font-size: 1rem; user-select: all; }
+.tf-saved { display: flex; gap: 10px; align-items: center; margin: 14px 0 6px; font-weight: 700; }
+.tf-h { font-size: 1.2rem; margin: 0 0 6px; }
+.tf-h:focus { outline: none; }
+.tf-switch { text-align: center; margin: 12px 0 0; }
+.tf-card input[name="code"], .tf-card input[name="recovery"] { font-size: 1.3rem; letter-spacing: 0.18em; text-align: center; }
 .ask-notes { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; font-size: 0.82rem; color: var(--ink-soft); font-weight: 600; }
 .ask-notes li { display: flex; gap: 8px; align-items: flex-start; }
 .ask-notes svg { flex: 0 0 auto; color: var(--accent2-strong); margin-top: 2px; }

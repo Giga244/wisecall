@@ -57,7 +57,7 @@ describe('a correct production setup', () => {
     assert.match(r.out, /READY: every check passed/);
     assert.doesNotMatch(r.out, /❌|⚠/);
     for (const text of ['NODE_ENV is "production"', 'Development mode (devMode) is off', 'SESSION_SECRET is set', 'PUBLIC_URL is https://wisecall.example', 'No fake (mock) provider is active',
-      'Bank of Georgia answers', 'Didit answers', 'Resend answers', 'SUPPORT_EMAIL is support@wisecall.example', 'LAUNCH_MODE is "live"']) {
+      'Bank of Georgia answers', 'Didit answers', 'Resend answers', 'SUPPORT_EMAIL is support@wisecall.example', 'LAUNCH_MODE is "live"', 'Admin accounts need two-step verification']) {
       assert.match(line(r.out, text), /^ {2}✅/, `${text}\n${r.out}`);
     }
     assert.match(r.out, /migrations? applied|reachable/);
@@ -198,6 +198,16 @@ describe('providers that are configured but not answering correctly', () => {
     const r = await check({ DATABASE_URL: 'postgresql://nobody:nothing@127.0.0.1:9/none' });
     assert.equal(r.code, 1);
     assert.match(line(r.out, 'database'), /^ {2}❌.*cannot connect/);
+  });
+});
+
+describe('admin two-step verification', () => {
+  test('is checked (a ✅ with how long a verified session lasts), and switching it off is a ❌ that blocks the launch', async () => {
+    const ok = await check();
+    assert.match(line(ok.out, 'Admin accounts need two-step verification'), /^ {2}✅.*12 hours/);
+    const off = await check({ ADMIN_2FA: 'off' });
+    assert.notEqual(off.code, 0, off.out);
+    assert.match(off.out, /ADMIN_2FA=off/);
   });
 });
 

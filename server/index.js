@@ -63,6 +63,9 @@ app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
 app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
 app.use('/api/waitlist', rateLimit({ windowMs: 60 * 60 * 1000, max: 12 }));
+app.use('/api/admin/2fa/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 })); // (and five wrong codes in a row lock the account for 5 minutes)
+app.use('/api/admin/2fa/enable', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }));
+app.use('/api/admin/2fa/setup', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }));
 app.use('/api/verification/kyc/start', rateLimit({ windowMs: 60 * 60 * 1000, max: 15 }));
 app.use('/api/verification/work-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 12 }));
 app.use('/api/verification/documents', rateLimit({ windowMs: 60 * 60 * 1000, max: 40 }));
@@ -87,6 +90,7 @@ app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/admin/2fa', require('./routes/adminTwoFactor')); // two-step verification (how an admin passes the second step)
 if (config.DEV_MODE) app.use('/api/admin/dev', require('./routes/adminDev')); // development only: never exists in production
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin', require('./routes/adminVerification'));

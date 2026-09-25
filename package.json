@@ -13,6 +13,7 @@
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "migrate": "node scripts/migrate.js",
     "check:launch": "node scripts/check-launch.js",
+    "admin:reset-2fa": "node scripts/reset-admin-2fa.js",
     "check:colors": "node scripts/check-colors.js",
     "check:contrast": "node scripts/check-contrast.js",
     "test:e2e": "playwright test",
@@ -28,6 +29,7 @@
     "jsonwebtoken": "^9.0.2",
     "openid-client": "^6.8.8",
     "pg": "^8.23.0",
+    "qrcode": "^1.5.4",
     "sharp": "^0.35.4"
   },
   "devDependencies": {

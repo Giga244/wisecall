@@ -3,8 +3,9 @@ const { SESSION_SECRET } = require('./config');
 
 const COOKIE_NAME = 'wisecall_token';
 
-function signToken(user) {
-  return jwt.sign({ id: user.id, email: user.email }, SESSION_SECRET, { expiresIn: '30d' });
+// `extra` adds claims to the session; an admin who passed the second step gets { mfaAt: <seconds> } (see server/twoFactor.js).
+function signToken(user, extra) {
+  return jwt.sign({ id: user.id, email: user.email, ...(extra || {}) }, SESSION_SECRET, { expiresIn: '30d' });
 }
 
 function setAuthCookie(res, token) {

@@ -119,14 +119,15 @@ function pageRoutes() {
   });
 
   // The admin page. Who is asking is checked BEFORE anything of it is sent: nobody signed in goes to the login page, a signed-in person who
-  // is not an admin gets a plain "no access" page, and only an admin receives the admin page (and, from the routes in index.js, its scripts).
+  // is not an admin gets a plain "no access" page, an admin who has not passed the second step (an authenticator app) gets the two-step
+  // verification page instead, and only an admin who has passed it receives the admin panel (and, from the routes in index.js, its scripts).
   router.get('/admin.html', async (req, res, next) => {
     try {
-      const { user, admin } = await require('./adminAuth').whoIsAsking(req);
+      const { user, admin, verified } = await require('./adminAuth').whoIsAsking(req);
       res.set('Cache-Control', 'no-store');
       if (!user) return res.redirect(302, '/login.html?redirect=/admin.html');
       if (!admin) return void sendForbidden(res);
-      if (!(await sendPage(res, 'admin.html', baseVars('/admin.html')))) next();
+      if (!(await sendPage(res, verified ? 'admin.html' : 'admin-2fa.html', baseVars('/admin.html')))) next();
     } catch (e) { next(e); }
   });
 
@@ -135,7 +136,7 @@ function pageRoutes() {
       const name = req.params[0];
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
-      if (name === '403' || name === '404' || name === '500') return notFoundHandler(req, res);
+      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (!(await sendPage(res, `${name}.html`, baseVars(`/${name}.html`)))) next();
     } catch (e) { next(e); }

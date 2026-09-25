@@ -35,6 +35,7 @@ function adminRoutes() {
   scan('server/routes/adminVerification.js', '/api/admin');
   scan('server/routes/ratings.js', '/api', '/admin/');
   scan('server/routes/adminDev.js', '/api/admin/dev'); // (development only, but this test server is a development one)
+  scan('server/routes/adminTwoFactor.js', '/api/admin/2fa'); // (how an admin passes the second step: for admins only, see tests/two-factor.test.js)
   return found;
 }
 
@@ -91,7 +92,7 @@ describe('the admin scripts and texts are for admins only', () => {
 
   test('visitors and ordinary accounts get a plain 403 for every admin script and dictionary', async () => {
     for (const who of [client(base), plain]) {
-      for (const p of [...ADMIN_SCRIPTS, '/i18n/admin-en.json', '/i18n/admin-ka.json']) {
+      for (const p of [...ADMIN_SCRIPTS, '/i18n/admin-en.json', '/i18n/admin-ka.json', '/i18n/admin2fa-en.json', '/i18n/admin2fa-ka.json']) {
         const r = await who(p);
         assert.equal(r.status, 403, p);
         assert.equal(r.text, 'Forbidden', p);

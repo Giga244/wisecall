@@ -12,6 +12,12 @@
       const err = new Error(data.error || 'request_failed');
       err.code = data.error;
       err.message2 = data.message;
+      err.data = data; // the rest of the answer (for example how long to wait)
+      // An admin whose second step (an authenticator code) has run out: the page is loaded again, and the server then asks for the code.
+      if ((err.code === 'two_factor_required' || err.code === 'two_factor_setup_required') && window.location.pathname === '/admin.html') {
+        if (window.WisecallNav && window.WisecallI18n) window.WisecallNav.showToast(window.WisecallI18n.t('admin.tf.expired'));
+        setTimeout(() => window.location.reload(), 1500);
+      }
       throw err;
     }
     return data;

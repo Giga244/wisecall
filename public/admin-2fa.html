@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Two-step verification — Wisecall</title>
+<meta name="description" content="Two-step verification for admin accounts.">
+<meta name="robots" content="noindex">
+<meta name="wisecall-i18n-extra" content="admin2fa">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Two-step verification — Wisecall">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Two-step verification — Wisecall">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+
+<main class="auth-page" id="main">
+  <div class="auth-card tf-card">
+    <h1 data-i18n="admin.tf.title">Two-step verification</h1>
+    <div id="tfBody" aria-live="polite"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin-2fa.js"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ function warnings() {
   if (config.PAYMENT_PROVIDER === 'mock') list.push('MOCK BANK is active: nobody pays anything real. Set PAYMENT_PROVIDER=bog or tbc for real payments.');
   if (config.KYC_PROVIDER === 'mock') list.push('MOCK ID CHECK is active: no ID is really checked. Set KYC_PROVIDER=didit for real checks.');
   if (!config.EMAIL_ENABLED) list.push('EMAIL IS OFF: verification codes and reset links are shown on screen instead of being emailed. Set RESEND_API_KEY and EMAIL_FROM.');
+  if (!config.ADMIN_2FA_REQUIRED) list.push('ADMIN 2FA IS OFF (ADMIN_2FA=off): admin accounts can act with just a password. This is only for automated tests; it is refused in production.');
   if (config.SESSION_SECRET === 'dev-secret-change-me-before-production') list.push('SESSION_SECRET is the built-in development value.');
   if (config.DATA_ENCRYPTION_KEY === 'dev-only-data-key-never-use-in-production') list.push('DATA_ENCRYPTION_KEY is the built-in development value: IBANs and documents are not really protected.');
   if (/localhost|127\.0\.0\.1/.test(config.PUBLIC_URL)) list.push(`PUBLIC_URL is ${config.PUBLIC_URL}: emailed links and bank callbacks point at this computer.`);

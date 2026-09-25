@@ -86,6 +86,10 @@ const config = {
 
   // ADMIN_EMAILS is a comma-separated list; the old single ADMIN_EMAIL still works.
   ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL),
+  // Admin accounts must pass a second step (an authenticator app) before any admin action. "required" is the default; "off" exists only for
+  // automated tests and is refused in production. A verified session lasts ADMIN_2FA_SESSION_HOURS, then the code is asked for again.
+  ADMIN_2FA: (env.ADMIN_2FA || 'required').trim().toLowerCase(),
+  ADMIN_2FA_SESSION_HOURS: int(env.ADMIN_2FA_SESSION_HOURS, 12),
 
   // Public social links shown in the footer. An empty one is not shown; a value must be an https address.
   SOCIAL_URLS: Object.fromEntries(
@@ -104,6 +108,7 @@ Object.defineProperty(config, 'LAUNCH_MODE', {
   }
 });
 
+config.ADMIN_2FA_REQUIRED = config.ADMIN_2FA !== 'off';
 config.GOOGLE_ENABLED = Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET);
 config.GOOGLE_CALLBACK_URL = `${config.PUBLIC_URL}/api/auth/google/callback`; // must be listed in Google Cloud Console
 
@@ -123,6 +128,9 @@ if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) probl
 if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
 if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negative');
 if (config.UNPAID_ATTEMPT_DAYS < 1) problems.push('UNPAID_ATTEMPT_DAYS must be at least 1');
+if (!['required', 'off'].includes(config.ADMIN_2FA)) problems.push('ADMIN_2FA must be required (or, on a developer\'s computer only, off)');
+if (config.ADMIN_2FA_SESSION_HOURS < 1 || config.ADMIN_2FA_SESSION_HOURS > 72) problems.push('ADMIN_2FA_SESSION_HOURS must be between 1 and 72');
+if (IS_PROD && config.ADMIN_2FA === 'off') problems.push('ADMIN_2FA=off is not allowed in production: admin accounts must use two-step verification');
 if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
 if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
 if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');

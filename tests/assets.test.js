@@ -25,7 +25,7 @@ function addresses(text) {
 
 describe('addresses carry the version of the file', () => {
   test('on every page, every stylesheet, script, logo, icon, font and share picture has ?v=<hash>, and the hash is the file\'s own', async () => {
-    const pages = fs.readdirSync(PUBLIC).filter((f) => f.endsWith('.html') && !/^(admin|403|404|500)\.html$/.test(f)).map((f) => (f === 'index.html' ? '/' : `/${f}`));
+    const pages = fs.readdirSync(PUBLIC).filter((f) => f.endsWith('.html') && !/^(admin|admin-2fa|403|404|500)\.html$/.test(f)).map((f) => (f === 'index.html' ? '/' : `/${f}`));
     const seen = new Map();
     for (const p of [...pages, '/no-such-page']) {
       const html = (await visitor(p, { headers: { Accept: 'text/html' } })).text;
