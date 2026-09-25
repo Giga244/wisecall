@@ -25,9 +25,13 @@ async function refresh() {
 // Cheap enough to call on every page load: the count is only re-read when it is older than maxAgeMs.
 const ensureFresh = (maxAgeMs = 5000) => (Date.now() - lastCheck > maxAgeMs ? refresh() : Promise.resolve(config.LISTED_MENTORS));
 
-// What to tell whoever runs the site (printed at startup): an explicit "live" with nobody to book is a mistake worth a warning.
+// What to tell whoever runs the site (printed at startup, and by `npm run check:launch`): an explicit "live" with nobody to book is a
+// mistake worth a warning, and so is a site with no public contact address.
 function warnings() {
   const list = [];
+  if (!config.SUPPORT_EMAIL) {
+    list.push('SUPPORT_EMAIL is not set: no contact address appears in the footer, the Terms, the Privacy Policy or the emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@yourdomain.ge before launch (for local testing, support@wisecall.test).');
+  }
   if (config.LAUNCH_MODE_SETTING === 'live' && config.LISTED_MENTORS === 0) {
     list.push('LAUNCH_MODE=live, but no mentor is listed yet: buyers would see an empty Browse page. Use LAUNCH_MODE=prelaunch, or leave it empty so the site opens by itself when the first mentor is listed.');
   }
