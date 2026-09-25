@@ -24,7 +24,7 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   res.json({ user: user ? meProfile(user) : null });
 }));
 
-const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'proofUrl', 'sampleAnswer'];
+const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'theme', 'proofUrl', 'sampleAnswer'];
 const NICHES = rules.nicheKeys();
 const MENTOR_APPLICATION_FIELDS = ['niche', 'roleTitle', 'price', 'proofUrl', 'sampleAnswer'];
 const URL_RE = /^https?:\/\/.+\..+/i;
@@ -32,7 +32,7 @@ const URL_RE = /^https?:\/\/.+\..+/i;
 router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const updates = req.body || {};
   // Every text field must really be text (or null), never an object or array.
-  for (const field of ['name', 'bio', 'roleTitle', 'proofUrl', 'sampleAnswer', 'niche', 'language']) {
+  for (const field of ['name', 'bio', 'roleTitle', 'proofUrl', 'sampleAnswer', 'niche', 'language', 'theme']) {
     const v = updates[field];
     if (v !== undefined && v !== null && typeof v !== 'string') return res.status(400).json({ error: 'invalid_field', field });
   }
@@ -52,6 +52,9 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     } else if (field === 'niche') {
       if (updates.niche !== null && !NICHES.includes(updates.niche)) return res.status(400).json({ error: 'invalid_niche' });
       patch.niche = updates.niche;
+    } else if (field === 'theme') {
+      if (updates.theme !== null && !['system', 'light', 'dark'].includes(updates.theme)) return res.status(400).json({ error: 'invalid_theme' });
+      patch.theme = updates.theme;
     } else if (field === 'language') {
       if (!['en', 'ka'].includes(updates.language)) return res.status(400).json({ error: 'invalid_language' });
       patch.language = updates.language;

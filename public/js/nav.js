@@ -100,6 +100,9 @@
       const data = await WisecallAPI.apiFetch('/me');
       user = data.user;
     } catch (e) { /* not logged in */ }
+    // The theme chosen on the account (on another device, say) wins over what this device remembers; and from now on a choice made
+    // here is saved on the account too.
+    if (window.WisecallTheme) WisecallTheme.adopt(user);
 
     if (user) {
       loggedOut.forEach((el) => { el.style.display = 'none'; });

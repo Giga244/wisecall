@@ -1271,5 +1271,12 @@
   "admin.rv.hideConfirm": "დავმალოთ ეს მიმოხილვა? ის პროფილიდან და საშუალო შეფასებიდან გაქრება. შენი მიზეზი ჩაიწერება.",
   "admin.rv.direction.asker_to_mentor": "მკითხველი → მენტორი",
   "admin.rv.direction.mentor_to_asker": "მენტორი → მკითხველი",
-  "admin.rv.noText": "(წერილობითი მიმოხილვა არ არის)"
+  "admin.rv.noText": "(წერილობითი მიმოხილვა არ არის)",
+  "theme.button": "თემა",
+  "theme.label": "თემა",
+  "theme.system": "სისტემის",
+  "theme.light": "ღია",
+  "theme.dark": "მუქი",
+  "settings.appearance.title": "გარეგნობა",
+  "settings.appearance.body": "აირჩიე, როგორ გამოიყურებოდეს Wisecall. „სისტემის“ თემა შენს მოწყობილობას მიჰყვება და მასთან ერთად იცვლება."
 }

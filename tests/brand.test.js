@@ -78,12 +78,12 @@ describe('the brand files are used as they are', () => {
 describe('every page carries the icons, the manifest and the theme colour', () => {
   const pages = fs.readdirSync(PUB).filter((f) => f.endsWith('.html') && !/^(500|404)\.html$/.test(f));
 
-  test('the same five tags, once each, on every page (added by the server from one file)', async () => {
+  test('the same tags, once each, on every page (added by the server from one file)', async () => {
     assert.ok(pages.length >= 15);
     for (const f of [...pages, '404.html']) {
       const url = f === 'index.html' ? '/' : (f === '404.html' ? '/no-such-page-here' : `/${f}`);
       const html = await (await fetch(base + url, { headers: { Accept: 'text/html' } })).text();
-      for (const tag of ['<link rel="icon" href="/favicon.ico" sizes="48x48">', '<link rel="icon" href="/favicon.svg" type="image/svg+xml">', '<link rel="apple-touch-icon" href="/apple-touch-icon.png">', '<link rel="manifest" href="/site.webmanifest">', '<meta name="theme-color" content="#25213B">']) {
+      for (const tag of ['<link rel="icon" href="/favicon.ico" sizes="48x48">', '<link rel="icon" href="/favicon.svg" type="image/svg+xml">', '<link rel="apple-touch-icon" href="/apple-touch-icon.png">', '<link rel="manifest" href="/site.webmanifest">', '<meta name="theme-color" content="#F4FBF8" media="(prefers-color-scheme: light)">', '<meta name="theme-color" content="#15131F" media="(prefers-color-scheme: dark)">', '<meta name="color-scheme" content="light dark">', '<script src="/js/theme-init.js"></script>']) {
         assert.equal(html.split(tag).length - 1, 1, `${f}: ${tag}`);
       }
       assert.equal((html.match(/rel="icon"/g) || []).length, 2, `${f}: exactly two icon links`);

@@ -46,6 +46,7 @@ function userFromRow(r) {
     linkedinUrl: r.linkedin_url,
     websiteUrl: r.website_url,
     profileVisibility: r.profile_visibility,
+    theme: r.theme,
     photoUpdatedAt: r.photo_updated_at,
     createdAt: r.created_at
   };
@@ -94,7 +95,7 @@ const USER_COLUMNS = {
   emailVerifyCodeExpiresAt: 'email_code_expires_at', resetTokenHash: 'reset_token_hash',
   resetTokenExpiresAt: 'reset_token_expires_at',
   headline: 'headline', currentWork: 'current_work', city: 'city', languages: 'languages', linkedinUrl: 'linkedin_url', websiteUrl: 'website_url',
-  profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at'
+  profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme'
 };
 
 const BOOKING_COLUMNS = {

@@ -57,7 +57,19 @@ window.SettingsAccounts = (function () {
     button.disabled = false;
   }
 
+  // Appearance: System, Light or Dark (kept on this device and on the account, see public/js/theme-init.js).
+  function initAppearance() {
+    const form = $('themeForm');
+    if (!form || !window.WisecallTheme) return;
+    const draw = () => { const r = form.querySelector(`input[value="${WisecallTheme.get()}"]`); if (r) r.checked = true; };
+    form.addEventListener('submit', (ev) => ev.preventDefault());
+    form.addEventListener('change', (ev) => { WisecallTheme.set(ev.target.value); WisecallNav.showToast(t('toast.saved')); });
+    document.addEventListener('wisecall:theme-changed', draw);
+    draw();
+  }
+
   function init() {
+    initAppearance();
     $('googleToggle').addEventListener('click', toggle);
     document.addEventListener('wisecall:lang-changed', draw);
     document.addEventListener('wisecall:password-set', () => { if (data) data.hasPassword = true; draw(); });

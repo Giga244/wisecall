@@ -198,6 +198,18 @@
   </div>
 
   <div class="tab-panel" role="tabpanel" id="panel-account" aria-labelledby="tab-account" data-panel="account" hidden>
+  <div class="settings-card" id="appearanceCard">
+    <h2 data-i18n="settings.appearance.title">Appearance</h2>
+    <p class="muted" data-i18n="settings.appearance.body">Choose how Wisecall looks. “System” follows your device and changes with it.</p>
+    <form id="themeForm" novalidate>
+      <fieldset class="theme-radios">
+        <legend class="sr-only" data-i18n="theme.label">Theme</legend>
+        <label class="check-chip" for="themeSystem"><input type="radio" name="theme" id="themeSystem" value="system"><span data-i18n="theme.system">System</span></label>
+        <label class="check-chip" for="themeLight"><input type="radio" name="theme" id="themeLight" value="light"><span data-i18n="theme.light">Light</span></label>
+        <label class="check-chip" for="themeDark"><input type="radio" name="theme" id="themeDark" value="dark"><span data-i18n="theme.dark">Dark</span></label>
+      </fieldset>
+    </form>
+  </div>
   <div class="settings-card" id="connectedCard" hidden>
     <h2 data-i18n="settings.connected.title">Connected accounts</h2>
     <p class="muted" data-i18n="settings.connected.body">Sign in faster by connecting your Google account. Wisecall only learns your name, email address and picture, and Google learns nothing about your questions.</p>

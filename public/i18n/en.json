@@ -1271,5 +1271,12 @@
   "admin.rv.hideConfirm": "Hide this review? It disappears from the profile and from the average. Your reason is logged.",
   "admin.rv.direction.asker_to_mentor": "Asker → mentor",
   "admin.rv.direction.mentor_to_asker": "Mentor → asker",
-  "admin.rv.noText": "(no written review)"
+  "admin.rv.noText": "(no written review)",
+  "theme.button": "Theme",
+  "theme.label": "Theme",
+  "theme.system": "System",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "settings.appearance.title": "Appearance",
+  "settings.appearance.body": "Choose how Wisecall looks. “System” follows your device and changes with it."
 }
