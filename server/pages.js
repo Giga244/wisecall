@@ -13,10 +13,15 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 const cache = new Map();
 
+// The tags every page needs in its <head> (icons, the web app manifest, the theme colour) live in one file and are added
+// here, so no page can forget them or point at an old icon.
+const HEAD_TAGS = path.join(__dirname, 'headTags.html');
+
 function readPage(file) {
   if (cache.has(file)) return cache.get(file);
   const full = path.join(PUBLIC, file);
-  const html = fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : null;
+  let html = fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : null;
+  if (html !== null) html = html.replace('</head>', () => fs.readFileSync(HEAD_TAGS, 'utf8') + '</head>');
   if (config.IS_PROD) cache.set(file, html);
   return html;
 }

@@ -52,7 +52,7 @@
     const lum = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
       .map((c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)))
       .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0);
-    const ink = '#2b2440';
+    const ink = '#25213b';
     const onWhite = (h) => 1.05 / (lum(h) + 0.05), onInk = (h) => (lum(h) + 0.05) / (lum(ink) + 0.05);
     // A colour that neither white nor dark text can read on (middle brightness) is darkened a little until white can.
     for (let i = 0; i < 12 && Math.max(onWhite(hex), onInk(hex)) < 4.5; i++) {

@@ -8,6 +8,7 @@ const CSP = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
+  "manifest-src 'self'",
   "img-src 'self' data:",
   "connect-src 'self'",
   "form-action 'self'",

@@ -11,7 +11,7 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <a class="logo" href="/index.html" aria-label="Wisecall">Wisecall<span class="dot">.</span></a>
+          <a class="logo" href="/index.html">${window.WisecallBrand ? WisecallBrand.logoHtml({ full: true }) : 'Wisecall'}</a>
           <p data-i18n="footer.tagline">Real advice, from people who've done it.</p>
           <p class="footer-contact" id="footerContact" hidden><a href="" id="footerContactLink"></a></p>
           <ul class="footer-social" id="footerSocial" hidden></ul>

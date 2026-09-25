@@ -56,13 +56,13 @@
   // A soft illustration for the empty list: two speech bubbles and a spark. Decorative only.
   const EMPTY_ART = `
     <svg class="empty-art" viewBox="0 0 220 150" aria-hidden="true">
-      <circle cx="46" cy="118" r="22" fill="#ffe3a3"/>
+      <circle cx="46" cy="118" r="22" fill="#ffe7a3"/>
       <circle cx="188" cy="30" r="14" fill="#bdeedb"/>
       <rect x="18" y="20" width="120" height="70" rx="22" fill="#ff6f59"/>
       <path d="M44 88 Q40 108 26 116 Q56 114 66 90 Z" fill="#ff6f59"/>
       <circle cx="54" cy="55" r="7" fill="#fff"/><circle cx="78" cy="55" r="7" fill="#fff"/><circle cx="102" cy="55" r="7" fill="#fff"/>
-      <rect x="96" y="66" width="106" height="62" rx="20" fill="#fff" stroke="#2b2440" stroke-width="4"/>
-      <path d="M176 126 Q184 142 200 146 Q170 146 160 128 Z" fill="#fff" stroke="#2b2440" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="96" y="66" width="106" height="62" rx="20" fill="#fff" stroke="#25213b" stroke-width="4"/>
+      <path d="M176 126 Q184 142 200 146 Q170 146 160 128 Z" fill="#fff" stroke="#25213b" stroke-width="4" stroke-linejoin="round"/>
       <path d="M122 98l12 12 26-28" fill="none" stroke="#3db88e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
 

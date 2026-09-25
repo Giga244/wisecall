@@ -5,11 +5,13 @@
 @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('/fonts/nunito-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 
 :root {
-  --ink: #2b2440;
+  --ink: #25213b;
   --ink-soft: #5f5880;
   --bg: #eaf6f1;
   --card: #ffffff;
   --accent: #ff6f59;
+  --mint: #ddf3ea;            /* brand mint (soft green fills) */
+  --sun: #ffe7a3;             /* brand sun (soft yellow fills) */
   --accent-dark: #e8543d;
   /* Text-safe versions (AA contrast) of the brand colours: --accent, --accent2, --gold and --red stay for fills and decoration. */
   --accent-strong: #cf4129;   /* buttons and other fills that carry white text */
@@ -40,7 +42,7 @@ body {
   overflow-x: hidden;
 }
 
-h1, h2, h3, .logo { font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 700; }
+h1, h2, h3 { font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 700; }
 .mono, .price, code { font-family: 'Nunito', sans-serif; font-variant-numeric: tabular-nums; }
 
 .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
@@ -59,10 +61,6 @@ h1, h2, h3, .logo { font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 7
 @keyframes pop-in {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
-}
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-4deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
@@ -98,8 +96,12 @@ html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 }
 .nav.nav-hidden { transform: translateY(-100%); }
 .nav-inner { display: flex; align-items: center; gap: 20px; padding: 14px 24px; min-height: 68px; }
-.logo { font-weight: 800; font-size: 1.6rem; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; white-space: nowrap; }
-.logo .dot { color: var(--accent); display: inline-block; animation: wiggle 3.5s ease-in-out infinite; }
+/* The logo is the image from /brand (see public/js/header.js): 36px high, 30px on tablets, 28px on phones. */
+.logo { display: inline-flex; align-items: center; min-height: 44px; line-height: 0; text-decoration: none; white-space: nowrap; }
+.logo img { display: block; height: 36px; width: auto; }
+@media (max-width: 1023px) { .logo img { height: 30px; } }
+@media (max-width: 639px) { .logo img { height: 28px; } }
+@media (max-width: 359px) { .logo-pic[data-mark] img { aspect-ratio: 1 / 1; } } /* the symbol on its own is square */
 .nav-links { display: flex; gap: 24px; flex: 1; white-space: nowrap; }
 .nav-links a { color: var(--ink-soft); text-decoration: none; font-weight: 700; font-size: 0.92rem; transition: color 0.15s; display: inline-flex; align-items: center; min-height: 44px; }
 .nav-links a:hover { color: var(--accent-text); }
@@ -155,7 +157,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 }
 .hero-blob.b1 { width: 280px; height: 280px; background: #ffd9c4; top: -60px; right: -40px; animation-duration: 11s; }
 .hero-blob.b2 { width: 180px; height: 220px; background: #bdeedb; bottom: -30px; right: 220px; border-radius: 45% 55% 60% 40%; animation-duration: 8s; animation-delay: -3s; }
-.hero-blob.b3 { width: 120px; height: 120px; background: #ffe3a3; top: 60px; right: 380px; animation-duration: 7s; animation-delay: -1.5s; }
+.hero-blob.b3 { width: 120px; height: 120px; background: #ffe7a3; top: 60px; right: 380px; animation-duration: 7s; animation-delay: -1.5s; }
 .hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 40px; align-items: center; }
 .hero-text { max-width: 560px; animation: fade-up 0.7s ease both; }
 .hero h1 { font-size: 3.2rem; line-height: 1.08; margin: 0 0 20px; letter-spacing: -0.01em; text-wrap: balance; }
@@ -268,7 +270,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 .footer { padding: 52px 0 calc(28px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: rgba(255, 255, 255, 0.5); }
 .footer p { color: var(--ink-soft); font-size: 0.85rem; margin: 0; font-weight: 600; }
 .footer-top { display: grid; grid-template-columns: 1.5fr repeat(3, 1fr); gap: 32px; }
-.footer-brand .logo { font-size: 1.5rem; display: inline-block; }
+.footer-brand .logo { display: inline-flex; }
 .footer-brand p { margin: 8px 0 0; max-width: 280px; font-size: 0.92rem; }
 .footer .footer-contact { margin-top: 12px; }
 .footer-contact a { color: var(--accent-text); font-weight: 800; text-decoration: none; overflow-wrap: anywhere; }
@@ -541,7 +543,6 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 }
 @media (max-width: 560px) {
   .container { padding: 0 16px; }
-  .logo { font-size: 1.35rem; }
   .auth-page, .expert-page, .dash, .settings { padding-left: 16px; padding-right: 16px; }
 }
 @media (max-width: 720px) {
@@ -622,7 +623,6 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 .empty-rich h3 { margin: 4px 0 0; font-size: 1.5rem; }
 .empty-rich p { margin: 0; color: var(--ink-soft); max-width: 480px; }
 .empty-art { width: 220px; max-width: 70%; height: auto; }
-.logo { white-space: nowrap; }
 /* About, contact, error pages */
 .about-actions, .error-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
@@ -752,7 +752,6 @@ html.sheet-open, html.sheet-open body { overflow: hidden; }
   .auth-page .auth-card { max-width: 560px; }
 }
 /* Tap targets on tablets and phones: the logo, language buttons and small links are at least 44px */
-.logo { display: inline-flex; align-items: center; min-height: 44px; }
 @media (max-width: 1023px), (pointer: coarse) {
   .lang-btn { min-width: 44px; }
   .breadcrumb a { min-height: 44px; }

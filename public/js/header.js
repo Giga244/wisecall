@@ -2,6 +2,17 @@
 // 1024px a menu button that opens a full-height panel (built here, opened by nav.js).
 // Loaded as the first script inside <body>, so it puts the header exactly where the script tag is.
 (function () {
+  // The Wisecall logo, as the brand files in /brand (never redrawn here). Light pages use the navy + coral logo, dark pages the
+  // one made for dark backgrounds. Under 360px wide the light logo becomes just the symbol, so the header never overflows.
+  // (Ratio 446 : 108, so 36px high is 149px wide; the size attributes keep the page from jumping while the logo loads.)
+  window.WisecallBrand = window.WisecallBrand || {
+    logoHtml(opts) {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      if (dark) return '<img class="logo-img" src="/brand/wisecall-logo-on-dark-transparent.svg" alt="Wisecall" width="149" height="36" decoding="async">';
+      if (opts && opts.full) return '<img class="logo-img" src="/brand/wisecall-logo.svg" alt="Wisecall" width="149" height="36" decoding="async">'; // (the footer has room for the whole logo)
+      return '<picture class="logo-pic" data-mark><source media="(max-width: 359px)" srcset="/brand/wisecall-mark.svg"><img class="logo-img" src="/brand/wisecall-logo.svg" alt="Wisecall" width="149" height="36" decoding="async"></picture>';
+    }
+  };
   const here = window.location.pathname;
   const onHome = here === '/' || here === '/index.html';
   const link = (hash) => (onHome ? '' : '/index.html') + hash; // on the home page the links just scroll
@@ -24,7 +35,7 @@
     <a class="skip-link" href="#main" data-i18n="a11y.skip">Skip to content</a>
     <header class="nav" id="siteHeader">
       <div class="container nav-inner">
-        <a href="/index.html" class="logo" aria-label="Wisecall">Wisecall<span class="dot">.</span></a>
+        <a href="/index.html" class="logo">${WisecallBrand.logoHtml()}</a>
         <nav class="nav-links" aria-label="Main">
           ${LINKS.map((l) => `<a href="${link(l.hash)}"${l.extra ? ' class="nl-extra"' : ''} data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
         </nav>
@@ -48,7 +59,7 @@
       <div class="mm-backdrop" data-mm-close></div>
       <div class="mm-panel" role="dialog" aria-modal="true" aria-labelledby="mmTitle" tabindex="-1">
         <div class="mm-head">
-          <span class="logo" id="mmTitle">Wisecall<span class="dot">.</span></span>
+          <span class="logo" id="mmTitle">${WisecallBrand.logoHtml()}</span>
           <button type="button" class="mm-close" data-mm-close aria-label="Close menu" data-i18n-aria="nav.menuClose">${ICON_CLOSE}</button>
         </div>
         <nav class="mm-links" aria-label="Main">

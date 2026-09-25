@@ -216,7 +216,7 @@ window.WisecallRatings = (function () {
   // ---- A mentor's profile: summary and reviews ---------------------------------------------------------------------------
   function summaryHtml(s) {
     const counts = [5, 4, 3, 2, 1].map((n) => s.distribution[n] || 0);
-    const tags = Object.entries(s.tags || {}).sort((a, b) => b[1] - a[1]);
+    const tags = Object.entries(s.tags || {}).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); // (the same order every time)
     return `
       <div class="review-summary">
         <div><strong>${s.avg}</strong><div class="review-stars" aria-hidden="true">${'★'.repeat(Math.round(s.avg))}${'☆'.repeat(5 - Math.round(s.avg))}</div><span class="muted small">${s.count === 1 ? t('rate.reviews.oneRating') : fill(t('rate.reviews.ratings'), { n: s.count })}</span></div>

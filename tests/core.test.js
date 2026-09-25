@@ -342,12 +342,12 @@ describe('SEO, error pages and the contact form', () => {
   test('pages carry a canonical link, share image and the right domain', async () => {
     const html = await (await get('/')).text();
     assert.match(html, /<link rel="canonical" href="http:\/\/localhost:4551\/">/);
-    assert.match(html, /og:image" content="http:\/\/localhost:4551\/og-image\.png"/);
+    assert.match(html, /og:image" content="http:\/\/localhost:4551\/og-image-1200x630\.png"/);
     assert.match(html, /twitter:card" content="summary_large_image"/);
     assert.doesNotMatch(html, /\{\{/, 'no unfilled placeholders');
     const dash = await (await get('/dashboard.html')).text();
     assert.match(dash, /name="robots" content="noindex"/);
-    const png = Buffer.from(await (await get('/og-image.png')).arrayBuffer());
+    const png = Buffer.from(await (await get('/og-image-1200x630.png')).arrayBuffer());
     assert.equal(png.readUInt32BE(16), 1200);
     assert.equal(png.readUInt32BE(20), 630);
   });
@@ -439,7 +439,8 @@ describe('security hardening', () => {
     const fs = require('fs');
     for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html'))) {
       const html = fs.readFileSync(path.join(ROOT, 'public', f), 'utf8');
-      assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)[^>]*>/i, `${f} has an inline script`);
+      // (a JSON-LD block is data for search engines, not a script: the browser never runs it, so the policy does not apply to it)
+      assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)(?![^>]*type="application\/ld\+json")[^>]*>/i, `${f} has an inline script`);
       assert.doesNotMatch(html, /\son(click|change|submit|load|error)=/i, `${f} has an inline event handler`);
     }
   });
@@ -564,7 +565,7 @@ describe('production safety', () => {
         assert.doesNotMatch(text, /localhost|127\.0\.0\.1/, `${p} mentions localhost`);
       }
       assert.match(await (await fetch(`${prod.base}/`)).text(), /rel="canonical" href="https:\/\/wisecall\.example\/"/);
-      assert.match(await (await fetch(`${prod.base}/`)).text(), /og:image" content="https:\/\/wisecall\.example\/og-image\.png"/);
+      assert.match(await (await fetch(`${prod.base}/`)).text(), /og:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png"/);
       assert.match(await (await fetch(`${prod.base}/robots.txt`)).text(), /Sitemap: https:\/\/wisecall\.example\/sitemap\.xml/);
       assert.match(await (await fetch(`${prod.base}/sitemap.xml`)).text(), /<loc>https:\/\/wisecall\.example\/<\/loc>/);
     } finally { prod.proc.kill(); }

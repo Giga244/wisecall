@@ -199,7 +199,7 @@ test('in Georgian too', async () => {
   await expect(askerPage.locator('#askedList .rate-theirs .chip-tag').first()).toHaveText('გასაგები კითხვა');
   await visitorPage.goto(`/u/${mentor.username}`);
   await visitorPage.locator('.lang-btn[data-lang="ka"]').first().click();
-  await expect(visitorPage.locator('#reviewsBody .chip-tag').first()).toContainText('სასარგებლო');
+  await expect(visitorPage.locator('#reviewsBody .review-card .chip-tag').first()).toHaveText('სასარგებლო');
   await expect(visitorPage.locator('#reviewsBody .review-reply strong')).toContainText('პასუხი: Rita Rated');
   await expect(visitorPage.locator('#reviewsBody .rreport-box summary, #reviewsBody .report-login a').first()).toContainText('მიმოხილვა');
 });

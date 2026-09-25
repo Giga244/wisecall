@@ -115,7 +115,6 @@ app.get('/api/config', async (req, res) => {
   });
 });
 
-app.get('/favicon.ico', (req, res) => res.redirect(301, '/favicon.svg'));
 app.use(pages.seoRoutes());
 app.use(pages.pageRoutes());
 // Scripts, styles and the dictionaries change with every release and are not fingerprinted, so they are kept for an
@@ -123,7 +122,9 @@ app.use(pages.pageRoutes());
 app.use(express.static(path.join(__dirname, '..', 'public'), {
   index: false,
   setHeaders(res, file) {
-    if (/\.(woff2|png|svg|ico|jpg|webp)$/i.test(file)) res.set('Cache-Control', 'public, max-age=2592000, immutable');
+    // The logo, the icons and the share picture keep their names when the brand changes, so they are checked once a day.
+    if (/[\\/](brand[\\/][^\\/]+|favicon\.(svg|ico)|apple-touch-icon\.png|icon-[\w-]+\.png|og-image[\w-]*\.png|site\.webmanifest)$/i.test(file)) res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
+    else if (/\.(woff2|png|svg|ico|jpg|webp)$/i.test(file)) res.set('Cache-Control', 'public, max-age=2592000, immutable');
     else if (/\.(css|js|json)$/i.test(file)) res.set('Cache-Control', 'public, max-age=3600, must-revalidate');
   }
 }));

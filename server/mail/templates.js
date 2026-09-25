@@ -7,7 +7,7 @@ const { escapeHtml } = require('../email');
 // Names of the niches in each language, read from the site's own dictionaries.
 const NICHE_NAMES = { en: require('../../public/i18n/en.json'), ka: require('../../public/i18n/ka.json') };
 
-const COLORS = { ink: '#2b2440', soft: '#746e94', bg: '#eaf6f1', card: '#ffffff', accent: '#ff6f59', quote: '#eefaf4' };
+const COLORS = { ink: '#25213b', soft: '#746e94', bg: '#eaf6f1', card: '#ffffff', accent: '#ff6f59', quote: '#eefaf4' };
 
 // Text with {placeholders}; each placeholder is escaped for HTML (or left raw for plain text).
 const fill = (str, data, esc = true) => String(str).replace(/\{(\w+)\}/g, (m, k) => (data[k] === undefined ? m : (esc ? escapeHtml(data[k]) : String(data[k]))));
@@ -361,7 +361,7 @@ function layout(lang, heading, blocks) {
 <body style="margin:0;padding:0;background:${COLORS.bg};font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${COLORS.bg};padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px">
-<tr><td style="padding:0 6px 14px;font-size:26px;font-weight:800;color:${COLORS.ink}">Wisecall<span style="color:${COLORS.accent}">.</span></td></tr>
+<tr><td style="padding:0 6px 14px"><a href="${escapeHtml(config.PUBLIC_URL)}" style="text-decoration:none"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/wisecall-logo-email.png" width="200" height="48" alt="Wisecall" style="display:block;border:0;outline:none;height:auto;max-width:100%;font-size:26px;font-weight:800;color:${COLORS.ink}"></a></td></tr>
 <tr><td style="background:${COLORS.card};border-radius:22px;padding:30px 28px">
 <h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;color:${COLORS.ink}">${escapeHtml(heading)}</h1>
 ${rows}
