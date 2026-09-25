@@ -99,6 +99,26 @@ describe('the admin scripts and texts are for admins only', () => {
     }
   });
 
+  test('other spellings of the same files (encoded letters, dot segments, capitals, backslashes, the page as a raw file) get nothing either', async () => {
+    const http = require('http');
+    const raw = (p, cookie) => new Promise((resolve, reject) => {
+      const port = new URL(base).port;
+      const req = http.request({ host: 'localhost', port, path: p, method: 'GET', headers: cookie ? { cookie } : {} }, (res) => {
+        let body = ''; res.on('data', (d) => { body += d; }); res.on('end', () => resolve({ status: res.statusCode, body }));
+      });
+      req.on('error', reject); req.end();
+    });
+    const paths = ['/js/./admin.js', '/js/x/../admin.js', '/js/%61dmin.js', '/js/%61dmin-mentors.js', '/JS/ADMIN.JS', '/js/Admin-Queue.js', '/js\\admin.js', '/i18n/%61dmin-en.json', '/i18n/./admin-ka.json', '/I18N/ADMIN-EN.JSON',
+      '/%61dmin.html', '/./admin.html', '/x/../admin.html', '/js/../admin.html', '/admin.htm', '/%2e%2e/admin.html', '/js/admin.js%00', '/js/admin.js%2f'];
+    for (const [who, cookie] of [['visitor', ''], ['plain account', plain.cookie()]]) {
+      for (const p of paths) {
+        const r = await raw(p, cookie);
+        assert.ok([400, 403, 404].includes(r.status), `${who} ${p} -> ${r.status}`);
+        assert.doesNotMatch(r.body, /adminLaunchNote|admin\.launch|Prelaunch mode|Mentor applications|LAUNCH_MODE|adminTabs/, `${who} ${p} sent admin content`);
+      }
+    }
+  });
+
   test('an admin gets them', async () => {
     for (const p of ADMIN_SCRIPTS) assert.equal((await admin(p)).status, 200, p);
     const en = JSON.parse((await admin('/i18n/admin-en.json')).text);

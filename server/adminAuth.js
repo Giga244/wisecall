@@ -1,3 +1,4 @@
+const path = require('path');
 const jwt = require('jsonwebtoken');
 const config = require('./config');
 const { asyncHandler } = require('./util');
@@ -28,11 +29,23 @@ const requireAdmin = asyncHandler(async (req, res, next) => {
   next();
 });
 
-// The admin scripts and dictionaries are files, not API calls: they are served to admins only, so their texts (and the settings they
-// mention) are never sent to anybody else.
+// Is this URL one of the admin scripts or dictionaries (/js/admin*.js, /i18n/admin-*.json)? The file server decodes and tidies a path before
+// it opens a file (%61 is "a", "/./" and "\" are separators, and Windows ignores case and trailing dots and spaces), so the check is made
+// on the same tidied path, and on the whole start of the name, never on the raw text of the URL.
+function tidyPath(urlPath) {
+  try { return path.posix.normalize(decodeURIComponent(String(urlPath)).replace(/\\/g, '/')).toLowerCase(); }
+  catch (e) { return null; } // a path that cannot be read
+}
+function isAdminFile(urlPath) {
+  const p = tidyPath(urlPath);
+  return p === null || /^\/(js\/admin|i18n\/admin)/.test(p); // (an unreadable path is not let through)
+}
+
+// Those files are for admins only: their texts (and the settings they mention) are never sent to anybody else.
 const adminOnlyFile = asyncHandler(async (req, res, next) => {
+  if (!isAdminFile(req.path)) return next();
   if ((await whoIsAsking(req)).admin) return next();
   res.status(403).set('Cache-Control', 'no-store').type('text/plain').send('Forbidden');
 });
 
-module.exports = { requireAdmin, isAdminUser, whoIsAsking, adminOnlyFile };
+module.exports = { requireAdmin, isAdminUser, whoIsAsking, adminOnlyFile, isAdminFile, tidyPath };

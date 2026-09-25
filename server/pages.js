@@ -171,6 +171,14 @@ function seoRoutes() {
   return router;
 }
 
+// The HTML files are only ever sent by the routes above (which fill in their placeholders and, for the admin page, check who is asking).
+// A spelling the routes do not recognise but the file server would decode into a page (/%61dmin.html) must not reach the raw file.
+function blockRawHtml(req, res, next) {
+  const p = require('./adminAuth').tidyPath(req.path);
+  if (p === null || /\.html?$/.test(p)) return notFoundHandler(req, res);
+  next();
+}
+
 // Nice-looking 404 / 500 pages for browsers; JSON for API callers.
 function notFoundHandler(req, res) {
   if (req.path.startsWith('/api/') || !req.accepts(['html', 'json'])?.startsWith('html')) {
@@ -194,4 +202,4 @@ function errorPage(req, res) {
   res.status(500).type('html').send(fill(html, baseVars(req.path)));
 }
 
-module.exports = { pageRoutes, seoRoutes, notFoundHandler, errorPage };
+module.exports = { pageRoutes, seoRoutes, blockRawHtml, notFoundHandler, errorPage };
