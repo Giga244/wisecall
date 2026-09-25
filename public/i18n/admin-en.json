@@ -187,5 +187,13 @@
   "admin.dev.changed.payable": "The mentor's earnings are now payable.",
   "admin.dev.changed.revealed": "The ratings were revealed.",
   "admin.dev.nothing": "Nothing else changed yet.",
-  "admin.dev.err": "Fast-forward did not work."
+  "admin.dev.err": "Fast-forward did not work.",
+  "admin.mv.reinstateNote": "Reinstated mentors go back to review. Approve again to list them.",
+  "admin.mv.reinstateReadyNote": "Every verification step is still valid, so you can reinstate and approve in one click.",
+  "admin.mv.reinstateNotReady": "Some verification steps are no longer valid: reinstating puts the mentor back in review until they pass again.",
+  "admin.mv.reinstateApprove": "Reinstate and re-approve (list again now)",
+  "admin.mv.backInReview": "Reinstated: approve again to list",
+  "admin.reapprove": "Re-approve",
+  "admin.mv.reinstated": "Reinstated: the mentor is back in review. Approve again to list them.",
+  "admin.mv.reapproved": "Reinstated and approved again: the mentor is listed."
 }

@@ -93,3 +93,22 @@ test('an admin suspends a mentor: the open question is refunded, the buyer is em
   const ask = await client(S.BASE).api('/experts/' + suspended.id);
   expect(ask.status).toBe(404);
 });
+
+test('the admin reinstates the mentor: the panel says they go back to review, and one click reinstates and approves again', async () => {
+  await adminPage.goto('/admin.html');
+  await adminPage.click('#statusFilters [data-status="suspended"]');
+  const card = adminPage.locator('.mv-card').filter({ hasText: suspended.email });
+  await card.locator('.mv-open').click();
+  await expect(card.locator('.mv-suspend .mv-note')).toContainText('Reinstated mentors go back to review. Approve again to list them.');
+  await expect(card.locator('.mv-suspend .mv-note')).toContainText('Every verification step is still valid');
+  await card.locator('.mv-suspend-reason').fill('The complaints were looked into and found unfounded');
+  await expect(card.locator('.mv-reinstate')).toHaveText('Reinstate (needs approval again)');
+  await card.locator('.mv-reinstate-approve').click();
+  await expect(adminPage.locator('#toast')).toContainText('Reinstated and approved again: the mentor is listed.');
+
+  await expect.poll(async () => (await S.sql('SELECT verification_status FROM users WHERE id = $1', [suspended.id]))[0].verification_status).toBe('verified');
+  await buyerPage.goto('/');
+  await expect(buyerPage.locator('.expert-card').filter({ hasText: 'Risky Mentor' })).toBeVisible();
+  const log = (await S.sql(`SELECT action FROM verification_audit WHERE mentor_id = $1 ORDER BY created_at`, [suspended.id])).map((r) => r.action);
+  expect(log.slice(-3)).toEqual(['suspended', 'reinstated', 'approved']);
+});

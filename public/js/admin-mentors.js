@@ -115,7 +115,8 @@
         ${credentialsBlock(d)}
         <div class="mv-steps">${rows}</div>
         <div class="mv-final">
-          <button class="btn btn-primary mv-approve" ${d.ready && d.mentor.verificationStatus === 'pending' ? '' : 'disabled'}>${t('admin.approve')}</button>
+          ${d.standing && d.standing.backInReview ? `<p class="mv-note" role="note"><strong>${t('admin.mv.reinstateNote')}</strong></p>` : ''}
+          <button class="btn btn-primary mv-approve" ${d.ready && d.mentor.verificationStatus === 'pending' ? '' : 'disabled'}>${t(d.standing && d.standing.wasApproved ? 'admin.reapprove' : 'admin.approve')}</button>
           ${d.ready ? '' : `<span class="muted small">${t('admin.mv.approveBlocked')}</span>`}
           <div class="mv-reject">
             <input type="text" class="mv-reject-reason" maxlength="500" placeholder="${esc(t('admin.rejectReasonPlaceholder'))}" aria-label="${esc(t('admin.rejectReasonPlaceholder'))}">
@@ -124,10 +125,13 @@
         </div>
         <div class="mv-suspend">
           <p class="muted small"><strong>${t('admin.mv.suspendTitle')}</strong></p>
+          ${d.mentor.verificationStatus === 'suspended' ? `
+            <p class="mv-note" role="note"><strong>${t('admin.mv.reinstateNote')}</strong> ${t(d.ready ? 'admin.mv.reinstateReadyNote' : 'admin.mv.reinstateNotReady')}</p>` : ''}
           <div class="mv-decide">
             <input type="text" class="mv-suspend-reason" maxlength="300" placeholder="${esc(t(d.mentor.verificationStatus === 'suspended' ? 'admin.mv.reinstateReason' : 'admin.mv.suspendReason'))}" aria-label="${esc(t(d.mentor.verificationStatus === 'suspended' ? 'admin.mv.reinstateReason' : 'admin.mv.suspendReason'))}">
             ${d.mentor.verificationStatus === 'suspended'
-              ? `<button class="btn btn-outline btn-sm mv-reinstate">${t('admin.mv.reinstate')}</button>`
+              ? `<button class="btn btn-outline btn-sm mv-reinstate">${t('admin.mv.reinstate')}</button>
+                 ${d.ready ? `<button class="btn btn-primary btn-sm mv-reinstate-approve">${t('admin.mv.reinstateApprove')}</button>` : ''}`
               : `<button class="btn btn-ghost btn-sm mv-suspend-btn">${t('admin.mv.suspend')}</button>`}
           </div>
         </div>
@@ -157,6 +161,7 @@
         <div class="review-actions" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
           <span class="badge badge-${m.verificationStatus === 'rejected' ? 'rejected' : (m.verificationStatus === 'verified' ? 'answered' : 'pending_payment')}">${t('settings.verify.' + (m.verificationStatus || 'none'))}</span>
           ${v.total ? `<span class="muted small">${t('admin.mv.progress').replace('{done}', v.done).replace('{total}', v.total)}</span>` : ''}
+          ${v.backInReview ? `<span class="badge badge-pending_payment">${t('admin.mv.backInReview')}</span>` : ''}
           ${v.waiting ? `<span class="badge badge-pending_payment">${t('admin.mv.waiting').replace('{n}', v.waiting)}</span>` : ''}
           ${v.openFlags ? `<span class="badge badge-rejected">${t('admin.mv.flagsOpen').replace('{n}', v.openFlags)}</span>` : ''}
           ${(m.reviewCount >= 3 && m.ratingAvg < 3.5) ? `<span class="form-error" style="margin:0">${t('admin.lowRatingFlag').replace('{avg}', m.ratingAvg)}</span>` : ''}
@@ -213,16 +218,21 @@
         });
         const suspendBtn = body.querySelector('.mv-suspend-btn');
         const reinstateBtn = body.querySelector('.mv-reinstate');
-        const changeStanding = (btn, path, confirmKey) => async () => {
+        const reinstateApproveBtn = body.querySelector('.mv-reinstate-approve');
+        const changeStanding = (btn, path, confirmKey, extra) => async () => {
           const reason = body.querySelector('.mv-suspend-reason').value.trim();
           if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
           if (confirmKey && !window.confirm(t(confirmKey).replace('{name}', el.querySelector('.card-name').textContent))) return;
           btn.disabled = true;
-          try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/${path}`, { method: 'POST', body: { reason } }); WisecallNav.showToast(t('toast.saved')); onChange(); }
-          catch (e) { WisecallNav.showToast(t('toast.error')); btn.disabled = false; }
+          try {
+            const r = await WisecallAPI.apiFetch(`/admin/mentors/${id}/${path}`, { method: 'POST', body: { reason, ...(extra || {}) } });
+            WisecallNav.showToast(t(path === 'reinstate' ? (r.reapproved ? 'admin.mv.reapproved' : 'admin.mv.reinstated') : 'toast.saved'));
+            onChange();
+          } catch (e) { WisecallNav.showToast(t('toast.error')); btn.disabled = false; }
         };
         if (suspendBtn) suspendBtn.addEventListener('click', changeStanding(suspendBtn, 'suspend', 'admin.mv.suspendConfirm'));
         if (reinstateBtn) reinstateBtn.addEventListener('click', changeStanding(reinstateBtn, 'reinstate'));
+        if (reinstateApproveBtn) reinstateApproveBtn.addEventListener('click', changeStanding(reinstateApproveBtn, 'reinstate', null, { reapprove: true }));
         const refresh = body.querySelector('.mv-kyc-refresh');
         if (refresh) refresh.addEventListener('click', async () => {
           refresh.disabled = true;

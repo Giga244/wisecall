@@ -25,11 +25,15 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
   const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
   const mentors = rows.map(userFromRow);
   const ids = mentors.map((m) => m.id);
-  const [stats, stepMap, flagRows] = await Promise.all([
+  const [stats, stepMap, flagRows, standingRows] = await Promise.all([
     mentorStatsFor(ids), verificationSteps.loadStepsFor(ids),
-    query(`SELECT mentor_id, count(*)::int AS n FROM mentor_flags WHERE status = 'open' AND mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`, [ids])
+    query(`SELECT mentor_id, count(*)::int AS n FROM mentor_flags WHERE status = 'open' AND mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`, [ids]),
+    // the last thing that happened to each mentor's standing: "reinstated" (and still pending) means back in review after a suspension
+    query(`SELECT DISTINCT ON (mentor_id) mentor_id, action FROM verification_audit
+            WHERE mentor_id = ANY($1::uuid[]) AND action IN ('suspended', 'reinstated', 'approved', 'rejected', 'delisted') ORDER BY mentor_id, created_at DESC`, [ids])
   ]);
   const openFlags = Object.fromEntries(flagRows.rows.map((r) => [r.mentor_id, r.n]));
+  const lastStanding = Object.fromEntries(standingRows.rows.map((r) => [r.mentor_id, r.action]));
   res.json({
     mentors: mentors.map((m) => {
       const v = verificationSteps.describe(m, stepMap[m.id]);
@@ -41,7 +45,7 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
       const done = v.requirements.filter((r) => (r.type === 'step' ? r.status === 'passed' : r.satisfied)).length;
       return {
         ...meProfile(m), ...stats[m.id],
-        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0 }
+        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated' }
       };
     })
   });

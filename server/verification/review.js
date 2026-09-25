@@ -67,14 +67,14 @@ async function decideStep({ mentorId, step, decision, reason, admin }) {
 }
 
 // Final approval: allowed only when every required step for the niche has passed.
-async function approve({ mentorId, admin }) {
+async function approve({ mentorId, admin, reason }) {
   const mentor = await mentorOrThrow(mentorId);
   if (mentor.verificationStatus !== 'pending') throw new VerificationError('invalid_state');
   const summary = await steps.describeFor(mentor);
   if (!summary.ready) throw new VerificationError('steps_incomplete', { missing: summary.missing });
 
   const updated = await updateUser(mentor.id, { verificationStatus: 'verified', verificationNote: null, verificationDecidedAt: new Date() });
-  await steps.audit(mentor.id, steps.adminActor(admin), 'approved', { from: 'pending', to: 'verified' });
+  await steps.audit(mentor.id, steps.adminActor(admin), 'approved', { from: 'pending', to: 'verified', ...(reason ? { reason } : {}) });
   await credentials.scheduleDeletion(mentor.id, null);
   return updated;
 }
@@ -119,14 +119,21 @@ async function suspend({ mentorId, reason, admin }) {
   return { refunded, total: rows.length };
 }
 
-// Lifts a suspension. The mentor goes back to "pending": they must be approved again.
-async function reinstate({ mentorId, reason, admin }) {
+// Lifts a suspension. The mentor goes back to "pending" on purpose: a suspended mentor may have lost a step (a licence that ran out, a
+// name that no longer matches) while away, so an admin looks again before they are listed. When every required step is still valid the
+// admin can do both in one click (`reapprove`): the mentor is reinstated and approved again in the same request, and both are logged.
+// Returns { mentor, reapproved } (reapproved is false when steps are missing: the mentor stays in review, and `missing` says what).
+async function reinstate({ mentorId, reason, admin, reapprove }) {
   const text = cleanReason(reason);
   const mentor = await mentorOrThrow(mentorId);
   if (mentor.verificationStatus !== 'suspended') throw new VerificationError('invalid_state');
-  const updated = await updateUser(mentor.id, { verificationStatus: 'pending', suspendedAt: null, suspensionReason: null, verificationNote: null });
+  const pending = await updateUser(mentor.id, { verificationStatus: 'pending', suspendedAt: null, suspensionReason: null, verificationNote: null });
   await steps.audit(mentor.id, steps.adminActor(admin), 'reinstated', { from: 'suspended', to: 'pending', reason: text });
-  return updated;
+  if (!reapprove) return { mentor: pending, reapproved: false };
+  const summary = await steps.describeFor(pending);
+  if (!summary.ready) return { mentor: pending, reapproved: false, missing: summary.missing };
+  const approved = await approve({ mentorId: mentor.id, admin, reason: `approved again on reinstatement: ${text}` });
+  return { mentor: approved, reapproved: true };
 }
 
 module.exports = { decideStep, approve, reject, suspend, reinstate, VerificationError };

@@ -74,6 +74,11 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
       : { ...r, options: r.options.map((o) => ({ ...o, ...(detail[o.step] || {}), status: o.status })) })),
     ready: summary.ready,
     missing: summary.missing,
+    // Was this mentor listed before, and did an admin just lift their suspension? (Reinstated mentors go back to review on purpose.)
+    standing: (() => {
+      const last = auditRows.rows.find((a) => ['suspended', 'reinstated', 'approved', 'rejected', 'delisted'].includes(a.action));
+      return { wasApproved: auditRows.rows.some((a) => a.action === 'approved'), backInReview: mentor.verificationStatus === 'pending' && Boolean(last) && last.action === 'reinstated' };
+    })(),
     registries: rules.registriesFor(mentor.niche),
     audit: auditRows.rows.map((a) => ({
       id: a.id, action: a.action, step: a.step, from: a.from_status, to: a.to_status, reason: a.reason, by: a.actor_label, at: a.created_at
@@ -141,7 +146,16 @@ router.post('/mentors/:id/suspend', requireAuth, requireAdmin, asyncHandler(asyn
 }));
 router.post('/mentors/:id/reinstate', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
-  try { await review.reinstate({ mentorId: req.params.id, reason: (req.body || {}).reason, admin: req.adminUser }); res.json({ ok: true }); } catch (e) { fail(res, e); }
+  const { reason, reapprove } = req.body || {};
+  if (reapprove !== undefined && typeof reapprove !== 'boolean') return res.status(400).json({ error: 'invalid_request' });
+  try {
+    const out = await review.reinstate({ mentorId: req.params.id, reason, admin: req.adminUser, reapprove: reapprove === true });
+    if (out.reapproved) { // listed again, like any approval: the mentor is told, and people waiting for their field are told
+      notify.notifyMentorDecision(out.mentor, true, null);
+      require('../waitlist').afterMaybeListed(out.mentor.id);
+    }
+    res.json({ ok: true, reapproved: out.reapproved, ...(out.missing ? { missing: out.missing } : {}) });
+  } catch (e) { fail(res, e); }
 }));
 
 // ---- Review queue: answers held during probation, and reports ---------------------------------------------
