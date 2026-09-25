@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// npm run lighthouse -- [--base http://localhost:4242] [--login email:password] [--pages home,expert,signup,dashboard,settings] [--details]
+// npm run lighthouse -- [--base http://localhost:4242] [--login email:password] [--pages home,expert,signup,dashboard,settings] [--details] [--dark] [--shots folder]
 // Runs Lighthouse (mobile and desktop) on the main pages of a RUNNING site and prints the four scores per page. Pages
 // that need an account (dashboard, settings) are audited signed in as --login. Set CHROME_PATH to use a browser other
 // than the one Chrome finds by itself. The exit code is 1 when any score is below 90.
@@ -8,6 +8,8 @@ const BASE = String(arg('base', 'http://localhost:4242')).replace(/\/+$/, '');
 const LOGIN = arg('login', '');
 const WANT = String(arg('pages', 'home,expert,signup,dashboard,settings')).split(',');
 const DETAILS = arg('details', false) !== false;
+const DARK = arg('dark', false) !== false;
+const SHOTS = arg('shots', '') || ''; // a folder to keep the final screenshot of every audit in (to see what was audited)
 const TARGET = 90;
 const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 
@@ -39,6 +41,17 @@ async function signedInCookie() {
   const cookie = LOGIN ? await signedInCookie() : '';
 
   const chrome = await chromeLauncher.launch({ chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu'], chromePath: process.env.CHROME_PATH });
+  if (DARK) {
+    // --dark audits the dark theme. Chrome cannot be told from the command line that its device prefers dark, so the choice is stored
+    // the way the header's theme menu stores it (Lighthouse then keeps the storage instead of clearing it).
+    const { chromium } = require('@playwright/test');
+    const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
+    const page = await (browser.contexts()[0] || await browser.newContext()).newPage();
+    await page.goto(BASE + '/');
+    await page.evaluate(() => localStorage.setItem('wisecall_theme', 'dark'));
+    await page.close();
+    await browser.close();
+  }
   const rows = [];
   let worst = 100;
   try {
@@ -46,9 +59,10 @@ async function signedInCookie() {
       const path = pages[name];
       if (!path) { console.log(`skipping ${name} (needs ${name === 'expert' ? 'a listed expert' : '--login email:password'})`); continue; }
       for (const form of ['mobile', 'desktop']) {
-        const flags = { port: chrome.port, output: 'json', logLevel: 'error', onlyCategories: CATEGORIES, ...(cookie ? { extraHeaders: { Cookie: cookie } } : {}) };
+        const flags = { port: chrome.port, output: 'json', logLevel: 'error', onlyCategories: CATEGORIES, ...(DARK ? { disableStorageReset: true } : {}), ...(cookie ? { extraHeaders: { Cookie: cookie } } : {}) };
         const result = await lighthouse(BASE + path, flags, form === 'desktop' ? desktop : undefined);
         const lhr = result.lhr;
+        if (SHOTS) require('fs').writeFileSync(require('path').join(SHOTS, `lighthouse-${DARK ? 'dark' : 'light'}-${name}-${form}.jpg`), Buffer.from(String(lhr.audits['final-screenshot'].details.data).replace(/^data:image\/\w+;base64,/, ''), 'base64'));
         const scores = CATEGORIES.map((c) => Math.round((lhr.categories[c].score || 0) * 100));
         const seoFails = lhr.categories.seo.auditRefs.filter((r) => lhr.audits[r.id].score !== null && lhr.audits[r.id].score < 1 && !['informative', 'notApplicable', 'manual'].includes(lhr.audits[r.id].scoreDisplayMode)).map((r) => r.id);
         const seoNa = PRIVATE.has(name) && seoFails.length === 1 && seoFails[0] === 'is-crawlable';

@@ -13,14 +13,15 @@ const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-prac
 
 const describeViolation = (v) => `${v.id} (${v.impact}): ${v.help}\n    ` + v.nodes.slice(0, 3).map((n) => `${n.target.join(' ')}  ${(n.failureSummary || '').split('\n')[1] || ''}`).join('\n    ');
 
-for (const lang of ['en', 'ka']) {
-  test.describe(`accessibility in ${lang === 'en' ? 'English' : 'Georgian'}`, () => {
+// (the dark theme gets the axe audits too: colour contrast is checked against the dark colours)
+for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']]) {
+  test.describe(`accessibility in ${lang === 'en' ? 'English' : 'Georgian'}${scheme === 'dark' ? ' in dark mode' : ''}`, () => {
     let ctxs = [], pages = {}, mentorUsername;
 
     test.beforeAll(async ({ browser }) => {
       mentorUsername = (await S.sql(`SELECT username FROM users WHERE email = 'ana@e2e.test'`))[0].username;
       for (const who of ['visitor', 'seeker', 'mentor', 'admin']) {
-        const ctx = await browser.newContext({ reducedMotion: 'reduce' }); // no animation in flight while axe reads the colours
+        const ctx = await browser.newContext({ reducedMotion: 'reduce', colorScheme: scheme }); // no animation in flight while axe reads the colours
         await ctx.addInitScript((l) => { try { localStorage.setItem('wisecall_lang', l); } catch (e) { /* ignore */ } }, lang);
         pages[who] = await ctx.newPage();
         ctxs.push(ctx);
@@ -55,7 +56,7 @@ for (const lang of ['en', 'ka']) {
     });
 
     test('...and on every admin tab', async () => {
-      for (const tab of ['mentors', 'bookings', 'queue', 'interviews', 'payouts', 'waitlist']) {
+      for (const tab of ['mentors', 'bookings', 'queue', 'reviews', 'interviews', 'payouts', 'waitlist']) {
         await audit('admin', '/admin.html', async (p) => { await p.click(`#adminTabs [data-tab="${tab}"]`); await p.waitForLoadState('networkidle'); });
       }
     });
@@ -67,7 +68,15 @@ for (const lang of ['en', 'ka']) {
       });
     });
 
+    test('dark mode really is on (the audits above are of the dark colours)', async () => {
+      test.skip(scheme !== 'dark');
+      await pages.visitor.goto('/');
+      expect(await pages.visitor.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+      expect(await pages.visitor.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(21, 19, 31)');
+    });
+
     test('keyboard: a skip link, and every control is reachable and shows a focus ring', async () => {
+      test.skip(scheme === 'dark');
       const page = pages.visitor;
       for (const url of ['/', '/signup.html', '/login.html', '/contact.html', `/u/${mentorUsername}`]) {
         await page.goto(url);
@@ -104,6 +113,7 @@ for (const lang of ['en', 'ka']) {
     });
 
     test('errors are announced to screen readers, and the fields are marked invalid', async () => {
+      test.skip(scheme === 'dark');
       const page = pages.visitor;
       // Sign up with nothing typed
       await page.goto('/signup.html');
@@ -136,6 +146,7 @@ for (const lang of ['en', 'ka']) {
       }
     });
     test('every form control has a real <label> (not just a placeholder), on the pages people fill in', async () => {
+      test.skip(scheme === 'dark');
       const check = async (page, url) => {
         await page.goto(url);
         await page.waitForLoadState('networkidle');
