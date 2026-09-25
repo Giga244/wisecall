@@ -9,7 +9,7 @@
   const submitBtn = form.querySelector('button[type="submit"]');
   const submitKey = 'contact.send';
 
-  // The public support address (SUPPORT_EMAIL), shown only when one is configured. Messages from this
+  // The public support address, shown only when one is configured. Messages from this
   // form go to the private admin addresses instead.
   const direct = document.getElementById('contactDirect');
   function drawDirect(cfg) {

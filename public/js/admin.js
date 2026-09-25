@@ -3,7 +3,7 @@
   const user = await WisecallNav.initNav();
   const t = WisecallI18n.t;
 
-  if (!user) {
+  if (!user) { // (the server already sends a signed-out visitor to the login page; this covers a session that ended while the page was open)
     window.location.href = '/login.html?redirect=/admin.html';
     return;
   }
@@ -54,8 +54,6 @@
     } catch (e) {
       if (e.code === 'not_admin') {
         content.innerHTML = `<p class="muted">${t('admin.notAuthorized')}</p>`;
-      } else if (e.code === 'admin_not_configured') {
-        content.innerHTML = `<p class="muted">${e.message2 || t('admin.notConfigured')}</p>`;
       } else {
         content.innerHTML = `<p class="muted">${t('toast.error')}</p>`;
       }

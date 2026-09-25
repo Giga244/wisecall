@@ -504,7 +504,7 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 .expert-wrap, .dash, .settings { min-height: 85vh; }
 .breadcrumb { min-height: 34px; }
 
-/* Before launch (LAUNCH_MODE=prelaunch): a slim note under the header, and the home page's Browse section
+/* Before launch (prelaunch mode): a slim note under the header, and the home page's Browse section
    shows the waiting list instead of the expert search. */
 .launch-banner {
   background: var(--mint-soft); color: var(--mint-banner-ink); border-bottom: 1px solid var(--border);

@@ -255,7 +255,8 @@ describe('launch mode: prelaunch, then live', () => {
 
   test('the pages and the dictionary know about prelaunch (English and Georgian)', () => {
     const pub = (f) => fs.readFileSync(path.join(ROOT, 'public', f), 'utf8');
-    const en = JSON.parse(pub('i18n/en.json')), ka = JSON.parse(pub('i18n/ka.json'));
+    // (the admin panel's texts live in their own dictionaries, which the server only sends to admins)
+    const en = { ...JSON.parse(pub('i18n/en.json')), ...JSON.parse(pub('i18n/admin-en.json')) }, ka = { ...JSON.parse(pub('i18n/ka.json')), ...JSON.parse(pub('i18n/admin-ka.json')) };
     const wanted = new Set(['hero.prelaunch.cta', 'hero.prelaunch.note', 'experts.prelaunch.title', 'experts.prelaunch.panelTitle', 'experts.prelaunch.body', 'wait.prelaunch.title', 'wait.join',
       'cta.prelaunch.title', 'cta.prelaunch.sub', 'launch.banner', 'launch.banner.mentor', 'expert.prelaunch.title', 'expert.prelaunch.body', 'vt.status.verifiedPrelaunch',
       'dash.received.prelaunch.title', 'dash.received.prelaunch.body', 'admin.launch.banner']);

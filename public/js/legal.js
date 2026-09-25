@@ -6,7 +6,7 @@
 
   let supportEmail = null;
 
-  // The public support address (SUPPORT_EMAIL) is added where the text says how to reach us: the last
+  // The public support address is added where the text says how to reach us: the last
   // section of the Terms (Contact) and the first of the Privacy Policy (who is responsible). Nothing is
   // added when no address is configured.
   function contactLine() {

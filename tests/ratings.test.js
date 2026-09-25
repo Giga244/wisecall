@@ -491,7 +491,9 @@ describe('reminder emails after 2 and after 6 days', () => {
     assert.match(toAsker[0].body.html, /Dr Mentor/);
     assert.match(toAsker[0].body.html, /\/dashboard\.html/);
     assert.doesNotMatch(toAsker[0].body.html, /ბოლო შეხსენებაა/, 'the first one is not the last');
-    const toMentor = resend.to('mentor@example.com', 'rate your Wisecall question').filter((m) => /Ada Reminder/.test(m.body.html));
+    const forAda = () => resend.to('mentor@example.com', 'rate your Wisecall question').filter((m) => /Ada Reminder/.test(m.body.html));
+    for (let i = 0; i < 40 && forAda().length < 1; i++) await wait(250); // (the two emails are sent one after the other)
+    const toMentor = forAda();
     assert.equal(toMentor.length, 1);
     assert.match(toMentor[0].body.html, /How was the question from Ada Reminder/);
   });

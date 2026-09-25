@@ -115,6 +115,10 @@ app.get('/api/config', async (req, res) => {
   });
 });
 
+// The admin scripts and their dictionaries are for admins only: everybody else gets a plain 403 for them, so no admin text or
+// setting is ever sent to a visitor or an ordinary account (the admin page itself is checked in server/pages.js).
+app.use(/^\/(?:js\/admin[\w-]*\.js|i18n\/admin-[a-z]{2}\.json)$/, require('./adminAuth').adminOnlyFile);
+
 app.use(pages.seoRoutes());
 app.use(pages.pageRoutes());
 // Scripts, styles and the dictionaries change with every release and are not fingerprinted, so they are kept for an

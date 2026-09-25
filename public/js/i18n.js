@@ -45,9 +45,16 @@
     return navigator.language && navigator.language.toLowerCase().startsWith('ka') ? 'ka' : 'en';
   }
 
+  // A page can name extra dictionaries: <meta name="wisecall-i18n-extra" content="admin"> also loads /i18n/admin-<lang>.json. The admin
+  // texts are kept out of the public dictionaries because the server only sends them to admins.
+  function extraDictionaries() {
+    const meta = document.querySelector('meta[name="wisecall-i18n-extra"]');
+    return meta ? meta.content.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  }
   async function loadDict(lang) {
-    const res = await fetch(`/i18n/${lang}.json`);
-    return res.json();
+    const extra = extraDictionaries().map((name) => fetch(`/i18n/${name}-${lang}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+    const parts = await Promise.all([fetch(`/i18n/${lang}.json`).then((r) => r.json()), ...extra]);
+    return Object.assign({}, ...parts);
   }
 
   function applyDict(dict) {
