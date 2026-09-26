@@ -1,6 +1,9 @@
 node_modules/
+# secrets and local data never go to git (.env.example is the documented template, with no values)
 .env
-data/db.json
+.env.*
+!.env.example
+data/
 
 # end-to-end test output
 e2e/.tmp/
