@@ -104,6 +104,8 @@
     const state = data.v.kycState;
     const returned = new URLSearchParams(window.location.search).get('kyc') === 'returned';
     if (req.status === 'passed') return '';
+    // Before launch the site can run without the ID-check provider: nothing to start yet, and the rest of the application can be filled in.
+    if (!WisecallI18n.idChecksOpen()) return `<p class="vt-soon" role="status"><strong>${t('vt.kyc.soon')}</strong> ${t('vt.kyc.soonBody')}</p>`;
     let note = '';
     let label = 'vt.kyc.start';
     if (req.status === 'failed') { note = `<p class="form-error">${t(state === 'expired' ? 'vt.kyc.expired' : 'vt.kyc.failed')}</p>`; label = 'vt.kyc.retry'; }
@@ -142,6 +144,20 @@
     const showReason = status === 'failed' && req.reason && !SYSTEM_STEPS.includes(req.step) && !(req.step === 'license' && req.expiresAt && new Date(req.expiresAt) < new Date());
     const action = status === 'passed' && !['license', 'work_email', 'portfolio'].includes(req.step) ? '' : actionFor(req, user);
     const open = (status === 'todo' || status === 'failed') && action;
+    // (while ID checks are closed there is nothing to do yet: the note stands on its own, not under "Do this step")
+    const waitingForIdChecks = req.step === 'id_kyc' && status !== 'passed' && !WisecallI18n.idChecksOpen();
+    if (waitingForIdChecks) return `
+      <li class="vt-step vt-${status}" data-step="${req.step}">
+        <span class="vt-icon" aria-hidden="true">${ICON[status]}</span>
+        <div class="vt-main">
+          <div class="vt-head">
+            <h3>${t('verify.step.' + req.step)}</h3>
+            <span class="badge badge-${BADGE[status]}">${t('verify.status.' + status)}</span>
+          </div>
+          <p class="muted small">${t('vt.help.' + req.step)}</p>
+          ${action}
+        </div>
+      </li>`;
     return `
       <li class="vt-step vt-${status}" data-step="${req.step}">
         <span class="vt-icon" aria-hidden="true">${ICON[status]}</span>

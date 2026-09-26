@@ -99,12 +99,30 @@ const config = {
   )
 };
 
+// Which of the two outside services actually work with the keys that are set. Before launch a site can run without them (see LAUNCH_MODE):
+// with no bank nothing can be booked or paid, and with no ID-check provider the ID-check step says "ID checks open soon". The fake providers
+// (mock) exist only outside production.
+config.PAYMENTS_ENABLED = (() => {
+  const p = config.PAYMENT_PROVIDER;
+  if (p === 'mock') return !IS_PROD;
+  if (p === 'bog') return Boolean(config.BOG_CLIENT_ID && config.BOG_CLIENT_SECRET);
+  if (p === 'tbc') return Boolean(config.TBC_API_KEY && config.TBC_CLIENT_ID && config.TBC_CLIENT_SECRET);
+  return false;
+})();
+config.ID_CHECKS_ENABLED = (() => {
+  const p = config.KYC_PROVIDER;
+  if (p === 'mock') return !IS_PROD;
+  if (p === 'didit') return Boolean(config.DIDIT_API_KEY && config.DIDIT_WORKFLOW_ID && config.DIDIT_WEBHOOK_SECRET);
+  return false;
+})();
+
 Object.defineProperty(config, 'LAUNCH_MODE', {
   enumerable: true,
   get() {
     const s = this.LAUNCH_MODE_SETTING;
     if (s === 'prelaunch' || s === 'live') return s;
-    return this.LISTED_MENTORS > 0 ? 'live' : 'prelaunch';
+    // Automatic: live once the first mentor is listed, but never without what LAUNCH_MODE=live requires (a bank and the ID check).
+    return this.PAYMENTS_ENABLED && this.ID_CHECKS_ENABLED && this.LISTED_MENTORS > 0 ? 'live' : 'prelaunch';
   }
 });
 
@@ -141,7 +159,7 @@ if (IS_PROD) {
   const secret = env.SESSION_SECRET || env.JWT_SECRET;
   if (!secret || secret === JWT_DEFAULT || secret.length < 24) problems.push('SESSION_SECRET must be set to 24+ random characters');
   if (!env.DATA_ENCRYPTION_KEY || env.DATA_ENCRYPTION_KEY.length < 32) problems.push('DATA_ENCRYPTION_KEY must be set to 32+ random characters (it encrypts mentors\' IBANs)');
-  if (!env.PUBLIC_URL && !env.APP_URL) problems.push('PUBLIC_URL is required: your site\'s public https:// address (for example https://wisecall.ge)');
+  if (!env.PUBLIC_URL && !env.APP_URL) problems.push('PUBLIC_URL is required: your site\'s public https:// address (for example https://wisecallge.ge)');
   else if (!/^https:\/\//.test(config.PUBLIC_URL)) problems.push('PUBLIC_URL must be your public https:// address');
   else if (/\/\/(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(config.PUBLIC_URL)) problems.push('PUBLIC_URL must be your real public address, not localhost');
   if (!['resend', 'postmark'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend or postmark in production');
@@ -150,24 +168,33 @@ if (IS_PROD) {
   if (!env.EMAIL_FROM) problems.push('EMAIL_FROM is required (an address on a domain you verified with your email provider)');
   if (config.ADMIN_EMAILS.length === 0) problems.push('ADMIN_EMAILS is required (who can approve mentors)');
 
+  // The fake providers are never allowed in production, launched or not.
   if (config.KYC_PROVIDER === 'mock') problems.push('KYC_PROVIDER=mock is a fake ID check for development and is not allowed in production');
-  else if (config.KYC_PROVIDER !== 'didit') problems.push('KYC_PROVIDER is required in production: didit');
-  if (config.KYC_PROVIDER === 'didit') {
-    if (!config.DIDIT_API_KEY) problems.push('DIDIT_API_KEY is required when KYC_PROVIDER=didit');
-    if (!config.DIDIT_WORKFLOW_ID) problems.push('DIDIT_WORKFLOW_ID is required when KYC_PROVIDER=didit');
-    if (!config.DIDIT_WEBHOOK_SECRET) problems.push('DIDIT_WEBHOOK_SECRET is required when KYC_PROVIDER=didit (webhooks are refused without it)');
-  }
-
   if (config.PAYMENT_PROVIDER === 'mock') problems.push('PAYMENT_PROVIDER=mock is a fake bank for development and is not allowed in production');
-  else if (!['bog', 'tbc'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER is required in production: bog or tbc');
-  if (config.PAYMENT_PROVIDER === 'bog') {
-    if (!config.BOG_CLIENT_ID) problems.push('BOG_CLIENT_ID is required when PAYMENT_PROVIDER=bog');
-    if (!config.BOG_CLIENT_SECRET) problems.push('BOG_CLIENT_SECRET is required when PAYMENT_PROVIDER=bog');
-  }
-  if (config.PAYMENT_PROVIDER === 'tbc') {
-    if (!config.TBC_API_KEY) problems.push('TBC_API_KEY is required when PAYMENT_PROVIDER=tbc');
-    if (!config.TBC_CLIENT_ID) problems.push('TBC_CLIENT_ID is required when PAYMENT_PROVIDER=tbc');
-    if (!config.TBC_CLIENT_SECRET) problems.push('TBC_CLIENT_SECRET is required when PAYMENT_PROVIDER=tbc');
+
+  // The real bank and the real ID check are required only to OPEN the site (LAUNCH_MODE=live). Before that (LAUNCH_MODE=prelaunch, or empty:
+  // automatic) the server starts without them: nothing can be booked or paid, the ID-check step says "ID checks open soon", mentors can still
+  // sign up and fill in their application, and visitors can join the waiting list. In automatic mode the site does not open by itself until
+  // a bank is set up (see LAUNCH_MODE above).
+  if (config.LAUNCH_MODE_SETTING === 'live') {
+    const opening = ' (LAUNCH_MODE=live opens the site to payments; use LAUNCH_MODE=prelaunch until the keys are ready)';
+    if (config.KYC_PROVIDER !== 'mock' && config.KYC_PROVIDER !== 'didit') problems.push('KYC_PROVIDER is required in production: didit' + opening);
+    if (config.KYC_PROVIDER === 'didit') {
+      if (!config.DIDIT_API_KEY) problems.push('DIDIT_API_KEY is required when KYC_PROVIDER=didit' + opening);
+      if (!config.DIDIT_WORKFLOW_ID) problems.push('DIDIT_WORKFLOW_ID is required when KYC_PROVIDER=didit' + opening);
+      if (!config.DIDIT_WEBHOOK_SECRET) problems.push('DIDIT_WEBHOOK_SECRET is required when KYC_PROVIDER=didit (webhooks are refused without it)' + opening);
+    }
+
+    if (config.PAYMENT_PROVIDER !== 'mock' && !['bog', 'tbc'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER is required in production: bog or tbc' + opening);
+    if (config.PAYMENT_PROVIDER === 'bog') {
+      if (!config.BOG_CLIENT_ID) problems.push('BOG_CLIENT_ID is required when PAYMENT_PROVIDER=bog' + opening);
+      if (!config.BOG_CLIENT_SECRET) problems.push('BOG_CLIENT_SECRET is required when PAYMENT_PROVIDER=bog' + opening);
+    }
+    if (config.PAYMENT_PROVIDER === 'tbc') {
+      if (!config.TBC_API_KEY) problems.push('TBC_API_KEY is required when PAYMENT_PROVIDER=tbc' + opening);
+      if (!config.TBC_CLIENT_ID) problems.push('TBC_CLIENT_ID is required when PAYMENT_PROVIDER=tbc' + opening);
+      if (!config.TBC_CLIENT_SECRET) problems.push('TBC_CLIENT_SECRET is required when PAYMENT_PROVIDER=tbc' + opening);
+    }
   }
 }
 

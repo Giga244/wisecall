@@ -32,7 +32,7 @@ function settings(config, env) {
   out.push(key.length >= 32 && !PLACEHOLDER.test(key) ? ok(`DATA_ENCRYPTION_KEY is set (${key.length} characters)`) : fail('DATA_ENCRYPTION_KEY is at least 32 characters', key ? `it is ${key.length} characters` : 'it is not set (it encrypts mentors\' IBANs and ID documents; keep a safe copy)'));
 
   const url = env.PUBLIC_URL || env.APP_URL || '';
-  if (!url) out.push(fail('PUBLIC_URL is your https:// address', 'it is not set (for example https://wisecall.ge)'));
+  if (!url) out.push(fail('PUBLIC_URL is your https:// address', 'it is not set (for example https://wisecallge.ge)'));
   else if (!/^https:\/\//i.test(url)) out.push(fail('PUBLIC_URL is your https:// address', `${url} is not https`));
   else if (LOCAL_HOST.test(url)) out.push(fail('PUBLIC_URL is your real address', `${url} points at this computer`));
   else out.push(ok(`PUBLIC_URL is ${config.PUBLIC_URL}`));
@@ -41,7 +41,7 @@ function settings(config, env) {
   out.push(config.ADMIN_2FA_REQUIRED
     ? ok(`Admin accounts need two-step verification (an authenticator app; a verified session lasts ${config.ADMIN_2FA_SESSION_HOURS} hours)`)
     : fail('Admin accounts need two-step verification', 'ADMIN_2FA=off switches it off, which is only for automated tests. Remove it (the default is required)'));
-  if (!config.SUPPORT_EMAIL) out.push(warn('SUPPORT_EMAIL is set', 'it is empty, so no public contact address appears in the footer, Terms, Privacy Policy or emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@yourdomain.ge before launch'));
+  if (!config.SUPPORT_EMAIL) out.push(warn('SUPPORT_EMAIL is set', 'it is empty, so no public contact address appears in the footer, Terms, Privacy Policy or emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@wisecallge.ge before launch'));
   else if (!isEmail(config.SUPPORT_EMAIL)) out.push(fail('SUPPORT_EMAIL is an email address', `"${config.SUPPORT_EMAIL}" is not one`));
   else if (PERSONAL_MAIL.test(config.SUPPORT_EMAIL)) out.push(warn('SUPPORT_EMAIL is a role address on your own domain', `${config.SUPPORT_EMAIL} looks like a personal mailbox, and it is shown to everyone`));
   else out.push(ok(`SUPPORT_EMAIL is ${config.SUPPORT_EMAIL}`));
@@ -66,22 +66,28 @@ function providers(config) {
   const ready = {};
   const missing = (names) => names.filter((n) => !config[n]);
 
+  // Before launch (LAUNCH_MODE=prelaunch, or empty) the site runs without the bank and the ID-check provider: a missing key is a warning, not
+  // a failure. It must be fixed before LAUNCH_MODE=live, where the server refuses to start without them. The fake providers are never fine.
+  const early = config.LAUNCH_MODE_SETTING !== 'live';
+  const problem = early ? warn : fail;
+  const later = (closed) => `${early ? 'Fine while the site is in prelaunch (' + closed + ' stay closed); it must be done before LAUNCH_MODE=live' : 'LAUNCH_MODE=live needs it'}`;
+
   const pay = config.PAYMENT_PROVIDER;
   if (pay === 'mock') out.push(fail('Payments use a real bank', 'PAYMENT_PROVIDER=mock is the fake bank for development'));
   else if (pay === 'bog' || pay === 'tbc') {
     const need = pay === 'bog' ? ['BOG_CLIENT_ID', 'BOG_CLIENT_SECRET'] : ['TBC_API_KEY', 'TBC_CLIENT_ID', 'TBC_CLIENT_SECRET'];
     const gap = missing(need);
     ready.pay = gap.length === 0;
-    out.push(gap.length ? fail(`Payment keys for ${pay.toUpperCase()} are set`, `missing: ${gap.join(', ')}`) : ok(`Payments use ${pay === 'bog' ? 'Bank of Georgia' : 'TBC Bank'}, and its keys are set`));
-  } else out.push(fail('Payments use a real bank', 'PAYMENT_PROVIDER must be bog or tbc'));
+    out.push(gap.length ? problem(`Payment keys for ${pay.toUpperCase()} are set`, `missing: ${gap.join(', ')}. ${later('bookings and payments')}`) : ok(`Payments use ${pay === 'bog' ? 'Bank of Georgia' : 'TBC Bank'}, and its keys are set`));
+  } else out.push(problem('Payments use a real bank', `PAYMENT_PROVIDER is not set (bog or tbc). ${later('bookings and payments')}`));
 
   const kyc = config.KYC_PROVIDER;
   if (kyc === 'mock') out.push(fail('ID checks use Didit', 'KYC_PROVIDER=mock is the fake ID check for development'));
   else if (kyc === 'didit') {
     const gap = missing(['DIDIT_API_KEY', 'DIDIT_WORKFLOW_ID', 'DIDIT_WEBHOOK_SECRET']);
     ready.kyc = gap.length === 0;
-    out.push(gap.length ? fail('Didit keys are set', `missing: ${gap.join(', ')}`) : ok('ID checks use Didit, and its API key, workflow id and webhook secret are set'));
-  } else out.push(fail('ID checks use Didit', 'KYC_PROVIDER must be didit'));
+    out.push(gap.length ? problem('Didit keys are set', `missing: ${gap.join(', ')}. ${later('ID checks (mentors see "ID checks open soon")')}`) : ok('ID checks use Didit, and its API key, workflow id and webhook secret are set'));
+  } else out.push(problem('ID checks use Didit', `KYC_PROVIDER is not set (didit). ${later('ID checks (mentors see "ID checks open soon")')}`));
 
   const mail = config.EMAIL_PROVIDER;
   if (mail === 'log') out.push(fail('Email goes through a real provider', 'EMAIL_PROVIDER=log only writes to a file'));
@@ -155,6 +161,7 @@ function launchModeCheck(config, listed) {
   const s = config.LAUNCH_MODE_SETTING;
   if (s === 'live' && listed === 0) return warn('LAUNCH_MODE is "live" and there is somebody to book', 'no mentor is listed yet, so buyers would see an empty Browse page. Use prelaunch, or leave LAUNCH_MODE empty so the site opens by itself when the first mentor is listed');
   if (s !== 'auto') return null;
+  if (!(config.PAYMENTS_ENABLED && config.ID_CHECKS_ENABLED)) return warn('Launch mode is automatic', `${listed ? listed + ' mentor(s) are listed, but t' : 'T'}he site stays in prelaunch (nobody can book or pay) until the bank keys and the Didit keys are set: it never opens by itself without them`);
   if (listed === null) return ok('Launch mode is automatic', 'the database has no mentors yet, so the site starts in prelaunch and opens by itself when the first mentor is listed');
   return listed === 0
     ? warn('Launch mode is automatic', '0 listed mentors, so the site is in prelaunch (visitors join the waiting list, nobody can pay). It opens by itself when the first mentor is listed')
@@ -176,10 +183,11 @@ async function runChecks(config, env, { deep = false } = {}) {
 
   const payName = config.PAYMENT_PROVIDER === 'tbc' ? 'TBC Bank' : 'Bank of Georgia';
 
-  if (!ready.pay) live.push(skip(`${payName} answers and accepts your keys`, 'fix the payment settings first'));
+  const early = config.LAUNCH_MODE_SETTING !== 'live';
+  if (!ready.pay) live.push(skip(`${payName} answers and accepts your keys`, early ? 'no bank keys yet (fine in prelaunch)' : 'fix the payment settings first'));
   else live.push(await attempt(`${payName} answers and accepts your keys`, () => require(`./pay/${config.PAYMENT_PROVIDER}`).ping()));
 
-  if (!ready.kyc) live.push(skip('Didit answers and accepts your key', 'fix the ID-check settings first'));
+  if (!ready.kyc) live.push(skip('Didit answers and accepts your key', early ? 'no Didit keys yet (fine in prelaunch)' : 'fix the ID-check settings first'));
   else live.push(await attempt('Didit answers and accepts your key', () => require('./kyc/didit').ping({ deep })));
 
   const mailName = config.EMAIL_PROVIDER === 'postmark' ? 'Postmark' : 'Resend';

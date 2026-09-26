@@ -481,14 +481,14 @@ describe('security hardening', () => {
 });
 
 describe('production safety', () => {
-  const blank = { JWT_SECRET: '', SESSION_SECRET: '', APP_URL: '', PUBLIC_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', DATA_ENCRYPTION_KEY: '', KYC_PROVIDER: '', DIDIT_API_KEY: '', DIDIT_WORKFLOW_ID: '', DIDIT_WEBHOOK_SECRET: '' };
+  const blank = { JWT_SECRET: '', SESSION_SECRET: '', APP_URL: '', PUBLIC_URL: '', RESEND_API_KEY: '', EMAIL_FROM: '', ADMIN_EMAILS: '', ADMIN_EMAIL: '', PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', DATA_ENCRYPTION_KEY: '', KYC_PROVIDER: '', DIDIT_API_KEY: '', DIDIT_WORKFLOW_ID: '', DIDIT_WEBHOOK_SECRET: '', LAUNCH_MODE: 'live' }; // (live: the bank and Didit keys are required; prelaunch is tested in prelaunch-production.test.js)
   // The smallest complete production configuration; tests remove or change one thing at a time.
   const goodProd = {
     PATH: process.env.PATH, NODE_ENV: 'production', PORT: '4552', DATABASE_URL: process.env.TEST_DATABASE_URL,
     SESSION_SECRET: 'test-secret-that-is-long-enough-1234567890', PUBLIC_URL: 'https://wisecall.example', RESEND_API_KEY: 're_fake',
     EMAIL_FROM: 'Wisecall <hi@wisecall.example>', ADMIN_EMAILS: 'boss@wisecall.example', PAYMENT_PROVIDER: 'bog',
     BOG_CLIENT_ID: 'id', BOG_CLIENT_SECRET: 'secret', DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345',
-    JWT_SECRET: '', APP_URL: '',
+    JWT_SECRET: '', APP_URL: '', LAUNCH_MODE: 'live',
     KYC_PROVIDER: 'didit', DIDIT_API_KEY: 'key_for_test', DIDIT_WORKFLOW_ID: 'workflow_for_test', DIDIT_WEBHOOK_SECRET: 'whsec_for_test'
   };
   const start = (env) => spawnSync('node', ['server/index.js'], { cwd: ROOT, encoding: 'utf8', timeout: 8000, env });

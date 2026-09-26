@@ -27,6 +27,8 @@
   const launchMode = () => loadedConfig.launchMode;
   // True only on a developer's computer (the server does not send the setting at all in production).
   const devMode = () => Boolean(loadedConfig.devMode);
+  // False while the site runs without its ID-check provider (before launch): the ID-check step then says "ID checks open soon".
+  const idChecksOpen = () => loadedConfig.idChecksOpen !== false;
 
   // Texts may contain {answerDays}, {feePct}, {sharePct}, {priceMin} and {priceMax}; they are filled in
   // from the server's settings so the page never disagrees with what the server really does.
@@ -115,5 +117,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, ready };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready };
 })();

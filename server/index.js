@@ -103,6 +103,8 @@ app.get('/api/config', async (req, res) => {
     currency: config.CURRENCY,
     // "prelaunch": buyers cannot pay yet and the pages show the waiting list; "live": normal.
     launchMode: config.LAUNCH_MODE,
+    // Whether mentors can do the ID check yet (before launch the site can run without the ID-check provider's keys).
+    idChecksOpen: config.ID_CHECKS_ENABLED,
     // Whether the "Continue with Google" button is shown (both Google keys are set).
     googleEnabled: config.GOOGLE_ENABLED,
     priceMin: config.PRICE_MIN,
@@ -154,12 +156,16 @@ async function start() {
   await launch.refresh();
   const server = app.listen(config.PORT, () => {
     console.log(`Wisecall running at http://localhost:${config.PORT}`);
-    console.log(config.PAYMENT_PROVIDER === 'mock'
-      ? 'Payments: MOCK bank (development only). Set PAYMENT_PROVIDER=bog or tbc with your bank keys for real payments.'
-      : `Payments: ${config.PAYMENT_PROVIDER.toUpperCase()} (callback URL ${config.PUBLIC_URL}/api/payments/callback)`);
-    console.log(config.KYC_PROVIDER === 'mock'
-      ? 'ID check: MOCK (development only).'
-      : `ID check: ${config.KYC_PROVIDER.toUpperCase()} (webhook URL ${config.PUBLIC_URL}/api/kyc/webhook)`);
+    console.log(!config.PAYMENTS_ENABLED
+      ? 'Payments: OFF (no bank keys yet): nothing can be booked or paid. Set PAYMENT_PROVIDER=bog or tbc with your bank keys, then LAUNCH_MODE=live.'
+      : config.PAYMENT_PROVIDER === 'mock'
+        ? 'Payments: MOCK bank (development only). Set PAYMENT_PROVIDER=bog or tbc with your bank keys for real payments.'
+        : `Payments: ${config.PAYMENT_PROVIDER.toUpperCase()} (callback URL ${config.PUBLIC_URL}/api/payments/callback)`);
+    console.log(!config.ID_CHECKS_ENABLED
+      ? 'ID check: OFF (no Didit keys yet): mentors see "ID checks open soon". Set KYC_PROVIDER=didit with your Didit keys.'
+      : config.KYC_PROVIDER === 'mock'
+        ? 'ID check: MOCK (development only).'
+        : `ID check: ${config.KYC_PROVIDER.toUpperCase()} (webhook URL ${config.PUBLIC_URL}/api/kyc/webhook)`);
     const how = config.LAUNCH_MODE_SETTING === 'auto' ? `automatic: ${config.LISTED_MENTORS} listed mentor(s)` : 'set by LAUNCH_MODE';
     console.log(config.LAUNCH_MODE === 'prelaunch'
       ? `Launch mode: PRELAUNCH (${how}). Nobody can pay yet; visitors join the waiting list and mentors can apply and be verified. It opens when the first mentor is listed, or set LAUNCH_MODE=live.`

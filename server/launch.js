@@ -32,6 +32,12 @@ function warnings() {
   if (!config.SUPPORT_EMAIL) {
     list.push('SUPPORT_EMAIL is not set: no contact address appears in the footer, the Terms, the Privacy Policy or the emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@yourdomain.ge before launch (for local testing, support@wisecall.test).');
   }
+  // Before launch the site can run without the bank and the ID-check provider: say plainly what is closed, and why it does not open by itself.
+  if (!config.PAYMENTS_ENABLED) list.push('PAYMENTS ARE OFF (no bank keys): bookings and payments are closed and the site stays in prelaunch. Set PAYMENT_PROVIDER (bog or tbc) and the bank keys, then LAUNCH_MODE=live (or empty), before you open it.');
+  if (!config.ID_CHECKS_ENABLED) list.push('ID CHECKS ARE OFF (no Didit keys): mentors see "ID checks open soon" and cannot pass the ID step yet. Set KYC_PROVIDER=didit and the Didit keys before you approve mentors.');
+  if (config.LAUNCH_MODE_SETTING === 'auto' && config.LISTED_MENTORS > 0 && !(config.PAYMENTS_ENABLED && config.ID_CHECKS_ENABLED)) {
+    list.push(`${config.LISTED_MENTORS} mentor(s) are listed, but the site stays in prelaunch (nobody can book or pay): it opens by itself only once the bank keys and the Didit keys are set.`);
+  }
   if (config.LAUNCH_MODE_SETTING === 'live' && config.LISTED_MENTORS === 0) {
     list.push('LAUNCH_MODE=live, but no mentor is listed yet: buyers would see an empty Browse page. Use LAUNCH_MODE=prelaunch, or leave it empty so the site opens by itself when the first mentor is listed.');
   }

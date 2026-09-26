@@ -83,7 +83,8 @@ async function applyResult(providerName, result) {
 
 // The provider's webhook arrives here (already raw bytes).
 async function handleWebhook({ rawBody, headers }) {
-  const provider = kyc.current();
+  let provider;
+  try { provider = kyc.current(); } catch (e) { throw new steps.VerificationError('invalid_webhook', { detail: 'ID checks are not set up on this site' }); } // (before launch there is no provider: nothing here is genuine)
   let result;
   try { result = provider.handleWebhook({ rawBody, headers }); }
   catch (e) { throw new steps.VerificationError('invalid_webhook', { detail: e.message }); }

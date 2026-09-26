@@ -201,6 +201,42 @@ describe('providers that are configured but not answering correctly', () => {
   });
 });
 
+describe('going online in prelaunch, before the bank and Didit keys exist', () => {
+  const noKeys = { PAYMENT_PROVIDER: '', BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', KYC_PROVIDER: '', DIDIT_API_KEY: '', DIDIT_WORKFLOW_ID: '', DIDIT_WEBHOOK_SECRET: '' };
+
+  test('prelaunch: the missing keys are ⚠️ warnings, not ❌ failures, and the check passes', async () => {
+    const r = await check({ LAUNCH_MODE: 'prelaunch', ...noKeys });
+    assert.equal(r.code, 0, r.out);
+    assert.match(line(r.out, 'Payments use a real bank'), /^ {2}⚠️ .*PAYMENT_PROVIDER is not set.*Fine while the site is in prelaunch.*before LAUNCH_MODE=live/);
+    assert.match(line(r.out, 'ID checks use Didit'), /^ {2}⚠️ .*KYC_PROVIDER is not set.*ID checks open soon/);
+    assert.match(line(r.out, 'answers and accepts your keys'), /^ {2}➖ .*no bank keys yet \(fine in prelaunch\)/);
+    assert.match(line(r.out, 'Didit answers'), /^ {2}➖ .*no Didit keys yet \(fine in prelaunch\)/);
+    assert.doesNotMatch(r.out, /❌/);
+    assert.match(r.out, /READY, with \d+ warnings/);
+  });
+
+  test('prelaunch with only some of the keys: still warnings', async () => {
+    const r = await check({ LAUNCH_MODE: 'prelaunch', BOG_CLIENT_SECRET: '', DIDIT_WEBHOOK_SECRET: '' });
+    assert.equal(r.code, 0, r.out);
+    assert.match(line(r.out, 'Payment keys for BOG are set'), /^ {2}⚠️ .*missing: BOG_CLIENT_SECRET/);
+    assert.match(line(r.out, 'Didit keys are set'), /^ {2}⚠️ .*missing: DIDIT_WEBHOOK_SECRET/);
+  });
+
+  test('live: the same missing keys are ❌ and block the launch', async () => {
+    const r = await check({ LAUNCH_MODE: 'live', ...noKeys });
+    assert.equal(r.code, 1, r.out);
+    assert.match(line(r.out, 'Payments use a real bank'), /^ {2}❌ .*LAUNCH_MODE=live needs it/);
+    assert.match(line(r.out, 'ID checks use Didit'), /^ {2}❌ /);
+    assert.match(r.out, /NOT READY/);
+  });
+
+  test('the fake bank is a ❌ even in prelaunch', async () => {
+    const r = await check({ LAUNCH_MODE: 'prelaunch', PAYMENT_PROVIDER: 'mock' });
+    assert.equal(r.code, 1, r.out);
+    assert.match(line(r.out, 'Payments use a real bank'), /^ {2}❌ .*fake bank/);
+  });
+});
+
 describe('admin two-step verification', () => {
   test('is checked (a ✅ with how long a verified session lasts), and switching it off is a ❌ that blocks the launch', async () => {
     const ok = await check();

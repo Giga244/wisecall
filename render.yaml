@@ -1,6 +1,12 @@
 # Optional Render Blueprint: New -> Blueprint, then pick this repository.
 # Secrets (marked sync: false) are asked for in the Render dashboard, never stored here.
 # Check the plan names against Render's current plans before applying.
+#
+# This starts the site in PRELAUNCH: it runs without any bank or ID-check (Didit) keys. Mentors can sign up and apply, visitors can
+# join the waiting list, nobody can book or pay, and the ID-check step says "ID checks open soon". On launch day add, under
+# Environment: PAYMENT_PROVIDER (bog or tbc) with its keys (BOG_CLIENT_ID + BOG_CLIENT_SECRET, or TBC_API_KEY + TBC_CLIENT_ID +
+# TBC_CLIENT_SECRET), KYC_PROVIDER=didit with DIDIT_API_KEY, DIDIT_WORKFLOW_ID and DIDIT_WEBHOOK_SECRET, then change LAUNCH_MODE to
+# live. With LAUNCH_MODE=live the server refuses to start without them (DEPLOY.md, "Going online first").
 databases:
   - name: wisecall-db
     databaseName: wisecall
@@ -20,6 +26,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: LAUNCH_MODE
+        value: prelaunch
       - key: DATABASE_URL
         fromDatabase:
           name: wisecall-db
@@ -29,8 +37,9 @@ services:
       # Generated once here; copy it from the Render dashboard into your password manager.
       - key: DATA_ENCRYPTION_KEY
         generateValue: true
+      # Your domain. Until its DNS points at Render, you can use the https://....onrender.com address instead.
       - key: PUBLIC_URL
-        sync: false
+        value: https://wisecallge.ge
       - key: PLATFORM_FEE_PERCENT
         value: "20"
       - key: ANSWER_DEADLINE_DAYS
@@ -39,31 +48,11 @@ services:
         value: "7"
       - key: ADMIN_EMAILS
         sync: false
-      - key: PAYMENT_PROVIDER
-        sync: false        # bog or tbc
-      - key: BOG_CLIENT_ID
-        sync: false
-      - key: BOG_CLIENT_SECRET
-        sync: false
-      - key: TBC_API_KEY
-        sync: false
-      - key: TBC_CLIENT_ID
-        sync: false
-      - key: TBC_CLIENT_SECRET
-        sync: false
-      - key: KYC_PROVIDER
-        value: didit
-      - key: DIDIT_API_KEY
-        sync: false
-      - key: DIDIT_WORKFLOW_ID
-        sync: false
-      - key: DIDIT_WEBHOOK_SECRET
-        sync: false
       - key: EMAIL_PROVIDER
         value: resend
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
-        sync: false
+        value: Wisecall <hello@wisecallge.ge>
       - key: SUPPORT_EMAIL
-        sync: false
+        value: support@wisecallge.ge

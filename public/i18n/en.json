@@ -1117,5 +1117,7 @@
   "expert.question.enough": "Long enough.",
   "dash.unfinished.show": "Show unfinished payments ({n})",
   "dash.unfinished.hide": "Hide unfinished payments ({n})",
-  "dash.unfinished.note": "These payments were cancelled, failed or never finished. Nothing was charged. They are deleted after {unpaidDays} days."
+  "dash.unfinished.note": "These payments were cancelled, failed or never finished. Nothing was charged. They are deleted after {unpaidDays} days.",
+  "vt.kyc.soon": "ID checks open soon.",
+  "vt.kyc.soonBody": "You can fill in the rest of your application now. The ID check will appear here as soon as it opens."
 }

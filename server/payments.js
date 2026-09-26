@@ -114,7 +114,8 @@ async function syncBooking(bookingId) {
 // The bank called our callback URL. Authenticity is checked by the provider (a signature for BOG);
 // either way the payment status is then read from the bank's API, never from the callback body.
 async function handleCallback({ rawBody, headers }) {
-  const provider = pay.current();
+  let provider;
+  try { provider = pay.current(); } catch (e) { throw new PaymentError('invalid_callback', 'payments are not set up on this site'); } // (before launch there is no bank: nothing here is genuine)
   let orderId;
   try { ({ orderId } = provider.verifyCallback({ rawBody, headers })); } // throws if not genuine
   catch (e) { throw new PaymentError('invalid_callback', e.message); }
