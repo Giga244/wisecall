@@ -137,7 +137,7 @@
   "settings.profile.save": "Save profile",
   "settings.mentor.title": "Mentor profile",
   "settings.mentor.enable": "I'd like to offer advice as a mentor",
-  "settings.mentor.hint": "Your profile appears in Browse experts once you've set a title, niche, and price below, and our team has reviewed it.",
+  "settings.mentor.hint": "Your profile appears in Browse experts once your application is approved and you have set a price and your payout details.",
   "settings.mentor.proofUrl": "Proof of expertise — a LinkedIn link is strongly preferred",
   "settings.mentor.proofUrl.hint": "Required. We check this before your profile goes public — it's how we confirm you're actually worth paying for advice.",
   "settings.mentor.proofUrl.invalid": "That doesn't look like a valid link (needs to start with http:// or https://).",
@@ -189,7 +189,7 @@
   "auth.consent.and": " and ",
   "auth.consent.privacy": "Privacy Policy",
   "auth.consent.after": ".",
-  "legal.updated": "Last updated: 25 September 2026",
+  "legal.updated": "Last updated: 27 September 2026",
   "legal.back": "Back to home",
   "legal.terms.title": "Terms of Service",
   "legal.terms.intro": "These terms are the agreement between you and Wisecall. Please read them before you use the site. If you do not agree, please do not use it.",
@@ -235,11 +235,11 @@
     {
       "h": "6. Mentor responsibilities",
       "p": [
-        "If you apply to be a mentor, you promise that everything you tell us about yourself is true, including your job title, experience, qualifications, and the proof link you provide. Pretending to be someone you are not, or claiming credentials you do not have, leads to removal and may lead to legal action.",
+        "If you apply to be a mentor, you promise that everything you tell us about yourself is true, including your job title, experience, qualifications, the story of your experience, and the evidence you provide. Pretending to be someone you are not, claiming credentials you do not have, or using someone else’s work as your evidence leads to removal and may lead to legal action.",
         "Mentors must: answer honestly and in good faith; answer within the deadline; stay within their real area of expertise; not present an answer as a diagnosis, legal opinion, or financial recommendation for a specific person; keep what seekers tell them confidential; and follow the laws that apply to them, including any licensing rules in their profession.",
         "Mentors must not ask seekers to pay outside Wisecall, must not share a seeker’s question publicly without permission, and must not send spam or promote unrelated services.",
         "Mentors are responsible for their own taxes on the money they earn. To be paid, a mentor must give Wisecall their full name and a valid Georgian IBAN in Settings. Until then their profile stays hidden and they cannot receive questions.",
-        "We may approve or reject mentor applications and remove a mentor at any time, for example if they get poor reviews, break these terms, or we cannot verify them.",
+        "We review mentor applications partly automatically, as the Privacy Policy explains. We may approve or reject an application and remove a mentor at any time, for example if they get poor reviews, break these terms, or we cannot verify them. Every rejection is made by a person on our team, who tells you why; you can change your application and apply again.",
         "How mentor payouts work: for each answered question, the mentor earns the price minus the Wisecall platform fee. This becomes payable 7 days after the answer, which is the period in which a buyer can ask for a refund. Wisecall then pays it by bank transfer to the IBAN the mentor gave, in periodic manual transfers. If a buyer is refunded after the mentor has already been paid, the refunded amount is deducted from the mentor’s next payout."
       ]
     },
@@ -321,7 +321,7 @@
         "Account data: your name, email address, and a password (stored only as a one-way hash, never in readable form), plus your language choice.",
         "Profile data: your username, photo, headline, current work or study, city, languages, short bio, and optional LinkedIn and website links. You choose who can see them: everyone, or only people you have had a question with (the profile of a mentor who is listed on Wisecall is always public). Photos are resized and stripped of hidden data such as the place they were taken. Your email address, bank details and verification documents are never shown on a profile.",
         "Sign in with Google: if you choose “Continue with Google”, Google tells us your name, your email address, whether Google has verified that address, your picture, and an identifier of your Google account. We do not receive your Google password, and we get no access to your Google data beyond these basics. You can disconnect Google in Settings once you have set a password.",
-        "Mentor data: if you apply to be a mentor, your job title, field, bio, price, the proof link you give us (for example a LinkedIn profile), and your sample answer. Your title, field, bio, and price become public once you are approved. Your proof link, sample answer, and email are never public.",
+        "Mentor data: if you apply to be a mentor, your job title, field (niche), specialty tags, years of experience, the story of how you learned your field, a sample answer, your price, and the evidence you add (links to your work, a Georgian company registration code, an uploaded diploma or certificate, and optionally a confirmed work email). Your title, field, bio and price become public once you are approved. Your story, sample answer, evidence and email are never public.",
         "Questions and answers: the questions you send, the answers you receive, and reviews you write.",
         "Payment data: your card details are entered on our payment bank’s secure page and processed by the bank. We receive only the payment status, amount and the bank’s reference numbers. We never see or store your full card number. Mentors give us their full name and IBAN so we can pay them; the IBAN is stored encrypted and is visible only to the mentor and to Wisecall administrators who make the payouts.",
         "Technical data: your IP address and basic request information appear in server logs and are used to prevent abuse (for example, limiting repeated login attempts).",
@@ -331,76 +331,88 @@
     {
       "h": "3. Mentor verification",
       "p": [
-        "Every mentor is checked before they appear on Wisecall. This section explains what that involves and applies only to people who apply to be mentors.",
-        "ID and selfie check: we use an identity verification provider, Didit (didit.me), to check a government ID document and a live selfie. You send your ID photos and selfie directly to the provider. Wisecall does not receive or store them. We receive and keep only the provider’s verification ID, the result (approved, declined or in review), your verified full name, date of birth and country, and the time of the check. Your verified name and date of birth are stored encrypted. The provider handles your data under its own privacy policy and its agreement with us.",
-        "Names: we compare the name on your ID with your profile name, the name on your license or registry entry, and the name of your payout account holder. If they do not match, a member of our team looks at it before anything is approved.",
-        "Professional proof: depending on your field we ask for your license or registration number, who issued it and when it expires; a supporting document (a PDF or JPG such as a scan of your license, diploma or proof of your role); a company identification number; a work email address (we send a confirmation code to it); and a link to your portfolio. Your license number and uploaded documents are stored encrypted and are visible only to the Wisecall administrators who review applications. Uploaded documents are deleted 90 days after we make a decision.",
-        "Video interview: in regulated fields (such as medicine, law and finance) we hold a short video call with you. We keep the time of the call, the result and our reviewers’ notes.",
-        "Records: every decision is written to an audit log with who made it, when and why. Your public profile shows only badges for the checks you passed (for example “ID verified”) and the date of the check. It never shows your ID, date of birth, license number or documents.",
+        "Every mentor is checked before they appear on Wisecall. This section explains what that involves and applies only to people who apply to be mentors. An application has three steps: identity, experience, and a review.",
+        "ID and selfie check: we use an identity verification provider, Didit (didit.me), to check a government ID document and a live selfie. You send your ID photos and selfie directly to the provider. Wisecall does not receive or store them. We receive and keep only the provider’s verification ID, the result (approved, declined or in review), your verified full name, date of birth and country, and the time of the check. Your verified name and date of birth are stored encrypted. From the date of birth the application uses only one fact: whether you are 18 or older. The provider handles your data under its own privacy policy and its agreement with us.",
+        "Names: we compare the name on your ID with your profile name and, in regulated fields, the name on your license. If they do not match, you can correct your profile name or a member of our team looks at it; it is never an automatic rejection. The name of your payout account holder is compared too, but only before we pay you: a different name holds the payout until our team has checked it.",
+        "Experience and evidence: you describe your experience and add at least one piece of evidence of any kind (a portfolio, your website, a social media page, publications, your company, a diploma, a product you made, testimonials). You do not need an employer. In regulated fields (such as medicine, law and finance) we also ask for your license or registration number and who issued it, and where there is no public register we can check, a copy of your license, certificate or diploma. License numbers and uploaded documents are stored encrypted and are visible only to the Wisecall administrators who review applications.",
+        "Video interview: only if our team asks for one before deciding. We keep the time of the call, the result and our reviewers’ notes.",
+        "Records: every decision is written to an audit log with who made it, when and why. Your public profile shows only badges for the checks you passed (for example “ID verified” and “Experience reviewed”) and the date of the check. It never shows your ID, date of birth, license number, evidence or documents.",
         "Ongoing checks: after approval we keep watching quality. Your first answers may be reviewed before they reach the buyer, reports from buyers and low ratings are reviewed by our team, and license expiry dates are tracked. We may suspend a profile if a check fails or a serious problem is reported.",
-        "How long we keep it: uploaded documents are deleted 90 days after a decision. The result of your ID check, your verified name, date of birth and country, and your license details are kept while your mentor account exists, and afterwards for as long as the law requires."
-      ]
+        "How long we keep it: uploaded documents are deleted 90 days after a decision. The result of your ID check, your verified name, date of birth and country, your license details, your application and the results of its review are kept while your mentor account exists, and afterwards for as long as the law requires."
+      ],
+      "id": "mentor-verification"
     },
     {
-      "h": "4. Cookies and browser storage",
+      "id": "automated-review",
+      "h": "4. Automated review of mentor applications",
       "p": [
-        "We use one essential cookie to keep you logged in. It is not used for advertising or tracking. We also store your language choice in your browser. We do not use advertising or analytics cookies."
+        "When you submit a mentor application, part of the review is automatic. It helps our team decide faster and more consistently. It never rejects anyone: a person on our team makes every rejection, and every decision in a regulated field.",
+        "Link checks: our server opens the links you gave as evidence, reads the page title and description, and checks whether the page shows your name or brand. For websites it may also look up, in public domain registration records, how old the website is.",
+        "AI-assisted review: we send part of your application to an AI model, Claude, provided by Anthropic, PBC (United States), which scores it and writes a short summary for our team. We send only your title, field, specialty tags, years of experience, story, sample answer, and what the link checks saw (the kind of evidence, the website’s domain, the page title and description). We never send your ID data, date of birth, email address, phone number, bank details, license number or documents, and we remove email addresses, phone numbers and bank account numbers from your text before sending it. Anthropic processes this data for us under its commercial terms and does not use it to train its models.",
+        "Account signals: to detect fake or duplicate applications we compare, across accounts, a keyed hash of your network address and of a random identifier stored in your browser, and we look for copied stories, copied sample answers and the same evidence links. The hashes cannot be turned back into an address and are deleted after 180 days.",
+        "The decision: automatic approval is possible only when every one of our published rules is met (among them: not a regulated field, ID check passed, names match, all review scores high, at least one piece of evidence checked automatically, and a low risk level), and only if we have switched it on. Everything else is decided by a person, who sees the automatic results. You can ask for any decision to be looked at again by a person, and you can change your application and submit it again."
       ]
     },
     {
-      "h": "5. Why we use your data",
+      "h": "5. Cookies and browser storage",
+      "p": [
+        "We use two essential cookies: one keeps you logged in, and one holds a random identifier for your browser that we use only to detect fake or duplicate accounts (it is kept for up to a year). They are not used for advertising or tracking. We also store your language choice in your browser. We do not use advertising or analytics cookies."
+      ]
+    },
+    {
+      "h": "6. Why we use your data",
       "p": [
         "To create and secure your account, and to send the emails you need: verification codes, password resets, and notifications about your questions and answers.",
         "To run the marketplace: show mentor profiles, deliver questions and answers, take payments, pay mentors, and issue refunds.",
-        "To review mentor applications and keep the platform safe from fraud and misuse.",
+        "To review mentor applications, partly automatically (see “Automated review of mentor applications”), and to keep the platform safe from fraud and misuse.",
         "To meet legal duties, such as keeping payment records.",
         "We do not sell your personal data."
       ]
     },
     {
-      "h": "6. Who we share it with",
+      "h": "7. Who we share it with",
       "p": [
         "The mentor you ask receives your name and your question. A seeker receives the mentor’s answer.",
-        "Service providers that work for us: our payment bank (card payments and refunds), our identity verification provider (mentors only), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us.",
+        "Service providers that work for us: our payment bank (card payments and refunds), our identity verification provider (mentors only), Anthropic (the AI-assisted review of mentor applications, mentors only), our email provider (sending emails), and our hosting and database provider. They may only use the data to provide their service to us. When we check a link you gave as evidence, the website it points to receives a request from our server.",
         "Google: if you use Google sign-in, Google learns that you signed in to Wisecall, under Google’s own privacy policy. Nothing about your questions or answers is sent to Google.",
         "Authorities, when the law requires it.",
         "The public can see public profiles, and a mentor’s ratings and reviews (with the reviewer’s name and photo, or “Anonymous asker” when the reviewer’s profile is private)."
       ]
     },
     {
-      "h": "7. Where data is processed",
+      "h": "8. Where data is processed",
       "p": [
-        "Our providers may process data outside Georgia, for example in the European Union or the United States. When that happens, we rely on providers that protect data to a suitable standard."
+        "Our providers may process data outside Georgia, for example in the European Union or the United States (the AI-assisted review of mentor applications is processed in the United States). When that happens, we rely on providers that protect data to a suitable standard."
       ]
     },
     {
-      "h": "8. How long we keep it",
+      "h": "9. How long we keep it",
       "p": [
         "We keep your account data while your account exists. If you ask us to delete your account, we delete or anonymise your personal data, except records we must keep by law, such as payment records, and data needed to handle a dispute.",
         "Login verification codes and password reset tokens expire within minutes or hours and are stored only as hashes."
       ]
     },
     {
-      "h": "9. Your rights",
+      "h": "10. Your rights",
       "p": [
         "You can ask us to give you a copy of your data, correct it, delete it, limit how we use it, or stop using it for something you object to. You can also withdraw a consent you gave. Contact us and we will answer within a reasonable time.",
         "If you believe we handled your data unlawfully, you can complain to the Personal Data Protection Service of Georgia."
       ]
     },
     {
-      "h": "10. Security",
+      "h": "11. Security",
       "p": [
         "Passwords are hashed, connections use HTTPS, and access to data is limited. No system is perfectly secure, so please use a strong, unique password."
       ]
     },
     {
-      "h": "11. Children",
+      "h": "12. Children",
       "p": [
         "Wisecall is for people 18 and over. We do not knowingly collect data from children. If you think a child has given us data, contact us and we will delete it."
       ]
     },
     {
-      "h": "12. Changes",
+      "h": "13. Changes",
       "p": [
         "We may update this policy. When we make a meaningful change, we will tell you by email or on the site."
       ]
@@ -434,9 +446,9 @@
     {
       "h": "How we verify mentors",
       "p": [
-        "Nobody appears on Wisecall just by signing up. Every mentor confirms their email, passes a government ID and live selfie check with our identity partner (the name has to match their profile and payout account), links to proof of what they have done, and writes a sample answer. They also give at least one more proof of their background, such as a work email, a diploma or a portfolio.",
-        "In regulated fields such as medicine, law and finance we go further: we check the professional license against the official register, and our team holds a short video interview before approving anyone. Business mentors show their company or their role in it.",
-        "A person on our team reviews every step and writes down why. Your ID photos never reach Wisecall, and a mentor’s license number and documents are never public. Profiles show only badges for the checks passed, with the date.",
+        "Nobody appears on Wisecall just by signing up. Every mentor confirms their email and passes a government ID and live selfie check with our identity partner: they must be 18 or older, and the name has to match their profile. Then they tell us about their experience, write a sample answer, and show at least one piece of evidence of their work: a portfolio, a website, a company, a diploma, publications or a product. Self-taught experts and business owners are welcome; nobody needs an employer.",
+        "Part of the review is automatic: we open the links a mentor gives, and an AI model reads the application to help our team. In regulated fields such as medicine, law and finance we go further: we check the professional license against the official register, and a person always makes the decision. Our team may also ask for a short video call.",
+        "A person on our team makes every rejection and writes down why. Your ID photos never reach Wisecall, and a mentor’s license number, evidence and documents are never public. Profiles show only badges for the checks passed, with the date.",
         "After approval we keep checking: a new mentor’s first answers are reviewed before you see them, buyers can report a mentor, low ratings are looked at again, and we can suspend a profile at once. We remove people who mislead others."
       ]
     },
@@ -685,15 +697,15 @@
   "badge.interview": "Video interviewed",
   "badge.interview.tip": "Our team met them on a video call. Verified {date}.",
   "hv.title": "How we verify mentors",
-  "hv.sub": "Nobody appears in Browse experts just by signing up. Every mentor goes through these checks first, and a person on our team approves each one.",
+  "hv.sub": "Nobody appears in Browse experts just by signing up. Every mentor goes through these checks first. Self-taught experts and business owners are welcome: what counts is what they have really done.",
   "hv.1.title": "A real person",
-  "hv.1.body": "A government ID and a live selfie, checked by our identity partner. The name on the ID has to match their profile and payout account.",
+  "hv.1.body": "A government ID and a live selfie, checked by our identity partner. Mentors must be 18 or older, and the name on the ID has to match their profile.",
   "hv.2.title": "Real experience",
-  "hv.2.body": "A proof link, a sample answer, and at least one more proof of background: a work email, a diploma or a portfolio. Our team reads all of it.",
+  "hv.2.body": "Their story, a sample answer, and at least one piece of evidence of their work: a portfolio, a website, a company, a diploma or publications. We open the links and check them.",
   "hv.3.title": "Licensed where it matters",
-  "hv.3.body": "Doctors, lawyers and financial advisers also give us their license or registration, and we check it against the official register.",
-  "hv.4.title": "Met on video",
-  "hv.4.body": "In regulated fields, our team also holds a short video interview before approving anyone.",
+  "hv.3.body": "Doctors, lawyers, financial advisers and other regulated professions also give us their license, and a person checks it against the official register before approving them.",
+  "hv.4.title": "A person decides",
+  "hv.4.body": "An automatic review helps our team, but a person makes every rejection and every decision in regulated fields. We may also meet a mentor on a short video call.",
   "hv.5.title": "Watched after approval",
   "hv.5.body": "A new mentor's first answers are checked before you see them. Reports and low ratings are reviewed, and we can suspend a profile at once.",
   "hv.badges": "Look for these badges on a mentor’s profile:",
@@ -1119,5 +1131,133 @@
   "dash.unfinished.hide": "Hide unfinished payments ({n})",
   "dash.unfinished.note": "These payments were cancelled, failed or never finished. Nothing was charged. They are deleted after {unpaidDays} days.",
   "vt.kyc.soon": "ID checks open soon.",
-  "vt.kyc.soonBody": "You can fill in the rest of your application now. The ID check will appear here as soon as it opens."
+  "vt.kyc.soonBody": "You can fill in the rest of your application now. The ID check will appear here as soon as it opens.",
+  "settings.mentor.price.hint": "You can change your price at any time.",
+  "settings.mentor.price.invalid": "Enter a whole number of lari from 5 to 2000.",
+  "settings.mentor.savePrice": "Save price",
+  "settings.mentor.applicationHint": "Your title, niche, experience and evidence are part of your application.",
+  "settings.mentor.openApplication": "Open your application",
+  "verify.step.age": "Age 18+",
+  "verify.step.experience": "Your experience",
+  "badge.experience": "Experience reviewed",
+  "badge.experience.tip": "Their experience, evidence and a sample answer were reviewed before approval. Reviewed {date}.",
+  "badge.diploma": "Diploma verified",
+  "badge.diploma.tip": "Our team checked their diploma or certificate. Verified {date}.",
+  "ap.title": "Your mentor application",
+  "ap.intro": "Three steps, about {minutes} minutes. Self-taught experts, freelancers and business owners are welcome: you don't need an employer, a degree or a work email.",
+  "ap.progress": "Application progress",
+  "ap.progressText": "{done} of {total} steps done",
+  "ap.step.identity": "Identity",
+  "ap.step.experience": "Experience",
+  "ap.step.review": "Review",
+  "ap.state.done": "Done",
+  "ap.state.todo": "To do",
+  "ap.state.waiting": "In progress",
+  "ap.state.attention": "Needs attention",
+  "ap.status.inReview": "Submitted: in review",
+  "ap.id.title": "1. Identity",
+  "ap.id.help": "A photo of your ID and a quick live selfie, checked automatically by our identity partner. We keep only the result, your verified name, date of birth and country: never the images.",
+  "ap.id.passed": "Your ID and selfie were checked.",
+  "ap.age.passed": "Age 18+ confirmed.",
+  "ap.age.failed": "Your ID shows you are under 18. Mentors must be 18 or older.",
+  "ap.age.pending": "Our team is checking the date of birth on your ID.",
+  "ap.name.passed": "Your name matches your ID.",
+  "ap.name.pending": "The name on your ID doesn't match your profile name. If your profile name is different from your ID, correct it in the Profile tab and we'll check again at once. Otherwise our team will look at it. This is never an automatic rejection.",
+  "ap.name.fix": "Edit my profile name",
+  "ap.exp.title": "2. Experience",
+  "ap.exp.welcome": "Self-taught? Running your own business? Welcome. We look at what you have actually done, not at who employs you.",
+  "ap.f.title": "Title",
+  "ap.f.title.hint": "What you do, in a few words. For example: \"Pastry chef and bakery owner\".",
+  "ap.f.niche": "Niche",
+  "ap.f.niche.choose": "Choose your niche",
+  "ap.f.niche.regulated": "{niche} (licence needed)",
+  "ap.f.tags": "Specialty tags",
+  "ap.f.tags.hint": "Up to {max}, separated by commas. For example: sourdough, pricing, hiring.",
+  "ap.f.years": "Years of experience",
+  "ap.f.story": "Your story",
+  "ap.f.story.hint": "How you learned what you know and what you have done with it. {min} to {max} characters.",
+  "ap.f.sample": "Sample answer",
+  "ap.f.sample.hint": "Answer a question someone in your field might ask, the way you would for a paying client. At least {min} characters.",
+  "ap.f.count": "{n} characters",
+  "ap.f.save": "Save draft",
+  "ap.ev.title": "Evidence (at least one)",
+  "ap.ev.hint": "Anything that shows your work. One is enough; more helps. Links we can open that show your name or brand are checked automatically.",
+  "ap.ev.kind": "Type",
+  "ap.ev.kind.linkedin": "LinkedIn profile",
+  "ap.ev.kind.website": "Your website or online shop",
+  "ap.ev.kind.portfolio": "Portfolio (Behance, Dribbble, GitHub...)",
+  "ap.ev.kind.social": "Social media page",
+  "ap.ev.kind.publication": "Publication or article",
+  "ap.ev.kind.company": "Your company (Public Registry code or website)",
+  "ap.ev.kind.diploma": "Diploma or certificate (upload)",
+  "ap.ev.kind.product": "An app or product you made",
+  "ap.ev.kind.testimonials": "Client reviews or testimonials",
+  "ap.ev.kind.other": "Other link",
+  "ap.ev.kind.work_email": "Work email (confirmed)",
+  "ap.ev.url": "Link",
+  "ap.ev.registry": "Public Registry identification code (optional if you give the website)",
+  "ap.ev.registry.hint": "9 digits for a company, 11 for an individual entrepreneur. Our team looks it up in the registry.",
+  "ap.ev.upload": "Upload a diploma or certificate (PDF or JPG, up to 10 MB)",
+  "ap.ev.note": "What is it? (optional)",
+  "ap.ev.add": "Add",
+  "ap.ev.remove": "Remove",
+  "ap.ev.none": "Nothing added yet.",
+  "ap.ev.state.verified": "Checked",
+  "ap.ev.state.unchecked": "Checked after you submit",
+  "ap.ev.state.team": "Our team checks this",
+  "ap.ev.state.unclear": "Opened, but your name was not found",
+  "ap.ev.state.problem": "We could not open this link",
+  "ap.ev.err.invalid_url": "Enter a full web address starting with https://",
+  "ap.ev.err.not_linkedin": "That is not a LinkedIn address. Choose another type.",
+  "ap.ev.err.duplicate_evidence": "You already added this link.",
+  "ap.ev.err.too_much_evidence": "You can add up to 10 items.",
+  "ap.ev.err.invalid_company_id": "Enter 9 or 11 digits.",
+  "ap.ev.err.company_needs_id_or_url": "Enter the registry code or the company website.",
+  "ap.lic.title": "Licence (regulated field)",
+  "ap.lic.help": "{niche} is a regulated field. Give your licence or registration number and who issued it: our team checks it in the official register before approving you.",
+  "ap.lic.docHelp": "There is no public register we can check for this field, so please also upload your licence, certificate or diploma.",
+  "ap.opt.title": "Optional: a work email badge",
+  "ap.opt.help": "If you have an email address at a company or institution, confirm it to add a \"Work email verified\" badge. It is not required.",
+  "ap.opt.done": "Work email confirmed ({domain}).",
+  "ap.missingHead": "Still missing:",
+  "ap.missing.email": "Verify your email address",
+  "ap.missing.title": "Your title",
+  "ap.missing.niche": "Your niche",
+  "ap.missing.tags": "At least one specialty tag",
+  "ap.missing.years": "Your years of experience",
+  "ap.missing.story": "Your story (at least 100 characters of real writing)",
+  "ap.missing.sample": "A sample answer (at least 150 characters of real writing)",
+  "ap.missing.evidence": "At least one piece of evidence",
+  "ap.missing.license": "Your licence or registration number",
+  "ap.missing.license_document": "A copy of your licence, certificate or diploma",
+  "ap.missing.price": "Your price per question",
+  "ap.missing.priceLink": "Set it in the Mentor tab",
+  "ap.submit": "Submit for review",
+  "ap.submitted": "Submitted. We'll email you when it's decided.",
+  "ap.submit.ai": "When you submit, we check your links automatically and your application is reviewed with the help of an AI model (Claude, by Anthropic). It sees your title, niche, tags, years, story, sample answer and what your links show: never your ID, date of birth, email, phone number or bank details. A person makes every rejection, and every decision in regulated fields.",
+  "ap.submit.privacy": "How we use your data",
+  "ap.locked": "Submitted on {date}. Your application is locked while we review it.",
+  "ap.lockedApproved": "Approved. To change your experience, edit your application: your profile is hidden from Browse experts until the change is approved.",
+  "ap.edit": "Edit my application",
+  "ap.edit.confirm": "Your profile will be hidden from Browse experts until the changed application is approved. Continue?",
+  "ap.err.incomplete": "Something is still missing: see the list above.",
+  "ap.err.application_locked": "Your application is being reviewed. Press \"Edit my application\" first.",
+  "ap.err.invalid_tags": "Up to 8 tags of up to 40 characters each, without links.",
+  "ap.err.invalid_years": "Enter a whole number from 0 to 70.",
+  "ap.err.story_too_long": "Your story can be up to 1500 characters.",
+  "ap.err.sample_too_long": "The sample answer can be up to 3000 characters.",
+  "ap.err.title_too_long": "The title can be up to 100 characters.",
+  "ap.err.invalid_niche": "Choose a niche from the list.",
+  "ap.rev.title": "3. Review",
+  "ap.rev.not_submitted": "When you submit, we check your links and read your application. You will hear from us by email.",
+  "ap.rev.waiting_identity": "Submitted. The review starts as soon as your ID check is done.",
+  "ap.rev.checking": "We are checking your application now. This usually takes a minute or two.",
+  "ap.rev.with_team": "A person on our team is reviewing your application. We will email you when it is decided.",
+  "ap.rev.approved": "Approved. Welcome to Wisecall!",
+  "ap.rev.rejected": "Not approved this time. You can change your application and submit it again.",
+  "ap.rev.suspended": "Your profile is suspended. Contact us if you have questions.",
+  "ap.rev.interview": "Our team would like a short video call with you (about 20 minutes) before deciding.",
+  "ap.rev.interviewDone": "Video call done.",
+  "ap.rev.refresh": "Check again",
+  "ap.why.ai": "Part of the review is automatic: we open your links and an AI model reads your application to help our team. It never sees your ID or contact details, and it never rejects anyone: people do."
 }

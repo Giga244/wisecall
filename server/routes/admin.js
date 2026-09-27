@@ -17,38 +17,55 @@ const { pretty } = require('../iban');
 
 const router = express.Router();
 
+// The mentor list. ?queue=needs_human: submitted applications waiting for a person, riskiest first (then the oldest), with the latest
+// analysis (AI summary on top). ?status=...: mentors in that verification status.
+const RISK_ORDER = { high: 0, medium: 1, low: 2 };
 router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
-  const { status } = req.query;
+  const { status, queue } = req.query;
   const params = [];
   let where = `role IN ('mentor', 'both')`;
-  if (status) { params.push(String(status)); where += ` AND verification_status = $${params.length}`; }
+  if (queue === 'needs_human') where += ` AND verification_status = 'pending'`;
+  else if (status) { params.push(String(status)); where += ` AND verification_status = $${params.length}`; }
   const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
   const mentors = rows.map(userFromRow);
   const ids = mentors.map((m) => m.id);
-  const [stats, stepMap, flagRows, standingRows] = await Promise.all([
+  const [stats, stepMap, flagRows, standingRows, reviews] = await Promise.all([
     mentorStatsFor(ids), verificationSteps.loadStepsFor(ids),
     query(`SELECT mentor_id, count(*)::int AS n FROM mentor_flags WHERE status = 'open' AND mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`, [ids]),
     // the last thing that happened to each mentor's standing: "reinstated" (and still pending) means back in review after a suspension
     query(`SELECT DISTINCT ON (mentor_id) mentor_id, action FROM verification_audit
-            WHERE mentor_id = ANY($1::uuid[]) AND action IN ('suspended', 'reinstated', 'approved', 'rejected', 'delisted') ORDER BY mentor_id, created_at DESC`, [ids])
+            WHERE mentor_id = ANY($1::uuid[]) AND action IN ('suspended', 'reinstated', 'approved', 'rejected', 'delisted') ORDER BY mentor_id, created_at DESC`, [ids]),
+    require('../verification/analysis').latestFor(ids)
   ]);
   const openFlags = Object.fromEntries(flagRows.rows.map((r) => [r.mentor_id, r.n]));
   const lastStanding = Object.fromEntries(standingRows.rows.map((r) => [r.mentor_id, r.action]));
-  res.json({
-    mentors: mentors.map((m) => {
+  const list = mentors.map((m) => {
       const v = verificationSteps.describe(m, stepMap[m.id]);
       // "waiting" = required steps a person has to look at (submitted, decided by an admin, not yet decided).
-      const waiting = rules.stepNamesFor(m.niche).filter((s) => {
-        const row = stepMap[m.id][s];
-        return row && row.status === 'pending' && ['admin', 'auto+admin'].includes(rules.STEPS[s].decider);
+      const waiting = v.requirements.filter((r) => {
+        const row = stepMap[m.id][r.step];
+        return row && row.status === 'pending' && ['admin', 'auto+admin'].includes(rules.STEPS[r.step].decider);
       }).length;
-      const done = v.requirements.filter((r) => (r.type === 'step' ? r.status === 'passed' : r.satisfied)).length;
+      const done = v.requirements.filter((r) => r.status === 'passed').length;
+      const a = reviews[m.id];
+      const submitted = m.verificationStatus === 'pending' && Boolean(m.applicationSubmittedAt);
       return {
         ...meProfile(m), ...stats[m.id],
-        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated' }
+        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted },
+        analysis: a ? {
+          status: a.status, risk: a.risk, outcome: a.outcome, createdAt: a.createdAt, forCurrentSubmission: Boolean(m.applicationSubmittedAt) && String(a.submittedAt) === String(m.applicationSubmittedAt),
+          recommendation: a.ai ? a.ai.recommendation : null, summary: a.ai ? a.ai.admin_summary : null, aiError: a.aiError, costUsd: a.usage.costUsd,
+          wouldAutoApprove: Boolean(a.checks && a.checks.wouldAutoApprove)
+        } : null
       };
-    })
   });
+  if (queue === 'needs_human') {
+    // Submitted applications first, riskiest first, then the oldest submission; drafts (not submitted yet) last.
+    const rank = (m) => (m.verification.submitted ? 0 : 1);
+    const risk = (m) => (m.analysis && m.analysis.risk ? RISK_ORDER[m.analysis.risk] : 3);
+    list.sort((x, y) => rank(x) - rank(y) || risk(x) - risk(y) || new Date(x.applicationSubmittedAt || x.createdAt) - new Date(y.applicationSubmittedAt || y.createdAt));
+  }
+  res.json({ mentors: list });
 }));
 const BOOKING_STATUSES = ['pending_payment', 'paid', 'answered', 'refund_pending', 'refunded', 'expired'];
 

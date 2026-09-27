@@ -41,7 +41,11 @@ async function logIn(page, email) {
   await page.click('#loginForm button[type="submit"]');
   await page.waitForURL((u) => u.pathname === '/dashboard.html');
 }
-const audit = async (page) => (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`);
+// (colour transitions are finished first: a contrast check in the middle of a 0.18 s fade, on a busy machine, would measure a colour in between)
+const audit = async (page) => {
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+  return (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`);
+};
 
 test('the startup messages: mock providers, open for buyers, no missing-address warning, two-step verification on', async () => {
   const log = srv.logs();

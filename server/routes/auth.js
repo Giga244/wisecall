@@ -69,6 +69,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
   }
 
   setAuthCookie(res, signToken(user));
+  await require('../verification/signals').record(req, res, user.id, 'signup');
   res.status(201).json({
     user: meProfile(user),
     emailSent,
@@ -87,6 +88,7 @@ router.post('/login', asyncHandler(async (req, res) => {
   if (!user || !ok) return res.status(401).json({ error: 'invalid_credentials' });
 
   setAuthCookie(res, signToken(user));
+  await require('../verification/signals').record(req, res, user.id, 'login');
   res.json({ user: meProfile(user) });
 }));
 

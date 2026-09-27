@@ -90,6 +90,7 @@ async function handleWebhook({ rawBody, headers }) {
   catch (e) { throw new steps.VerificationError('invalid_webhook', { detail: e.message }); }
   const out = await applyResult(provider.name, result);
   if (out.changed && out.status === 'approved') await afterApproved(out.userId);
+  else if (out.changed && ['declined', 'expired'].includes(out.status)) require('./analysis').afterIdentityChange(out.userId);
   await tellMentor(out);
   return out;
 }
@@ -114,9 +115,45 @@ async function tellMentor(out) {
   if (o) await require('./updates').stepDecided(out.userId, 'id_kyc', o[0], null, o[1]);
 }
 
-// Things that depend on the verified name (the name-match step) run here once an ID check is approved.
+// Things that depend on the verified person run here once an ID check is approved: the age step and the name-match step. Then the
+// application is looked at again (a finished Experience form is analysed, or the earlier analysis decided again).
 async function afterApproved(userId) {
-  try { await require('./names').recompute(userId); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') console.error('[kyc] name match failed:', e.message); }
+  try { await updateAge(userId); } catch (e) { console.error('[kyc] age check failed:', e.message); }
+  try { await require('./names').recompute(userId); } catch (e) { console.error('[kyc] name match failed:', e.message); }
+  require('./analysis').afterIdentityChange(userId);
+}
+
+// Age in whole years on a given day, from 'YYYY-MM-DD' (null when the date is missing or not a real date).
+function ageOn(dateOfBirth, today = new Date()) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateOfBirth || ''));
+  if (!m) return null;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const born = new Date(Date.UTC(y, mo - 1, d));
+  if (born.getUTCMonth() !== mo - 1 || born.getUTCDate() !== d || born > today) return null;
+  let age = today.getUTCFullYear() - y;
+  if (today.getUTCMonth() + 1 < mo || (today.getUTCMonth() + 1 === mo && today.getUTCDate() < d)) age -= 1;
+  return age;
+}
+
+// The age step: 18 or older according to the date of birth on the ID. Only the result is stored (never the date itself). A missing date
+// waits for an admin; under 18 fails the step (a person then decides on the application: the computer never rejects one).
+async function updateAge(userId) {
+  const { rows } = await query(`SELECT birth_date_enc FROM kyc_sessions WHERE user_id = $1 AND status = 'approved' ORDER BY decided_at DESC NULLS LAST LIMIT 1`, [userId]);
+  if (!rows[0]) return null;
+  const current = (await steps.loadSteps(userId)).age;
+  if (current && current.decidedBy) return current.status; // an admin already decided it
+  const age = ageOn(decrypt(rows[0].birth_date_enc));
+  const min = require('./rules').LIMITS.minAge;
+  if (age === null) {
+    await steps.setStep(userId, 'age', 'pending', { evidence: { dateOfBirth: 'missing' }, replaceEvidence: true, reason: 'The ID check gave no date of birth: an admin checks it', actor: steps.PROVIDER });
+    return 'pending';
+  }
+  if (age >= min) {
+    if (!current || current.status !== 'passed') await steps.setStep(userId, 'age', 'passed', { evidence: { adult: true }, replaceEvidence: true, reason: `${min} or older according to the ID`, actor: steps.PROVIDER });
+    return 'passed';
+  }
+  await steps.setStep(userId, 'age', 'failed', { evidence: { adult: false }, replaceEvidence: true, reason: `Under ${min} according to the ID`, actor: steps.PROVIDER });
+  return 'failed';
 }
 
 // For admins only: the verified person as the provider reported it.
@@ -135,4 +172,4 @@ async function verifiedNameFor(userId) {
   return rows[0] ? decrypt(rows[0].verified_name_enc) : null;
 }
 
-module.exports = { startForMentor, applyResult, handleWebhook, refresh, summaryFor, verifiedNameFor, latestSession };
+module.exports = { startForMentor, applyResult, handleWebhook, refresh, summaryFor, verifiedNameFor, latestSession, updateAge, ageOn };

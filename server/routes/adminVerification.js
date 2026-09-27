@@ -15,6 +15,8 @@ const interviews = require('../verification/interviews');
 const probation = require('../probation');
 const payments = require('../payments');
 const reports = require('../reports');
+const analysis = require('../verification/analysis');
+const experience = require('../verification/experience');
 
 const router = express.Router();
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -23,7 +25,7 @@ const STATUS_FOR_CODE = {
   not_found: 404, unknown_step: 404,
   reason_required: 400, invalid_decision: 400,
   not_manual: 409, not_submitted: 409, invalid_state: 409, steps_incomplete: 409,
-  invalid_slot: 400, invalid_link: 400, not_started: 409
+  invalid_slot: 400, invalid_link: 400, not_started: 409, already_passed: 409
 };
 
 // Turns a VerificationError into a JSON reply; anything else is a real error.
@@ -41,20 +43,23 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
   const mentor = await getUserById(req.params.id);
   if (!mentor || !(mentor.role === 'mentor' || mentor.role === 'both')) return res.status(404).json({ error: 'not_found' });
 
-  const [kycSummary, openFlags, creds, docs, stepRows, auditRows] = await Promise.all([
+  const [kycSummary, openFlags, creds, docs, stepRows, auditRows, reviews, evidence] = await Promise.all([
     kycService.summaryFor(mentor.id),
     flags.openFlagsFor(mentor.id),
     credentials.credentialsFor(mentor.id),
     credentials.listDocuments(mentor.id),
     query(`SELECT s.*, u.email AS decided_by_email FROM verification_steps s LEFT JOIN users u ON u.id = s.decided_by WHERE s.user_id = $1`, [mentor.id]),
-    query(`SELECT * FROM verification_audit WHERE mentor_id = $1 ORDER BY created_at DESC LIMIT 200`, [mentor.id])
+    query(`SELECT * FROM verification_audit WHERE mentor_id = $1 ORDER BY created_at DESC LIMIT 200`, [mentor.id]),
+    analysis.reviewsFor(mentor.id, 5),
+    experience.listEvidence(mentor.id)
   ]);
   const detail = {};
   stepRows.rows.forEach((r) => {
     detail[r.step] = {
       step: r.step, status: steps.effectiveStatus({ status: r.status, expiresAt: r.expires_at }), rawStatus: r.status, evidence: r.evidence || {},
       reason: r.reason, decidedAt: r.decided_at, decidedBy: r.decided_by_email || (r.decided_by ? null : (r.status === 'pending' ? null : 'system')),
-      expiresAt: r.expires_at, updatedAt: r.updated_at, manual: ['admin', 'auto+admin'].includes(rules.STEPS[r.step] && rules.STEPS[r.step].decider)
+      expiresAt: r.expires_at, updatedAt: r.updated_at, manual: ['admin', 'auto+admin'].includes(rules.STEPS[r.step] && rules.STEPS[r.step].decider),
+      legacy: rules.LEGACY_STEPS.includes(r.step)
     };
   });
   const summary = steps.describe(mentor, Object.fromEntries(Object.entries(detail).map(([k, v]) => [k, { status: v.rawStatus, expiresAt: v.expiresAt }])));
@@ -63,15 +68,26 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
     mentor: {
       ...meProfile(mentor), sampleAnswer: mentor.sampleAnswer, proofUrl: mentor.proofUrl
     },
+    // Step 2 as the mentor filled it in, and step 3: the latest analysis first (AI summary, scores, flags, link checks, cost).
+    application: {
+      roleTitle: mentor.roleTitle, niche: mentor.niche, specialtyTags: mentor.specialtyTags, yearsExperience: mentor.yearsExperience,
+      story: mentor.story, sampleAnswer: mentor.sampleAnswer, submittedAt: mentor.applicationSubmittedAt, submitted: experience.submitted(mentor)
+    },
+    evidence: evidence.map((e) => ({ ...e, registry: e.kind === 'company' ? rules.COMPANY_REGISTRY : undefined })),
+    analysis: reviews[0] || null,
+    analysisHistory: reviews.slice(1).map((r) => ({ id: r.id, trigger: r.trigger, createdAt: r.createdAt, risk: r.risk, outcome: r.outcome, costUsd: r.usage.costUsd, aiError: r.aiError })),
+    autoApprove: require('../config').AUTO_APPROVE,
+    interviewRequested: Boolean(stepRows.rows.find((r) => r.step === 'video_interview')),
     level: summary.level,
     kyc: kycSummary,
     flags: openFlags,
     credentials: creds,
     workEmail: mentor.workEmail ? { address: mentor.workEmail, verifiedAt: mentor.workEmailVerifiedAt } : null,
     documents: docs,
-    requirements: summary.requirements.map((r) => (r.type === 'step'
-      ? { ...r, ...(detail[r.step] || {}), status: r.status }
-      : { ...r, options: r.options.map((o) => ({ ...o, ...(detail[o.step] || {}), status: o.status })) })),
+    requirements: summary.requirements.map((r) => ({ ...r, ...(detail[r.step] || {}), status: r.status })),
+    optional: summary.optional.map((r) => ({ ...r, ...(detail[r.step] || {}), status: r.status })),
+    // Steps from the first rules, kept for the record.
+    legacySteps: Object.values(detail).filter((d) => d.legacy),
     ready: summary.ready,
     missing: summary.missing,
     // Was this mentor listed before, and did an admin just lift their suspension? (Reinstated mentors go back to review on purpose.)
@@ -115,6 +131,42 @@ router.post('/mentors/:id/reject', requireAuth, requireAdmin, asyncHandler(async
     notify.notifyMentorDecision(mentor, false, mentor.verificationNote);
     res.json({ mentor: meProfile(mentor) });
   } catch (e) { fail(res, e); }
+}));
+
+// Runs the automatic analysis again (for example after the mentor fixed a link, or once an AI key was added). Waits for it to finish.
+router.post('/mentors/:id/analysis', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const mentor = await getUserById(req.params.id);
+  if (!mentor || !(mentor.role === 'mentor' || mentor.role === 'both')) return res.status(404).json({ error: 'not_found' });
+  if (mentor.verificationStatus !== 'pending') return res.status(409).json({ error: 'invalid_state' });
+  await steps.audit(mentor.id, steps.adminActor(req.adminUser), 'analysis_rerun_requested', {});
+  await analysis.rerun(mentor.id);
+  res.json({ analysis: (await analysis.reviewsFor(mentor.id, 1))[0] || null });
+}));
+
+// An admin confirms or refuses one piece of evidence by hand (a company code in the Public Registry, a diploma, a link).
+router.post('/mentors/:id/evidence/:evidenceId', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const { decision, reason } = req.body || {};
+  if (typeof decision !== 'string' || (reason !== undefined && typeof reason !== 'string')) return res.status(400).json({ error: 'invalid_decision' });
+  try {
+    await review.decideEvidence({ mentorId: req.params.id, evidenceId: req.params.evidenceId, decision, reason, admin: req.adminUser });
+    res.json({ ok: true });
+  } catch (e) { fail(res, e); }
+}));
+
+// An admin asks for a video interview (optional; never required by default).
+router.post('/mentors/:id/interview/request', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try {
+    const summary = await review.requestInterview({ mentorId: req.params.id, reason: (req.body || {}).reason, admin: req.adminUser });
+    res.json({ ready: summary.ready, missing: summary.missing });
+  } catch (e) { fail(res, e); }
+}));
+
+// What the AI reviews cost (this month and in total), which model is used, and whether automatic approval is on.
+router.get('/verification/costs', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json(await analysis.costs());
 }));
 
 // Asks the ID-verification provider for the latest result (for example when a webhook was lost).

@@ -81,7 +81,7 @@ async function adminCancel(admin, id, reason) {
   if (text.length < 5) throw new VerificationError('reason_required');
   await tx(async (client) => {
     await client.query(`UPDATE interview_slots SET status = 'cancelled' WHERE id = $1`, [id]);
-    await client.query(`DELETE FROM verification_steps WHERE user_id = $1 AND step = $2 AND status = 'pending'`, [row.booked_by, STEP]);
+    await client.query(`UPDATE verification_steps SET evidence = '{"requested": true}'::jsonb, updated_at = now() WHERE user_id = $1 AND step = $2 AND status = 'pending'`, [row.booked_by, STEP]);
   });
   const mentor = await getUserById(row.booked_by);
   await steps.audit(mentor.id, steps.adminActor(admin), 'interview_cancelled', { step: STEP, reason: text });
@@ -102,10 +102,11 @@ async function recordResult(admin, id, { result, reason, notes }) {
 }
 
 // ---- Mentor: pick, see, change --------------------------------------------------------------------
-const requires = (user) => rules.stepNamesFor(user.niche).includes(STEP);
+// A video interview is never required by default: only when an admin has asked this mentor for one (the step then exists).
+const requires = async (user) => Boolean((await steps.loadSteps(user.id))[STEP]);
 
 async function overview(user) {
-  const required = requires(user);
+  const required = await requires(user);
   if (!required) return { required: false, slots: [], booking: null, result: null };
   const cutoff = new Date(Date.now() + rules.LIMITS.interviewMinNoticeHours * HOUR);
   const [open, mine, last] = await Promise.all([
@@ -127,7 +128,7 @@ async function overview(user) {
 }
 
 async function book(user, slotId) {
-  if (!requires(user)) throw new VerificationError('not_required');
+  if (!(await requires(user))) throw new VerificationError('not_required');
   const stepRows = await steps.loadSteps(user.id);
   if ((stepRows.id_kyc || {}).status !== 'passed') throw new VerificationError('id_check_first');
   if ((stepRows[STEP] || {}).status === 'passed') throw new VerificationError('already_passed');
@@ -147,7 +148,7 @@ async function book(user, slotId) {
   }
   if (!slot) throw new VerificationError('slot_unavailable');
 
-  await steps.setStep(user.id, STEP, 'pending', { evidence: { interview: slot.starts_at.toISOString() }, replaceEvidence: true, actor: steps.mentorActor(user) });
+  await steps.setStep(user.id, STEP, 'pending', { evidence: { requested: true, interview: slot.starts_at.toISOString() }, replaceEvidence: true, actor: steps.mentorActor(user) });
   await steps.audit(user.id, steps.mentorActor(user), 'interview_booked', { step: STEP, reason: slot.starts_at.toISOString() });
   notify.notifyInterviewBooked(user, slotFromRow(slot));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -163,7 +164,7 @@ async function cancel(user) {
   if (new Date(slot.starts_at).getTime() < Date.now() + rules.LIMITS.interviewMinNoticeHours * HOUR) throw new VerificationError('too_late');
   await tx(async (client) => {
     await client.query(`UPDATE interview_slots SET status = 'open', booked_by = NULL, booked_at = NULL, meeting_link = NULL, link_sent_at = NULL WHERE id = $1`, [slot.id]);
-    await client.query(`DELETE FROM verification_steps WHERE user_id = $1 AND step = $2 AND status = 'pending'`, [user.id, STEP]);
+    await client.query(`UPDATE verification_steps SET evidence = '{"requested": true}'::jsonb, updated_at = now() WHERE user_id = $1 AND step = $2 AND status = 'pending'`, [user.id, STEP]);
   });
   await steps.audit(user.id, steps.mentorActor(user), 'interview_cancelled', { step: STEP, reason: 'cancelled by the mentor' });
 }

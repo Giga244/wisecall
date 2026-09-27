@@ -40,25 +40,26 @@ after(async () => { if (srv) srv.proc.kill(); await resend.stop(); await didit.s
 
 describe('an admin decision on a step', () => {
   test('a rejected step emails the reason and everything that is still missing (Design, English)', async () => {
-    await designer.api('/verification/portfolio', { method: 'POST', body: { url: 'https://behance.net/nino' } });
+    const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF');
+    assert.equal((await designer.api('/verification/documents/diploma', { method: 'POST', body: PDF, headers: { 'Content-Type': 'application/pdf', 'X-Filename': 'diploma.pdf' } })).status, 201);
     const before = resend.to('nino@example.com', 'update').length;
-    assert.equal((await decide(designerId, 'sample_answer', 'failed', 'The sample answer is too short to judge')).status, 200);
+    assert.equal((await decide(designerId, 'diploma', 'failed', 'The scan is too blurry to read')).status, 200);
     const mail = await resend.waitFor('nino@example.com', 'update');
     assert.equal(resend.to('nino@example.com', 'update').length, before + 1);
-    assert.match(text(mail), /couldn't approve this yet: Sample answer/);
-    assert.match(text(mail), /The sample answer is too short to judge/);
+    assert.match(text(mail), /couldn't approve this yet: Diploma or certificate/);
+    assert.match(text(mail), /The scan is too blurry to read/);
     assert.match(text(mail), /ID and selfie check \(not started\)/);
-    assert.match(text(mail), /Sample answer \(needs another try\)/);
-    assert.match(text(mail), /At least one of: Work email, Diploma or certificate, Portfolio \(waiting for review\)/);
+    assert.match(text(mail), /Age 18\+ \(not started\)/);
+    assert.match(text(mail), /Your experience \(not started\)/);
+    assert.doesNotMatch(text(mail), /At least one of/, 'rules v2 has no either-or steps');
     assert.match(mail.body.html, /settings\.html\?tab=verification/);
   });
 
-  test('an approved step says so, and the list shrinks', async () => {
+  test('an approved step says so, with what is still needed', async () => {
     const already = resend.to('nino@example.com', 'update').length;
-    assert.equal((await decide(designerId, 'portfolio', 'passed', 'Real work under the same name')).status, 200);
+    assert.equal((await decide(designerId, 'diploma', 'passed', 'A clearer scan was checked')).status, 200);
     const mail = await resend.waitForNew('nino@example.com', 'update', already);
-    assert.match(text(mail), /Approved: Portfolio/);
-    assert.doesNotMatch(text(mail), /At least one of/);
+    assert.match(text(mail), /Approved: Diploma or certificate/);
     assert.match(text(mail), /ID and selfie check/);
   });
 
@@ -68,7 +69,7 @@ describe('an admin decision on a step', () => {
     const mail = await resend.waitForNew('levan@example.com', 'განაცხადის', 0);
     assert.match(text(mail), /ლიცენზია ან რეგისტრაცია/);
     assert.match(text(mail), /ვერ ვიპოვეთ რეესტრში/);
-    assert.match(text(mail), /ვიდეო-ინტერვიუ \(არ დაწყებულა\)/);
+    assert.match(text(mail), /18\+ ასაკი \(არ დაწყებულა\)/);
     assert.doesNotMatch(text(mail), /MD-1234-5678/, 'the licence number is never in an email');
   });
 

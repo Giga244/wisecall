@@ -117,6 +117,23 @@ async function ratingsHousekeeping() {
   if (reminded) console.log(`[jobs] sent ${reminded} rating reminder(s)`);
 }
 
+// Mentor verification: account signals older than their retention are deleted; an analysis that never finished (the server restarted in
+// the middle) is marked failed and started again for applications still waiting; submitted applications that were waiting for the ID
+// check are looked at again (in case a result arrived while the server was down).
+async function verificationHousekeeping() {
+  const purged = await require('./verification/signals').purgeOld();
+  if (purged) console.log(`[jobs] deleted ${purged} old account signal(s)`);
+  const { rows } = await query(
+    `UPDATE verification_reviews SET status = 'failed', ai_error = coalesce(ai_error, 'interrupted'), finished_at = now()
+      WHERE status = 'running' AND created_at < now() - interval '15 minutes' RETURNING user_id`);
+  const analysis = require('./verification/analysis');
+  for (const { user_id: id } of rows) analysis.afterIdentityChange(id);
+  const stale = await query(
+    `SELECT u.id FROM users u WHERE u.verification_status = 'pending' AND u.application_submitted_at < now() - interval '10 minutes'
+        AND NOT EXISTS (SELECT 1 FROM verification_reviews r WHERE r.user_id = u.id AND r.submitted_at = u.application_submitted_at) LIMIT 50`);
+  for (const { id } of stale.rows) analysis.afterIdentityChange(id);
+}
+
 // `wait` (used by the development-only fast-forward tool): if another run is in progress, wait for it and then run, instead of skipping.
 async function runSweep({ wait = false } = {}) {
   const client = await pool.connect();
@@ -138,6 +155,7 @@ async function runSweep({ wait = false } = {}) {
       await checkLicenses();
       await notifyWaitingList();
       await ratingsHousekeeping();
+      await verificationHousekeeping();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }

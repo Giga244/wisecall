@@ -595,10 +595,12 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 .trust-tip {
   position: absolute; left: 0; top: calc(100% + 8px); z-index: 30; width: max-content; max-width: min(280px, 80vw);
   background: var(--inverse); color: var(--on-inverse); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; line-height: 1.45;
-  box-shadow: 0 12px 30px -10px rgba(var(--shadow-rgb), 0.5); opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity 0.15s, transform 0.15s;
-  pointer-events: none;
+  box-shadow: 0 12px 30px -10px rgba(var(--shadow-rgb), 0.5); pointer-events: none;
+  display: none; /* (a hidden tip takes no room, so a badge near the right edge never makes the page wider) */
 }
-.trust-badge-lg:hover .trust-tip, .trust-badge-lg:focus .trust-tip { opacity: 1; visibility: visible; transform: none; }
+.trust-badge-lg:hover .trust-tip, .trust-badge-lg:focus .trust-tip { display: block; }
+/* The last badges in a row open their tip towards the left, so it stays on the screen. */
+.trust-list > li:nth-last-child(-n+2) .trust-tip { left: auto; right: 0; }
 .trust-badge-lg:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* Verification tab: progress tracker */
@@ -635,6 +637,57 @@ form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size
 .vt-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .vt-soon { margin: 8px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); color: var(--sun-ink); font-size: 0.9rem; }
 .vt-why ul { margin: 12px 0; padding-left: 20px; display: grid; gap: 8px; font-size: 0.92rem; }
+
+/* Verification tab: the application in three steps (Identity -> Experience -> Review) */
+.ap-stepper { list-style: none; margin: 16px 0 8px; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; counter-reset: none; }
+.ap-stepper-item { position: relative; }
+.ap-stepper-link {
+  display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--bg);
+  color: inherit; text-decoration: none; border: 2px solid transparent;
+}
+.ap-stepper-link:hover { border-color: var(--border); }
+.ap-stepper-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ap-stepper-num {
+  flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; background: var(--gray-soft); color: var(--ink-soft);
+}
+.ap-stepper-text { display: grid; line-height: 1.25; min-width: 0; }
+.ap-stepper-text .small { color: var(--ink-soft); }
+.ap-done .ap-stepper-num { background: var(--accent2-strong); color: var(--on-accent2); }
+.ap-waiting .ap-stepper-num { background: var(--sun-soft); color: var(--sun-ink); }
+.ap-attention .ap-stepper-num { background: var(--pink-soft); color: var(--red-strong); }
+.ap-section { scroll-margin-top: 90px; }
+.ap-section h3 { margin: 0; font-size: 1.1rem; }
+.ap-section h4 { margin: 18px 0 4px; font-size: 1rem; }
+.ap-welcome { margin: 6px 0 4px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--mint-soft); color: var(--mint-banner-ink); font-size: 0.92rem; font-weight: 700; }
+.ap-line { margin: 8px 0 0; }
+.ap-ok { color: var(--accent2-text); font-weight: 700; }
+.ap-note { margin: 10px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); color: var(--sun-ink); font-size: 0.92rem; }
+.ap-note p { margin: 0 0 8px; }
+.ap-block { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 6px; }
+.ap-count { font-weight: 700; }
+.ap-evidence { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
+.ap-evidence li { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--bg); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 0.9rem; }
+.ap-evidence-main { display: grid; gap: 2px; flex: 1 1 220px; min-width: 0; }
+.ap-evidence-kind { font-weight: 800; }
+.ap-evidence-what { overflow-wrap: anywhere; }
+.ap-ev-form { grid-template-columns: minmax(0, 1fr); }
+.ap-optional { margin-top: 14px; }
+.ap-optional summary { cursor: pointer; font-weight: 800; color: var(--accent-text); min-height: 44px; display: flex; align-items: center; }
+.ap-submit { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 12px; }
+.ap-missing { padding: 10px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); color: var(--sun-ink); font-size: 0.92rem; margin-bottom: 10px; }
+.ap-missing p { margin: 0 0 4px; }
+.ap-missing ul { margin: 0; padding-left: 20px; }
+.ap-missing .linklike { color: inherit; text-decoration: underline; }
+.ap-submit .btn[aria-disabled="true"] { opacity: 0.65; }
+.ap-summary { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 10px 0; font-size: 0.92rem; }
+.ap-summary dt { font-weight: 800; }
+.ap-summary dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+@media (max-width: 560px) {
+  .ap-stepper { grid-template-columns: minmax(0, 1fr); }
+  .ap-summary { grid-template-columns: minmax(0, 1fr); }
+  .ap-summary dd { margin-bottom: 6px; }
+}
 @media (max-width: 560px) {
   .vt-step { grid-template-columns: 32px minmax(0, 1fr); gap: 10px; padding: 14px; }
   .vt-icon { width: 32px; height: 32px; font-size: 0.95rem; }
@@ -792,6 +845,17 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 }
 .mv-decide input:focus, .mv-reject input:focus { border-color: var(--accent); }
 .mv-credentials, .mv-kyc { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin: 10px 0; }
+/* The automatic analysis, on top of an application (admin) */
+.mv-analysis { background: var(--mint-soft); border: 1px solid var(--mint-line); border-radius: var(--radius-sm); padding: 12px 14px; margin: 0 0 12px; }
+.mv-analysis .mv-step-head { justify-content: flex-start; }
+.mv-ai-summary { margin: 8px 0; font-weight: 700; }
+.mv-scores { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.86rem; }
+.mv-scores th { text-align: left; font-weight: 600; padding: 3px 8px 3px 0; white-space: nowrap; width: 1%; }
+.mv-scores td { padding: 3px 0; }
+.mv-scores td:last-child { width: 3em; text-align: right; font-weight: 800; }
+.mv-score-bar { display: block; height: 8px; border-radius: 999px; background: var(--accent2-strong); max-width: 100%; }
+.mv-application, .mv-evidence-list { margin: 0 0 12px; }
+.mv-costs p { margin: 0 0 14px; }
 .mv-docs { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
 .mv-docs li { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; word-break: break-word; }
 .mv-audit { margin-top: 14px; }

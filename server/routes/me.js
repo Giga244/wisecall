@@ -13,6 +13,7 @@ const ledger = require('../ledger');
 const rules = require('../verification/rules');
 const verification = require('../verification/steps');
 const names = require('../verification/names');
+const experience = require('../verification/experience');
 const { getUserById, updateUser } = require('../models');
 const config = require('../config');
 
@@ -24,15 +25,16 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   res.json({ user: user ? meProfile(user) : null });
 }));
 
-const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'theme', 'proofUrl', 'sampleAnswer'];
+const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'theme', 'sampleAnswer'];
 const NICHES = rules.nicheKeys();
-const MENTOR_APPLICATION_FIELDS = ['niche', 'roleTitle', 'price', 'proofUrl', 'sampleAnswer'];
-const URL_RE = /^https?:\/\/.+\..+/i;
+// Part of the mentor application (step 2, "Experience"): they cannot change while it is being reviewed or once it is approved (the
+// mentor presses "Edit my application" first). The price is not part of the application and can change at any time.
+const APPLICATION_FIELDS = ['niche', 'roleTitle', 'sampleAnswer'];
 
 router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const updates = req.body || {};
   // Every text field must really be text (or null), never an object or array.
-  for (const field of ['name', 'bio', 'roleTitle', 'proofUrl', 'sampleAnswer', 'niche', 'language', 'theme']) {
+  for (const field of ['name', 'bio', 'roleTitle', 'sampleAnswer', 'niche', 'language', 'theme']) {
     const v = updates[field];
     if (v !== undefined && v !== null && typeof v !== 'string') return res.status(400).json({ error: 'invalid_field', field });
   }
@@ -58,12 +60,8 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     } else if (field === 'language') {
       if (!['en', 'ka'].includes(updates.language)) return res.status(400).json({ error: 'invalid_language' });
       patch.language = updates.language;
-    } else if (field === 'proofUrl') {
-      const value = String(updates.proofUrl || '').trim();
-      if (value && (!URL_RE.test(value) || value.length > 500)) return res.status(400).json({ error: 'invalid_proof_url' });
-      patch.proofUrl = value || null;
     } else if (field === 'sampleAnswer') {
-      patch.sampleAnswer = String(updates.sampleAnswer || '').trim().slice(0, 3000) || null;
+      patch.sampleAnswer = String(updates.sampleAnswer || '').trim().slice(0, rules.LIMITS.sampleMax) || null;
     } else if (field === 'name') {
       const value = String(updates.name || '').trim().slice(0, 100);
       if (!value) return res.status(400).json({ error: 'missing_fields' });
@@ -83,37 +81,22 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
 
   const next = { ...existing, ...patch };
   const isMentor = next.role === 'mentor' || next.role === 'both';
-  const touchedMentorFields = MENTOR_APPLICATION_FIELDS.some((f) => updates[f] !== undefined);
+  const changedApplication = APPLICATION_FIELDS.filter((f) => patch[f] !== undefined && patch[f] !== existing[f]);
 
-  // Strict rule: saving mentor details needs a verified email, a proof link and a real sample answer.
-  if (touchedMentorFields && isMentor) {
+  // Saving mentor details needs a verified email, and the application cannot change while it is reviewed or approved.
+  if (changedApplication.length && isMentor) {
     if (!existing.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
-    if (!next.proofUrl) return res.status(400).json({ error: 'proof_required' });
-    if (!next.sampleAnswer || next.sampleAnswer.length < 80) return res.status(400).json({ error: 'sample_required' });
-  }
-
-  // A complete application goes into the review queue. Changing what an admin already judged (niche,
-  // title, proof link, sample answer) sends a live mentor back to review; changing the price does not.
-  const complete = Boolean(next.roleTitle && next.niche && next.price && next.proofUrl && next.sampleAnswer);
-  const changed = ['niche', 'roleTitle', 'proofUrl', 'sampleAnswer'].filter((f) => patch[f] !== undefined && patch[f] !== existing[f]);
-  const canReview = existing.verificationStatus !== 'suspended';
-  if (touchedMentorFields && isMentor && complete && canReview && (changed.length || ['none', 'rejected'].includes(existing.verificationStatus))) {
-    patch.verificationStatus = 'pending';
-    patch.verificationNote = null;
+    if (experience.isLocked(existing)) return res.status(409).json({ error: 'application_locked' });
   }
 
   const user = await updateUser(existing.id, patch);
-
-  // The two steps the mentor completes here go to an admin (again, when they were edited).
-  if (touchedMentorFields && isMentor && complete) {
-    const actor = verification.mentorActor(user);
-    const current = await verification.loadSteps(user.id);
-    if (!current.proof_link || changed.includes('proofUrl')) await verification.setStep(user.id, 'proof_link', 'pending', { evidence: { url: user.proofUrl }, replaceEvidence: true, actor });
-    if (!current.sample_answer || changed.includes('sampleAnswer')) await verification.setStep(user.id, 'sample_answer', 'pending', { evidence: { length: user.sampleAnswer.length }, replaceEvidence: true, actor });
-    await verification.syncEmailStep(user);
+  if (isMentor && changedApplication.length) await verification.syncEmailStep(user);
+  // A changed name is compared with the ID again (a mentor fixing a name that did not match is checked at once).
+  if (isMentor && patch.name !== undefined && patch.name !== existing.name) {
+    await names.recompute(user.id);
+    // Evidence pages are checked for the mentor's name, so an application already analysed is analysed again with the new name.
+    if (experience.submitted(user)) require('../verification/analysis').afterNameChange(user.id);
   }
-  // A changed name is compared with the ID again.
-  if (isMentor && patch.name !== undefined && patch.name !== existing.name) await names.recompute(user.id);
   res.json({ user: meProfile(user) });
 }));
 

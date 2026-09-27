@@ -205,6 +205,10 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `TBC_API_KEY`, `TBC_CLIENT_ID`, `TBC_CLIENT_SECRET` | From TBC (when `PAYMENT_PROVIDER=tbc`). Required for `live`, not for prelaunch |
 | `KYC_PROVIDER` | `didit`. **Needed for `LAUNCH_MODE=live`; leave it out in prelaunch** (mentors then see "ID checks open soon") |
 | `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | From Didit ([step 2b](#2b-set-up-id-verification-for-mentors-didit)). Required for `live`, not for prelaunch |
+| `ANTHROPIC_API_KEY` | Optional but recommended: the key from [console.anthropic.com](https://console.anthropic.com) (Settings → API keys). With it, every mentor application gets an AI summary and scores for the admin (about 2 US cents per application with the default model; the admin panel shows what the reviews cost). Without it the AI part is skipped and every application goes to a person with the link checks only. The AI never receives ID data, dates of birth, emails, phone numbers, IBANs or documents |
+| `ANTHROPIC_MODEL` | Optional. Default `claude-sonnet-5`. Set another model name to switch |
+| `ANTHROPIC_FALLBACK_MODEL` | Optional. Default `claude-opus-5`: asked once when the first model declines for safety reasons. Empty = no second try |
+| `AUTO_APPROVE` | `off` (the default): a person approves every mentor. `on`: the analysis approves a mentor by itself only when **every** rule in `server/verification/rules.js` holds; never in a regulated field (medicine, law, finance, psychology, dentistry, pharmacy, nursing, accounting), and never a rejection |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional: both, or neither. From Google Cloud Console ([step 2c](#2c-sign-in-with-google-optional)). Empty = no "Continue with Google" button |
 | `PLATFORM_FEE_PERCENT` | `20` (Wisecall's cut; the mentor gets the rest) |
 | `ANSWER_DEADLINE_DAYS` | `7` (also written in the Terms; keep them in step) |

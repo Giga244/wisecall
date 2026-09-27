@@ -91,6 +91,24 @@ const config = {
   ADMIN_2FA: (env.ADMIN_2FA || 'required').trim().toLowerCase(),
   ADMIN_2FA_SESSION_HOURS: int(env.ADMIN_2FA_SESSION_HOURS, 12),
 
+  // Mentor verification (rules v2, server/verification/rules.js).
+  // AUTO_APPROVE=on lets the analysis approve a mentor by itself when EVERY condition in rules.js holds (never in a regulated niche).
+  // Off (the default): every application is approved or rejected by a person, with the analysis to help.
+  AUTO_APPROVE_SETTING: (env.AUTO_APPROVE || 'off').trim().toLowerCase(),
+  // The AI part of the analysis (Claude, by Anthropic). No key: that part is skipped and the application goes to a person.
+  ANTHROPIC_API_KEY: (env.ANTHROPIC_API_KEY || '').trim(),
+  ANTHROPIC_MODEL: (env.ANTHROPIC_MODEL || 'claude-sonnet-5').trim(),
+  // Asked once more when the first model declines to answer for safety reasons. Empty = no second try.
+  ANTHROPIC_FALLBACK_MODEL: (env.ANTHROPIC_FALLBACK_MODEL === undefined ? 'claude-opus-5' : env.ANTHROPIC_FALLBACK_MODEL).trim(),
+  // Optional: low | medium | high (how much the model thinks; lower is cheaper). Empty = the model's default.
+  ANTHROPIC_EFFORT: (env.ANTHROPIC_EFFORT || '').trim().toLowerCase(),
+  // Only outside production: tests point the AI at a fake server. Production always talks to Anthropic itself.
+  ANTHROPIC_BASE_URL: IS_PROD ? 'https://api.anthropic.com' : ((env.ANTHROPIC_BASE_URL || '').trim() || 'https://api.anthropic.com'),
+  // Domain ages for the link checks come from RDAP (public registration data). Tests point it at a fake server.
+  RDAP_BASE_URL: (IS_PROD ? '' : (env.RDAP_BASE_URL || '').trim()) || 'https://rdap.org/domain/',
+  // Development only: let the link checker reach addresses on this computer (the tests' fake web pages). Refused in production.
+  LINK_CHECK_ALLOW_PRIVATE: env.LINK_CHECK_ALLOW_PRIVATE === '1',
+
   // Public social links shown in the footer. An empty one is not shown; a value must be an https address.
   SOCIAL_URLS: Object.fromEntries(
     ['facebook', 'instagram', 'linkedin', 'x', 'tiktok', 'youtube']
@@ -127,6 +145,8 @@ Object.defineProperty(config, 'LAUNCH_MODE', {
 });
 
 config.ADMIN_2FA_REQUIRED = config.ADMIN_2FA !== 'off';
+config.AUTO_APPROVE = config.AUTO_APPROVE_SETTING === 'on';
+config.AI_REVIEW_ENABLED = Boolean(config.ANTHROPIC_API_KEY);
 config.GOOGLE_ENABLED = Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET);
 config.GOOGLE_CALLBACK_URL = `${config.PUBLIC_URL}/api/auth/google/callback`; // must be listed in Google Cloud Console
 
@@ -154,6 +174,11 @@ if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_P
 if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');
 if (Boolean(config.GOOGLE_CLIENT_ID) !== Boolean(config.GOOGLE_CLIENT_SECRET)) problems.push('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must both be set (Google sign-in) or both be empty (no Google button)');
 if (!['prelaunch', 'live', 'auto'].includes(config.LAUNCH_MODE_SETTING)) problems.push('LAUNCH_MODE must be prelaunch or live (or empty: prelaunch until a mentor is listed)');
+if (!['on', 'off'].includes(config.AUTO_APPROVE_SETTING)) problems.push('AUTO_APPROVE must be on or off (off: a person approves every mentor)');
+if (config.ANTHROPIC_EFFORT && !['low', 'medium', 'high'].includes(config.ANTHROPIC_EFFORT)) problems.push('ANTHROPIC_EFFORT must be low, medium or high (or empty)');
+if (!/^[a-z0-9][a-z0-9.\-]*$/i.test(config.ANTHROPIC_MODEL)) problems.push('ANTHROPIC_MODEL must be a model name such as claude-sonnet-5');
+if (config.ANTHROPIC_FALLBACK_MODEL && !/^[a-z0-9][a-z0-9.\-]*$/i.test(config.ANTHROPIC_FALLBACK_MODEL)) problems.push('ANTHROPIC_FALLBACK_MODEL must be a model name (or empty)');
+if (IS_PROD && config.LINK_CHECK_ALLOW_PRIVATE) problems.push('LINK_CHECK_ALLOW_PRIVATE is for tests on a developer\'s computer and is not allowed in production');
 
 if (IS_PROD) {
   const secret = env.SESSION_SECRET || env.JWT_SECRET;

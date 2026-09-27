@@ -93,10 +93,10 @@ function compareNames(a, b, threshold = LIMITS.nameMatchThreshold) {
 }
 
 // ---- Recomputing the name-match step ---------------------------------------------------------
-// Compares the ID name with the profile name, the licence name and the payout account holder. All
-// matching: the step passes by itself. Any mismatch: the step waits for an admin and a flag is raised,
-// and it is never approved by the computer. A mismatch an admin already approved is not raised again
-// unless one of the names changes.
+// The name on the ID is compared with the profile name and (regulated niches) the name on the licence. All matching: the step passes
+// by itself. A mismatch is NEVER a rejection: the step waits, the mentor can correct their profile name (it is compared again at once),
+// or an admin looks at it. The payout account holder is compared too, but only for payouts: a different name there holds the money
+// until an admin checks it, and has no effect on the application.
 const crypto = require('crypto');
 const { query } = require('../db');
 const steps = require('./steps');
@@ -115,22 +115,35 @@ async function licenseName(userId) {
   }
 }
 
-const IDENTITY_SOURCES = new Set(['profile', 'license']);
+// A keyed hash, so the names cannot be guessed back from it. It only tells us whether the inputs changed.
+const hashOf = (parts) => crypto.createHmac('sha256', config.DATA_ENCRYPTION_KEY).update(parts.join('|').toLowerCase()).digest('hex');
+
+// The payout name only matters for paying out: its own flag, which blocks payouts until an admin closes it.
+async function recomputePayout(user, idName) {
+  if (!user.payoutName) return flags.resolveFlags(user.id, ['payout_name_mismatch'], steps.SYSTEM, 'No payout account');
+  const r = compareNames(idName, user.payoutName);
+  if (r.match) return flags.resolveFlags(user.id, ['payout_name_mismatch'], steps.SYSTEM, 'The payout name now matches');
+  const opened = await flags.openFlag(user.id, 'payout_name_mismatch', { mismatches: [{ source: 'iban', name: user.payoutName, score: r.score }] });
+  if (opened) {
+    require('../notify').notifyAdmins('A payout account name does not match the ID',
+      `<p>${user.name} (${user.email}): the payout account holder "${user.payoutName}" does not match the name on the ID (${Math.round(r.score * 100)}%).</p><p>Payouts to this mentor are held until an admin checks it.</p>`);
+  }
+  return opened;
+}
 
 async function recompute(userId) {
   const user = await getUserById(userId);
   if (!user || !(user.role === 'mentor' || user.role === 'both')) return null;
   const idName = await kyc.verifiedNameFor(user.id);
   if (!idName) return null; // nothing to compare against until the ID check is approved
+  await recomputePayout(user, idName);
 
   const candidates = [
     { source: 'profile', label: 'Profile name', name: user.name },
-    { source: 'license', label: 'License name', name: await licenseName(user.id) },
-    { source: 'iban', label: 'Payout account holder', name: user.payoutName }
+    { source: 'license', label: 'License name', name: await licenseName(user.id) }
   ].filter((c) => c.name);
   const results = candidates.map((c) => ({ ...c, ...compareNames(idName, c.name) }));
-  // A keyed hash, so the names cannot be guessed back from it. It only tells us whether the inputs changed.
-  const inputsHash = crypto.createHmac('sha256', config.DATA_ENCRYPTION_KEY).update([idName, ...candidates.map((c) => `${c.source}:${c.name}`)].join('|').toLowerCase()).digest('hex');
+  const inputsHash = hashOf([idName, ...candidates.map((c) => `${c.source}:${c.name}`)]);
 
   const current = (await steps.loadSteps(user.id)).name_match;
   // An admin already looked at exactly these names and approved them: leave that decision alone.
@@ -145,33 +158,29 @@ async function recompute(userId) {
       : `${r.label} DOES NOT MATCH the ID: "${r.name}" (${Math.round(r.score * 100)}%)`))
   };
   const mismatches = results.filter((r) => !r.match);
+  const before = current ? current.status : null;
 
   if (!mismatches.length) {
     await steps.setStep(user.id, 'name_match', 'passed', { evidence, replaceEvidence: true, reason: 'All names match the ID', actor: steps.SYSTEM });
-    await flags.resolveFlags(user.id, ['name_mismatch', 'payout_name_mismatch'], steps.SYSTEM, 'The names now match');
+    await flags.resolveFlags(user.id, ['name_mismatch'], steps.SYSTEM, 'The names now match');
+    if (before !== 'passed') await require('./analysis').afterIdentityChange(user.id);
     return { match: true };
   }
 
-  await steps.setStep(user.id, 'name_match', 'pending', { evidence, replaceEvidence: true, reason: 'A name does not match the ID: waiting for an admin', actor: steps.SYSTEM });
-  const identityBad = mismatches.filter((m) => IDENTITY_SOURCES.has(m.source));
-  const payoutBad = mismatches.filter((m) => m.source === 'iban');
+  await steps.setStep(user.id, 'name_match', 'pending', { evidence, replaceEvidence: true, reason: 'A name does not match the ID: the mentor can correct it, or an admin checks it', actor: steps.SYSTEM });
   const detail = { mismatches: mismatches.map((m) => ({ source: m.source, name: m.name, score: m.score })) };
-  let newFlag = false;
-  if (identityBad.length) newFlag = (await flags.openFlag(user.id, 'name_mismatch', detail)) || newFlag;
-  else await flags.resolveFlags(user.id, ['name_mismatch'], steps.SYSTEM, 'The names now match');
-  if (payoutBad.length) newFlag = (await flags.openFlag(user.id, 'payout_name_mismatch', detail)) || newFlag;
-  else await flags.resolveFlags(user.id, ['payout_name_mismatch'], steps.SYSTEM, 'The payout name now matches');
+  const newFlag = await flags.openFlag(user.id, 'name_mismatch', detail);
 
-  // A live mentor whose public name no longer matches the ID goes back to review. (A payout-name
-  // mismatch alone only blocks payouts, see the admin payout route.)
-  if (identityBad.length && user.verificationStatus === 'verified') {
+  // A live mentor whose public name no longer matches the ID goes back to review.
+  if (user.verificationStatus === 'verified') {
     await updateUser(user.id, { verificationStatus: 'pending' });
     await steps.audit(user.id, steps.SYSTEM, 'delisted', { from: 'verified', to: 'pending', step: 'name_match', reason: 'The name no longer matches the ID' });
   }
   if (newFlag) {
     require('../notify').notifyAdmins('A mentor name does not match their ID',
-      `<p>${user.name} (${user.email}): ${evidence.results.join('; ')}.</p><p>Open the admin panel to review it. It was not approved automatically.</p>`);
+      `<p>${user.name} (${user.email}): ${evidence.results.join('; ')}.</p><p>It was not approved (or rejected) automatically: the mentor can correct their profile name, or you can check it in the admin panel.</p>`);
   }
+  if (before === 'passed') await require('./analysis').afterIdentityChange(user.id);
   return { match: false, mismatches };
 }
-module.exports = { transliterate, tokens, similarity, compareNames, recompute };
+module.exports = { transliterate, tokens, canon, similarity, compareNames, recompute };

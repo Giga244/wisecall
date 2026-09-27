@@ -10,11 +10,7 @@
 
   const becomeMentorCheckbox = document.getElementById('becomeMentor');
   const mentorForm = document.getElementById('mentorForm');
-  const roleTitleInput = document.getElementById('roleTitle');
-  const nicheSelect = document.getElementById('niche');
   const priceInput = document.getElementById('price');
-  const proofUrlInput = document.getElementById('proofUrl');
-  const sampleInput = document.getElementById('sampleAnswer');
   const verificationBox = document.getElementById('verificationBox');
   const payoutCard = document.getElementById('payoutCard');
   const payoutForm = document.getElementById('payoutForm');
@@ -73,11 +69,7 @@
     const isMentor = u.role === 'mentor' || u.role === 'both';
     becomeMentorCheckbox.checked = isMentor;
     mentorForm.style.display = isMentor ? 'grid' : 'none';
-    roleTitleInput.value = u.roleTitle || '';
-    nicheSelect.value = u.niche || 'business';
     priceInput.value = u.price || '';
-    proofUrlInput.value = u.proofUrl || '';
-    sampleInput.value = u.sampleAnswer || '';
     renderVerification(u);
   }
 
@@ -132,18 +124,20 @@
   // ---- Mentor application progress, shown above the tabs ------------------------------------------------------------
   const progressBox = document.getElementById('appProgress');
   let lastVerification = null;
-  function drawProgress(v) {
-    if (v) lastVerification = v;
+  function drawProgress(fresh) {
+    if (fresh) lastVerification = fresh;
     if (!isMentorUser(user) || !lastVerification) { progressBox.hidden = true; return; }
-    const reqs = lastVerification.requirements;
-    const total = reqs.length;
-    const done = reqs.filter((r) => (r.type === 'step' ? r.status === 'passed' : r.satisfied)).length;
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    const status = lastVerification.status;
+    const v = lastVerification;
+    const passed = (s) => (v.requirements.find((r) => r.step === s) || {}).status === 'passed';
+    const app = v.application || { locked: false, stage: 'not_submitted' };
+    const total = 3;
+    const done = [['email', 'id_kyc', 'age', 'name_match'].every(passed), app.locked, app.stage === 'approved'].filter(Boolean).length;
+    const pct = Math.round((done / total) * 100);
+    const status = v.status;
     const verified = status === 'verified';
     const tone = verified ? 'answered' : (status === 'rejected' || status === 'suspended' ? 'rejected' : 'pending_payment');
-    const label = verified ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : (status === 'suspended' ? 'vt.status.suspended' : (status === 'rejected' ? 'vt.status.rejected' : (lastVerification.ready ? 'vt.status.pendingReady' : 'vt.status.pending')));
-    const text = t('vt.progress').replace('{done}', done).replace('{total}', total);
+    const label = verified ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : (status === 'suspended' ? 'vt.status.suspended' : (status === 'rejected' ? 'vt.status.rejected' : (app.locked ? 'ap.status.inReview' : 'vt.status.pending')));
+    const text = t('ap.progressText').replace('{done}', done).replace('{total}', total);
     progressBox.hidden = false;
     progressBox.innerHTML = `
       <div class="app-progress-head">
@@ -212,28 +206,17 @@
   mentorForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     try {
-      const data = await WisecallAPI.apiFetch('/me', {
-        method: 'PATCH',
-        body: {
-          roleTitle: roleTitleInput.value.trim(),
-          niche: nicheSelect.value,
-          price: Number(priceInput.value),
-          proofUrl: proofUrlInput.value.trim(),
-          sampleAnswer: sampleInput.value.trim()
-        }
-      });
+      const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price: Number(priceInput.value) } });
       Object.assign(user, data.user);
       renderVerification(user);
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
-      const map = {
-        invalid_proof_url: 'settings.mentor.proofUrl.invalid',
-        proof_required: 'settings.mentor.proofUrl.required',
-        sample_required: 'settings.mentor.sample.required',
-        email_not_verified: 'settings.mentor.emailNotVerified'
-      };
-      WisecallNav.showToast(t(map[e.code] || 'toast.error'));
+      WisecallNav.showToast(t(e.code === 'invalid_price' ? 'settings.mentor.price.invalid' : 'toast.error'));
     }
+  });
+  mentorForm.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-goto-tab]');
+    if (btn) selectTab(btn.dataset.gotoTab, { focus: true });
   });
 
   document.getElementById('passwordForm').addEventListener('submit', async (ev) => {

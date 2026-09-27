@@ -2,7 +2,7 @@
 // English and Georgian, and the rest of the application still works. Runs its own server: prelaunch, a bank named but without keys, Didit named
 // but without keys (a development server, so the sign-up code is on screen).
 const { test, expect } = require('@playwright/test');
-const { startServer, SAMPLE } = require('../tests/helpers');
+const { startServer } = require('../tests/helpers');
 
 let srv;
 test.beforeAll(async () => {
@@ -25,22 +25,22 @@ test('a mentor applies and sees "ID checks open soon" (English and Georgian); no
   await page.waitForURL((u) => u.pathname === '/dashboard.html');
 
   const headers = { 'X-Requested-With': 'wisecall' };
-  const apply = await page.request.patch(`${srv.base}/api/me`, { headers, data: { becomeMentor: true, roleTitle: 'Designer', niche: 'design', price: 25, proofUrl: 'https://linkedin.com/in/early', sampleAnswer: SAMPLE } });
+  const apply = await page.request.patch(`${srv.base}/api/me`, { headers, data: { becomeMentor: true, price: 25 } });
   expect(apply.status()).toBe(200);
 
   await page.goto(`${srv.base}/settings.html?tab=verification`);
-  const step = page.locator('.vt-step[data-step="id_kyc"]');
+  const step = page.locator('#ap-identity');
   await expect(step.locator('.vt-soon')).toContainText('ID checks open soon.');
   await expect(step.locator('.vt-soon')).toContainText('fill in the rest of your application now');
   await expect(step.locator('[data-kyc-start]')).toHaveCount(0);
-  await expect(step.locator('details')).toHaveCount(0); // no "Do this step": there is nothing to do yet
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `${process.env.E2E_SHOTS}/id-checks-soon-en.png`, fullPage: true });
 
-  // the rest works: a portfolio link is accepted
-  const pf = page.locator('.vt-step[data-step="portfolio"]');
-  await pf.locator('input[name="url"]').fill('https://example.com/portfolio');
-  await pf.locator('form[data-form="portfolio"] button[type="submit"]').click();
-  await expect(page.locator('.vt-step[data-step="portfolio"]')).toHaveClass(/vt-pending/);
+  // the rest works: a portfolio link is accepted as evidence
+  const ev = page.locator('#ap-experience form[data-form="evidence"]');
+  await ev.locator('[name="kind"]').selectOption('portfolio');
+  await ev.locator('[name="url"]').fill('https://early-mentor.invalid/portfolio');
+  await ev.locator('button[type="submit"]').click();
+  await expect(page.locator('#ap-experience .ap-evidence li')).toHaveCount(1);
 
   // and the server agrees that the ID check is closed
   expect((await page.request.post(`${srv.base}/api/verification/kyc/start`, { headers })).status()).toBe(503);

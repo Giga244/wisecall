@@ -1,4 +1,4 @@
-// Video interviews for regulated niches: admin slots, mentor booking, meeting link, results, cancellation.
+// Video interviews, only when an admin asks a mentor for one: admin slots, mentor booking, meeting link, results, cancellation.
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
@@ -19,6 +19,12 @@ async function newSlot(hours) {
   const r = await admin.api('/admin/interviews', { method: 'POST', body: { startsAt: inHours(hours) } });
   assert.equal(r.status, 201, r.text);
   return r.slots[0];
+}
+// An admin asks this mentor for a video interview (their application is waiting for a decision).
+async function ask(id) {
+  await pool.query(`UPDATE users SET verification_status = 'pending' WHERE id = $1`, [id]);
+  const r = await admin.api(`/admin/mentors/${id}/interview/request`, { method: 'POST', body: { reason: 'We would like to meet you before deciding' } });
+  assert.equal(r.status, 200, r.text);
 }
 async function mentorOf(name, email, niche, language) {
   const c = await signupByEmail(fake, base, name, email, language);
@@ -66,11 +72,20 @@ describe('publishing slots', () => {
 describe('booking', () => {
   let slot, other;
 
-  test('only niches that require an interview can book one', async () => {
+  test('only a mentor an admin asked can book one (not required by default, not even in a regulated niche)', async () => {
     slot = await newSlot(72);
     assert.equal((await designer.api('/verification/interview')).required, false);
     assert.equal((await designer.api('/verification/interview/book', { method: 'POST', body: { slotId: slot.id } })).error, 'not_required');
+    assert.equal((await doctor.api('/verification/interview')).required, false);
     assert.equal((await seeker.api('/verification/interview')).error, 'not_a_mentor');
+    assert.equal((await seeker.api(`/admin/mentors/${doctorId}/interview/request`, { method: 'POST', body: { reason: 'Let me in please' } })).error, 'not_admin');
+    await pool.query(`UPDATE users SET verification_status = 'pending' WHERE id = $1`, [doctorId]);
+    assert.equal((await admin.api(`/admin/mentors/${doctorId}/interview/request`, { method: 'POST', body: { reason: 'no' } })).error, 'reason_required');
+    await ask(doctorId);
+    await ask(lawyerId);
+    assert.equal((await doctor.api('/verification/interview')).required, true);
+    const mail = await fake.waitFor('levan@example.com', 'ვიდეოზარი');
+    assert.match(mail.body.html, /We would like to meet you before deciding/, 'the reason is in the email');
   });
 
   test('the ID check must be passed first', async () => {
@@ -120,6 +135,7 @@ describe('booking', () => {
     other = fresh;
     const l2 = await mentorOf('Second Lawyer', 'second@example.com', 'law', 'en');
     await passKyc(l2.id);
+    await ask(l2.id);
     const results = await Promise.all([
       lawyer.api('/verification/interview/book', { method: 'POST', body: { slotId: fresh.id } }),
       l2.c.api('/verification/interview/book', { method: 'POST', body: { slotId: fresh.id } })
@@ -175,7 +191,7 @@ describe('meeting link, result and audit trail', () => {
   test('everything is in the mentor\'s audit log', async () => {
     const d = await admin.api(`/admin/mentors/${doctorId}/verification`);
     const actions = d.audit.map((a) => a.action);
-    for (const a of ['interview_booked', 'interview_link_sent', 'step_passed']) assert.ok(actions.includes(a), `${a} is logged`);
+    for (const a of ['interview_requested', 'interview_booked', 'interview_link_sent', 'step_passed']) assert.ok(actions.includes(a), `${a} is logged`);
     const passed = d.audit.find((a) => a.action === 'step_passed' && a.step === 'video_interview');
     assert.equal(passed.by, 'qa-admin@example.com');
     assert.ok(d.requirements.find((r) => r.step === 'video_interview'));
@@ -202,15 +218,18 @@ describe('meeting link, result and audit trail', () => {
 });
 
 describe('cancelling', () => {
-  test('a mentor can give a slot back well ahead of time; it opens again and the step is withdrawn', async () => {
+  test('a mentor can give a slot back well ahead of time; it opens again and the admin\'s request stays', async () => {
     const s = await newSlot(300);
     const m = await mentorOf('Third Doctor', 'third@example.com', 'medicine', 'en');
     await passKyc(m.id);
+    await ask(m.id);
     assert.equal((await m.c.api('/verification/interview/book', { method: 'POST', body: { slotId: s.id } })).status, 200);
     assert.equal((await m.c.api('/verification/interview/cancel', { method: 'POST' })).status, 200);
     assert.equal((await slotRow(s.id)).status, 'open');
     assert.equal((await slotRow(s.id)).booked_by, null);
-    assert.equal(await stepRow(m.id, 'video_interview'), undefined);
+    const back = await stepRow(m.id, 'video_interview');
+    assert.equal(back.status, 'pending');
+    assert.deepEqual(back.evidence, { requested: true }, 'still asked for, no booking');
     assert.equal((await m.c.api('/verification/interview/cancel', { method: 'POST' })).error, 'not_found');
 
     assert.equal((await m.c.api('/verification/interview/book', { method: 'POST', body: { slotId: s.id } })).status, 200);
@@ -222,11 +241,12 @@ describe('cancelling', () => {
     const s = await newSlot(310);
     const m = await mentorOf('Fourth Doctor', 'fourth@example.com', 'medicine', 'en');
     await passKyc(m.id);
+    await ask(m.id);
     assert.equal((await m.c.api('/verification/interview/book', { method: 'POST', body: { slotId: s.id } })).status, 200);
     assert.equal((await admin.api(`/admin/interviews/${s.id}/cancel`, { method: 'POST', body: { reason: '' } })).error, 'reason_required');
     assert.equal((await admin.api(`/admin/interviews/${s.id}/cancel`, { method: 'POST', body: { reason: 'The interviewer is unwell' } })).status, 200);
     assert.equal((await slotRow(s.id)).status, 'cancelled');
-    assert.equal(await stepRow(m.id, 'video_interview'), undefined);
+    assert.deepEqual((await stepRow(m.id, 'video_interview')).evidence, { requested: true });
     const mail = await fake.waitFor('fourth@example.com', 'cancelled');
     assert.match(mail.body.html, /The interviewer is unwell/);
     assert.equal((await m.c.api('/verification/interview')).canBook, true);

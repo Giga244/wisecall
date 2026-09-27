@@ -1,4 +1,4 @@
-// Professional credentials: licence details, private documents, work email, portfolio and company ID.
+// Professional credentials: licence details, private documents, the optional work email, and evidence (a portfolio, a company code).
 // A Medicine mentor (regulated niche), a Business mentor and a Design mentor (standard niche) are used.
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
@@ -122,8 +122,8 @@ describe('private documents', () => {
     assert.equal(r.error, 'file_too_large');
   });
 
-  test('only the steps a niche asks for accept documents', async () => {
-    assert.equal((await upload(doctor, 'diploma', JPEG, { name: 'd.jpg', type: 'image/jpeg' })).error, 'not_required');
+  test('only the steps a niche asks for accept documents (a diploma, as evidence, is open to everyone)', async () => {
+    assert.equal((await upload(designer, 'license_document', PDF)).error, 'not_required', 'a licence document is for regulated niches');
     assert.equal((await upload(doctor, 'name_match', PDF)).error, 'unknown_step');
     assert.equal((await upload(seeker, 'diploma', JPEG, { type: 'image/jpeg' })).error, 'not_a_mentor');
     assert.equal((await upload(client(base), 'diploma', JPEG, { type: 'image/jpeg' })).status, 401);
@@ -235,64 +235,73 @@ describe('work email', () => {
     assert.equal((await designer.api('/verification/work-email/verify', { method: 'POST', body: { code: start.devCode } })).error, 'expired');
   });
 
-  test('the step is only for niches that allow it (Medicine needs a licence instead)', async () => {
-    assert.equal((await doctor.api('/verification/work-email', { method: 'POST', body: { email: 'levan@clinic.example' } })).error, 'not_required');
+  test('a work email is optional in every niche: it only adds a badge', async () => {
+    const r = await doctor.api('/verification/work-email', { method: 'POST', body: { email: 'levan@clinic.example' } });
+    assert.equal(r.status, 200, r.text);
+    assert.equal((await doctor.api('/verification')).requirements.some((x) => x.step === 'work_email'), false, 'never required');
+  });
+
+  test('a confirmed work email also counts as evidence (verified automatically; the address itself is not shown)', async () => {
+    const ev = (await pool.query(`SELECT * FROM mentor_evidence WHERE user_id = $1 AND kind = 'work_email'`, [designerId])).rows;
+    assert.equal(ev.length, 1);
+    assert.equal(ev[0].check_status, 'ok');
+    assert.equal(ev[0].auto_verified, true);
+    assert.equal(ev[0].check_result.domain, 'studio.example');
   });
 });
 
-describe('portfolio and company ID', () => {
-  test('a Design mentor can submit a portfolio link; only web addresses are accepted', async () => {
-    assert.equal((await designer.api('/verification/portfolio', { method: 'POST', body: { url: 'javascript:alert(1)' } })).error, 'invalid_url');
-    assert.equal((await designer.api('/verification/portfolio', { method: 'POST', body: { url: 'not a url' } })).error, 'invalid_url');
-    assert.equal((await designer.api('/verification/portfolio', { method: 'POST', body: { url: 'https://behance.net/nino' } })).status, 200);
-    const row = await stepRow(designerId, 'portfolio');
-    assert.equal(row.status, 'pending');
-    assert.equal(row.evidence.url, 'https://behance.net/nino');
-    assert.equal((await doctor.api('/verification/portfolio', { method: 'POST', body: { url: 'https://behance.net/x' } })).error, 'not_required');
+describe('evidence: a portfolio link, a company code', () => {
+  test('any mentor can add a portfolio link as evidence; only web addresses are accepted', async () => {
+    assert.equal((await designer.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'javascript:alert(1)' } })).error, 'invalid_url');
+    assert.equal((await designer.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'not a url' } })).error, 'invalid_url');
+    const r = await designer.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'https://behance.net/nino' } });
+    assert.equal(r.status, 200, r.text);
+    const row = (await pool.query(`SELECT * FROM mentor_evidence WHERE user_id = $1 AND kind = 'portfolio'`, [designerId])).rows[0];
+    assert.equal(row.url, 'https://behance.net/nino');
+    assert.equal(row.check_status, 'unchecked', 'links are checked when the application is submitted');
+    assert.equal((await doctor.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'https://behance.net/x' } })).status, 200, 'a doctor can add one too');
   });
 
-  test('a Business mentor submits a company ID (9 or 11 digits); the admin checks it in the Public Registry', async () => {
-    assert.equal((await boss.api('/verification/company-id', { method: 'POST', body: { companyId: '12345' } })).error, 'invalid_company_id');
-    assert.equal((await boss.api('/verification/company-id', { method: 'POST', body: { companyId: '20481-2222' } })).error, 'invalid_company_id');
-    assert.equal((await boss.api('/verification/company-id', { method: 'POST', body: { companyId: '404 123 456' } })).status, 200);
+  test('a Business mentor gives a company code (9 or 11 digits); the admin gets a direct link to the Public Registry', async () => {
+    assert.equal((await boss.api('/verification/evidence', { method: 'POST', body: { kind: 'company', registryId: '12345' } })).error, 'invalid_company_id');
+    assert.equal((await boss.api('/verification/evidence', { method: 'POST', body: { kind: 'company', registryId: '20481-2222' } })).error, 'invalid_company_id');
+    assert.equal((await boss.api('/verification/evidence', { method: 'POST', body: { kind: 'company', registryId: '404 123 456' } })).status, 200);
     const bossId = (await boss.api('/me')).user.id;
-    assert.equal((await stepRow(bossId, 'company_id')).evidence.companyId, '404123456');
     const d = await admin.api(`/admin/mentors/${bossId}/verification`);
-    assert.ok(d.registries.some((r) => /reestri|napr/.test(r.url)), 'links to the Public Registry');
-    assert.equal((await designer.api('/verification/company-id', { method: 'POST', body: { companyId: '404123456' } })).error, 'not_required');
+    const company = d.evidence.find((e) => e.kind === 'company');
+    assert.equal(company.registryId, '404123456');
+    assert.equal(company.checkStatus, 'admin_check');
+    assert.ok(company.registry.some((r) => /reestri|napr/.test(r.url)), 'links to the Public Registry (never scraped)');
   });
 });
 
 describe('the whole picture for each niche', () => {
-  test('Design: work email + portfolio are extras; the "at least one of" rule is what counts', async () => {
+  test('Design: identity and experience; no licence, no interview; the work email and diploma are optional badges', async () => {
     const own = await designer.api('/verification');
     assert.equal(own.level, 'standard');
     assert.equal(own.regulated, false);
-    const anyOf = own.requirements.find((r) => r.type === 'anyOf');
-    assert.deepEqual(anyOf.options.map((o) => o.step).sort(), ['diploma', 'portfolio', 'work_email']);
-    assert.equal(anyOf.satisfied, false, 'nothing has passed yet: the work email was changed and must be confirmed again');
-    assert.equal(anyOf.options.find((o) => o.step === 'work_email').status, 'pending');
-    assert.equal(anyOf.options.find((o) => o.step === 'portfolio').status, 'pending');
-
-    const ok = await admin.api(`/admin/mentors/${designerId}/steps/portfolio`, { method: 'POST', body: { decision: 'passed', reason: 'Real work, matches the name' } });
-    assert.equal(ok.status, 200, ok.text);
-    assert.equal((await designer.api('/verification')).requirements.find((r) => r.type === 'anyOf').satisfied, true, 'one is enough');
-    assert.equal(own.ready, false, 'the ID check and other steps are still open');
-    assert.ok(!own.requirements.some((r) => r.step === 'license'));
+    assert.deepEqual(own.requirements.map((r) => r.step), ['email', 'id_kyc', 'age', 'name_match', 'experience']);
+    assert.deepEqual(own.optional.map((o) => o.step), ['work_email', 'diploma']);
+    assert.equal(own.optional.find((o) => o.step === 'work_email').status, 'pending', 'the work email was changed and must be confirmed again');
+    assert.equal(own.ready, false, 'the ID check and the application are still open');
   });
 
-  test('Medicine: licence, supporting document and video interview are all required', async () => {
+  test('Medicine: the licence and a copy of it are required (no public register we could confirm); an interview only if asked', async () => {
     const own = await doctor.api('/verification');
     assert.equal(own.level, 'regulated');
     assert.equal(own.regulated, true);
     const names = own.requirements.map((r) => r.step);
-    assert.ok(['license', 'license_document', 'video_interview'].every((s) => names.includes(s)));
+    assert.ok(['license', 'license_document'].every((s) => names.includes(s)));
+    assert.ok(!names.includes('video_interview'));
     assert.equal(own.ready, false);
   });
 
   test('the admin cannot give final approval while anything is missing', async () => {
     const r = await admin.api(`/admin/mentors/${doctorId}/approve`, { method: 'POST' });
-    assert.equal(r.error, 'steps_incomplete');
-    assert.ok(r.missing.includes('id_kyc') && r.missing.includes('video_interview'));
+    assert.equal(r.status, 409);
+    await pool.query(`UPDATE users SET verification_status = 'pending' WHERE id = $1`, [doctorId]);
+    const again = await admin.api(`/admin/mentors/${doctorId}/approve`, { method: 'POST' });
+    assert.equal(again.error, 'steps_incomplete');
+    assert.ok(again.missing.includes('id_kyc') && again.missing.includes('experience'));
   });
 });

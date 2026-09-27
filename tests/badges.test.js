@@ -33,28 +33,32 @@ before(async () => {
 after(async () => { if (srv) srv.proc.kill(); await pool.end(); });
 
 describe('trust badges', () => {
-  test('a Medicine mentor shows ID, license and interview badges, each with its date', async () => {
+  test('a Medicine mentor shows ID, Experience reviewed and license badges, each with its date', async () => {
     const e = await publicFor(doctorId);
-    assert.deepEqual(e.badges.map((b) => b.key).sort(), ['id', 'interview', 'license']);
+    assert.deepEqual(e.badges.map((b) => b.key).sort(), ['experience', 'id', 'license']);
     for (const b of e.badges) assert.ok(!Number.isNaN(new Date(b.date).getTime()), `${b.key} has a date`);
   });
 
-  test('a Design mentor shows ID and work email, and no license or interview badge', async () => {
+  test('a Design mentor shows ID and Experience reviewed, plus the optional work email and diploma badges once passed; no license badge', async () => {
+    assert.deepEqual((await publicFor(designerId)).badges.map((b) => b.key).sort(), ['experience', 'id']);
+    await setStep(designerId, 'work_email', 'passed');
+    await setStep(designerId, 'diploma', 'passed');
     const e = await publicFor(designerId);
-    assert.deepEqual(e.badges.map((b) => b.key).sort(), ['id', 'workEmail']);
+    assert.deepEqual(e.badges.map((b) => b.key).sort(), ['diploma', 'experience', 'id', 'workEmail']);
   });
 
   test('the listing carries the same badges', async () => {
     const list = (await client(base).api('/experts')).experts;
-    assert.deepEqual(list.find((x) => x.id === doctorId).badges.map((b) => b.key).sort(), ['id', 'interview', 'license']);
-    assert.deepEqual(list.find((x) => x.id === designerId).badges.map((b) => b.key).sort(), ['id', 'workEmail']);
+    assert.deepEqual(list.find((x) => x.id === doctorId).badges.map((b) => b.key).sort(), ['experience', 'id', 'license']);
+    assert.deepEqual(list.find((x) => x.id === designerId).badges.map((b) => b.key).sort(), ['diploma', 'experience', 'id', 'workEmail']);
   });
 
   test('only a passed check earns a badge: pending and failed ones show nothing', async () => {
     await setStep(designerId, 'work_email', 'pending');
-    assert.deepEqual((await publicFor(designerId)).badges.map((b) => b.key), ['id']);
+    await setStep(designerId, 'diploma', 'failed');
+    assert.deepEqual((await publicFor(designerId)).badges.map((b) => b.key).sort(), ['experience', 'id']);
     await setStep(designerId, 'id_kyc', 'failed');
-    assert.deepEqual((await publicFor(designerId)).badges, []);
+    assert.deepEqual((await publicFor(designerId)).badges.map((b) => b.key), ['experience']);
     await setStep(designerId, 'id_kyc', 'passed');
     await setStep(designerId, 'work_email', 'passed');
   });

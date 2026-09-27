@@ -1,5 +1,5 @@
-// Professional credentials a mentor submits: licence or registration, company ID, portfolio, work email,
-// and private documents. Everything is checked by the server first, then waits for an admin (except the
+// Professional credentials a mentor submits: a licence or registration (regulated niches), private documents (a licence document,
+// a diploma as evidence), and an optional work email. Everything is checked by the server first, then waits for an admin (except the
 // work-email step, which the server decides after the mentor proves they can read that mailbox).
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -12,7 +12,6 @@ const { sendTemplate } = require('../mail');
 
 const { VerificationError } = steps;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const URL_RE = /^https?:\/\/[^\s]+\.[^\s]+$/i;
 const DOCUMENT_STEPS = Object.keys(rules.STEPS).filter((s) => rules.STEPS[s].document);
 
 const text = (v, min, max) => {
@@ -20,9 +19,9 @@ const text = (v, min, max) => {
   return s.length >= min && s.length <= max ? s : null;
 };
 
-// A mentor can only submit what their niche asks for.
+// A mentor can only submit what their niche asks for, or one of the optional badges.
 function requireStep(user, step) {
-  if (!rules.stepNamesFor(user.niche).includes(step)) throw new VerificationError('not_required');
+  if (!rules.canSubmit(user.niche, step)) throw new VerificationError('not_required');
 }
 
 // ---- Licence or registration number -----------------------------------------------------------
@@ -68,22 +67,6 @@ async function ownCredentials(userId) {
   return r ? { numberEnding: r.license_last4, issuingBody: r.issuing_body, holderName: r.holder_name, validUntil: r.valid_until } : null;
 }
 
-// ---- Portfolio and company ID -----------------------------------------------------------------
-async function submitPortfolio(user, url) {
-  requireStep(user, 'portfolio');
-  const value = String(url || '').trim();
-  if (!URL_RE.test(value) || value.length > 500) throw new VerificationError('invalid_url');
-  await steps.setStep(user.id, 'portfolio', 'pending', { evidence: { url: value }, replaceEvidence: true, actor: steps.mentorActor(user) });
-}
-
-// Georgian legal entities have a 9-digit identification code; individual entrepreneurs use their 11-digit personal number.
-async function submitCompanyId(user, id) {
-  requireStep(user, 'company_id');
-  const value = String(id || '').replace(/\s/g, '');
-  if (!/^(\d{9}|\d{11})$/.test(value)) throw new VerificationError('invalid_company_id');
-  await steps.setStep(user.id, 'company_id', 'pending', { evidence: { companyId: value }, replaceEvidence: true, actor: steps.mentorActor(user) });
-}
-
 // ---- Work email --------------------------------------------------------------------------------
 function domainOf(email) { return String(email).split('@')[1].toLowerCase(); }
 const isFreeDomain = (domain) => rules.FREE_EMAIL_DOMAINS.some((d) => domain === d || domain.endsWith('.' + d));
@@ -124,6 +107,11 @@ async function verifyWorkEmail(user, code) {
   await steps.setStep(user.id, 'work_email', 'passed', {
     evidence: { domain: domainOf(u.work_email), verifiedAt: new Date().toISOString() }, replaceEvidence: true, actor: steps.SYSTEM
   });
+  // It also counts as a piece of evidence for the application (verified automatically; the address itself is not shown).
+  await query(
+    `INSERT INTO mentor_evidence (user_id, kind, check_status, auto_verified, check_result, checked_at)
+     SELECT $1, 'work_email', 'ok', true, $2, now() WHERE NOT EXISTS (SELECT 1 FROM mentor_evidence WHERE user_id = $1 AND kind = 'work_email')`,
+    [user.id, JSON.stringify({ domain: domainOf(u.work_email) })]);
 }
 
 // ---- Private documents -------------------------------------------------------------------------
@@ -146,6 +134,8 @@ function safeFilename(name, mime) {
 async function storeDocument(user, step, { filename, buffer }) {
   if (!DOCUMENT_STEPS.includes(step)) throw new VerificationError('unknown_step');
   requireStep(user, step);
+  // A diploma is a piece of evidence: it cannot be added while the application is locked for review.
+  if (step === 'diploma' && require('./experience').isLocked(user)) throw new VerificationError('application_locked');
   if (!Buffer.isBuffer(buffer) || !buffer.length) throw new VerificationError('empty_file');
   if (buffer.length > rules.LIMITS.maxUploadBytes) throw new VerificationError('file_too_large');
   const mime = detectMime(buffer);
@@ -162,6 +152,9 @@ async function storeDocument(user, step, { filename, buffer }) {
   const total = (await query('SELECT count(*)::int AS n FROM verification_documents WHERE user_id = $1 AND step = $2', [user.id, step])).rows[0].n;
   await steps.setStep(user.id, step, 'pending', { evidence: { files: total }, replaceEvidence: true, actor: steps.mentorActor(user) });
   await steps.audit(user.id, steps.mentorActor(user), 'document_uploaded', { step, reason: `${name} (${buffer.length} bytes)` });
+  if (step === 'diploma') {
+    await query(`INSERT INTO mentor_evidence (user_id, kind, document_id, check_status) VALUES ($1, 'diploma', $2, 'admin_check')`, [user.id, rows[0].id]);
+  }
   return { id: rows[0].id };
 }
 
@@ -184,6 +177,9 @@ async function getDocument(id) {
 // The mentor removes something they uploaded. If that leaves a waiting step with no files, the step is withdrawn.
 async function deleteOwnDocument(user, id) {
   if (!/^[0-9a-f-]{36}$/i.test(String(id))) throw new VerificationError('not_found');
+  const doc = (await query('SELECT step FROM verification_documents WHERE id = $1 AND user_id = $2', [id, user.id])).rows[0];
+  if (doc && doc.step === 'diploma' && require('./experience').isLocked(user)) throw new VerificationError('application_locked');
+  await query('DELETE FROM mentor_evidence WHERE document_id = $1 AND user_id = $2', [id, user.id]); // (the diploma's evidence item goes with it)
   const { rows } = await query('DELETE FROM verification_documents WHERE id = $1 AND user_id = $2 RETURNING step, filename', [id, user.id]);
   if (!rows[0]) throw new VerificationError('not_found');
   const left = (await query('SELECT count(*)::int AS n FROM verification_documents WHERE user_id = $1 AND step = $2', [user.id, rows[0].step])).rows[0].n;
@@ -215,6 +211,6 @@ async function purgeExpiredDocuments() {
 }
 
 module.exports = {
-  DOCUMENT_STEPS, submitLicense, credentialsFor, ownCredentials, submitPortfolio, submitCompanyId, startWorkEmail, verifyWorkEmail,
+  DOCUMENT_STEPS, submitLicense, credentialsFor, ownCredentials, startWorkEmail, verifyWorkEmail,
   storeDocument, listDocuments, getDocument, deleteOwnDocument, scheduleDeletion, purgeExpiredDocuments, isFreeDomain
 };

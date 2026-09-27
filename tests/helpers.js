@@ -35,6 +35,9 @@ async function startServer(port, extraEnv = {}) {
     ...(extraEnv.NODE_ENV === 'production' ? { ADMIN_2FA: 'required' } : { ADMIN_2FA: 'off' }),
     SUPPORT_EMAIL: '', SOCIAL_FACEBOOK: '', SOCIAL_INSTAGRAM: '', SOCIAL_LINKEDIN: '', SOCIAL_X: '', SOCIAL_TIKTOK: '', SOCIAL_YOUTUBE: '',
     PLATFORM_FEE_PERCENT: '20',
+    // Mentor verification: no real AI and no real web lookups in tests (a test that needs them starts its own fakes).
+    ANTHROPIC_API_KEY: '', ANTHROPIC_BASE_URL: '', ANTHROPIC_MODEL: '', ANTHROPIC_FALLBACK_MODEL: 'claude-opus-5', ANTHROPIC_EFFORT: '',
+    AUTO_APPROVE: 'off', RDAP_BASE_URL: 'http://127.0.0.1:9/rdap/', LINK_CHECK_ALLOW_PRIVATE: '',
     PROBATION_ANSWERS: '0', // the probation tests turn it on; every other test answers straight away
     LAUNCH_MODE: 'live', // (left empty the site starts in prelaunch until a mentor is listed; the launch tests cover that)
     ...extraEnv
@@ -55,6 +58,8 @@ async function startServer(port, extraEnv = {}) {
 
 function client(base) {
   let cookie = '';
+  const jar = new Map(); // every cookie the server set (the sign-in cookie, the device cookie...), sent back like a browser does
+  const jarString = () => [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
   const call = async (p, { method = 'GET', body, headers = {} } = {}) => {
     const res = await fetch(base + p, {
       method,
@@ -62,8 +67,12 @@ function client(base) {
       body: body === undefined ? undefined : (typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)),
       redirect: 'manual'
     });
-    const set = res.headers.get('set-cookie');
-    if (set) cookie = set.split(';')[0];
+    for (const c of res.headers.getSetCookie ? res.headers.getSetCookie() : []) {
+      const pair = c.split(';')[0];
+      const i = pair.indexOf('=');
+      jar.set(pair.slice(0, i).trim(), pair.slice(i + 1));
+    }
+    cookie = jarString();
     const text = await res.text();
     let json = {};
     try { json = JSON.parse(text); } catch (e) { /* not JSON */ }
@@ -71,6 +80,8 @@ function client(base) {
   };
   call.api = (p, o) => call('/api' + p, o);
   call.cookie = () => cookie; // (for tests that send raw requests with their own paths)
+  call.getCookie = (name) => jar.get(name);
+  call.setCookie = (name, value) => { jar.set(name, value); cookie = jarString(); };
   // For binary downloads: the raw fetch Response, signed in as this client.
   call.raw = (p) => fetch(base + p, { headers: cookie ? { cookie } : {}, redirect: 'manual' });
   return call;
@@ -137,16 +148,18 @@ async function addPayoutDetails(mentorClient, iban = GOOD_IBAN, name = 'Test Men
   return r;
 }
 // Gives a mentor every verification step their niche requires (written straight into the test
-// database, since the real ID check, licence review etc. have their own tests) and then performs
-// the real final approval as the admin. Returns the mentor's id.
+// database, since the real ID check, the Experience form, the analysis and the licence review have their own tests), marks the
+// application as submitted, and then performs the real final approval as the admin. Returns the mentor's id.
 async function approveMentor(adminClient, mentorClient) {
   const { Pool } = require('pg');
   const rules = require('../server/verification/rules');
   const me = (await mentorClient.api('/me')).user;
   const pool = new Pool({ connectionString: TEST_DB });
   try {
-    for (const r of rules.requiredFor(me.niche)) {
-      const step = typeof r === 'string' ? r : r.anyOf[0];
+    await pool.query(
+      `UPDATE users SET verification_status = 'pending', application_submitted_at = coalesce(application_submitted_at, now())
+        WHERE id = $1 AND verification_status IN ('none', 'rejected', 'pending')`, [me.id]);
+    for (const step of rules.requiredFor(me.niche)) {
       await pool.query(
         `INSERT INTO verification_steps (user_id, step, status, reason, decided_at) VALUES ($1, $2, 'passed', 'test setup', now())
          ON CONFLICT (user_id, step) DO UPDATE SET status = 'passed', reason = 'test setup', decided_at = now()`, [me.id, step]

@@ -22,13 +22,15 @@
     document.title = title.includes('Wisecall') ? title : `${title} — Wisecall`;
     const withContact = kind === 'terms' ? (sections || []).length - 1 : (kind === 'privacy' ? 0 : -1);
     root.innerHTML = Array.isArray(sections) ? sections.map((s, i) => `
-      <section class="legal-section">
+      <section class="legal-section"${s.id ? ` id="${esc(s.id)}"` : ''}>
         <h2>${esc(s.h)}</h2>
         ${s.p.map(p => `<p>${esc(p)}</p>`).join('')}
         ${i === withContact ? contactLine() : ''}
       </section>`).join('') : '';
   }
   render();
+  // The sections are drawn by this script, so a link to one of them (/privacy.html#automated-review) is scrolled to once it exists.
+  if (window.location.hash) { const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1))); if (target) target.scrollIntoView(); }
   document.addEventListener('wisecall:lang-changed', render);
   WisecallI18n.getConfig().then((cfg) => { supportEmail = cfg.contactEmail || null; render(); });
 })();

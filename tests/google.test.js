@@ -368,9 +368,13 @@ describe('Google sign-in', () => {
       fake.personas.mentorish = { sub: 'g-mentorish', email: 'mentorish@e2e.test', email_verified: true, name: 'Mia Mentor' };
       await b.google('mentorish');
       assert.equal((await b.me()).emailVerified, true, 'the email is verified (Google said so)');
-      const r = await b.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Cardiologist', niche: 'medicine', price: 25, proofUrl: 'https://linkedin.com/in/mia', sampleAnswer: SAMPLE } });
+      const r = await b.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
       assert.equal(r.status, 200, JSON.stringify(r));
-      assert.notEqual(r.user.verificationStatus, 'verified');
+      await b.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Product designer', niche: 'design', specialtyTags: ['apps'], yearsExperience: 6, story: 'I designed banking and delivery apps for six years, first in an agency and then on my own for small startups in Tbilisi.', sampleAnswer: require('./helpers').longAnswer(SAMPLE) } });
+      await b.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'https://mia-mentor.invalid/work' } });
+      const sub = await b.api('/verification/submit', { method: 'POST' });
+      assert.equal(sub.status, 200, JSON.stringify(sub));
+      assert.notEqual(sub.user.verificationStatus, 'verified');
       const v = await b.api('/verification');
       assert.notEqual(v.status, 'verified');
       assert.equal(v.ready, false);

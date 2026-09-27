@@ -46,6 +46,9 @@ const notifyMentorSuspended = (mentor, note) => safeSend('mentor suspended', 'me
 
 const notifyVerificationUpdate =(mentor, data) => safeSend('verification update', 'verificationUpdate', mentor, data);
 
+const notifyInterviewRequested = (mentor, reason) => safeSend('interview requested', 'interviewRequested', mentor, { reason });
+const notifyVerificationSimplified = (mentor) => safeSend('verification simplified', 'verificationSimplified', mentor, {});
+
 const notifyInterviewBooked =(mentor, slot) =>
   safeSend('interview booked', 'interviewBooked', mentor, { date: utcDate(slot.startsAt, mentor.language), minutes: slot.minutes });
 const notifyInterviewLink = (mentor, slot) =>
@@ -67,4 +70,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

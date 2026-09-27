@@ -134,42 +134,16 @@
       <input type="checkbox" id="becomeMentor">
       <span data-i18n="settings.mentor.enable">I'd like to offer advice as a mentor</span>
     </label>
-    <p class="muted small" data-i18n="settings.mentor.hint">Your profile appears in Browse experts once you've set a title, niche, and price below, and our team has reviewed it.</p>
+    <p class="muted small" data-i18n="settings.mentor.hint">Your profile appears in Browse experts once your application is approved and you have set a price and your payout details.</p>
     <div id="verificationBox" style="display:none; margin: 12px 0;"></div>
     <form id="mentorForm" style="display:none">
-      <label for="roleTitle"><span data-i18n="settings.mentor.roleTitle">Title</span>
-        <input type="text" id="roleTitle" placeholder="Cardiologist, 14 yrs" autocomplete="organization-title" required>
-      </label>
-      <label for="niche"><span data-i18n="settings.mentor.niche">Niche</span>
-        <select id="niche" required>
-          <option value="business" data-i18n="niche.business">Business</option>
-          <option value="medicine" data-i18n="niche.medicine">Medicine</option>
-          <option value="teaching" data-i18n="niche.teaching">Teaching</option>
-          <option value="tech" data-i18n="niche.tech">Tech</option>
-          <option value="fitness" data-i18n="niche.fitness">Fitness</option>
-          <option value="creative" data-i18n="niche.creative">Creative</option>
-          <option value="law" data-i18n="niche.law">Law</option>
-          <option value="finance" data-i18n="niche.finance">Finance</option>
-          <option value="marketing" data-i18n="niche.marketing">Marketing</option>
-          <option value="design" data-i18n="niche.design">Design</option>
-          <option value="writing" data-i18n="niche.writing">Writing</option>
-          <option value="parenting" data-i18n="niche.parenting">Parenting</option>
-          <option value="engineering" data-i18n="niche.engineering">Engineering</option>
-          <option value="science" data-i18n="niche.science">Science</option>
-        </select>
-      </label>
       <label for="price"><span data-i18n="settings.mentor.price">Price per question (USD)</span>
         <input type="number" id="price" min="5" max="2000" step="1" inputmode="numeric" required>
+        <span class="hint" data-i18n="settings.mentor.price.hint">You can change your price at any time.</span>
       </label>
-      <label for="proofUrl"><span data-i18n="settings.mentor.proofUrl">Proof of expertise — a LinkedIn link is strongly preferred</span>
-        <input type="url" id="proofUrl" placeholder="https://linkedin.com/in/yourname" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" required>
-        <span class="hint" data-i18n="settings.mentor.proofUrl.hint">Required. We check this before your profile goes public — it's how we confirm you're actually worth paying for advice.</span>
-      </label>
-      <label for="sampleAnswer"><span data-i18n="settings.mentor.sample">Sample answer — reply to a typical question in your field</span>
-        <textarea id="sampleAnswer" rows="5" minlength="80" required></textarea>
-        <span class="hint" data-i18n="settings.mentor.sample.hint">At least 80 characters. We read this to judge whether your advice is worth paying for.</span>
-      </label>
-      <button type="submit" class="btn btn-primary" data-i18n="settings.mentor.save">Save mentor profile</button>
+      <button type="submit" class="btn btn-primary" data-i18n="settings.mentor.savePrice">Save price</button>
+      <p class="muted small"><span data-i18n="settings.mentor.applicationHint">Your title, niche, experience and evidence are part of your application.</span>
+        <button type="button" class="linklike" data-goto-tab="verification" data-i18n="settings.mentor.openApplication">Open your application</button></p>
     </form>
   </div>
   </div>

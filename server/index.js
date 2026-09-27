@@ -69,6 +69,11 @@ app.use('/api/admin/2fa/setup', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 })
 app.use('/api/verification/kyc/start', rateLimit({ windowMs: 60 * 60 * 1000, max: 15 }));
 app.use('/api/verification/work-email', rateLimit({ windowMs: 15 * 60 * 1000, max: 12 }));
 app.use('/api/verification/documents', rateLimit({ windowMs: 60 * 60 * 1000, max: 40 }));
+// Each submission starts an analysis (with a paid AI call), so it is limited; so are evidence links (each one is checked on the web).
+app.use('/api/verification/submit', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.use('/api/verification/evidence', rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
+app.use('/api/verification/experience', rateLimit({ windowMs: 60 * 60 * 1000, max: 120 }));
+app.use(/^\/api\/admin\/mentors\/[^/]+\/analysis$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use(/^\/api\/experts\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.use('/api/me/photo', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use(/^\/api\/ratings\/[^/]+\/(report|reply)$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
@@ -173,11 +178,14 @@ async function start() {
     console.log(config.GOOGLE_ENABLED
       ? `Google sign-in: on (add ${config.GOOGLE_CALLBACK_URL} as an authorised redirect URI in Google Cloud Console).`
       : 'Google sign-in: off (set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to show "Continue with Google").');
+    console.log(`Mentor review: AI ${config.AI_REVIEW_ENABLED ? `on (${config.ANTHROPIC_MODEL})` : 'off (set ANTHROPIC_API_KEY to add AI summaries for the admin)'}; automatic approval ${config.AUTO_APPROVE ? 'ON' : 'off (a person approves every mentor)'}.`);
     launch.warnings().forEach((w) => console.warn('[WARNING] ' + w));
     require('./startupWarnings').printWarnings();
   });
 
   const stopJobs = startJobs();
+  // Verification rules v2: finish carrying over what mentors did under the first rules (once; safe to repeat).
+  setTimeout(() => require('./verification/carryOver').run().catch((e) => console.error('[carry-over] failed:', e.message)), 2000).unref();
   const shutdown = () => { stopJobs(); server.close(() => db.close().then(() => process.exit(0))); };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);

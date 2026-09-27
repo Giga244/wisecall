@@ -91,7 +91,7 @@ const S = {
         kyc_expired: 'The ID check was not completed in time. Please start it again.'
       },
       steps: {
-        email: 'Verified email', id_kyc: 'ID and selfie check', name_match: 'Name match', sample_answer: 'Sample answer', proof_link: 'Proof link',
+        email: 'Verified email', id_kyc: 'ID and selfie check', age: 'Age 18+', name_match: 'Name match', experience: 'Your experience', sample_answer: 'Sample answer', proof_link: 'Proof link',
         license: 'License or registration', license_document: 'License document', video_interview: 'Video interview', company_id: 'Company ID number',
         role_proof: 'Proof of your role', work_email: 'Work email', diploma: 'Diploma or certificate', portfolio: 'Portfolio'
       }
@@ -100,6 +100,17 @@ const S = {
       subject: 'Your Wisecall work email code', heading: 'Confirm your work email',
       intro: 'Use this code to confirm that you can read email at your work address ({domain}):', expiry: 'The code expires in 15 minutes.',
       footer: "If you didn't ask for this, you can safely ignore this email."
+    },
+    interviewRequested: {
+      subject: 'A short video call about your Wisecall application', heading: 'We would like to meet you',
+      intro: 'Before we decide on your mentor application, our team would like a short video call with you (about 20 minutes).', reasonLabel: 'Why:',
+      after: 'Please choose a time that suits you in your verification settings.', button: 'Choose a time'
+    },
+    verificationSimplified: {
+      subject: 'We made mentor verification simpler', heading: 'Mentor verification is simpler now',
+      intro: 'We changed how Wisecall checks mentors: an ID check, one short Experience form and an automatic review. Self-taught experts and business owners are welcome, and no employer or work email is needed.',
+      after: 'We kept everything you already did. To finish your application, add a few details to the new Experience form (it takes about 2 minutes) and press "Submit for review".',
+      button: 'Finish my application'
     },
     interviewBooked: {
       subject: 'Your Wisecall video interview is booked', heading: 'Your interview is booked',
@@ -201,7 +212,7 @@ const S = {
         kyc_expired: 'პირადობის შემოწმება დროულად ვერ დასრულდა. დაიწყე თავიდან.'
       },
       steps: {
-        email: 'დადასტურებული ელფოსტა', id_kyc: 'პირადობის და სელფის შემოწმება', name_match: 'სახელის დამთხვევა', sample_answer: 'საცდელი პასუხი', proof_link: 'დამადასტურებელი ბმული',
+        email: 'დადასტურებული ელფოსტა', id_kyc: 'პირადობის და სელფის შემოწმება', age: '18+ ასაკი', name_match: 'სახელის დამთხვევა', experience: 'შენი გამოცდილება', sample_answer: 'საცდელი პასუხი', proof_link: 'დამადასტურებელი ბმული',
         license: 'ლიცენზია ან რეგისტრაცია', license_document: 'ლიცენზიის დოკუმენტი', video_interview: 'ვიდეო-ინტერვიუ', company_id: 'კომპანიის საიდენტიფიკაციო ნომერი',
         role_proof: 'შენი როლის დადასტურება', work_email: 'სამსახურეობრივი ელფოსტა', diploma: 'დიპლომი ან სერტიფიკატი', portfolio: 'პორტფოლიო'
       }
@@ -210,6 +221,17 @@ const S = {
       subject: 'შენი Wisecall-ის სამსახურეობრივი ელფოსტის კოდი', heading: 'დაადასტურე სამსახურეობრივი ელფოსტა',
       intro: 'გამოიყენე ეს კოდი, რომ დაადასტურო, რომ შენს სამსახურეობრივ მისამართზე ({domain}) წერილების წაკითხვა შეგიძლია:', expiry: 'კოდი მოქმედია 15 წუთის განმავლობაში.',
       footer: 'თუ ეს შენ არ მოგითხოვია, უბრალოდ უგულებელყავი ეს წერილი.'
+    },
+    interviewRequested: {
+      subject: 'მოკლე ვიდეოზარი შენი Wisecall-ის განაცხადის შესახებ', heading: 'გვსურს გაგიცნოთ',
+      intro: 'სანამ შენს მენტორის განაცხადზე გადაწყვეტილებას მივიღებთ, ჩვენს გუნდს სურს შენთან მოკლე ვიდეოზარი (დაახლოებით 20 წუთი).', reasonLabel: 'რატომ:',
+      after: 'გთხოვთ, ვერიფიკაციის პარამეტრებში აირჩიე შენთვის მოსახერხებელი დრო.', button: 'დროის არჩევა'
+    },
+    verificationSimplified: {
+      subject: 'მენტორების ვერიფიკაცია გავამარტივეთ', heading: 'მენტორის ვერიფიკაცია ახლა უფრო მარტივია',
+      intro: 'შევცვალეთ, როგორ ამოწმებს Wisecall მენტორებს: პირადობის შემოწმება, ერთი მოკლე ფორმა გამოცდილების შესახებ და ავტომატური განხილვა. თვითნასწავლი ექსპერტები და ბიზნესის მფლობელები სასურველნი არიან; დამსაქმებელი ან სამსახურეობრივი ელფოსტა საჭირო არ არის.',
+      after: 'ყველაფერი, რაც უკვე გააკეთე, შენახულია. განაცხადის დასასრულებლად ახალ ფორმაში რამდენიმე დეტალი დაამატე (დაახლოებით 2 წუთი) და დააჭირე „განსახილველად გაგზავნას“.',
+      button: 'განაცხადის დასრულება'
     },
     interviewBooked: {
       subject: 'შენი Wisecall-ის ვიდეო ინტერვიუ დაჯავშნილია', heading: 'ინტერვიუ დაჯავშნილია',
@@ -320,6 +342,14 @@ const BUILDERS = {
   workEmailCode: (s, d) => ({
     heading: s.workEmailCode.heading,
     blocks: [{ p: fill(s.workEmailCode.intro, d), raw: true }, { code: d.code }, { small: s.workEmailCode.expiry }, { small: s.workEmailCode.footer }]
+  }),
+  interviewRequested: (s, d) => ({
+    heading: s.interviewRequested.heading,
+    blocks: [{ p: s.interviewRequested.intro }, ...(d.reason ? [{ quote: `${s.interviewRequested.reasonLabel} ${d.reason}` }] : []), { p: s.interviewRequested.after }, { button: s.interviewRequested.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
+  }),
+  verificationSimplified: (s) => ({
+    heading: s.verificationSimplified.heading,
+    blocks: [{ p: s.verificationSimplified.intro }, { p: s.verificationSimplified.after }, { button: s.verificationSimplified.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
   }),
   interviewBooked: (s, d) => ({
     heading: s.interviewBooked.heading,

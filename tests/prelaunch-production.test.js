@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { Pool } = require('pg');
-const { ROOT, resetDatabase, startServer, client, SAMPLE, longQuestion } = require('./helpers');
+const { ROOT, resetDatabase, startServer, client, SAMPLE, longQuestion, longAnswer } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
@@ -66,19 +66,23 @@ describe('production + LAUNCH_MODE=prelaunch, with no bank and no Didit keys', (
 
   test('a mentor can sign up (code by email), fill in the application, and waits: the ID check is closed, the other steps work', async () => {
     mentor = await signupByEmail(resend, pre.base, 'Nino Mentor', 'nino@example.com');
-    const r = await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Product designer', niche: 'design', price: 25, proofUrl: 'https://linkedin.com/in/nino', sampleAnswer: SAMPLE } });
+    const r = await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
     assert.equal(r.status, 200, r.text);
     mentorId = (await mentor.api('/me')).user.id;
+    const start = await mentor.api('/verification/kyc/start', { method: 'POST', body: {} });
+    assert.equal(start.status, 503);
+    assert.equal(start.error, 'kyc_unavailable');
+    // The rest of the application works: the Experience form, the evidence, and submitting it.
+    const form = await mentor.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Product designer', niche: 'design', specialtyTags: ['apps'], yearsExperience: 7, story: 'I taught myself product design and have spent seven years designing apps for shops, banks and delivery services in Tbilisi.', sampleAnswer: longAnswer(SAMPLE) } });
+    assert.equal(form.error, undefined, form.text);
+    const ev = await mentor.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'https://nino-mentor.invalid/portfolio' } });
+    assert.equal(ev.error, undefined, ev.text);
+    const sent = await mentor.api('/verification/submit', { method: 'POST' });
+    assert.equal(sent.error, undefined, sent.text);
     const v = await mentor.api('/verification');
     assert.equal(v.error, undefined, v.text);
     assert.equal(v.status, 'pending', 'the application is waiting for review'); // (this route's own "status" field: the mentor's verification status)
     assert.equal(v.requirements.find((x) => x.step === 'id_kyc').status, 'todo');
-    const start = await mentor.api('/verification/kyc/start', { method: 'POST', body: {} });
-    assert.equal(start.status, 503);
-    assert.equal(start.error, 'kyc_unavailable');
-    const pf = await mentor.api('/verification/portfolio', { method: 'POST', body: { url: 'https://example.com/portfolio' } });
-    assert.equal(pf.error, undefined, pf.text);
-    assert.equal((await mentor.api('/verification')).requirements.flatMap((x) => x.options || [x]).find((x) => x.step === 'portfolio').status, 'pending', 'the rest of the application works');
     assert.equal((await mentor.api('/me/payout', { method: 'PUT', body: { name: 'Nino Mentor', iban: 'GE29NB0000000101904917' } })).status, 200);
     assert.equal((await mentor.api('/me')).user.verificationStatus, 'pending', 'waiting for review');
   });

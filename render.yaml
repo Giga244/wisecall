@@ -56,3 +56,10 @@ services:
         value: Wisecall <hello@wisecallge.ge>
       - key: SUPPORT_EMAIL
         value: support@wisecallge.ge
+      # Mentor verification (rules v2): the AI review of applications, and whether it may approve by itself (off: a person approves).
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-5
+      - key: AUTO_APPROVE
+        value: "off"

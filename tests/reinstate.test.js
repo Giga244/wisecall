@@ -53,7 +53,7 @@ describe('reinstate and re-approve in one click', () => {
 
   test('a step that is no longer valid: reinstated but NOT approved, and the answer says what is missing', async () => {
     const { c, id } = await suspendedMentor('Lost A Step', 'lost@example.com');
-    await pool.query(`UPDATE verification_steps SET status = 'failed', reason = 'expired while away' WHERE user_id = $1 AND step = 'sample_answer'`, [id]);
+    await pool.query(`UPDATE verification_steps SET status = 'failed', reason = 'the name changed while away' WHERE user_id = $1 AND step = 'name_match'`, [id]);
     assert.equal((await detail(id)).ready, false);
     const r = await admin.api(`/admin/mentors/${id}/reinstate`, { method: 'POST', body: { reason: 'Reports were unfounded', reapprove: true } });
     assert.equal(r.status, 200, r.text);

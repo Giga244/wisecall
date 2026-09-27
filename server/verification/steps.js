@@ -86,16 +86,21 @@ async function syncEmailStep(user, client) {
   if (!user.emailVerified && has) await setStep(user.id, 'email', 'failed', { reason: 'Email not verified', actor: SYSTEM, client });
 }
 
-// Where a mentor stands: every requirement with its status, and whether final approval is possible.
+// Steps this mentor needs on top of their niche's: a video interview, once an admin has asked for one.
+const extraStepsFor = (steps) => (steps.video_interview ? ['video_interview'] : []);
+
+// Where a mentor stands: every requirement with its status (and its place in Identity -> Experience -> Review), the optional badges,
+// and whether final approval is possible.
 function describe(user, steps) {
   const niche = user.niche;
   const statusOf = (s) => effectiveStatus(steps[s]);
-  const requirements = rules.requiredFor(niche).map((r) => {
-    if (typeof r === 'string') return { type: 'step', step: r, status: statusOf(r) || 'todo' };
-    return { type: 'anyOf', options: r.anyOf.map((s) => ({ step: s, status: statusOf(s) || 'todo' })), satisfied: r.anyOf.some((s) => statusOf(s) === 'passed') };
-  });
-  const { ready, missing } = rules.evaluate(niche, statusOf);
-  return { niche, level: rules.levelFor(niche), requirements, ready, missing };
+  const extra = extraStepsFor(steps);
+  const requirements = [...rules.requiredFor(niche), ...extra].map((s) => ({ type: 'step', step: s, group: rules.STEPS[s].group, status: statusOf(s) || 'todo' }));
+  const { ready, missing } = rules.evaluate(niche, statusOf, extra);
+  return {
+    niche, level: rules.levelFor(niche), regulated: rules.isRegulated(niche), requirements, ready, missing,
+    optional: rules.OPTIONAL_STEPS.map((s) => ({ step: s, status: statusOf(s) || 'todo' }))
+  };
 }
 
 // -> the same shape as describe(), loading the steps itself.
@@ -104,5 +109,5 @@ async function describeFor(user, client) {
 }
 
 module.exports = {
-  VerificationError, SYSTEM, PROVIDER, adminActor, mentorActor, audit, loadSteps, loadStepsFor, effectiveStatus, setStep, syncEmailStep, describe, describeFor
+  VerificationError, SYSTEM, PROVIDER, adminActor, mentorActor, audit, loadSteps, loadStepsFor, effectiveStatus, setStep, syncEmailStep, describe, describeFor, extraStepsFor
 };

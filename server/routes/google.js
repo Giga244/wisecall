@@ -108,7 +108,11 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
     return backWith(res, 'link', 'linked');
   }
 
-  const signIn = (user, to) => { setAuthCookie(res, signToken(user)); res.redirect(302, to); };
+  const signIn = async (user, to) => {
+    setAuthCookie(res, signToken(user));
+    await require('../verification/signals').record(req, res, user.id, 'login');
+    res.redirect(302, to);
+  };
 
   // ---- A Google account we know: sign that person in ---------------------------------------------------------------
   const known = await identities.findGoogle(claims.sub);
@@ -150,7 +154,7 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
     const sent = await sendVerificationCode(user, user.language);
     to = `/verify-email.html?redirect=${encodeURIComponent(to)}${sent.devCode ? `&devCode=${sent.devCode}` : ''}${!sent.emailSent && !sent.devCode ? '&emailFailed=1' : ''}`;
   }
-  signIn(await getUserById(user.id), to);
+  return signIn(await getUserById(user.id), to);
 }));
 
 module.exports = router;

@@ -32,7 +32,7 @@
   async function load() {
     content.innerHTML = `<p class="muted">${t('admin.loading')}</p>`;
     try {
-      const qs = activeStatus ? `?status=${activeStatus}` : '';
+      const qs = tab === 'mentors' && activeStatus === 'pending' ? '?queue=needs_human' : (activeStatus ? `?status=${activeStatus}` : '');
       if (tab === 'interviews') {
         await AdminInterviews.render(content);
       } else if (tab === 'queue') {

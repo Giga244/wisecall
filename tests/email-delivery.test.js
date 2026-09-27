@@ -75,9 +75,12 @@ describe('every email goes out through the Resend API', () => {
     admin = (await signup('QA Admin', 'qa-admin@example.com', 'en')).c;
     const m1 = await signup('Dr English', 'approved@example.com', 'en');
     const m2 = await signup('Georgian Applicant', 'rejected@example.com', 'ka');
-    for (const [who, url] of [[m1.c, 'a'], [m2.c, 'b']]) {
-      await who.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Doctor', niche: 'medicine', price: 25, proofUrl: `https://linkedin.com/in/${url}`, sampleAnswer: SAMPLE } });
-    }
+    await m1.c.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Doctor', niche: 'medicine', price: 25 } });
+    // The second one submits a complete application (a person then rejects it: the computer never does).
+    await m2.c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
+    await m2.c.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Shop owner', niche: 'business', specialtyTags: ['retail'], yearsExperience: 5, story: 'I have run a small clothing shop in Kutaisi for five years and moved it online during the pandemic, with a team of three people.', sampleAnswer: longAnswer(SAMPLE) } });
+    await m2.c.api('/verification/evidence', { method: 'POST', body: { kind: 'website', url: 'https://georgian-applicant.invalid/' } });
+    assert.equal((await m2.c.api('/verification/submit', { method: 'POST' })).status, 200);
     const id1 = (await m1.c.api('/me')).user.id;
     const id2 = (await m2.c.api('/me')).user.id;
     await approveMentor(admin, m1.c);
