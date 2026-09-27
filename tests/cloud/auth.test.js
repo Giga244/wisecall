@@ -64,7 +64,7 @@ describe('email codes and rate limits', () => {
     assert.equal((await c.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } })).user.emailVerified, true);
   });
 
-  test('after 5 wrong codes the code stops working (a new one must be requested)', { todo: 'AUDIT #2' }, async () => {
+  test('after 5 wrong codes the code stops working (a new one must be requested)', async () => {
     const c = client(base);
     const su = await c.api('/auth/signup', { method: 'POST', body: { name: 'Brute Force', email: 'brute@example.com', password: 'test-pass-12345' } });
     const wrong = String((Number(su.devVerifyCode) + 1) % 900000 + 100000);
@@ -73,7 +73,7 @@ describe('email codes and rate limits', () => {
     assert.notEqual(right.status, 200, 'the code must be dead after 5 wrong tries');
   });
 
-  test('a rate limit cannot be dodged by changing the letter case of the address', { todo: 'AUDIT #1' }, async () => {
+  test('a rate limit cannot be dodged by changing the letter case of the address', async () => {
     const c = client(base);
     let last;
     for (let i = 0; i < 7; i++) last = (await c.api('/auth/resend-verification', { method: 'POST' })).status; // limit: 6 per 15 minutes
