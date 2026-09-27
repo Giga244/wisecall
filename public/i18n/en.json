@@ -1478,5 +1478,8 @@
   "inbox.ev.dispute.partial_refund": "Our team decided: the asker is refunded {amount}.",
   "inbox.ev.dispute.rejected": "Our team decided: no refund, the answer stands.",
   "inbox.n.dispute_opened": "The asker reported a problem with your answer.",
-  "inbox.n.dispute_resolved": "We decided on a reported answer."
+  "inbox.n.dispute_resolved": "We decided on a reported answer.",
+  "dash.receipt.payment": "Receipt",
+  "dash.receipt.refund": "Refund receipt",
+  "dash.statements.title": "Monthly statements"
 }

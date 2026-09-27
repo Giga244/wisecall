@@ -82,7 +82,9 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   };
   const me = req.userToken.id;
   // A buyer never sees an answer that is still being checked (see server/probation.js).
-  const asked = await ratings.attach((await list('seeker', 'mentor')).map((b) => probation.forViewer(b, me)), me, 'asker');
+  const askedRaw = await ratings.attach((await list('seeker', 'mentor')).map((b) => probation.forViewer(b, me)), me, 'asker');
+  const receiptsFor = await require('../receipts').forBookings(askedRaw.map((b) => b.id));
+  const asked = askedRaw.map((b) => ({ ...b, receipts: receiptsFor[b.id] || [] }));
   const received = await ratings.attach((await list('mentor', 'seeker')).map((b) => ({ ...b, answerHeld: b.answerReview === 'held' })), me, 'mentor');
   // Reported problems with answers, and until when the asker can still report one.
   const disputes = require('../disputes');

@@ -1478,5 +1478,8 @@
   "inbox.ev.dispute.partial_refund": "ჩვენი გუნდის გადაწყვეტილება: კითხვის ავტორს უბრუნდება {amount}.",
   "inbox.ev.dispute.rejected": "ჩვენი გუნდის გადაწყვეტილება: თანხა არ ბრუნდება, პასუხი ძალაში რჩება.",
   "inbox.n.dispute_opened": "კითხვის ავტორმა შენს პასუხზე პრობლემა შეგვატყობინა.",
-  "inbox.n.dispute_resolved": "საჩივარზე გადაწყვეტილება მივიღეთ."
+  "inbox.n.dispute_resolved": "საჩივარზე გადაწყვეტილება მივიღეთ.",
+  "dash.receipt.payment": "ქვითარი",
+  "dash.receipt.refund": "დაბრუნების ქვითარი",
+  "dash.statements.title": "თვიური ამონაწერები"
 }

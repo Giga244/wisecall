@@ -69,6 +69,11 @@ const S = {
       final: 'This is the last reminder.', button: 'Rate now',
       unsubscribe: "You get these reminders because you had a question on Wisecall. Don't want them? Turn them off here:"
     },
+    receipt: {
+      subject: 'Your Wisecall receipt {number}', heading: 'Your receipt',
+      payment: 'Thank you for your payment for a question to {mentor}.', refund: 'We returned money for your question to {mentor}.',
+      lines: 'Receipt {number} · {date} · {amount}', button: 'Download the receipt (PDF)', after: 'You need to be signed in to open it.'
+    },
     disputeOpened: {
       subject: 'The asker reported a problem with your answer', heading: 'A problem was reported',
       intro: 'The person who asked the question below reported a problem with your answer. Our team is looking at it and will tell you what they decide.',
@@ -217,6 +222,11 @@ const S = {
       final: 'ეს ბოლო შეხსენებაა.', button: 'შეაფასე ახლა',
       unsubscribe: 'ამ შეხსენებებს იღებ, რადგან Wisecall-ზე კითხვა გქონდა. აღარ გინდა? აქ შეგიძლია გამორთო:'
     },
+    receipt: {
+      subject: 'შენი Wisecall-ის ქვითარი {number}', heading: 'შენი ქვითარი',
+      payment: 'მადლობა გადახდისთვის: კითხვა {mentor}-სთვის.', refund: 'შენი კითხვისთვის ({mentor}) თანხა დაგიბრუნეთ.',
+      lines: 'ქვითარი {number} · {date} · {amount}', button: 'ქვითრის ჩამოტვირთვა (PDF)', after: 'გასახსნელად სისტემაში უნდა იყო შესული.'
+    },
     disputeOpened: {
       subject: 'კითხვის ავტორმა შენს პასუხზე პრობლემა დააფიქსირა', heading: 'პრობლემა დაფიქსირდა',
       intro: 'ქვემოთ მოცემული კითხვის ავტორმა შენს პასუხზე პრობლემა დააფიქსირა. ჩვენი გუნდი ამას განიხილავს და გადაწყვეტილებას შეგატყობინებს.',
@@ -355,6 +365,11 @@ const BUILDERS = {
       ]
     };
   },
+  receipt: (s, d) => ({
+    heading: s.receipt.heading,
+    blocks: [{ p: fill(d.kind === 'refund' ? s.receipt.refund : s.receipt.payment, d), raw: true }, { p: fill(s.receipt.lines, d), raw: true },
+      { button: s.receipt.button, url: d.url }, { small: s.receipt.after }]
+  }),
   disputeOpened: (s, d) => ({
     heading: s.disputeOpened.heading,
     blocks: [{ p: s.disputeOpened.intro }, { quote: d.question }, { p: s.disputeOpened.after }, { button: s.disputeOpened.button, url: `${config.PUBLIC_URL}/dashboard.html` }]

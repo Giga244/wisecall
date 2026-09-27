@@ -173,6 +173,7 @@
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
         ${disputeHtml(b, 'asker')}
+        ${receiptLinks(b)}
         ${conversationLink(b)}
       </article>`;
   }
@@ -220,6 +221,10 @@
         <button type="submit" class="btn btn-outline btn-sm">${t('dash.decline.send')}</button>
       </form>
     </details>`;
+
+  // The asker's receipts (payment, refunds) as PDFs, in the page's language.
+  const receiptLinks = (b) => ((b.receipts || []).length
+    ? `<p class="booking-receipts small">${b.receipts.map((r) => `<a class="plain-link" href="/api/receipts/${encodeURIComponent(r.id)}.pdf?lang=${WisecallI18n.getLang()}">${t('dash.receipt.' + r.kind)} ${escapeHtml(r.number)}</a>`).join(' · ')}</p>` : '');
 
   // The booking's conversation in the Inbox (the follow-up question and its reply, what happened), once it is paid.
   const conversationLink = (b) => (['paid', 'answered', 'refund_pending', 'refunded'].includes(b.status)
@@ -381,7 +386,17 @@
         ${e.items.length ? `
           <h2 class="earn-h">${t('dash.earnings.items')}</h2>
           <ul class="earn-list">${e.items.map((i) => `<li><span>${escapeHtml(i.question)}</span><span class="muted small">${escapeHtml(itemNote(i))}</span><strong>${money(i.amount)}</strong></li>`).join('')}</ul>`
-          : emptyState('dash.earnings.empty.title', 'dash.earnings.empty', '')}`;
+          : emptyState('dash.earnings.empty.title', 'dash.earnings.empty', '')}
+        <div id="statements"></div>`;
+      // Monthly statements (PDF / CSV) for the months with earnings or payouts.
+      const st = await WisecallAPI.apiFetch('/me/statements').catch(() => ({ months: [] }));
+      if (st.months.length) {
+        const lang = WisecallI18n.getLang();
+        document.getElementById('statements').innerHTML = `
+          <h2 class="earn-h">${t('dash.statements.title')}</h2>
+          <ul class="earn-list">${st.months.map((m) => `<li><span>${escapeHtml(m)}</span>
+            <span><a class="plain-link" href="/api/me/statements/${m}.pdf?lang=${lang}">PDF</a> · <a class="plain-link" href="/api/me/statements/${m}.csv?lang=${lang}">CSV</a></span></li>`).join('')}</ul>`;
+      }
     } catch (err) {
       earningsBox.innerHTML = `<p class="muted">${t('toast.error')}</p>`;
     }

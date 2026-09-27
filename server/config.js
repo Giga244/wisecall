@@ -72,6 +72,11 @@ const config = {
   EMAIL_LOG_FILE: env.EMAIL_LOG_FILE || '',
   EMAIL_FROM: env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',
   SUPPORT_EMAIL: env.SUPPORT_EMAIL || '',
+  // The seller's legal details (a company or individual entrepreneur), required on receipts and in the footer for Georgian
+  // e-commerce. Each is shown only when set.
+  LEGAL_NAME: (env.LEGAL_NAME || '').trim(),
+  LEGAL_ID: (env.LEGAL_ID || '').trim(),
+  LEGAL_ADDRESS: (env.LEGAL_ADDRESS || '').trim(),
   POSTMARK_API_URL: (env.POSTMARK_API_URL || 'https://api.postmarkapp.com').replace(/\/+$/, ''),
 
   // Sign in with Google (OAuth 2 / OpenID Connect, done on the server). Both empty = the button is not shown.

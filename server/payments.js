@@ -14,6 +14,7 @@ const pay = require('./pay');
 const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('./models');
 const notify = require('./notify');
 const ledger = require('./ledger');
+const receipts = require('./receipts');
 
 class PaymentError extends Error {
   constructor(code, message) { super(message || code); this.code = code; }
@@ -66,9 +67,11 @@ async function applyBankStatus(client, booking, s) {
         return { booking, after };
       }
       const updated = await updateBooking(booking.id, { status: 'paid', paidAt: new Date(), answerDeadline: deadlineFromNow() }, client);
+      const receipt = await receipts.issue(updated.id, 'payment', updated.amount, client);
       after.push(async () => {
         const mentor = await getUserById(updated.mentorId);
         if (mentor) notify.notifyMentorNewQuestion(mentor, updated);
+        await receipts.email(receipt);
       });
       return { booking: updated, after };
     }
@@ -85,9 +88,12 @@ async function applyBankStatus(client, booking, s) {
       status: 'refunded', refundedAt: new Date(), refundReason: booking.refundReason || 'refunded_at_bank', refundError: null
     }, client);
     await ledger.onRefundRequested(client, updated);
+    // (what is left to return after an earlier partial refund)
+    const receipt = await receipts.issue(updated.id, 'refund', updated.amount - (updated.refundedAmount || 0), client);
     after.push(async () => {
       const [seeker, mentor] = await Promise.all([getUserById(updated.seekerId), getUserById(updated.mentorId)]);
       if (seeker && mentor) notify.notifyRefund(seeker, mentor, updated, updated.refundReason);
+      await receipts.email(receipt);
     });
     return { booking: updated, after };
   }
@@ -189,11 +195,14 @@ async function partialRefund(bookingId, amount, reason) {
     throw new PaymentError('refund_failed', err.message);
   }
   let updated;
+  let receipt;
   await tx(async (client) => {
     const b = await lockBooking(client, claimed.id);
     updated = await updateBooking(b.id, { refundedAmount: amount, refundReason: reason }, client);
     await ledger.onPartialRefund(client, b, amount);
+    receipt = await receipts.issue(b.id, 'refund', amount, client);
   });
+  receipts.email(receipt).catch((e) => console.error('[payments] receipt email failed:', e.message));
   return updated;
 }
 

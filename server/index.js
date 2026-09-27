@@ -102,6 +102,7 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/inbox', require('./routes/inbox').router);
+app.use('/api', require('./routes/receipts'));
 app.use('/api/admin/2fa', require('./routes/adminTwoFactor')); // two-step verification (how an admin passes the second step)
 if (config.DEV_MODE) app.use('/api/admin/dev', require('./routes/adminDev')); // development only: never exists in production
 app.use('/api/admin/support', require('./routes/inbox').adminRouter);

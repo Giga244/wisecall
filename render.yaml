@@ -46,6 +46,14 @@ services:
         value: "7"
       - key: PAYOUT_HOLD_DAYS
         value: "7"
+      - key: DISPUTE_DAYS
+        value: "7"
+      - key: LEGAL_NAME
+        sync: false
+      - key: LEGAL_ID
+        sync: false
+      - key: LEGAL_ADDRESS
+        sync: false
       - key: ADMIN_EMAILS
         sync: false
       - key: EMAIL_PROVIDER

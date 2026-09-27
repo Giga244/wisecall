@@ -49,6 +49,9 @@ const notifyDisputeResolved = (asker, mentor, booking, d) => Promise.all([asker,
   role: u && u.id === booking.seekerId ? 'asker' : 'mentor', outcome: d.outcome, amount: d.refundAmount ? money({ amount: d.refundAmount, currency: booking.currency }) : '', note: d.note
 })));
 
+// A receipt for a payment or a refund (data: number, kind, amount, mentor, date, url of the PDF).
+const notifyReceipt = (user, data) => safeSend('receipt', 'receipt', user, data);
+
 const notifySupportReply = (user, data) => safeSend('support reply', 'supportReply', user, { body: data.body, threadId: data.threadId });
 
 const notifyMentorDeadlineSoon = (mentor, booking) => {
@@ -109,4 +112,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

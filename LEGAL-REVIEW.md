@@ -96,3 +96,8 @@ Mentor applications now go through three steps (Identity → Experience → Revi
     proportion between the platform fee and the mentor's share), or none, with a note both see. Mentors' earnings are never payable
     before that window has passed. Confirm the Terms (refunds, the mentor's share, disputes) and whether consumer law requires a
     different window or an appeal.
+46. **Receipts and statements.** Every payment and refund gets a numbered receipt (R-000001, …) emailed to the asker with a PDF
+    (EN/KA): the seller's legal details from LEGAL_NAME / LEGAL_ID / LEGAL_ADDRESS, the date, the payer's name, "a question to <mentor>
+    on Wisecall", the amount in GEL and the bank. Confirm what a Georgian receipt must contain (VAT status, a fiscal receipt from the
+    bank or a cash-register rule), and whether Wisecall or the mentor is the seller. Mentors get monthly statements (CSV/PDF) of what
+    they earned and were paid: confirm whether they need anything for their own taxes (for example the platform's details).
