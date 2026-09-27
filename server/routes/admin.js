@@ -98,6 +98,61 @@ router.post('/safety/:id/review', requireAuth, requireAdmin, asyncHandler(async 
   res.json({ ok: true });
 }));
 
+// The overview: the numbers an admin checks first (sign-ups, applications, the waiting list, questions, refunds, disputes, money).
+// Amounts are tetri. "received" is what buyers paid for questions that are not (being) refunded, minus partial refunds; "fee" is
+// Wisecall's share of the answered ones (gross, before bank fees and tax); "payouts" uses the ledger's own rules (server/ledger.js).
+router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const [users, apps, risks, flags, waiting, bookings, money, disputes, safety, support, payouts] = await Promise.all([
+    query(`SELECT count(*)::int AS total,
+                   count(*) FILTER (WHERE created_at > now() - interval '7 days')::int AS week,
+                   count(*) FILTER (WHERE created_at > now() - interval '30 days')::int AS month,
+                   count(*) FILTER (WHERE role IN ('mentor', 'both'))::int AS mentors
+              FROM users WHERE deleted_at IS NULL`),
+    query(`SELECT CASE WHEN verification_status = 'pending' AND application_submitted_at IS NULL THEN 'draft' ELSE verification_status END AS status,
+                   count(*)::int AS n
+              FROM users WHERE role IN ('mentor', 'both') AND deleted_at IS NULL GROUP BY 1`),
+    query(`SELECT COALESCE(r.risk, 'none') AS risk, count(*)::int AS n
+              FROM users u
+              LEFT JOIN LATERAL (SELECT v.risk FROM verification_reviews v WHERE v.user_id = u.id ORDER BY v.created_at DESC LIMIT 1) r ON TRUE
+             WHERE u.role IN ('mentor', 'both') AND u.verification_status = 'pending' AND u.application_submitted_at IS NOT NULL AND u.deleted_at IS NULL
+             GROUP BY 1`),
+    query(`SELECT count(*)::int AS n FROM mentor_flags WHERE status = 'open'`),
+    query(`SELECT niche, count(*)::int AS n FROM waitlist WHERE notified_at IS NULL GROUP BY niche ORDER BY n DESC, niche`),
+    query(`SELECT status, count(*)::int AS n, count(*) FILTER (WHERE paid_at > now() - interval '30 days')::int AS month FROM bookings GROUP BY status`),
+    query(`SELECT COALESCE(sum(amount - COALESCE(refunded_amount, 0)) FILTER (WHERE status IN ('paid', 'answered')), 0)::bigint AS received,
+                   COALESCE(sum(platform_fee_amount - round(COALESCE(refunded_amount, 0)::numeric * platform_fee_amount / amount)) FILTER (WHERE status = 'answered'), 0)::bigint AS fee,
+                   COALESCE(sum(CASE WHEN status = 'refunded' THEN amount ELSE COALESCE(refunded_amount, 0) END) FILTER (WHERE paid_at IS NOT NULL), 0)::bigint AS refunded,
+                   count(*) FILTER (WHERE refunded_amount IS NOT NULL AND status <> 'refunded')::int AS partial,
+                   count(*) FILTER (WHERE provider = 'mock' AND paid_at IS NOT NULL)::int AS test_payments
+              FROM bookings`),
+    query(`SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status = 'resolved')::int AS resolved
+              FROM disputes`),
+    query(`SELECT count(*)::int AS n FROM safety_events WHERE reviewed_at IS NULL`),
+    query(`SELECT count(*)::int AS n FROM threads WHERE kind = 'support' AND status = 'open'`),
+    query(`SELECT COALESCE(sum(p.amount) FILTER (WHERE ${ledger.payableSql('p')}), 0)::bigint AS payable,
+                   COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND NOT (${ledger.payableSql('p')})), 0)::bigint AS holding,
+                   COALESCE(sum(${ledger.debtAmountSql('p')}) FILTER (WHERE ${ledger.debtSql('p')}), 0)::bigint AS debt,
+                   COALESCE(sum(p.amount) FILTER (WHERE p.status = 'paid'), 0)::bigint AS paid_out
+              FROM payouts p`)
+  ]);
+  const byKey = (rows, key, val = 'n') => Object.fromEntries(rows.map((r) => [r[key], r[val]]));
+  const m = money.rows[0];
+  const p = payouts.rows[0];
+  const q = byKey(bookings.rows, 'status');
+  res.json({
+    currency: config.CURRENCY,
+    feePercent: config.PLATFORM_FEE_PERCENT,
+    signups: users.rows[0],
+    applications: { byStatus: byKey(apps.rows, 'status'), waitingByRisk: byKey(risks.rows, 'risk'), openFlags: flags.rows[0].n },
+    waitlist: { byNiche: byKey(waiting.rows, 'niche'), total: waiting.rows.reduce((s, r) => s + r.n, 0) },
+    questions: { byStatus: q, paidLast30Days: bookings.rows.reduce((s, r) => s + r.month, 0) },
+    refunds: { pending: q.refund_pending || 0, full: q.refunded || 0, partial: m.partial, amount: Number(m.refunded) },
+    disputes: { open: disputes.rows[0].open, resolved: disputes.rows[0].resolved, openSafety: safety.rows[0].n, openSupport: support.rows[0].n },
+    money: { received: Number(m.received), fee: Number(m.fee), testPayments: m.test_payments },
+    payouts: { payable: Number(p.payable), holding: Number(p.holding), debt: Number(p.debt), paidOut: Number(p.paid_out) }
+  });
+}));
+
 const BOOKING_STATUSES = ['pending_payment', 'paid', 'answered', 'refund_pending', 'refunded', 'expired'];
 
 // All bookings, newest first, with both people's names so support can see what happened.

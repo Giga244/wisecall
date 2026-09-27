@@ -59,7 +59,8 @@ for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']])
     });
 
     test('...and on every admin tab', async () => {
-      for (const tab of ['mentors', 'bookings', 'queue', 'reviews', 'interviews', 'payouts', 'waitlist', 'disputes', 'support']) {
+      test.slow(); // (ten tabs, each audited after its data loads)
+      for (const tab of ['mentors', 'bookings', 'queue', 'reviews', 'interviews', 'payouts', 'waitlist', 'disputes', 'support', 'overview']) {
         await audit('admin', '/admin.html', async (p) => { await p.click(`#adminTabs [data-tab="${tab}"]`); await p.waitForLoadState('networkidle'); });
       }
     });
