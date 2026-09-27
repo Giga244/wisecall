@@ -1303,5 +1303,7 @@
   "ap.why.ai": "Part of the review is automatic: we open your links and an AI model reads your application to help our team. It never sees your ID or contact details, and it never rejects anyone: people do.",
   "vt.status.needsAttention": "Needs attention: a required step failed. You're hidden from Browse experts until it's sorted out",
   "settings.verify.needs_attention": "Needs attention — hidden from Browse experts",
-  "ap.rev.needs_attention": "A required step above needs your attention. Until it is sorted out your profile is hidden from Browse experts and nobody can book you."
+  "ap.rev.needs_attention": "A required step above needs your attention. Until it is sorted out your profile is hidden from Browse experts and nobody can book you.",
+  "auth.verify.tooManyAttempts": "Too many wrong codes, so this code no longer works. Ask for a new code below.",
+  "vt.we.tooManyAttempts": "Too many wrong codes, so this code no longer works. Send yourself a new one."
 }

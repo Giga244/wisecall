@@ -395,7 +395,7 @@
 
   const LICENSE_ERR = { invalid_license_number: 'vt.lic.err.number', invalid_issuing_body: 'vt.lic.err.body', invalid_holder_name: 'vt.lic.err.holder', invalid_valid_until: 'vt.lic.err.until' };
   const DOC_ERR = { unsupported_file_type: 'vt.doc.err.type', file_too_large: 'vt.doc.err.size', too_many_files: 'vt.doc.err.many', empty_file: 'vt.doc.err.empty', application_locked: 'ap.err.application_locked' };
-  const EMAIL_ERR = { free_email_domain: 'vt.we.free', invalid_email: 'vt.we.invalid', invalid_code: 'vt.we.wrongCode', expired: 'vt.we.expired', no_pending_code: 'vt.we.expired' };
+  const EMAIL_ERR = { free_email_domain: 'vt.we.free', invalid_email: 'vt.we.invalid', invalid_code: 'vt.we.wrongCode', expired: 'vt.we.expired', no_pending_code: 'vt.we.expired', too_many_attempts: 'vt.we.tooManyAttempts' };
   const FORM_ERR = {
     invalid_tags: 'ap.err.invalid_tags', invalid_years: 'ap.err.invalid_years', story_too_long: 'ap.err.story_too_long', sample_too_long: 'ap.err.sample_too_long',
     title_too_long: 'ap.err.title_too_long', invalid_niche: 'ap.err.invalid_niche', invalid_custom_niche: 'ap.err.invalid_custom_niche', application_locked: 'ap.err.application_locked', email_not_verified: 'settings.mentor.emailNotVerified'

@@ -1,4 +1,5 @@
 const express = require('express');
+const codeAttempts = require('../codeAttempts');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { signToken, setAuthCookie, clearAuthCookie, requireAuth } = require('../auth');
@@ -161,9 +162,15 @@ router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
   if (user.emailVerified) return res.json({ user: meProfile(user) });
   if (!user.emailVerifyCodeHash || !user.emailVerifyCodeExpiresAt) return res.status(400).json({ error: 'no_pending_code' });
   if (new Date(user.emailVerifyCodeExpiresAt).getTime() < Date.now()) return res.status(400).json({ error: 'expired' });
-  if (!(await bcrypt.compare(code.trim(), user.emailVerifyCodeHash))) return res.status(400).json({ error: 'invalid_code' });
+  // At most 5 tries per code for this account, whatever the IP address (docs/AUDIT.md #2); then a new code must be asked for.
+  const used = await codeAttempts.takeTry(user.id, 'email');
+  if (used === null) return res.status(400).json({ error: 'too_many_attempts' });
+  if (!(await bcrypt.compare(code.trim(), user.emailVerifyCodeHash))) {
+    const left = await codeAttempts.wrongCode(user.id, 'email', used);
+    return res.status(400).json({ error: left ? 'invalid_code' : 'too_many_attempts', attemptsLeft: left });
+  }
 
-  const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null });
+  const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null, emailCodeAttempts: 0 });
   if (updated.role === 'mentor' || updated.role === 'both') await verification.syncEmailStep(updated);
   res.json({ user: meProfile(updated) });
 }));
@@ -176,7 +183,8 @@ router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) =
   const verifyCode = String(crypto.randomInt(100000, 1000000));
   await updateUser(user.id, {
     emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10),
-    emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000)
+    emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    emailCodeAttempts: 0
   });
 
   let emailSent = false;

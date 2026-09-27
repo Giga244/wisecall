@@ -81,7 +81,7 @@ async function startWorkEmail(user, email) {
 
   const code = String(crypto.randomInt(100000, 1000000));
   await query(
-    `UPDATE users SET work_email = $2, work_email_verified_at = NULL, work_email_code_hash = $3, work_email_code_expires_at = $4 WHERE id = $1`,
+    `UPDATE users SET work_email = $2, work_email_verified_at = NULL, work_email_code_hash = $3, work_email_code_expires_at = $4, work_email_code_attempts = 0 WHERE id = $1`,
     [user.id, value, await bcrypt.hash(code, 10), new Date(Date.now() + rules.LIMITS.workEmailCodeMinutes * 60000)]
   );
   await steps.setStep(user.id, 'work_email', 'pending', { evidence: { domain }, replaceEvidence: true, actor: steps.mentorActor(user) });
@@ -100,9 +100,15 @@ async function verifyWorkEmail(user, code) {
   const u = rows[0];
   if (!u || !u.work_email_code_hash) throw new VerificationError('no_pending_code');
   if (new Date(u.work_email_code_expires_at).getTime() < Date.now()) throw new VerificationError('expired');
-  if (!(await bcrypt.compare(String(code || '').trim(), u.work_email_code_hash))) throw new VerificationError('invalid_code');
+  // At most 5 tries per code (docs/AUDIT.md #2); then a new code must be asked for.
+  const codeAttempts = require('../codeAttempts');
+  const used = await codeAttempts.takeTry(user.id, 'work_email');
+  if (used === null) throw new VerificationError('too_many_attempts');
+  if (!(await bcrypt.compare(String(code || '').trim(), u.work_email_code_hash))) {
+    throw new VerificationError((await codeAttempts.wrongCode(user.id, 'work_email', used)) ? 'invalid_code' : 'too_many_attempts');
+  }
 
-  await query('UPDATE users SET work_email_verified_at = now(), work_email_code_hash = NULL, work_email_code_expires_at = NULL WHERE id = $1', [user.id]);
+  await query('UPDATE users SET work_email_verified_at = now(), work_email_code_hash = NULL, work_email_code_expires_at = NULL, work_email_code_attempts = 0 WHERE id = $1', [user.id]);
   // The server decides this step: the mentor proved they can read mail at that company or institution address.
   await steps.setStep(user.id, 'work_email', 'passed', {
     evidence: { domain: domainOf(u.work_email), verifiedAt: new Date().toISOString() }, replaceEvidence: true, actor: steps.SYSTEM

@@ -35,7 +35,7 @@
       WisecallNav.showToast(WisecallI18n.t('auth.verify.success'));
       window.location.href = redirect;
     } catch (e) {
-      const map = { invalid_code: 'auth.verify.invalidCode', expired: 'auth.verify.expiredCode', no_pending_code: 'auth.verify.noPendingCode' };
+      const map = { invalid_code: 'auth.verify.invalidCode', expired: 'auth.verify.expiredCode', no_pending_code: 'auth.verify.noPendingCode', too_many_attempts: 'auth.verify.tooManyAttempts' };
       errorEl.textContent = WisecallI18n.t(map[e.code] || 'toast.error');
       submitBtn.disabled = false;
     }

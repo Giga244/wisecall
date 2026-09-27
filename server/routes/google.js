@@ -67,7 +67,7 @@ router.post('/link/start', requireAuth, asyncHandler(async (req, res) => {
 
 async function sendVerificationCode(user, lang) {
   const code = String(crypto.randomInt(100000, 1000000));
-  await updateUser(user.id, { emailVerifyCodeHash: await bcrypt.hash(code, 10), emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000) });
+  await updateUser(user.id, { emailVerifyCodeHash: await bcrypt.hash(code, 10), emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000), emailCodeAttempts: 0 });
   if (config.EMAIL_ENABLED) {
     try { await sendTemplate('verify', { to: user.email, lang, data: { code } }); return { emailSent: true }; } catch (e) { console.error('[email] verification send failed:', e.message); }
   }

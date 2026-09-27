@@ -229,6 +229,17 @@ describe('work email', () => {
     assert.doesNotMatch(own.text, /nino@studio/, 'only the domain is echoed');
   });
 
+  test('after 5 wrong work-email codes the code is cleared and a new one must be sent (docs/AUDIT.md #2)', async () => {
+    const start = await designer.api('/verification/work-email', { method: 'POST', body: { email: 'nino@guess.example' } });
+    const wrong = start.devCode === '000000' ? '111111' : '000000';
+    const errors = [];
+    for (let i = 0; i < 5; i++) errors.push((await designer.api('/verification/work-email/verify', { method: 'POST', body: { code: wrong } })).error);
+    assert.deepEqual(errors, ['invalid_code', 'invalid_code', 'invalid_code', 'invalid_code', 'too_many_attempts']);
+    assert.notEqual((await designer.api('/verification/work-email/verify', { method: 'POST', body: { code: start.devCode } })).status, 200, 'the right code no longer works');
+    const again = await designer.api('/verification/work-email', { method: 'POST', body: { email: 'nino@guess.example' } });
+    assert.equal((await designer.api('/verification/work-email/verify', { method: 'POST', body: { code: again.devCode } })).status, 200, 'a new code has 5 fresh tries');
+  });
+
   test('an expired code is refused', async () => {
     const start = await designer.api('/verification/work-email', { method: 'POST', body: { email: 'nino@other.example' } });
     await pool.query(`UPDATE users SET work_email_code_expires_at = now() - interval '1 minute' WHERE id = $1`, [designerId]);
