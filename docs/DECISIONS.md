@@ -53,3 +53,6 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   The rating is attached to the Service, not the Person: schema.org has no aggregateRating on Person, and it is only added when there are
   real, visible reviews.
 - Mentor profiles are rendered into the HTML (name, role, bio, city, languages, price, rating), so /api/ can stay blocked in robots.txt.
+- Quality audit UX-3: the review page does not promise a time ("within 2 working days") until the team agrees one; the mentor gets an
+  email the moment it is decided. UX-6: the browser's own confirm() dialogs stay (they are accessible and the tests rely on them);
+  the tab-row fade mask was left out (the active tab is already scrolled into view).

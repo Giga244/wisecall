@@ -83,7 +83,7 @@
           ${riskBadge(a.risk)}
           ${ai ? `<span class="badge badge-${ai.recommendation === 'approve' ? 'answered' : (ai.recommendation === 'reject_suggested' ? 'rejected' : 'pending_payment')}">${esc(fill('admin.ai.recommends', { rec: t('admin.ai.rec.' + ai.recommendation) }))}</span>` : ''}
         </div>
-        ${ai ? `<p class="mv-ai-summary"><span class="badge badge-paid">${t('admin.ai.summaryLabel')}</span> ${esc(ai.admin_summary)}</p><p class="muted small"><strong>${t('admin.ai.evidence')}</strong> ${esc(ai.evidence_summary)}</p>` : `<p class="form-error">${esc(fill('admin.ai.error', { error: a.aiError || '-' }))}</p>`}
+        ${ai ? `<p class="mv-ai-summary"><span class="badge badge-paid">${t('admin.ai.summaryLabel')}</span> ${esc(ai.admin_summary)}</p><p class="muted small"><strong>${t('admin.ai.evidence')}</strong> ${esc(ai.evidence_summary)}</p>` : aiStatus(a.aiError)}
         ${c.wouldAutoApprove && !d.autoApprove ? `<p class="mv-note">${t('admin.ai.wouldAuto')}</p>` : ''}
         ${reasons.length ? `<p class="small"><strong>${t('admin.ai.reasons')}</strong></p><ul class="mv-evidence">${reasons.map((r) => `<li>${esc(reasonText(r))}</li>`).join('')}</ul>` : ''}
         ${ai ? `<table class="mv-scores"><caption class="sr-only">${t('admin.ai.scores')}</caption><tbody>${Object.entries(ai.scores).map(([k, v]) => `<tr><th scope="row">${esc(label('admin.ai.score.', k))}</th><td><span class="mv-score-bar" style="width:${Math.max(2, v)}%"></span></td><td>${v}</td></tr>`).join('')}</tbody></table>` : ''}
@@ -91,7 +91,7 @@
         ${c.injection && c.injection.found ? `<p class="form-error"><strong>${t('admin.ai.injection')}</strong></p><ul class="mv-evidence">${c.injection.matches.map((m) => `<li>${esc(m.field)}: “${esc(m.snippet)}”</li>`).join('')}</ul>` : ''}
         ${signalLines.length ? `<p class="small"><strong>${t('admin.ai.signals')}</strong></p><ul class="mv-evidence">${signalLines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
         <p class="muted small">${esc(fill('admin.ai.cost', { cost: usd(a.usage.costUsd), in: a.usage.inputTokens, out: a.usage.outputTokens, model: a.aiModel || '-' }))} · ${esc(t('admin.ai.trigger.' + a.trigger))} · ${fmt(a.createdAt)}</p>
-        ${(d.analysisHistory || []).length ? `<details><summary class="small">${fill('admin.ai.history', { n: d.analysisHistory.length })}</summary><ul class="mv-evidence">${d.analysisHistory.map((h) => `<li>${fmt(h.createdAt)} · ${esc(t('admin.ai.trigger.' + h.trigger))} · ${h.risk ? esc(t('admin.ai.risk.' + h.risk)) : '-'} · ${usd(h.costUsd)}${h.aiError ? ' · ' + esc(h.aiError) : ''}</li>`).join('')}</ul></details>` : ''}
+        ${(d.analysisHistory || []).length ? `<details><summary class="small">${fill('admin.ai.history', { n: d.analysisHistory.length })}</summary><ul class="mv-evidence">${d.analysisHistory.map((h) => `<li>${fmt(h.createdAt)} · ${esc(t('admin.ai.trigger.' + h.trigger))} · ${h.risk ? esc(t('admin.ai.risk.' + h.risk)) : '-'} · ${usd(h.costUsd)}${h.aiError ? ' · ' + esc(aiErrorText(h.aiError)) : ''}</li>`).join('')}</ul></details>` : ''}
         ${actions}
       </div>`;
   }
@@ -148,6 +148,14 @@
         }).join('')}
       </div>`;
   }
+
+  // Why the AI part of an analysis did not run, in plain words (the raw code only for an unknown one).
+  function aiErrorText(code) {
+    const base = String(code || '').split(':')[0].replace(/^api_error_\d+$/, 'api_error');
+    const key = 'admin.ai.err.' + base;
+    return t(key) !== key ? t(key) : fill('admin.ai.error', { error: code || '-' });
+  }
+  const aiStatus = (code) => (String(code).startsWith('not_configured') ? `<p class="muted small">${esc(aiErrorText(code))}</p>` : `<p class="form-error">${esc(aiErrorText(code))}</p>`);
 
   // The person as the ID provider verified them. Only admins ever see this.
   function kycBlock(k) {
@@ -271,7 +279,7 @@
           <strong>${esc(m.roleTitle || '—')}</strong> · ${m.niche ? esc(t('niche.' + m.niche)) : '—'}
           ${v.level === 'regulated' ? `<span class="badge badge-paid">${t('verify.level.regulated')}</span>` : ''}
         </p>
-        ${m.analysis && m.analysis.summary ? `<p class="mv-ai-summary small">${riskBadge(m.analysis.risk)} <span class="badge badge-paid">${t('admin.ai.summaryLabel')}</span> ${esc(m.analysis.summary)}</p>` : (m.analysis && m.analysis.risk ? `<p class="small">${riskBadge(m.analysis.risk)} ${m.analysis.aiError ? esc(fill('admin.ai.error', { error: m.analysis.aiError })) : ''}</p>` : '')}
+        ${m.analysis && m.analysis.summary ? `<p class="mv-ai-summary small">${riskBadge(m.analysis.risk)} <span class="badge badge-paid">${t('admin.ai.summaryLabel')}</span> ${esc(m.analysis.summary)}</p>` : (m.analysis && m.analysis.risk ? `<p class="small">${riskBadge(m.analysis.risk)} ${m.analysis.aiError ? esc(aiErrorText(m.analysis.aiError)) : ''}</p>` : '')}
         ${m.verificationStatus === 'pending' && !v.submitted ? `<p><span class="badge badge-pending_payment">${t('admin.ai.draft')}</span></p>` : ''}
         ${m.verificationNote ? `<p class="muted small">${t('admin.lastNote')}: ${esc(m.verificationNote)}</p>` : ''}
         <div class="review-actions" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">

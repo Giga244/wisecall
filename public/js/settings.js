@@ -170,7 +170,7 @@
       </div>
       <div class="vt-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="${escapeHtml(text)}"><span style="width:${pct}%"></span></div>
       <p class="small app-progress-foot"><strong>${escapeHtml(text)}</strong>
-        ${verified ? '' : `<button type="button" class="linklike" data-goto-tab="verification">${t('settings.progress.continue')}</button>`}</p>`;
+        ${verified ? '' : `<button type="button" class="linklike" data-goto-tab="verification">${t(app.locked && status !== 'needs_attention' ? 'settings.progress.status' : 'settings.progress.continue')}</button>`}</p>`;
   }
   progressBox.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-goto-tab]');

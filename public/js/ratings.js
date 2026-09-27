@@ -87,7 +87,9 @@ window.WisecallRatings = (function () {
     const asker = v.role === 'asker';
     let body = '';
     if (v.mine && v.mine.revealed) {
-      body = `<p class="muted small">${t('rate.revealed')}</p>${mineHtml(v)}${v.theirs ? theirsHtml(b, v) : `<p class="muted small">${esc(fill(t('rate.theirNone'), { name: b.otherPartyName }))}</p>`}`;
+      body = v.theirs
+        ? `<p class="muted small">${t('rate.revealed')}</p>${mineHtml(v)}${theirsHtml(b, v)}`
+        : `<p class="muted small">${esc(fill(t('rate.revealedOne'), { name: b.otherPartyName }))}</p>${mineHtml(v)}`;
     } else if (v.mine) {
       body = `
         <p class="muted small">${esc(fill(t('rate.waiting'), { name: b.otherPartyName, date: dateOf(v.revealsAt) }))}</p>

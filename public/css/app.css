@@ -46,7 +46,7 @@
 .field .hint { display: block; font-weight: 600; color: var(--ink-soft); font-size: 0.78rem; margin-top: 6px; }
 .field input[aria-invalid="true"] { border-color: var(--red-strong); }
 .pw-wrap { position: relative; }
-.pw-wrap input { padding-right: 52px; }
+.pw-wrap input { padding-right: 52px; min-height: 44px; }
 .pw-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: none; background: transparent; border-radius: 50%; color: var(--ink-soft); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .pw-toggle:hover { color: var(--ink); background: var(--bg); }
 .pw-toggle[aria-pressed="true"] { color: var(--accent-text); }

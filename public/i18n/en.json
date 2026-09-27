@@ -301,7 +301,7 @@
       "h": "9. Content",
       "p": [
         "You own what you write. By posting it on Wisecall you give us permission to store it, show it to the people it is meant for, and, for a mentor’s public profile and reviews, display it on the site. We may remove content that breaks these terms.",
-        "Reviews are shown with the reviewer’s first name and the initial of their last name."
+        "A review shows the reviewer’s name and photo when their profile is public; otherwise it is shown as coming from an anonymous asker."
       ]
     },
     {
@@ -1615,5 +1615,7 @@
   "help.articles": "Articles",
   "help.more": "More help",
   "meta.help.title": "Help centre — Wisecall",
-  "meta.help.description": "Short guides for asking, paying, refunds, becoming a mentor and your account on Wisecall."
+  "meta.help.description": "Short guides for asking, paying, refunds, becoming a mentor and your account on Wisecall.",
+  "rate.revealedOne": "Your rating is now visible. {name} didn’t rate this question.",
+  "settings.progress.status": "See where it stands"
 }

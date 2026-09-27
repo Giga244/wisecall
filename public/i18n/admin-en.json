@@ -397,5 +397,20 @@
   "admin.dis.save": "Decide",
   "admin.dis.pick": "Choose a decision.",
   "admin.dis.badAmount": "Enter an amount above 0 and below the price.",
-  "admin.dis.bankError": "The bank did not accept the refund; nothing changed. Try again."
+  "admin.dis.bankError": "The bank did not accept the refund; nothing changed. Try again.",
+  "admin.ai.err.not_configured": "AI summaries are off (no API key). The checks above still ran; a person decides.",
+  "admin.ai.err.monthly_budget_reached": "The AI review was skipped: this month's AI budget is used up (AI_MONTHLY_BUDGET_USD).",
+  "admin.ai.err.mentor_daily_limit": "The AI review was skipped: this applicant reached today’s limit of reviews.",
+  "admin.ai.err.auth_failed": "The AI review did not run: the API key was refused.",
+  "admin.ai.err.rate_limited": "The AI review did not run: the AI service asked us to slow down. Run it again later.",
+  "admin.ai.err.timeout": "The AI review did not run: the AI service took too long. Run it again.",
+  "admin.ai.err.unreachable": "The AI review did not run: the AI service could not be reached.",
+  "admin.ai.err.model_not_found": "The AI review did not run: the model in ANTHROPIC_MODEL does not exist.",
+  "admin.ai.err.bad_request": "The AI review did not run: the AI service refused the request.",
+  "admin.ai.err.api_error": "The AI review did not run: the AI service had an error.",
+  "admin.ai.err.refused": "The AI declined to review this application; a person decides.",
+  "admin.ai.err.invalid_output": "The AI answered in an unexpected form; a person decides.",
+  "admin.ai.err.interrupted": "The analysis was interrupted (the server restarted). It runs again by itself.",
+  "admin.ai.err.analysis_failed": "The analysis failed; a person decides. Run it again if you like.",
+  "admin.ai.err.error": "The AI review did not run because of an unexpected error."
 }
