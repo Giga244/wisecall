@@ -93,11 +93,36 @@ async function checkEvidence(user) {
   return { items: checked, summary };
 }
 
+// ---- Spending limits for the AI part ------------------------------------------------------------------------------------------------------
+// -> null when the AI may be asked, or the reason it is skipped ('monthly_budget_reached' | 'mentor_daily_limit').
+let budgetWarned = null; // the month the admins were last told that the budget is used up
+async function aiLimitReached(userId) {
+  if (!config.AI_REVIEW_ENABLED) return null; // (aiReview says 'not_configured' itself)
+  const { rows } = await query(
+    `SELECT coalesce(sum(ai_cost_usd) FILTER (WHERE created_at >= date_trunc('month', now())), 0) AS month_cost,
+            count(*) FILTER (WHERE user_id = $1 AND created_at > now() - interval '1 day' AND jsonb_array_length(ai_attempts) > 0)::int AS mentor_today
+       FROM verification_reviews`, [userId]);
+  if (Number(rows[0].month_cost) >= config.AI_MONTHLY_BUDGET_USD) {
+    const month = new Date().toISOString().slice(0, 7);
+    if (budgetWarned !== month) {
+      budgetWarned = month;
+      require('../notify').notifyAdmins('The AI review budget for this month is used up',
+        `<p>The AI reviews of mentor applications have reached this month's budget ($${config.AI_MONTHLY_BUDGET_USD}, AI_MONTHLY_BUDGET_USD). Until next month, or until you raise it, applications are analysed without the AI part and wait for a person.</p>`);
+    }
+    return 'monthly_budget_reached';
+  }
+  if (rows[0].mentor_today >= config.AI_REVIEWS_PER_MENTOR_PER_DAY) return 'mentor_daily_limit';
+  return null;
+}
+
 // ---- The whole analysis ---------------------------------------------------------------------------------------------------------------------
 async function run(userId, trigger) {
   const user = await getUserById(userId);
   if (!isMentor(user) || user.verificationStatus !== 'pending') return null;
   if (!user.applicationSubmittedAt && trigger !== 'migrated') return null;
+  // One analysis at a time per mentor, also across servers (a deploy can briefly run two): a recent one still running wins.
+  const busy = await query(`SELECT 1 FROM verification_reviews WHERE user_id = $1 AND status = 'running' AND created_at > now() - interval '15 minutes'`, [user.id]);
+  if (busy.rowCount) return null;
   const { rows } = await query(
     `INSERT INTO verification_reviews (user_id, rules_version, trigger, submitted_at) VALUES ($1, $2, $3, $4) RETURNING id`,
     [user.id, rules.VERSION, trigger, user.applicationSubmittedAt]);
@@ -110,7 +135,8 @@ async function run(userId, trigger) {
       { field: 'story', text: user.story }, { field: 'sample_answer', text: user.sampleAnswer },
       ...evidence.items.map((e) => ({ field: `evidence:${e.kind}`, text: [e.note, e.checkResult.title, e.checkResult.description].filter(Boolean).join(' \n') }))
     ]);
-    const ai = await aiReview.review(aiReview.buildApplication(user, evidence.items));
+    const limit = await aiLimitReached(user.id);
+    const ai = limit ? { result: null, model: null, error: limit, attempts: [] } : await aiReview.review(aiReview.buildApplication(user, evidence.items));
     const t = aiReview.totals(ai.attempts);
     await query(
       `UPDATE verification_reviews SET checks = $2, ai = $3, ai_model = $4, ai_error = $5, ai_attempts = $6, ai_input_tokens = $7, ai_output_tokens = $8, ai_cost_usd = $9
@@ -251,6 +277,7 @@ async function costs() {
   const r = rows[0];
   return {
     model: config.ANTHROPIC_MODEL, fallbackModel: config.ANTHROPIC_FALLBACK_MODEL || null, aiEnabled: config.AI_REVIEW_ENABLED, autoApprove: config.AUTO_APPROVE,
+    budgetUsd: config.AI_MONTHLY_BUDGET_USD, perMentorPerDay: config.AI_REVIEWS_PER_MENTOR_PER_DAY,
     month: { reviews: r.month_reviews, costUsd: Number(r.month_cost), inputTokens: Number(r.month_in), outputTokens: Number(r.month_out) },
     total: { reviews: r.total_reviews, costUsd: Number(r.total_cost), withAi: r.with_ai },
     averageUsd: r.with_ai ? Number(r.total_cost) / r.with_ai : 0

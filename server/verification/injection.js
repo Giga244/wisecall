@@ -20,7 +20,8 @@ const PATTERNS = [
 function detectInjection(texts) {
   const matches = [];
   for (const { field, text } of texts) {
-    const value = String(text || '');
+    // (compatibility forms and invisible characters are removed first, so full-width letters or zero-width spaces cannot hide a match)
+    const value = String(text || '').normalize('NFKC').replace(/[\u200B-\u200F\u2060-\u2064\uFEFF\u00AD]/g, '');
     for (const re of PATTERNS) {
       const m = re.exec(value);
       if (m) {

@@ -133,15 +133,17 @@ router.post('/mentors/:id/reject', requireAuth, requireAdmin, asyncHandler(async
   } catch (e) { fail(res, e); }
 }));
 
-// Runs the automatic analysis again (for example after the mentor fixed a link, or once an AI key was added). Waits for it to finish.
+// Runs the automatic analysis again (for example after the mentor fixed a link, or once an AI key was added). It runs in the background:
+// the answer comes at once (202) and the panel checks the detail view until the new analysis is there.
 router.post('/mentors/:id/analysis', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
   const mentor = await getUserById(req.params.id);
   if (!mentor || !(mentor.role === 'mentor' || mentor.role === 'both')) return res.status(404).json({ error: 'not_found' });
   if (mentor.verificationStatus !== 'pending') return res.status(409).json({ error: 'invalid_state' });
+  const before = (await analysis.reviewsFor(mentor.id, 1))[0];
   await steps.audit(mentor.id, steps.adminActor(req.adminUser), 'analysis_rerun_requested', {});
-  await analysis.rerun(mentor.id);
-  res.json({ analysis: (await analysis.reviewsFor(mentor.id, 1))[0] || null });
+  analysis.rerun(mentor.id);
+  res.status(202).json({ started: true, previous: before ? before.id : null });
 }));
 
 // An admin confirms or refuses one piece of evidence by hand (a company code in the Public Registry, a diploma, a link).

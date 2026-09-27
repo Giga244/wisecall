@@ -93,10 +93,20 @@ describe('link checker: which addresses may never be reached', () => {
   });
 
   test('page titles, descriptions and names are read from HTML; shorteners and company codes are recognised', () => {
-    const p = linkCheck.parseHtml('<html><head><title>Old</title><meta property="og:title" content="Nino &amp; Co &#8212; Studio"><meta name="description" content=\'Posters by Nino\'></head><body><script>var x="Evil"</script>Hello</body></html>');
+    const p = linkCheck.parseHtml('<html><head><title>Old</title><meta property="og:title" content="Nino &amp; Co &#8212; Studio"><meta name="description" content=\'Posters by Nino\'></head><body><script>var x="Evil"</script><h1>Nino <b>Beridze</b></h1>Hello</body></html>');
     assert.equal(p.title, 'Nino & Co \u2014 Studio');
     assert.equal(p.description, 'Posters by Nino');
-    assert.ok(!p.text.includes('Evil'));
+    assert.deepEqual(p.h1, ['Nino Beridze']);
+    assert.ok(!JSON.stringify(p).includes('Evil'), 'scripts are never read');
+    // A huge page with unclosed tags is cut, and read quickly.
+    const t0 = Date.now();
+    linkCheck.parseHtml('<title>x</title>' + '<script <h1 '.repeat(30000));
+    assert.ok(Date.now() - t0 < 1000);
+    assert.equal(linkCheck.registrableDomain('anna.github.io'), 'github.io');
+    assert.equal(linkCheck.isFreeHosting('anna.github.io'), true);
+    assert.equal(linkCheck.isFreeHosting('shop.vercel.app'), true);
+    assert.equal(linkCheck.isFreeHosting('www.behance.net'), false);
+    assert.equal(linkCheck.isFreeHosting('annakapanadze.ge'), false);
     assert.equal(linkCheck.registrableDomain('www.shop.example.com.ge'), 'example.com.ge');
     assert.equal(linkCheck.registrableDomain('blog.example.co.uk'), 'example.co.uk');
     assert.equal(linkCheck.registrableDomain('a.b.example.com'), 'example.com');
@@ -104,6 +114,48 @@ describe('link checker: which addresses may never be reached', () => {
     assert.deepEqual(linkCheck.companyIdFormat('404 123 456'), { value: '404123456', type: 'legal_entity' });
     assert.deepEqual(linkCheck.companyIdFormat('01001012345'), { value: '01001012345', type: 'individual_entrepreneur' });
     assert.equal(linkCheck.companyIdFormat('4041234567'), null);
+  });
+});
+
+describe('link checker: when a page really "shows the mentor\'s name"', () => {
+  const page = (title, extra = {}) => ({ title, htmlTitle: title, description: '', siteName: '', h1: [], ...extra });
+  const anna = { name: 'Anna Kapanadze', brands: ['Google'] };
+  const find = (pg, url) => linkCheck.findPerson(pg, url, url, anna);
+
+  test('the name in the title or main heading counts; Georgian and Latin spellings are the same person', () => {
+    assert.equal(find(page('Anna Kapanadze | Illustration'), 'https://behance.net/w1'), 'name');
+    assert.equal(find(page('Portfolio', { h1: ['ანა კაპანაძე'] }), 'https://site.ge/work'), 'name');
+    assert.equal(find(page('annakapanadze on Behance', { h1: ['Anna Kapanadze'] }), 'https://www.behance.net/annakapanadze'), 'name', 'a username without separators is fine');
+  });
+
+  test('a page that only repeats its own address, or shows the name only in the body, proves nothing', () => {
+    assert.notEqual(find(page('Search results for Anna Kapanadze'), 'https://www.youtube.com/results?search_query=Anna+Kapanadze'), 'name');
+    assert.notEqual(find(page('anna-kapanadze - not found'), 'https://example.org/anna-kapanadze'), 'name');
+    assert.notEqual(find(page('Welcome', { description: 'Anna Kapanadze' }), 'https://site.ge/'), 'name', 'the description does not count');
+  });
+
+  test('a brand or the address alone is shown to the admin but never counts', () => {
+    assert.equal(find(page('Google careers'), 'https://careers.google.com/'), 'brand');
+    assert.equal(find(page('Portfolio'), 'https://kapanadze.ge/'), 'address');
+  });
+
+  describe('checked against a real server', () => {
+    let server, port;
+    before(async () => {
+      server = http.createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/html' }); res.end('<title>Anna Kapanadze</title><h1>Anna Kapanadze</h1>'); });
+      await new Promise((r) => server.listen(0, '127.0.0.1', r));
+      port = server.address().port;
+    });
+    after(() => { server.closeAllConnections(); server.close(); });
+
+    test('the same page counts at a plain address, but not as a search page', async () => {
+      const ok = await linkCheck.checkLink(`http://127.0.0.1:${port}/w1`, anna, { allowPrivate: true });
+      assert.equal(ok.autoVerified, true);
+      assert.equal(ok.checkStatus, 'ok');
+      const search = await linkCheck.checkLink(`http://127.0.0.1:${port}/search?q=portfolio`, anna, { allowPrivate: true });
+      assert.ok(search.result.flags.includes('search_page'));
+      assert.equal(search.autoVerified, false);
+    });
   });
 });
 

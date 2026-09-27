@@ -285,7 +285,7 @@
   async function costLine(el) {
     try {
       const c = await WisecallAPI.apiFetch('/admin/verification/costs');
-      el.innerHTML = `<p class="muted small">${esc(fill('admin.ai.costs', { month: usd(c.month.costUsd), n: c.month.reviews, total: usd(c.total.costUsd), avg: usd(c.averageUsd), model: c.model }))}
+      el.innerHTML = `<p class="muted small">${esc(fill('admin.ai.costs', { month: usd(c.month.costUsd), budget: usd(c.budgetUsd), n: c.month.reviews, total: usd(c.total.costUsd), avg: usd(c.averageUsd), model: c.model }))}
         · ${t(c.autoApprove ? 'admin.ai.autoOn' : 'admin.ai.autoOff')}${c.aiEnabled ? '' : ' · ' + t('admin.ai.aiOff')}</p>`;
     } catch (e) { el.innerHTML = ''; }
   }
@@ -352,8 +352,17 @@
         if (rerun) rerun.addEventListener('click', async () => {
           rerun.disabled = true;
           rerun.textContent = t('admin.ai.running');
-          try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/analysis`, { method: 'POST' }); await loadPanel(); onChange({ soft: true }); }
-          catch (e) { WisecallNav.showToast(t('toast.error')); rerun.disabled = false; rerun.textContent = t('admin.ai.rerun'); }
+          try {
+            const r = await WisecallAPI.apiFetch(`/admin/mentors/${id}/analysis`, { method: 'POST' });
+            // It runs in the background: check every 2 seconds (for up to 2 minutes) until the new analysis has finished.
+            for (let i = 0; i < 60; i++) {
+              await new Promise((done) => setTimeout(done, 2000));
+              const d = await WisecallAPI.apiFetch(`/admin/mentors/${id}/verification`);
+              if (d.analysis && d.analysis.id !== r.previous && d.analysis.status !== 'running') break;
+            }
+            await loadPanel();
+            onChange({ soft: true });
+          } catch (e) { WisecallNav.showToast(t('toast.error')); rerun.disabled = false; rerun.textContent = t('admin.ai.rerun'); }
         });
         const ivReq = body.querySelector('.mv-iv-request');
         if (ivReq) ivReq.addEventListener('click', async () => {

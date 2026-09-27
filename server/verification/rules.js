@@ -76,8 +76,8 @@ const LIMITS = {
   interviewMaxDaysAhead: 120,
 
   // Probation: a new mentor's first answers wait for an admin before the buyer sees them.
-  // (The PROBATION_ANSWERS variable exists only so automated tests can switch it off; leave it unset.)
-  probationAnswers: Number.isInteger(Number(process.env.PROBATION_ANSWERS)) && process.env.PROBATION_ANSWERS !== '' ? Number(process.env.PROBATION_ANSWERS) : 5,
+  // (The PROBATION_ANSWERS variable exists only so automated tests can switch it off; it is ignored in production.)
+  probationAnswers: process.env.NODE_ENV !== 'production' && process.env.PROBATION_ANSWERS !== undefined && process.env.PROBATION_ANSWERS !== '' && Number.isInteger(Number(process.env.PROBATION_ANSWERS)) ? Number(process.env.PROBATION_ANSWERS) : 5,
   probationHoldHours: 24,
 
   // Automatic flags for the admin.

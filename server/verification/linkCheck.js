@@ -14,6 +14,7 @@ const net = require('net');
 const config = require('../config');
 const { LIMITS } = require('./rules');
 const names = require('./names');
+const tldts = require('tldts');
 
 class LinkError extends Error { constructor(code) { super(code); this.code = code; } }
 
@@ -153,20 +154,27 @@ function decodeEntities(s) {
 }
 const clean = (s, max) => decodeEntities(String(s || '')).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 
+// Only the first 100 KB are parsed (enough for the head and the main heading), which also keeps the patterns below fast.
 function parseHtml(html) {
-  const title = (html.match(/<title[^>]*>([\s\S]{0,2000}?)<\/title>/i) || [])[1];
+  const head = String(html).slice(0, 100 * 1024);
+  const title = (head.match(/<title[^>]*>([\s\S]{0,2000}?)<\/title>/i) || [])[1];
   const meta = {};
-  for (const tag of html.match(/<meta\b[^>]*>/gi) || []) {
+  for (const tag of head.match(/<meta\b[^>]{0,2000}>/gi) || []) {
     const key = (tag.match(/\b(?:name|property)\s*=\s*["']?([^"'\s>]+)/i) || [])[1];
     const content = (tag.match(/\bcontent\s*=\s*"([^"]*)"/i) || tag.match(/\bcontent\s*=\s*'([^']*)'/i) || [])[1];
     if (key && content !== undefined && meta[key.toLowerCase()] === undefined) meta[key.toLowerCase()] = content;
   }
-  const text = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<!--[\s\S]*?-->/gi, ' ').replace(/<[^>]+>/g, ' ');
+  const h1 = [];
+  for (const m of head.matchAll(/<h1\b[^>]{0,500}>([\s\S]{0,500}?)<\/h1>/gi)) {
+    h1.push(clean(m[1].replace(/<[^>]{0,500}>/g, ' '), 200));
+    if (h1.length >= 3) break;
+  }
   return {
     title: clean(meta['og:title'] || title, 200),
+    htmlTitle: clean(title, 200),
     description: clean(meta.description || meta['og:description'] || meta['twitter:description'], 400),
     siteName: clean(meta['og:site_name'], 100),
-    text: clean(text, 20000)
+    h1: h1.filter(Boolean)
   };
 }
 
@@ -180,19 +188,22 @@ const WALLED = ['linkedin.com', 'instagram.com', 'facebook.com', 'fb.com', 'x.co
 const OLD_PLATFORMS = new Set([...WALLED, 'behance.net', 'dribbble.com', 'github.com', 'gitlab.com', 'youtube.com', 'medium.com', 'substack.com',
   'google.com', 'apple.com', 'wikipedia.org', 'researchgate.net', 'scholar.google.com', 'orcid.org', 'wordpress.com', 'wix.com', 'notion.site',
   'artstation.com', 'vimeo.com', 'soundcloud.com', 'amazon.com', 'goodreads.com', 'play.google.com', 'apps.apple.com', 'upwork.com', 'fiverr.com']);
-const SECOND_LEVEL = new Set(['co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'com.ge', 'org.ge', 'edu.ge', 'gov.ge', 'net.ge', 'pvt.ge', 'school.ge',
-  'com.au', 'net.au', 'co.jp', 'com.br', 'co.in', 'com.tr', 'com.ua', 'co.il', 'com.cn', 'co.nz', 'co.za', 'com.mx', 'com.ar', 'co.kr']);
+// Search and result pages repeat whatever is in the address, so they can never show who someone is.
+const SEARCH_PATH = /(^|\/)(search|results|find|explore|query|lookup|suche|poisk)(\/|$)/i;
+const SEARCH_PARAMS = ['q', 'query', 'search', 'search_query', 'keyword', 'keywords', 'term', 'text', 's', 'k', 'p'];
 
+// The registered domain under the public suffix list (anna.example.com.ge -> example.com.ge). An IP address is its own domain.
 function registrableDomain(hostname) {
-  const parts = String(hostname).toLowerCase().replace(/\.$/, '').split('.');
-  if (parts.length <= 2) return parts.join('.');
-  const last2 = parts.slice(-2).join('.');
-  return SECOND_LEVEL.has(last2) ? parts.slice(-3).join('.') : last2;
+  const host = String(hostname).toLowerCase().replace(/\.$/, '');
+  return tldts.parse(host).domain || host;
 }
+// A page on a free hosting platform (anna.github.io, shop.vercel.app, name.wixsite.com): anyone can make one in minutes, and the
+// platform's domain age says nothing about the page. The public suffix list's "private" section lists these platforms.
+const isFreeHosting = (hostname) => Boolean(tldts.parse(String(hostname).toLowerCase(), { allowPrivateDomains: true }).isPrivate);
 const onPlatform = (host, list) => list.some((d) => host === d || host.endsWith('.' + d));
 
 // Domain age from RDAP (the public registration data service). Unknown (null) when the registry does not answer: that is never held
-// against the mentor. Answers are remembered for a day.
+// against the mentor. Answers are remembered for a day (at most 1000 domains).
 const ageCache = new Map();
 // Names reserved for examples and tests (RFC 2606 / 6761): they are never registered, so there is nothing to look up.
 const RESERVED = /(^|\.)(example\.(com|net|org)|example|invalid|test|localhost|local)$/i;
@@ -210,28 +221,50 @@ async function domainCreated(domain, opts = {}) {
       if (ev && !Number.isNaN(Date.parse(ev.eventDate))) created = new Date(ev.eventDate).toISOString();
     }
   } catch (e) { /* unknown */ }
+  ageCache.delete(domain);
   ageCache.set(domain, { created, at: Date.now() });
+  if (ageCache.size > 1000) ageCache.delete(ageCache.keys().next().value);
   return created;
 }
 const ageDays = (iso) => (iso ? Math.floor((Date.now() - Date.parse(iso)) / 86400000) : null);
 
-// Does the page (or its address) show this person? Name words are compared across Georgian and Latin spellings.
+// The words in a web address (path and query), decoded: "/in/anna-kapanadze?ref=x" -> anna, kapanadze, ref, x (and "in").
+function addressWords(...urls) {
+  const out = new Set();
+  for (const url of urls.filter(Boolean)) {
+    let u;
+    try { u = new URL(url); } catch (e) { continue; }
+    let text = `${u.pathname} ${u.search}`;
+    try { text = decodeURIComponent(text.replace(/\+/g, ' ')); } catch (e) { /* keep it encoded */ }
+    names.tokens(text).forEach((w) => out.add(names.canon(w)));
+  }
+  return out;
+}
+
+// Does the page show this person? Only the page's own title, social-card title, site name and main headings count (not the body, which
+// can repeat anything), names are compared across Georgian and Latin spellings, and name words that are already in the address itself
+// are ignored: a page that merely repeats its address ("/search?q=Anna Kapanadze", "/anna-kapanadze" on a page that echoes it) proves
+// nothing. -> 'name' (counts), or 'brand' / 'address' (shown to the admin, never counted), or null.
 //   person: { name, brands: [strings] }
-function findPerson(page, finalUrl, person) {
-  const pageWords = new Set(names.tokens(`${page.title} ${page.description} ${page.siteName} ${page.text}`).map(names.canon));
+function findPerson(page, requestedUrl, finalUrl, person) {
+  const pageWords = new Set(names.tokens([page.title, page.htmlTitle, page.siteName, ...(page.h1 || [])].join(' ')).map(names.canon));
   const nameWords = [...new Set(names.tokens(person.name).filter((w) => w.length >= 2).map(names.canon))];
-  const found = nameWords.filter((w) => pageWords.has(w));
+  const inAddress = addressWords(requestedUrl, finalUrl);
+  const found = nameWords.filter((w) => !inAddress.has(w) && pageWords.has(w));
   if (nameWords.length && found.length >= Math.min(2, nameWords.length)) return 'name';
   for (const brand of person.brands || []) {
     const b = names.tokens(brand).filter((w) => w.length >= 3).map(names.canon);
     if (b.length && b.every((w) => pageWords.has(w))) return 'brand';
   }
-  // A personal address (anna-beridze.com, behance.net/annaberidze) counts only when the page itself opened.
-  const addr = names.canon(names.tokens(new URL(finalUrl).hostname.replace(/^www\./, '') + ' ' + new URL(finalUrl).pathname).join(''));
+  const final = new URL(finalUrl || requestedUrl);
+  const addr = names.canon(names.tokens(final.hostname.replace(/^www\./, '') + ' ' + final.pathname).join(''));
   const surname = nameWords.length ? nameWords[nameWords.length - 1] : '';
   if (surname.length >= 4 && addr.includes(surname)) return 'address';
   return null;
 }
+
+// A link is only ever "verified automatically" when the page opened, shows the person's name as above, and none of these is true.
+const NOT_AUTO = ['shortener', 'new_domain', 'redirected_elsewhere', 'free_hosting', 'search_page'];
 
 // Checks one link. -> { checkStatus: ok | warning | failed, autoVerified, result }
 //   person: { name, brands }
@@ -246,6 +279,8 @@ async function checkLink(value, person, opts = {}) {
   result.domain = domain;
   if (SHORTENERS.has(host) || SHORTENERS.has(domain)) result.flags.push('shortener');
   if (u.protocol === 'http:') result.flags.push('no_https');
+  if (isFreeHosting(host)) result.flags.push('free_hosting');
+  if (SEARCH_PATH.test(u.pathname) || SEARCH_PARAMS.some((k) => u.searchParams.has(k))) result.flags.push('search_page');
 
   let page = null;
   try {
@@ -254,8 +289,10 @@ async function checkLink(value, person, opts = {}) {
     result.status = r.status;
     if (r.redirects.length) {
       result.redirects = r.redirects.length;
-      const finalDomain = registrableDomain(new URL(r.url).hostname);
+      const finalHost = new URL(r.url).hostname.toLowerCase();
+      const finalDomain = registrableDomain(finalHost);
       if (finalDomain !== domain) { result.finalDomain = finalDomain; result.flags.push('redirected_elsewhere'); }
+      if (isFreeHosting(finalHost) && !result.flags.includes('free_hosting')) result.flags.push('free_hosting');
     }
     const type = String(r.headers['content-type'] || '');
     if (r.status >= 200 && r.status < 300) {
@@ -271,7 +308,8 @@ async function checkLink(value, person, opts = {}) {
     result.flags.push(e.code === 'blocked_address' || e.code === 'port_not_allowed' ? 'refused_address' : 'dead_link');
   }
 
-  const created = await domainCreated(result.finalDomain || domain, opts);
+  // (a page on a free hosting platform has no age of its own: the platform's would only mislead)
+  const created = result.flags.includes('free_hosting') ? null : await domainCreated(result.finalDomain || domain, opts);
   if (created) {
     result.domainCreated = created;
     result.domainAgeDays = ageDays(created);
@@ -282,12 +320,11 @@ async function checkLink(value, person, opts = {}) {
     result.title = page.title;
     result.description = page.description;
     if (page.siteName) result.siteName = page.siteName;
-    result.match = findPerson(page, result.finalUrl, person);
-    if (!result.match) result.flags.push('name_not_found');
+    result.match = findPerson(page, u.toString(), result.finalUrl, person);
+    if (result.match !== 'name') result.flags.push('name_not_found');
   }
   const opened = Boolean(page);
-  const risky = result.flags.some((f) => ['shortener', 'new_domain', 'redirected_elsewhere'].includes(f));
-  const autoVerified = opened && Boolean(result.match) && !risky;
+  const autoVerified = opened && result.match === 'name' && !result.flags.some((f) => NOT_AUTO.includes(f));
   let checkStatus = 'warning';
   if (result.flags.includes('dead_link') || result.flags.includes('refused_address')) checkStatus = 'failed';
   else if (autoVerified) checkStatus = 'ok';
@@ -303,4 +340,4 @@ function companyIdFormat(value) {
   return null;
 }
 
-module.exports = { LinkError, isBlockedAddress, checkAddress, safeGet, parseHtml, registrableDomain, domainCreated, ageDays, checkLink, companyIdFormat, SHORTENERS };
+module.exports = { LinkError, isBlockedAddress, checkAddress, safeGet, parseHtml, registrableDomain, isFreeHosting, findPerson, domainCreated, ageDays, checkLink, companyIdFormat, SHORTENERS };

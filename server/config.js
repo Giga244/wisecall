@@ -100,8 +100,13 @@ const config = {
   ANTHROPIC_MODEL: (env.ANTHROPIC_MODEL || 'claude-sonnet-5').trim(),
   // Asked once more when the first model declines to answer for safety reasons. Empty = no second try.
   ANTHROPIC_FALLBACK_MODEL: (env.ANTHROPIC_FALLBACK_MODEL === undefined ? 'claude-opus-5' : env.ANTHROPIC_FALLBACK_MODEL).trim(),
-  // Optional: low | medium | high (how much the model thinks; lower is cheaper). Empty = the model's default.
-  ANTHROPIC_EFFORT: (env.ANTHROPIC_EFFORT || '').trim().toLowerCase(),
+  // low | medium | high: how much the model thinks (lower is cheaper and faster). medium is enough for reading an application.
+  ANTHROPIC_EFFORT: (env.ANTHROPIC_EFFORT || 'medium').trim().toLowerCase(),
+  // Spending limits for the AI review. Past the monthly budget (US dollars, counted from what the reviews cost this calendar month) the AI
+  // part is skipped and applications go to a person with the link checks only; the admins are emailed once. Each mentor gets at most this
+  // many AI reviews a day (submissions and admin re-runs together).
+  AI_MONTHLY_BUDGET_USD: Number.isFinite(Number(env.AI_MONTHLY_BUDGET_USD)) && env.AI_MONTHLY_BUDGET_USD !== undefined && env.AI_MONTHLY_BUDGET_USD !== '' ? Number(env.AI_MONTHLY_BUDGET_USD) : 20,
+  AI_REVIEWS_PER_MENTOR_PER_DAY: int(env.AI_REVIEWS_PER_MENTOR_PER_DAY, 4),
   // Only outside production: tests point the AI at a fake server. Production always talks to Anthropic itself.
   ANTHROPIC_BASE_URL: IS_PROD ? 'https://api.anthropic.com' : ((env.ANTHROPIC_BASE_URL || '').trim() || 'https://api.anthropic.com'),
   // Domain ages for the link checks come from RDAP (public registration data). Tests point it at a fake server.
@@ -175,7 +180,9 @@ if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) pro
 if (Boolean(config.GOOGLE_CLIENT_ID) !== Boolean(config.GOOGLE_CLIENT_SECRET)) problems.push('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must both be set (Google sign-in) or both be empty (no Google button)');
 if (!['prelaunch', 'live', 'auto'].includes(config.LAUNCH_MODE_SETTING)) problems.push('LAUNCH_MODE must be prelaunch or live (or empty: prelaunch until a mentor is listed)');
 if (!['on', 'off'].includes(config.AUTO_APPROVE_SETTING)) problems.push('AUTO_APPROVE must be on or off (off: a person approves every mentor)');
-if (config.ANTHROPIC_EFFORT && !['low', 'medium', 'high'].includes(config.ANTHROPIC_EFFORT)) problems.push('ANTHROPIC_EFFORT must be low, medium or high (or empty)');
+if (!['low', 'medium', 'high'].includes(config.ANTHROPIC_EFFORT)) problems.push('ANTHROPIC_EFFORT must be low, medium or high');
+if (!(config.AI_MONTHLY_BUDGET_USD >= 0)) problems.push('AI_MONTHLY_BUDGET_USD must be a number of US dollars (0 or more)');
+if (!(config.AI_REVIEWS_PER_MENTOR_PER_DAY >= 0)) problems.push('AI_REVIEWS_PER_MENTOR_PER_DAY must be 0 or more');
 if (!/^[a-z0-9][a-z0-9.\-]*$/i.test(config.ANTHROPIC_MODEL)) problems.push('ANTHROPIC_MODEL must be a model name such as claude-sonnet-5');
 if (config.ANTHROPIC_FALLBACK_MODEL && !/^[a-z0-9][a-z0-9.\-]*$/i.test(config.ANTHROPIC_FALLBACK_MODEL)) problems.push('ANTHROPIC_FALLBACK_MODEL must be a model name (or empty)');
 if (IS_PROD && config.LINK_CHECK_ALLOW_PRIVATE) problems.push('LINK_CHECK_ALLOW_PRIVATE is for tests on a developer\'s computer and is not allowed in production');
