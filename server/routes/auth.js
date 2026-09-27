@@ -2,7 +2,7 @@ const express = require('express');
 const codeAttempts = require('../codeAttempts');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { signToken, setAuthCookie, clearAuthCookie, requireAuth } = require('../auth');
+const { clearAuthCookie, requireAuth, startSession, endSession, endAllSessions, tokenFrom } = require('../auth');
 const { meProfile, asyncHandler } = require('../util');
 const { getUserById, getUserByEmail, insertUser, updateUser } = require('../models');
 const config = require('../config');
@@ -69,7 +69,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
     }
   }
 
-  setAuthCookie(res, signToken(user));
+  await startSession(req, res, user);
   await require('../verification/signals').record(req, res, user.id, 'signup');
   res.status(201).json({
     user: meProfile(user),
@@ -88,15 +88,18 @@ router.post('/login', asyncHandler(async (req, res) => {
   const ok = await bcrypt.compare(password, user && user.passwordHash ? user.passwordHash : DUMMY_HASH) && Boolean(user && user.passwordHash);
   if (!user || !ok) return res.status(401).json({ error: 'invalid_credentials' });
 
-  setAuthCookie(res, signToken(user));
+  await startSession(req, res, user);
   await require('../verification/signals').record(req, res, user.id, 'login');
   res.json({ user: meProfile(user) });
 }));
 
-router.post('/logout', (req, res) => {
+// Signing out ends this device's session on the server too, not only the cookie in this browser.
+router.post('/logout', asyncHandler(async (req, res) => {
+  const payload = await tokenFrom(req);
+  if (payload) await endSession(payload);
   clearAuthCookie(res);
   res.json({ ok: true });
-});
+}));
 
 // Reset tokens look like "<userId>.<random>": the id lets us find the one account to check,
 // and only a bcrypt hash of the random part is stored.
@@ -150,6 +153,8 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
     resetTokenHash: null,
     resetTokenExpiresAt: null
   });
+  // Whoever else was signed in (a stolen cookie, a forgotten device) is signed out now (docs/AUDIT.md #3).
+  await endAllSessions(user.id);
   res.json({ ok: true });
 }));
 

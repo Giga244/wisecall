@@ -14,7 +14,7 @@ const config = require('../config');
 const google = require('../google');
 const identities = require('../identities');
 const usernames = require('../usernames');
-const { signToken, setAuthCookie, requireAuth, optionalAuth } = require('../auth');
+const { requireAuth, optionalAuth, startSession } = require('../auth');
 const { asyncHandler } = require('../util');
 const { getUserById, getUserByEmail, insertUser, updateUser } = require('../models');
 const { fetchGooglePhoto } = require('../images');
@@ -109,7 +109,7 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
   }
 
   const signIn = async (user, to) => {
-    setAuthCookie(res, signToken(user));
+    await startSession(req, res, user);
     await require('../verification/signals').record(req, res, user.id, 'login');
     res.redirect(302, to);
   };

@@ -1481,5 +1481,15 @@
   "inbox.n.dispute_resolved": "We decided on a reported answer.",
   "dash.receipt.payment": "Receipt",
   "dash.receipt.refund": "Refund receipt",
-  "dash.statements.title": "Monthly statements"
+  "dash.statements.title": "Monthly statements",
+  "settings.sessions.title": "Where you're signed in",
+  "settings.sessions.body": "Sign out a device you don't recognise, or every device except this one. Changing your password also signs out every other device.",
+  "settings.sessions.unknown": "A device",
+  "settings.sessions.this": "This device",
+  "settings.sessions.lastSeen": "Last active {date}",
+  "settings.sessions.signOut": "Sign out",
+  "settings.sessions.others": "Sign out all other devices",
+  "settings.sessions.confirm": "Sign out every device except this one?",
+  "settings.sessions.done": "Signed out.",
+  "settings.sessions.doneAll": "Every other device is signed out."
 }

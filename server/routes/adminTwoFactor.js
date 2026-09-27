@@ -3,7 +3,7 @@
 // they still need an admin account: anybody else gets the same plain 403 as everywhere.
 const express = require('express');
 const QRCode = require('qrcode');
-const { requireAuth, signToken, setAuthCookie } = require('../auth');
+const { requireAuth, reissue } = require('../auth');
 const { requireAdmin, requireAdminUser } = require('../adminAuth');
 const { asyncHandler } = require('../util');
 const config = require('../config');
@@ -19,7 +19,7 @@ function fail(res, e) {
 }
 
 // From now on this login is a verified admin session (for ADMIN_2FA_SESSION_HOURS).
-const markVerified = (res, user) => setAuthCookie(res, signToken(user, { mfaAt: Math.floor(Date.now() / 1000) }));
+const markVerified = (res, req) => reissue(res, req.userToken, { mfaAt: Math.floor(Date.now() / 1000) });
 
 // Where this admin stands. (On a developer's computer it also carries the code the app would show now, so nobody needs a phone to try it.)
 router.get('/status', requireAuth, requireAdminUser, asyncHandler(async (req, res) => {
@@ -51,7 +51,7 @@ router.post('/enable', requireAuth, requireAdminUser, asyncHandler(async (req, r
   if (typeof code !== 'string') return res.status(400).json({ error: 'invalid_code' });
   try {
     const { recoveryCodes } = await twoFactor.confirmSetup(req.adminUser, code);
-    markVerified(res, req.adminUser);
+    markVerified(res, req);
     console.log(`[admin] two-step verification turned on for ${req.adminUser.email}`);
     res.set('Cache-Control', 'no-store');
     res.json({ ok: true, recoveryCodes });
@@ -64,7 +64,7 @@ router.post('/verify', requireAuth, requireAdminUser, asyncHandler(async (req, r
   if ((code !== undefined && typeof code !== 'string') || (recoveryCode !== undefined && typeof recoveryCode !== 'string') || (code === undefined && recoveryCode === undefined)) return res.status(400).json({ error: 'invalid_code' });
   try {
     const out = await twoFactor.verifyLogin(req.adminUser, { code, recoveryCode });
-    markVerified(res, req.adminUser);
+    markVerified(res, req);
     if (out.usedRecovery) console.log(`[admin] ${req.adminUser.email} signed in with a recovery code (${out.recoveryLeft} left)`);
     res.json({ ok: true, recoveryLeft: out.recoveryLeft, usedRecovery: out.usedRecovery });
   } catch (e) { fail(res, e); }

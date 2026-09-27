@@ -25,7 +25,7 @@ describe('sessions after a password change', () => {
     assert.equal((await other.api('/auth/reset-password', { method: 'POST', body: { token, newPassword: 'third-password-789' } })).status, 400);
   });
 
-  test('a session opened before a password RESET is signed out', { todo: 'AUDIT #3' }, async () => {
+  test('a session opened before a password RESET is signed out', async () => {
     const victim = await signupVerified(base, 'Giorgi Test', 'giorgi@example.com', 'old-password-123'); // e.g. a stolen or forgotten session
     assert.ok((await victim.api('/me')).user);
     const owner = client(base);
@@ -35,7 +35,7 @@ describe('sessions after a password change', () => {
     assert.equal((await victim.api('/me')).user, null, 'the old session must no longer be signed in');
   });
 
-  test('other sessions are signed out after a password CHANGE in Settings', { todo: 'AUDIT #3' }, async () => {
+  test('other sessions are signed out after a password CHANGE in Settings', async () => {
     const laptop = await signupVerified(base, 'Ana Test', 'ana@example.com', 'old-password-123');
     const phone = client(base);
     assert.equal((await phone.api('/auth/login', { method: 'POST', body: { email: 'ana@example.com', password: 'old-password-123' } })).status, 200);

@@ -1481,5 +1481,15 @@
   "inbox.n.dispute_resolved": "საჩივარზე გადაწყვეტილება მივიღეთ.",
   "dash.receipt.payment": "ქვითარი",
   "dash.receipt.refund": "დაბრუნების ქვითარი",
-  "dash.statements.title": "თვიური ამონაწერები"
+  "dash.statements.title": "თვიური ამონაწერები",
+  "settings.sessions.title": "სად ხარ შესული",
+  "settings.sessions.body": "გამოდი მოწყობილობიდან, რომელსაც ვერ ცნობ, ან ყველა მოწყობილობიდან ამის გარდა. პაროლის შეცვლაც ყველა სხვა მოწყობილობიდან გამოგიყვანს.",
+  "settings.sessions.unknown": "მოწყობილობა",
+  "settings.sessions.this": "ეს მოწყობილობა",
+  "settings.sessions.lastSeen": "ბოლოს აქტიური: {date}",
+  "settings.sessions.signOut": "გამოსვლა",
+  "settings.sessions.others": "ყველა სხვა მოწყობილობიდან გამოსვლა",
+  "settings.sessions.confirm": "გამოხვიდე ყველა მოწყობილობიდან ამის გარდა?",
+  "settings.sessions.done": "გამოსულია.",
+  "settings.sessions.doneAll": "ყველა სხვა მოწყობილობიდან გამოხვედი."
 }

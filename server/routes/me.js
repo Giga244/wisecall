@@ -1,4 +1,5 @@
 const express = require('express');
+const auth = require('../auth');
 const bcrypt = require('bcryptjs');
 const { requireAuth, optionalAuth } = require('../auth');
 const { meProfile, asyncHandler, isListable } = require('../util');
@@ -201,7 +202,28 @@ router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   if (hasPassword && !(await bcrypt.compare(String(currentPassword), user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
 
   await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
+  // Every other device is signed out (docs/AUDIT.md #3); this one gets a fresh session.
+  await auth.endAllSessions(user.id);
+  await auth.startSession(req, res, user);
   res.json({ ok: true });
+}));
+
+// Settings -> Account: where this account is signed in, signing out one device, or every other device.
+router.get('/sessions', requireAuth, asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ sessions: await auth.listSessions(req.userToken.id, req.userToken.sid), currentKnown: Boolean(req.userToken.sid) });
+}));
+router.post('/sessions/:id/revoke', requireAuth, asyncHandler(async (req, res) => {
+  if (req.params.id === req.userToken.sid) return res.status(400).json({ error: 'use_logout' });
+  if (!(await auth.revokeSession(req.userToken.id, req.params.id))) return res.status(404).json({ error: 'not_found' });
+  res.json({ sessions: await auth.listSessions(req.userToken.id, req.userToken.sid) });
+}));
+router.post('/sessions/logout-others', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  await auth.endAllSessions(user.id);
+  const sid = await auth.startSession(req, res, user);
+  res.json({ sessions: await auth.listSessions(user.id, sid) });
 }));
 
 // Connected accounts (Settings > Account): is Google connected, can it be disconnected.

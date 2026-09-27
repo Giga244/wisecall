@@ -1,9 +1,7 @@
 const path = require('path');
-const jwt = require('jsonwebtoken');
 const config = require('./config');
 const { asyncHandler } = require('./util');
 const { getUserById } = require('./models');
-const { COOKIE_NAME } = require('./auth');
 const twoFactor = require('./twoFactor');
 
 // An admin is an account whose email is in ADMIN_EMAILS. The address must also be verified: otherwise anybody could sign up with an
@@ -14,10 +12,8 @@ const isAdminUser = (user) => Boolean(user && user.emailVerified && config.ADMIN
 // -> { user, admin, verified }: user is null when nobody is signed in (or the session is invalid or expired); verified means the admin has
 // also passed the second step (an authenticator app) in this session, or the second step is not required.
 async function whoIsAsking(req) {
-  const token = req.cookies && req.cookies[COOKIE_NAME];
-  if (!token) return { user: null, admin: false, verified: false };
-  let payload;
-  try { payload = jwt.verify(token, config.SESSION_SECRET); } catch (e) { return { user: null, admin: false, verified: false }; }
+  const payload = await require('./auth').tokenFrom(req); // (a genuine cookie whose session is still valid)
+  if (!payload) return { user: null, admin: false, verified: false };
   const user = await getUserById(payload.id);
   const admin = isAdminUser(user);
   return { user: user || null, admin, verified: admin && (!config.ADMIN_2FA_REQUIRED || twoFactor.isFresh(payload.mfaAt)) };
