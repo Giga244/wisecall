@@ -84,7 +84,14 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   // A buyer never sees an answer that is still being checked (see server/probation.js).
   const asked = await ratings.attach((await list('seeker', 'mentor')).map((b) => probation.forViewer(b, me)), me, 'asker');
   const received = await ratings.attach((await list('mentor', 'seeker')).map((b) => ({ ...b, answerHeld: b.answerReview === 'held' })), me, 'mentor');
-  res.json({ asked, received });
+  // Reported problems with answers, and until when the asker can still report one.
+  const disputes = require('../disputes');
+  const found = await disputes.forBookings([...asked, ...received].map((b) => b.id));
+  const withDispute = (b, role) => {
+    const w = role === 'asker' ? disputes.windowFor(b) : null;
+    return { ...b, dispute: found[b.id] || null, disputeUntil: w && Date.now() < +w.until && !found[b.id] ? w.until : null };
+  };
+  res.json({ asked: asked.map((b) => withDispute(b, 'asker')), received: received.map((b) => withDispute(b, 'mentor')) });
 }));
 
 router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
@@ -145,6 +152,20 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
     if (seeker && mentor) notify.notifySeekerAnswered(seeker, mentor, booking);
   }
   res.json({ booking: probation.forViewer(booking, req.userToken.id) });
+}));
+
+// "Report a problem with this answer" (the asker, within DISPUTE_DAYS of being able to read it; once per question).
+const DISPUTE_STATUS = { not_found: 404, forbidden: 403, already_reported: 409, not_disputable: 409, window_closed: 409 };
+router.post('/:id/dispute', requireAuth, asyncHandler(async (req, res) => {
+  const disputes = require('../disputes');
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(401).json({ error: 'not_authenticated' });
+  try {
+    res.status(201).json({ dispute: await disputes.open(user, req.params.id, req.body || {}) });
+  } catch (e) {
+    if (e instanceof disputes.DisputeError) return res.status(DISPUTE_STATUS[e.code] || 400).json({ error: e.code });
+    throw e;
+  }
 }));
 
 // A mentor declines a paid question they have not answered (not in their field, or against the rules): the asker is refunded in full,

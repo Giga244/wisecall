@@ -91,3 +91,8 @@ Mentor applications now go through three steps (Identity → Experience → Revi
     data: confirm the legal basis and add it to the Privacy Policy.
 44. **A mentor declining a question.** The asker is refunded in full at once and sees the reason (not qualified / against the rules);
     the mentor's optional note is seen only by the team. Confirm the Terms cover this.
+45. **"Report a problem with this answer" and partial refunds.** Within 7 days (DISPUTE_DAYS) of being able to read an answer, the
+    asker can report a problem; the mentor's payout for it is held until an admin decides: a full refund, a partial refund (split in
+    proportion between the platform fee and the mentor's share), or none, with a note both see. Mentors' earnings are never payable
+    before that window has passed. Confirm the Terms (refunds, the mentor's share, disputes) and whether consumer law requires a
+    different window or an appeal.

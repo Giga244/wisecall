@@ -1,0 +1,106 @@
+// "Report a problem with this answer": the asker can open ONE dispute per question, within DISPUTE_DAYS of being able to read the
+// answer. While it is open the mentor's payout for that question is held (server/ledger.js payableSql). An admin decides: a full
+// refund, a partial refund (split in proportion between the platform fee and the mentor's share), or no refund, always with a note
+// that both people see. Every step is in the Inbox and by email.
+const { query } = require('./db');
+const config = require('./config');
+const textSafety = require('./textSafety');
+const { getBookingById, getUserById } = require('./models');
+
+const REASONS = ['not_an_answer', 'wrong_or_harmful', 'off_topic', 'rude', 'other'];
+const OUTCOMES = ['full_refund', 'partial_refund', 'rejected'];
+const DETAILS_MAX = 1500;
+
+class DisputeError extends Error {
+  constructor(code, extra = {}) { super(code); this.code = code; Object.assign(this, extra); }
+}
+const isUuid = (v) => /^[0-9a-f-]{36}$/i.test(String(v || ''));
+
+// When the asker could first read the answer, and until when they can report a problem with it.
+function windowFor(booking) {
+  if (booking.status !== 'answered' || booking.answerReview === 'held' || !booking.answeredAt) return null;
+  const from = new Date(booking.answerReleasedAt || booking.answeredAt);
+  return { from, until: new Date(from.getTime() + config.DISPUTE_DAYS * 86400000) };
+}
+
+const view = (d) => d && ({
+  id: d.id, reason: d.reason, details: d.details, status: d.status, outcome: d.outcome, refundAmount: d.refund_amount,
+  note: d.resolution_note, createdAt: d.created_at, resolvedAt: d.resolved_at
+});
+
+async function open(user, bookingId, { reason, details } = {}) {
+  if (!REASONS.includes(reason)) throw new DisputeError('invalid_reason');
+  const booking = isUuid(bookingId) ? await getBookingById(bookingId) : null;
+  if (!booking) throw new DisputeError('not_found');
+  if (booking.seekerId !== user.id) throw new DisputeError('forbidden');
+  const w = windowFor(booking);
+  if (!w) throw new DisputeError('not_disputable');
+  if (Date.now() > +w.until) throw new DisputeError('window_closed');
+  const text = typeof details === 'string' ? textSafety.cleanText(details).slice(0, DETAILS_MAX) : '';
+  const { rows } = await query(
+    `INSERT INTO disputes (booking_id, opened_by, reason, details) VALUES ($1, $2, $3, $4) ON CONFLICT (booking_id) DO NOTHING RETURNING *`,
+    [booking.id, user.id, reason, text || null]);
+  if (!rows[0]) throw new DisputeError('already_reported');
+  const inbox = require('./inbox');
+  inbox.onDisputeOpened(booking);
+  const mentor = await getUserById(booking.mentorId);
+  require('./notify').notifyDisputeOpened(mentor, booking);
+  require('./notify').notifyAdmins('A problem with an answer was reported',
+    `<p>Reason: ${reason}. The mentor's payout for this question is on hold. Decide it in the admin panel, Disputes tab (booking ${booking.id}).</p>`);
+  return view(rows[0]);
+}
+
+// { [bookingId]: dispute } for the dashboard.
+async function forBookings(ids) {
+  if (!ids.length) return {};
+  const { rows } = await query('SELECT * FROM disputes WHERE booking_id = ANY($1::uuid[])', [ids]);
+  return Object.fromEntries(rows.map((d) => [d.booking_id, view(d)]));
+}
+
+async function listForAdmin({ status = 'open' } = {}) {
+  const { rows } = await query(
+    `SELECT d.*, b.question, b.answer, b.amount, b.mentor_net_amount, b.platform_fee_amount, b.status AS booking_status, b.refunded_amount,
+            a.name AS asker_name, a.email AS asker_email, m.name AS mentor_name, m.email AS mentor_email, r.email AS resolved_by_email
+       FROM disputes d JOIN bookings b ON b.id = d.booking_id JOIN users a ON a.id = b.seeker_id JOIN users m ON m.id = b.mentor_id
+       LEFT JOIN users r ON r.id = d.resolved_by
+      WHERE d.status = $1 ORDER BY d.created_at LIMIT 200`, [status]);
+  return rows.map((d) => ({
+    ...view(d), bookingId: d.booking_id, question: d.question, answer: d.answer, amount: d.amount, mentorNet: d.mentor_net_amount,
+    fee: d.platform_fee_amount, bookingStatus: d.booking_status, asker: { name: d.asker_name, email: d.asker_email },
+    mentor: { name: d.mentor_name, email: d.mentor_email }, resolvedBy: d.resolved_by_email
+  }));
+}
+
+// An admin decides. The dispute is claimed first (open -> resolved in one statement), so it is decided once; if the bank refuses the
+// refund, the claim is undone and the admin can try again.
+async function resolve(admin, disputeId, { outcome, amount, note } = {}) {
+  if (!OUTCOMES.includes(outcome)) throw new DisputeError('invalid_outcome');
+  const text = typeof note === 'string' ? note.trim() : '';
+  if (text.length < 5) throw new DisputeError('note_required');
+  if (!isUuid(disputeId)) throw new DisputeError('not_found');
+  const found = (await query('SELECT * FROM disputes WHERE id = $1', [disputeId])).rows[0];
+  if (!found) throw new DisputeError('not_found');
+  const booking = await getBookingById(found.booking_id);
+  if (outcome === 'partial_refund' && !(Number.isInteger(amount) && amount >= 1 && amount < booking.amount)) throw new DisputeError('invalid_amount');
+  const { rows } = await query(
+    `UPDATE disputes SET status = 'resolved', outcome = $2, refund_amount = $3, resolution_note = $4, resolved_by = $5, resolved_at = now()
+      WHERE id = $1 AND status = 'open' RETURNING *`,
+    [found.id, outcome, outcome === 'partial_refund' ? amount : (outcome === 'full_refund' ? booking.amount : null), text.slice(0, 1000), admin.id]);
+  if (!rows[0]) throw new DisputeError('already_resolved');
+  const payments = require('./payments');
+  try {
+    if (outcome === 'full_refund') await payments.refundBooking(booking.id, 'dispute');
+    if (outcome === 'partial_refund') await payments.partialRefund(booking.id, amount, 'dispute');
+  } catch (e) {
+    await query(`UPDATE disputes SET status = 'open', outcome = NULL, refund_amount = NULL, resolution_note = NULL, resolved_by = NULL, resolved_at = NULL WHERE id = $1`, [found.id]);
+    throw new DisputeError(e.code === 'refund_failed' ? 'refund_failed' : (e.code || 'refund_failed'), { detail: e.message });
+  }
+  const d = view(rows[0]);
+  const fresh = await getBookingById(booking.id);
+  require('./inbox').onDisputeResolved(fresh, d);
+  const [asker, mentor] = await Promise.all([getUserById(fresh.seekerId), getUserById(fresh.mentorId)]);
+  require('./notify').notifyDisputeResolved(asker, mentor, fresh, d);
+  return d;
+}
+
+module.exports = { REASONS, OUTCOMES, DisputeError, windowFor, open, forBookings, listForAdmin, resolve };

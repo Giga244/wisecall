@@ -69,6 +69,9 @@ const onAnswered = (booking) => safely('answered', () => bookingEvent(booking, '
 const onRefunded = (booking, reason) => safely('refunded', () => bookingEvent(booking, 'refunded', { reason: reason || null, amount: booking.refundedAmount || booking.amount },
   [[booking.seekerId, 'refunded'], [booking.mentorId, 'refunded']]));
 const onDeclined = (booking, reason) => safely('declined', () => bookingEvent(booking, 'declined', { reason }, [[booking.seekerId, 'declined']]));
+const onDisputeOpened = (booking) => safely('dispute opened', () => bookingEvent(booking, 'dispute_opened', {}, [[booking.mentorId, 'dispute_opened']]));
+const onDisputeResolved = (booking, d) => safely('dispute resolved', () => bookingEvent(booking, 'dispute_resolved',
+  { outcome: d.outcome, amount: d.refundAmount || null, note: d.note }, [[booking.seekerId, 'dispute_resolved'], [booking.mentorId, 'dispute_resolved']]));
 // A rating became visible: the person who was rated hears about it.
 const onRatingRevealed = (bookingId, rateeId) => safely('rating revealed', async () => {
   const threadId = await bookingThreadId(bookingId);
@@ -429,7 +432,7 @@ const unsubscribeUrl = (userId, category) => `${config.PUBLIC_URL}/unsubscribe.h
 module.exports = {
   LIMITS, OPTIONAL_EMAILS, REPORT_REASONS, InboxError,
   bookingThreadId, systemThreadId, addMessage, notifyUser,
-  onPaid, onAnswered, onRefunded, onDeclined, onRatingRevealed, systemMessage,
+  onPaid, onAnswered, onRefunded, onDeclined, onDisputeOpened, onDisputeResolved, onRatingRevealed, systemMessage,
   listThreads, threadFor, threadIdForBooking, markThreadRead, postMessage, startSupport,
   adminList, adminThread, adminReply, adminUpdate, reportMessage, adminReports, resolveReport,
   listNotifications, unreadCount, markNotificationsRead, emailSettings, setEmailOff, emailAllowed, unsubscribe, unsubscribeUrl, unsubscribeToken

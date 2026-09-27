@@ -164,6 +164,39 @@ async function refundBooking(bookingId, reason) {
   try { return (await syncBooking(claimed.id)) || claimed; } catch (e) { return claimed; }
 }
 
+// A partial refund (an admin settling a dispute): `amount` tetri goes back to the asker and the booking stays answered. The mentor's
+// part is in proportion to their share of the price (server/ledger.js onPartialRefund). The request is claimed first
+// (partial_refund_started_at), so two admins cannot send it twice; the ledger changes only after the bank accepted it.
+// Returns the booking. Throws PaymentError.
+async function partialRefund(bookingId, amount, reason) {
+  let claimed = null;
+  await tx(async (client) => {
+    const b = await lockBooking(client, bookingId);
+    if (!b) throw new PaymentError('not_found');
+    if (b.status !== 'answered') throw new PaymentError('not_refundable');
+    if (b.refundedAmount || b.partialRefundStartedAt) throw new PaymentError('already_partly_refunded');
+    if (!Number.isInteger(amount) || amount < 1 || amount >= b.amount) throw new PaymentError('invalid_amount');
+    try { pay.forProvider(b.provider); } catch (e) { throw new PaymentError('provider_unavailable', e.message); }
+    if (!b.providerOrderId) throw new PaymentError('missing_order');
+    await client.query('UPDATE bookings SET partial_refund_started_at = now() WHERE id = $1', [b.id]);
+    claimed = b;
+  });
+  try {
+    await pay.forProvider(claimed.provider).refund({ orderId: claimed.providerOrderId, amount, partial: true, idempotencyKey: `partial-refund-${claimed.id}` });
+  } catch (err) {
+    await query('UPDATE bookings SET partial_refund_started_at = NULL WHERE id = $1', [claimed.id]); // (nothing was returned: it can be tried again)
+    console.error(`[payments] the bank refused the partial refund for booking ${claimed.id}:`, err.message);
+    throw new PaymentError('refund_failed', err.message);
+  }
+  let updated;
+  await tx(async (client) => {
+    const b = await lockBooking(client, claimed.id);
+    updated = await updateBooking(b.id, { refundedAmount: amount, refundReason: reason }, client);
+    await ledger.onPartialRefund(client, b, amount);
+  });
+  return updated;
+}
+
 module.exports = {
-  PaymentError, deadlineFromNow, startPayment, syncBooking, handleCallback, refundBooking, expirePending, applyBankStatus
+  PaymentError, partialRefund, deadlineFromNow, startPayment, syncBooking, handleCallback, refundBooking, expirePending, applyBankStatus
 };

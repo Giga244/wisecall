@@ -43,6 +43,12 @@ const notifyRefund = (seeker, mentor, booking, reason) => Promise.all([
 const notifyFollowUp = (to, data) =>
   safeSend('follow-up notify', data.kind === 'follow_up_question' ? 'followUpQuestion' : 'followUpReply', to, { name: data.from, body: data.body, threadId: data.threadId });
 
+// A dispute: the mentor hears that the asker reported a problem (the payout is held); both hear the decision.
+const notifyDisputeOpened = (mentor, booking) => safeSend('dispute opened', 'disputeOpened', mentor, { question: booking.question });
+const notifyDisputeResolved = (asker, mentor, booking, d) => Promise.all([asker, mentor].map((u) => safeSend('dispute resolved', 'disputeResolved', u, {
+  role: u && u.id === booking.seekerId ? 'asker' : 'mentor', outcome: d.outcome, amount: d.refundAmount ? money({ amount: d.refundAmount, currency: booking.currency }) : '', note: d.note
+})));
+
 const notifySupportReply = (user, data) => safeSend('support reply', 'supportReply', user, { body: data.body, threadId: data.threadId });
 
 const notifyMentorDeadlineSoon = (mentor, booking) => {
@@ -103,4 +109,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

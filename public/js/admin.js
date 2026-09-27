@@ -15,7 +15,7 @@
   let tab = 'mentors';
   const MENTOR_FILTERS = ['pending', 'verified', 'failed_step', 'rejected', 'suspended', ''];
   const BOOKING_FILTERS = ['paid', 'answered', 'refund_pending', 'refunded', 'pending_payment', ''];
-  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist', 'niches', 'support']; // tabs that have no status chips
+  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist', 'niches', 'support', 'disputes']; // tabs that have no status chips
   const tabs = document.getElementById('adminTabs');
 
   function escapeHtml(str) {
@@ -45,6 +45,8 @@
         await AdminNiches.render(content);
       } else if (tab === 'support') {
         await AdminSupport.render(content);
+      } else if (tab === 'disputes') {
+        await AdminDisputes.render(content);
       } else if (tab === 'payouts') {
         const [owed, history] = await Promise.all([WisecallAPI.apiFetch('/admin/payouts'), WisecallAPI.apiFetch('/admin/payouts/history')]);
         renderPayouts(owed, history.batches);

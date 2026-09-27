@@ -29,6 +29,9 @@ const config = {
   ANSWER_DEADLINE_DAYS: int(env.ANSWER_DEADLINE_DAYS, 7),
   // A mentor's earnings become payable this many days after the answer (the buyer's refund window).
   PAYOUT_HOLD_DAYS: int(env.PAYOUT_HOLD_DAYS, 7),
+  // The asker can report a problem with an answer ("dispute") this many days after they can read it. Earnings are never payable
+  // before this window has passed, whatever PAYOUT_HOLD_DAYS says.
+  DISPUTE_DAYS: int(env.DISPUTE_DAYS, 7),
   SWEEP_INTERVAL_SECONDS: int(env.SWEEP_INTERVAL_SECONDS, 600),
   // Attempts to ask a question that were never paid (cancelled, failed, timed out) are deleted after this many days.
   UNPAID_ATTEMPT_DAYS: int(env.UNPAID_ATTEMPT_DAYS, 7),

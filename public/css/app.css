@@ -562,3 +562,10 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .decline-form { display: grid; gap: 8px; margin-top: 6px; }
 .decline-form fieldset { border: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .decline-form textarea { width: 100%; }
+.dispute-note { background: var(--sun-soft); border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 12px; }
+.dispute-note p { margin: 0; }
+.dispute-form { display: grid; gap: 8px; margin-top: 6px; }
+.dispute-form textarea, .dispute-form select { width: 100%; }
+.dis-card { display: grid; gap: 8px; margin-bottom: 14px; }
+.dis-form { display: grid; gap: 8px; }
+.dis-form fieldset { border: none; padding: 0; margin: 0; display: grid; gap: 4px; }

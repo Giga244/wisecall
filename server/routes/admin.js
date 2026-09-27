@@ -72,6 +72,22 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
   }
   res.json({ mentors: list });
 }));
+// Reported problems with answers: the open ones (or ?status=resolved), and the decision (full / partial / no refund, with a note).
+router.get('/disputes', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ disputes: await require('../disputes').listForAdmin({ status: req.query.status === 'resolved' ? 'resolved' : 'open' }) });
+}));
+router.post('/disputes/:id/resolve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const disputes = require('../disputes');
+  const admin = await getUserById(req.userToken.id);
+  const b = req.body || {};
+  try {
+    res.json({ dispute: await disputes.resolve(admin, req.params.id, { outcome: b.outcome, amount: b.amount, note: b.note }) });
+  } catch (e) {
+    if (!(e instanceof disputes.DisputeError)) throw e;
+    res.status({ not_found: 404, already_resolved: 409, refund_failed: 502 }[e.code] || 400).json({ error: e.code, message: e.detail });
+  }
+}));
+
 // Questions that looked like an emergency (not paid for; the person saw help text). ?open=0 lists the reviewed ones too.
 router.get('/safety', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   res.json({ events: await require('../safety').listForAdmin({ open: req.query.open !== '0' }) });
@@ -142,10 +158,10 @@ router.get('/waitlist.csv', requireAuth, requireAdmin, asyncHandler(async (req, 
 async function payoutRows() {
   const { rows } = await query(
     `SELECT u.id, u.name, u.email, u.payout_name, u.payout_iban_enc, u.payout_iban_last4,
-            COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND p.payable_at <= now()), 0)::int AS payable,
-            COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND p.payable_at > now()), 0)::int AS holding,
-            COALESCE(sum(p.amount) FILTER (WHERE p.status = 'paid' AND p.debt_flagged_at IS NOT NULL AND p.debt_settled_batch_id IS NULL), 0)::int AS debt,
-            count(*) FILTER (WHERE p.status = 'pending' AND p.payable_at <= now())::int AS payable_count,
+            COALESCE(sum(p.amount) FILTER (WHERE ${ledger.payableSql('p')}), 0)::int AS payable,
+            COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND NOT (${ledger.payableSql('p')})), 0)::int AS holding,
+            COALESCE(sum(${ledger.debtAmountSql('p')}) FILTER (WHERE ${ledger.debtSql('p')}), 0)::int AS debt,
+            count(*) FILTER (WHERE ${ledger.payableSql('p')})::int AS payable_count,
             EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = u.id AND f.status = 'open' AND f.kind IN ('name_mismatch', 'payout_name_mismatch')) AS flagged,
             u.verification_status = 'suspended' AS suspended
        FROM users u JOIN payouts p ON p.mentor_id = u.id
@@ -177,7 +193,7 @@ const sendCsv = (res, filename, header, lines) => {
 const lari = (tetri) => (tetri / 100).toFixed(2);
 
 router.get('/payouts', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
-  res.json({ currency: config.CURRENCY, holdDays: config.PAYOUT_HOLD_DAYS, mentors: await payoutRows() });
+  res.json({ currency: config.CURRENCY, holdDays: ledger.holdDays(), mentors: await payoutRows() });
 }));
 
 // The transfers to make today, ready for a spreadsheet or bulk upload at the bank.

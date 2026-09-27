@@ -108,9 +108,11 @@ async function getPaymentStatus(orderId) {
 
 // Asks BOG to refund the whole order. BOG accepts the request first; the order later becomes
 // "refunded", which getPaymentStatus reports.
-async function refund({ orderId, idempotencyKey }) {
+// A full refund sends no amount; a partial one (`partial`, after a dispute) sends the amount to return. The same idempotency key returns
+// the same result, so a retry never refunds twice.
+async function refund({ orderId, amount, partial, idempotencyKey }) {
   const res = await call('POST', `/payments/v1/payment/refund/${encodeURIComponent(orderId)}`, {
-    json: {}, headers: { 'Idempotency-Key': uuidFrom(idempotencyKey) }
+    json: partial ? { amount: toDecimal(amount) } : {}, headers: { 'Idempotency-Key': uuidFrom(idempotencyKey) }
   });
   return { refundId: (res && res.action_id) || null };
 }

@@ -24,11 +24,13 @@ async function getPaymentStatus(orderId) {
   return { status: o.status, amount: o.amount, currency: 'gel', raw: o.status };
 }
 
-async function refund({ orderId }) {
+// `partial`: return only `amount` (a dispute settled with a partial refund); the order then says "refunded_partially".
+async function refund({ orderId, amount, partial }) {
   // The fake bank forgets its orders when the server restarts: a payment made before that is still refundable (nothing real to check).
   if (!orders.has(orderId)) orders.set(orderId, { orderId, status: 'paid' });
   const o = orders.get(orderId);
-  if (o.status !== 'paid') throw new Error('mock bank: order is not refundable');
+  if (!['paid', 'refunded_partially'].includes(o.status) || (o.status === 'refunded_partially' && partial)) throw new Error('mock bank: order is not refundable');
+  if (partial) { o.status = 'refunded_partially'; o.refunded = amount; return { refundId: `mock-partial-refund-${orderId}` }; }
   o.status = 'refunded';
   return { refundId: `mock-refund-${orderId}` };
 }

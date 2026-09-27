@@ -46,3 +46,37 @@ test('the mentor declines a paid question from the dashboard; the asker is refun
   await buyerPage.goto('/dashboard.html');
   await expect(buyerPage.locator(`.booking-card[data-id="${b.id}"] .booking-note`)).toContainText('outside what they can answer well');
 });
+
+test('the asker reports a problem with an answer; the admin decides a partial refund; both see the decision', async ({ browser }) => {
+  const b = await bookAndPay(S.BASE, buyer, mentor.id, 'How many rest days per week should a beginner take when starting to run?');
+  const r = await mentor.client.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: require('../tests/helpers').longAnswer('Two rest days, and never two hard days in a row.') } });
+  expect(r.status).toBe(200);
+  expect((await admin.api(`/admin/answers/${b.id}/approve`, { method: 'POST' })).status).toBe(200); // (a new mentor's answers wait for an admin)
+
+  await buyerPage.goto('/dashboard.html');
+  const card = buyerPage.locator(`.booking-card[data-id="${b.id}"]`);
+  await card.locator('.dispute-box summary').click();
+  await card.locator('.dispute-form select').selectOption('not_an_answer');
+  await card.locator('.dispute-form textarea').fill('It does not say anything about my knee.');
+  await card.locator('.dispute-form button[type="submit"]').click();
+  await expect(buyerPage.locator(`.booking-card[data-id="${b.id}"] .dispute-note`)).toContainText('You reported a problem');
+
+  const adminContext = await browser.newContext();
+  const adminPage = await adminContext.newPage();
+  await S.logIn(adminPage, { email: 'e2e-admin@example.com' });
+  await adminPage.goto('/admin.html');
+  await adminPage.locator('#adminTabs [data-tab="disputes"]').click();
+  const item = adminPage.locator('.dis-card', { hasText: 'salome@e2e.test' });
+  await item.locator('input[value="partial_refund"]').check();
+  await item.locator('input[type="number"]').fill('10');
+  await expect(item.locator('.dis-split')).toContainText('8.00');
+  await item.locator('textarea').fill('Half of the answer did not cover the question.');
+  await item.locator('button[type="submit"]').click();
+  await expect(adminPage.locator('.dis-card', { hasText: 'salome@e2e.test' })).toHaveCount(0);
+  await adminContext.close();
+
+  await buyerPage.reload();
+  await expect(buyerPage.locator(`.booking-card[data-id="${b.id}"] .dispute-note`)).toContainText('refunded 10.00');
+  const row = (await S.sql('SELECT refunded_amount FROM bookings WHERE id = $1', [b.id]))[0];
+  expect(row.refunded_amount).toBe(1000);
+});

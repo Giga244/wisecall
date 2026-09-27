@@ -95,6 +95,8 @@
     else if (b.status === 'refunded') {
       const known = ['no_answer_deadline', 'mentor_suspended', 'answer_rejected', 'declined_not_qualified', 'declined_against_rules', 'dispute'];
       text = t(known.includes(b.refundReason) ? 'dash.refund.' + b.refundReason : 'dash.refund.other');
+    } else if (b.status === 'answered' && b.refundedAmount) {
+      text = t('dash.refund.partial').replace('{amount}', money(b.refundedAmount));
     } else if (b.status === 'answered' && b.answerHeld) {
       text = t(b.__role === 'mentor' ? 'dash.answer.held.mentor' : 'dash.answer.held.buyer');
     } else if (b.status === 'pending_payment') text = t('dash.pending.note');
@@ -134,6 +136,20 @@
     WisecallReport.wire(askedList);
 
     WisecallRatings.wire(askedList, { reload: load });
+    askedList.querySelectorAll('.dispute-form').forEach((form) => form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const err = form.querySelector('.form-error');
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      try {
+        await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/dispute`, { method: 'POST', body: { reason: form.querySelector('select').value, details: form.querySelector('textarea').value } });
+        WisecallNav.showToast(t('dash.dispute.sent'));
+        load();
+      } catch (e) {
+        err.textContent = t({ already_reported: 'dash.dispute.already', window_closed: 'dash.dispute.closed' }[e.code] || 'toast.error');
+        btn.disabled = false;
+      }
+    }));
   }
 
   function askedCard(b) {
@@ -156,8 +172,35 @@
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
+        ${disputeHtml(b, 'asker')}
         ${conversationLink(b)}
       </article>`;
+  }
+
+  // "Report a problem with this answer" (the asker, within the report window), and where a report stands (both people).
+  function disputeHtml(b, role) {
+    const d = b.dispute;
+    if (d) {
+      const text = d.status === 'open'
+        ? t(role === 'asker' ? 'dash.dispute.openAsker' : 'dash.dispute.openMentor')
+        : t('dash.dispute.outcome.' + d.outcome).replace('{amount}', d.refundAmount ? money(d.refundAmount) : '');
+      return `<div class="dispute-note"><p>${escapeHtml(text)}</p>${d.status === 'resolved' && d.note ? `<p class="small muted">${escapeHtml(t('dash.dispute.why'))} ${escapeHtml(d.note)}</p>` : ''}</div>`;
+    }
+    if (role !== 'asker' || !b.disputeUntil) return '';
+    const reasons = ['not_an_answer', 'wrong_or_harmful', 'off_topic', 'rude', 'other'];
+    return `
+      <details class="decline-box dispute-box">
+        <summary>${t('dash.dispute.open')}</summary>
+        <form class="dispute-form" data-id="${b.id}" novalidate>
+          <p class="small muted">${escapeHtml(t('dash.dispute.help').replace('{date}', new Date(b.disputeUntil).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium' })))}</p>
+          <label class="field-label small" for="dispute-reason-${b.id}">${t('dash.dispute.reason')}</label>
+          <select id="dispute-reason-${b.id}">${reasons.map((r) => `<option value="${r}">${t('dash.dispute.r.' + r)}</option>`).join('')}</select>
+          <label class="field-label small" for="dispute-details-${b.id}">${t('dash.dispute.details')}</label>
+          <textarea id="dispute-details-${b.id}" rows="3" maxlength="1500"></textarea>
+          <p class="form-error" role="alert"></p>
+          <button type="submit" class="btn btn-outline btn-sm">${t('dash.dispute.send')}</button>
+        </form>
+      </details>`;
   }
 
   // "Can't answer this?": decline with a reason (not qualified / against the rules); the asker is refunded in full.
@@ -238,6 +281,7 @@
             </form>` : '')}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'paid' && !b.answer ? declineHtml(b) : ''}
+        ${disputeHtml(b, 'mentor')}
         ${conversationLink(b)}
       </article>`;
     }).join('');

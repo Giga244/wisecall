@@ -69,6 +69,16 @@ const S = {
       final: 'This is the last reminder.', button: 'Rate now',
       unsubscribe: "You get these reminders because you had a question on Wisecall. Don't want them? Turn them off here:"
     },
+    disputeOpened: {
+      subject: 'The asker reported a problem with your answer', heading: 'A problem was reported',
+      intro: 'The person who asked the question below reported a problem with your answer. Our team is looking at it and will tell you what they decide.',
+      after: 'Your payout for this question is on hold until then.', button: 'Open your dashboard'
+    },
+    disputeResolved: {
+      subject: 'We decided on the reported answer', heading: 'Our decision',
+      outcomes: { full_refund: 'The asker is refunded in full.', partial_refund: 'The asker is refunded {amount}.', rejected: 'There is no refund: the answer stands.' },
+      mentorShare: 'Your payout changes in proportion to the refund.', noteLabel: 'Why:', button: 'Open your dashboard'
+    },
     followUpQuestion: {
       subject: '{name} asked a follow-up question', heading: 'A follow-up question',
       intro: '{name} asked one follow-up question about your answer:',
@@ -207,6 +217,16 @@ const S = {
       final: 'ეს ბოლო შეხსენებაა.', button: 'შეაფასე ახლა',
       unsubscribe: 'ამ შეხსენებებს იღებ, რადგან Wisecall-ზე კითხვა გქონდა. აღარ გინდა? აქ შეგიძლია გამორთო:'
     },
+    disputeOpened: {
+      subject: 'კითხვის ავტორმა შენს პასუხზე პრობლემა დააფიქსირა', heading: 'პრობლემა დაფიქსირდა',
+      intro: 'ქვემოთ მოცემული კითხვის ავტორმა შენს პასუხზე პრობლემა დააფიქსირა. ჩვენი გუნდი ამას განიხილავს და გადაწყვეტილებას შეგატყობინებს.',
+      after: 'მანამდე ამ კითხვის ანაზღაურება შეჩერებულია.', button: 'პირადი კაბინეტის გახსნა'
+    },
+    disputeResolved: {
+      subject: 'გადაწყვეტილება საჩივარზე პასუხის შესახებ', heading: 'ჩვენი გადაწყვეტილება',
+      outcomes: { full_refund: 'კითხვის ავტორს თანხა სრულად დაუბრუნდება.', partial_refund: 'კითხვის ავტორს დაუბრუნდება {amount}.', rejected: 'თანხა არ ბრუნდება: პასუხი ძალაში რჩება.' },
+      mentorShare: 'შენი ანაზღაურება თანხის დაბრუნების პროპორციულად იცვლება.', noteLabel: 'მიზეზი:', button: 'პირადი კაბინეტის გახსნა'
+    },
     followUpQuestion: {
       subject: '{name}-მ დამატებითი კითხვა დაგისვა', heading: 'დამატებითი კითხვა',
       intro: '{name}-მ შენს პასუხზე ერთი დამატებითი კითხვა დაგისვა:',
@@ -335,6 +355,19 @@ const BUILDERS = {
       ]
     };
   },
+  disputeOpened: (s, d) => ({
+    heading: s.disputeOpened.heading,
+    blocks: [{ p: s.disputeOpened.intro }, { quote: d.question }, { p: s.disputeOpened.after }, { button: s.disputeOpened.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  disputeResolved: (s, d) => ({
+    heading: s.disputeResolved.heading,
+    blocks: [
+      { p: fill(s.disputeResolved.outcomes[d.outcome] || '', d), raw: true },
+      ...(d.role === 'mentor' && d.outcome !== 'rejected' ? [{ p: s.disputeResolved.mentorShare }] : []),
+      ...(d.note ? [{ quote: `${s.disputeResolved.noteLabel} ${d.note}` }] : []),
+      { button: s.disputeResolved.button, url: `${config.PUBLIC_URL}/dashboard.html` }
+    ]
+  }),
   followUpQuestion: (s, d) => ({
     heading: s.followUpQuestion.heading,
     blocks: [{ p: fill(s.followUpQuestion.intro, d), raw: true }, { quote: d.body }, { p: s.followUpQuestion.after }, { button: s.followUpQuestion.button, url: `${config.PUBLIC_URL}/inbox.html?thread=${d.threadId}` }]

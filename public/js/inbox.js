@@ -51,6 +51,10 @@
       }
       case 'payout_sent': return esc(fill('inbox.ev.payout_sent', { amount: WisecallAPI.formatAmount(d.amount || 0), reference: d.reference || '—' }));
       case 'refunded': return esc(fill('inbox.ev.refunded', { amount: WisecallAPI.formatAmount(d.amount || 0) }));
+      case 'dispute_resolved': {
+        const s = esc(fill('inbox.ev.dispute.' + d.outcome, { amount: d.amount ? WisecallAPI.formatAmount(d.amount) : '' }));
+        return s + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
+      }
       case 'declined': return esc(t('inbox.ev.declined')) + (d.reason ? `<span class="ev-note">${esc(t('inbox.declineReason.' + d.reason))}</span>` : '');
       case 'rejected': case 'suspended': case 'interview_requested': case 'approved': {
         const note = d.note || d.reason;

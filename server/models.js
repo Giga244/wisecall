@@ -90,6 +90,10 @@ function bookingFromRow(r) {
     answerHeldUntil: r.answer_held_until,
     answerReleasedAt: r.answer_released_at,
     answerFlaggedAt: r.answer_flagged_at,
+    declinedAt: r.declined_at,
+    declineReason: r.decline_reason,
+    refundedAmount: r.refunded_amount,
+    partialRefundStartedAt: r.partial_refund_started_at,
     createdAt: r.created_at
   };
 }
@@ -114,7 +118,8 @@ const BOOKING_COLUMNS = {
   providerOrderId: 'provider_order_id', paidAt: 'paid_at', answeredAt: 'answered_at', answerDeadline: 'answer_deadline',
   refundedAt: 'refunded_at', refundReason: 'refund_reason', providerRefundId: 'provider_refund_id',
   refundRequestedAt: 'refund_requested_at', refundError: 'refund_error', reminderSentAt: 'reminder_sent_at',
-  answerReview: 'answer_review', answerHeldUntil: 'answer_held_until', answerReleasedAt: 'answer_released_at', answerFlaggedAt: 'answer_flagged_at'
+  answerReview: 'answer_review', answerHeldUntil: 'answer_held_until', answerReleasedAt: 'answer_released_at', answerFlaggedAt: 'answer_flagged_at',
+  refundedAmount: 'refunded_amount'
 };
 
 // `client` may be a transaction client; otherwise the shared pool is used.
