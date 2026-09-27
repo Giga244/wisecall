@@ -331,5 +331,13 @@
   "admin.reapprove": "Re-approve",
   "admin.mv.reinstated": "Reinstated: the mentor is back in review. Approve again to list them.",
   "admin.mv.reapproved": "Reinstated and approved again: the mentor is listed.",
-  "admin.tf.expired": "Your two-step verification has expired. Reloading to sign in again…"
+  "admin.tf.expired": "Your two-step verification has expired. Reloading to sign in again…",
+  "admin.filter.failed_step": "Approved, but a step failed",
+  "admin.mv.failedRequired": "A required step failed",
+  "admin.mv.kycRerun": "Re-run ID check",
+  "admin.mv.kycRerunHelp": "Only if the ID may have been read wrongly (for example the date of birth). The provider is asked again and the age worked out again; if it still fails, the mentor can take the ID check once more. Logged with your reason.",
+  "admin.mv.kycRerunGo": "Re-run the ID check",
+  "admin.mv.kycRerun.age_passed": "The age check now passes.",
+  "admin.mv.kycRerun.reopened": "The ID check is open again: the mentor can take it once more.",
+  "admin.mv.kycRerun.unchanged": "No new result from the provider: the age waits for an admin."
 }

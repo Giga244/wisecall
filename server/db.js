@@ -9,19 +9,33 @@ pool.on('error', (e) => console.error('[db] idle client error:', e.message));
 
 const query = (text, params) => pool.query(text, params);
 
+// Runs fn(client) in one transaction. Work that must only happen once the changes are saved (an email about them) is queued with
+// afterCommit(client, fn) and runs after COMMIT; it is dropped on ROLLBACK.
 async function tx(fn) {
   const client = await pool.connect();
+  client.afterCommit = [];
   try {
     await client.query('BEGIN');
     const result = await fn(client);
     await client.query('COMMIT');
+    const later = client.afterCommit;
+    client.afterCommit = null;
+    for (const f of later) Promise.resolve().then(f).catch((e) => console.error('[db] after-commit task failed:', e.message));
     return result;
   } catch (err) {
     try { await client.query('ROLLBACK'); } catch (e) { /* connection already gone */ }
     throw err;
   } finally {
+    client.afterCommit = null;
     client.release();
   }
+}
+
+// Queues fn to run once the transaction of `client` has committed; without a transaction (no client, or a plain pool query) it runs
+// straight away (in the background: its errors are logged, never thrown).
+function afterCommit(client, fn) {
+  if (client && Array.isArray(client.afterCommit)) { client.afterCommit.push(fn); return; }
+  Promise.resolve().then(fn).catch((e) => console.error('[db] background task failed:', e.message));
 }
 
 // Applies every migrations/*.sql file once, in filename order. An advisory lock keeps two
@@ -56,4 +70,4 @@ async function migrate() {
 
 const close = () => pool.end();
 
-module.exports = { pool, query, tx, migrate, close };
+module.exports = { pool, query, tx, afterCommit, migrate, close };

@@ -54,6 +54,9 @@ function userFromRow(r) {
     profileVisibility: r.profile_visibility,
     theme: r.theme,
     photoUpdatedAt: r.photo_updated_at,
+    // Whether a step the mentor's niche requires no longer holds (see failedRequiredStepSql). Only known when the row was read through
+    // USER_SELECT (getUserById and friends); undefined otherwise, and then the mentor is treated as not listable.
+    hasFailedRequiredStep: r.has_failed_required_step === undefined ? undefined : Boolean(r.has_failed_required_step),
     createdAt: r.created_at
   };
 }
@@ -117,36 +120,59 @@ const BOOKING_COLUMNS = {
 // `client` may be a transaction client; otherwise the shared pool is used.
 const runner = (client) => (client ? client.query.bind(client) : query);
 
-function buildUpdate(table, columns, id, patch, client) {
+function buildUpdate(table, columns, id, patch, client, returning = '*') {
   const keys = Object.keys(patch).filter((k) => columns[k]);
   if (!keys.length) return null;
   const sets = keys.map((k, i) => `${columns[k]} = $${i + 1}`);
   const values = keys.map((k) => patch[k]);
-  return runner(client)(`UPDATE ${table} SET ${sets.join(', ')} WHERE id = $${keys.length + 1} RETURNING *`, [...values, id]);
+  return runner(client)(`UPDATE ${table} SET ${sets.join(', ')} WHERE id = $${keys.length + 1} RETURNING ${returning}`, [...values, id]);
 }
+
+// ---- The "failed required step" rule (docs/AUDIT.md #8) ----------------------------------------------------------------------------
+// A mentor with a step their niche requires that no longer holds (failed, or a licence past its expiry date) is never listed or
+// bookable, whatever users.verification_status says. This one SQL condition is used by listableSql() (lists, counts, pages) and by
+// USER_SELECT (so isListable() in server/util.js sees it too). `u` is the name of the users row in the outer query.
+// The steps every mentor needs come from server/verification/rules.js; a regulated niche adds its licence steps.
+function failedRequiredStepSql(u = 'users') {
+  const rules = require('./verification/rules');
+  const niches = require('./niches');
+  const lit = (list) => list.filter((k) => /^[a-z0-9_]+$/.test(k)).map((k) => `'${k}'`).join(', ');
+  const base = rules.requiredFor(null).concat('video_interview'); // (an interview is required once an admin has asked for one)
+  const regulated = [...new Set([...niches.all().filter((n) => n.regulated).map((n) => n.key), ...Object.keys(rules.REGULATED)])];
+  const byStep = {};
+  for (const key of regulated) {
+    for (const step of rules.requiredFor(key)) if (!base.includes(step)) (byStep[step] = byStep[step] || []).push(key);
+  }
+  const extra = Object.entries(byStep).map(([step, keys]) => ` OR (fs.step = '${step}' AND ${u}.niche IN (${lit(keys)}))`).join('');
+  return `EXISTS (SELECT 1 FROM verification_steps fs WHERE fs.user_id = ${u}.id
+      AND (fs.status = 'failed' OR (fs.status = 'passed' AND fs.expires_at IS NOT NULL AND fs.expires_at < now()))
+      AND (fs.step IN (${lit(base)})${extra}))`;
+}
+// Every column of a user plus the rule above, for code that decides whether a mentor may be shown.
+const userColumnsSql = (u = 'users') => `${u}.*, ${failedRequiredStepSql(u)} AS has_failed_required_step`;
 
 const isUuid = (v) => /^[0-9a-f-]{36}$/i.test(String(v));
 
 async function getUserById(id, client) {
   if (!isUuid(id)) return null;
-  const { rows } = await runner(client)('SELECT * FROM users WHERE id = $1', [id]);
+  const { rows } = await runner(client)(`SELECT ${userColumnsSql()} FROM users WHERE id = $1`, [id]);
   return userFromRow(rows[0]);
 }
 
 async function getUserByEmail(email) {
-  const { rows } = await query('SELECT * FROM users WHERE lower(email) = lower($1)', [email]);
+  const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE lower(email) = lower($1)`, [email]);
   return userFromRow(rows[0]);
 }
 
 async function updateUser(id, patch, client) {
-  const res = await buildUpdate('users', USER_COLUMNS, id, patch, client);
+  const res = await buildUpdate('users', USER_COLUMNS, id, patch, client, userColumnsSql());
   return res ? userFromRow((await res).rows[0]) : getUserById(id, client);
 }
 
 async function insertUser(u) {
   const { rows } = await query(
     `INSERT INTO users (name, email, password_hash, color, language, email_code_hash, email_code_expires_at, email_verified)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *, false AS has_failed_required_step`,
     [u.name, u.email, u.passwordHash || null, u.color, u.language || 'en', u.emailVerifyCodeHash || null, u.emailVerifyCodeExpiresAt || null, Boolean(u.emailVerified)]
   );
   return userFromRow(rows[0]);
@@ -178,11 +204,13 @@ async function claimAnswer(id, answer, hold) {
   return bookingFromRow(rows[0]);
 }
 
-// A mentor shows up publicly (and can be booked) only when this is true: approved by an admin AND
-// payout details saved, so a question can never be paid to someone we cannot pay.
-function listableSql() {
-  return `role IN ('mentor', 'both') AND price IS NOT NULL AND niche IS NOT NULL
-    AND role_title IS NOT NULL AND verification_status = 'verified' AND payout_iban_enc IS NOT NULL`;
+// A mentor shows up publicly (and can be booked) only when this is true: approved by an admin, payout details saved (so a question
+// can never be paid to someone we cannot pay), and no required verification step that no longer holds. The same rule, for one user
+// object, is isListable() in server/util.js. `u` names the users row when the query gives it another name.
+function listableSql(u = 'users') {
+  return `${u}.role IN ('mentor', 'both') AND ${u}.price IS NOT NULL AND ${u}.niche IS NOT NULL
+    AND ${u}.role_title IS NOT NULL AND ${u}.verification_status = 'verified' AND ${u}.payout_iban_enc IS NOT NULL
+    AND NOT ${failedRequiredStepSql(u)}`;
 }
 
 // { [mentorId]: { ratingAvg, reviewCount, answeredCount } } for the given mentor ids.
@@ -225,5 +253,5 @@ async function mentorStatsFor(ids) {
 
 module.exports = {
   userFromRow, bookingFromRow, getUserById, getUserByEmail, updateUser, insertUser,
-  getBookingById, updateBooking, claimAnswer, listableSql, mentorStatsFor
+  getBookingById, updateBooking, claimAnswer, listableSql, failedRequiredStepSql, userColumnsSql, mentorStatsFor
 };

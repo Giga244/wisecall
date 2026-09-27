@@ -43,11 +43,12 @@ async function decideStep({ mentorId, step, decision, reason, admin }) {
     const c = await credentials.credentialsFor(mentor.id);
     if (c && c.validUntil) expiresAt = new Date(c.validUntil + 'T23:59:59Z');
   }
-  await steps.setStep(mentor.id, step, decision, { reason: text, actor: steps.adminActor(admin), expiresAt });
+  // (A failed required step takes a listed mentor off the site inside setStep, and that sends the mentor the email.)
+  const saved = await steps.setStep(mentor.id, step, decision, { reason: text, actor: steps.adminActor(admin), expiresAt });
   // Uploaded documents for a decided step are deleted 90 days later.
   if (credentials.DOCUMENT_STEPS.includes(step)) await credentials.scheduleDeletion(mentor.id, step);
-  // The mentor is emailed the outcome and what is still missing (after the delisting below, so the list is current).
-  const emailAfter = () => require('./updates').stepDecided(mentor.id, step, decision, text);
+  // The mentor is emailed the outcome and what is still missing (unless the delisting already did).
+  const emailAfter = () => (saved.delisted ? null : require('./updates').stepDecided(mentor.id, step, decision, text));
   // An admin who accepts the names as they are closes the mismatch flag. (A payout-name flag is closed on its own: it only holds payouts.)
   if (step === 'name_match' && decision === 'passed') {
     await flags.resolveFlags(mentor.id, ['name_mismatch'], steps.adminActor(admin), text);
@@ -63,11 +64,6 @@ async function decideStep({ mentorId, step, decision, reason, admin }) {
     await flags.resolveFlags(mentor.id, ['license_expiring', 'license_expired'], steps.adminActor(admin), `renewed license approved: ${text}`);
   }
 
-  // A required step that fails takes a live mentor off the site until it is sorted out.
-  if (decision === 'failed' && mentor.verificationStatus === 'verified' && rules.stepNamesFor(mentor.niche).includes(step)) {
-    await updateUser(mentor.id, { verificationStatus: 'pending' });
-    await steps.audit(mentor.id, steps.adminActor(admin), 'delisted', { from: 'verified', to: 'pending', step, reason: text });
-  }
   await emailAfter();
   // The identity side changed: the latest analysis is decided again (it may now allow automatic approval, or no longer).
   if (['name_match', 'age'].includes(step)) require('./analysis').afterIdentityChange(mentor.id);

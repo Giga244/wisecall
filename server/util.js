@@ -29,18 +29,36 @@ function meProfile(user) {
   const { passwordHash, resetTokenHash, resetTokenExpiresAt, emailVerifyCodeHash, emailVerifyCodeExpiresAt, payoutIbanEnc, ...rest } = user;
   return {
     ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), hasPassword: Boolean(passwordHash), photoUrl: photoUrl(user), isListedMentor: isListable(user),
+    verificationState: verificationState(user),
     isAdmin: Boolean(user.email) && Boolean(user.emailVerified) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase())
   };
 }
 
+// The one rule for "shown in Browse experts and bookable", for a user read through models.getUserById (or USER_SELECT): the same
+// conditions as models.listableSql(). A required verification step that no longer holds always wins over an approval
+// (hasFailedRequiredStep), and a user object that does not say (undefined) is treated as not listable.
 function isListable(user) {
   return Boolean(user) && (user.role === 'mentor' || user.role === 'both') &&
     Boolean(user.price) && Boolean(user.niche) && Boolean(user.roleTitle) &&
-    user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc);
+    user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc) && user.hasFailedRequiredStep === false;
+}
+
+// Where a mentor's application stands, in one word, for every screen that shows it (the Settings banner, the progress bar, the
+// Verification tab): the steps win over the stored status, so an approved mentor with a step that no longer holds is
+// "needs_attention", never "verified".
+//   none | pending (not sent yet) | in_review | needs_attention | verified | rejected | suspended
+function verificationState(user) {
+  if (!user || !(user.role === 'mentor' || user.role === 'both')) return 'none';
+  const s = user.verificationStatus || 'none';
+  if (s === 'suspended' || s === 'rejected') return s;
+  if (user.hasFailedRequiredStep) return 'needs_attention';
+  if (s === 'verified') return 'verified';
+  if (s === 'pending') return user.applicationSubmittedAt ? 'in_review' : 'pending';
+  return 'none';
 }
 
 // Express 4 does not catch rejected promises from async handlers; this forwards them to
 // the error middleware instead of leaving the request hanging.
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-module.exports = { publicProfile, meProfile, isListable, asyncHandler, photoUrl };
+module.exports = { publicProfile, meProfile, isListable, verificationState, asyncHandler, photoUrl };

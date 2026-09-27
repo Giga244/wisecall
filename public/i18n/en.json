@@ -1200,7 +1200,7 @@
   "ap.id.help": "A photo of your ID and a quick live selfie, checked automatically by our identity partner. We keep only the result, your verified name, date of birth and country: never the images.",
   "ap.id.passed": "Your ID and selfie were checked.",
   "ap.age.passed": "Age 18+ confirmed.",
-  "ap.age.failed": "Your ID shows you are under 18. Mentors must be 18 or older.",
+  "ap.age.failed": "Your ID shows you are under 18. Mentors must be 18 or older. This result is final for this ID; if it was read wrongly, contact support and an admin can run the check again.",
   "ap.age.pending": "Our team is checking the date of birth on your ID.",
   "ap.name.passed": "Your name matches your ID.",
   "ap.name.pending": "The name on your ID doesn't match your profile name. If your profile name is different from your ID, correct it in the Profile tab and we'll check again at once. Otherwise our team will look at it. This is never an automatic rejection.",
@@ -1300,5 +1300,8 @@
   "ap.rev.interview": "Our team would like a short video call with you (about 20 minutes) before deciding.",
   "ap.rev.interviewDone": "Video call done.",
   "ap.rev.refresh": "Check again",
-  "ap.why.ai": "Part of the review is automatic: we open your links and an AI model reads your application to help our team. It never sees your ID or contact details, and it never rejects anyone: people do."
+  "ap.why.ai": "Part of the review is automatic: we open your links and an AI model reads your application to help our team. It never sees your ID or contact details, and it never rejects anyone: people do.",
+  "vt.status.needsAttention": "Needs attention: a required step failed. You're hidden from Browse experts until it's sorted out",
+  "settings.verify.needs_attention": "Needs attention — hidden from Browse experts",
+  "ap.rev.needs_attention": "A required step above needs your attention. Until it is sorted out your profile is hidden from Browse experts and nobody can book you."
 }

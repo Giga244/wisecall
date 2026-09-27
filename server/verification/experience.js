@@ -236,9 +236,11 @@ async function withdraw(user) {
 // Where the application stands, in plain words (never the AI's scores or the risk level).
 //   not_submitted | waiting_identity | checking | with_team | approved | rejected | suspended
 async function stageFor(user, stepMap) {
-  if (user.verificationStatus === 'verified') return 'approved';
   if (user.verificationStatus === 'suspended') return 'suspended';
   if (user.verificationStatus === 'rejected') return 'rejected';
+  // A required step that no longer holds wins over an approval (the same rule as util.verificationState).
+  if (user.hasFailedRequiredStep && (user.verificationStatus === 'verified' || submitted(user))) return 'needs_attention';
+  if (user.verificationStatus === 'verified') return 'approved';
   if (!submitted(user)) return 'not_submitted';
   const latest = (await query(
     `SELECT status FROM verification_reviews WHERE user_id = $1 AND submitted_at = $2 ORDER BY created_at DESC LIMIT 1`, [user.id, user.applicationSubmittedAt])).rows[0];

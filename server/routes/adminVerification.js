@@ -183,6 +183,18 @@ router.post('/mentors/:id/kyc/refresh', requireAuth, requireAdmin, asyncHandler(
   }
 }));
 
+// "Re-run ID check" (admins only, reason required, logged): for an ID that may have been read wrongly, for example an age failure. The
+// provider is asked again and the age worked out again; if it still fails, the mentor may take the ID check once more.
+router.post('/mentors/:id/kyc/rerun', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const reason = req.body && req.body.reason;
+  if (typeof reason !== 'string' || reason.trim().length < 5) return res.status(400).json({ error: 'reason_required' });
+  const mentor = await getUserById(req.params.id);
+  if (!mentor || !(mentor.role === 'mentor' || mentor.role === 'both')) return res.status(404).json({ error: 'not_found' });
+  const admin = await getUserById(req.userToken.id);
+  res.json(await kycService.adminRerun(mentor.id, admin, reason.trim().slice(0, 1000)));
+}));
+
 // An admin closes a flag (for example after checking a name mismatch by hand). A reason is required.
 router.post('/flags/:id/resolve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });

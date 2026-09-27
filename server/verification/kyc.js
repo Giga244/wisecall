@@ -22,7 +22,11 @@ async function latestSession(userId) {
 // Sends the mentor to the provider's hosted check.
 async function startForMentor(user) {
   const provider = kyc.current();
-  const current = (await steps.loadSteps(user.id)).id_kyc;
+  const mine = await steps.loadSteps(user.id);
+  const current = mine.id_kyc;
+  // Under 18 on the ID is final for that ID: the check cannot simply be taken again. Only an admin can open it again
+  // (adminRerun below), for example when the date was read wrongly.
+  if (mine.age && mine.age.status === 'failed') throw new steps.VerificationError('age_final');
   if (current && current.status === 'passed') throw new steps.VerificationError('already_verified');
 
   const { sessionId, url } = await provider.startVerification({
@@ -49,6 +53,7 @@ async function applyResult(providerName, result) {
   }
 
   let changed = false;
+  let stepChanged = false; // (the id_kyc step itself moved: only then is the mentor emailed about it)
   await tx(async (client) => {
     if (result.eventId) {
       const seen = await client.query('INSERT INTO kyc_events (event_id) VALUES ($1) ON CONFLICT DO NOTHING RETURNING event_id', [result.eventId]);
@@ -60,6 +65,9 @@ async function applyResult(providerName, result) {
     if (final && ['not_finished', 'expired'].includes(result.status)) return;
 
     const p = result.person;
+    const before = (await client.query(`SELECT status FROM verification_steps WHERE user_id = $1 AND step = 'id_kyc'`, [session.user_id])).rows[0];
+    const after = { approved: 'passed', declined: 'failed', in_review: 'pending', expired: 'failed' }[result.status];
+    stepChanged = Boolean(after) && (!before || before.status !== after);
     await client.query(
       `UPDATE kyc_sessions SET status = $2, verified_name_enc = COALESCE($3, verified_name_enc), birth_date_enc = COALESCE($4, birth_date_enc),
               country = COALESCE($5, country), decided_at = CASE WHEN $2 IN ('approved', 'declined') THEN now() ELSE decided_at END,
@@ -78,7 +86,7 @@ async function applyResult(providerName, result) {
     }
     changed = true;
   });
-  return { known: true, changed, userId: session.user_id, status: result.status };
+  return { known: true, changed, stepChanged, userId: session.user_id, status: result.status };
 }
 
 // The provider's webhook arrives here (already raw bytes).
@@ -111,7 +119,7 @@ async function refresh(userId) {
 // The mentor is emailed when the ID check ends (approved, declined or expired), never for "in review".
 const OUTCOME = { approved: ['passed', null], declined: ['failed', 'kyc_declined'], expired: ['failed', 'kyc_expired'] };
 async function tellMentor(out) {
-  const o = out.changed && OUTCOME[out.status];
+  const o = out.changed && out.stepChanged && OUTCOME[out.status];
   if (o) await require('./updates').stepDecided(out.userId, 'id_kyc', o[0], null, o[1]);
 }
 
@@ -137,11 +145,12 @@ function ageOn(dateOfBirth, today = new Date()) {
 
 // The age step: 18 or older according to the date of birth on the ID. Only the result is stored (never the date itself). A missing date
 // waits for an admin; under 18 fails the step (a person then decides on the application: the computer never rejects one).
-async function updateAge(userId) {
+// `force` (an admin's re-run) works it out again even when a person decided it before.
+async function updateAge(userId, { force = false } = {}) {
   const { rows } = await query(`SELECT birth_date_enc FROM kyc_sessions WHERE user_id = $1 AND status = 'approved' ORDER BY decided_at DESC NULLS LAST LIMIT 1`, [userId]);
   if (!rows[0]) return null;
   const current = (await steps.loadSteps(userId)).age;
-  if (current && current.decidedBy) return current.status; // an admin already decided it
+  if (current && current.decidedBy && !force) return current.status; // an admin already decided it
   const age = ageOn(decrypt(rows[0].birth_date_enc));
   const min = require('./rules').LIMITS.minAge;
   if (age === null) {
@@ -152,8 +161,28 @@ async function updateAge(userId) {
     if (!current || current.status !== 'passed') await steps.setStep(userId, 'age', 'passed', { evidence: { adult: true }, replaceEvidence: true, reason: `${min} or older according to the ID`, actor: steps.PROVIDER });
     return 'passed';
   }
-  await steps.setStep(userId, 'age', 'failed', { evidence: { adult: false }, replaceEvidence: true, reason: `Under ${min} according to the ID`, actor: steps.PROVIDER });
+  // (A listed mentor is taken off the site by setStep and emailed the reason in their language.)
+  await steps.setStep(userId, 'age', 'failed', { evidence: { adult: false }, replaceEvidence: true, reason: `Under ${min} according to the ID`, reasonKey: 'age_under_min', actor: steps.PROVIDER });
   return 'failed';
+}
+
+// Admin only: "re-run the ID check", for when the ID may have been read wrongly. First the provider is asked again for the latest
+// result (a reading corrected on the provider's side shows up here) and the age is worked out again from it. If it is still under 18
+// (or there is no usable result), the ID check is opened again so the mentor can take it once more; the audit log keeps the old
+// result. Returns { outcome: 'age_passed' | 'reopened' | 'unchanged' }.
+async function adminRerun(userId, admin, reason) {
+  const actor = steps.adminActor(admin);
+  try { await refresh(userId); } catch (e) { console.error('[kyc] re-run: provider refresh failed:', e.message); }
+  const age = await updateAge(userId, { force: true });
+  await steps.audit(userId, actor, 'id_check_rerun', { step: 'id_kyc', reason });
+  if (age === 'passed' || age === 'pending') {
+    require('./analysis').afterIdentityChange(userId);
+    return { outcome: age === 'passed' ? 'age_passed' : 'unchanged' };
+  }
+  await query(`DELETE FROM verification_steps WHERE user_id = $1 AND step IN ('id_kyc', 'age')`, [userId]);
+  await steps.audit(userId, actor, 'id_check_reopened', { step: 'id_kyc', reason });
+  require('./analysis').afterIdentityChange(userId);
+  return { outcome: 'reopened' };
 }
 
 // For admins only: the verified person as the provider reported it.
@@ -172,4 +201,4 @@ async function verifiedNameFor(userId) {
   return rows[0] ? decrypt(rows[0].verified_name_enc) : null;
 }
 
-module.exports = { startForMentor, applyResult, handleWebhook, refresh, summaryFor, verifiedNameFor, latestSession, updateAge, ageOn };
+module.exports = { startForMentor, applyResult, handleWebhook, refresh, summaryFor, verifiedNameFor, latestSession, updateAge, adminRerun, ageOn };

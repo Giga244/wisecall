@@ -40,7 +40,7 @@
   function reviewState() {
     const stage = data.v.application.stage;
     if (stage === 'approved') return 'done';
-    if (stage === 'rejected' || stage === 'suspended') return 'attention';
+    if (stage === 'rejected' || stage === 'suspended' || stage === 'needs_attention') return 'attention';
     if (stage === 'not_submitted') return 'todo';
     return 'waiting';
   }
@@ -350,17 +350,19 @@
   }
 
   // ---- Whole tab --------------------------------------------------------------------------------------------------------------
+  // The headline and its colour come from v.state (the same state as the steps: a failed required step is never "verified").
   function headline() {
     const v = data.v;
-    if (v.status === 'verified') return data.user.hasPayoutDetails ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : 'vt.status.verifiedNoPayout';
-    if (v.status === 'suspended') return 'vt.status.suspended';
-    if (v.status === 'rejected') return 'vt.status.rejected';
+    if (v.state === 'verified') return data.user.hasPayoutDetails ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : 'vt.status.verifiedNoPayout';
+    if (v.state === 'needs_attention') return 'vt.status.needsAttention';
+    if (v.state === 'suspended') return 'vt.status.suspended';
+    if (v.state === 'rejected') return 'vt.status.rejected';
     return v.application.locked ? 'ap.status.inReview' : 'vt.status.pending';
   }
 
   function render() {
     const v = data.v;
-    const tone = v.status === 'verified' ? 'answered' : (v.status === 'rejected' || v.status === 'suspended' ? 'rejected' : 'pending_payment');
+    const tone = v.state === 'verified' ? 'answered' : (['rejected', 'suspended', 'needs_attention'].includes(v.state) ? 'rejected' : 'pending_payment');
     root.innerHTML = `
       <div class="settings-card vt-summary">
         <div class="vt-summary-head">
@@ -369,7 +371,7 @@
         </div>
         <p class="muted">${fill('ap.intro', { minutes: v.limits.minutesToApply })}</p>
         ${stepper()}
-        ${v.status !== 'verified' ? `<p class="muted small">${t('vt.gate')}</p>` : ''}
+        ${v.state !== 'verified' ? `<p class="muted small">${t('vt.gate')}</p>` : ''}
       </div>
       ${identitySection()}
       ${experienceSection()}
@@ -543,7 +545,7 @@
         window.location.href = r.url; // the identity partner's own page
       } catch (e) {
         const el = start.parentElement.parentElement.querySelector('.vt-error');
-        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', email_not_verified: 'settings.mentor.emailNotVerified' }, e);
+        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified' }, e);
         start.disabled = false;
       }
     });

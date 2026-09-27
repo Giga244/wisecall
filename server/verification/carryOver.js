@@ -1,6 +1,9 @@
 // Verification rules v2: what the server does once after migration 018 (and harmlessly on every start after that).
 //   1 The new "age 18+" step is worked out from the ID check for everyone who already passed it (only the result is stored).
-//   2 Applications that were waiting under the first rules are analysed again with what the mentor already gave, so an admin sees the
+//   2 Approved mentors with a required step that failed (for example "under 18" from step 1, or an ID check declined later) are
+//     taken off the site: status back to review, logged, admins told, the mentor emailed the reason. An approval never outlives a
+//     failed required step (docs/AUDIT.md #8).
+//   3 Applications that were waiting under the first rules are analysed again with what the mentor already gave, so an admin sees the
 //     link checks and the AI summary at once (never approved automatically), and the mentor gets one email: "we simplified
 //     verification: add a few details (about 2 minutes) and submit". Approved mentors keep their approval (the migration did that).
 // Runs under an advisory lock, so two servers starting together do not both do it.
@@ -26,6 +29,8 @@ async function run() {
       try { await kyc.updateAge(id); } catch (e) { console.error(`[carry-over] age for ${id}:`, e.message); }
     }
 
+    const delisted = await steps.delistFailedApproved();
+
     const waiting = (await query(
       `SELECT u.id FROM users u
         WHERE u.role IN ('mentor', 'both') AND u.verification_status = 'pending' AND u.application_submitted_at IS NULL
@@ -40,8 +45,8 @@ async function run() {
         require('../notify').notifyVerificationSimplified(await getUserById(id));
       } catch (e) { console.error(`[carry-over] ${id}:`, e.message); }
     }
-    if (ages.length || waiting.length) console.log(`[carry-over] verification rules v2: age step for ${ages.length}, ${waiting.length} waiting application(s) analysed and told`);
-    return { ages: ages.length, waiting: waiting.length };
+    if (ages.length || waiting.length || delisted) console.log(`[carry-over] verification rules v2: age step for ${ages.length}, ${delisted} approved mentor(s) with a failed step taken off the site, ${waiting.length} waiting application(s) analysed and told`);
+    return { ages: ages.length, delisted, waiting: waiting.length };
   } finally {
     if (locked) await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]).catch(() => {});
     client.release();

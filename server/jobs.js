@@ -121,6 +121,8 @@ async function ratingsHousekeeping() {
 // the middle) is marked failed and started again for applications still waiting; submitted applications that were waiting for the ID
 // check are looked at again (in case a result arrived while the server was down).
 async function verificationHousekeeping() {
+  // An approved mentor with a failed required step is taken off the site (normally at once by the step itself; this catches the rest).
+  await require('./verification/steps').delistFailedApproved();
   const purged = await require('./verification/signals').purgeOld();
   if (purged) console.log(`[jobs] deleted ${purged} old account signal(s)`);
   const { rows } = await query(

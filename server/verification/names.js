@@ -102,7 +102,7 @@ const { query } = require('../db');
 const steps = require('./steps');
 const flags = require('./flags');
 const kyc = require('./kyc');
-const { getUserById, updateUser } = require('../models');
+const { getUserById } = require('../models');
 
 // The name the mentor gave as it appears on their licence, when they have submitted one.
 async function licenseName(userId) {
@@ -171,11 +171,8 @@ async function recompute(userId) {
   const detail = { mismatches: mismatches.map((m) => ({ source: m.source, name: m.name, score: m.score })) };
   const newFlag = await flags.openFlag(user.id, 'name_mismatch', detail);
 
-  // A live mentor whose public name no longer matches the ID goes back to review.
-  if (user.verificationStatus === 'verified') {
-    await updateUser(user.id, { verificationStatus: 'pending' });
-    await steps.audit(user.id, steps.SYSTEM, 'delisted', { from: 'verified', to: 'pending', step: 'name_match', reason: 'The name no longer matches the ID' });
-  }
+  // A live mentor whose public name no longer matches the ID goes back to review (and is told why).
+  if (user.verificationStatus === 'verified') await steps.delist(user.id, 'name_match', { reasonKey: 'name_mismatch', actor: steps.SYSTEM });
   if (newFlag) {
     require('../notify').notifyAdmins('A mentor name does not match their ID',
       `<p>${user.name} (${user.email}): ${evidence.results.join('; ')}.</p><p>It was not approved (or rejected) automatically: the mentor can correct their profile name, or you can check it in the admin panel.</p>`);

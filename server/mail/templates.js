@@ -85,8 +85,11 @@ const S = {
       stillNeeded: 'Still needed for your application:', allDone: 'Every required step is approved. Our team will give the final approval soon.',
       anyOf: 'At least one of: {options}', state: { todo: 'not started', pending: 'waiting for review', failed: 'needs another try' },
       button: 'Open verification',
+      delisted: 'Until this is sorted out, your profile is hidden from Browse experts and nobody can book you. Everything else on your account stays as it is.',
       reasons: {
         license_expired: 'Your license has expired. Please submit the renewed one; until it is approved your profile is hidden from Browse experts.',
+        age_under_min: 'The date of birth on your ID shows you are under 18, and mentors must be 18 or older. If the ID was read wrongly, reply to this email or contact support: an admin can run the ID check again.',
+        name_mismatch: 'Your profile name no longer matches the name on your ID. Change it back in Settings → Profile, or contact support if your name has changed.',
         kyc_declined: 'The ID check was not approved. Please try again with a valid, undamaged ID and good lighting.',
         kyc_expired: 'The ID check was not completed in time. Please start it again.'
       },
@@ -206,7 +209,10 @@ const S = {
       stillNeeded: 'განაცხადისთვის კიდევ საჭიროა:', allDone: 'ყველა სავალდებულო ნაბიჯი დამტკიცებულია. ჩვენი გუნდი მალე მიიღებს საბოლოო გადაწყვეტილებას.',
       anyOf: 'სულ მცირე ერთი: {options}', state: { todo: 'არ დაწყებულა', pending: 'განხილვას ელოდება', failed: 'საჭიროა ხელახლა ცდა' },
       button: 'ვერიფიკაციის გახსნა',
+      delisted: 'სანამ ეს არ მოგვარდება, შენი პროფილი ექსპერტების სიაში დამალულია და ვერავინ დაგიჯავშნის. ანგარიშზე დანარჩენი ყველაფერი უცვლელი რჩება.',
       reasons: {
+        age_under_min: 'შენი დოკუმენტის დაბადების თარიღით 18 წლამდე ხარ, მენტორი კი მინიმუმ 18 წლის უნდა იყოს. თუ დოკუმენტი არასწორად წაიკითხა სისტემამ, უპასუხე ამ წერილს ან დაუკავშირდი მხარდაჭერას: ადმინისტრატორს შეუძლია შემოწმების თავიდან გაშვება.',
+        name_mismatch: 'შენი პროფილის სახელი აღარ ემთხვევა დოკუმენტზე მითითებულ სახელს. დააბრუნე ის პარამეტრებში → პროფილი, ან დაუკავშირდი მხარდაჭერას, თუ სახელი შეგეცვალა.',
         license_expired: 'შენი ლიცენზიის ვადა ამოიწურა. გთხოვ, გამოგვიგზავნე განახლებული; სანამ ის არ დამტკიცდება, შენი პროფილი ექსპერტების სიაში დამალულია.',
         kyc_declined: 'პირადობის შემოწმება ვერ დამტკიცდა. სცადე თავიდან ვალიდური, დაუზიანებელი დოკუმენტით და კარგ განათებაზე.',
         kyc_expired: 'პირადობის შემოწმება დროულად ვერ დასრულდა. დაიწყე თავიდან.'
@@ -335,6 +341,7 @@ const BUILDERS = {
       blocks: [
         { p: fill(d.status === 'passed' ? u.passed : u.failed, { step: name(d.step) }), raw: true },
         ...(d.status === 'failed' && (u.reasons[d.reasonKey] || d.reason) ? [{ quote: `${u.reasonLabel} ${u.reasons[d.reasonKey] || d.reason}` }] : []),
+        ...(d.delisted ? [{ p: u.delisted }] : []),
         ...(missing.length ? [{ p: u.stillNeeded }, { quote: missing.map(line).join('\n') }] : [{ p: u.allDone }]),
         { button: u.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }
       ]

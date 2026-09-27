@@ -22,12 +22,16 @@
   function renderVerification(u) {
     const isMentor = u.role === 'mentor' || u.role === 'both';
     if (!isMentor) { verificationBox.style.display = 'none'; return; }
-    const status = u.verificationStatus || 'none';
+    // (verificationState, from the server: the same state as the steps, so an approved mentor with a failed step shows "Needs attention")
+    const status = u.verificationState || u.verificationStatus || 'none';
     const map = {
       none: { cls: 'badge-pending_payment', key: 'settings.verify.none' },
-      pending: { cls: 'badge-pending_payment', key: 'settings.verify.pending' },
+      pending: { cls: 'badge-pending_payment', key: 'settings.verify.none' },
+      in_review: { cls: 'badge-pending_payment', key: 'settings.verify.pending' },
+      needs_attention: { cls: 'badge-rejected', key: 'settings.verify.needs_attention' },
       verified: { cls: 'badge-answered', key: 'settings.verify.verified' },
-      rejected: { cls: 'badge-rejected', key: 'settings.verify.rejected' }
+      rejected: { cls: 'badge-rejected', key: 'settings.verify.rejected' },
+      suspended: { cls: 'badge-rejected', key: 'settings.verify.suspended' }
     };
     const info = map[status] || map.none;
     const needsPayout = status === 'verified' && !u.hasPayoutDetails;
@@ -133,10 +137,11 @@
     const total = 3;
     const done = [['email', 'id_kyc', 'age', 'name_match'].every(passed), app.locked, app.stage === 'approved'].filter(Boolean).length;
     const pct = Math.round((done / total) * 100);
-    const status = v.status;
+    const status = v.state || v.status; // (the same state as the steps)
     const verified = status === 'verified';
-    const tone = verified ? 'answered' : (status === 'rejected' || status === 'suspended' ? 'rejected' : 'pending_payment');
-    const label = verified ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : (status === 'suspended' ? 'vt.status.suspended' : (status === 'rejected' ? 'vt.status.rejected' : (app.locked ? 'ap.status.inReview' : 'vt.status.pending')));
+    const tone = verified ? 'answered' : (['rejected', 'suspended', 'needs_attention'].includes(status) ? 'rejected' : 'pending_payment');
+    const label = verified ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed')
+      : ({ suspended: 'vt.status.suspended', rejected: 'vt.status.rejected', needs_attention: 'vt.status.needsAttention' }[status] || (app.locked ? 'ap.status.inReview' : 'vt.status.pending'));
     const text = t('ap.progressText').replace('{done}', done).replace('{total}', total);
     progressBox.hidden = false;
     progressBox.innerHTML = `

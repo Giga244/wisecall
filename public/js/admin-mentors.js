@@ -157,6 +157,13 @@
         <p><strong>${t('admin.mv.kyc')}</strong> ${esc(k.provider)} · ${t('verify.kyc.' + k.status)}</p>
         ${k.verifiedName ? `<p>${t('admin.mv.kycName')}: <strong>${esc(k.verifiedName)}</strong> · ${t('admin.mv.kycDob')}: ${esc(k.dateOfBirth || '—')} · ${t('admin.mv.kycCountry')}: ${esc(k.country || '—')}</p>` : ''}
         <button class="btn btn-ghost btn-sm mv-kyc-refresh">${t('admin.mv.kycRefresh')}</button>
+        <details class="mv-kyc-rerun">
+          <summary>${t('admin.mv.kycRerun')}</summary>
+          <p class="muted small">${t('admin.mv.kycRerunHelp')}</p>
+          <label class="sr-only" for="mvRerunReason">${t('admin.mv.reasonPlaceholder')}</label>
+          <input type="text" id="mvRerunReason" class="mv-kyc-rerun-reason" maxlength="1000" placeholder="${t('admin.mv.reasonPlaceholder')}">
+          <button type="button" class="btn btn-outline btn-sm mv-kyc-rerun-btn">${t('admin.mv.kycRerunGo')}</button>
+        </details>
       </div>`;
   }
   // What the mentor submitted as proof of qualification. Only admins ever see the full licence number,
@@ -273,6 +280,7 @@
           ${v.backInReview ? `<span class="badge badge-pending_payment">${t('admin.mv.backInReview')}</span>` : ''}
           ${v.waiting ? `<span class="badge badge-pending_payment">${t('admin.mv.waiting').replace('{n}', v.waiting)}</span>` : ''}
           ${v.openFlags ? `<span class="badge badge-rejected">${t('admin.mv.flagsOpen').replace('{n}', v.openFlags)}</span>` : ''}
+          ${v.failedRequired ? `<span class="badge badge-rejected">${t('admin.mv.failedRequired')}</span>` : ''}
           ${(m.reviewCount >= 3 && m.ratingAvg < 3.5) ? `<span class="form-error" style="margin:0">${t('admin.lowRatingFlag').replace('{avg}', m.ratingAvg)}</span>` : ''}
           <button class="btn btn-outline btn-sm mv-open" aria-expanded="false">${t('admin.mv.review')}</button>
         </div>
@@ -394,6 +402,17 @@
           refresh.disabled = true;
           try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/kyc/refresh`, { method: 'POST' }); await loadPanel(); onChange({ soft: true }); }
           catch (e) { WisecallNav.showToast(t('toast.error')); refresh.disabled = false; }
+        });
+        const rerunId = body.querySelector('.mv-kyc-rerun-btn');
+        if (rerunId) rerunId.addEventListener('click', async () => {
+          const reason = body.querySelector('.mv-kyc-rerun-reason').value.trim();
+          if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+          rerunId.disabled = true;
+          try {
+            const r = await WisecallAPI.apiFetch(`/admin/mentors/${id}/kyc/rerun`, { method: 'POST', body: { reason } });
+            WisecallNav.showToast(t('admin.mv.kycRerun.' + r.outcome));
+            await loadPanel(); onChange({ soft: true });
+          } catch (e) { WisecallNav.showToast(t('toast.error')); rerunId.disabled = false; }
         });
         const approve = body.querySelector('.mv-approve');
         if (approve) approve.addEventListener('click', async () => {

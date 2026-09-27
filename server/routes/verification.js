@@ -1,6 +1,6 @@
 const express = require('express');
 const { requireAuth } = require('../auth');
-const { asyncHandler, meProfile } = require('../util');
+const { asyncHandler, meProfile, isListable, verificationState } = require('../util');
 const { getUserById } = require('../models');
 const rules = require('../verification/rules');
 const steps = require('../verification/steps');
@@ -30,6 +30,8 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
   res.json({
     rules: rules.VERSION,
     status: user.verificationStatus,
+    // One word for every screen (banner, progress bar, steps): see util.verificationState. A failed required step is never "verified".
+    state: verificationState(user),
     note: user.verificationNote,
     niche: user.niche,
     level: summary.level,
@@ -53,7 +55,7 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
       documents: (await credentials.listDocuments(user.id)).map(({ id, step, filename, size, uploadedAt }) => ({ id, step, filename, size, uploadedAt }))
     },
     hasPayoutDetails: Boolean(user.payoutIbanEnc),
-    listed: user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc)
+    listed: isListable(user)
   });
 }));
 

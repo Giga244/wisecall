@@ -3,7 +3,7 @@ const { query } = require('../db');
 const { requireAuth } = require('../auth');
 const { requireAdmin } = require('../adminAuth');
 const { meProfile, asyncHandler } = require('../util');
-const { userFromRow, bookingFromRow, getUserById, updateUser, mentorStatsFor } = require('../models');
+const { userFromRow, bookingFromRow, getUserById, updateUser, mentorStatsFor, userColumnsSql, failedRequiredStepSql } = require('../models');
 const config = require('../config');
 const payments = require('../payments');
 const notify = require('../notify');
@@ -18,15 +18,20 @@ const { pretty } = require('../iban');
 const router = express.Router();
 
 // The mentor list. ?queue=needs_human: submitted applications waiting for a person, riskiest first (then the oldest), with the latest
-// analysis (AI summary on top). ?status=...: mentors in that verification status.
+// analysis (AI summary on top). ?status=...: mentors in that verification status. ?status=failed_step: approved mentors with a required
+// step that failed: still marked verified (should never last: the sweep delists them), or taken off the site for it and not sorted out
+// yet (an open 'required_step_failed' flag).
 const RISK_ORDER = { high: 0, medium: 1, low: 2 };
 router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   const { status, queue } = req.query;
   const params = [];
   let where = `role IN ('mentor', 'both')`;
   if (queue === 'needs_human') where += ` AND verification_status = 'pending'`;
-  else if (status) { params.push(String(status)); where += ` AND verification_status = $${params.length}`; }
-  const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
+  else if (status === 'failed_step') {
+    where += ` AND ((verification_status = 'verified' AND ${failedRequiredStepSql()})
+                OR EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = users.id AND f.kind = 'required_step_failed' AND f.status = 'open'))`;
+  } else if (status) { params.push(String(status)); where += ` AND verification_status = $${params.length}`; }
+  const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
   const mentors = rows.map(userFromRow);
   const ids = mentors.map((m) => m.id);
   const [stats, stepMap, flagRows, standingRows, reviews] = await Promise.all([
@@ -51,7 +56,7 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
       const submitted = m.verificationStatus === 'pending' && Boolean(m.applicationSubmittedAt);
       return {
         ...meProfile(m), ...stats[m.id],
-        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted },
+        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted, failedRequired: Boolean(m.hasFailedRequiredStep) },
         analysis: a ? {
           status: a.status, risk: a.risk, outcome: a.outcome, createdAt: a.createdAt, forCurrentSubmission: Boolean(m.applicationSubmittedAt) && String(a.submittedAt) === String(m.applicationSubmittedAt),
           recommendation: a.ai ? a.ai.recommendation : null, summary: a.ai ? a.ai.admin_summary : null, aiError: a.aiError, costUsd: a.usage.costUsd,

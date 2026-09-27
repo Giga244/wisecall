@@ -121,7 +121,7 @@ async function change(userId, wanted) {
 async function resolve(username) {
   const u = String(username || '').toLowerCase();
   if (!u || u.length > 60) return null;
-  const now = await query('SELECT * FROM users WHERE lower(username) = $1', [u]);
+  const now = await query(`SELECT ${require('./models').userColumnsSql()} FROM users WHERE lower(username) = $1`, [u]);
   if (now.rows[0]) return { row: now.rows[0] };
   const old = await query('SELECT u.username FROM username_history h JOIN users u ON u.id = h.user_id WHERE h.old_username = $1', [u]);
   if (old.rows[0] && old.rows[0].username) return { redirectTo: old.rows[0].username };

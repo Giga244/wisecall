@@ -60,7 +60,7 @@ describe('failed required steps', () => {
     assert.equal(b.status, 404);
   });
 
-  test('a required step failed by the SYSTEM (ID check / age from the provider) also takes a listed mentor off the site', { todo: 'AUDIT #8' }, async () => {
+  test('a required step failed by the SYSTEM (ID check / age from the provider) also takes a listed mentor off the site', async () => {
     const m = await signupVerified(ctx.base, 'Levan Listed', 'levan@example.com');
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Engineer', niche: 'tech', price: 40, sampleAnswer: SAMPLE } });
     const id = await require('../helpers').approveMentor(ctx.admin, m);

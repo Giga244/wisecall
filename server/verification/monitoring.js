@@ -5,7 +5,7 @@ const rules = require('./rules');
 const steps = require('./steps');
 const flags = require('./flags');
 const notify = require('../notify');
-const { getUserById, updateUser, mentorStatsFor } = require('../models');
+const { getUserById, mentorStatsFor } = require('../models');
 
 const DAY = 86400000;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -51,11 +51,9 @@ async function licenseSweep() {
           `<p>The license of ${esc(mentor.name)} (${esc(mentor.email)}) expires on ${expiresAt.slice(0, 10)}. Ask them for the renewed one, or they will leave Browse experts on that day.</p>`);
       }
     } else {
-      // Expired: a required step no longer holds, so the mentor is taken off the site (the same rule as a failed step).
-      await updateUser(mentor.id, { verificationStatus: 'pending' });
-      await steps.audit(mentor.id, steps.SYSTEM, 'delisted', { from: 'verified', to: 'pending', step: 'license', reason: 'license expired' });
+      // Expired: a required step no longer holds, so the mentor is taken off the site (the same rule as a failed step) and told.
+      await steps.delist(mentor.id, 'license', { reason: 'license expired', reasonKey: 'license_expired', actor: steps.SYSTEM });
       await flags.openFlag(mentor.id, 'license_expired', { expiresAt });
-      require('./updates').stepDecided(mentor.id, 'license', 'failed', null, 'license_expired');
       notify.notifyAdmins('A mentor license expired', `<p>The license of ${esc(mentor.name)} (${esc(mentor.email)}) expired on ${expiresAt.slice(0, 10)}. They were taken off Browse experts and asked for a renewed license.</p>`);
       delisted += 1;
     }

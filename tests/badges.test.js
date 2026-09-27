@@ -57,18 +57,21 @@ describe('trust badges', () => {
     await setStep(designerId, 'work_email', 'pending');
     await setStep(designerId, 'diploma', 'failed');
     assert.deepEqual((await publicFor(designerId)).badges.map((b) => b.key).sort(), ['experience', 'id']);
+    // A failed ID check is a failed REQUIRED step: the mentor is not public at all any more (docs/AUDIT.md #8), so no badge shows.
     await setStep(designerId, 'id_kyc', 'failed');
-    assert.deepEqual((await publicFor(designerId)).badges.map((b) => b.key), ['experience']);
+    assert.equal(await publicFor(designerId), undefined);
     await setStep(designerId, 'id_kyc', 'passed');
+    assert.deepEqual((await publicFor(designerId)).badges.map((b) => b.key).sort(), ['experience', 'id']);
     await setStep(designerId, 'work_email', 'passed');
   });
 
-  test('an expired license loses its badge', async () => {
+  test('an expired license loses its badge (and, being required for Medicine, takes the mentor off the site)', async () => {
     await pool.query(`UPDATE verification_steps SET expires_at = now() + interval '90 days' WHERE user_id = $1 AND step = 'license'`, [doctorId]);
     assert.ok((await publicFor(doctorId)).badges.some((b) => b.key === 'license'));
     await pool.query(`UPDATE verification_steps SET expires_at = now() - interval '1 day' WHERE user_id = $1 AND step = 'license'`, [doctorId]);
-    assert.ok(!(await publicFor(doctorId)).badges.some((b) => b.key === 'license'), 'the badge is hidden after expiry');
-    assert.ok((await publicFor(doctorId)).badges.some((b) => b.key === 'id'), 'other badges stay');
+    assert.equal(await publicFor(doctorId), undefined, 'not public with an expired licence');
+    await pool.query(`UPDATE verification_steps SET expires_at = now() + interval '90 days' WHERE user_id = $1 AND step = 'license'`, [doctorId]);
+    assert.deepEqual((await publicFor(doctorId)).badges.map((b) => b.key).sort(), ['experience', 'id', 'license'], 'back, with its badges, once renewed');
   });
 
   test('nothing personal is ever in the public data', async () => {
