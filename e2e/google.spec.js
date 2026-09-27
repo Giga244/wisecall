@@ -91,7 +91,7 @@ test('cancelling at Google: back on the login page with a friendly message, and 
   expect(new URL(page.url()).search).toBe(''); // the address is tidied
   // ...and in Georgian
   await page.locator('.lang-btn[data-lang="ka"]').first().click();
-  await expect(page.locator('#googleError')).toContainText('გააუქმეთ');
+  await expect(page.locator('#googleError')).toContainText('გააუქმე,');
   await expect(page.locator('#googleBtn')).toContainText('გაგრძელება Google-ით');
   await expect(page.locator('.or-divider')).toHaveText('ან');
 });
