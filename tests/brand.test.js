@@ -53,6 +53,9 @@ describe('the brand files are used as they are', () => {
     assert.ok(email.width <= 640 && email.width >= 320, `email logo is ${email.width}px wide`);
     const original = await sharp(path.join(PACK, 'logo', 'wisecall-logo.png')).metadata();
     assert.ok(Math.abs(email.width / email.height - original.width / original.height) < 0.01, 'same proportions as the pack\'s logo');
+    const dark = await sharp(path.join(PUB, 'brand', 'wisecall-logo-email-dark.png')).metadata();
+    assert.equal(`${dark.width}x${dark.height}`, `${email.width}x${email.height}`, 'the dark-mode email logo has the same size');
+    assert.equal(dark.hasAlpha, true, 'on a transparent background');
   });
 
   test('nothing points at the old logo, the old favicon or the old share picture any more', () => {

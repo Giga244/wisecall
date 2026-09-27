@@ -64,6 +64,22 @@ describe('templates', () => {
     assert.doesNotMatch(render('answered', 'en', sample).subject, /</);
   });
 
+  test('branded, readable in dark mode, and with a plain-text version, in both languages', () => {
+    for (const name of TEMPLATE_NAMES) {
+      for (const lang of ['en', 'ka']) {
+        const { html, text } = render(name, lang, { ...sample, question: 'Is this fine?', answer: 'An answer', mentor: 'Dr Who', body: 'A follow-up question' }); // (no HTML in what people wrote)
+        assert.match(html, /\/brand\/wisecall-logo-email\.png"/, `${name} ${lang}: the logo`);
+        assert.match(html, /background:#eaf6f1/, `${name} ${lang}: the brand colours`);
+        assert.match(html, /<meta name="color-scheme" content="light dark">/, `${name} ${lang}: tells mail apps it has a dark version`);
+        assert.match(html, /@media \(prefers-color-scheme:dark\)/);
+        assert.match(html, /\/brand\/wisecall-logo-email-dark\.png"/, `${name} ${lang}: the logo for dark backgrounds`);
+        assert.match(html, new RegExp(`<html lang="${lang}">`));
+        assert.doesNotMatch(text, /<\/?(p|div|a|strong|b|br|table|td|img|span)\b/i, `${name} ${lang}: the text version has no HTML`);
+        assert.ok(text.length > 40, `${name} ${lang}: the text version says something`);
+      }
+    }
+  });
+
   test('unknown language falls back to English', () => {
     assert.equal(render('verify', 'fr', { code: '111111' }).subject, render('verify', 'en', { code: '111111' }).subject);
   });
