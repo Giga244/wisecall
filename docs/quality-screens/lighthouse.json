@@ -1,0 +1,95 @@
+{
+ "base": "http://localhost:4242",
+ "formFactor": "mobile",
+ "runs": 3,
+ "note": "Local server over http on the same machine: network timings are optimistic, and HTTPS/HTTP2 checks do not apply.",
+ "pages": {
+  "home": {
+   "url": "/",
+   "scores": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "metrics": {
+    "first-contentful-paint": "1.7 s",
+    "largest-contentful-paint": "2.1 s",
+    "total-blocking-time": "0 ms",
+    "cumulative-layout-shift": "0",
+    "speed-index": "1.7 s"
+   },
+   "weightKb": 213,
+   "failing": [
+    "unminified-css (Est savings of 3 KiB)",
+    "unused-css-rules (Est savings of 10 KiB)",
+    "network-dependency-tree-insight",
+    "render-blocking-insight (Est savings of 1,010 ms)"
+   ],
+   "performanceRuns": [
+    98,
+    98,
+    98
+   ]
+  },
+  "profile": {
+   "url": "/u/levan-tsereteli",
+   "scores": {
+    "performance": 97,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "metrics": {
+    "first-contentful-paint": "1.4 s",
+    "largest-contentful-paint": "2.6 s",
+    "total-blocking-time": "10 ms",
+    "cumulative-layout-shift": "0",
+    "speed-index": "1.4 s"
+   },
+   "weightKb": 209,
+   "failing": [
+    "largest-contentful-paint (2.6 s)",
+    "unminified-css (Est savings of 3 KiB)",
+    "unused-css-rules (Est savings of 11 KiB)",
+    "network-dependency-tree-insight",
+    "render-blocking-insight (Est savings of 690 ms)"
+   ],
+   "performanceRuns": [
+    96,
+    97,
+    97
+   ]
+  },
+  "browse": {
+   "url": "/?niche=tech#experts",
+   "scores": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "metrics": {
+    "first-contentful-paint": "1.7 s",
+    "largest-contentful-paint": "2.2 s",
+    "total-blocking-time": "0 ms",
+    "cumulative-layout-shift": "0",
+    "speed-index": "1.7 s"
+   },
+   "weightKb": 213,
+   "failing": [
+    "label-content-name-mismatch",
+    "unminified-css (Est savings of 3 KiB)",
+    "unused-css-rules (Est savings of 10 KiB)",
+    "lcp-discovery-insight",
+    "network-dependency-tree-insight",
+    "render-blocking-insight (Est savings of 1,010 ms)"
+   ],
+   "performanceRuns": [
+    98,
+    98,
+    98
+   ]
+  }
+ }
+}

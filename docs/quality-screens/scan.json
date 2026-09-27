@@ -1,0 +1,7220 @@
+[
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-home-1280-light-en.jpg",
+  "loadMs": 1131,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Sort experts",
+    "over": 88
+   }
+  ],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-browse-tech-1280-light-en.jpg",
+  "loadMs": 974,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Sort experts",
+    "over": 88
+   }
+  ],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-profile-mentor-1280-light-en.jpg",
+  "loadMs": 966,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-profile-mentor-ka-1280-light-en.jpg",
+  "loadMs": 969,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-about-1280-light-en.jpg",
+  "loadMs": 882,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-contact-1280-light-en.jpg",
+  "loadMs": 891,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-terms-1280-light-en.jpg",
+  "loadMs": 886,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-privacy-1280-light-en.jpg",
+  "loadMs": 890,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-signup-1280-light-en.jpg",
+  "loadMs": 903,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-signup-errors-1280-light-en.jpg",
+  "loadMs": 1365,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-login-1280-light-en.jpg",
+  "loadMs": 903,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-login-wrong-1280-light-en.jpg",
+  "loadMs": 1769,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-forgot-password-1280-light-en.jpg",
+  "loadMs": 896,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-reset-password-bad-1280-light-en.jpg",
+  "loadMs": 885,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-not-found-1280-light-en.jpg",
+  "loadMs": 887,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-profile-ask-anon-1280-light-en.jpg",
+  "loadMs": 1300,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-home-1280-light-ka.jpg",
+  "loadMs": 1086,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ექსპერტების დალაგება",
+    "over": 181
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "two",
+   "Georgian",
+   "startups",
+   "one",
+   "acquired",
+   "Ask",
+   "about",
+   "fundraising",
+   "hiring",
+   "your",
+   "first",
+   "ten",
+   "people",
+   "pricing",
+   "growing",
+   "into",
+   "new",
+   "markets",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-browse-tech-1280-light-ka.jpg",
+  "loadMs": 1044,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ექსპერტების დალაგება",
+    "over": 181
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-1280-light-ka.jpg",
+  "loadMs": 971,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "Kapanadze-",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-ka-1280-light-ka.jpg",
+  "loadMs": 989,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-about-1280-light-ka.jpg",
+  "loadMs": 908,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-contact-1280-light-ka.jpg",
+  "loadMs": 912,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Website",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-terms-1280-light-ka.jpg",
+  "loadMs": 931,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "IBAN-",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-privacy-1280-light-ka.jpg",
+  "loadMs": 919,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support",
+   "Wisecall-",
+   "Google-",
+   "IBAN-",
+   "Didit-",
+   "Claude-",
+   "Anthropic",
+   "PBC",
+   "Cookie-",
+   "cookie-",
+   "HTTPS-"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-signup-1280-light-ka.jpg",
+  "loadMs": 917,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-signup-errors-1280-light-ka.jpg",
+  "loadMs": 1363,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-login-1280-light-ka.jpg",
+  "loadMs": 920,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-login-wrong-1280-light-ka.jpg",
+  "loadMs": 1802,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-forgot-password-1280-light-ka.jpg",
+  "loadMs": 914,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-reset-password-bad-1280-light-ka.jpg",
+  "loadMs": 898,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-not-found-1280-light-ka.jpg",
+  "loadMs": 904,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-profile-ask-anon-1280-light-ka.jpg",
+  "loadMs": 1321,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-home-1280-dark-en.jpg",
+  "loadMs": 1004,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Sort experts",
+    "over": 88
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-browse-tech-1280-dark-en.jpg",
+  "loadMs": 998,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Sort experts",
+    "over": 88
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-profile-mentor-1280-dark-en.jpg",
+  "loadMs": 988,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-profile-mentor-ka-1280-dark-en.jpg",
+  "loadMs": 996,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-about-1280-dark-en.jpg",
+  "loadMs": 898,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-contact-1280-dark-en.jpg",
+  "loadMs": 902,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-terms-1280-dark-en.jpg",
+  "loadMs": 899,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-privacy-1280-dark-en.jpg",
+  "loadMs": 887,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-signup-1280-dark-en.jpg",
+  "loadMs": 898,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-signup-errors-1280-dark-en.jpg",
+  "loadMs": 1358,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-login-1280-dark-en.jpg",
+  "loadMs": 903,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-login-wrong-1280-dark-en.jpg",
+  "loadMs": 1782,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-forgot-password-1280-dark-en.jpg",
+  "loadMs": 893,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-reset-password-bad-1280-dark-en.jpg",
+  "loadMs": 926,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-not-found-1280-dark-en.jpg",
+  "loadMs": 894,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-profile-ask-anon-1280-dark-en.jpg",
+  "loadMs": 1306,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-home-1280-dark-ka.jpg",
+  "loadMs": 1020,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ექსპერტების დალაგება",
+    "over": 181
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "two",
+   "Georgian",
+   "startups",
+   "one",
+   "acquired",
+   "Ask",
+   "about",
+   "fundraising",
+   "hiring",
+   "your",
+   "first",
+   "ten",
+   "people",
+   "pricing",
+   "growing",
+   "into",
+   "new",
+   "markets",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-browse-tech-1280-dark-ka.jpg",
+  "loadMs": 1008,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ექსპერტების დალაგება",
+    "over": 181
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-1280-dark-ka.jpg",
+  "loadMs": 987,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "Kapanadze-",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-ka-1280-dark-ka.jpg",
+  "loadMs": 966,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-about-1280-dark-ka.jpg",
+  "loadMs": 914,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-contact-1280-dark-ka.jpg",
+  "loadMs": 906,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Website",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-terms-1280-dark-ka.jpg",
+  "loadMs": 932,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "IBAN-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-privacy-1280-dark-ka.jpg",
+  "loadMs": 922,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support",
+   "Wisecall-",
+   "Google-",
+   "IBAN-",
+   "Didit-",
+   "Claude-",
+   "Anthropic",
+   "PBC",
+   "Cookie-",
+   "cookie-",
+   "HTTPS-"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-signup-1280-dark-ka.jpg",
+  "loadMs": 915,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-signup-errors-1280-dark-ka.jpg",
+  "loadMs": 1378,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-login-1280-dark-ka.jpg",
+  "loadMs": 915,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-login-wrong-1280-dark-ka.jpg",
+  "loadMs": 1801,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-forgot-password-1280-dark-ka.jpg",
+  "loadMs": 932,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-reset-password-bad-1280-dark-ka.jpg",
+  "loadMs": 911,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-not-found-1280-dark-ka.jpg",
+  "loadMs": 906,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-profile-ask-anon-1280-dark-ka.jpg",
+  "loadMs": 1309,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-home-375-light-en.jpg",
+  "loadMs": 966,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "I'm launching a small product and have no competitors to com",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "My class of 25 teenagers talks over me. How do I get their a",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-browse-tech-375-light-en.jpg",
+  "loadMs": 956,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "I'm launching a small product and have no competitors to com",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "My class of 25 teenagers talks over me. How do I get their a",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-profile-mentor-375-light-en.jpg",
+  "loadMs": 943,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-profile-mentor-ka-375-light-en.jpg",
+  "loadMs": 942,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-about-375-light-en.jpg",
+  "loadMs": 886,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-contact-375-light-en.jpg",
+  "loadMs": 901,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-terms-375-light-en.jpg",
+  "loadMs": 888,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-privacy-375-light-en.jpg",
+  "loadMs": 891,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-signup-375-light-en.jpg",
+  "loadMs": 903,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-signup-errors-375-light-en.jpg",
+  "loadMs": 1350,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-login-375-light-en.jpg",
+  "loadMs": 903,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-login-wrong-375-light-en.jpg",
+  "loadMs": 1802,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-forgot-password-375-light-en.jpg",
+  "loadMs": 889,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-reset-password-bad-375-light-en.jpg",
+  "loadMs": 887,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-not-found-375-light-en.jpg",
+  "loadMs": 883,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "visitor-profile-ask-anon-375-light-en.jpg",
+  "loadMs": 1300,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-home-375-light-ka.jpg",
+  "loadMs": 1040,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "მცირე პროდუქტს ვუშვებ და ფასის შესადარებელი კონკურენტი არ მყ",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "25 მოზარდისგან შედგენილი კლასი ჩემს ხმას ახშობს. როგორ მივიპ",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "two",
+   "Georgian",
+   "startups",
+   "one",
+   "acquired",
+   "Ask",
+   "about",
+   "fundraising",
+   "hiring",
+   "your",
+   "first",
+   "ten",
+   "people",
+   "pricing",
+   "growing",
+   "into",
+   "new",
+   "markets",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-browse-tech-375-light-ka.jpg",
+  "loadMs": 1001,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "მცირე პროდუქტს ვუშვებ და ფასის შესადარებელი კონკურენტი არ მყ",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "25 მოზარდისგან შედგენილი კლასი ჩემს ხმას ახშობს. როგორ მივიპ",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-375-light-ka.jpg",
+  "loadMs": 952,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "Sep",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-ka-375-light-ka.jpg",
+  "loadMs": 970,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "Sep",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-about-375-light-ka.jpg",
+  "loadMs": 907,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-contact-375-light-ka.jpg",
+  "loadMs": 902,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Website",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-terms-375-light-ka.jpg",
+  "loadMs": 908,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "IBAN-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-privacy-375-light-ka.jpg",
+  "loadMs": 914,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support",
+   "Wisecall-",
+   "Google-",
+   "IBAN-",
+   "Didit-",
+   "Claude-",
+   "Anthropic",
+   "PBC",
+   "Cookie-",
+   "cookie-",
+   "HTTPS-"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-signup-375-light-ka.jpg",
+  "loadMs": 914,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-signup-errors-375-light-ka.jpg",
+  "loadMs": 1365,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-login-375-light-ka.jpg",
+  "loadMs": 939,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-login-wrong-375-light-ka.jpg",
+  "loadMs": 1793,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-forgot-password-375-light-ka.jpg",
+  "loadMs": 894,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-reset-password-bad-375-light-ka.jpg",
+  "loadMs": 910,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-not-found-375-light-ka.jpg",
+  "loadMs": 897,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "visitor-profile-ask-anon-375-light-ka.jpg",
+  "loadMs": 1297,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "Sep",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-home-375-dark-en.jpg",
+  "loadMs": 963,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "I'm launching a small product and have no competitors to com",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "My class of 25 teenagers talks over me. How do I get their a",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-browse-tech-375-dark-en.jpg",
+  "loadMs": 953,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "I'm launching a small product and have no competitors to com",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "My class of 25 teenagers talks over me. How do I get their a",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Search by name or specialty…",
+    "over": 210
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-profile-mentor-375-dark-en.jpg",
+  "loadMs": 947,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-profile-mentor-ka-375-dark-en.jpg",
+  "loadMs": 956,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-about-375-dark-en.jpg",
+  "loadMs": 895,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-contact-375-dark-en.jpg",
+  "loadMs": 905,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-terms-375-dark-en.jpg",
+  "loadMs": 909,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-privacy-375-dark-en.jpg",
+  "loadMs": 894,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-signup-375-dark-en.jpg",
+  "loadMs": 896,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-signup-errors-375-dark-en.jpg",
+  "loadMs": 1371,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-login-375-dark-en.jpg",
+  "loadMs": 909,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-login-wrong-375-dark-en.jpg",
+  "loadMs": 1783,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-forgot-password-375-dark-en.jpg",
+  "loadMs": 890,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-reset-password-bad-375-dark-en.jpg",
+  "loadMs": 886,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-not-found-375-dark-en.jpg",
+  "loadMs": 883,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "visitor-profile-ask-anon-375-dark-en.jpg",
+  "loadMs": 1277,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "home",
+  "url": "/",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-home-375-dark-ka.jpg",
+  "loadMs": 1033,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "მცირე პროდუქტს ვუშვებ და ფასის შესადარებელი კონკურენტი არ მყ",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "25 მოზარდისგან შედგენილი კლასი ჩემს ხმას ახშობს. როგორ მივიპ",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "two",
+   "Georgian",
+   "startups",
+   "one",
+   "acquired",
+   "Ask",
+   "about",
+   "fundraising",
+   "hiring",
+   "your",
+   "first",
+   "ten",
+   "people",
+   "pricing",
+   "growing",
+   "into",
+   "new",
+   "markets",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "browse-tech",
+  "url": "/?niche=tech#experts",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-browse-tech-375-dark-ka.jpg",
+  "loadMs": 1009,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "მცირე პროდუქტს ვუშვებ და ფასის შესადარებელი კონკურენტი არ მყ",
+    "offscreen": 205
+   },
+   {
+    "tag": "h3",
+    "cls": "ex-q",
+    "text": "25 მოზარდისგან შედგენილი კლასი ჩემს ხმას ახშობს. როგორ მივიპ",
+    "offscreen": 507
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "ძებნა სახელით ან სპეციალობით…",
+    "over": 260
+   }
+  ],
+  "latin": [
+   "Wisecall-",
+   "Python",
+   "JavaScript",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-375-dark-ka.jpg",
+  "loadMs": 959,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "Sep",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-mentor-ka",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-profile-mentor-ka-375-dark-ka.jpg",
+  "loadMs": 953,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "Sep",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "about",
+  "url": "/about.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-about-375-dark-ka.jpg",
+  "loadMs": 905,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "contact",
+  "url": "/contact.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-contact-375-dark-ka.jpg",
+  "loadMs": 900,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Website",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "terms",
+  "url": "/terms.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-terms-375-dark-ka.jpg",
+  "loadMs": 917,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "IBAN-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "privacy",
+  "url": "/privacy.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-privacy-375-dark-ka.jpg",
+  "loadMs": 927,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support",
+   "Wisecall-",
+   "Google-",
+   "IBAN-",
+   "Didit-",
+   "Claude-",
+   "Anthropic",
+   "PBC",
+   "Cookie-",
+   "cookie-",
+   "HTTPS-"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-signup-375-dark-ka.jpg",
+  "loadMs": 933,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "signup-errors",
+  "url": "/signup.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-signup-errors-375-dark-ka.jpg",
+  "loadMs": 1388,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-login-375-dark-ka.jpg",
+  "loadMs": 907,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "login-wrong",
+  "url": "/login.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-login-wrong-375-dark-ka.jpg",
+  "loadMs": 1786,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "forgot-password",
+  "url": "/forgot-password.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-forgot-password-375-dark-ka.jpg",
+  "loadMs": 906,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "reset-password-bad",
+  "url": "/reset-password.html?token=bad",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-reset-password-bad-375-dark-ka.jpg",
+  "loadMs": 906,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "not-found",
+  "url": "/no-such-page",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-not-found-375-dark-ka.jpg",
+  "loadMs": 898,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "visitor",
+  "page": "profile-ask-anon",
+  "url": "/u/tamar-lomidze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "visitor-profile-ask-anon-375-dark-ka.jpg",
+  "loadMs": 1295,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "Sep",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-dashboard-buyer-1280-light-en.jpg",
+  "loadMs": 1014,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-asked.tab \"My questions\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-settings-account-1280-light-en.jpg",
+  "loadMs": 950,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-account.tab \"Account\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-settings-profile-1280-light-en.jpg",
+  "loadMs": 927,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-profile.tab \"Profile\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-profile-own-1280-light-en.jpg",
+  "loadMs": 905,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-ask-sheet-1280-light-en.jpg",
+  "loadMs": 1391,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-dashboard-buyer-1280-light-ka.jpg",
+  "loadMs": 985,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Sep",
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-asked.tab \"ჩემი კითხვები\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-settings-account-1280-light-ka.jpg",
+  "loadMs": 967,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "English",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-account.tab \"ანგარიში\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-settings-profile-1280-light-ka.jpg",
+  "loadMs": 960,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "nino-beridze",
+   "LinkedIn-",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-profile.tab \"პროფილი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-profile-own-1280-light-ka.jpg",
+  "loadMs": 922,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-ask-sheet-1280-light-ka.jpg",
+  "loadMs": 1407,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "Kapanadze-",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-dashboard-buyer-1280-dark-en.jpg",
+  "loadMs": 983,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-settings-account-1280-dark-en.jpg",
+  "loadMs": 959,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-settings-profile-1280-dark-en.jpg",
+  "loadMs": 945,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-profile-own-1280-dark-en.jpg",
+  "loadMs": 919,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-ask-sheet-1280-dark-en.jpg",
+  "loadMs": 1400,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-dashboard-buyer-1280-dark-ka.jpg",
+  "loadMs": 1014,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Sep",
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-settings-account-1280-dark-ka.jpg",
+  "loadMs": 985,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "English",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-settings-profile-1280-dark-ka.jpg",
+  "loadMs": 957,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "nino-beridze",
+   "LinkedIn-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-profile-own-1280-dark-ka.jpg",
+  "loadMs": 914,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-ask-sheet-1280-dark-ka.jpg",
+  "loadMs": 1404,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "Kapanadze-",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-dashboard-buyer-375-light-en.jpg",
+  "loadMs": 979,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-settings-account-375-light-en.jpg",
+  "loadMs": 933,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": [
+   {
+    "id": "target-size",
+    "impact": "serious",
+    "help": "All touch targets must be 24px large, or leave sufficient space",
+    "nodes": [
+     {
+      "target": "#newPassword",
+      "summary": "Fix any of the following:   Target has insufficient size because it is partially obscured (smallest space is 259px by 3px, should be at least 24px by 24px)"
+     },
+     {
+      "target": "button[aria-controls=\"newPassword\"]",
+      "summary": "Fix any of the following:   Target has insufficient size because it is partially obscured (smallest space is 44px by 1px, should be at least 24px by 24px)"
+     }
+    ],
+    "count": 2
+   }
+  ]
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-settings-profile-375-light-en.jpg",
+  "loadMs": 937,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-profile-own-375-light-en.jpg",
+  "loadMs": 902,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "buyer-ask-sheet-375-light-en.jpg",
+  "loadMs": 1417,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-dashboard-buyer-375-light-ka.jpg",
+  "loadMs": 996,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Sep",
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-settings-account-375-light-ka.jpg",
+  "loadMs": 973,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "English",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-settings-profile-375-light-ka.jpg",
+  "loadMs": 967,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "nino-beridze",
+   "LinkedIn-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-profile-own-375-light-ka.jpg",
+  "loadMs": 918,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "buyer-ask-sheet-375-light-ka.jpg",
+  "loadMs": 1427,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "Sep",
+   "support",
+   "Kapanadze-"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-dashboard-buyer-375-dark-en.jpg",
+  "loadMs": 983,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-settings-account-375-dark-en.jpg",
+  "loadMs": 930,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": [
+   {
+    "id": "target-size",
+    "impact": "serious",
+    "help": "All touch targets must be 24px large, or leave sufficient space",
+    "nodes": [
+     {
+      "target": "#newPassword",
+      "summary": "Fix any of the following:   Target has insufficient size because it is partially obscured (smallest space is 259px by 3px, should be at least 24px by 24px)"
+     },
+     {
+      "target": "button[aria-controls=\"newPassword\"]",
+      "summary": "Fix any of the following:   Target has insufficient size because it is partially obscured (smallest space is 44px by 1px, should be at least 24px by 24px)"
+     }
+    ],
+    "count": 2
+   }
+  ]
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-settings-profile-375-dark-en.jpg",
+  "loadMs": 925,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-profile-own-375-dark-en.jpg",
+  "loadMs": 901,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "buyer-ask-sheet-375-dark-en.jpg",
+  "loadMs": 1427,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "dashboard-buyer",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-dashboard-buyer-375-dark-ka.jpg",
+  "loadMs": 981,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Sep",
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-account",
+  "url": "/settings.html?tab=account",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-settings-account-375-dark-ka.jpg",
+  "loadMs": 956,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "English",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "settings-profile",
+  "url": "/settings.html?tab=profile",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-settings-profile-375-dark-ka.jpg",
+  "loadMs": 988,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "localhost",
+   "nino-beridze",
+   "LinkedIn-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "profile-own",
+  "url": "/u/nino-beridze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-profile-own-375-dark-ka.jpg",
+  "loadMs": 911,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "September",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "buyer",
+  "page": "ask-sheet",
+  "url": "/u/giorgi-kapanadze",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "buyer-ask-sheet-375-dark-ka.jpg",
+  "loadMs": 1426,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "years",
+   "fintech",
+   "September",
+   "help",
+   "junior",
+   "mid-level",
+   "developers",
+   "plan",
+   "their",
+   "careers",
+   "prepare",
+   "for",
+   "interviews",
+   "design",
+   "systems",
+   "that",
+   "scale",
+   "Sep",
+   "support",
+   "Kapanadze-"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-dashboard-mentor-1280-light-en.jpg",
+  "loadMs": 1008,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Write your answer…",
+    "over": 129
+   }
+  ],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-received.tab \"Questions for me 1\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-dashboard-earnings-1280-light-en.jpg",
+  "loadMs": 965,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-earnings.tab \"Earnings\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-settings-mentor-1280-light-en.jpg",
+  "loadMs": 954,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-mentor.tab \"Mentor\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-settings-payouts-1280-light-en.jpg",
+  "loadMs": 934,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-payouts.tab \"Payouts\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-dashboard-mentor-1280-light-ka.jpg",
+  "loadMs": 1001,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "დაწერე პასუხი…",
+    "over": 112
+   }
+  ],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-received.tab \"კითხვები ჩემთვის 1\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-dashboard-earnings-1280-light-ka.jpg",
+  "loadMs": 966,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-earnings.tab \"შემოსავალი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-settings-mentor-1280-light-ka.jpg",
+  "loadMs": 984,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-mentor.tab \"მენტორი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-settings-payouts-1280-light-ka.jpg",
+  "loadMs": 958,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "GE-",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-payouts.tab \"გადახდები\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-dashboard-mentor-1280-dark-en.jpg",
+  "loadMs": 963,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Write your answer…",
+    "over": 129
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-dashboard-earnings-1280-dark-en.jpg",
+  "loadMs": 934,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-settings-mentor-1280-dark-en.jpg",
+  "loadMs": 957,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-settings-payouts-1280-dark-en.jpg",
+  "loadMs": 934,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-dashboard-mentor-1280-dark-ka.jpg",
+  "loadMs": 986,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "დაწერე პასუხი…",
+    "over": 112
+   }
+  ],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-dashboard-earnings-1280-dark-ka.jpg",
+  "loadMs": 1017,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-settings-mentor-1280-dark-ka.jpg",
+  "loadMs": 997,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-settings-payouts-1280-dark-ka.jpg",
+  "loadMs": 960,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "GE-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-dashboard-mentor-375-light-en.jpg",
+  "loadMs": 976,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Earnings",
+    "offscreen": 19
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Write your answer…",
+    "over": 129
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-dashboard-earnings-375-light-en.jpg",
+  "loadMs": 936,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-settings-mentor-375-light-en.jpg",
+  "loadMs": 961,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Payouts",
+    "offscreen": 69
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Account",
+    "offscreen": 176
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "mentor-settings-payouts-375-light-en.jpg",
+  "loadMs": 937,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-dashboard-mentor-375-light-ka.jpg",
+  "loadMs": 985,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "შემოსავალი",
+    "offscreen": 49
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "დაწერე პასუხი…",
+    "over": 112
+   }
+  ],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-dashboard-earnings-375-light-ka.jpg",
+  "loadMs": 976,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-settings-mentor-375-light-ka.jpg",
+  "loadMs": 969,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "ვერიფიკაცია",
+    "offscreen": 8
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "გადახდები",
+    "offscreen": 136
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "ანგარიში",
+    "offscreen": 252
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "mentor-settings-payouts-375-light-ka.jpg",
+  "loadMs": 974,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "GE-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-dashboard-mentor-375-dark-en.jpg",
+  "loadMs": 971,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Earnings",
+    "offscreen": 19
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "Write your answer…",
+    "over": 129
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-dashboard-earnings-375-dark-en.jpg",
+  "loadMs": 950,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-settings-mentor-375-dark-en.jpg",
+  "loadMs": 955,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Payouts",
+    "offscreen": 69
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Account",
+    "offscreen": 176
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "mentor-settings-payouts-375-dark-en.jpg",
+  "loadMs": 931,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-mentor",
+  "url": "/dashboard.html?tab=received",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-dashboard-mentor-375-dark-ka.jpg",
+  "loadMs": 1029,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "შემოსავალი",
+    "offscreen": 49
+   },
+   {
+    "tag": "label",
+    "cls": "sr-only",
+    "text": "დაწერე პასუხი…",
+    "over": 112
+   }
+  ],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "dashboard-earnings",
+  "url": "/dashboard.html?tab=earnings",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-dashboard-earnings-375-dark-ka.jpg",
+  "loadMs": 976,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-mentor",
+  "url": "/settings.html?tab=mentor",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-settings-mentor-375-dark-ka.jpg",
+  "loadMs": 983,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "ვერიფიკაცია",
+    "offscreen": 8
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "გადახდები",
+    "offscreen": 136
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "ანგარიში",
+    "offscreen": 252
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "mentor",
+  "page": "settings-payouts",
+  "url": "/settings.html?tab=payouts",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "mentor-settings-payouts-375-dark-ka.jpg",
+  "loadMs": 949,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Wisecall-",
+   "GE-",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "applicant-settings-verification-applicant-1280-light-en.jpg",
+  "loadMs": 970,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-verification.tab \"Verification\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "applicant-dashboard-applicant-1280-light-en.jpg",
+  "loadMs": 908,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-asked.tab \"My questions\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "applicant-settings-verification-applicant-1280-light-ka.jpg",
+  "loadMs": 976,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Sep",
+   "Six",
+   "years",
+   "designing",
+   "mobile",
+   "banking",
+   "e-commerce",
+   "apps",
+   "ran",
+   "user",
+   "for",
+   "three",
+   "Georgian",
+   "startups",
+   "teach",
+   "course",
+   "Start",
+   "with",
+   "five",
+   "short",
+   "interviews",
+   "real",
+   "users",
+   "before",
+   "you",
+   "touch",
+   "the",
+   "design",
+   "Ask",
+   "them",
+   "show",
+   "how",
+   "they",
+   "task",
+   "today",
+   "write",
+   "down",
+   "every",
+   "place",
+   "hesitate",
+   "only",
+   "then",
+   "sketch",
+   "two",
+   "alternatives",
+   "next",
+   "people",
+   "Behance",
+   "Dribbble",
+   "GitHub",
+   "portfolio",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-verification.tab \"ვერიფიკაცია\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "applicant-dashboard-applicant-1280-light-ka.jpg",
+  "loadMs": 918,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button#tab-asked.tab \"ჩემი კითხვები\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "applicant-settings-verification-applicant-1280-dark-en.jpg",
+  "loadMs": 964,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "applicant-dashboard-applicant-1280-dark-en.jpg",
+  "loadMs": 902,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "applicant-settings-verification-applicant-1280-dark-ka.jpg",
+  "loadMs": 989,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "Sep",
+   "Six",
+   "years",
+   "designing",
+   "mobile",
+   "banking",
+   "e-commerce",
+   "apps",
+   "ran",
+   "user",
+   "for",
+   "three",
+   "Georgian",
+   "startups",
+   "teach",
+   "course",
+   "Start",
+   "with",
+   "five",
+   "short",
+   "interviews",
+   "real",
+   "users",
+   "before",
+   "you",
+   "touch",
+   "the",
+   "design",
+   "Ask",
+   "them",
+   "show",
+   "how",
+   "they",
+   "task",
+   "today",
+   "write",
+   "down",
+   "every",
+   "place",
+   "hesitate",
+   "only",
+   "then",
+   "sketch",
+   "two",
+   "alternatives",
+   "next",
+   "people",
+   "Behance",
+   "Dribbble",
+   "GitHub",
+   "portfolio",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "applicant-dashboard-applicant-1280-dark-ka.jpg",
+  "loadMs": 923,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "applicant-settings-verification-applicant-375-light-en.jpg",
+  "loadMs": 955,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Account",
+    "offscreen": 88
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "applicant-dashboard-applicant-375-light-en.jpg",
+  "loadMs": 902,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Earnings",
+    "offscreen": 56
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "applicant-settings-verification-applicant-375-light-ka.jpg",
+  "loadMs": 990,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "გადახდები",
+    "offscreen": 8
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "ანგარიში",
+    "offscreen": 124
+   }
+  ],
+  "latin": [
+   "Sep",
+   "Six",
+   "years",
+   "designing",
+   "mobile",
+   "banking",
+   "e-commerce",
+   "apps",
+   "ran",
+   "user",
+   "for",
+   "three",
+   "Georgian",
+   "startups",
+   "teach",
+   "course",
+   "Start",
+   "with",
+   "five",
+   "short",
+   "interviews",
+   "real",
+   "users",
+   "before",
+   "you",
+   "touch",
+   "the",
+   "design",
+   "Ask",
+   "them",
+   "show",
+   "how",
+   "they",
+   "task",
+   "today",
+   "write",
+   "down",
+   "every",
+   "place",
+   "hesitate",
+   "only",
+   "then",
+   "sketch",
+   "two",
+   "alternatives",
+   "next",
+   "people",
+   "Behance",
+   "Dribbble",
+   "GitHub",
+   "portfolio",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "applicant-dashboard-applicant-375-light-ka.jpg",
+  "loadMs": 954,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "შემოსავალი",
+    "offscreen": 96
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "applicant-settings-verification-applicant-375-dark-en.jpg",
+  "loadMs": 960,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Account",
+    "offscreen": 88
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "applicant-dashboard-applicant-375-dark-en.jpg",
+  "loadMs": 908,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "Earnings",
+    "offscreen": 56
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "settings-verification-applicant",
+  "url": "/settings.html?tab=verification",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "applicant-settings-verification-applicant-375-dark-ka.jpg",
+  "loadMs": 980,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "გადახდები",
+    "offscreen": 8
+   },
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "ანგარიში",
+    "offscreen": 124
+   }
+  ],
+  "latin": [
+   "Sep",
+   "Six",
+   "years",
+   "designing",
+   "mobile",
+   "banking",
+   "e-commerce",
+   "apps",
+   "ran",
+   "user",
+   "for",
+   "three",
+   "Georgian",
+   "startups",
+   "teach",
+   "course",
+   "Start",
+   "with",
+   "five",
+   "short",
+   "interviews",
+   "real",
+   "users",
+   "before",
+   "you",
+   "touch",
+   "the",
+   "design",
+   "Ask",
+   "them",
+   "show",
+   "how",
+   "they",
+   "task",
+   "today",
+   "write",
+   "down",
+   "every",
+   "place",
+   "hesitate",
+   "only",
+   "then",
+   "sketch",
+   "two",
+   "alternatives",
+   "next",
+   "people",
+   "Behance",
+   "Dribbble",
+   "GitHub",
+   "portfolio",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "applicant",
+  "page": "dashboard-applicant",
+  "url": "/dashboard.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "applicant-dashboard-applicant-375-dark-ka.jpg",
+  "loadMs": 920,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "tab",
+    "text": "შემოსავალი",
+    "offscreen": 96
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-mentors-1280-light-en.jpg",
+  "loadMs": 966,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"Mentor applications\"",
+   "button.chip \"Bookings and refunds\"",
+   "button.chip \"Review queue\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-bookings-1280-light-en.jpg",
+  "loadMs": 1583,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"Mentor applications\"",
+   "button.chip \"Bookings and refunds\"",
+   "button.chip \"Review queue\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-payouts-1280-light-en.jpg",
+  "loadMs": 1602,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"Mentor applications\"",
+   "button.chip \"Bookings and refunds\"",
+   "button.chip \"Review queue\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-queue-1280-light-en.jpg",
+  "loadMs": 1613,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"Mentor applications\"",
+   "button.chip \"Bookings and refunds\"",
+   "button.chip \"Review queue\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-reviews-1280-light-en.jpg",
+  "loadMs": 1601,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"Mentor applications\"",
+   "button.chip \"Bookings and refunds\"",
+   "button.chip \"Review queue\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-waitlist-1280-light-en.jpg",
+  "loadMs": 1604,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"Mentor applications\"",
+   "button.chip \"Bookings and refunds\"",
+   "button.chip \"Review queue\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-interviews-1280-light-en.jpg",
+  "loadMs": 1614,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"Mentor applications\"",
+   "button.chip \"Bookings and refunds\"",
+   "button.chip \"Review queue\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-mentors-1280-light-ka.jpg",
+  "loadMs": 971,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "AI-",
+   "claude-sonnet-",
+   "ANTHROPIC",
+   "API",
+   "KEY",
+   "not",
+   "configured",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"მენტორის განაცხადები\"",
+   "button.chip \"ჯავშნები და დაბრუნებები\"",
+   "button.chip \"განხილვის რიგი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-bookings-1280-light-ka.jpg",
+  "loadMs": 1611,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Sep",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"მენტორის განაცხადები\"",
+   "button.chip \"ჯავშნები და დაბრუნებები\"",
+   "button.chip \"განხილვის რიგი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-payouts-1280-light-ka.jpg",
+  "loadMs": 1619,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "CSV",
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"მენტორის განაცხადები\"",
+   "button.chip \"ჯავშნები და დაბრუნებები\"",
+   "button.chip \"განხილვის რიგი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-queue-1280-light-ka.jpg",
+  "loadMs": 1629,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"მენტორის განაცხადები\"",
+   "button.chip \"ჯავშნები და დაბრუნებები\"",
+   "button.chip \"განხილვის რიგი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-reviews-1280-light-ka.jpg",
+  "loadMs": 1615,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"მენტორის განაცხადები\"",
+   "button.chip \"ჯავშნები და დაბრუნებები\"",
+   "button.chip \"განხილვის რიგი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-waitlist-1280-light-ka.jpg",
+  "loadMs": 1615,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"მენტორის განაცხადები\"",
+   "button.chip \"ჯავშნები და დაბრუნებები\"",
+   "button.chip \"განხილვის რიგი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-interviews-1280-light-ka.jpg",
+  "loadMs": 1600,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [
+   "button.lang-btn \"EN\"",
+   "button.lang-btn \"KA\"",
+   "button.chip \"მენტორის განაცხადები\"",
+   "button.chip \"ჯავშნები და დაბრუნებები\"",
+   "button.chip \"განხილვის რიგი\""
+  ],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-mentors-1280-dark-en.jpg",
+  "loadMs": 971,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-bookings-1280-dark-en.jpg",
+  "loadMs": 1580,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-payouts-1280-dark-en.jpg",
+  "loadMs": 1599,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-queue-1280-dark-en.jpg",
+  "loadMs": 1594,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-reviews-1280-dark-en.jpg",
+  "loadMs": 1594,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-waitlist-1280-dark-en.jpg",
+  "loadMs": 1608,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-interviews-1280-dark-en.jpg",
+  "loadMs": 1594,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-mentors-1280-dark-ka.jpg",
+  "loadMs": 1014,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "AI-",
+   "claude-sonnet-",
+   "ANTHROPIC",
+   "API",
+   "KEY",
+   "not",
+   "configured",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-bookings-1280-dark-ka.jpg",
+  "loadMs": 1636,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Sep",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-payouts-1280-dark-ka.jpg",
+  "loadMs": 1620,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "CSV",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-queue-1280-dark-ka.jpg",
+  "loadMs": 1599,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-reviews-1280-dark-ka.jpg",
+  "loadMs": 1604,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-waitlist-1280-dark-ka.jpg",
+  "loadMs": 1609,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 1280,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-interviews-1280-dark-ka.jpg",
+  "loadMs": 1596,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-mentors-375-light-en.jpg",
+  "loadMs": 984,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Review queue",
+    "offscreen": 140
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Reviews",
+    "offscreen": 242
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 397
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 498
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 618
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Suspended",
+    "offscreen": 105
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "All",
+    "offscreen": 171
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-bookings-375-light-en.jpg",
+  "loadMs": 1653,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Review queue",
+    "offscreen": 140
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Reviews",
+    "offscreen": 242
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 397
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 498
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 618
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Refund in progress",
+    "offscreen": 121
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Refunded",
+    "offscreen": 232
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Awaiting payment",
+    "offscreen": 396
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "All",
+    "offscreen": 462
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-payouts-375-light-en.jpg",
+  "loadMs": 1700,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-queue-375-light-en.jpg",
+  "loadMs": 1618,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 135
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 236
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 356
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-reviews-375-light-en.jpg",
+  "loadMs": 1652,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 15
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 116
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 236
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-waitlist-375-light-en.jpg",
+  "loadMs": 1619,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "en",
+  "file": "admin-admin-interviews-375-light-en.jpg",
+  "loadMs": 1618,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 107
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-mentors-375-light-ka.jpg",
+  "loadMs": 1020,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ჯავშნები და დაბრუნებები",
+    "offscreen": 47
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "განხილვის რიგი",
+    "offscreen": 203
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მიმოხილვები",
+    "offscreen": 340
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 517
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 663
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 818
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "უარყოფილი",
+    "offscreen": 106
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "შეჩერებული",
+    "offscreen": 236
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ყველა",
+    "offscreen": 326
+   }
+  ],
+  "latin": [
+   "AI-",
+   "claude-sonnet-",
+   "ANTHROPIC",
+   "API",
+   "KEY",
+   "not",
+   "configured",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-bookings-375-light-ka.jpg",
+  "loadMs": 1701,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip active",
+    "text": "ჯავშნები და დაბრუნებები",
+    "offscreen": 47
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "განხილვის რიგი",
+    "offscreen": 203
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მიმოხილვები",
+    "offscreen": 340
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 517
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 663
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 818
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "პასუხგაცემული",
+    "offscreen": 72
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "თანხა ბრუნდება",
+    "offscreen": 227
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "თანხა დაბრუნებულია",
+    "offscreen": 417
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "გადახდის მოლოდინში",
+    "offscreen": 616
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ყველა",
+    "offscreen": 707
+   }
+  ],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Sep",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-payouts-375-light-ka.jpg",
+  "loadMs": 1687,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 37
+   }
+  ],
+  "latin": [
+   "CSV",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-queue-375-light-ka.jpg",
+  "loadMs": 1655,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მიმოხილვები",
+    "offscreen": 24
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 201
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 347
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 502
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-reviews-375-light-ka.jpg",
+  "loadMs": 1598,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 54
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 200
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 355
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-waitlist-375-light-ka.jpg",
+  "loadMs": 1605,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "light",
+  "lang": "ka",
+  "file": "admin-admin-interviews-375-light-ka.jpg",
+  "loadMs": 1597,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 43
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 198
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-mentors-375-dark-en.jpg",
+  "loadMs": 964,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Review queue",
+    "offscreen": 140
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Reviews",
+    "offscreen": 242
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 397
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 498
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 618
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Suspended",
+    "offscreen": 105
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "All",
+    "offscreen": 171
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-bookings-375-dark-en.jpg",
+  "loadMs": 1580,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Review queue",
+    "offscreen": 140
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Reviews",
+    "offscreen": 242
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 397
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 498
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 618
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Refund in progress",
+    "offscreen": 121
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Refunded",
+    "offscreen": 232
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Awaiting payment",
+    "offscreen": 396
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "All",
+    "offscreen": 462
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-payouts-375-dark-en.jpg",
+  "loadMs": 1580,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-queue-375-dark-en.jpg",
+  "loadMs": 1639,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 135
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 236
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 356
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-reviews-375-dark-en.jpg",
+  "loadMs": 1687,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Video interviews",
+    "offscreen": 15
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Payouts",
+    "offscreen": 116
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 236
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-waitlist-375-dark-en.jpg",
+  "loadMs": 1637,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "en",
+  "file": "admin-admin-interviews-375-dark-en.jpg",
+  "loadMs": 1691,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "Waiting list",
+    "offscreen": 107
+   }
+  ],
+  "latin": [],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-mentors",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-mentors-375-dark-ka.jpg",
+  "loadMs": 1002,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ჯავშნები და დაბრუნებები",
+    "offscreen": 47
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "განხილვის რიგი",
+    "offscreen": 203
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მიმოხილვები",
+    "offscreen": 340
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 517
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 663
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 818
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "უარყოფილი",
+    "offscreen": 106
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "შეჩერებული",
+    "offscreen": 236
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ყველა",
+    "offscreen": 326
+   }
+  ],
+  "latin": [
+   "AI-",
+   "claude-sonnet-",
+   "ANTHROPIC",
+   "API",
+   "KEY",
+   "not",
+   "configured",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-bookings",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-bookings-375-dark-ka.jpg",
+  "loadMs": 1685,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip active",
+    "text": "ჯავშნები და დაბრუნებები",
+    "offscreen": 47
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "განხილვის რიგი",
+    "offscreen": 203
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მიმოხილვები",
+    "offscreen": 340
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 517
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 663
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 818
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "პასუხგაცემული",
+    "offscreen": 72
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "თანხა ბრუნდება",
+    "offscreen": 227
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "თანხა დაბრუნებულია",
+    "offscreen": 417
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "გადახდის მოლოდინში",
+    "offscreen": 616
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ყველა",
+    "offscreen": 707
+   }
+  ],
+  "latin": [
+   "junior",
+   "developer",
+   "Should",
+   "learn",
+   "keep",
+   "going",
+   "deeper",
+   "with",
+   "get",
+   "job",
+   "next",
+   "year",
+   "Sep",
+   "Oct",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-payouts",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-payouts-375-dark-ka.jpg",
+  "loadMs": 1596,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 37
+   }
+  ],
+  "latin": [
+   "CSV",
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-queue",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-queue-375-dark-ka.jpg",
+  "loadMs": 1614,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მიმოხილვები",
+    "offscreen": 24
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 201
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 347
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 502
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-reviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-reviews-375-dark-ka.jpg",
+  "loadMs": 1612,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ვიდეო ინტერვიუები",
+    "offscreen": 54
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 200
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 355
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-waitlist",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-waitlist-375-dark-ka.jpg",
+  "loadMs": 1609,
+  "sideways": 0,
+  "clipped": [],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ },
+ {
+  "role": "admin",
+  "page": "admin-interviews",
+  "url": "/admin.html",
+  "width": 375,
+  "theme": "dark",
+  "lang": "ka",
+  "file": "admin-admin-interviews-375-dark-ka.jpg",
+  "loadMs": 1600,
+  "sideways": 0,
+  "clipped": [
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "ანაზღაურებები",
+    "offscreen": 43
+   },
+   {
+    "tag": "button",
+    "cls": "chip",
+    "text": "მოლოდინის სია",
+    "offscreen": 198
+   }
+  ],
+  "latin": [
+   "support"
+  ],
+  "noFocus": [],
+  "consoleErrors": [],
+  "failed": [],
+  "axe": []
+ }
+]
