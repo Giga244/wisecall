@@ -54,4 +54,9 @@ router.post('/bookings/:id/fast-forward', requireAuth, requireAdmin, asyncHandle
   res.json({ days, before, after });
 }));
 
+// An error on purpose, to try error monitoring (SENTRY_DSN): the message carries an email address that must never reach the report.
+router.post('/crash', requireAuth, requireAdmin, asyncHandler(async () => {
+  throw new Error('A test error for someone@example.com (development only)');
+}));
+
 module.exports = router;

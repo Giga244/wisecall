@@ -148,6 +148,9 @@ async function verificationHousekeeping() {
   for (const { id } of stale.rows) analysis.afterIdentityChange(id);
 }
 
+// When the last sweep finished without an error (for the /status page).
+let lastSweepAt = null;
+
 // `wait` (used by the development-only fast-forward tool): if another run is in progress, wait for it and then run, instead of skipping.
 async function runSweep({ wait = false } = {}) {
   const client = await pool.connect();
@@ -172,6 +175,7 @@ async function runSweep({ wait = false } = {}) {
       await verificationHousekeeping();
       await safetyHousekeeping();
       await accountHousekeeping();
+      lastSweepAt = new Date();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }
@@ -191,4 +195,4 @@ function startJobs() {
   return () => { clearInterval(timer); clearTimeout(first); };
 }
 
-module.exports = { startJobs, runSweep, purgeUnpaid };
+module.exports = { startJobs, runSweep, purgeUnpaid, lastSweep: () => lastSweepAt };

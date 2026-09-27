@@ -72,6 +72,11 @@ const config = {
   EMAIL_LOG_FILE: env.EMAIL_LOG_FILE || '',
   EMAIL_FROM: env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',
   SUPPORT_EMAIL: env.SUPPORT_EMAIL || '',
+  // Error monitoring (server/errorReport.js): a Sentry project's DSN. Empty = off. No personal data is ever sent.
+  SENTRY_DSN: (env.SENTRY_DSN || '').trim(),
+  // Visitor statistics with Plausible (server/analytics.js): the site's domain as registered there. Empty = off.
+  PLAUSIBLE_DOMAIN: (env.PLAUSIBLE_DOMAIN || '').trim(),
+  PLAUSIBLE_API_URL: (env.PLAUSIBLE_API_URL || 'https://plausible.io/api/event').trim(),
   // The seller's legal details (a company or individual entrepreneur), required on receipts and in the footer for Georgian
   // e-commerce. Each is shown only when set.
   LEGAL_NAME: (env.LEGAL_NAME || '').trim(),

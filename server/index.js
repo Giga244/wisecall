@@ -28,6 +28,23 @@ app.get('/healthz', async (req, res) => {
   }
 });
 
+// The public status of the site's parts (the /status page): nothing secret, just whether each part works.
+app.get('/api/status', async (req, res) => {
+  const out = { checkedAt: new Date().toISOString(), components: {} };
+  const t0 = Date.now();
+  try { await db.query('SELECT 1'); out.components.database = { status: 'ok', ms: Date.now() - t0 }; } catch (e) { out.components.database = { status: 'down' }; }
+  const last = require('./jobs').lastSweep();
+  const late = !last || Date.now() - last.getTime() > Math.max(3 * config.SWEEP_INTERVAL_SECONDS * 1000, 5 * 60000);
+  out.components.website = { status: 'ok' };
+  out.components.jobs = { status: late ? (process.uptime() < 120 ? 'starting' : 'delayed') : 'ok', lastRun: last ? last.toISOString() : null };
+  out.components.payments = { status: config.LAUNCH_MODE === 'prelaunch' ? 'not_open' : (config.PAYMENTS_ENABLED ? 'ok' : 'off') };
+  out.components.idChecks = { status: config.ID_CHECKS_ENABLED ? 'ok' : 'not_open' };
+  out.components.email = { status: config.EMAIL_ENABLED ? 'ok' : 'off' };
+  out.status = out.components.database.status !== 'ok' ? 'down' : (out.components.jobs.status === 'delayed' ? 'degraded' : 'ok');
+  res.set('Cache-Control', 'no-store');
+  res.status(out.status === 'down' ? 503 : 200).json(out);
+});
+
 // The bank's callback needs the raw body (BOG signs the exact bytes), so it is mounted before the
 // global json() body parser. It also comes from the bank's servers, so it is exempt from the CSRF
 // header rule; its authenticity is checked in server/pay/ instead.
@@ -170,6 +187,8 @@ app.use(pages.notFoundHandler);
 app.use((err, req, res, next) => {
   if (err.type === 'entity.too.large' && !res.headersSent) return res.status(413).json({ error: 'file_too_large' });
   console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
+  const errorReport = require('./errorReport');
+  errorReport.report(err, { method: req.method, route: errorReport.routeOf(req), status: err.status || 500 }); // (off without SENTRY_DSN; nothing personal)
   if (res.headersSent) return next(err);
   const wantsHtml = !req.path.startsWith('/api/') && req.method === 'GET' && String(req.accepts(['html', 'json'])).startsWith('html');
   if (wantsHtml) return pages.errorPage(req, res);
@@ -214,7 +233,7 @@ async function start() {
   process.on('SIGINT', shutdown);
 }
 
-process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
+process.on('unhandledRejection', (err) => { console.error('[unhandledRejection]', err); require('./errorReport').report(err instanceof Error ? err : new Error(String(err))); });
 
 start().catch((err) => {
   console.error('Failed to start:', err.message);
