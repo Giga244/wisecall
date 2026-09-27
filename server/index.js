@@ -96,6 +96,8 @@ app.use('/api/auth/google', require('./routes/google'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/waitlist', require('./routes/waitlist'));
+app.use('/api/me/2fa', rateLimit({ windowMs: 15 * 60 * 1000, max: 30 }));
+app.use('/api/me/2fa', require('./routes/twoFactorUser'));
 app.use('/api/me', require('./routes/me'));
 app.use('/api', require('./routes/profiles'));
 app.use('/api', require('./routes/ratings'));

@@ -72,7 +72,7 @@ describe('the admin page', () => {
   test('an address on the admin list that was never verified is not an admin', async () => {
     const s = await startServer(4607, { ADMIN_EMAILS: 'unverified-admin@example.com' }); extra.push(s);
     const c = client(s.base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { name: 'Not Verified', email: 'unverified-admin@example.com', password: 'test-pass-12345' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Not Verified', email: 'unverified-admin@example.com', password: 'test-pass-12345' } });
     assert.equal(su.status, 201);
     assert.equal((await c('/admin.html')).status, 403);
     assert.equal((await c.api('/admin/mentors')).status, 403);

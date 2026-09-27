@@ -43,7 +43,7 @@ async function newMentor(name, email, { price = 30, jar } = {}) {
     // The same browser as another account (their device cookie), for the account-signal test.
     c = client(base);
     c.setCookie('wisecall_device', jar.getCookie('wisecall_device'));
-    const su = await c.api('/auth/signup', { method: 'POST', body: { name, email, password: PASSWORD } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: PASSWORD } });
     await c.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } });
   } else c = await signupVerified(base, name, email);
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price } });

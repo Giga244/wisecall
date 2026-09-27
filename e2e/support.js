@@ -33,6 +33,7 @@ async function signUp(page, { name, email, password = PASSWORD }) {
   await page.fill('#name', name);
   await page.fill('#email', email);
   await page.fill('#password', password);
+  await page.check('#adult');
   await page.click('#signupForm button[type="submit"]');
   await page.waitForURL(/verify-email\.html/);
   await expect(page.locator('#devCodeBox')).toBeHidden(); // the code is only in the email, never on screen
@@ -54,7 +55,7 @@ async function logIn(page, { email, password = PASSWORD }, to = '/dashboard.html
 // ---- Set-up shortcuts for the specs that are not about signing up (the API, exactly as the pages call it) --------
 async function apiUser(name, email) {
   const c = client(BASE);
-  const su = await c.api('/auth/signup', { method: 'POST', body: { name, email, password: PASSWORD, language: 'en' } });
+  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: PASSWORD, language: 'en' } });
   if (su.status !== 201) throw new Error('signup failed: ' + su.text);
   const mail = await waitForMail(email);
   const v = await c.api('/auth/verify-email', { method: 'POST', body: { code: codeIn(mail) } });

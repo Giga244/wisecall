@@ -12,7 +12,7 @@ const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
 
 const signup = async (name, email, username) => {
   const c = client(base);
-  const r = await c.api('/auth/signup', { method: 'POST', body: { name, email, password: 'test-pass-12345', ...(username ? { username } : {}) } });
+  const r = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: 'test-pass-12345', ...(username ? { username } : {}) } });
   return { c, r };
 };
 const png = (w = 800, h = 600, color = '#e0413a') => sharp({ create: { width: w, height: h, channels: 3, background: color } }).png().toBuffer();

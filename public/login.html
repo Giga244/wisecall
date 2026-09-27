@@ -66,6 +66,17 @@
       <p class="form-error" id="formError" role="alert"></p>
       <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.login.cta">Log in</button>
     </form>
+    <form id="codeForm" novalidate hidden>
+      <h2 class="code-step-title" data-i18n="auth.twoStep.title">Two-step verification</h2>
+      <p class="muted" id="codeHelp" data-i18n="auth.twoStep.help">Enter the 6-digit code from your authenticator app.</p>
+      <div class="field">
+        <label for="loginCode" id="codeLabel" data-i18n="auth.twoStep.code">Code</label>
+        <input type="text" id="loginCode" inputmode="numeric" autocomplete="one-time-code" autocapitalize="none" maxlength="20" required>
+      </div>
+      <p class="small"><button type="button" class="linklike" id="useRecovery" data-i18n="auth.twoStep.useRecovery">Use a recovery code instead</button></p>
+      <p class="form-error" id="codeError" role="alert"></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.twoStep.cta">Continue</button>
+    </form>
     <p class="auth-switch">
       <span data-i18n="auth.login.noAccount">Don't have an account?</span>
       <a href="/signup.html" data-i18n="auth.login.createOne">Create one</a>

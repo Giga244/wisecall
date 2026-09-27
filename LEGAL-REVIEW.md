@@ -109,3 +109,8 @@ Mentor applications now go through three steps (Identity → Experience → Revi
     payouts and receipts stay, pointing at the anonymous account, as accounting law requires. The **question and answer texts stay** for
     the other person's record. Confirm the 14-day grace period, what must be kept and for how long, and whether the question/answer
     text must also be removed on request.
+48. **Sign-up and account security.** Sign-up now requires "I'm 18 or older" (a new Google account confirms it on the next page), and
+    the time is stored. New passwords are checked against known breaches with Have I Been Pwned: only the first 5 characters of the
+    password's SHA-1 hash are sent (k-anonymity), never the password or an email. Every account can turn on two-step verification
+    (an authenticator app, with recovery codes). Mention the breach check in the Privacy Policy (a processor/recipient?), and confirm the
+    18+ wording.

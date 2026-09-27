@@ -58,10 +58,12 @@
     email_taken: 'auth.error.emailTaken',
     invalid_email: 'auth.error.invalidEmail',
     weak_password: 'auth.error.weakPassword',
-    missing_fields: 'auth.error.missingFields'
+    missing_fields: 'auth.error.missingFields',
+    adult_required: 'auth.adultRequired',
+    password_breached: 'auth.error.breached'
   };
   // Which field an error belongs to, so it can be marked and focused.
-  const FIELD_FOR = { invalid_username: 'username', reserved_username: 'username', username_taken: 'username', email_taken: 'email', invalid_email: 'email', weak_password: 'password', missing_fields: 'name' };
+  const FIELD_FOR = { invalid_username: 'username', reserved_username: 'username', username_taken: 'username', email_taken: 'email', invalid_email: 'email', weak_password: 'password', missing_fields: 'name', adult_required: 'adult', password_breached: 'password' };
 
   function fail(message, fieldId) {
     errorEl.textContent = message;
@@ -78,12 +80,13 @@
     const password = document.getElementById('password').value;
     if (!name || !email || !password) { fail(t('auth.error.missingFields'), !name ? 'name' : (!email ? 'email' : 'password')); return; }
     if (password.length < 8) { fail(t('auth.error.weakPassword'), 'password'); return; }
+    if (!document.getElementById('adult').checked) { fail(t('auth.adultRequired'), 'adult'); return; }
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
     try {
       const data = await WisecallAPI.apiFetch('/auth/signup', {
         method: 'POST',
-        body: { name, email, password, language: WisecallI18n.getLang(), username: usernameInput.value.trim().toLowerCase() || undefined }
+        body: { name, email, password, adult: true, language: WisecallI18n.getLang(), username: usernameInput.value.trim().toLowerCase() || undefined }
       });
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}`;
       if (data.devMode && data.devVerifyCode) verifyUrl += `&devCode=${data.devVerifyCode}`;

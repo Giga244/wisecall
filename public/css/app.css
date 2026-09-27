@@ -573,3 +573,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .btn-danger:hover { filter: brightness(0.92); }
 .data-delete-title { margin-top: 18px; font-size: 1.05rem; }
 .deletion-banner { background: var(--pink-soft); color: var(--pink-ink); }
+.adult-row { margin: 4px 0 10px; }
+.code-step-title { font-size: 1.2rem; margin: 0 0 6px; }
+.recovery-codes { background: var(--gray-soft); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 1rem; line-height: 1.8; }
+.tf-qr svg { width: 200px; height: 200px; background: var(--white); border-radius: 12px; padding: 6px; }

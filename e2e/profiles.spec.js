@@ -33,6 +33,7 @@ test('sign up with a username of your own: it is suggested from the name, checke
 
   await page.fill('#email', EMAIL);
   await page.fill('#password', S.PASSWORD);
+  await page.check('#adult');
   await page.click('#signupForm button[type="submit"]');
   await page.waitForURL(/verify-email\.html/);
   await page.fill('#code', S.codeIn(await S.waitForMail(EMAIL)));
@@ -48,6 +49,7 @@ test('a taken username is refused at sign-up with a clear message', async ({ pag
   await page.fill('#name', 'Other Person');
   await page.fill('#email', 'other.person@e2e.test');
   await page.fill('#password', S.PASSWORD);
+  await page.check('#adult');
   await page.click('#signupForm button[type="submit"]');
   await expect(page.locator('#formError')).toHaveText(/already taken/i);
   await expect(page).toHaveURL(/signup\.html/);

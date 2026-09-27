@@ -23,6 +23,7 @@ async function signUpWithScreenCode(page, name, email) {
   await page.fill('#name', name);
   await page.fill('#email', email);
   await page.fill('#password', 'local-test-pass-1');
+  await page.check('#adult');
   await page.click('#signupForm button[type="submit"]');
   await page.waitForURL(/verify-email\.html/);
   const box = page.locator('#devCodeBox');

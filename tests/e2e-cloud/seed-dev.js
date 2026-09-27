@@ -36,7 +36,7 @@ function client() {
 
 async function user(name, email, language = 'en') {
   const c = client();
-  let r = await c('/auth/signup', { method: 'POST', body: { name, email, password: PASSWORD, language } });
+  let r = await c('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: PASSWORD, language } });
   if (r.status === 409) { r = await c('/auth/login', { method: 'POST', body: { email, password: PASSWORD } }); return c; }
   if (r.status !== 201) throw new Error(`signup ${email}: ${r.text}`);
   if (!r.devVerifyCode) throw new Error('No devVerifyCode: run the server without an email provider (see the top of this file).');

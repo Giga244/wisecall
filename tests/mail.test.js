@@ -21,7 +21,7 @@ async function waitFor(fn, ms = 8000) {
 // With real email on, the code is only in the email, so read it from the outbox.
 async function signupViaOutbox(name, email, language = 'en') {
   const c = client(base);
-  const su = await c.api('/auth/signup', { method: 'POST', body: { name, email, password: 'test-pass-12345', language } });
+  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: 'test-pass-12345', language } });
   assert.equal(su.status, 201);
   const mail = await waitFor(() => mailTo(email)[0]);
   const v = await c.api('/auth/verify-email', { method: 'POST', body: { code: codeFrom(mail) } });
@@ -72,7 +72,7 @@ describe('templates', () => {
 describe('delivery through the email provider', () => {
   test('signup sends the verification code by email (in the chosen language) and never returns it', async () => {
     const c = client(base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { name: 'Nino Beridze', email: 'nino@example.com', password: 'test-pass-12345', language: 'ka' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Nino Beridze', email: 'nino@example.com', password: 'test-pass-12345', language: 'ka' } });
     assert.equal(su.status, 201);
     assert.equal(su.devVerifyCode, undefined, 'code must not be in the response when email was sent');
     assert.equal(su.user.language, 'ka');

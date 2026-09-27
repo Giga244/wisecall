@@ -23,3 +23,11 @@ Tests: tests/inbox.test.js (15), e2e/inbox.spec.js (4). Migration 021 (additive,
 ## PART 3 early — 🔴 #1 and #2
 Rate-limit keys are the limiter plus the lower-cased path without trailing slashes (#1). Wrong email / work-email codes are counted per
 account; after 5 the code is cleared (#2, migration 020). Their cloud tests no longer have { todo }.
+
+## PART 0.1 / Phase 4 — safety, disputes, receipts, account tools
+Emergency questions (EN+KA, first-person) get help (112, 116 006) instead of payment and are logged for admins; mentors can decline a
+question (full refund, reason shown). "Report a problem with this answer" within 7 days holds the payout; admins decide full / partial
+(proportional) / no refund in a Disputes tab. Numbered receipts (email + PDF, EN/KA, Noto Sans Georgian) and monthly statements (CSV/PDF).
+Account tools: signed-in devices + sign out others (AUDIT #3), data export, deletion with a 14-day grace (records kept pseudonymised),
+optional two-step verification for all, a breached-password check (HIBP k-anonymity) and 18+ at sign-up. Migrations 022–027.
+Tests: safety, disputes, receipts, sessions, account, account-security (+ e2e safety). Unit 627, cloud 28 + 6 todo, e2e green.

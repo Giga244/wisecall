@@ -9,6 +9,11 @@ const config = require('../config');
 const { sendTemplate } = require('../mail');
 const verification = require('../verification/steps');
 const usernames = require('../usernames');
+const hibp = require('../hibp');
+const twoFactor = require('../twoFactor');
+const { isAdminUser } = require('../adminAuth');
+const jwt = require('jsonwebtoken');
+const { query } = require('../db');
 
 const router = express.Router();
 const isStr = (v) => typeof v === 'string';
@@ -18,10 +23,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
 
 router.post('/signup', asyncHandler(async (req, res) => {
-  const { name, email, password, language, username } = req.body || {};
+  const { name, email, password, language, username, adult } = req.body || {};
   if (!isStr(name) || !isStr(email) || !isStr(password) || !name.trim() || !email || !password) return res.status(400).json({ error: 'missing_fields' });
   if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
   if (String(password).length < 8 || String(password).length > 200) return res.status(400).json({ error: 'weak_password' });
+  // "I am 18 or older" (a box on the form).
+  if (adult !== true) return res.status(400).json({ error: 'adult_required' });
+  if (await hibp.breachCount(password)) return res.status(400).json({ error: 'password_breached' });
   // The username is their choice (checked before anything is created); without one we make one from their name.
   let wantedUsername = null;
   if (username !== undefined && username !== null && username !== '') {
@@ -50,6 +58,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
     if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
     throw err;
   }
+  await query('UPDATE users SET adult_confirmed_at = now() WHERE id = $1', [user.id]);
   try {
     await usernames.assignNew(user.id, user.name, wantedUsername);
   } catch (e) {
@@ -88,7 +97,43 @@ router.post('/login', asyncHandler(async (req, res) => {
   const ok = await bcrypt.compare(password, user && user.passwordHash ? user.passwordHash : DUMMY_HASH) && Boolean(user && user.passwordHash);
   if (!user || !ok) return res.status(401).json({ error: 'invalid_credentials' });
 
+  // Two-step verification turned on (optional for everyone; admins have their own required step after signing in): the code comes
+  // next, and only then is there a session.
+  if (await needsSecondStep(user)) { askForSecondStep(res, user); return res.json({ twoFactorRequired: true }); }
   await startSession(req, res, user);
+  await require('../verification/signals').record(req, res, user.id, 'login');
+  res.json({ user: meProfile(user) });
+}));
+
+// ---- The second step at sign-in (for an account that turned two-step verification on) -----------------------------------------
+// Between the password (or Google) and the code, a short-lived signed cookie remembers who is signing in; it is not a session.
+const PENDING_COOKIE = 'wisecall_2fa';
+const PENDING_MINUTES = 10;
+async function needsSecondStep(user) {
+  return !isAdminUser(user) && (await twoFactor.stateFor(user.id)).enabled;
+}
+function askForSecondStep(res, user) {
+  res.cookie(PENDING_COOKIE, jwt.sign({ id: user.id, purpose: 'second_step' }, config.SESSION_SECRET, { expiresIn: `${PENDING_MINUTES}m` }), {
+    httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: PENDING_MINUTES * 60000
+  });
+}
+router.post('/login/second-step', asyncHandler(async (req, res) => {
+  let pending = null;
+  try { pending = jwt.verify(req.cookies[PENDING_COOKIE] || '', config.SESSION_SECRET); } catch (e) { /* expired or missing */ }
+  if (!pending || pending.purpose !== 'second_step') return res.status(401).json({ error: 'sign_in_again' });
+  const user = await getUserById(pending.id);
+  if (!user) return res.status(401).json({ error: 'sign_in_again' });
+  const { code, recoveryCode } = req.body || {};
+  if ((code !== undefined && !isStr(code)) || (recoveryCode !== undefined && !isStr(recoveryCode)) || (code === undefined && recoveryCode === undefined)) return res.status(400).json({ error: 'invalid_code' });
+  try {
+    await twoFactor.verifyLogin(user, { code, recoveryCode });
+  } catch (e) {
+    if (!(e instanceof twoFactor.TwoFactorError)) throw e;
+    if (e.retryAfter) res.set('Retry-After', String(e.retryAfter));
+    return res.status(e.code === 'locked' ? 429 : 400).json({ error: e.code });
+  }
+  res.clearCookie(PENDING_COOKIE);
+  await startSession(req, res, user, { mfaAt: Math.floor(Date.now() / 1000) });
   await require('../verification/signals').record(req, res, user.id, 'login');
   res.json({ user: meProfile(user) });
 }));
@@ -147,6 +192,7 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
     new Date(user.resetTokenExpiresAt).getTime() > Date.now() &&
     await bcrypt.compare(rawToken, user.resetTokenHash);
   if (!valid) return res.status(400).json({ error: 'invalid_or_expired' });
+  if (await hibp.breachCount(newPassword)) return res.status(400).json({ error: 'password_breached' });
 
   await updateUser(user.id, {
     passwordHash: await bcrypt.hash(newPassword, 10),
@@ -211,3 +257,5 @@ function randomColor() {
 }
 
 module.exports = router;
+module.exports.needsSecondStep = needsSecondStep;
+module.exports.askForSecondStep = askForSecondStep;

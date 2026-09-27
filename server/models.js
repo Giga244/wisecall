@@ -58,6 +58,7 @@ function userFromRow(r) {
     // USER_SELECT (getUserById and friends); undefined otherwise, and then the mentor is treated as not listable.
     hasFailedRequiredStep: r.has_failed_required_step === undefined ? undefined : Boolean(r.has_failed_required_step),
     deletionRequestedAt: r.deletion_requested_at || null,
+    adultConfirmedAt: r.adult_confirmed_at || null,
     deletedAt: r.deleted_at || null,
     createdAt: r.created_at
   };

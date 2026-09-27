@@ -310,7 +310,7 @@ test.describe('the pieces that appear on top of a page, in dark', () => {
     expect((await surface(page, '#themeMenu')).bg.every((v) => v < 90), 'the theme menu is a dark surface').toBe(true);
     await shot(page, 'theme-menu-1280');
     await page.keyboard.press('Escape');
-    await page.locator('form button[type="submit"]').click(); // empty form: the errors
+    await page.locator('#loginForm button[type="submit"]').click(); // empty form: the errors
     await page.waitForTimeout(300);
     await shot(page, 'form-errors-1280');
     const err = page.locator('.field-error:visible, .form-error:visible, [role="alert"]:visible').first();

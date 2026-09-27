@@ -10,7 +10,7 @@ test.describe('the admin page', () => {
     await expect(page).toHaveURL(/\/login\.html\?redirect=(%2F|\/)admin\.html/);
     await page.fill('#email', 'e2e-admin@example.com');
     await page.fill('#password', S.PASSWORD);
-    await page.locator('form button[type="submit"]').click();
+    await page.locator('#loginForm button[type="submit"]').click();
     await expect(page).toHaveURL(/\/admin\.html$/);
     await expect(page.locator('#adminTabs')).toBeVisible();
   });

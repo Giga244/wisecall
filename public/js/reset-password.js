@@ -27,7 +27,7 @@
       resultEl.style.display = 'block';
       resultEl.innerHTML = `<p class="muted">${WisecallI18n.t('auth.reset.success')}</p><a class="btn btn-primary btn-block" href="/login.html" style="margin-top:14px">${WisecallI18n.t('auth.login.cta')}</a>`;
     } catch (e) {
-      errorEl.textContent = e.code === 'invalid_or_expired' ? WisecallI18n.t('auth.reset.expired') : WisecallI18n.t('toast.error');
+      errorEl.textContent = WisecallI18n.t({ invalid_or_expired: 'auth.reset.expired', password_breached: 'auth.error.breached' }[e.code] || 'toast.error');
       submitBtn.disabled = false;
     }
   });

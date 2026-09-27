@@ -41,6 +41,10 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   if (updates.price !== undefined && typeof updates.price !== 'number' && typeof updates.price !== 'string') return res.status(400).json({ error: 'invalid_price' });
   const existing = await getUserById(req.userToken.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });
+  // "I am 18 or older", for an account made with Google (the sign-up form asks it for everyone else). Recorded once.
+  if (updates.adultConfirmed === true && !existing.adultConfirmedAt) {
+    await require('../db').query('UPDATE users SET adult_confirmed_at = now() WHERE id = $1 AND adult_confirmed_at IS NULL', [existing.id]);
+  }
 
   // Validate every provided field first and build the patch; nothing is written until
   // every check passes, so a rejected request can never leave a partial change behind.
@@ -200,6 +204,7 @@ router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   if (typeof newPassword !== 'string' || !newPassword || (hasPassword && (typeof currentPassword !== 'string' || !currentPassword))) return res.status(400).json({ error: 'missing_fields' });
   if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
   if (hasPassword && !(await bcrypt.compare(String(currentPassword), user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
+  if (await require('../hibp').breachCount(newPassword)) return res.status(400).json({ error: 'password_breached' });
 
   await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
   // Every other device is signed out (docs/AUDIT.md #3); this one gets a fresh session.

@@ -231,7 +231,7 @@ describe('Google sign-in', () => {
     test('NOT verified on our side: nothing is linked and nobody is signed in; they are asked to use their password first', async () => {
       // an account made by email + password whose email was never confirmed (anybody could have typed that address)
       const un = new Browser();
-      assert.equal((await un.api('/auth/signup', { method: 'POST', body: { name: 'Unverified Here', email: 'unverified.here@e2e.test', password: 'their-own-password-2' } })).status, 201);
+      assert.equal((await un.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Unverified Here', email: 'unverified.here@e2e.test', password: 'their-own-password-2' } })).status, 201);
       const before = { users: await userCount(), ids: await identityCount() };
       const attacker = new Browser();
       const { final } = await attacker.google('existing2');
@@ -485,7 +485,7 @@ describe('Google sign-in', () => {
       const s = await startServer(PORT + 3, { ADMIN_EMAILS: 'squatter@example.com' });
       try {
         const c = new Browser();
-        const squat = await fetch(`${s.base}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: JSON.stringify({ name: 'Squatter', email: 'squatter@example.com', password: 'squatter-password-1' }) });
+        const squat = await fetch(`${s.base}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: JSON.stringify({ adult: true, name: 'Squatter', email: 'squatter@example.com', password: 'squatter-password-1' }) });
         assert.equal(squat.status, 201);
         const cookie = squat.headers.getSetCookie().map((x) => x.split(';')[0]).join('; ');
         const me = await (await fetch(`${s.base}/api/me`, { headers: { cookie } })).json();

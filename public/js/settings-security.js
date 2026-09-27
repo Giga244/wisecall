@@ -38,6 +38,64 @@
     try { sessions = (await WisecallAPI.apiFetch('/me/sessions')).sessions; drawSessions(); } catch (e) { /* signed out */ }
   }
 
+  // ---- Two-step verification (optional; recommended for mentors; admins manage theirs on the admin page) ----------------------------
+  let tf = null;
+  let setup = null;
+  let codes = null;
+  function drawTwoStep() {
+    const box = document.getElementById('twoStepCard');
+    if (!box || !tf) return;
+    let body;
+    if (codes) {
+      body = `<p>${esc(t('settings.twoStep.codes'))}</p><pre class="recovery-codes">${codes.map(esc).join('\n')}</pre>
+        <button type="button" class="btn btn-primary btn-sm" id="tfCodesDone">${esc(t('settings.twoStep.codesDone'))}</button>`;
+    } else if (tf.enabled) {
+      body = `<p><span class="badge badge-answered">${esc(t('settings.twoStep.on'))}</span> ${esc(t('settings.twoStep.recoveryLeft').replace('{n}', tf.recoveryLeft))}</p>
+        ${tf.admin ? `<p class="muted small">${esc(t('settings.twoStep.admin'))}</p>` : `
+        <form id="tfOff" novalidate>
+          <label class="field-label" for="tfOffPassword">${esc(t(me && me.hasPassword ? 'settings.data.password' : 'settings.twoStep.codeLabel'))}</label>
+          <input type="${me && me.hasPassword ? 'password' : 'text'}" id="tfOffPassword" autocomplete="${me && me.hasPassword ? 'current-password' : 'one-time-code'}">
+          <p class="form-error" id="tfError" role="alert"></p>
+          <button type="submit" class="btn btn-outline btn-sm">${esc(t('settings.twoStep.turnOff'))}</button>
+        </form>`}`;
+    } else if (setup) {
+      body = `<p>${esc(t('settings.twoStep.scan'))}</p><div class="tf-qr" aria-hidden="true">${setup.qr}</div>
+        <p class="small">${esc(t('settings.twoStep.key'))} <code>${esc(setup.key)}</code></p>
+        <form id="tfOn" novalidate>
+          <label class="field-label" for="tfCode">${esc(t('settings.twoStep.codeLabel'))}</label>
+          <input type="text" id="tfCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+          ${setup.devCode ? `<p class="small muted">Development only: the app would show ${esc(setup.devCode)}</p>` : ''}
+          <p class="form-error" id="tfError" role="alert"></p>
+          <button type="submit" class="btn btn-primary btn-sm">${esc(t('settings.twoStep.confirm'))}</button>
+        </form>`;
+    } else {
+      body = `<p class="muted">${esc(t(tf.recommended ? 'settings.twoStep.bodyMentor' : 'settings.twoStep.body'))}</p>
+        <button type="button" class="btn btn-outline btn-sm" id="tfStart">${esc(t('settings.twoStep.start'))}</button>`;
+    }
+    box.innerHTML = `<h2>${esc(t('settings.twoStep.title'))}</h2>${body}`;
+    const q = (id) => box.querySelector(id);
+    if (q('#tfStart')) q('#tfStart').addEventListener('click', async () => {
+      try { setup = await WisecallAPI.apiFetch('/me/2fa/setup', { method: 'POST' }); drawTwoStep(); } catch (e) { WisecallNav.showToast(t('toast.error')); }
+    });
+    if (q('#tfOn')) q('#tfOn').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      try { codes = (await WisecallAPI.apiFetch('/me/2fa/enable', { method: 'POST', body: { code: q('#tfCode').value.trim() } })).recoveryCodes; setup = null; tf.enabled = true; tf.recoveryLeft = codes.length; drawTwoStep(); }
+      catch (e) { q('#tfError').textContent = t(e.code === 'invalid_code' ? 'auth.twoStep.wrong' : 'toast.error'); }
+    });
+    if (q('#tfCodesDone')) q('#tfCodesDone').addEventListener('click', () => { codes = null; drawTwoStep(); });
+    if (q('#tfOff')) q('#tfOff').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const v = q('#tfOffPassword').value;
+      try {
+        await WisecallAPI.apiFetch('/me/2fa/disable', { method: 'POST', body: me && me.hasPassword ? { password: v } : { code: v } });
+        tf.enabled = false; drawTwoStep(); WisecallNav.showToast(t('settings.twoStep.off'));
+      } catch (e) { q('#tfError').textContent = t({ wrong_password: 'settings.data.wrongPassword', invalid_code: 'auth.twoStep.wrong' }[e.code] || 'toast.error'); }
+    });
+  }
+  async function loadTwoStep() {
+    try { tf = await WisecallAPI.apiFetch('/me/2fa'); drawTwoStep(); } catch (e) { /* signed out */ }
+  }
+
   // ---- Your data: download it, or delete the account (re-authentication, then a grace period) -------------------------------------
   let me = null;
   let graceDays = 14;
@@ -102,7 +160,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    WisecallI18n.ready.then(() => { loadSessions(); loadData(); });
-    document.addEventListener('wisecall:lang-changed', () => { drawSessions(); drawData(); });
+    WisecallI18n.ready.then(() => { loadSessions(); loadData().then(loadTwoStep); });
+    document.addEventListener('wisecall:lang-changed', () => { drawSessions(); drawData(); drawTwoStep(); });
   });
 })();

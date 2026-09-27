@@ -109,6 +109,12 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
   }
 
   const signIn = async (user, to) => {
+    // Two-step verification turned on: the code is asked for on the sign-in page before there is a session.
+    const authRoutes = require('./auth');
+    if (await authRoutes.needsSecondStep(user)) {
+      authRoutes.askForSecondStep(res, user);
+      return res.redirect(302, `/login.html?step=code&redirect=${encodeURIComponent(to)}`);
+    }
     await startSession(req, res, user);
     await require('../verification/signals').record(req, res, user.id, 'login');
     res.redirect(302, to);

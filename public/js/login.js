@@ -17,11 +17,48 @@
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
     try {
-      await WisecallAPI.apiFetch('/auth/login', { method: 'POST', body: { email, password } });
+      const r = await WisecallAPI.apiFetch('/auth/login', { method: 'POST', body: { email, password } });
+      if (r.twoFactorRequired) { showCodeStep(); return; }
       window.location.href = redirect;
     } catch (e) {
       errorEl.textContent = t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error');
       button.disabled = false;
     }
   });
+
+  // The second step, for an account with two-step verification on (after the password, or after Google: ?step=code).
+  const codeForm = document.getElementById('codeForm');
+  const codeInput = document.getElementById('loginCode');
+  let recovery = false;
+  function showCodeStep() {
+    form.hidden = true;
+    document.querySelectorAll('.google-block, .auth-switch').forEach((el) => { el.hidden = true; });
+    codeForm.hidden = false;
+    codeInput.focus();
+  }
+  document.getElementById('useRecovery').addEventListener('click', () => {
+    recovery = !recovery;
+    document.getElementById('codeLabel').textContent = t(recovery ? 'auth.twoStep.recovery' : 'auth.twoStep.code');
+    document.getElementById('useRecovery').textContent = t(recovery ? 'auth.twoStep.useCode' : 'auth.twoStep.useRecovery');
+    codeInput.value = '';
+    codeInput.focus();
+  });
+  codeForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const err = document.getElementById('codeError');
+    err.textContent = '';
+    const value = codeInput.value.trim();
+    if (!value) { err.textContent = t('auth.twoStep.empty'); return; }
+    const button = codeForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    try {
+      await WisecallAPI.apiFetch('/auth/login/second-step', { method: 'POST', body: recovery ? { recoveryCode: value } : { code: value } });
+      window.location.href = redirect;
+    } catch (e) {
+      err.textContent = t({ invalid_code: 'auth.twoStep.wrong', locked: 'auth.twoStep.locked', sign_in_again: 'auth.twoStep.again' }[e.code] || 'toast.error');
+      if (e.code === 'sign_in_again') { codeForm.hidden = true; form.hidden = false; }
+      button.disabled = false;
+    }
+  });
+  if (params.get('step') === 'code') showCodeStep();
 })();

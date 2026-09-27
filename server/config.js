@@ -98,6 +98,11 @@ const config = {
   // automated tests and is refused in production. A verified session lasts ADMIN_2FA_SESSION_HOURS, then the code is asked for again.
   ADMIN_2FA: (env.ADMIN_2FA || 'required').trim().toLowerCase(),
   ADMIN_2FA_SESSION_HOURS: int(env.ADMIN_2FA_SESSION_HOURS, 12),
+  // New passwords are checked against known data breaches (Have I Been Pwned, k-anonymity: only the first 5 characters of the
+  // password's SHA-1 leave the server). On in production unless HIBP_CHECK=off; off elsewhere unless HIBP_CHECK=on. If the service
+  // cannot be reached the password is accepted.
+  HIBP_CHECK: (env.HIBP_CHECK || (IS_PROD ? 'on' : 'off')).toLowerCase() === 'on',
+  HIBP_API_URL: (env.HIBP_API_URL || 'https://api.pwnedpasswords.com/range/').replace(/\/?$/, '/'),
 
   // Mentor verification (rules v2, server/verification/rules.js).
   // AUTO_APPROVE=on lets the analysis approve a mentor by itself when EVERY condition in rules.js holds (never in a regulated niche).
