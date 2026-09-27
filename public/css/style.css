@@ -1005,3 +1005,8 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 .founder { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
 .founder-photo { width: 120px; height: 120px; border-radius: 999px; object-fit: cover; }
 .founder-name { margin-top: 0; }
+.help-article { line-height: 1.75; }
+.help-article h2, .help-article h3 { margin-top: 24px; }
+.help-article blockquote { margin: 16px 0; padding: 10px 16px; border-left: 4px solid var(--accent); background: var(--sun-tint); border-radius: 8px; }
+.help-nav { margin-top: 32px; }
+.help-nav ul { padding-left: 20px; line-height: 2; }

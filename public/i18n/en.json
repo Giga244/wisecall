@@ -1609,5 +1609,11 @@
   "about.founder.title": "The founder",
   "about.contact.title": "Contact",
   "about.contact.body": "Questions, ideas or a problem? We read every message.",
-  "about.contact.link": "Write to us"
+  "about.contact.link": "Write to us",
+  "help.title": "Help centre",
+  "help.intro": "Short guides for asking, paying, refunds, becoming a mentor and your account.",
+  "help.articles": "Articles",
+  "help.more": "More help",
+  "meta.help.title": "Help centre — Wisecall",
+  "meta.help.description": "Short guides for asking, paying, refunds, becoming a mentor and your account on Wisecall."
 }

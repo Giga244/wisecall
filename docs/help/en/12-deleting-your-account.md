@@ -1,17 +1,20 @@
 # Deleting your account
 
-**How:** there's no "delete account" button yet. Write to us through the **Contact** page **from your account's email address** and ask us to delete your account. [CHECK: this article must change when a self-service button exists.]
+**How:** go to **Settings → Account → Your data** and choose **Delete my account**. You confirm with your password (if you only sign in with Google, sign in with Google again first and come back within 10 minutes).
 
-**Before you ask**
-- **Buyers:** if you have a question waiting for an answer, wait for it (or its automatic refund) first.
-- **Mentors:** answer your open questions, or tell us and we'll refund them. Earnings that are already payable are paid out on the next payout date.
+**Before you can delete it**
+Nothing may be left half-way for someone else or for money:
+- **Buyers:** a question still waiting for its answer or refund must finish first.
+- **Mentors:** answer or decline your open questions, and wait for your earnings to be paid out.
+- A reported problem with an answer must be decided first.
+The page tells you exactly what is still open.
 
-**What gets deleted and what we must keep**
-- Your profile, photo, username and account details are removed. [CHECK: exact list and timing, decided with our lawyer.]
-- Payment, refund and payout records must be kept for the period the law requires (accounting and tax), even after the account is closed. [CHECK: period.]
-- Reviews you wrote: [CHECK: removed or anonymised].
-- Mentors' uploaded documents are deleted 90 days after the decision on them in any case.
+**What happens**
+- Your account **closes at once**: you are signed out everywhere and, if you are a mentor, you disappear from Browse experts.
+- For **14 days** you can change your mind: sign in and choose **Keep my account**.
+- After 14 days your details are removed: name, email, password, username, profile, photo, bank details, evidence and documents, support conversations and notifications. Reviews you wrote keep their stars without the text, and messages you wrote in question conversations are blanked.
+- **Payment, refund and payout records stay**, without your name, because accounting and tax law require them. The questions and answers stay for the other person's record.
 
-**Just want a break?** You don't have to delete anything; you can simply stop using Wisecall. Buyers can set their profile to private in **Settings → Profile**.
+**Want your data first?** In **Settings → Account → Your data**, choose **Download my data**: you get a file with everything we keep about your account.
 
-**Want your data first?** Ask for a copy in the same message.
+**Just want a break?** You don't have to delete anything; you can simply stop using Wisecall. You can set your profile to private in **Settings → Profile**.

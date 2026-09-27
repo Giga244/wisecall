@@ -15,4 +15,4 @@ Applying takes about 10 minutes if you have your links ready.
 
 **Medicine, law and finance** also need a valid licence or registration number, which our team checks in the official register.
 
-**Rejected?** A person always makes that decision and tells you why. Fix what they mention and apply again. There's no limit. How long the review takes: [CHECK: target time for the team].
+**Rejected?** A person always makes that decision and tells you why. Fix what they mention and apply again. There's no limit. You get an email as soon as it is decided.

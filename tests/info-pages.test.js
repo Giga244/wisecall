@@ -65,3 +65,20 @@ describe('settings the pages read', () => {
     assert.equal(cfg.founder.story.en, 'I started Wisecall because <good> advice is hard to find.', 'plain text: the page sets it as text');
   });
 });
+
+describe('the help centre', () => {
+  test('the list and an article, in both languages; nothing unsettled is published; unknown articles are 404', async () => {
+    const list = await html('/help.html');
+    assert.match(list, /<a href="\/help\/refunds">Refunds<\/a>/);
+    assert.doesNotMatch(list, /how-mentors-get-paid/, 'an article with a [CHECK] note waits');
+    const a = await html('/help/refunds');
+    assert.match(a, /<title>Refunds — Wisecall<\/title>/);
+    assert.match(a, /<strong>full price<\/strong>/);
+    assert.doesNotMatch(a, /\[CHECK/);
+    const ka = await html('/ka/help/refunds');
+    assert.match(ka, /<html lang="ka"/);
+    assert.match(ka, /<h1>თანხის დაბრუნება<\/h1>/);
+    assert.equal((await fetch(base + '/help/no-such-article')).status, 404);
+    assert.match(await html('/sitemap.xml'), /\/ka\/help\/refunds<\/loc>/);
+  });
+});

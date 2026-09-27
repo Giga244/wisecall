@@ -115,6 +115,10 @@
       return currentDict;
     }
     localStorage.setItem(STORAGE_KEY, lang);
+    if (lang === 'ka' && !onKaPath() && document.querySelector('meta[name="wisecall-server-lang"]')) {
+      location.href = '/ka' + path() + location.search + location.hash;
+      return currentDict;
+    }
     document.documentElement.lang = lang;
     const dict = await loadDict(lang);
     applyDict(dict);

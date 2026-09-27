@@ -1,7 +1,7 @@
 # How payment works
 
 1. **You see the price first.** Each mentor sets their own price per question, in lari (between 5 ₾ and 2,000 ₾). That's the whole price.
-2. **You pay by card on the bank's secure page.** When you press the ask button, you go to our bank's payment page ([CHECK: Bank of Georgia or TBC Bank, whichever is live]). Wisecall never sees or stores your card number.
+2. **You pay by card on the bank's secure page.** When you press the ask button, you go to our bank's payment page (Bank of Georgia or TBC Bank). Wisecall never sees or stores your card number.
 3. **Your question is sent only after the bank confirms the payment.** Usually that takes a few seconds after you come back to Wisecall. If the page says it's still waiting, leave it open a moment. It checks with the bank by itself.
 4. **You have 30 minutes to finish paying.** If you cancel, the payment fails or you don't finish, **nothing is charged** and the question isn't sent. You can try again straight away; your text is still in the box.
 

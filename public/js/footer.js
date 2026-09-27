@@ -32,6 +32,7 @@
             <li><a href="/contact.html" data-i18n="footer.contact">Contact</a></li>
             <li><a href="/faq.html" data-i18n="footer.faq">FAQ</a></li>
             <li><a href="/how-we-verify.html" data-i18n="hv.title">How we verify mentors</a></li>
+            <li><a href="/help.html" data-i18n="help.title">Help centre</a></li>
           </ul>
         </nav>
         <nav class="footer-col" aria-labelledby="footLegal">

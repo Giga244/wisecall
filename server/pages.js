@@ -262,6 +262,33 @@ function verifyVars(lang) {
   return vars;
 }
 
+// The help centre (server/help.js): /help.html lists the articles, /help/<slug> shows one; both in the page's language.
+function sendHelp(res, slug) {
+  const help = require('./help');
+  const html = readPage('help.html');
+  if (html === null) return false;
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const list = help.articles(lang);
+  const a = slug ? help.article(lang, slug) : null;
+  if (slug && !a) return false;
+  const nav = list.filter((x) => !a || x.slug !== a.slug).map((x) => `<li><a href="${prefix}/help/${x.slug}">${escapeHtml(x.title)}</a></li>`).join('');
+  const helpTitle = d['help.title'] || 'Help centre';
+  const vars = {
+    ...baseVars(a ? `/help/${a.slug}` : '/help.html'),
+    TITLE: escapeHtml(a ? `${a.title} — Wisecall` : `${helpTitle} — Wisecall`),
+    DESCRIPTION: escapeHtml(shortText(a ? a.description : (d['help.intro'] || ''))),
+    H1: escapeHtml(a ? a.title : helpTitle),
+    CRUMBS: a ? `<li><a href="${prefix}/help.html">${escapeHtml(helpTitle)}</a></li><li><span aria-current="page">${escapeHtml(a.title)}</span></li>` : `<li><span aria-current="page">${escapeHtml(helpTitle)}</span></li>`,
+    BODY: a ? `<article class="help-article">${a.html}</article>` : `<p class="legal-intro">${escapeHtml(d['help.intro'] || '')}</p>`,
+    NAV_TITLE: escapeHtml(a ? (d['help.more'] || 'More help') : (d['help.articles'] || 'Articles')),
+    NAV: nav
+  };
+  sendHtml(res, 200, fill(html, vars));
+  return true;
+}
+
 // The home page: who runs the site, and the site itself.
 function homeJsonLd(lang) {
   const url = lang === 'ka' ? kaUrl('/') : `${config.PUBLIC_URL}/`;
@@ -350,6 +377,12 @@ function pageRoutes() {
     } catch (e) { next(e); }
   });
 
+  // A help article: /help/<slug>.
+  router.get(/^\/help\/([a-z0-9-]{1,80})\/?$/, (req, res, next) => {
+    try { if (!sendHelp(res, req.params[0])) notFoundHandler(req, res); } catch (e) { next(e); }
+  });
+  router.get('/help', (req, res) => res.redirect(301, (res.locals.pageLang === 'ka' ? '/ka' : '') + '/help.html'));
+
   // A page per field: /advice/<niche>.
   router.get(/^\/advice\/([a-z][a-z0-9_]{1,30})\/?$/, async (req, res, next) => {
     try { await sendAdvice(req, res, req.params[0]); } catch (e) { next(e); }
@@ -393,6 +426,7 @@ function pageRoutes() {
         const f = faqVars(langOf(res));
         return void sendHtml(res, 200, addToHead(fill(html, { ...baseVars('/faq.html'), ...f.vars }), f.head));
       }
+      if (name === 'help') { if (!sendHelp(res, null)) next(); return; }
       if (name === 'how-we-verify') {
         if (!(await sendPage(res, 'how-we-verify.html', { ...baseVars('/how-we-verify.html'), ...verifyVars(langOf(res)) }))) next();
         return;
@@ -421,8 +455,10 @@ function seoRoutes() {
 
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
-      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
-        .filter(([p]) => p === '/' || fs.existsSync(path.join(PUBLIC, p)));
+      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
+        .filter(([p]) => p === '/' || fs.existsSync(path.join(PUBLIC, p)))
+        // (a help article in both languages)
+        .concat(require('./help').articles('en').filter((a) => require('./help').article('ka', a.slug)).map((a) => [`/help/${a.slug}`, 0.4]));
       // Before launch the profiles are not offered to visitors, so they are not offered to search engines either.
       await require('./launch').ensureFresh(5000);
       const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT username, GREATEST(created_at, COALESCE(photo_updated_at, created_at), COALESCE(verification_decided_at, created_at)) AS changed_at FROM users WHERE ${listableSql()} AND username IS NOT NULL AND profile_visibility = 'public' ORDER BY created_at DESC LIMIT 5000`)).rows;
