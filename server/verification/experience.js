@@ -50,8 +50,18 @@ function parseExperience(input) {
     patch.roleTitle = v || null;
   }
   if (b.niche !== undefined) {
-    if (b.niche !== null && !rules.isValidNiche(b.niche)) return { error: 'invalid_niche', field: 'niche' };
+    if (b.niche !== null && !rules.isCustomNiche(b.niche) && !rules.isValidNiche(b.niche)) return { error: 'invalid_niche', field: 'niche' };
     patch.niche = b.niche;
+    if (!rules.isCustomNiche(b.niche)) patch.customNiche = null; // (the mentor's own words are only kept with "Other")
+  }
+  // "Other (type your own)": the field in the mentor's own words (public on the profile, so it is checked like one).
+  if (b.customNiche !== undefined && (b.niche === undefined || rules.isCustomNiche(b.niche))) {
+    if (b.customNiche === null || b.customNiche === '') patch.customNiche = null;
+    else {
+      const c = require('../customNiche').clean(b.customNiche);
+      if (c.error) return { error: c.error, field: 'customNiche' };
+      patch.customNiche = c.value;
+    }
   }
   if (b.specialtyTags !== undefined) {
     const tags = parseTags(b.specialtyTags);
@@ -169,7 +179,7 @@ function missingFor(user, evidence, stepMap) {
   const missing = [];
   if (!user.emailVerified) missing.push('email');
   if (!user.roleTitle || user.roleTitle.length < LIMITS.titleMin) missing.push('title');
-  if (!rules.isValidNiche(user.niche)) missing.push('niche');
+  if (!(rules.isValidNiche(user.niche) || (rules.isCustomNiche(user.niche) && user.customNiche))) missing.push('niche');
   if (!(user.specialtyTags || []).length) missing.push('tags');
   if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
   if (!user.story || size(user.story) < LIMITS.storyMin || looksRepeated(user.story)) missing.push('story');
@@ -243,7 +253,7 @@ async function applicationFor(user, stepMap) {
   const evidence = await listEvidence(user.id);
   return {
     form: {
-      roleTitle: user.roleTitle || '', niche: user.niche || null, specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
+      roleTitle: user.roleTitle || '', niche: user.niche || null, customNiche: user.customNiche || '', specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
       story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price || null
     },
     evidence: evidence.map(evidenceForMentor),

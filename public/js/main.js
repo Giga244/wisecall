@@ -35,9 +35,19 @@
     return sorted;
   }
 
+  // The chips: "All", and every field somebody listed works in (plus the chosen one, even when nobody is there yet).
+  const knownNiche = (key) => WisecallI18n.niches().some((n) => n.key === key);
+  function drawChips() {
+    const used = new Set(allExperts.map((e) => e.niche));
+    const keys = WisecallI18n.niches().map((n) => n.key).filter((k) => used.has(k) || k === activeNiche);
+    filters.innerHTML = [`<button type="button" class="chip" data-niche="all">${escapeHtml(t('niche.all'))}</button>`,
+      ...keys.map((k) => `<button type="button" class="chip" data-niche="${escapeHtml(k)}">${escapeHtml(t('niche.' + k))}</button>`)].join('');
+  }
+
   // The chips (and the strip's links) choose a field; the address shows it (?niche=) so it can be shared.
   function setNiche(niche, opts) {
-    activeNiche = WisecallHome.NICHES.includes(niche) ? niche : 'all';
+    activeNiche = knownNiche(niche) ? niche : 'all';
+    drawChips();
     filters.querySelectorAll('.chip').forEach(c => {
       const on = c.dataset.niche === activeNiche;
       c.classList.toggle('active', on);
@@ -138,7 +148,7 @@
           ${WisecallAPI.avatar(e)}
           <div>
             <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
-            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(t('niche.' + e.niche))}` : ''}</div>
+            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(WisecallI18n.nicheName(e.niche, e.customNiche))}` : ''}</div>
           </div>
         </div>
         <div class="card-bio">${escapeHtml(e.bio || '')}</div>
@@ -202,7 +212,7 @@
     render();
   });
 
-  document.addEventListener('wisecall:lang-changed', render);
+  document.addEventListener('wisecall:lang-changed', () => { setNiche(activeNiche, { push: false }); });
 
   setNiche(new URLSearchParams(window.location.search).get('niche') || 'all', { push: false });
   if (!prelaunch) {
@@ -210,7 +220,7 @@
       const data = await WisecallAPI.apiFetch('/experts');
       allExperts = data.experts;
       loaded = true;
-      render();
+      setNiche(activeNiche, { push: false }); // (the chips now know which fields have mentors)
     } catch (e) {
       grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
     }

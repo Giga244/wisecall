@@ -10,8 +10,6 @@
   const chars = (s) => [...String(s || '').trim().replace(/\s+/g, ' ')].length;
 
   const BADGE = { done: 'answered', waiting: 'pending_payment', attention: 'rejected', todo: 'badge-muted' };
-  const NICHES = ['business', 'medicine', 'teaching', 'tech', 'fitness', 'creative', 'law', 'finance', 'marketing', 'design', 'writing', 'parenting', 'engineering', 'science'];
-  const REGULATED = ['medicine', 'law', 'finance', 'psychology', 'dentistry', 'pharmacy', 'nursing', 'accounting'];
   const MAX_BYTES = 10 * 1024 * 1024;
 
   let root = null;
@@ -213,7 +211,8 @@
   function experienceForm() {
     const f = data.v.application.form;
     const L = data.v.limits;
-    const nicheOptions = NICHES.map((n) => `<option value="${n}"${f.niche === n ? ' selected' : ''}>${esc(REGULATED.includes(n) ? fill('ap.f.niche.regulated', { niche: t('niche.' + n) }) : t('niche.' + n))}</option>`).join('');
+    const nicheOptions = WisecallI18n.niches().map((n) => `<option value="${esc(n.key)}"${f.niche === n.key ? ' selected' : ''}>${esc(n.regulated ? fill('ap.f.niche.regulated', { niche: t('niche.' + n.key) }) : t('niche.' + n.key))}</option>`).join('')
+      + `<option value="other"${f.niche === 'other' ? ' selected' : ''}>${esc(t('ap.f.niche.other'))}</option>`;
     return `
       <form class="vt-form ap-form" data-form="experience" novalidate>
         <label><span>${t('ap.f.title')}</span>
@@ -221,6 +220,9 @@
           <span class="hint">${t('ap.f.title.hint')}</span></label>
         <label><span>${t('ap.f.niche')}</span>
           <select name="niche"><option value="">${t('ap.f.niche.choose')}</option>${nicheOptions}</select></label>
+        <label class="ap-custom-niche"${f.niche === 'other' ? '' : ' hidden'}><span>${t('ap.f.customNiche')}</span>
+          <input type="text" name="customNiche" maxlength="40" value="${esc(f.customNiche || '')}">
+          <span class="hint">${t('ap.f.customNiche.hint')}</span></label>
         <label><span>${t('ap.f.tags')}</span>
           <input type="text" name="specialtyTags" maxlength="400" value="${esc(f.specialtyTags.join(', '))}">
           <span class="hint">${fill('ap.f.tags.hint', { max: L.tagsMax })}</span></label>
@@ -243,7 +245,7 @@
     return `
       <dl class="ap-summary">
         <dt>${t('ap.f.title')}</dt><dd>${esc(f.roleTitle || '—')}</dd>
-        <dt>${t('ap.f.niche')}</dt><dd>${f.niche ? esc(t('niche.' + f.niche)) : '—'}</dd>
+        <dt>${t('ap.f.niche')}</dt><dd>${f.niche ? esc(WisecallI18n.nicheName(f.niche, f.customNiche)) : '—'}</dd>
         <dt>${t('ap.f.tags')}</dt><dd>${esc(f.specialtyTags.join(', ') || '—')}</dd>
         <dt>${t('ap.f.years')}</dt><dd>${esc(f.yearsExperience === null ? '—' : f.yearsExperience)}</dd>
         <dt>${t('ap.f.story')}</dt><dd>${clip(f.story || '—', 280)}</dd>
@@ -394,7 +396,7 @@
   const EMAIL_ERR = { free_email_domain: 'vt.we.free', invalid_email: 'vt.we.invalid', invalid_code: 'vt.we.wrongCode', expired: 'vt.we.expired', no_pending_code: 'vt.we.expired' };
   const FORM_ERR = {
     invalid_tags: 'ap.err.invalid_tags', invalid_years: 'ap.err.invalid_years', story_too_long: 'ap.err.story_too_long', sample_too_long: 'ap.err.sample_too_long',
-    title_too_long: 'ap.err.title_too_long', invalid_niche: 'ap.err.invalid_niche', application_locked: 'ap.err.application_locked', email_not_verified: 'settings.mentor.emailNotVerified'
+    title_too_long: 'ap.err.title_too_long', invalid_niche: 'ap.err.invalid_niche', invalid_custom_niche: 'ap.err.invalid_custom_niche', application_locked: 'ap.err.application_locked', email_not_verified: 'settings.mentor.emailNotVerified'
   };
   const EV_ERR = {
     invalid_url: 'ap.ev.err.invalid_url', not_linkedin: 'ap.ev.err.not_linkedin', duplicate_evidence: 'ap.ev.err.duplicate_evidence', too_much_evidence: 'ap.ev.err.too_much_evidence',
@@ -412,7 +414,7 @@
     experience: (f) => WisecallAPI.apiFetch('/verification/experience', {
       method: 'PUT',
       body: {
-        roleTitle: f.roleTitle.value, niche: f.niche.value || null, specialtyTags: f.specialtyTags.value,
+        roleTitle: f.roleTitle.value, niche: f.niche.value || null, ...(f.niche.value === 'other' ? { customNiche: f.customNiche.value } : {}), specialtyTags: f.specialtyTags.value,
         yearsExperience: f.yearsExperience.value === '' ? null : Number(f.yearsExperience.value), story: f.story.value, sampleAnswer: f.sampleAnswer.value
       }
     }),
@@ -466,6 +468,9 @@
       });
     });
 
+    // "Other (type your own)" shows the field for the mentor's own words.
+    const expForm = root.querySelector('form[data-form="experience"]');
+    if (expForm) expForm.niche.addEventListener('change', () => { expForm.querySelector('.ap-custom-niche').hidden = expForm.niche.value !== 'other'; });
     const evForm = root.querySelector('form[data-form="evidence"]');
     if (evForm) { evForm.kind.addEventListener('change', () => syncEvidenceForm(evForm)); syncEvidenceForm(evForm); }
     root.querySelectorAll('textarea[data-count]').forEach((area) => { updateCount(area); area.addEventListener('input', () => updateCount(area)); });

@@ -79,6 +79,44 @@ async function sendProfile(res, row, asked) {
   return true;
 }
 
+// A page per field: /advice/<niche>. The title, description, mentor list and links to the other fields are written in here, in English,
+// for search engines and link previews; the page script then draws it in the visitor's language, with badges and ratings. Before launch
+// no mentor is listed (the page offers the waiting list), and only a field with a listed mentor may be indexed.
+async function sendAdvice(req, res, key) {
+  const niches = require('./niches');
+  const n = niches.get(key);
+  if (!n || !n.active) return notFoundHandler(req, res);
+  const html = readPage('advice.html');
+  if (html === null) return notFoundHandler(req, res);
+  await require('./launch').ensureFresh(5000);
+  const live = config.LAUNCH_MODE !== 'prelaunch';
+  const rows = live ? (await query(
+    `SELECT name, username, role_title, price FROM users WHERE ${listableSql()} AND niche = $1 AND username IS NOT NULL AND profile_visibility = 'public'
+      ORDER BY created_at DESC LIMIT 60`, [key])).rows : [];
+  const name = n.en;
+  const h1 = `Advice on ${name} from people who have done it`;
+  const intro = `Ask a verified mentor your question about ${name} and get a real, written answer. Every mentor on Wisecall passed an ID check and a review of their experience.`;
+  const vars = {
+    ...baseVars(`/advice/${key}`),
+    TITLE: escapeHtml(`${h1} — Wisecall`),
+    DESCRIPTION: escapeHtml(intro),
+    ROBOTS: live && rows.length ? 'index, follow' : 'noindex',
+    NICHE_KEY: escapeHtml(key),
+    NICHE_NAME: escapeHtml(name),
+    H1: escapeHtml(h1),
+    INTRO: escapeHtml(intro),
+    LIST_TITLE: escapeHtml(`Mentors: ${name}`),
+    REGULATED_HIDDEN: n.regulated ? '' : 'hidden',
+    REGULATED_NOTE: n.regulated ? escapeHtml(`${name} is a regulated field: mentors here also showed their licence, and a person on our team checked it. Answers are personal experience and opinion, not professional advice for your situation.`) : '',
+    MENTORS: rows.length
+      ? rows.map((r) => `<a class="expert-card" href="/u/${encodeURIComponent(r.username)}"><div class="card-top"><div><div class="card-name">${escapeHtml(r.name)}</div><div class="card-role">${escapeHtml(r.role_title || '')}</div></div></div><div class="card-bottom"><span class="price">${escapeHtml(String(r.price))} ₾</span></div></a>`).join('')
+      : `<p class="muted">${escapeHtml(live ? `No mentors in ${name} yet.` : 'Wisecall opens soon.')}</p>`,
+    OTHER_NICHES: niches.active().filter((x) => x.key !== key).map((x) => `<li><a class="niche-chip" href="/advice/${x.key}"><span>${escapeHtml(x.en)}</span></a></li>`).join('')
+  };
+  sendHtml(res, 200, fill(html, vars));
+  return true;
+}
+
 async function sendPage(res, file, vars, status = 200) {
   const html = readPage(file);
   if (html === null) return false;
@@ -104,6 +142,11 @@ function pageRoutes() {
       const qs = new URLSearchParams(rest).toString();
       res.redirect(301, `/u/${user.username}${qs ? '?' + qs : ''}`);
     } catch (e) { next(e); }
+  });
+
+  // A page per field: /advice/<niche>.
+  router.get(/^\/advice\/([a-z][a-z0-9_]{1,30})\/?$/, async (req, res, next) => {
+    try { await sendAdvice(req, res, req.params[0]); } catch (e) { next(e); }
   });
 
   // A profile: /u/<username>. An old username moves to the new one.
@@ -136,7 +179,7 @@ function pageRoutes() {
       const name = req.params[0];
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
-      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa') return notFoundHandler(req, res); // (sent only by their own routes)
+      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (!(await sendPage(res, `${name}.html`, baseVars(`/${name}.html`)))) next();
     } catch (e) { next(e); }
@@ -172,8 +215,12 @@ function seoRoutes() {
       // Before launch the profiles are not offered to visitors, so they are not offered to search engines either.
       await require('./launch').ensureFresh(5000);
       const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT username, created_at FROM users WHERE ${listableSql()} AND username IS NOT NULL AND profile_visibility = 'public' ORDER BY created_at DESC LIMIT 5000`)).rows;
+      // A field's page, once it has a mentor people can ask.
+      const fields = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT DISTINCT niche FROM users WHERE ${listableSql()} AND profile_visibility = 'public'`)).rows
+        .map((r) => r.niche).filter((k) => require('./niches').isValid(k));
       const urls = [
         ...staticPages.map(([p, prio]) => `<url><loc>${escapeHtml(config.PUBLIC_URL + p)}</loc><priority>${prio}</priority></url>`),
+        ...fields.map((k) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/advice/${k}`)}</loc><priority>0.8</priority></url>`),
         ...rows.map((r) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/u/${r.username}`)}</loc><lastmod>${new Date(r.created_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority></url>`)
       ];
       res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);

@@ -46,7 +46,7 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
       evidenceMax: rules.LIMITS.evidenceMax, evidenceNoteMax: rules.LIMITS.evidenceNoteMax, minutesToApply: rules.LIMITS.minutesToApply
     },
     evidenceKinds: rules.EVIDENCE_KINDS,
-    licence: summary.regulated ? { publicRegister: rules.REGULATED[user.niche].publicRegister } : null,
+    licence: summary.regulated ? { publicRegister: Boolean(rules.REGULATED[user.niche] && rules.REGULATED[user.niche].publicRegister) } : null,
     inputs: {
       license: await credentials.ownCredentials(user.id),
       workEmailDomain: user.workEmail ? user.workEmail.split('@')[1] : null,

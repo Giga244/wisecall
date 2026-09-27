@@ -36,13 +36,12 @@ const OPTIONAL_STEPS = Object.keys(STEPS).filter((s) => STEPS[s].optional);
 const IDENTITY_STEPS = ['email', 'id_kyc', 'age', 'name_match'];
 
 // ---- Niches --------------------------------------------------------------------------------
-// Every niche in this list is REGULATED: never approved automatically, and a licence (number + issuing body) is required, which an
-// admin checks against the official register. See ./registries.js for the registers and their sources.
-const NICHES = {
-  business: {}, medicine: {}, teaching: {}, tech: {}, fitness: {}, creative: {}, law: {}, finance: {},
-  marketing: {}, design: {}, writing: {}, parenting: {}, engineering: {}, science: {}
-};
-const isRegulated = (niche) => Object.prototype.hasOwnProperty.call(REGULATED, niche);
+// The niches live in the database (server/niches.js). A REGULATED niche is never approved automatically and needs a licence (number +
+// issuing body) that an admin checks against the official register: the researched list with sources is ./registries.js, and an admin
+// can create further regulated niches. "Other" (a mentor's own words) is never approved automatically either.
+const niches = () => require('../niches');
+const isRegulated = (niche) => niches().isRegulated(niche);
+const isCustomNiche = (niche) => niche === 'other';
 
 // ---- The Experience form and evidence --------------------------------------------------------------
 const EVIDENCE_KINDS = ['linkedin', 'website', 'portfolio', 'social', 'publication', 'company', 'diploma', 'product', 'testimonials', 'other'];
@@ -153,8 +152,8 @@ const FREE_EMAIL_DOMAINS = [
 ];
 
 // ---- Helpers -------------------------------------------------------------------------------
-const nicheKeys = () => Object.keys(NICHES);
-const isValidNiche = (niche) => Object.prototype.hasOwnProperty.call(NICHES, niche);
+const nicheKeys = () => niches().active().map((n) => n.key);
+const isValidNiche = (niche) => niches().isValid(niche);
 const levelFor = (niche) => (isRegulated(niche) ? 'regulated' : 'standard');
 
 // The steps a mentor in this niche needs before they can be approved.
@@ -162,7 +161,8 @@ function requiredFor(niche) {
   const out = [...IDENTITY_STEPS, 'experience'];
   if (isRegulated(niche)) {
     out.push('license');
-    if (!REGULATED[niche].publicRegister) out.push('license_document');
+    // (a regulated niche an admin created has no researched register: the document is checked by hand)
+    if (!(REGULATED[niche] && REGULATED[niche].publicRegister)) out.push('license_document');
   }
   return out;
 }
@@ -170,7 +170,7 @@ const stepNamesFor = requiredFor;
 // Steps a mentor in this niche may submit something for (the required ones and the optional badges).
 const canSubmit = (niche, step) => requiredFor(niche).includes(step) || OPTIONAL_STEPS.includes(step);
 
-const registriesFor = (niche) => (isRegulated(niche) ? REGULATED[niche].registries : []);
+const registriesFor = (niche) => (REGULATED[niche] ? REGULATED[niche].registries : []);
 
 // Whether every requirement for approval is met.
 //   statusOf(step) -> 'passed' | 'pending' | 'failed' | undefined
@@ -230,6 +230,7 @@ function decide(f) {
   const reasons = [];
   const id = f.identity || {};
   if (f.regulated) reasons.push({ code: 'regulated_niche' });
+  if (f.customNiche) reasons.push({ code: 'custom_niche' });
   if (id.kyc !== 'passed') reasons.push({ code: 'identity_not_verified' });
   if (id.age !== 'passed') reasons.push({ code: 'age_not_confirmed' });
   if (id.names !== 'passed') reasons.push({ code: 'names_differ' });
@@ -252,7 +253,7 @@ function decide(f) {
 }
 
 module.exports = {
-  VERSION, STEPS, LEGACY_STEPS, OPTIONAL_STEPS, IDENTITY_STEPS, NICHES, REGULATED, COMPANY_REGISTRY, EVIDENCE_KINDS, LIMITS,
+  VERSION, STEPS, LEGACY_STEPS, OPTIONAL_STEPS, IDENTITY_STEPS, REGULATED, COMPANY_REGISTRY, EVIDENCE_KINDS, LIMITS,
   DECISION, SCORE_KEYS, RED_FLAGS, RISK, FREE_EMAIL_DOMAINS,
-  nicheKeys, isValidNiche, isRegulated, levelFor, requiredFor, stepNamesFor, canSubmit, registriesFor, evaluate, riskFrom, decide
+  nicheKeys, isValidNiche, isRegulated, isCustomNiche, levelFor, requiredFor, stepNamesFor, canSubmit, registriesFor, evaluate, riskFrom, decide
 };

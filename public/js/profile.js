@@ -92,7 +92,7 @@
     return `<ol>
       <li><a href="/index.html">${t('expert.crumb.home')}</a></li>
       ${isMentor ? `<li><a href="/index.html#experts">${t('nav.browse')}</a></li>
-      ${expert.niche ? `<li><a href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a></li>` : ''}` : ''}
+      ${expert.niche ? (expert.niche === 'other' ? `<li><span>${escapeHtml(WisecallI18n.nicheName('other', expert.customNiche))}</span></li>` : `<li><a href="/advice/${encodeURIComponent(expert.niche)}">${escapeHtml(t('niche.' + expert.niche))}</a></li>`) : ''}` : ''}
       <li><span aria-current="page">${escapeHtml(expert.name)}</span></li>
     </ol>`;
   }
@@ -133,7 +133,7 @@
               ${isMentor && expert.headline ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
               ${WisecallRatings.askerBadgeHtml(expert.asker)}
               <div class="profile-tags">
-                ${isMentor && expert.niche ? `<a class="tag tag-niche" href="/index.html?niche=${encodeURIComponent(expert.niche)}#experts">${escapeHtml(t('niche.' + expert.niche))}</a>` : ''}
+                ${isMentor && expert.niche ? (expert.niche === 'other' ? `<span class="tag tag-niche">${escapeHtml(WisecallI18n.nicheName('other', expert.customNiche))}</span>` : `<a class="tag tag-niche" href="/advice/${encodeURIComponent(expert.niche)}">${escapeHtml(t('niche.' + expert.niche))}</a>`) : ''}
                 ${isMentor ? `<span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>` : ''}
                 ${isMentor && (expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
               </div>

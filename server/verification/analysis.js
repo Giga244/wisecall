@@ -173,6 +173,7 @@ async function decideAndApply(userId, reviewId, { notify = false } = {}) {
   const decision = rules.decide({
     autoApproveOn: config.AUTO_APPROVE,
     regulated: rules.isRegulated(user.niche),
+    customNiche: rules.isCustomNiche(user.niche),
     identity,
     interviewRequested: interviewRequested(stepMap),
     ai: review.ai,

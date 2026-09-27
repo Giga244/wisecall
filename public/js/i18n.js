@@ -56,11 +56,18 @@
     const meta = document.querySelector('meta[name="wisecall-i18n-extra"]');
     return meta ? meta.content.split(',').map((s) => s.trim()).filter(Boolean) : [];
   }
+  // The niche names come from the server (an admin can add niches), so "niche.<key>" works for every niche in both languages.
   async function loadDict(lang) {
     const extra = extraDictionaries().map((name) => fetch(`/i18n/${name}-${lang}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
-    const parts = await Promise.all([fetch(`/i18n/${lang}.json`).then((r) => r.json()), ...extra]);
-    return Object.assign({}, ...parts);
+    const [cfg, ...parts] = await Promise.all([getConfig(), fetch(`/i18n/${lang}.json`).then((r) => r.json()), ...extra]);
+    const dict = Object.assign({}, ...parts);
+    (cfg.niches || []).forEach((n) => { dict['niche.' + n.key] = lang === 'ka' ? n.ka : n.en; });
+    return dict;
   }
+  // The niches the site offers, in their order: [{ key, en, ka, icon, regulated }]. Known once initI18n() has finished.
+  const niches = () => loadedConfig.niches || [];
+  // A niche's name in the current language; "Other" shows the mentor's own words when there are some.
+  const nicheName = (key, custom) => (key === 'other' && custom ? custom : t('niche.' + key));
 
   function applyDict(dict) {
     currentDict = dict;
@@ -117,5 +124,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName };
 })();

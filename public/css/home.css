@@ -40,6 +40,7 @@ section h2 { font-size: clamp(1.6rem, 3vw + 0.9rem, 2rem); margin: 0 0 12px; tex
   font-weight: 800; font-size: 0.9rem; transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), border-color 0.15s, box-shadow 0.15s;
 }
 .niche-chip svg { color: var(--accent2-strong); }
+.niche-more { font-family: inherit; cursor: pointer; color: var(--accent-text); }
 .niche-chip:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 10px 20px -14px rgba(var(--shadow-rgb), 0.5); }
 .niche-chip:focus-visible, .faq-q:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 

@@ -112,7 +112,7 @@ async function view(owner, viewer) {
   };
   if (listable) {
     const [stats, badges] = await Promise.all([mentorStatsFor([owner.id]), badgesFor([owner.id])]);
-    out.mentor = { roleTitle: owner.roleTitle, niche: owner.niche, price: owner.price, badges: badges[owner.id] || [], ...stats[owner.id] };
+    out.mentor = { roleTitle: owner.roleTitle, niche: owner.niche, customNiche: owner.niche === 'other' ? owner.customNiche || null : undefined, price: owner.price, badges: badges[owner.id] || [], ...stats[owner.id] };
   }
   // How mentors rated this person as an asker: nothing under 3 ratings, then a friendly badge and their top tags (never the ratings themselves).
   out.asker = await require('./ratings').askerBadge(owner.id);

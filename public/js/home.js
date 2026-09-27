@@ -4,31 +4,22 @@
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // One small line icon per field (24 x 24, drawn in the text colour).
-  const NICHES = {
-    business: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
-    medicine: '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>',
-    teaching: '<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M7 10.5V15c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5"/>',
-    tech: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
-    fitness: '<path d="M6 7v10M18 7v10M3 9v6M21 9v6M6 12h12"/>',
-    creative: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
-    law: '<path d="M12 3v18M6 21h12M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0L5 7zM19 7l-3 7a3 3 0 0 0 6 0l-3-7z"/>',
-    finance: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
-    marketing: '<path d="M3 11v2a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
-    design: '<path d="M12 19l7-7-4-4-7 7v4h4z"/><path d="M15 8l3-3 3 3-3 3"/>',
-    writing: '<path d="M4 20h4L20 8l-4-4L4 16v4z"/><path d="M13 7l4 4"/>',
-    parenting: '<circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M2 20c0-3.5 2.7-6 6-6s6 2.5 6 6M14 20c0-2.3 1.5-4 3.5-4S21 17.7 21 20"/>',
-    engineering: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
-    science: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/>'
-  };
-  const icon = (key, size) => `<svg viewBox="0 0 24 24" width="${size || 22}" height="${size || 22}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NICHES[key] || ''}</svg>`;
-
-  // The strip of fields under the hero. Each is a link to Browse experts filtered by that field.
+  // The strip of fields under the hero. Each is a link to Browse experts filtered by that field. The niches come from the server (an
+  // admin can add more); the first STRIP_FIRST show, the rest behind "Show all".
+  const STRIP_FIRST = 12;
+  let stripOpen = false;
+  const iconOf = (key) => { const n = WisecallI18n.niches().find((x) => x.key === key); return n ? n.icon : 'spark'; };
+  const icon = (key, size) => WisecallNicheIcons.svg(iconOf(key), size);
   function drawStrip() {
     const list = document.getElementById('nicheStrip');
     if (!list) return;
-    list.innerHTML = Object.keys(NICHES).map((key) => `
-      <li><a class="niche-chip" href="/index.html?niche=${key}#experts" data-niche-link="${key}">${icon(key)}<span>${esc(t('niche.' + key))}</span></a></li>`).join('');
+    const all = WisecallI18n.niches();
+    const shown = stripOpen ? all : all.slice(0, STRIP_FIRST);
+    list.innerHTML = shown.map((n) => `
+      <li><a class="niche-chip" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${icon(n.key)}<span>${esc(t('niche.' + n.key))}</span></a></li>`).join('') +
+      (all.length > STRIP_FIRST ? `<li><button type="button" class="niche-chip niche-more" aria-expanded="${stripOpen}">${esc(stripOpen ? t('home.fields.less') : t('home.fields.more').replace('{n}', all.length))}</button></li>` : '');
+    const more = list.querySelector('.niche-more');
+    if (more) more.addEventListener('click', () => { stripOpen = !stripOpen; drawStrip(); list.querySelector('.niche-more').focus(); });
   }
 
   // ---- FAQ accordion: buttons with aria-expanded, arrow keys move between questions --------------------------
@@ -117,5 +108,5 @@
   document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(initExamples));
   document.addEventListener('wisecall:lang-changed', drawStrip);
 
-  window.WisecallHome = { NICHES: Object.keys(NICHES), icon, drawStrip, emptyArt: EMPTY_ART };
+  window.WisecallHome = { icon, drawStrip, emptyArt: EMPTY_ART };
 })();

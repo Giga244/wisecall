@@ -99,6 +99,7 @@ app.use('/api/admin/2fa', require('./routes/adminTwoFactor')); // two-step verif
 if (config.DEV_MODE) app.use('/api/admin/dev', require('./routes/adminDev')); // development only: never exists in production
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin', require('./routes/adminVerification'));
+app.use('/api/admin', require('./routes/adminNiches').router);
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
 if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 
@@ -125,6 +126,8 @@ app.get('/api/config', async (req, res) => {
     // Shown in the footer only when set.
     contactEmail: config.SUPPORT_EMAIL || null,
     social: config.SOCIAL_URLS,
+    // The niches (fields) the pages offer, with both names and an icon (they live in the database and an admin can add more).
+    niches: require('./niches').forClient(),
     // Only present on a developer's computer, where pages may show dev-mode helpers. In production the
     // key does not exist at all.
     ...(config.DEV_MODE ? { devMode: true } : {})
@@ -156,6 +159,7 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await db.migrate();
+  await require('./niches').load(); // (the niche list lives in the database)
   const made = await require('./usernames').backfill(); // people who signed up before profiles existed get a username
   if (made) console.log(`[profiles] gave ${made} existing user(s) a username made from their name`);
   await launch.refresh();

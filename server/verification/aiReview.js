@@ -84,7 +84,6 @@ recommendation: "approve" only if every score is 75 or more and there are no red
 Write the summaries in English, even when the application is in Georgian. Never repeat contact details.`;
 
 // ---- Building what is sent ------------------------------------------------------------------------------------------------------------
-const NICHE_NAMES = require('../../public/i18n/en.json');
 
 // Contact and bank details the applicant may have typed into their text are removed before anything is sent.
 function redact(text) {
@@ -97,7 +96,8 @@ function redact(text) {
 // user: the mentor; evidence: rows with their check results. Returns the object that is sent (tests read it back).
 function buildApplication(user, evidence) {
   return {
-    niche: NICHE_NAMES['niche.' + user.niche] || user.niche,
+    niche: redact(require('../niches').nameOf(user.niche, 'en', user.customNiche)),
+    ...(rules.isCustomNiche(user.niche) ? { niche_is_applicants_own_words: true } : {}),
     regulated_niche: rules.isRegulated(user.niche),
     title: redact(user.roleTitle),
     specialty_tags: (user.specialtyTags || []).map(redact),

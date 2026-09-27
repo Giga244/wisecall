@@ -4,14 +4,14 @@
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // The fields, in the order shown. (Each needs a "niche.<key>" text in both languages.)
-  const FIELDS = ['business', 'medicine', 'teaching', 'tech', 'fitness', 'creative', 'law', 'finance', 'marketing', 'design', 'writing', 'parenting', 'engineering', 'science'];
+  // The fields, in the order shown (the niche list from the server).
+  const fields = () => WisecallI18n.niches().map((n) => n.key);
   const prelaunch = () => WisecallI18n.launchMode() === 'prelaunch';
 
   let counter = 0;
   function html(niche) {
     const n = ++counter;
-    const options = ['any', ...FIELDS].map((k) => `<option value="${k}"${k === (niche || 'any') ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : t('niche.' + k))}</option>`).join('');
+    const options = ['any', ...fields()].map((k) => `<option value="${k}"${k === (niche || 'any') ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : t('niche.' + k))}</option>`).join('');
     return `
       <form class="waitlist-form" novalidate>
         <h3>${t(prelaunch() ? 'wait.prelaunch.title' : 'wait.title')}</h3>
@@ -48,5 +48,5 @@
     });
   }
 
-  window.WisecallWaitlist = { FIELDS, html, wire };
+  window.WisecallWaitlist = { fields, html, wire };
 })();

@@ -451,3 +451,15 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .asker-line { margin: 2px 0 8px; }
 @media (max-width: 639px) { .rate-card { padding: 14px; } .rate-actions .btn { flex: 1 1 auto; } }
 .theme-radios { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+/* A field's page: /advice/<niche> */
+.advice { padding-top: 18px; padding-bottom: 60px; }
+.advice-head { display: flex; gap: 16px; align-items: flex-start; margin: 10px 0 18px; }
+.advice-icon { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 18px; background: var(--mint-soft); color: var(--accent2-strong); display: flex; align-items: center; justify-content: center; }
+.advice-head h1 { margin: 0 0 6px; }
+.advice-intro { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+.advice-regulated { padding: 10px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); color: var(--sun-ink); font-size: 0.92rem; max-width: 80ch; }
+.advice-regulated[hidden] { display: none; }
+.advice-list, .advice-how, .advice-more { margin-top: 30px; }
+.advice-list h2, .advice-how h2, .advice-more h2 { font-size: 1.35rem; margin-bottom: 14px; }
+.advice-steps { padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
+@media (max-width: 560px) { .advice-head { flex-direction: column; gap: 10px; } }

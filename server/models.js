@@ -36,6 +36,7 @@ function userFromRow(r) {
     story: r.story,
     applicationSubmittedAt: r.application_submitted_at,
     verificationRules: r.verification_rules,
+    customNiche: r.custom_niche,
     emailVerified: r.email_verified,
     emailVerifyCodeHash: r.email_code_hash,
     emailVerifyCodeExpiresAt: r.email_code_expires_at,
@@ -102,7 +103,7 @@ const USER_COLUMNS = {
   headline: 'headline', currentWork: 'current_work', city: 'city', languages: 'languages', linkedinUrl: 'linkedin_url', websiteUrl: 'website_url',
   profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme',
   specialtyTags: 'specialty_tags', yearsExperience: 'years_experience', story: 'story', applicationSubmittedAt: 'application_submitted_at',
-  verificationRules: 'verification_rules'
+  verificationRules: 'verification_rules', customNiche: 'custom_niche'
 };
 
 const BOOKING_COLUMNS = {

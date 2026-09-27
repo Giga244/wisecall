@@ -222,7 +222,7 @@ describe('the decision rules (rules v2)', () => {
   });
 
   test('the regulated niches, their steps and registers', () => {
-    for (const n of ['medicine', 'law', 'finance', 'psychology', 'dentistry', 'pharmacy', 'nursing', 'accounting']) {
+    for (const n of ['medicine', 'law', 'finance', 'psychology', 'dentistry', 'pharmacy', 'nursing', 'accounting_tax']) {
       assert.ok(rules.isRegulated(n), n);
       assert.ok(rules.REGULATED[n].sources.length > 0, `${n} has a source`);
     }

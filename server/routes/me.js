@@ -26,7 +26,6 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
 }));
 
 const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'theme', 'sampleAnswer'];
-const NICHES = rules.nicheKeys();
 // Part of the mentor application (step 2, "Experience"): they cannot change while it is being reviewed or once it is approved (the
 // mentor presses "Edit my application" first). The price is not part of the application and can change at any time.
 const APPLICATION_FIELDS = ['niche', 'roleTitle', 'sampleAnswer'];
@@ -52,7 +51,7 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
       if (!Number.isFinite(n) || n < config.PRICE_MIN || n > config.PRICE_MAX) return res.status(400).json({ error: 'invalid_price' });
       patch.price = Math.round(n);
     } else if (field === 'niche') {
-      if (updates.niche !== null && !NICHES.includes(updates.niche)) return res.status(400).json({ error: 'invalid_niche' });
+      if (updates.niche !== null && !rules.isValidNiche(updates.niche)) return res.status(400).json({ error: 'invalid_niche' }); // ("Other" is chosen in the Experience form)
       patch.niche = updates.niche;
     } else if (field === 'theme') {
       if (updates.theme !== null && !['system', 'light', 'dark'].includes(updates.theme)) return res.status(400).json({ error: 'invalid_theme' });

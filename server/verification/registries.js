@@ -8,8 +8,7 @@
 //   registries      links the admin panel shows next to the licence (never fetched by the server: an admin opens them).
 //   sources         where the facts above come from.
 //
-// Niches listed here that do not exist yet (psychology, dentistry, pharmacy, nursing, accounting) arrive with the niche list in the
-// database; until then the entries are simply unused.
+// The keys are niche keys (the niches table, migration 019).
 const REGULATED = {
   medicine: {
     label: 'Medicine',
@@ -73,7 +72,7 @@ const REGULATED = {
     ],
     sources: ['https://nbg.gov.ge/en/page/licensing-requirements', 'https://legal.ge/en/service/licensing-and-regulatory-permits-en/investment-advisor-license-georgia']
   },
-  accounting: {
+  accounting_tax: {
     label: 'Accounting & tax',
     licence: 'Certified accountant or auditor listed by SARAS (Service for Accounting, Reporting and Auditing Supervision)',
     publicRegister: true,
@@ -84,10 +83,21 @@ const REGULATED = {
   }
 };
 
+// Fields that were looked at and are NOT treated as regulated for giving advice (a lawyer should confirm; LEGAL-REVIEW.md).
+const CONSIDERED = {
+  architecture: {
+    note: 'Architects must be certified to sign building projects (Code on Spatial Planning, Architectural and Construction Activities, since 1 Oct 2020), but advice needs no certificate.',
+    sources: ['https://icca.ge/en/news/georgian-code-on-spatial-planning-architectural-and-construction-activities/']
+  },
+  real_estate: { note: 'No licence for real-estate agents could be confirmed in Georgia.', sources: ['https://napr.gov.ge/en'] },
+  tourism: { note: 'No licence for tour guides or hospitality advice could be confirmed.', sources: [] },
+  study_abroad: { note: 'No licence for education agents could be confirmed.', sources: [] }
+};
+
 // Georgian companies: an admin looks the identification code up in the Public Registry (the server never scrapes it).
 const COMPANY_REGISTRY = [
   { key: 'enreg', label: 'Public Registry: search a company by name or identification code', url: 'https://enreg.reestri.gov.ge/' },
   { key: 'napr', label: 'National Agency of Public Registry', url: 'https://napr.gov.ge/en' }
 ];
 
-module.exports = { REGULATED, COMPANY_REGISTRY };
+module.exports = { REGULATED, CONSIDERED, COMPANY_REGISTRY };

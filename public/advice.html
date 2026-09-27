@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="{{CANONICAL_URL}}">
+<meta name="robots" content="{{ROBOTS}}">
+<meta name="wisecall-niche" content="{{NICHE_KEY}}">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{CANONICAL_URL}}">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/home.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+
+<main class="advice container" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/index.html" data-i18n="expert.crumb.home">Home</a></li>
+      <li><a href="/index.html#experts" data-i18n="nav.browse">Browse experts</a></li>
+      <li><span aria-current="page" id="adviceCrumb">{{NICHE_NAME}}</span></li>
+    </ol>
+  </nav>
+
+  <header class="advice-head">
+    <span class="advice-icon" id="adviceIcon" aria-hidden="true"></span>
+    <div>
+      <h1 id="adviceTitle">{{H1}}</h1>
+      <p class="advice-intro" id="adviceIntro">{{INTRO}}</p>
+    </div>
+  </header>
+
+  <p class="advice-regulated" id="adviceRegulated" {{REGULATED_HIDDEN}}>{{REGULATED_NOTE}}</p>
+
+  <section class="advice-list" aria-labelledby="adviceListTitle">
+    <h2 id="adviceListTitle">{{LIST_TITLE}}</h2>
+    <div class="expert-grid" id="adviceGrid" aria-live="polite">{{MENTORS}}</div>
+  </section>
+
+  <section class="advice-how" aria-labelledby="adviceHowTitle">
+    <h2 id="adviceHowTitle" data-i18n="adv.how.title">How it works</h2>
+    <ol class="advice-steps">
+      <li data-i18n="adv.how.1">Pick a mentor and read their profile, badges and reviews.</li>
+      <li data-i18n="adv.how.2">Write your question and pay the price shown. The money is held until you get your answer.</li>
+      <li data-i18n="adv.how.3">Get a written answer within {answerDays} days, or your money back automatically.</li>
+    </ol>
+    <p class="small"><a href="/index.html#verify" data-i18n="adv.verifyLink">How we verify mentors</a></p>
+  </section>
+
+  <nav class="advice-more" aria-labelledby="adviceMoreTitle">
+    <h2 id="adviceMoreTitle" data-i18n="adv.more">Other fields</h2>
+    <ul class="niche-strip" id="adviceOther">{{OTHER_NICHES}}</ul>
+  </nav>
+</main>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/badges.js"></script>
+<script src="/js/niche-icons.js"></script>
+<script src="/js/waitlist.js"></script>
+<script src="/js/advice.js"></script>
+</body>
+</html>
