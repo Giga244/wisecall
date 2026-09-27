@@ -70,6 +70,7 @@ function validate(direction, input) {
 async function afterReveal(rows) {
   const monitoring = require('./verification/monitoring');
   for (const r of rows) {
+    if (!r.hidden_at) require('./inbox').onRatingRevealed(r.booking_id, r.ratee_id); // (the notification centre)
     try {
       if (r.direction === 'asker_to_mentor') await monitoring.afterReview(r.ratee_id);
       else await afterAskerRating(r.ratee_id);

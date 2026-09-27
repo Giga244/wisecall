@@ -204,6 +204,8 @@ function seoRoutes() {
       'Disallow: /reset-password.html',
       'Disallow: /forgot-password.html',
       'Disallow: /waitlist-unsubscribe.html',
+      'Disallow: /unsubscribe.html',
+      'Disallow: /inbox.html',
       `Sitemap: ${config.PUBLIC_URL}/sitemap.xml`,
       ''
     ].join('\n'));

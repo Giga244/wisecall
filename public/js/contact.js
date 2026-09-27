@@ -47,7 +47,14 @@
       });
       form.style.display = 'none';
       doneEl.style.display = 'block';
-      doneEl.textContent = data.devMode ? t('contact.sentDev') : t('contact.sent');
+      doneEl.textContent = data.devMode ? t('contact.sentDev') : t(data.threadId ? 'contact.sentInbox' : 'contact.sent');
+      if (data.threadId) {
+        const a = document.createElement('a');
+        a.href = '/inbox.html?thread=' + encodeURIComponent(data.threadId);
+        a.className = 'btn btn-outline btn-sm';
+        a.textContent = t('contact.openInbox');
+        doneEl.append(' ', a);
+      }
     } catch (e) {
       const map = { missing_fields: 'contact.err.missing', invalid_email: 'contact.err.email', too_many_requests: 'contact.err.rate' };
       errorEl.textContent = t(map[e.code] || 'contact.err.send');

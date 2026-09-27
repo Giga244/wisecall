@@ -156,8 +156,13 @@
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
+        ${conversationLink(b)}
       </article>`;
   }
+
+  // The booking's conversation in the Inbox (the follow-up question and its reply, what happened), once it is paid.
+  const conversationLink = (b) => (['paid', 'answered', 'refund_pending', 'refunded'].includes(b.status)
+    ? `<p class="booking-conversation"><a class="plain-link" href="/inbox.html?booking=${encodeURIComponent(b.id)}">${t('dash.conversation')} →</a></p>` : '');
 
   // ---- Questions for me (mentors) -----------------------------------------------------------------------------------
   function receivedEmpty() {
@@ -214,6 +219,7 @@
               </div>
             </form>` : '')}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
+        ${conversationLink(b)}
       </article>`;
     }).join('');
     WisecallRatings.wire(receivedList, { reload: load });

@@ -11,3 +11,15 @@ actor fails a required step (status back to review, audit `delisted`, flag `requ
 carry-over and the regular sweep catch older cases. Age failure is final for that ID; admins have "Re-run ID check". Settings, the progress
 bar and the steps share one state (`verificationState`); admin filter "Approved, but a step failed". Tests: tests/failed-steps.test.js
 (8) and the cloud AUDIT #8 test (todo removed).
+
+## PART 0.1 / Phase 3 — Inbox (messages + notifications)
+/inbox.html with a header icon and unread badge (polled every 30 s; a dot on the phone menu button). One thread per paid booking with
+the question, the answer, events and ONE free follow-up question + ONE reply (then closed; unique indexes enforce it); support
+conversations (also from the contact form when signed in) answered from a new admin Support tab with internal notes, assignment and
+close; read-only system messages (application decisions, payouts); a notification centre; Settings → Notifications for the optional
+emails with signed unsubscribe links. Contact details / outside payments are refused in booking threads (EN+KA); reports go to admins.
+Tests: tests/inbox.test.js (15), e2e/inbox.spec.js (4). Migration 021 (additive, undo script).
+
+## PART 3 early — 🔴 #1 and #2
+Rate-limit keys are the limiter plus the lower-cased path without trailing slashes (#1). Wrong email / work-email codes are counted per
+account; after 5 the code is cleared (#2, migration 020). Their cloud tests no longer have { todo }.

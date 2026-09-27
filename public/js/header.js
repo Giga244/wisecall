@@ -47,6 +47,7 @@
       </div>
     </div>`;
   const ICON_MENU = '<svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+  const ICON_INBOX = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13l2.5 8v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/></svg>';
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
   const html = `
@@ -65,12 +66,13 @@
             <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
           </div>
           <div class="nav-actions" id="navLoggedIn" style="display:none">
+            <a href="/inbox.html" class="nav-inbox" data-inbox-link aria-label="Inbox" data-i18n-aria="nav.inbox">${ICON_INBOX}<span class="nav-badge" data-inbox-badge hidden></span></a>
             <a href="/dashboard.html" class="btn btn-ghost" data-i18n="nav.dashboard">Dashboard</a>
             <a href="/settings.html" class="btn btn-ghost" data-i18n="nav.settings">Settings</a>
             <button type="button" class="btn btn-outline" id="logoutBtn" data-i18n="nav.logout">Log out</button>
           </div>
         </div>
-        <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Menu" data-i18n-aria="nav.menu">${ICON_MENU}</button>
+        <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Menu" data-i18n-aria="nav.menu">${ICON_MENU}<span class="nav-badge nav-badge-dot" data-inbox-badge data-dot hidden></span></button>
       </div>
     </header>
 
@@ -91,6 +93,7 @@
           <a href="/login.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.login">Log in</a>
         </div>
         <div class="mm-actions" id="mmLoggedIn" style="display:none">
+          <a href="/inbox.html" class="btn btn-outline btn-lg btn-block mm-inbox" data-inbox-link><span data-i18n="nav.inbox">Inbox</span><span class="nav-badge" data-inbox-badge hidden></span></a>
           <a href="/dashboard.html" class="btn btn-primary btn-lg btn-block" data-i18n="nav.dashboard">Dashboard</a>
           <a href="/settings.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.settings">Settings</a>
           <button type="button" class="btn btn-ghost btn-lg btn-block" id="mmLogoutBtn" data-i18n="nav.logout">Log out</button>

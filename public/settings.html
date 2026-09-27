@@ -49,6 +49,7 @@
     <button class="tab" role="tab" id="tab-mentor" aria-controls="panel-mentor" data-tab="mentor" data-i18n="settings.tab.mentor">Mentor</button>
     <button class="tab" role="tab" id="tab-verification" aria-controls="panel-verification" data-tab="verification" data-mentor-only hidden data-i18n="settings.tab.verification">Verification</button>
     <button class="tab" role="tab" id="tab-payouts" aria-controls="panel-payouts" data-tab="payouts" data-mentor-only hidden data-i18n="settings.tab.payouts">Payouts</button>
+    <button class="tab" role="tab" id="tab-notifications" aria-controls="panel-notifications" data-tab="notifications" data-i18n="settings.tab.notifications">Notifications</button>
     <button class="tab" role="tab" id="tab-account" aria-controls="panel-account" data-tab="account" data-i18n="settings.tab.account">Account</button>
   </div>
 
@@ -169,6 +170,10 @@
       <button type="submit" class="btn btn-primary" data-i18n="settings.payouts.save">Save payout details</button>
     </form>
   </div>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" data-panel="notifications" hidden>
+    <div class="settings-card" id="notificationsPanel"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
   </div>
 
   <div class="tab-panel" role="tabpanel" id="panel-account" aria-labelledby="tab-account" data-panel="account" hidden>

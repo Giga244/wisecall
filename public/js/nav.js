@@ -128,6 +128,7 @@
       document.addEventListener('wisecall:lang-changed', (ev) => {
         WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { language: ev.detail.lang } }).catch(() => {});
       });
+      startUnreadBadge();
       if (!user.emailVerified && location.pathname !== '/verify-email.html' && header) {
         const bar = document.createElement('div');
         bar.className = 'verify-banner';
@@ -160,6 +161,29 @@
     after.insertAdjacentElement('afterend', bar);
   }
 
+  // The unread count on the Inbox link (header, phone menu and a dot on the menu button). Asked for when the page opens, then every 30
+  // seconds while the page is visible; the Inbox page sets it straight away after reading something.
+  let unreadTimer = null;
+  function setUnread(n) {
+    const count = Math.max(0, Number(n) || 0);
+    document.querySelectorAll('[data-inbox-badge]').forEach((b) => {
+      b.hidden = count === 0;
+      if (!b.hasAttribute('data-dot')) b.textContent = count > 99 ? '99+' : String(count);
+    });
+    const label = count ? t('nav.inboxUnread').replace('{n}', count) : t('nav.inbox');
+    document.querySelectorAll('.nav-inbox[data-inbox-link]').forEach((a) => a.setAttribute('aria-label', label));
+  }
+  async function pollUnread() {
+    if (document.visibilityState === 'hidden') return;
+    try { setUnread((await WisecallAPI.apiFetch('/inbox/unread')).count); } catch (e) { /* signed out or offline: leave it */ }
+  }
+  function startUnreadBadge() {
+    if (unreadTimer) return;
+    pollUnread();
+    unreadTimer = setInterval(pollUnread, 30000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollUnread(); });
+  }
+
   function showToast(msg) {
     let toast = document.getElementById('toast');
     if (!toast) {
@@ -174,5 +198,5 @@
     showToast._t = setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  window.WisecallNav = { initNav, showToast };
+  window.WisecallNav = { initNav, showToast, setUnread };
 })();

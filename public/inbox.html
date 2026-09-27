@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Inbox — Wisecall</title>
+<meta name="description" content="Your conversations and notifications on Wisecall.">
+<link rel="canonical" href="{{PUBLIC_URL}}/inbox.html">
+<meta name="robots" content="noindex">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Inbox — Wisecall">
+<meta property="og:description" content="Your conversations and notifications on Wisecall.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{PUBLIC_URL}}/inbox.html">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Inbox — Wisecall">
+<meta name="twitter:description" content="Your conversations and notifications on Wisecall.">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+
+<main class="dash container inbox-page" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/index.html" data-i18n="expert.crumb.home">Home</a></li>
+      <li><span aria-current="page" data-i18n="inbox.title">Inbox</span></li>
+    </ol>
+  </nav>
+
+  <div class="page-head">
+    <h1 data-i18n="inbox.title">Inbox</h1>
+    <p data-i18n="inbox.sub">Your conversations about questions, messages from Wisecall and our support team.</p>
+  </div>
+
+  <div class="tabs" id="inboxTabs" role="tablist" aria-label="Inbox" data-i18n-aria="inbox.title">
+    <button type="button" class="tab" role="tab" id="tab-messages" aria-controls="panel-messages" data-tab="messages" data-i18n="inbox.tab.messages">Messages</button>
+    <button type="button" class="tab" role="tab" id="tab-notifications" aria-controls="panel-notifications" data-tab="notifications"><span data-i18n="inbox.tab.notifications">Notifications</span> <span class="tab-count" id="notifCount" hidden></span></button>
+  </div>
+
+  <div class="tab-panel" role="tabpanel" id="panel-messages" aria-labelledby="tab-messages" data-panel="messages">
+    <div class="inbox-layout" id="inboxLayout">
+      <section class="inbox-list" aria-labelledby="inboxListTitle">
+        <div class="inbox-list-head">
+          <h2 id="inboxListTitle" class="sr-only" data-i18n="inbox.conversations">Conversations</h2>
+          <button type="button" class="btn btn-outline btn-sm" id="newSupport" data-i18n="inbox.support.new">Write to support</button>
+        </div>
+        <ul class="thread-list" id="threadList" aria-live="polite"></ul>
+      </section>
+      <section class="inbox-thread" id="threadView" aria-live="polite"></section>
+    </div>
+  </div>
+  <div class="tab-panel" role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" data-panel="notifications" hidden>
+    <div class="notif-head"><button type="button" class="btn btn-ghost btn-sm" id="markAllRead" data-i18n="inbox.n.markAll">Mark all as read</button></div>
+    <ul class="notif-list" id="notifList" aria-live="polite"></ul>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/inbox.js"></script>
+</body>
+</html>

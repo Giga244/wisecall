@@ -463,3 +463,93 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .advice-list h2, .advice-how h2, .advice-more h2 { font-size: 1.35rem; margin-bottom: 14px; }
 .advice-steps { padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
 @media (max-width: 560px) { .advice-head { flex-direction: column; gap: 10px; } }
+
+/* ---- Inbox (/inbox.html) and the unread badge in the header ------------------------------------------------------------- */
+.nav-inbox {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 999px;
+  color: var(--ink); background: var(--card); border: 1px solid var(--border); text-decoration: none;
+}
+.nav-inbox:hover, .nav-inbox:focus-visible { color: var(--accent-text); }
+.nav-badge {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: var(--accent-strong); color: var(--on-accent); font-size: 0.72rem; font-weight: 800; line-height: 1;
+}
+.nav-badge[hidden] { display: none; }
+.nav-inbox .nav-badge { position: absolute; top: -6px; right: -6px; }
+.nav-toggle { position: relative; }
+.nav-badge-dot { position: absolute; top: 4px; right: 4px; min-width: 10px; width: 10px; height: 10px; padding: 0; border: 2px solid var(--card); }
+.mm-inbox { gap: 10px; }
+
+.inbox-layout { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 20px; align-items: start; }
+.inbox-list, .inbox-thread { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0; }
+.inbox-list { padding: 12px; }
+.inbox-list-head { display: flex; justify-content: flex-end; padding: 4px 4px 10px; }
+.thread-list, .msg-list, .notif-list { list-style: none; margin: 0; padding: 0; }
+.thread-item {
+  width: 100%; display: flex; gap: 12px; align-items: center; text-align: left; padding: 12px; border: none; border-radius: var(--radius-sm);
+  background: transparent; color: var(--ink); cursor: pointer; font: inherit; min-height: 56px;
+}
+.thread-item:hover { background: var(--mint-soft); }
+.thread-item.active { background: var(--mint); }
+.thread-item.unread strong { color: var(--accent-text); }
+.thread-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.thread-top { display: flex; justify-content: space-between; gap: 8px; }
+.thread-top strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread-kind { font-size: 0.75rem; color: var(--ink-soft); white-space: nowrap; }
+.thread-preview { font-size: 0.85rem; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread-dot { width: 10px; height: 10px; border-radius: 999px; background: var(--accent-strong); flex: none; }
+.avatar-sm { width: 40px; height: 40px; font-size: 0.85rem; flex: none; }
+.avatar-wisecall { background: var(--navy); color: var(--on-navy); display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-weight: 800; }
+.inbox-thread { padding: 18px; min-height: 320px; display: flex; flex-direction: column; }
+.thread-head { display: flex; gap: 12px; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.thread-head h2 { font-size: 1.1rem; margin: 0; }
+.thread-head h2 a { color: inherit; }
+.inbox-back { display: none; }
+.thread-body { flex: 1; padding: 14px 2px; display: grid; gap: 12px; align-content: start; }
+.qa-card { background: var(--mint-soft); border-radius: var(--radius-sm); padding: 12px 14px; }
+.qa-card h3 { margin: 0 0 6px; color: var(--ink-soft); }
+.qa-answer { background: var(--sun-tint); }
+.msg-body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.msg-list { display: grid; gap: 10px; }
+.msg { display: flex; }
+.msg-mine { justify-content: flex-end; }
+.msg-bubble { max-width: min(560px, 92%); background: var(--gray-soft); border-radius: var(--radius-sm); padding: 10px 14px; }
+.msg-mine .msg-bubble { background: var(--lav-soft); }
+.msg-meta { font-size: 0.78rem; color: var(--ink-soft); margin: 0 0 4px; }
+.msg-warn { color: var(--sun-ink); margin: 6px 0 0; }
+.msg-report { margin-top: 4px; }
+.msg-event { justify-content: center; text-align: center; flex-direction: column; align-items: center; color: var(--ink-soft); font-size: 0.85rem; }
+.msg-event p { margin: 0; }
+.ev-note { display: block; margin-top: 4px; font-style: italic; }
+.thread-foot { border-top: 1px solid var(--border); padding-top: 12px; }
+.inbox-composer { display: grid; gap: 6px; }
+.inbox-composer textarea, .inbox-composer input[type="text"] { width: 100%; }
+.inbox-composer .checkbox-row { display: flex; gap: 8px; align-items: center; justify-content: flex-start; }
+.inbox-composer .checkbox-row input { width: auto; flex: none; }
+.composer-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.thread-closed { background: var(--gray-soft); border-radius: var(--radius-sm); padding: 10px 14px; margin: 0; }
+.inbox-rules { margin: 10px 0 0; }
+.report-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+.inbox-empty, .inbox-pick { padding: 18px; }
+.notif-head { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.notif-list { display: grid; gap: 8px; }
+.notif-item {
+  width: 100%; display: flex; justify-content: space-between; gap: 12px; text-align: left; padding: 14px 16px; border-radius: var(--radius-sm);
+  background: var(--card); border: 1px solid var(--border); color: var(--ink); font: inherit; cursor: pointer; min-height: 44px;
+}
+.notif-item.unread { border-color: var(--accent-strong); font-weight: 700; }
+@media (max-width: 767px) {
+  .inbox-layout { grid-template-columns: 1fr; }
+  .inbox-layout.has-thread .inbox-list { display: none; }
+  .inbox-layout:not(.has-thread) .inbox-thread { display: none; }
+  .inbox-back { display: inline-flex; }
+  .notif-item { flex-direction: column; }
+}
+/* Admin: support inbox */
+.sup-layout { display: grid; gap: 16px; }
+.sup-item, .sup-report { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.sup-item-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.sup-note { background: var(--sun-soft); }
+.sup-reports-title { margin-top: 28px; font-size: 1.2rem; }
+.sup-resolve { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.booking-conversation { margin: 10px 0 0; }

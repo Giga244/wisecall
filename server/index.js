@@ -80,6 +80,12 @@ app.use(/^\/api\/ratings\/[^/]+\/(report|reply)$/, rateLimit({ windowMs: 60 * 60
 app.use(/^\/api\/bookings\/[^/]+\/ratings$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
 app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+// The Inbox: sending (a follow-up, a support message), starting support conversations, reporting, unsubscribing.
+app.use(/^\/api\/inbox\/threads\/[^/]+\/messages$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
+app.use('/api/inbox/support', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
+app.use(/^\/api\/inbox\/messages\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.use('/api/inbox/unsubscribe', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.use('/api/inbox/unread', rateLimit({ windowMs: 60 * 1000, max: 120 })); // (every open tab asks every 30 seconds)
 // Uploaded verification documents arrive as raw file bytes (PDF or JPEG, up to 10 MB).
 app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
 // A profile photo arrives as raw file bytes too (JPEG, PNG or WebP, up to 5 MB; it is re-encoded on the server).
@@ -95,8 +101,10 @@ app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/inbox', require('./routes/inbox').router);
 app.use('/api/admin/2fa', require('./routes/adminTwoFactor')); // two-step verification (how an admin passes the second step)
 if (config.DEV_MODE) app.use('/api/admin/dev', require('./routes/adminDev')); // development only: never exists in production
+app.use('/api/admin/support', require('./routes/inbox').adminRouter);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin', require('./routes/adminVerification'));
 app.use('/api/admin', require('./routes/adminNiches').router);

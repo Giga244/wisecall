@@ -66,7 +66,21 @@ const S = {
       introAsker: 'How was the answer from {name}? Your rating helps other people find great mentors.',
       introMentor: 'How was the question from {name}? Your rating tells other mentors whether the question was clear and respectful.',
       after: 'Ratings are private until you have both rated, or until {date}, whichever comes first. You can change yours until then.',
-      final: 'This is the last reminder.', button: 'Rate now'
+      final: 'This is the last reminder.', button: 'Rate now',
+      unsubscribe: "You get these reminders because you had a question on Wisecall. Don't want them? Turn them off here:"
+    },
+    followUpQuestion: {
+      subject: '{name} asked a follow-up question', heading: 'A follow-up question',
+      intro: '{name} asked one follow-up question about your answer:',
+      after: 'You can reply once, in your Inbox. After your reply the conversation closes.', button: 'Reply in your Inbox'
+    },
+    followUpReply: {
+      subject: '{name} replied to your follow-up question', heading: 'A reply to your follow-up', intro: '{name} replied:',
+      after: 'This conversation is now closed. You can still rate the answer.', button: 'Open your Inbox'
+    },
+    supportReply: {
+      subject: 'Wisecall support replied to you', heading: 'A reply from Wisecall support', intro: 'We replied to your message:',
+      after: 'You can answer in the same conversation.', button: 'Open the conversation'
     },
     mentorApproved: {
       subject: "You're approved as a Wisecall mentor", heading: 'Welcome aboard',
@@ -190,7 +204,21 @@ const S = {
       introAsker: 'როგორი იყო {name}-ის პასუხი? შენი შეფასება სხვებს ეხმარება კარგი მენტორების პოვნაში.',
       introMentor: 'როგორი იყო {name}-ის კითხვა? შენი შეფასება სხვა მენტორებს ეუბნება, იყო თუ არა კითხვა გასაგები და პატივისცემით დაწერილი.',
       after: 'შეფასებები დახურულია, სანამ ორივე არ შეაფასებთ ან სანამ {date} არ დადგება — რომელიც უფრო ადრე მოხდება. მანამდე შეგიძლია შენი შეფასება შეცვალო.',
-      final: 'ეს ბოლო შეხსენებაა.', button: 'შეაფასე ახლა'
+      final: 'ეს ბოლო შეხსენებაა.', button: 'შეაფასე ახლა',
+      unsubscribe: 'ამ შეხსენებებს იღებ, რადგან Wisecall-ზე კითხვა გქონდა. აღარ გინდა? აქ შეგიძლია გამორთო:'
+    },
+    followUpQuestion: {
+      subject: '{name}-მ დამატებითი კითხვა დაგისვა', heading: 'დამატებითი კითხვა',
+      intro: '{name}-მ შენს პასუხზე ერთი დამატებითი კითხვა დაგისვა:',
+      after: 'შეგიძლია ერთხელ უპასუხო შემოსულებში. შენი პასუხის შემდეგ საუბარი დაიხურება.', button: 'უპასუხე შემოსულებში'
+    },
+    followUpReply: {
+      subject: '{name}-მ უპასუხა შენს დამატებით კითხვას', heading: 'პასუხი დამატებით კითხვაზე', intro: '{name}-ის პასუხი:',
+      after: 'ეს საუბარი ახლა დახურულია. პასუხის შეფასება კვლავ შეგიძლია.', button: 'შემოსულების გახსნა'
+    },
+    supportReply: {
+      subject: 'Wisecall-ის მხარდაჭერამ გიპასუხა', heading: 'პასუხი Wisecall-ის მხარდაჭერისგან', intro: 'შენს შეტყობინებას ვუპასუხეთ:',
+      after: 'შეგიძლია იმავე საუბარში უპასუხო.', button: 'საუბრის გახსნა'
     },
     mentorApproved: {
       subject: 'შენ დამტკიცდი Wisecall-ის მენტორად', heading: 'კეთილი იყოს შენი მობრძანება',
@@ -302,10 +330,23 @@ const BUILDERS = {
         { p: fill(asker ? s.rateReminder.introAsker : s.rateReminder.introMentor, d), raw: true },
         { p: fill(s.rateReminder.after, d), raw: true },
         ...(d.final ? [{ small: s.rateReminder.final }] : []),
-        { button: s.rateReminder.button, url: `${config.PUBLIC_URL}/dashboard.html` }
+        { button: s.rateReminder.button, url: `${config.PUBLIC_URL}/dashboard.html` },
+        ...(d.unsubscribeUrl ? [{ small: s.rateReminder.unsubscribe }, { link: d.unsubscribeUrl }] : [])
       ]
     };
   },
+  followUpQuestion: (s, d) => ({
+    heading: s.followUpQuestion.heading,
+    blocks: [{ p: fill(s.followUpQuestion.intro, d), raw: true }, { quote: d.body }, { p: s.followUpQuestion.after }, { button: s.followUpQuestion.button, url: `${config.PUBLIC_URL}/inbox.html?thread=${d.threadId}` }]
+  }),
+  followUpReply: (s, d) => ({
+    heading: s.followUpReply.heading,
+    blocks: [{ p: fill(s.followUpReply.intro, d), raw: true }, { quote: d.body }, { p: s.followUpReply.after }, { button: s.followUpReply.button, url: `${config.PUBLIC_URL}/inbox.html?thread=${d.threadId}` }]
+  }),
+  supportReply: (s, d) => ({
+    heading: s.supportReply.heading,
+    blocks: [{ p: s.supportReply.intro }, { quote: d.body }, { p: s.supportReply.after }, { button: s.supportReply.button, url: `${config.PUBLIC_URL}/inbox.html?thread=${d.threadId}` }]
+  }),
   mentorApproved: (s) => ({
     heading: s.mentorApproved.heading,
     blocks: [{ p: s.mentorApproved.intro }, { p: s.mentorApproved.after }, ...(config.LAUNCH_MODE === 'prelaunch' ? [{ p: s.mentorApproved.prelaunch }] : []), { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]

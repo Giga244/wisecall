@@ -101,7 +101,26 @@
       window.history.replaceState(null, '', url);
     }
     if (o.focus) btn.focus();
+    if (activeTab === 'notifications') drawNotificationSettings();
     if (activeTab === 'verification') SettingsVerification.init(document.getElementById('verificationPanel'), { user, goto: (n) => selectTab(n, { focus: true }) });
+  }
+
+  // Settings -> Notifications: the transactional emails are listed (they cannot be turned off); the optional ones are switches.
+  async function drawNotificationSettings() {
+    const box = document.getElementById('notificationsPanel');
+    let s;
+    try { s = await WisecallAPI.apiFetch('/inbox/email-settings'); } catch (e) { box.innerHTML = `<p class="muted">${escapeHtml(t('toast.error'))}</p>`; return; }
+    box.innerHTML = `
+      <h2>${escapeHtml(t('settings.notif.title'))}</h2>
+      <p>${escapeHtml(t('settings.notif.always'))}</p>
+      <p><strong>${escapeHtml(t('settings.notif.optional'))}</strong></p>
+      ${s.optional.map((o) => `<label class="checkbox-row"><input type="checkbox" data-email-opt="${escapeHtml(o.key)}"${o.on ? ' checked' : ''}> <span>${escapeHtml(t('settings.notif.' + o.key))}</span></label>`).join('')}
+      <p class="muted small">${escapeHtml(t('settings.notif.inbox'))} <a href="/inbox.html">${escapeHtml(t('nav.inbox'))}</a></p>`;
+    box.querySelectorAll('[data-email-opt]').forEach((cb) => cb.addEventListener('change', async () => {
+      const off = [...box.querySelectorAll('[data-email-opt]')].filter((x) => !x.checked).map((x) => x.dataset.emailOpt);
+      try { await WisecallAPI.apiFetch('/inbox/email-settings', { method: 'PUT', body: { off } }); WisecallNav.showToast(t('settings.notif.saved')); }
+      catch (e) { cb.checked = !cb.checked; WisecallNav.showToast(t('toast.error')); }
+    }));
   }
 
   // Verification and Payouts only exist for mentors.
