@@ -1,0 +1,16 @@
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "en",
+  "mainEntity": [
+    { "@type": "Question", "name": "What happens if the mentor doesn't answer?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The mentor has 7 days from your payment. If there is no answer by then, you are refunded in full automatically." } },
+    { "@type": "Question", "name": "How are mentors checked?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Every mentor passes an ID and selfie check, must be 18 or older, their name must match their ID, and a person on our team reviews their experience and evidence. Medicine, law and finance also need a licence we check in the official register." } },
+    { "@type": "Question", "name": "How much does a question cost?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Each mentor sets their own price, between 5 and 2,000 GEL per question. You see it before you pay." } },
+    { "@type": "Question", "name": "Can I get a refund after an answer?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, in full, if the answer is spam, empty, off-topic or breaks our rules and you tell us within 7 days. Disagreeing with an answer is not a reason for a refund." } }
+  ],
+  "_note": "Generate this from the same i18n keys the home page FAQ uses (faq.*), in the page's language, so the markup always matches the visible text (Google requires that). Emit one FAQPage per language version."
+}

@@ -1,0 +1,20 @@
+# PROPOSED robots.txt for https://wisecallge.ge (generated today by server/pages.js seoRoutes(); this is the suggested new output).
+# Changes vs today:
+#   1. /api/ is no longer blocked as a whole: mentor profiles and the expert list are drawn by JavaScript from /api/users/<name> and
+#      /api/experts, and a crawler that obeys robots.txt cannot render them (docs/QUALITY-AUDIT.md SEO-1). Only the private API areas stay
+#      blocked. (The better fix is to render the profile HTML on the server; then /api/ can be blocked again.)
+#   2. Pages that are also marked noindex are NOT listed here: a blocked page's "noindex" is never seen, so it can still show up in results
+#      as a bare link. They stay out through <meta name="robots" content="noindex">.
+#   3. The Georgian URLs (/ka/...) are allowed like the English ones.
+User-agent: *
+Allow: /
+Allow: /api/users/
+Allow: /api/experts
+Allow: /api/config
+Allow: /api/photo/
+Disallow: /api/
+Disallow: /admin.html
+Disallow: /mock-bank.html
+Disallow: /mock-kyc.html
+
+Sitemap: https://wisecallge.ge/sitemap.xml

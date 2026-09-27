@@ -1,0 +1,15 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://wisecallge.ge/#organization",
+  "name": "Wisecall",
+  "alternateName": "ვაიზქოლი",
+  "url": "https://wisecallge.ge/",
+  "logo": "https://wisecallge.ge/icon-512.png",
+  "description": "Paid written answers from verified mentors in Georgia.",
+  "areaServed": { "@type": "Country", "name": "Georgia" },
+  "email": "support@wisecallge.ge",
+  "sameAs": ["https://www.facebook.com/<page>", "https://www.instagram.com/<account>", "https://www.linkedin.com/company/<company>"],
+  "legalName": "[LEGAL NAME — from docs/legal]",
+  "address": { "@type": "PostalAddress", "addressCountry": "GE", "addressLocality": "Tbilisi" }
+}
