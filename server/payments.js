@@ -72,6 +72,7 @@ async function applyBankStatus(client, booking, s) {
         const mentor = await getUserById(updated.mentorId);
         if (mentor) notify.notifyMentorNewQuestion(mentor, updated);
         await receipts.email(receipt);
+        require('./analytics').event('question_paid', null, { field: mentor ? String(mentor.niche || '') : '' });
       });
       return { booking: updated, after };
     }

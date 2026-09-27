@@ -121,7 +121,11 @@ router.post('/evidence', ...submit(async (user, b) => {
   return { evidence: { id: item.id, kind: item.kind, url: item.url, registryId: item.registryId, note: item.note } };
 }));
 router.delete('/evidence/:id', ...submit(async (user, b, req) => { await experience.removeEvidence(user, req.params.id); }));
-router.post('/submit', ...submit(async (user, b, req, res) => ({ user: meProfile(await experience.submit(user, { req, res })) })));
+router.post('/submit', ...submit(async (user, b, req, res) => {
+  const out = { user: meProfile(await experience.submit(user, { req, res })) };
+  require('../analytics').event('mentor_application_submitted', req);
+  return out;
+}));
 router.post('/edit', ...submit(async (user) => ({ user: meProfile(await experience.withdraw(user)) })));
 
 // Regulated niches: the licence or registration. Optional for everyone: a work email (badge).

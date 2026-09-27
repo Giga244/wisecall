@@ -100,6 +100,7 @@ function shortText(s, max = 155) {
 // carry a version in their address and are kept for a year.
 function sendHtml(res, status, html) {
   if (!res.get('Cache-Control')) res.set('Cache-Control', 'no-cache');
+  if (status === 200 && res.req) require('./analytics').pageview(res.req); // (off unless PLAUSIBLE_DOMAIN is set)
   res.status(status).type('html').send(localize(html, langOf(res)));
 }
 

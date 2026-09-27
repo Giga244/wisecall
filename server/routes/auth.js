@@ -80,6 +80,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
 
   await startSession(req, res, user);
   await require('../verification/signals').record(req, res, user.id, 'signup');
+  require('../analytics').event('signup', req, { method: 'email' });
   res.status(201).json({
     user: meProfile(user),
     emailSent,

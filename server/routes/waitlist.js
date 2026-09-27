@@ -9,6 +9,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const b = req.body || {};
   try {
     await waitlist.add({ email: b.email, niche: b.niche, language: b.language });
+    require('../analytics').event('waitlist_join', req, { field: String(b.niche || 'any').slice(0, 40) });
     res.status(201).json({ ok: true });
   } catch (e) {
     if (e instanceof waitlist.WaitlistError) return res.status(400).json({ error: e.code });

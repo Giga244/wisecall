@@ -80,7 +80,7 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   if (profile.error) return res.status(400).json({ error: profile.error, field: profile.field });
   Object.assign(patch, profile.patch);
 
-  if (updates.becomeMentor === true && existing.role === 'seeker') patch.role = 'mentor';
+  if (updates.becomeMentor === true && existing.role === 'seeker') { patch.role = 'mentor'; require('../analytics').event('mentor_application_started', req); }
   if (updates.becomeMentor === false) patch.role = 'seeker';
 
   const next = { ...existing, ...patch };

@@ -114,3 +114,8 @@ Mentor applications now go through three steps (Identity → Experience → Revi
     password's SHA-1 hash are sent (k-anonymity), never the password or an email. Every account can turn on two-step verification
     (an authenticator app, with recovery codes). Mention the breach check in the Privacy Policy (a processor/recipient?), and confirm the
     18+ wording.
+49. **Statistics and error monitoring (both off until configured).** With PLAUSIBLE_DOMAIN set, the server tells Plausible (an EU
+    analytics service) about page views and a few events; it passes the visitor's IP address and browser for Plausible's daily-changing
+    visitor hash (Plausible does not store them), sets no cookie, and skips visitors with Do Not Track / Global Privacy Control. With
+    SENTRY_DSN set, server errors go to Sentry with personal data removed. List both as processors in the Privacy Policy and confirm no
+    consent banner is needed.
