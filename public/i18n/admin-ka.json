@@ -367,5 +367,15 @@
   "admin.sup.kind.support": "მხარდაჭერა",
   "admin.sup.resolution": "რა გააკეთე (სავალდებულო)",
   "admin.sup.resolve": "მოგვარებულად მონიშვნა",
-  "admin.sup.person": "{name} ({email})"
+  "admin.sup.person": "{name} ({email})",
+  "admin.safety.title": "კითხვები, რომლებიც გადაუდებელ შემთხვევას ჰგავდა",
+  "admin.safety.help": "არაფერი გადახდილა; ადამიანმა დახმარების ტექსტი ნახა (112 და ცხელი ხაზი). ტექსტი 90 დღე ინახება.",
+  "admin.safety.none": "განსახილველი არაფერია.",
+  "admin.safety.cat.self_harm": "თვითდაზიანება",
+  "admin.safety.cat.medical_emergency": "სამედიცინო გადაუდებელი შემთხვევა",
+  "admin.safety.cat.violence": "ძალადობა",
+  "admin.safety.cat.abuse": "შეურაცხყოფა/ძალადობა ახლობლისგან",
+  "admin.safety.deleted": "(ტექსტი 90 დღის შემდეგ წაიშალა)",
+  "admin.safety.note": "შენიშვნა (არასავალდებულო)",
+  "admin.safety.reviewed": "განხილულად მონიშვნა"
 }

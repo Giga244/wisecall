@@ -72,6 +72,16 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
   }
   res.json({ mentors: list });
 }));
+// Questions that looked like an emergency (not paid for; the person saw help text). ?open=0 lists the reviewed ones too.
+router.get('/safety', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ events: await require('../safety').listForAdmin({ open: req.query.open !== '0' }) });
+}));
+router.post('/safety/:id/review', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const admin = await getUserById(req.userToken.id);
+  if (!(await require('../safety').markReviewed(req.params.id, admin, (req.body || {}).note))) return res.status(404).json({ error: 'not_found' });
+  res.json({ ok: true });
+}));
+
 const BOOKING_STATUSES = ['pending_payment', 'paid', 'answered', 'refund_pending', 'refunded', 'expired'];
 
 // All bookings, newest first, with both people's names so support can see what happened.

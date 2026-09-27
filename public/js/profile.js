@@ -338,9 +338,33 @@
       // The server always answers with the bank's payment page; if it did not, something is wrong.
       throw new Error('no_checkout_url');
     } catch (e) {
-      errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION) : (e.message2 || t('expert.sendError'));
       submitBtn.disabled = false;
+      if (e.code === 'emergency') { showEmergencyHelp(); return; }
+      errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION) : (e.message2 || t('expert.sendError'));
     }
+  }
+
+  // The question sounded like an emergency: nothing was paid, and calm help is shown instead (the server decided; see server/safety.js).
+  function showEmergencyHelp() {
+    let box = document.getElementById('emergencyHelp');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'emergencyHelp';
+      box.className = 'emergency-help';
+      box.setAttribute('role', 'alert');
+      box.tabIndex = -1;
+      document.getElementById('askForm').insertAdjacentElement('beforebegin', box);
+    }
+    box.innerHTML = `
+      <h3>${escapeHtml(t('safety.title'))}</h3>
+      <p>${escapeHtml(t('safety.body'))}</p>
+      <ul>
+        <li><strong>112</strong> — ${escapeHtml(t('safety.112'))}</li>
+        <li><strong>116 006</strong> — ${escapeHtml(t('safety.violence'))}</li>
+      </ul>
+      <p>${escapeHtml(t('safety.notAlone'))}</p>
+      <p class="small muted">${escapeHtml(t('safety.notPaid'))}</p>`;
+    box.focus();
   }
 
   draw();

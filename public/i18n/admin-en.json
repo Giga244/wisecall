@@ -367,5 +367,15 @@
   "admin.sup.kind.support": "support",
   "admin.sup.resolution": "What you did (required)",
   "admin.sup.resolve": "Mark as resolved",
-  "admin.sup.person": "{name} ({email})"
+  "admin.sup.person": "{name} ({email})",
+  "admin.safety.title": "Questions that looked like an emergency",
+  "admin.safety.help": "Nothing was paid; the person saw help text (112 and a support line). The text is kept for 90 days.",
+  "admin.safety.none": "Nothing to review.",
+  "admin.safety.cat.self_harm": "Self-harm",
+  "admin.safety.cat.medical_emergency": "Medical emergency",
+  "admin.safety.cat.violence": "Violence",
+  "admin.safety.cat.abuse": "Abuse",
+  "admin.safety.deleted": "(the text was deleted after 90 days)",
+  "admin.safety.note": "Note (optional)",
+  "admin.safety.reviewed": "Mark as reviewed"
 }

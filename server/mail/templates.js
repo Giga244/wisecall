@@ -40,12 +40,12 @@ const S = {
       subject: 'Your Wisecall payment was refunded', heading: 'Your payment was refunded',
       intro: 'We refunded {amount} for your question to {mentor} because {reason}.',
       after: 'It can take 5–10 business days to appear on your statement.',
-      reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: "the mentor's profile was suspended", answer_rejected: 'the answer did not meet our standards', other: 'our team refunded it' }
+      reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: "the mentor's profile was suspended", answer_rejected: 'the answer did not meet our standards', declined_not_qualified: 'the mentor declined it: it is outside what they can answer well', declined_against_rules: "the mentor declined it: the question is against Wisecall's rules", dispute: 'our team agreed with your report about the answer', other: 'our team refunded it' }
     },
     refundMentor: {
       subject: 'A question was refunded on Wisecall', heading: 'A question was refunded',
       intro: 'The question below was refunded to the buyer because {reason}. You will not receive a payout for it.',
-      reasons: { no_answer_deadline: 'it was not answered within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: 'your profile was suspended', answer_rejected: 'our team found that the answer did not meet our standards', other: 'our team refunded it' }
+      reasons: { no_answer_deadline: 'it was not answered within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: 'your profile was suspended', answer_rejected: 'our team found that the answer did not meet our standards', declined_not_qualified: 'you declined it (outside what you can answer well)', declined_against_rules: "you declined it (against Wisecall's rules)", dispute: "our team upheld the asker's report about the answer", other: 'our team refunded it' }
     },
     mentorJoined: {
       subject: 'A new mentor just joined Wisecall', heading: 'A new mentor just joined',
@@ -178,12 +178,12 @@ const S = {
       subject: 'შენი Wisecall-ის გადახდა დაგიბრუნდა', heading: 'თანხა დაგიბრუნდა',
       intro: '{mentor}-სთვის დასმულ კითხვაზე {amount} დაგიბრუნეთ, რადგან {reason}.',
       after: 'თანხა ბანკის ამონაწერში 5–10 სამუშაო დღეში გამოჩნდება.',
-      reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'მენტორის პროფილი შეჩერდა', answer_rejected: 'პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+      reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'მენტორის პროფილი შეჩერდა', answer_rejected: 'პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', declined_not_qualified: 'მენტორმა კითხვა უარყო: ეს სცდება იმას, რაზეც კარგად უპასუხებს', declined_against_rules: 'მენტორმა კითხვა უარყო: კითხვა Wisecall-ის წესებს ეწინააღმდეგება', dispute: 'ჩვენმა გუნდმა გაიზიარა შენი საჩივარი პასუხზე', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
     },
     refundMentor: {
       subject: 'Wisecall-ზე კითხვის თანხა დაბრუნდა', heading: 'კითხვის თანხა დაბრუნდა',
       intro: 'ქვემოთ მოცემული კითხვის თანხა დაუბრუნდა მყიდველს, რადგან {reason}. ამ კითხვაზე ანაზღაურებას ვერ მიიღებ.',
-      reasons: { no_answer_deadline: 'პასუხი {days} დღის განმავლობაში არ გაიცა', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'შენი პროფილი შეჩერდა', answer_rejected: 'ჩვენმა გუნდმა დაადგინა, რომ პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
+      reasons: { no_answer_deadline: 'პასუხი {days} დღის განმავლობაში არ გაიცა', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'შენი პროფილი შეჩერდა', answer_rejected: 'ჩვენმა გუნდმა დაადგინა, რომ პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', declined_not_qualified: 'კითხვა უარყავი (სცდება იმას, რაზეც კარგად უპასუხებ)', declined_against_rules: 'კითხვა უარყავი (Wisecall-ის წესებს ეწინააღმდეგება)', dispute: 'ჩვენმა გუნდმა გაიზიარა კითხვის ავტორის საჩივარი პასუხზე', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
     },
     mentorJoined: {
       subject: 'Wisecall-ზე ახალი მენტორი გამოჩნდა', heading: 'ახალი მენტორი გამოჩნდა',

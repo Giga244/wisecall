@@ -17,14 +17,17 @@
         <div id="supThread"></div>
       </div>
       <h2 class="sup-reports-title">${esc(t('admin.sup.reports'))}</h2>
-      <div id="supReports"></div>`;
+      <div id="supReports"></div>
+      <h2 class="sup-reports-title">${esc(t('admin.safety.title'))}</h2>
+      <p class="muted small">${esc(t('admin.safety.help'))}</p>
+      <div id="supSafety"></div>`;
     container.querySelector('#supFilters').addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-sup-status]');
       if (!b) return;
       status = b.dataset.supStatus;
       render(container);
     });
-    await Promise.all([drawList(container), drawReports(container)]);
+    await Promise.all([drawList(container), drawReports(container), drawSafety(container)]);
     if (openId) await openThread(container, openId);
   }
 
@@ -122,6 +125,31 @@
       const resolution = f.querySelector('input').value.trim();
       if (resolution.length < 3) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
       try { await WisecallAPI.apiFetch(`/admin/support/reports/${f.dataset.report}/resolve`, { method: 'POST', body: { resolution } }); await drawReports(container); }
+      catch (e) { WisecallNav.showToast(t('toast.error')); }
+    }));
+  }
+
+  // Questions that looked like an emergency: what was written (kept 90 days), by whom, and a "reviewed" button with a note.
+  async function drawSafety(container) {
+    const box = container.querySelector('#supSafety');
+    let data;
+    try { data = await WisecallAPI.apiFetch('/admin/safety'); } catch (e) { box.innerHTML = `<p class="muted">${esc(t('toast.error'))}</p>`; return; }
+    if (!data.events.length) { box.innerHTML = `<p class="muted">${esc(t('admin.safety.none'))}</p>`; return; }
+    box.innerHTML = `<ul class="earn-list">${data.events.map((ev) => `
+      <li class="sup-report">
+        <div>
+          <p class="small muted">${esc(ev.categories.map((c) => t('admin.safety.cat.' + c)).join(', '))} · ${esc(when(ev.createdAt))} · ${esc(ev.user ? fill('admin.sup.person', { name: ev.user.name, email: ev.user.email }) : '—')}</p>
+          <p class="msg-body">${esc(ev.text || t('admin.safety.deleted'))}</p>
+        </div>
+        <form class="sup-resolve" data-safety="${esc(ev.id)}">
+          <label class="sr-only" for="saf-${esc(ev.id)}">${esc(t('admin.safety.note'))}</label>
+          <input type="text" id="saf-${esc(ev.id)}" maxlength="500" placeholder="${esc(t('admin.safety.note'))}">
+          <button type="submit" class="btn btn-outline btn-sm">${esc(t('admin.safety.reviewed'))}</button>
+        </form>
+      </li>`).join('')}</ul>`;
+    box.querySelectorAll('[data-safety]').forEach((f) => f.addEventListener('submit', async (e2) => {
+      e2.preventDefault();
+      try { await WisecallAPI.apiFetch(`/admin/safety/${f.dataset.safety}/review`, { method: 'POST', body: { note: f.querySelector('input').value } }); await drawSafety(container); }
       catch (e) { WisecallNav.showToast(t('toast.error')); }
     }));
   }

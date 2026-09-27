@@ -11,15 +11,25 @@ const launch = require('../launch');
 const ratings = require('../ratings');
 const { isListable, asyncHandler, photoUrl } = require('../util');
 const content = require('../content');
+const safety = require('../safety');
 const { bookingFromRow, getUserById, getBookingById, updateBooking, claimAnswer } = require('../models');
 
 const router = express.Router();
 
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
+  const { mentorId, question } = req.body || {};
+  // An emergency (someone who may harm themselves, a medical emergency, violence or abuse now) is never sent to the bank: the page
+  // shows help (112 and support lines) instead, and an admin reviews it later (server/safety.js). Checked first, even before launch.
+  if (typeof question === 'string') {
+    const categories = safety.checkEmergency(question);
+    if (categories.length) {
+      await safety.record({ userId: req.userToken.id, mentorId: typeof mentorId === 'string' && /^[0-9a-f-]{36}$/i.test(mentorId) ? mentorId : null, categories, text: question });
+      return res.status(422).json({ error: 'emergency', categories });
+    }
+  }
   // Before launch nobody can pay: refuse before anything is created or the bank is contacted.
   await launch.refresh(); // the mode can depend on the number of listed mentors, so it is read fresh
   if (config.LAUNCH_MODE === 'prelaunch') return res.status(403).json({ error: 'prelaunch', message: 'Wisecall has not opened to buyers yet. Join the waiting list and we will tell you the day it does.' });
-  const { mentorId, question } = req.body || {};
   if (typeof mentorId !== 'string' || typeof question !== 'string') return res.status(400).json({ error: 'missing_fields' });
   const checked = content.checkQuestion(question); // at least 50 characters (server/content.js)
   if (checked.error) return res.status(400).json({ error: checked.error, ...(checked.min ? { min: checked.min } : {}), ...(checked.max ? { max: checked.max } : {}) });
@@ -135,6 +145,31 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
     if (seeker && mentor) notify.notifySeekerAnswered(seeker, mentor, booking);
   }
   res.json({ booking: probation.forViewer(booking, req.userToken.id) });
+}));
+
+// A mentor declines a paid question they have not answered (not in their field, or against the rules): the asker is refunded in full,
+// at once, and sees the reason. The decline is claimed in one statement (only a paid, unanswered question), so it cannot race an answer.
+const DECLINE_REASONS = ['not_qualified', 'against_rules'];
+router.post('/:id/decline', requireAuth, asyncHandler(async (req, res) => {
+  const existing = await getBookingById(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'not_found' });
+  if (existing.mentorId !== req.userToken.id) return res.status(403).json({ error: 'forbidden' });
+  const { reason, note } = req.body || {};
+  if (!DECLINE_REASONS.includes(reason)) return res.status(400).json({ error: 'invalid_reason' });
+  const cleanNote = typeof note === 'string' ? note.trim().slice(0, 500) : '';
+  const { rows } = await query(
+    `UPDATE bookings SET declined_at = now(), decline_reason = $2, decline_note = $3
+      WHERE id = $1 AND status = 'paid' AND answered_at IS NULL AND declined_at IS NULL RETURNING *`, [existing.id, reason, cleanNote || null]);
+  if (!rows[0]) return res.status(409).json({ error: existing.answeredAt ? 'already_answered' : 'not_declinable' });
+  let booking = bookingFromRow(rows[0]);
+  try {
+    booking = await payments.refundBooking(booking.id, `declined_${reason}`);
+  } catch (e) {
+    // The decline stands; the refund retry job finishes the refund (the booking is refund_pending with the error recorded).
+    console.error(`[bookings] refund after a decline failed for ${booking.id}:`, e.message);
+  }
+  require('../inbox').onDeclined(booking, reason);
+  res.json({ booking: probation.forViewer(await getBookingById(booking.id), req.userToken.id) });
 }));
 
 module.exports = router;

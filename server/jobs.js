@@ -120,6 +120,12 @@ async function ratingsHousekeeping() {
 // Mentor verification: account signals older than their retention are deleted; an analysis that never finished (the server restarted in
 // the middle) is marked failed and started again for applications still waiting; submitted applications that were waiting for the ID
 // check are looked at again (in case a result arrived while the server was down).
+// Emergency checks keep the question text for a limited time only (server/safety.js).
+async function safetyHousekeeping() {
+  const n = await require('./safety').purgeOld();
+  if (n) console.log(`[jobs] deleted the text of ${n} old emergency check(s)`);
+}
+
 async function verificationHousekeeping() {
   // An approved mentor with a failed required step is taken off the site (normally at once by the step itself; this catches the rest).
   await require('./verification/steps').delistFailedApproved();
@@ -158,6 +164,7 @@ async function runSweep({ wait = false } = {}) {
       await notifyWaitingList();
       await ratingsHousekeeping();
       await verificationHousekeeping();
+      await safetyHousekeeping();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }

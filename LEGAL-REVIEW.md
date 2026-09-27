@@ -81,3 +81,13 @@ Mentor applications now go through three steps (Identity → Experience → Revi
 40. **What is stored.** Each paid question gets a conversation between the asker and the mentor: the question and answer (as before), what happened (paid, answered, refunded), and ONE free follow-up question and ONE reply. People can also write to support; admins answer from the admin panel and may add internal notes the person never sees. Messages are kept like the booking itself. Add the Inbox to the Privacy Policy (what is kept, who sees it, how long) and say that admins read support conversations and reported messages.
 41. **Contact-detail filter.** In question conversations, messages with phone numbers, email addresses, messenger or social handles, or requests to pay outside Wisecall are refused with an explanation; only the kind of detail found is recorded (never the text). Confirm this automated check needs no separate notice beyond the Terms and the note under the message box.
 42. **Emails a person can turn off.** Transactional emails (payments, answers, follow-ups, refunds, application decisions, payouts, support replies, security) cannot be turned off; reminders to rate and "tips and news" can, in Settings → Notifications or by the link in the email. Confirm the split, and whether "tips and news" needs opt-in consent before it is ever sent (nothing is sent in that category yet).
+
+## Safety and disputes (Phase 4) — needs lawyer review
+
+43. **Emergency check before payment.** A question that sounds like an emergency (self-harm, a medical emergency, violence or abuse
+    happening to the person) is not sent to the bank; the page shows help text with **112** and **116 006** (described as the free,
+    confidential 24/7 hotline for people facing violence) — **confirm both numbers and the wording**, and whether a mental-health line
+    should be added. The question is kept encrypted for 90 days for an admin to review. This is health-related (special category)
+    data: confirm the legal basis and add it to the Privacy Policy.
+44. **A mentor declining a question.** The asker is refunded in full at once and sees the reason (not qualified / against the rules);
+    the mentor's optional note is seen only by the team. Confirm the Terms cover this.

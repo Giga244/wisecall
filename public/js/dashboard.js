@@ -93,7 +93,7 @@
     let text = '';
     if (b.status === 'refund_pending') text = t('dash.refund.pending');
     else if (b.status === 'refunded') {
-      const known = ['no_answer_deadline', 'mentor_suspended', 'answer_rejected'];
+      const known = ['no_answer_deadline', 'mentor_suspended', 'answer_rejected', 'declined_not_qualified', 'declined_against_rules', 'dispute'];
       text = t(known.includes(b.refundReason) ? 'dash.refund.' + b.refundReason : 'dash.refund.other');
     } else if (b.status === 'answered' && b.answerHeld) {
       text = t(b.__role === 'mentor' ? 'dash.answer.held.mentor' : 'dash.answer.held.buyer');
@@ -160,6 +160,24 @@
       </article>`;
   }
 
+  // "Can't answer this?": decline with a reason (not qualified / against the rules); the asker is refunded in full.
+  const declineHtml = (b) => `
+    <details class="decline-box">
+      <summary>${t('dash.decline.open')}</summary>
+      <form class="decline-form" data-id="${b.id}" novalidate>
+        <fieldset>
+          <legend class="small">${t('dash.decline.why')}</legend>
+          <label class="checkbox-row"><input type="radio" name="reason" value="not_qualified"> <span>${t('dash.decline.not_qualified')}</span></label>
+          <label class="checkbox-row"><input type="radio" name="reason" value="against_rules"> <span>${t('dash.decline.against_rules')}</span></label>
+        </fieldset>
+        <label class="field-label small" for="decline-note-${b.id}">${t('dash.decline.note')}</label>
+        <textarea id="decline-note-${b.id}" rows="2" maxlength="500"></textarea>
+        <p class="small muted">${t('dash.decline.help')}</p>
+        <p class="form-error" role="alert"></p>
+        <button type="submit" class="btn btn-outline btn-sm">${t('dash.decline.send')}</button>
+      </form>
+    </details>`;
+
   // The booking's conversation in the Inbox (the follow-up question and its reply, what happened), once it is paid.
   const conversationLink = (b) => (['paid', 'answered', 'refund_pending', 'refunded'].includes(b.status)
     ? `<p class="booking-conversation"><a class="plain-link" href="/inbox.html?booking=${encodeURIComponent(b.id)}">${t('dash.conversation')} →</a></p>` : '');
@@ -219,10 +237,30 @@
               </div>
             </form>` : '')}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
+        ${b.status === 'paid' && !b.answer ? declineHtml(b) : ''}
         ${conversationLink(b)}
       </article>`;
     }).join('');
     WisecallRatings.wire(receivedList, { reload: load });
+
+    // Declining a question: the asker is refunded in full at once and sees the reason.
+    receivedList.querySelectorAll('.decline-form').forEach((form) => form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const reason = (form.querySelector('input[name="reason"]:checked') || {}).value;
+      const err = form.querySelector('.form-error');
+      if (!reason) { err.textContent = t('dash.decline.pick'); return; }
+      if (!window.confirm(t('dash.decline.confirm'))) return;
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      try {
+        await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/decline`, { method: 'POST', body: { reason, note: form.querySelector('textarea').value } });
+        WisecallNav.showToast(t('dash.decline.done'));
+        load();
+      } catch (e) {
+        err.textContent = t(e.code === 'already_answered' ? 'dash.answer.err.already' : 'toast.error');
+        btn.disabled = false;
+      }
+    }));
 
     // The answer form: a live count, then a check step ("you can't change it after sending"), then send. The server has the last word
     // (at least answerMin characters, real writing, and one answer only).
