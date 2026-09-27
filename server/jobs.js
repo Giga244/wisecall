@@ -121,6 +121,12 @@ async function ratingsHousekeeping() {
 // the middle) is marked failed and started again for applications still waiting; submitted applications that were waiting for the ID
 // check are looked at again (in case a result arrived while the server was down).
 // Emergency checks keep the question text for a limited time only (server/safety.js).
+// Accounts whose deletion grace period is over are emptied of personal details (server/account.js).
+async function accountHousekeeping() {
+  const n = await require('./account').deletionSweep();
+  if (n) console.log(`[jobs] looked at ${n} account(s) due for deletion`);
+}
+
 async function safetyHousekeeping() {
   const n = await require('./safety').purgeOld();
   if (n) console.log(`[jobs] deleted the text of ${n} old emergency check(s)`);
@@ -165,6 +171,7 @@ async function runSweep({ wait = false } = {}) {
       await ratingsHousekeeping();
       await verificationHousekeeping();
       await safetyHousekeeping();
+      await accountHousekeeping();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);
     }

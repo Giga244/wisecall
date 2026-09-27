@@ -61,10 +61,10 @@ async function sessionValid(payload) {
   const hit = checked.get(key);
   if (hit && hit.until > Date.now()) return hit.ok;
   const { rows } = await db().query(
-    `SELECT u.session_version, s.id AS sid, s.revoked_at, s.last_seen_at
+    `SELECT u.session_version, u.deleted_at, s.id AS sid, s.revoked_at, s.last_seen_at
        FROM users u LEFT JOIN sessions s ON s.id = $2 AND s.user_id = u.id WHERE u.id = $1`, [payload.id, sid]);
   const r = rows[0];
-  const ok = Boolean(r) && (payload.sv || 0) === r.session_version && (!payload.sid || (Boolean(r.sid) && !r.revoked_at));
+  const ok = Boolean(r) && !r.deleted_at && (payload.sv || 0) === r.session_version && (!payload.sid || (Boolean(r.sid) && !r.revoked_at));
   if (checked.size > 5000) checked.clear();
   checked.set(key, { ok, until: Date.now() + CACHE_MS });
   // "Last active" in Settings, updated at most every five minutes.

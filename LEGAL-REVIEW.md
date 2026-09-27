@@ -101,3 +101,11 @@ Mentor applications now go through three steps (Identity → Experience → Revi
     on Wisecall", the amount in GEL and the bank. Confirm what a Georgian receipt must contain (VAT status, a fiscal receipt from the
     bank or a cash-register rule), and whether Wisecall or the mentor is the seller. Mentors get monthly statements (CSV/PDF) of what
     they earned and were paid: confirm whether they need anything for their own taxes (for example the platform's details).
+47. **Download my data / delete my account.** Settings → Account: a JSON export of everything kept about the account (the ID-check
+    result's verified name and date of birth stay out: they are encrypted and not needed to use the data); deletion after the password
+    (or a Google sign-in in the last 10 minutes), refused while a question, a refund, a report or money is still open; the account
+    closes at once and is emptied after 14 days (name, email, profile, photos, IBAN, evidence, documents, support conversations and
+    notifications removed; ratings keep their stars without text; messages they wrote in question conversations are blanked). Bookings,
+    payouts and receipts stay, pointing at the anonymous account, as accounting law requires. The **question and answer texts stay** for
+    the other person's record. Confirm the 14-day grace period, what must be kept and for how long, and whether the question/answer
+    text must also be removed on request.

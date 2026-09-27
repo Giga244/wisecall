@@ -119,7 +119,7 @@
       <li class="msg${m.mine ? ' msg-mine' : ''}">
         <div class="msg-bubble">
           <p class="msg-meta"><strong>${esc(who)}</strong>${label ? ` · ${esc(label)}` : ''} · <time datetime="${esc(m.createdAt)}">${esc(when(m.createdAt))}</time></p>
-          <p class="msg-body">${esc(m.body)}</p>
+          <p class="msg-body">${esc(m.body || t('inbox.deleted'))}</p>
           ${hasLink(m.body) ? `<p class="msg-warn small">${esc(t('inbox.linkWarning'))}</p>` : ''}
           ${m.mine ? '' : `<button type="button" class="linklike small msg-report" data-report="${esc(m.id)}">${esc(t('inbox.report.open'))}</button>`}
         </div>

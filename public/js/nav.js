@@ -129,6 +129,14 @@
         WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { language: ev.detail.lang } }).catch(() => {});
       });
       startUnreadBadge();
+      // An account that is being deleted: say when, and how to keep it (Settings > Account).
+      if (user.deletionRequestedAt && header && !document.querySelector(".deletion-banner")) {
+        const until = new Date(new Date(user.deletionRequestedAt).getTime() + 14 * 86400000);
+        const bar = document.createElement("div");
+        bar.className = "verify-banner deletion-banner";
+        bar.innerHTML = `<span>${t("nav.deletionBanner").replace("{date}", until.toLocaleDateString(WisecallI18n.getLang() === "ka" ? "ka-GE" : "en-GB", { dateStyle: "long" }))}</span> <a href="/settings.html?tab=account">${t("nav.deletionKeep")}</a>`;
+        header.insertAdjacentElement("afterend", bar);
+      }
       if (!user.emailVerified && location.pathname !== '/verify-email.html' && header) {
         const bar = document.createElement('div');
         bar.className = 'verify-banner';

@@ -569,3 +569,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .dis-card { display: grid; gap: 8px; margin-bottom: 14px; }
 .dis-form { display: grid; gap: 8px; }
 .dis-form fieldset { border: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.btn-danger { background: var(--pink-soft); color: var(--red-strong); border: 1px solid var(--red-strong); }
+.btn-danger:hover { filter: brightness(0.92); }
+.data-delete-title { margin-top: 18px; font-size: 1.05rem; }
+.deletion-banner { background: var(--pink-soft); color: var(--pink-ink); }

@@ -69,6 +69,12 @@ const S = {
       final: 'This is the last reminder.', button: 'Rate now',
       unsubscribe: "You get these reminders because you had a question on Wisecall. Don't want them? Turn them off here:"
     },
+    deletionScheduled: {
+      subject: 'Your Wisecall account will be deleted', heading: 'Your account will be deleted',
+      intro: 'You asked us to delete your Wisecall account. It is closed now, and on {date} your details will be removed for good.',
+      after: 'Changed your mind? Sign in before then and choose "Keep my account". Records of payments stay, without your details, because the law requires them.',
+      button: 'Sign in'
+    },
     receipt: {
       subject: 'Your Wisecall receipt {number}', heading: 'Your receipt',
       payment: 'Thank you for your payment for a question to {mentor}.', refund: 'We returned money for your question to {mentor}.',
@@ -222,6 +228,12 @@ const S = {
       final: 'ეს ბოლო შეხსენებაა.', button: 'შეაფასე ახლა',
       unsubscribe: 'ამ შეხსენებებს იღებ, რადგან Wisecall-ზე კითხვა გქონდა. აღარ გინდა? აქ შეგიძლია გამორთო:'
     },
+    deletionScheduled: {
+      subject: 'შენი Wisecall-ის ანგარიში წაიშლება', heading: 'შენი ანგარიში წაიშლება',
+      intro: 'გვთხოვე შენი Wisecall-ის ანგარიშის წაშლა. ანგარიში ახლა დახურულია, ხოლო {date}-ს შენი მონაცემები სამუდამოდ წაიშლება.',
+      after: 'გადაიფიქრე? მანამდე შედი სისტემაში და აირჩიე „ანგარიშის შენარჩუნება“. გადახდების ჩანაწერები რჩება შენი მონაცემების გარეშე, რადგან ამას კანონი მოითხოვს.',
+      button: 'შესვლა'
+    },
     receipt: {
       subject: 'შენი Wisecall-ის ქვითარი {number}', heading: 'შენი ქვითარი',
       payment: 'მადლობა გადახდისთვის: კითხვა {mentor}-სთვის.', refund: 'შენი კითხვისთვის ({mentor}) თანხა დაგიბრუნეთ.',
@@ -365,6 +377,10 @@ const BUILDERS = {
       ]
     };
   },
+  deletionScheduled: (s, d) => ({
+    heading: s.deletionScheduled.heading,
+    blocks: [{ p: fill(s.deletionScheduled.intro, d), raw: true }, { p: s.deletionScheduled.after }, { button: s.deletionScheduled.button, url: `${config.PUBLIC_URL}/login.html` }]
+  }),
   receipt: (s, d) => ({
     heading: s.receipt.heading,
     blocks: [{ p: fill(d.kind === 'refund' ? s.receipt.refund : s.receipt.payment, d), raw: true }, { p: fill(s.receipt.lines, d), raw: true },

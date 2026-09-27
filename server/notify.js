@@ -52,6 +52,9 @@ const notifyDisputeResolved = (asker, mentor, booking, d) => Promise.all([asker,
 // A receipt for a payment or a refund (data: number, kind, amount, mentor, date, url of the PDF).
 const notifyReceipt = (user, data) => safeSend('receipt', 'receipt', user, data);
 
+// The account will be deleted on `when` unless the person signs in and keeps it.
+const notifyDeletionScheduled = (user, when) => safeSend('deletion scheduled', 'deletionScheduled', user, { date: utcDate(when, user.language) });
+
 const notifySupportReply = (user, data) => safeSend('support reply', 'supportReply', user, { body: data.body, threadId: data.threadId });
 
 const notifyMentorDeadlineSoon = (mentor, booking) => {
@@ -112,4 +115,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyDeletionScheduled, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

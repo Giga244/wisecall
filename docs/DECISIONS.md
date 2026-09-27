@@ -35,3 +35,11 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - **Work is committed locally, one commit per item, and NOT pushed.** The master prompt asks for commits only, and pushing to main
   deploys straight to the live site (Render). Keeping everything local until the owner has reviewed it is the safer choice; nothing
   here changes the live database until it is pushed. (The owner's own `tools/continue-night.bat` says the same.)
+
+## PART 0 / Phase 4 — account deletion
+- Deleting an account is refused while anything is still open for another person or for money (a question waiting, a refund, a
+  report, unpaid earnings or a debt), so no one is left half-way. The mentor must be paid out first (PART 5 lets a closing account
+  withdraw any amount).
+- The account is closed at once and emptied after 14 days (the brief's grace period). The row stays with its details removed because
+  bookings, payouts and receipts must keep pointing at it (accounting records). The question and answer texts stay, since they are
+  also the other person's record; messages the deleted person wrote are blanked. Listed in LEGAL-REVIEW.md 47 for the lawyer.

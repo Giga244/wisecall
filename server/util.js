@@ -40,7 +40,8 @@ function meProfile(user) {
 function isListable(user) {
   return Boolean(user) && (user.role === 'mentor' || user.role === 'both') &&
     Boolean(user.price) && Boolean(user.niche) && Boolean(user.roleTitle) &&
-    user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc) && user.hasFailedRequiredStep === false;
+    user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc) && user.hasFailedRequiredStep === false &&
+    !user.deletionRequestedAt && !user.deletedAt; // (an account being deleted is closed at once)
 }
 
 // Where a mentor's application stands, in one word, for every screen that shows it (the Settings banner, the progress bar, the

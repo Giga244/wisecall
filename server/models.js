@@ -57,6 +57,8 @@ function userFromRow(r) {
     // Whether a step the mentor's niche requires no longer holds (see failedRequiredStepSql). Only known when the row was read through
     // USER_SELECT (getUserById and friends); undefined otherwise, and then the mentor is treated as not listable.
     hasFailedRequiredStep: r.has_failed_required_step === undefined ? undefined : Boolean(r.has_failed_required_step),
+    deletionRequestedAt: r.deletion_requested_at || null,
+    deletedAt: r.deleted_at || null,
     createdAt: r.created_at
   };
 }
@@ -215,6 +217,7 @@ async function claimAnswer(id, answer, hold) {
 function listableSql(u = 'users') {
   return `${u}.role IN ('mentor', 'both') AND ${u}.price IS NOT NULL AND ${u}.niche IS NOT NULL
     AND ${u}.role_title IS NOT NULL AND ${u}.verification_status = 'verified' AND ${u}.payout_iban_enc IS NOT NULL
+    AND ${u}.deletion_requested_at IS NULL AND ${u}.deleted_at IS NULL
     AND NOT ${failedRequiredStepSql(u)}`;
 }
 

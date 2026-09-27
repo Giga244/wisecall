@@ -208,6 +208,38 @@ router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Settings -> Account: download my data (JSON) and delete my account (re-authentication, then a grace period; see server/account.js).
+router.get('/export', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  const data = await require('../account').exportData(user);
+  res.set('Cache-Control', 'no-store');
+  res.type('application/json').attachment(`wisecall-my-data-${new Date().toISOString().slice(0, 10)}.json`).send(JSON.stringify(data, null, 2));
+}));
+
+const ACCOUNT_STATUS = { wrong_password: 400, reauth_required: 403, already_requested: 409, open_items: 409, nothing_to_cancel: 409 };
+const accountFail = (res, e) => {
+  if (!(e instanceof require('../account').AccountError)) throw e;
+  res.status(ACCOUNT_STATUS[e.code] || 400).json({ error: e.code, ...(e.items ? { items: e.items } : {}) });
+};
+router.delete('/', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  try {
+    const out = await require('../account').requestDeletion(user, { password: (req.body || {}).password, sessionId: req.userToken.sid });
+    auth.clearAuthCookie(res);
+    res.json(out);
+  } catch (e) { accountFail(res, e); }
+}));
+router.post('/delete/cancel', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  try { await require('../account').cancelDeletion(user); res.json({ user: meProfile(await getUserById(user.id)) }); } catch (e) { accountFail(res, e); }
+}));
+router.get('/delete/check', requireAuth, asyncHandler(async (req, res) => {
+  res.json({ items: await require('../account').openItems(req.userToken.id), graceDays: require('../account').DELETION_GRACE_DAYS });
+}));
+
 // Settings -> Account: where this account is signed in, signing out one device, or every other device.
 router.get('/sessions', requireAuth, asyncHandler(async (req, res) => {
   res.set('Cache-Control', 'no-store');
