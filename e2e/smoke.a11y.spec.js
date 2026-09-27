@@ -42,7 +42,7 @@ for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']])
     }
 
     test('axe finds no WCAG A/AA problem on any public page', async () => {
-      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/no-such-page']) {
+      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/faq.html', '/how-we-verify.html', '/terms.html', '/privacy.html', '/no-such-page']) {
         await audit('visitor', url);
       }
     });
@@ -50,13 +50,16 @@ for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']])
     test('...on the seeker and mentor pages', async () => {
       await audit('seeker', '/dashboard.html');
       await audit('seeker', '/settings.html?tab=account');
+      await audit('seeker', '/settings.html?tab=notifications');
+      await audit('seeker', '/inbox.html');
+      await audit('seeker', '/inbox.html?tab=notifications');
       await audit('mentor', '/dashboard.html', async (p) => { await p.click('#tab-received'); });
       await audit('mentor', '/dashboard.html', async (p) => { await p.click('#tab-earnings'); });
       for (const tab of ['profile', 'mentor', 'verification', 'payouts']) await audit('mentor', `/settings.html?tab=${tab}`);
     });
 
     test('...and on every admin tab', async () => {
-      for (const tab of ['mentors', 'bookings', 'queue', 'reviews', 'interviews', 'payouts', 'waitlist']) {
+      for (const tab of ['mentors', 'bookings', 'queue', 'reviews', 'interviews', 'payouts', 'waitlist', 'disputes', 'support']) {
         await audit('admin', '/admin.html', async (p) => { await p.click(`#adminTabs [data-tab="${tab}"]`); await p.waitForLoadState('networkidle'); });
       }
     });

@@ -128,7 +128,12 @@ app.get('/api/config', async (req, res) => {
     googleEnabled: config.GOOGLE_ENABLED,
     priceMin: config.PRICE_MIN,
     priceMax: config.PRICE_MAX,
-    payoutHoldDays: config.PAYOUT_HOLD_DAYS,
+    payoutHoldDays: require('./ledger').holdDays(),
+    disputeDays: config.DISPUTE_DAYS,
+    // The seller's legal details for the footer (each only when set), and whether card logos belong there (only once payments are open).
+    legal: { name: config.LEGAL_NAME || null, id: config.LEGAL_ID || null, address: config.LEGAL_ADDRESS || null },
+    paymentsLive: config.PAYMENTS_ENABLED && config.LAUNCH_MODE !== 'prelaunch',
+    founder: config.FOUNDER.name ? config.FOUNDER : null,
     answerDeadlineDays: config.ANSWER_DEADLINE_DAYS,
     unpaidAttemptDays: config.UNPAID_ATTEMPT_DAYS,
     // How long a question and an answer must be (the forms show these; the server decides, see server/content.js).

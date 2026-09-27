@@ -217,6 +217,7 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `PAYOUT_HOLD_DAYS` | `7` (also written in the Terms) |
 | `DISPUTE_DAYS` | `7`: how long the asker can report a problem with an answer; earnings are held at least this long |
 | `LEGAL_NAME`, `LEGAL_ID`, `LEGAL_ADDRESS` | Your company or individual entrepreneur's name, identification number and legal address, printed on every receipt and shown in the footer. Each one is hidden while empty; set them before the first real payment |
+| `FOUNDER_NAME`, `FOUNDER_ROLE`, `FOUNDER_PHOTO`, `FOUNDER_STORY_EN`, `FOUNDER_STORY_KA` | Optional: the founder section on the About page (hidden while the name is empty). The photo must be a file on the site, such as `/brand/founder.jpg` |
 | `EMAIL_PROVIDER` | `resend` |
 | `RESEND_API_KEY` | From resend.com. **Create a new key**; do not reuse one that was ever pasted into a chat |
 | `EMAIL_FROM` | `Wisecall <hello@wisecallge.ge>` (an address on the domain you verify in step 9) |

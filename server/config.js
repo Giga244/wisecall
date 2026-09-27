@@ -77,6 +77,13 @@ const config = {
   LEGAL_NAME: (env.LEGAL_NAME || '').trim(),
   LEGAL_ID: (env.LEGAL_ID || '').trim(),
   LEGAL_ADDRESS: (env.LEGAL_ADDRESS || '').trim(),
+  // The founder section on the About page (hidden while FOUNDER_NAME is empty). FOUNDER_PHOTO is a path on this site (for example
+  // /brand/founder.jpg; the Content-Security-Policy allows no pictures from elsewhere); the stories are plain text, one per language.
+  FOUNDER: {
+    name: (env.FOUNDER_NAME || '').trim(), role: (env.FOUNDER_ROLE || '').trim(),
+    photo: /^\/(?!\/)[\w./-]+\.(?:jpe?g|png|webp)$/i.test((env.FOUNDER_PHOTO || '').trim()) ? env.FOUNDER_PHOTO.trim() : '',
+    story: { en: (env.FOUNDER_STORY_EN || '').trim(), ka: (env.FOUNDER_STORY_KA || '').trim() }
+  },
   POSTMARK_API_URL: (env.POSTMARK_API_URL || 'https://api.postmarkapp.com').replace(/\/+$/, ''),
 
   // Sign in with Google (OAuth 2 / OpenID Connect, done on the server). Both empty = the button is not shown.

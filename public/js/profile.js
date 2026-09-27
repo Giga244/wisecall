@@ -164,7 +164,7 @@
 
         ${expert.bio ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
 
-        ${isMentor && (expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')}</p></section>` : ''}
+        ${isMentor && (expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')} <a href="/how-we-verify.html">${t('hv.title')}</a></p></section>` : ''}
 
         ${isMentor ? `<section class="profile-section profile-reviews" aria-labelledby="reviewsTitle">
           <h2 id="reviewsTitle">${t('expert.reviewsTitle')}</h2>

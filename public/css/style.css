@@ -985,3 +985,23 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
   -webkit-text-fill-color: var(--ink); box-shadow: 0 0 0 100px var(--field) inset; caret-color: var(--ink);
 }
 [data-theme="dark"] img.doc-preview { filter: none; }
+/* Card logos in the footer (only once payments are live), the seller's legal details, and the FAQ / verification pages */
+.footer-pay { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 18px 0 0; }
+.footer-pay[hidden] { display: none; }
+.pay-mark { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--ink); font-weight: 800; font-size: 0.78rem; letter-spacing: 0.04em; }
+.pay-mark-mc .mc-dot { width: 12px; height: 12px; border-radius: 999px; background: var(--accent-strong); display: inline-block; }
+.pay-mark-mc .mc-dot + .mc-dot { background: var(--gold); margin-left: -6px; margin-right: 4px; }
+.footer-legal { margin: 4px 0 0; }
+.info-page section { margin-top: 28px; }
+.info-page h2 { font-size: 1.2rem; }
+.faq-group { margin-top: 28px; }
+.faq-group .faq-item { border-bottom: 1px solid var(--border); padding: 12px 0; }
+.faq-group summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.faq-group .faq-item p { margin: 8px 0 4px; line-height: 1.7; }
+.hvp-steps { padding-left: 22px; display: grid; gap: 14px; }
+.hvp-steps h3 { margin: 0 0 4px; font-size: 1.05rem; }
+.hvp-steps p { margin: 0; }
+.hvp-badges, .hvp-regulated { padding-left: 20px; line-height: 1.8; }
+.founder { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+.founder-photo { width: 120px; height: 120px; border-radius: 999px; object-fit: cover; }
+.founder-name { margin-top: 0; }

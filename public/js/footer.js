@@ -30,7 +30,8 @@
           <ul>
             <li><a href="/about.html" data-i18n="footer.about">About</a></li>
             <li><a href="/contact.html" data-i18n="footer.contact">Contact</a></li>
-            <li><a href="/index.html#faq" data-i18n="footer.faq">FAQ</a></li>
+            <li><a href="/faq.html" data-i18n="footer.faq">FAQ</a></li>
+            <li><a href="/how-we-verify.html" data-i18n="hv.title">How we verify mentors</a></li>
           </ul>
         </nav>
         <nav class="footer-col" aria-labelledby="footLegal">
@@ -41,8 +42,16 @@
           </ul>
         </nav>
       </div>
+      <div class="footer-pay" id="footerPay" hidden>
+        <span class="muted small" data-i18n="footer.weAccept">We accept</span>
+        <span class="pay-mark" aria-label="Visa">VISA</span>
+        <span class="pay-mark pay-mark-mc" aria-label="Mastercard"><span class="mc-dot" aria-hidden="true"></span><span class="mc-dot" aria-hidden="true"></span>Mastercard</span>
+      </div>
       <div class="footer-bottom">
-        <p>© <span id="footerYear"></span> Wisecall</p>
+        <div>
+          <p>© <span id="footerYear"></span> Wisecall</p>
+          <p class="footer-legal muted small" id="footerLegal" hidden></p>
+        </div>
         <div class="footer-lang">
           <span class="muted small" data-i18n="footer.lang">Language</span>
           <div class="lang-toggle" role="group" data-i18n-aria="footer.lang" aria-label="Language">
@@ -67,6 +76,12 @@
 
   // The contact email and social links come from the server's settings; whatever is not set is not shown.
   function fromConfig(cfg) {
+    // The seller's legal details (Georgian e-commerce rules), each part only when it is set.
+    const legal = cfg.legal || {};
+    const parts = [legal.name, legal.id && `ID ${legal.id}`, legal.address].filter(Boolean);
+    if (parts.length) { const el = f.querySelector('#footerLegal'); el.textContent = parts.join(' · '); el.hidden = false; }
+    // Card logos only once real payments are open.
+    f.querySelector('#footerPay').hidden = !cfg.paymentsLive;
     if (cfg.contactEmail) {
       const link = f.querySelector('#footerContactLink');
       link.href = 'mailto:' + cfg.contactEmail;

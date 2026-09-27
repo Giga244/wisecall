@@ -216,6 +216,52 @@ function profileJsonLd(u, stats, lang) {
   return jsonLd({ '@context': 'https://schema.org', '@graph': [{ '@type': 'ProfilePage', url, mainEntity: { '@id': `${url}#person` } }, person, service, crumbs] });
 }
 
+// Texts may carry the site's settings ({answerDays}, {priceMin}, ...), as they do in the pages' own script (public/js/i18n.js).
+function withSettings(text) {
+  const v = {
+    answerDays: config.ANSWER_DEADLINE_DAYS, holdDays: config.PAYOUT_HOLD_DAYS, disputeDays: config.DISPUTE_DAYS, feePct: config.PLATFORM_FEE_PERCENT,
+    sharePct: 100 - config.PLATFORM_FEE_PERCENT, priceMin: config.PRICE_MIN, priceMax: config.PRICE_MAX
+  };
+  return String(text || '').replace(/\{(\w+)\}/g, (m, k) => (v[k] !== undefined ? String(v[k]) : m));
+}
+
+// /faq.html: every question and answer, grouped, written in by the server in the page's language (also as FAQPage data).
+const FAQ_GROUPS = [['asking', [1, 7, 11, 10, 15]], ['payments', [2, 3, 4, 6]], ['mentors', [5, 8, 9]], ['account', [13, 14]]];
+function faqVars(lang) {
+  const d = dict(lang);
+  const items = [];
+  const html = FAQ_GROUPS.map(([group, ns]) => `
+  <section class="faq-group" aria-labelledby="faq-${group}">
+    <h2 id="faq-${group}" data-i18n="faq.group.${group}">${escapeHtml(d[`faq.group.${group}`] || group)}</h2>
+    ${ns.filter((n) => d[`faq.${n}.q`]).map((n) => {
+      const q = withSettings(d[`faq.${n}.q`]), a = withSettings(d[`faq.${n}.a`]);
+      items.push({ q, a });
+      return `<details class="faq-item" id="q${n}"><summary data-i18n="faq.${n}.q">${escapeHtml(q)}</summary><p data-i18n="faq.${n}.a">${escapeHtml(a)}</p></details>`;
+    }).join('\n    ')}
+  </section>`).join('');
+  const ld = jsonLd({ '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: lang,
+    mainEntity: items.map((i) => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) });
+  return { vars: { FAQ_TITLE: escapeHtml(d['faq.page.title']), FAQ_INTRO: escapeHtml(d['faq.page.intro']), FAQ_ITEMS: html }, head: ld };
+}
+
+// /how-we-verify.html: the checks, the badges, the regulated fields (from the niches), in the page's language.
+function verifyVars(lang) {
+  const d = dict(lang);
+  const noDate = (s) => String(s || '').replace(/\s*[^.]*\{date\}\.?$/, '');
+  const vars = {
+    HVP_TITLE: d['hvp.title'], HVP_INTRO: d['hvp.intro'], HVP_STEPS: d['hvp.steps'], BADGE_TITLE: d['badge.title'], HV_BADGES: d['hv.badges'],
+    HVP_REGULATED_TITLE: d['hvp.regulated.title'], HVP_REGULATED_BODY: d['hvp.regulated.body'], HVP_NEVER_TITLE: d['hvp.never.title'], HV_PRIVACY: d['hv.privacy'],
+    BADGE_ID_TIP: noDate(d['badge.id.tip']), BADGE_EXPERIENCE_TIP: noDate(d['badge.experience.tip']), BADGE_LICENSE_TIP: noDate(d['badge.license.tip']),
+    BADGE_WORKEMAIL_TIP: noDate(d['badge.workEmail.tip']), BADGE_DIPLOMA_TIP: noDate(d['badge.diploma.tip'])
+  };
+  for (const n of [1, 2, 3, 4, 5]) { vars[`HV_${n}_TITLE`] = d[`hv.${n}.title`]; vars[`HV_${n}_BODY`] = d[`hv.${n}.body`]; }
+  Object.keys(vars).forEach((k) => { vars[k] = escapeHtml(withSettings(vars[k] || '')); });
+  const niches = require('./niches');
+  vars.REGULATED_LIST = niches.active().filter((n) => n.regulated)
+    .map((n) => `<li><a href="${lang === 'ka' ? '/ka' : ''}/advice/${n.key}">${escapeHtml(lang === 'ka' ? n.ka : n.en)}</a></li>`).join('');
+  return vars;
+}
+
 // The home page: who runs the site, and the site itself.
 function homeJsonLd(lang) {
   const url = lang === 'ka' ? kaUrl('/') : `${config.PUBLIC_URL}/`;
@@ -341,6 +387,16 @@ function pageRoutes() {
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
       if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
+      if (name === 'faq') {
+        const html = readPage('faq.html');
+        if (html === null) return next();
+        const f = faqVars(langOf(res));
+        return void sendHtml(res, 200, addToHead(fill(html, { ...baseVars('/faq.html'), ...f.vars }), f.head));
+      }
+      if (name === 'how-we-verify') {
+        if (!(await sendPage(res, 'how-we-verify.html', { ...baseVars('/how-we-verify.html'), ...verifyVars(langOf(res)) }))) next();
+        return;
+      }
       if (!(await sendPage(res, `${name}.html`, baseVars(`/${name}.html`)))) next();
     } catch (e) { next(e); }
   });

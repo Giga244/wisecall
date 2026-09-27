@@ -28,9 +28,23 @@
         ${i === withContact ? contactLine() : ''}
       </section>`).join('') : '';
   }
+  // About: the founder, when the site is set up with one (FOUNDER_* settings); every value is set as text.
+  let founder = null;
+  function renderFounder() {
+    const box = document.getElementById('founderBox');
+    if (!box) return;
+    if (!founder) { box.hidden = true; return; }
+    const lang = WisecallI18n.getLang();
+    const story = (founder.story && (founder.story[lang] || founder.story.en)) || '';
+    box.innerHTML = `<h2 id="founderTitle">${esc(WisecallI18n.t('about.founder.title'))}</h2>
+      <div class="founder">${founder.photo ? `<img class="founder-photo" src="${esc(founder.photo)}" alt="" width="120" height="120" decoding="async">` : ''}
+        <div><p class="founder-name"><strong>${esc(founder.name)}</strong>${founder.role ? `<br><span class="muted">${esc(founder.role)}</span>` : ''}</p>
+        ${story.split(/\n{2,}/).filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('')}</div></div>`;
+    box.hidden = false;
+  }
   render();
   // The sections are drawn by this script, so a link to one of them (/privacy.html#automated-review) is scrolled to once it exists.
   if (window.location.hash) { const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1))); if (target) target.scrollIntoView(); }
-  document.addEventListener('wisecall:lang-changed', render);
-  WisecallI18n.getConfig().then((cfg) => { supportEmail = cfg.contactEmail || null; render(); });
+  document.addEventListener('wisecall:lang-changed', () => { render(); renderFounder(); });
+  WisecallI18n.getConfig().then((cfg) => { supportEmail = cfg.contactEmail || null; founder = cfg.founder || null; render(); renderFounder(); });
 })();
