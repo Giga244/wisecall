@@ -44,10 +44,23 @@
     };
   }
 
+  // A Georgian address (/ka/...) is always Georgian, and remembers it; otherwise the saved choice, then the browser's language.
+  const KA_PATH = /^\/ka(\/|$)/;
+  const onKaPath = () => KA_PATH.test(location.pathname);
+  // The page's address without the /ka prefix (what scripts compare against).
+  const path = () => location.pathname.replace(/^\/ka(?=\/|$)/, '') || '/';
   function getLang() {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    if (onKaPath()) { try { localStorage.setItem(STORAGE_KEY, 'ka'); } catch (e) { /* storage unavailable */ } return 'ka'; }
+    let saved = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { /* storage unavailable */ }
     if (saved) return saved;
     return navigator.language && navigator.language.toLowerCase().startsWith('ka') ? 'ka' : 'en';
+  }
+  // The page's title in the language (meta.<page>.title), for pages whose title is the same for everyone.
+  function applyTitle(dict) {
+    const p = path();
+    const key = p === '/' || p === '/index.html' ? 'index' : (/^\/([\w-]+)\.html$/.exec(p) || [])[1];
+    if (key && dict[`meta.${key}.title`]) document.title = dict[`meta.${key}.title`];
   }
 
   // A page can name extra dictionaries: <meta name="wisecall-i18n-extra" content="admin"> also loads /i18n/admin-<lang>.json. The admin
@@ -95,10 +108,17 @@
   }
 
   async function setLang(lang) {
+    // On a Georgian address, English is the same page without /ka.
+    if (lang !== 'ka' && onKaPath()) {
+      try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) { /* storage unavailable */ }
+      location.href = path() + location.search + location.hash;
+      return currentDict;
+    }
     localStorage.setItem(STORAGE_KEY, lang);
     document.documentElement.lang = lang;
     const dict = await loadDict(lang);
     applyDict(dict);
+    applyTitle(dict);
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
     document.dispatchEvent(new CustomEvent('wisecall:lang-changed', { detail: { lang, dict } }));
     return dict;
@@ -116,6 +136,7 @@
     document.documentElement.dataset.launch = cfg.launchMode; // lets the stylesheet show or hide things per mode
     if (cfg.devMode) { const s = document.createElement('script'); s.src = '/js/dev-overflow.js'; document.head.appendChild(s); } // development only
     applyDict(dict);
+    applyTitle(dict);
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.lang === lang);
       btn.addEventListener('click', () => setLang(btn.dataset.lang));
@@ -124,5 +145,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName, path };
 })();

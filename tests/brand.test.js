@@ -126,7 +126,7 @@ describe('every page carries the icons, the manifest and the theme colour', () =
     const html = await (await fetch(base + '/')).text();
     const m = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s);
     assert.ok(m);
-    const ld = JSON.parse(m[1]);
+    const ld = JSON.parse(m[1])['@graph'].find((x) => x['@type'] === 'Organization'); // (with the WebSite, in one graph)
     assert.equal(ld['@type'], 'Organization');
     assert.equal(ld.name, 'Wisecall');
     assert.match(ld.logo, new RegExp(`^${base.replace(/[.:\/]/g, '\\$&')}/brand/wisecall-mark\\.svg(\\?v=[0-9a-f]{10})?$`));

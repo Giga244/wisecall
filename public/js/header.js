@@ -13,7 +13,7 @@
       return '<picture class="logo-pic" data-mark><source media="(max-width: 359px)" srcset="/brand/wisecall-mark.svg"><img class="logo-img" src="/brand/wisecall-logo.svg" alt="Wisecall" width="149" height="36" decoding="async"></picture>';
     }
   };
-  const here = window.location.pathname;
+  const here = window.location.pathname.replace(/^\/ka(?=\/|$)/, '') || '/'; // (the Georgian address /ka/... is the same page)
   const onHome = here === '/' || here === '/index.html';
   const link = (hash) => (onHome ? '' : '/index.html') + hash; // on the home page the links just scroll
 

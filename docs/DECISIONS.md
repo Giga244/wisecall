@@ -43,3 +43,13 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - The account is closed at once and emptied after 14 days (the brief's grace period). The row stays with its details removed because
   bookings, payouts and receipts must keep pointing at it (accounting records). The question and answer texts stay, since they are
   also the other person's record; messages the deleted person wrote are blanked. Listed in LEGAL-REVIEW.md 47 for the lawyer.
+
+## PART 0 / Phase 5 — SEO
+- Georgian gets its own addresses with a `/ka` prefix (`/ka/`, `/ka/about.html`, `/ka/u/<name>`), served by the same routes; the
+  head of each page (lang, title, description, share tags, canonical, hreflang) is written in that language by the server.
+  `x-default` points to Georgian, the main market (as proposed in docs/seo/meta-tags.md). Links inside a page stay on the plain
+  addresses; the page still shows the visitor's chosen language, so nothing else had to change.
+- Structured data for a listed mentor: a ProfilePage with the Person, and the paid answer as a Service with an Offer (price in GEL).
+  The rating is attached to the Service, not the Person: schema.org has no aggregateRating on Person, and it is only added when there are
+  real, visible reviews.
+- Mentor profiles are rendered into the HTML (name, role, bio, city, languages, price, rating), so /api/ can stay blocked in robots.txt.

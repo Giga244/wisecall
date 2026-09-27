@@ -30,11 +30,77 @@ function readPage(file) {
   return html;
 }
 
+// ---- Languages ---------------------------------------------------------------------------------------------------------------
+// Every page has an English address (/about.html) and a Georgian one (/ka/about.html). The Georgian one is served by the same route:
+// languagePrefix() takes /ka off the address and remembers the language (res.locals.pageLang), and the head of the page is then
+// written in that language: <html lang>, the title and description (meta.<page>.* in the dictionaries), the share tags, the canonical
+// address, and links to both language versions (hreflang; Georgian is the default, the site's main market).
+const DICTS = {};
+const dict = (lang) => (DICTS[lang] = DICTS[lang] || JSON.parse(fs.readFileSync(path.join(PUBLIC, 'i18n', `${lang === 'ka' ? 'ka' : 'en'}.json`), 'utf8')));
+const langOf = (res) => (res.locals && res.locals.pageLang === 'ka' ? 'ka' : 'en');
+const kaUrl = (enPath) => `${config.PUBLIC_URL}/ka${enPath === '/' ? '/' : enPath}`;
+const pageKeyOf = (p) => (p === '/' || p === '/index.html' ? 'index' : (/^\/([\w-]+)\.html$/.exec(p) || [])[1] || null);
+
+function languagePrefix(req, res, next) {
+  if (req.path === '/ka') return res.redirect(301, '/ka/' + (req.url.slice(3) || ''));
+  if (req.path.startsWith('/ka/') && !req.path.startsWith('/ka/api/')) {
+    res.locals.pageLang = 'ka';
+    req.url = req.url.slice(3);
+  }
+  next();
+}
+
+// The head of a page in its language, with its alternates. Pages without a canonical address (error pages) only get <html lang>.
+function localize(html, lang) {
+  html = html.replace(/<html lang="[a-z-]+"/, () => `<html lang="${lang}"`);
+  const canon = /<link rel="canonical" href="([^"]*)">/.exec(html);
+  if (!canon) return html;
+  const enUrl = canon[1];
+  const enPath = enUrl.startsWith(config.PUBLIC_URL) ? (enUrl.slice(config.PUBLIC_URL.length) || '/') : enUrl;
+  const ka = kaUrl(enPath);
+  const d = dict(lang);
+  const key = pageKeyOf(enPath);
+  const title = key && d[`meta.${key}.title`];
+  const description = key && d[`meta.${key}.description`];
+  if (title) {
+    html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`)
+      .replace(/(<meta (?:property|name)="(?:og|twitter):title" content=")[^"]*(")/g, (m, a, b) => a + escapeHtml(title) + b);
+  }
+  if (description) {
+    html = html.replace(/(<meta (?:name="description"|(?:property|name)="(?:og|twitter):description") content=")[^"]*(")/g, (m, a, b) => a + escapeHtml(description) + b);
+  }
+  if (lang === 'ka') {
+    html = html.replace(canon[0], () => `<link rel="canonical" href="${escapeHtml(ka)}">`)
+      .replace(/(<meta property="og:url" content=")[^"]*(")/, (m, a, b) => a + escapeHtml(ka) + b);
+  }
+  const tags = [
+    `<link rel="alternate" hreflang="en" href="${escapeHtml(enUrl)}">`,
+    `<link rel="alternate" hreflang="ka" href="${escapeHtml(ka)}">`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(ka)}">`,
+    `<meta property="og:locale" content="${lang === 'ka' ? 'ka_GE' : 'en_US'}">`,
+    `<meta property="og:locale:alternate" content="${lang === 'ka' ? 'en_US' : 'ka_GE'}">`
+  ];
+  return html.replace('</head>', () => tags.join('\n') + '\n</head>');
+}
+
+// Structured data for search engines (JSON-LD). It is data, not a script: the Content-Security-Policy does not run it. "<" is escaped
+// so a value can never close the tag.
+const jsonLd = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+const addToHead = (html, extra) => html.replace('</head>', () => extra + '\n</head>');
+
+// A description of about 155 characters, cut at a word, with "…" when it was cut.
+function shortText(s, max = 155) {
+  const t = String(s || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  return (cut.slice(0, Math.max(cut.lastIndexOf(' '), max - 30)) + '…').trim();
+}
+
 // HTML is always asked for again (the answer is a small 304 when nothing changed), so a new release shows at once; the files it names
 // carry a version in their address and are kept for a year.
 function sendHtml(res, status, html) {
   if (!res.get('Cache-Control')) res.set('Cache-Control', 'no-cache');
-  res.status(status).type('html').send(html);
+  res.status(status).type('html').send(localize(html, langOf(res)));
 }
 
 function fill(html, vars) {
@@ -65,18 +131,102 @@ async function sendProfile(res, row, asked) {
   const u = row ? userFromRow(row) : null;
   const listable = Boolean(u) && isListable(u);
   const isPublic = Boolean(u) && u.profileVisibility === 'public';
+  const lang = langOf(res);
   const vars = baseVars(u ? `/u/${u.username}` : '/profile.html');
+  let extraHead = '';
+  vars.OG_IMAGE = config.PUBLIC_URL + assets.rewrite('/og-image-1200x630.png');
+  vars.PROFILE_SSR = SKELETON;
   if (u && isPublic) {
     const title = listable ? `${u.name}, ${u.roleTitle} — Wisecall` : `${u.name} — Wisecall`;
     vars.TITLE = escapeHtml(title);
-    vars.DESCRIPTION = escapeHtml((listable ? `Ask ${u.name} (${u.roleTitle}) a question on Wisecall for ${u.price} GEL. ${(u.bio || '').slice(0, 120)}` : `${u.name} on Wisecall. ${u.headline || u.bio || ''}`).trim().slice(0, 300));
+    const text = listable
+      ? (lang === 'ka' ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price} ₾. ${u.bio || ''}` : `Ask ${u.name} (${u.roleTitle}) a question on Wisecall for ${u.price} GEL. ${u.bio || ''}`)
+      : `${u.name} — Wisecall. ${u.headline || u.bio || ''}`;
+    vars.DESCRIPTION = escapeHtml(shortText(text));
+    if (u.photoUpdatedAt) vars.OG_IMAGE = config.PUBLIC_URL + require('./util').photoUrl(u);
+    // The profile's visible content, in the page itself, so search engines and link previews can read it (the page script then
+    // draws the full, interactive profile over it).
+    const profile = await require('./profiles').view(u, null);
+    const stats = listable ? (await require('./models').mentorStatsFor([u.id]))[u.id] : null;
+    vars.PROFILE_SSR = profileSsr(profile, stats, listable ? u : null, lang);
+    if (listable) extraHead = profileJsonLd(u, stats, lang);
   } else {
-    vars.TITLE = 'Profile — Wisecall';
-    vars.DESCRIPTION = 'A profile on Wisecall, where people ask verified experts and get real, paid answers.';
+    vars.TITLE = lang === 'ka' ? 'პროფილი — Wisecall' : 'Profile — Wisecall';
+    vars.DESCRIPTION = lang === 'ka' ? 'პროფილი Wisecall-ზე, სადაც ადამიანები გადამოწმებულ ექსპერტებს კითხვებს უსვამენ.' : 'A profile on Wisecall, where people ask verified experts and get real, paid answers.';
   }
   vars.ROBOTS = listable && isPublic ? 'index, follow' : 'noindex';
-  sendHtml(res, u || asked === undefined ? 200 : 404, fill(html, vars));
+  const page = fill(html, vars);
+  sendHtml(res, u || asked === undefined ? 200 : 404, extraHead ? addToHead(page, extraHead) : page);
   return true;
+}
+
+// What stands in the profile area until the page script has drawn the profile (a private or unknown profile shows only this).
+const SKELETON = `<div class="expert-layout" aria-hidden="true">
+      <div class="profile-card">
+        <div class="profile-head">
+          <span class="skeleton skeleton-avatar"></span>
+          <div style="flex:1"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line w60"></span></div>
+        </div>
+        <span class="skeleton skeleton-line w80" style="margin-top:24px"></span>
+      </div>
+      <div class="ask-side"><div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w60"></span></div></div>
+    </div>`;
+
+// A public profile as plain HTML (only what the public profile shows; every value escaped).
+function profileSsr(p, stats, mentor, lang) {
+  const ka = lang === 'ka';
+  const facts = [
+    p.city ? `<li>${escapeHtml(p.city)}</li>` : '',
+    (p.languages || []).length ? `<li>${escapeHtml(p.languages.join(', '))}</li>` : '',
+    mentor ? `<li>${escapeHtml(ka ? `ფასი: ${mentor.price} ₾ ერთ კითხვაზე` : `${mentor.price} GEL per question`)}</li>` : '',
+    stats && stats.reviewCount ? `<li>${escapeHtml(ka ? `★ ${stats.ratingAvg} (${stats.reviewCount} შეფასება)` : `★ ${stats.ratingAvg} (${stats.reviewCount} reviews)`)}</li>` : ''
+  ].join('');
+  const role = mentor ? mentor.roleTitle : p.headline;
+  return `<article class="profile-card profile-ssr">
+      <div class="profile-head"><div>
+        <h1>${escapeHtml(p.name)}</h1>
+        ${role ? `<p class="profile-headline">${escapeHtml(role)}</p>` : ''}
+      </div></div>
+      ${p.bio ? `<p class="profile-bio">${escapeHtml(p.bio)}</p>` : ''}
+      ${facts ? `<ul class="profile-facts">${facts}</ul>` : ''}
+    </article>`;
+}
+
+// A listed mentor as a person who offers a service (a paid written answer); its rating only when there are real, visible reviews.
+function profileJsonLd(u, stats, lang) {
+  const url = lang === 'ka' ? kaUrl(`/u/${u.username}`) : `${config.PUBLIC_URL}/u/${u.username}`;
+  const niches = require('./niches');
+  const service = {
+    '@type': 'Service', name: lang === 'ka' ? `კითხვა: ${u.name}` : `A question to ${u.name}`, serviceType: niches.nameOf(u.niche, lang, u.customNiche),
+    provider: { '@id': `${url}#person` },
+    offers: { '@type': 'Offer', price: String(u.price), priceCurrency: 'GEL', url }
+  };
+  if (stats && stats.reviewCount > 0 && stats.ratingAvg) service.aggregateRating = { '@type': 'AggregateRating', ratingValue: stats.ratingAvg, reviewCount: stats.reviewCount, bestRating: 5, worstRating: 1 };
+  const person = {
+    '@type': 'Person', '@id': `${url}#person`, name: u.name, jobTitle: u.roleTitle, url,
+    ...(u.photoUpdatedAt ? { image: config.PUBLIC_URL + require('./util').photoUrl(u) } : {}), ...(u.bio ? { description: shortText(u.bio, 300) } : {})
+  };
+  const crumbs = {
+    '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Wisecall', item: lang === 'ka' ? kaUrl('/') : `${config.PUBLIC_URL}/` },
+      ...(u.niche && u.niche !== 'other' ? [{ '@type': 'ListItem', position: 2, name: niches.nameOf(u.niche, lang), item: lang === 'ka' ? kaUrl(`/advice/${u.niche}`) : `${config.PUBLIC_URL}/advice/${u.niche}` }] : []),
+      { '@type': 'ListItem', position: u.niche && u.niche !== 'other' ? 3 : 2, name: u.name, item: url }
+    ]
+  };
+  return jsonLd({ '@context': 'https://schema.org', '@graph': [{ '@type': 'ProfilePage', url, mainEntity: { '@id': `${url}#person` } }, person, service, crumbs] });
+}
+
+// The home page: who runs the site, and the site itself.
+function homeJsonLd(lang) {
+  const url = lang === 'ka' ? kaUrl('/') : `${config.PUBLIC_URL}/`;
+  const d = dict(lang);
+  const org = { '@type': 'Organization', '@id': `${config.PUBLIC_URL}/#org`, name: 'Wisecall', url: `${config.PUBLIC_URL}/`, logo: config.PUBLIC_URL + assets.rewrite('/brand/wisecall-mark.svg'),
+    description: "Advice from people who've already done it.",
+    ...(config.LEGAL_NAME ? { legalName: config.LEGAL_NAME } : {}), ...(config.SUPPORT_EMAIL ? { email: config.SUPPORT_EMAIL } : {}),
+    sameAs: Object.values(config.SOCIAL_URLS || {}).filter(Boolean) };
+  const site = { '@type': 'WebSite', '@id': `${config.PUBLIC_URL}/#site`, name: 'Wisecall', url, inLanguage: lang === 'ka' ? 'ka' : 'en', publisher: { '@id': org['@id'] },
+    description: d['meta.index.description'] || '' };
+  return jsonLd({ '@context': 'https://schema.org', '@graph': [org, site] });
 }
 
 // A page per field: /advice/<niche>. The title, description, mentor list and links to the other fields are written in here, in English,
@@ -93,9 +243,13 @@ async function sendAdvice(req, res, key) {
   const rows = live ? (await query(
     `SELECT name, username, role_title, price FROM users WHERE ${listableSql()} AND niche = $1 AND username IS NOT NULL AND profile_visibility = 'public'
       ORDER BY created_at DESC LIMIT 60`, [key])).rows : [];
-  const name = n.en;
-  const h1 = `Advice on ${name} from people who have done it`;
-  const intro = `Ask a verified mentor your question about ${name} and get a real, written answer. Every mentor on Wisecall passed an ID check and a review of their experience.`;
+  const lang = langOf(res);
+  const ka = lang === 'ka';
+  const name = niches.nameOf(key, lang);
+  const h1 = ka ? `რჩევა: ${name} — მათგან, ვისაც ეს გაუვლია` : `Advice on ${name} from people who have done it`;
+  const intro = ka
+    ? `დაუსვი კითხვა გადამოწმებულ მენტორს (${name}) და მიიღე ნამდვილი, წერილობითი პასუხი. Wisecall-ის ყველა მენტორმა გაიარა პირადობის შემოწმება და გამოცდილების განხილვა.`
+    : `Ask a verified mentor your question about ${name} and get a real, written answer. Every mentor on Wisecall passed an ID check and a review of their experience.`;
   const vars = {
     ...baseVars(`/advice/${key}`),
     TITLE: escapeHtml(`${h1} — Wisecall`),
@@ -105,13 +259,15 @@ async function sendAdvice(req, res, key) {
     NICHE_NAME: escapeHtml(name),
     H1: escapeHtml(h1),
     INTRO: escapeHtml(intro),
-    LIST_TITLE: escapeHtml(`Mentors: ${name}`),
+    LIST_TITLE: escapeHtml(ka ? `მენტორები: ${name}` : `Mentors: ${name}`),
     REGULATED_HIDDEN: n.regulated ? '' : 'hidden',
-    REGULATED_NOTE: n.regulated ? escapeHtml(`${name} is a regulated field: mentors here also showed their licence, and a person on our team checked it. Answers are personal experience and opinion, not professional advice for your situation.`) : '',
+    REGULATED_NOTE: n.regulated ? escapeHtml(ka
+      ? `${name} რეგულირებადი სფეროა: აქაურმა მენტორებმა ლიცენზიაც წარმოადგინეს და ჩვენი გუნდის წევრმა შეამოწმა. პასუხები პირადი გამოცდილება და აზრია და არა პროფესიული რჩევა შენი კონკრეტული შემთხვევისთვის.`
+      : `${name} is a regulated field: mentors here also showed their licence, and a person on our team checked it. Answers are personal experience and opinion, not professional advice for your situation.`) : '',
     MENTORS: rows.length
       ? rows.map((r) => `<a class="expert-card" href="/u/${encodeURIComponent(r.username)}"><div class="card-top"><div><div class="card-name">${escapeHtml(r.name)}</div><div class="card-role">${escapeHtml(r.role_title || '')}</div></div></div><div class="card-bottom"><span class="price">${escapeHtml(String(r.price))} ₾</span></div></a>`).join('')
-      : `<p class="muted">${escapeHtml(live ? `No mentors in ${name} yet.` : 'Wisecall opens soon.')}</p>`,
-    OTHER_NICHES: niches.active().filter((x) => x.key !== key).map((x) => `<li><a class="niche-chip" href="/advice/${x.key}"><span>${escapeHtml(x.en)}</span></a></li>`).join('')
+      : `<p class="muted">${escapeHtml(live ? (ka ? `${name}: მენტორები ჯერ არ არიან.` : `No mentors in ${name} yet.`) : (ka ? 'Wisecall მალე გაიხსნება.' : 'Wisecall opens soon.'))}</p>`,
+    OTHER_NICHES: niches.active().filter((x) => x.key !== key).map((x) => `<li><a class="niche-chip" href="${ka ? '/ka' : ''}/advice/${x.key}"><span>${escapeHtml(ka ? x.ka : x.en)}</span></a></li>`).join('')
   };
   sendHtml(res, 200, fill(html, vars));
   return true;
@@ -128,7 +284,11 @@ function pageRoutes() {
   const router = express.Router();
 
   router.get(['/', '/index.html'], async (req, res, next) => {
-    try { if (!(await sendPage(res, 'index.html', baseVars('/')))) next(); } catch (e) { next(e); }
+    try {
+      const html = readPage('index.html');
+      if (html === null) return next();
+      sendHtml(res, 200, addToHead(fill(html, baseVars('/')), homeJsonLd(langOf(res))));
+    } catch (e) { next(e); }
   });
 
   // The old address of a mentor's page (/expert.html?id=...) lives on: it moves to the profile, keeping the rest of the query
@@ -197,15 +357,7 @@ function seoRoutes() {
       'User-agent: *',
       'Disallow: /api/',
       'Disallow: /admin.html',
-      'Disallow: /dashboard.html',
-      'Disallow: /settings.html',
-      'Disallow: /verify-email.html',
-      'Disallow: /choose-username.html',
-      'Disallow: /reset-password.html',
-      'Disallow: /forgot-password.html',
-      'Disallow: /waitlist-unsubscribe.html',
-      'Disallow: /unsubscribe.html',
-      'Disallow: /inbox.html',
+      'Disallow: /ka/admin.html',
       `Sitemap: ${config.PUBLIC_URL}/sitemap.xml`,
       ''
     ].join('\n'));
@@ -213,19 +365,26 @@ function seoRoutes() {
 
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
-      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3], ['/signup.html', 0.5], ['/login.html', 0.3]];
+      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
+        .filter(([p]) => p === '/' || fs.existsSync(path.join(PUBLIC, p)));
       // Before launch the profiles are not offered to visitors, so they are not offered to search engines either.
       await require('./launch').ensureFresh(5000);
-      const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT username, created_at FROM users WHERE ${listableSql()} AND username IS NOT NULL AND profile_visibility = 'public' ORDER BY created_at DESC LIMIT 5000`)).rows;
+      const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT username, GREATEST(created_at, COALESCE(photo_updated_at, created_at), COALESCE(verification_decided_at, created_at)) AS changed_at FROM users WHERE ${listableSql()} AND username IS NOT NULL AND profile_visibility = 'public' ORDER BY created_at DESC LIMIT 5000`)).rows;
       // A field's page, once it has a mentor people can ask.
       const fields = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT DISTINCT niche FROM users WHERE ${listableSql()} AND profile_visibility = 'public'`)).rows
         .map((r) => r.niche).filter((k) => require('./niches').isValid(k));
+      // Each page in both languages, each naming the other (and Georgian as the default).
+      const both = (p, extra) => {
+        const en = config.PUBLIC_URL + p, ka = kaUrl(p);
+        const alt = `<xhtml:link rel="alternate" hreflang="en" href="${escapeHtml(en)}"/><xhtml:link rel="alternate" hreflang="ka" href="${escapeHtml(ka)}"/><xhtml:link rel="alternate" hreflang="x-default" href="${escapeHtml(ka)}"/>`;
+        return [en, ka].map((loc) => `<url><loc>${escapeHtml(loc)}</loc>${alt}${extra}</url>`);
+      };
       const urls = [
-        ...staticPages.map(([p, prio]) => `<url><loc>${escapeHtml(config.PUBLIC_URL + p)}</loc><priority>${prio}</priority></url>`),
-        ...fields.map((k) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/advice/${k}`)}</loc><priority>0.8</priority></url>`),
-        ...rows.map((r) => `<url><loc>${escapeHtml(`${config.PUBLIC_URL}/u/${r.username}`)}</loc><lastmod>${new Date(r.created_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority></url>`)
+        ...staticPages.flatMap(([p, prio]) => both(p, `<priority>${prio}</priority>`)),
+        ...fields.flatMap((k) => both(`/advice/${k}`, '<priority>0.8</priority>')),
+        ...rows.flatMap((r) => both(`/u/${r.username}`, `<lastmod>${new Date(r.changed_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority>`))
       ];
-      res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
+      res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
     } catch (e) { next(e); }
   });
 
@@ -264,4 +423,4 @@ function errorPage(req, res) {
   sendHtml(res, 500, fill(html, baseVars(req.path)));
 }
 
-module.exports = { pageRoutes, seoRoutes, blockRawHtml, notFoundHandler, errorPage };
+module.exports = { pageRoutes, seoRoutes, blockRawHtml, notFoundHandler, errorPage, languagePrefix, localize, shortText };

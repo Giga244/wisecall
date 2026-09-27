@@ -2,7 +2,7 @@
 // for a mentor, how they were checked, their reviews, and the box where a buyer writes a question and goes to pay at the bank.
 (async function () {
   const params = new URLSearchParams(location.search);
-  const username = (location.pathname.match(/^\/u\/([\w-]+)/) || [])[1] || '';
+  const username = (location.pathname.match(/^(?:\/ka)?\/u\/([\w-]+)/) || [])[1] || '';
   // Everything the page needs is asked for at the same moment (texts, who is signed in, the profile), not one after the other.
   const profileRequest = username ? WisecallAPI.apiFetch('/users/' + encodeURIComponent(username)).catch((e) => ({ error: e.code || 'error' })) : Promise.resolve({ error: 'not_found' });
   await WisecallI18n.initI18n();
@@ -28,7 +28,16 @@
     answer = await WisecallAPI.apiFetch('/users/' + encodeURIComponent(answer.redirectTo)).catch((e) => ({ error: e.code || 'error' }));
   }
   if (answer.private) { document.title = `${t('profile.private.title')} — Wisecall`; showMessage('profile.private.title', `<p class="muted">${t('profile.private.body')}</p>`); return; }
-  if (!answer.profile) { showMessage('profile.notFound'); return; }
+  if (!answer.profile) {
+    // Nobody by that name, or the request failed (then say so, with a way to try again: it is not "not found").
+    if (answer.error && answer.error !== 'not_found') {
+      showMessage('profile.loadError', `<p><button type="button" class="btn btn-outline" data-retry>${t('common.retry')}</button></p>`);
+      page.querySelector('[data-retry]').addEventListener('click', () => location.reload());
+      return;
+    }
+    showMessage('profile.notFound');
+    return;
+  }
   // One object for the page: the person, plus (for a mentor) what buyers need.
   const expert = { ...answer.profile, ...(answer.profile.mentor || {}) };
   const isMentor = Boolean(answer.profile.isMentor);

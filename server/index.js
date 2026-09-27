@@ -151,6 +151,7 @@ app.get('/api/config', async (req, res) => {
 // setting is ever sent to a visitor or an ordinary account (the admin page itself is checked in server/pages.js).
 app.use(require('./adminAuth').adminOnlyFile);
 
+app.use(pages.languagePrefix); // (/ka/<page> is the Georgian version of <page>)
 app.use(pages.seoRoutes());
 app.use(pages.pageRoutes());
 app.use(pages.blockRawHtml);
