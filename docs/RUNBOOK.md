@@ -150,10 +150,21 @@ required value is missing or unsafe; the previous instance keeps running.
 
 - **Automatic:** Render paid PostgreSQL plans keep daily backups (Render → `wisecall-db` → **Backups**; check your plan's retention).
   Test a restore once a quarter.
-- **Manual, before every migration and weekly:**
+- **Manual, before every migration and weekly** (needs the PostgreSQL client tools; `PG_BIN` can name their folder):
   ```bash
-  pg_dump "$EXTERNAL_DATABASE_URL" --format=custom --file=wisecall-$(date +%F).dump
+  npm run backup -- "$EXTERNAL_DATABASE_URL"      # -> backups/wisecall-<date-time>.dump (pg_dump custom format; backups/ is git-ignored)
   ```
+  (the same as `pg_dump "$EXTERNAL_DATABASE_URL" --format=custom --no-owner --file=wisecall-$(date +%F).dump`).
+- **Check that a backup really restores** (monthly, and after changing plans):
+  ```bash
+  BACKUP_SOURCE_URL="$EXTERNAL_DATABASE_URL" npm run backup:check -- backups/wisecall-<date-time>.dump
+  ```
+  It restores the file into a new, empty scratch database on the same server, compares the row counts of the main tables (users,
+  bookings, payouts, payout batches, receipts, ratings, verification, inbox, waiting list) with the source, prints `ok`/`DIFF` per
+  table and drops the scratch database. The source is only read. Counts can differ if people used the site after the backup was made;
+  run it right after the backup for a clean comparison. The database user needs permission to create databases (on Render, run it
+  against a local PostgreSQL instead: restore there with `BACKUP_SOURCE_URL` pointing at the local copy you restored).
+  Tested on 2026-09-28 against the local test database: every table matched (`The backup restores completely.`).
   Store the file encrypted (it contains personal data), outside Render, and delete copies older than [90 days].
 - **Restore** into a new database first, never straight over production:
   ```bash
