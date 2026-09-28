@@ -52,10 +52,9 @@ function parseExperience(input) {
   if (b.niche !== undefined) {
     if (b.niche !== null && !rules.isCustomNiche(b.niche) && !rules.isValidNiche(b.niche)) return { error: 'invalid_niche', field: 'niche' };
     patch.niche = b.niche;
-    if (!rules.isCustomNiche(b.niche)) patch.customNiche = null; // (the mentor's own words are only kept with "Other")
   }
-  // "Other (type your own)": the field in the mentor's own words (public on the profile, so it is checked like one).
-  if (b.customNiche !== undefined && (b.niche === undefined || rules.isCustomNiche(b.niche))) {
+  // "Your field": the field in the mentor's own words, whatever the category (public on the profile, so it is checked like one).
+  if (b.customNiche !== undefined) {
     if (b.customNiche === null || b.customNiche === '') patch.customNiche = null;
     else {
       const c = require('../customNiche').clean(b.customNiche);
@@ -86,10 +85,26 @@ function parseExperience(input) {
   return { patch };
 }
 
+// Regulated work stays regulated: a field or title that names a licensed profession moves a non-regulated category to the regulated one
+// (server/fieldRules.js). An admin's "not a licensed profession" lasts until the mentor changes their field or title. Changes the patch.
+function applyFieldRules(user, patch) {
+  const changed = (k) => patch[k] !== undefined && patch[k] !== user[k];
+  const wordsChanged = changed('customNiche') || changed('roleTitle');
+  if (wordsChanged && user.fieldOverride) patch.fieldOverride = false;
+  const value = (k) => (patch[k] !== undefined ? patch[k] : user[k]);
+  const r = require('../fieldRules').categoryFor({ niche: value('niche'), field: value('customNiche'), title: value('roleTitle'), overridden: user.fieldOverride && !wordsChanged });
+  if (r.forced) patch.niche = r.forced;
+  return patch;
+}
+// Whether the category was chosen by the words (shown to the mentor, so they know why a licence is asked for).
+const regulatedByWords = (user) => !user.fieldOverride && rules.isRegulated(user.niche)
+  && require('../fieldRules').regulatedCategoryIn(user.customNiche, user.roleTitle) === user.niche;
+
 async function saveExperience(user, input) {
   if (isLocked(user)) throw new VerificationError('application_locked');
   const { patch, error, field } = parseExperience(input);
   if (error) throw new VerificationError(error, { field });
+  applyFieldRules(user, patch);
   // A different niche can need different steps (a licence), so the steps shown are recomputed from it when the page reloads.
   return Object.keys(patch).length ? updateUser(user.id, patch) : user;
 }
@@ -179,7 +194,8 @@ function missingFor(user, evidence, stepMap) {
   const missing = [];
   if (!user.emailVerified) missing.push('email');
   if (!user.roleTitle || user.roleTitle.length < LIMITS.titleMin) missing.push('title');
-  if (!(rules.isValidNiche(user.niche) || (rules.isCustomNiche(user.niche) && user.customNiche))) missing.push('niche');
+  if (!user.customNiche) missing.push('field');
+  if (!(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) missing.push('niche');
   if (!(user.specialtyTags || []).length) missing.push('tags');
   if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
   if (!user.story || size(user.story) < LIMITS.storyMin || looksRepeated(user.story)) missing.push('story');
@@ -255,7 +271,7 @@ async function applicationFor(user, stepMap) {
   const evidence = await listEvidence(user.id);
   return {
     form: {
-      roleTitle: user.roleTitle || '', niche: user.niche || null, customNiche: user.customNiche || '', specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
+      roleTitle: user.roleTitle || '', niche: user.niche || null, customNiche: user.customNiche || '', regulatedByWords: regulatedByWords(user), specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
       story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price || null
     },
     evidence: evidence.map(evidenceForMentor),
@@ -266,7 +282,32 @@ async function applicationFor(user, stepMap) {
   };
 }
 
+// ---- An admin changes a mentor's field -------------------------------------------------------------------------------------------------
+// text: the field in words (required), niche: a category or "other", notRegulated: the words name a licensed profession but this mentor
+// does not practise it ("Doctor Who fan fiction"). A category that needs a licence the approved mentor has not passed is refused.
+async function setFieldByAdmin({ mentorId, admin, text, niche, notRegulated }) {
+  const mentor = await getUserById(mentorId);
+  if (!isMentor(mentor)) throw new VerificationError('not_found');
+  const c = require('../customNiche').clean(text);
+  if (c.error) throw new VerificationError(c.error, { field: 'customNiche' });
+  if (!rules.isValidNiche(niche) && !rules.isCustomNiche(niche)) throw new VerificationError('invalid_niche', { field: 'niche' });
+  const words = require('../fieldRules').regulatedCategoryIn(c.value, mentor.roleTitle);
+  const override = Boolean(words) && !rules.isRegulated(niche);
+  if (override && notRegulated !== true) throw new VerificationError('regulated_words', { field: words });
+  if (mentor.verificationStatus === 'verified' && rules.isRegulated(niche) && niche !== mentor.niche) {
+    const stepMap = await steps.loadSteps(mentor.id);
+    const missing = rules.requiredFor(niche).filter((s) => !stepMap[s] || steps.effectiveStatus(stepMap[s]) !== 'passed');
+    if (missing.length) throw new VerificationError('licence_missing', { missing });
+  }
+  const before = `"${mentor.customNiche || ''}" (${mentor.niche || '-'})`;
+  const updated = await updateUser(mentor.id, { customNiche: c.value, niche, fieldOverride: override });
+  await steps.audit(mentor.id, steps.adminActor(admin), 'niche_changed', {
+    reason: `field ${before} -> "${c.value}" (${niche})${override ? '; not a licensed profession (admin decision)' : ''}`
+  });
+  return updated;
+}
+
 module.exports = {
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
-  missingFor, submit, withdraw, applicationFor, cleanUrl
+  missingFor, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin
 };

@@ -13,7 +13,7 @@ function publicProfile(user) {
     name: user.name,
     roleTitle: user.roleTitle,
     niche: user.niche,
-    customNiche: user.niche === 'other' ? user.customNiche || null : undefined, // (a mentor's own niche, "Other")
+    customNiche: user.customNiche || null, // "Your field", in the mentor's own words (shown instead of the category)
     bio: user.bio,
     price: user.price,
     color: user.color,

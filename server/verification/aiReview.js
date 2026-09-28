@@ -96,7 +96,7 @@ function redact(text) {
 // user: the mentor; evidence: rows with their check results. Returns the object that is sent (tests read it back).
 function buildApplication(user, evidence) {
   return {
-    niche: redact(require('../niches').nameOf(user.niche, 'en', user.customNiche)),
+    niche: redact(require('../niches').nameOf(user.niche, 'en', user.customNiche) + (user.niche !== 'other' && user.customNiche ? ` (${user.customNiche})` : '')),
     ...(rules.isCustomNiche(user.niche) ? { niche_is_applicants_own_words: true } : {}),
     regulated_niche: rules.isRegulated(user.niche),
     title: redact(user.roleTitle),

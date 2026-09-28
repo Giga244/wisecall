@@ -1,12 +1,12 @@
-// "Other: type your own" niche. A mentor whose field is not in the list writes it in their own words (3 to 40 characters). The text is
-// public on their profile, so it is cleaned and checked: letters of any alphabet, spaces and a few joining marks only; no links, email
+// "Your field": every mentor writes their field in their own words (3 to 60 characters), next to the closest category or "Other"
+// (users.custom_niche). The text is public on their profile and cards, so it is cleaned and checked: letters of any alphabet, spaces and a few joining marks only; no links, email
 // addresses, phone numbers or long numbers; no rude words (English and Georgian, also written in Latin letters); nothing that looks like
-// an instruction to the reviewer. An admin later sees these grouped as "Suggested niches" (see server/routes/adminNiches.js).
+// an instruction to the reviewer. The fields of mentors in "Other" are grouped for admins as "Suggested niches" (server/routes/adminNiches.js).
 const names = require('./verification/names');
 const { detectInjection } = require('./verification/injection');
 
 const MIN = 3;
-const MAX = 40;
+const MAX = 60;
 
 // Whole words (after Georgian is written in Latin letters and spelling variants are folded). Kept short on purpose: the admin reviews
 // every application anyway; this only stops the obvious from being saved as a public label.
@@ -26,7 +26,7 @@ function clean(input) {
   if (/https?:|www\.|@|\.(com|ge|net|org|io|ru)\b/i.test(value)) return { error: 'invalid_custom_niche' };
   if ((value.match(/\d/g) || []).length > 4) return { error: 'invalid_custom_niche' };                           // (no phone numbers)
   const words = wordsOf(value);
-  if (words.some((w) => RUDE.has(w) || RUDE.has(names.canon(w)))) return { error: 'invalid_custom_niche' };
+  if (words.some((w) => RUDE.has(w) || RUDE.has(names.canon(w))) || require('./textSafety').isOffensive(value)) return { error: 'invalid_custom_niche' };
   if (detectInjection([{ field: 'niche', text: value }]).found) return { error: 'invalid_custom_niche' };
   return { value };
 }

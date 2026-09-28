@@ -218,11 +218,13 @@
         <label><span>${t('ap.f.title')}</span>
           <input type="text" name="roleTitle" maxlength="${L.titleMax}" value="${esc(f.roleTitle)}" autocomplete="organization-title">
           <span class="hint">${t('ap.f.title.hint')}</span></label>
-        <label><span>${t('ap.f.niche')}</span>
-          <select name="niche"><option value="">${t('ap.f.niche.choose')}</option>${nicheOptions}</select></label>
-        <label class="ap-custom-niche"${f.niche === 'other' ? '' : ' hidden'}><span>${t('ap.f.customNiche')}</span>
-          <input type="text" name="customNiche" maxlength="40" value="${esc(f.customNiche || '')}">
+        <label class="ap-custom-niche"><span>${t('ap.f.customNiche')}</span>
+          <input type="text" name="customNiche" maxlength="60" value="${esc(f.customNiche || '')}" autocomplete="off">
           <span class="hint">${t('ap.f.customNiche.hint')}</span></label>
+        <label><span>${t('ap.f.niche')}</span>
+          <select name="niche"><option value="">${t('ap.f.niche.choose')}</option>${nicheOptions}</select>
+          <span class="hint">${t('ap.f.niche.hint')}</span></label>
+        ${f.regulatedByWords ? `<p class="mv-note ap-regulated-words" role="note">${esc(fill('ap.f.regulatedByWords', { niche: t('niche.' + f.niche) }))}</p>` : ''}
         <label><span>${t('ap.f.tags')}</span>
           <input type="text" name="specialtyTags" maxlength="400" value="${esc(f.specialtyTags.join(', '))}">
           <span class="hint">${fill('ap.f.tags.hint', { max: L.tagsMax })}</span></label>
@@ -245,7 +247,8 @@
     return `
       <dl class="ap-summary">
         <dt>${t('ap.f.title')}</dt><dd>${esc(f.roleTitle || '—')}</dd>
-        <dt>${t('ap.f.niche')}</dt><dd>${f.niche ? esc(WisecallI18n.nicheName(f.niche, f.customNiche)) : '—'}</dd>
+        <dt>${t('ap.f.customNiche')}</dt><dd>${esc(f.customNiche || '—')}</dd>
+        <dt>${t('ap.f.niche')}</dt><dd>${f.niche ? esc(t('niche.' + f.niche)) : '—'}</dd>
         <dt>${t('ap.f.tags')}</dt><dd>${esc(f.specialtyTags.join(', ') || '—')}</dd>
         <dt>${t('ap.f.years')}</dt><dd>${esc(f.yearsExperience === null ? '—' : f.yearsExperience)}</dd>
         <dt>${t('ap.f.story')}</dt><dd>${clip(f.story || '—', 280)}</dd>
@@ -416,7 +419,7 @@
     experience: (f) => WisecallAPI.apiFetch('/verification/experience', {
       method: 'PUT',
       body: {
-        roleTitle: f.roleTitle.value, niche: f.niche.value || null, ...(f.niche.value === 'other' ? { customNiche: f.customNiche.value } : {}), specialtyTags: f.specialtyTags.value,
+        roleTitle: f.roleTitle.value, niche: f.niche.value || null, customNiche: f.customNiche.value, specialtyTags: f.specialtyTags.value,
         yearsExperience: f.yearsExperience.value === '' ? null : Number(f.yearsExperience.value), story: f.story.value, sampleAnswer: f.sampleAnswer.value
       }
     }),
@@ -472,7 +475,6 @@
 
     // "Other (type your own)" shows the field for the mentor's own words.
     const expForm = root.querySelector('form[data-form="experience"]');
-    if (expForm) expForm.niche.addEventListener('change', () => { expForm.querySelector('.ap-custom-niche').hidden = expForm.niche.value !== 'other'; });
     const evForm = root.querySelector('form[data-form="evidence"]');
     if (evForm) { evForm.kind.addEventListener('change', () => syncEvidenceForm(evForm)); syncEvidenceForm(evForm); }
     root.querySelectorAll('textarea[data-count]').forEach((area) => { updateCount(area); area.addEventListener('input', () => updateCount(area)); });

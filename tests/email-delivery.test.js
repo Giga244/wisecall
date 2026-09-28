@@ -78,7 +78,7 @@ describe('every email goes out through the Resend API', () => {
     await m1.c.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Doctor', niche: 'medicine', price: 25 } });
     // The second one submits a complete application (a person then rejects it: the computer never does).
     await m2.c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
-    await m2.c.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Shop owner', niche: 'business', specialtyTags: ['retail'], yearsExperience: 5, story: 'I have run a small clothing shop in Kutaisi for five years and moved it online during the pandemic, with a team of three people.', sampleAnswer: longAnswer(SAMPLE) } });
+    await m2.c.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Shop owner', customNiche: 'Running a small shop', niche: 'business', specialtyTags: ['retail'], yearsExperience: 5, story: 'I have run a small clothing shop in Kutaisi for five years and moved it online during the pandemic, with a team of three people.', sampleAnswer: longAnswer(SAMPLE) } });
     await m2.c.api('/verification/evidence', { method: 'POST', body: { kind: 'website', url: 'https://georgian-applicant.invalid/' } });
     assert.equal((await m2.c.api('/verification/submit', { method: 'POST' })).status, 200);
     const id1 = (await m1.c.api('/me')).user.id;

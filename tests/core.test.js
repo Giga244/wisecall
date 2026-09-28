@@ -92,10 +92,10 @@ describe('mentor application and approval', () => {
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
     const empty = await m.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.error, 'incomplete');
-    assert.deepEqual(empty.missing, ['title', 'niche', 'tags', 'years', 'story', 'sample', 'evidence']);
+    assert.deepEqual(empty.missing, ['title', 'field', 'niche', 'tags', 'years', 'story', 'sample', 'evidence']);
     assert.equal((await m.api('/me')).user.verificationStatus, 'none', 'nothing is submitted');
 
-    const form = { roleTitle: 'Cardiologist', niche: 'medicine', specialtyTags: ['heart health', 'blood pressure'], yearsExperience: 14,
+    const form = { roleTitle: 'Cardiologist', customNiche: 'Heart health', niche: 'medicine', specialtyTags: ['heart health', 'blood pressure'], yearsExperience: 14,
       story: 'I trained in Tbilisi and Vienna and have worked as a cardiologist in a public hospital for fourteen years, running the outpatient clinic for patients after heart surgery.',
       sampleAnswer: longAnswer(SAMPLE) };
     assert.equal((await m.api('/verification/experience', { method: 'PUT', body: form })).status, 200);
@@ -315,7 +315,7 @@ describe('admin: mentor decisions and refunds', () => {
   test('rejecting needs a reason, and the mentor is told what it was', async () => {
     const m = await signupVerified(base, 'Reject Me', 'reject-me@example.com');
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 10 } });
-    await m.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Coach', niche: 'business', specialtyTags: ['sales'], yearsExperience: 6, story: 'I have coached small sales teams in Tbilisi for six years, first inside a telecom company and then on my own with shops and cafés.', sampleAnswer: longAnswer(SAMPLE) } });
+    await m.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Coach', customNiche: 'Sales coaching', niche: 'business', specialtyTags: ['sales'], yearsExperience: 6, story: 'I have coached small sales teams in Tbilisi for six years, first inside a telecom company and then on my own with shops and cafés.', sampleAnswer: longAnswer(SAMPLE) } });
     await m.api('/verification/evidence', { method: 'POST', body: { kind: 'website', url: 'https://reject-me.invalid/' } });
     const app = await m.api('/verification/submit', { method: 'POST' });
     assert.equal(app.status, 200, app.text);

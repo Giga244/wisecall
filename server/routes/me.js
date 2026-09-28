@@ -93,6 +93,7 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     if (experience.isLocked(existing)) return res.status(409).json({ error: 'application_locked' });
   }
 
+  if (isMentor && changedApplication.length) experience.applyFieldRules(existing, patch);
   const user = await updateUser(existing.id, patch);
   if (isMentor && changedApplication.length) await verification.syncEmailStep(user);
   // A changed name is compared with the ID again (a mentor fixing a name that did not match is checked at once).

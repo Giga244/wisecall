@@ -1,8 +1,10 @@
 // Niches (fields) in the browser: the home strip with "Show all", Browse's chips for the fields that have mentors, a field's page
-// (/advice/<niche>) in English and Georgian, "Other (type your own)" in the Experience form, and the admin's Niches tab.
+// (/advice/<niche>) in English and Georgian, "Your field" and "Other" in the Experience form, the field on cards, in search and as the
+// "Other" filter, and the admin's Niches tab.
 // Runs after full-flow.spec.js, whose Law mentor (Ana Lomidze) is listed.
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
+const { client } = require('../tests/helpers');
 
 test('the home strip shows the first fields and the rest behind "Show all"', async ({ page }) => {
   await page.goto('/');
@@ -31,18 +33,36 @@ test('a field page lists its mentors and switches language; Browse links there',
   // The mentor's profile links to their field's page.
   await page.goto('/u/' + (await S.sql(`SELECT username FROM users WHERE email = 'ana@e2e.test'`))[0].username);
   await expect(page.locator('.tag-niche')).toHaveAttribute('href', '/advice/law');
+  await expect(page.locator('.tag-niche')).toHaveText('Tax law for small businesses'); // (the mentor's words, not the category)
 });
 
-test('"Other (type your own)" in the Experience form', async ({ page }) => {
+test('the field in the mentor\'s words is on the card, search finds it, and "Other" is a filter', async ({ page }) => {
+  const admin = client(S.BASE);
+  await admin.api('/auth/login', { method: 'POST', body: { email: 'e2e-admin@example.com', password: S.PASSWORD } });
+  const who = await S.listedMentor(admin, { name: 'Nodar Nails', email: 'nodar@e2e.test', niche: 'other', roleTitle: 'Salon owner', customNiche: 'Nail artist' });
+  await page.goto('/?niche=other#experts');
+  const card = page.locator('.expert-card', { hasText: 'Nodar Nails' });
+  await expect(card.locator('.card-role')).toHaveText('Salon owner · Nail artist');
+  await expect(page.locator('#filters .chip[data-niche="other"]')).toHaveAttribute('aria-pressed', 'true');
+  await page.goto('/#experts');
+  await page.fill('#searchInput', 'nail art');
+  await expect(page.locator('.expert-card')).toHaveCount(1);
+  await expect(page.locator('.expert-card')).toContainText('Nodar Nails');
+  await page.fill('#searchInput', 'small business tax'); // (a specialty tag of the Law mentor)
+  await expect(page.locator('.expert-card', { hasText: 'Ana Lomidze' })).toBeVisible();
+  await page.goto('/u/' + who.username);
+  await expect(page.locator('.tag-niche')).toHaveText('Nail artist');
+});
+
+test('"Your field" and "Other" in the Experience form', async ({ page }) => {
   await S.signUp(page, { name: 'Gio Bees', email: 'gio.bees@e2e.test' });
   await page.goto('/settings.html');
   await page.click('#tab-mentor');
   await page.check('#becomeMentor');
   await page.goto('/settings.html?tab=verification');
   const form = page.locator('#ap-experience form[data-form="experience"]');
-  await expect(form.locator('.ap-custom-niche')).toBeHidden();
+  await expect(form.locator('.ap-custom-niche')).toBeVisible(); // (every mentor writes their field)
   await form.locator('[name="niche"]').selectOption('other');
-  await expect(form.locator('.ap-custom-niche')).toBeVisible();
   await form.locator('[name="customNiche"]').fill('www.bees.ge');
   await form.locator('button[type="submit"]').click();
   await expect(form.locator('.vt-error')).toContainText('without links');
@@ -54,7 +74,7 @@ test('"Other (type your own)" in the Experience form', async ({ page }) => {
 test('the admin sees the suggestion under Niches', async ({ page }) => {
   await S.logIn(page, { email: 'e2e-admin@example.com' }, '/admin.html');
   await page.click('#adminTabs [data-tab="niches"]');
-  await expect(page.locator('.nf-suggestion')).toContainText('Beekeeping');
+  await expect(page.locator('.nf-suggestion', { hasText: 'Beekeeping' })).toBeVisible();
   await expect(page.locator('.nf-niche')).toHaveCount(36);
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `${process.env.E2E_SHOTS}/admin-niches.png` });
 });

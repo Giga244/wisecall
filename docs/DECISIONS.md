@@ -69,3 +69,22 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   Gmail's apps ignore that CSS and recolour by themselves, so a real Gmail check (Android and iOS) is left to the owner.
 - docs/KA-REVIEW.md lists every Georgian text added or changed since the cloud packs were merged (`node scripts/ka-review.js 0c67940`),
   for a native speaker; it is regenerated after PART 4.
+
+## PART 2 — "Your field"
+- The mentor's own words live in the existing `users.custom_niche` (until now only used with "Other"), now for every category and up to
+  60 characters (migration 028 only widens the limit and adds `field_override`). One column, so nothing has to be kept in sync; the
+  admin's "Suggested niches" still groups only the mentors in "Other".
+- Required for every application sent from now on. Mentors approved before keep their category as the label until they edit their
+  application (the cards fall back to the category's name), so nobody is taken off the site for it.
+- Regulated professions: the words of the field AND the title are checked (English whole words, Georgian stems, e.g. doctor / ექიმი,
+  lawyer / ადვოკატი / იურისტი, financial adviser, accountant, psychologist, dentist, nurse, pharmacist). A match with a category that
+  needs no licence moves the application to the regulated category (licence step, never approved automatically), and the form says why.
+  Stricter by design: a false match costs an admin one click ("Not a licensed profession"), a missed one would let unlicensed medical,
+  legal or financial advice through. The admin's decision lasts until the mentor changes their field or title.
+- An admin cannot move an approved mentor into a category whose licence they have not passed (the site would show a regulated mentor
+  without a checked licence); the mentor adds the licence first.
+- On the profile the field's words are the tag; the breadcrumb and the tag's link still lead to the category's page (navigation), with
+  the category's name as the tag's tooltip.
+- Specialty tags stay out of the public data (as before); Browse's search box also asks the server, which matches them, and shows
+  the union with its own instant matches. When an admin turns a suggested "Other" field into a category, the mentors keep their own
+  words as their field.

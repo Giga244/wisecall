@@ -55,7 +55,7 @@ describe('a new Medicine mentor (regulated)', () => {
     assert.equal((await doc.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 40 } })).status, 200);
     id = (await doc.api('/me')).user.id;
     await apply(doc, {
-      roleTitle: 'Cardiologist', niche: 'medicine', specialtyTags: ['heart health'], yearsExperience: 14,
+      roleTitle: 'Cardiologist', customNiche: 'Heart health', niche: 'medicine', specialtyTags: ['heart health'], yearsExperience: 14,
       story: 'I trained in Tbilisi and have worked as a cardiologist for fourteen years, the last six running a clinic for patients after heart surgery.',
       sampleAnswer: longAnswer(SAMPLE)
     }, 'https://levan-clinic.invalid/team');
@@ -136,7 +136,7 @@ describe('a new Design mentor (standard)', () => {
     assert.equal((await des.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 20 } })).status, 200);
     id = (await des.api('/me')).user.id;
     await apply(des, {
-      roleTitle: 'Product designer', niche: 'design', specialtyTags: ['mobile apps', 'onboarding'], yearsExperience: 8,
+      roleTitle: 'Product designer', customNiche: 'Mobile app design', niche: 'design', specialtyTags: ['mobile apps', 'onboarding'], yearsExperience: 8,
       story: 'I taught myself design while working in a bank, then spent eight years designing mobile apps for startups in Tbilisi and Berlin.',
       sampleAnswer: longAnswer('Start with the one screen people see first and make it do one thing well.')
     }, 'https://nino-design.invalid/work');

@@ -50,4 +50,7 @@ function nameOf(key, lang, custom) {
 // For the pages (/api/config): what they need to show and filter niches.
 const forClient = () => active().map((n) => ({ key: n.key, en: n.en, ka: n.ka, icon: n.icon, regulated: n.regulated }));
 
-module.exports = { OTHER, load, all, active, get, isValid, exists, isRegulated, nameOf, forClient, fromRow };
+// What a mentor's field is called on the site: their own words, or the category's name when they wrote none (older profiles).
+const fieldOf = (user, lang) => (user && user.customNiche) || nameOf(user && user.niche, lang);
+
+module.exports = { OTHER, load, all, active, get, isValid, exists, isRegulated, nameOf, fieldOf, forClient, fromRow };

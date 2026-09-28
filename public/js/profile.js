@@ -142,7 +142,7 @@
               ${isMentor && expert.headline ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
               ${WisecallRatings.askerBadgeHtml(expert.asker)}
               <div class="profile-tags">
-                ${isMentor && expert.niche ? (expert.niche === 'other' ? `<span class="tag tag-niche">${escapeHtml(WisecallI18n.nicheName('other', expert.customNiche))}</span>` : `<a class="tag tag-niche" href="/advice/${encodeURIComponent(expert.niche)}">${escapeHtml(t('niche.' + expert.niche))}</a>`) : ''}
+                ${isMentor && expert.niche ? (expert.niche === 'other' ? `<span class="tag tag-niche">${escapeHtml(WisecallI18n.fieldName(expert))}</span>` : `<a class="tag tag-niche" href="/advice/${encodeURIComponent(expert.niche)}" title="${escapeHtml(t('niche.' + expert.niche))}">${escapeHtml(WisecallI18n.fieldName(expert))}</a>`) : ''}
                 ${isMentor ? `<span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>` : ''}
                 ${isMentor && (expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
               </div>

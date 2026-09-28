@@ -64,10 +64,14 @@ async function apiUser(name, email) {
 }
 
 // A verified, listed mentor (every required step passed, payout details saved), ready to be asked questions.
-async function listedMentor(admin, { name, email, niche = 'business', price = 20, roleTitle = 'Founder' }) {
+async function listedMentor(admin, { name, email, niche = 'business', price = 20, roleTitle = 'Founder', customNiche }) {
   const m = await apiUser(name, email);
-  const r = await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle, niche, price, proofUrl: 'https://linkedin.com/in/' + email.split('@')[0], sampleAnswer: SAMPLE } });
+  const r = await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle, ...(niche === 'other' ? {} : { niche }), price, proofUrl: 'https://linkedin.com/in/' + email.split('@')[0], sampleAnswer: SAMPLE } });
   if (r.status !== 200) throw new Error('mentor setup failed: ' + r.text);
+  if (customNiche || niche === 'other') {
+    const f = await m.api('/verification/experience', { method: 'PUT', body: { niche, customNiche: customNiche || roleTitle } });
+    if (f.status !== 200) throw new Error('field setup failed: ' + f.text);
+  }
   await approveMentor(admin, m);
   await addPayoutDetails(m, GOOD_IBAN, name);
   const me = (await m.api('/me')).user;

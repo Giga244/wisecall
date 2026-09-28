@@ -20,6 +20,8 @@
   let allExperts = [];
   let activeNiche = 'all';
   let searchTerm = '';
+  // Mentors the server found for the search (it also matches their specialty tags, which are not sent to the page): ids, or null.
+  let serverMatches = null;
   let sortMode = 'rating';
 
   function escapeHtml(str) {
@@ -36,10 +38,10 @@
   }
 
   // The chips: "All", and every field somebody listed works in (plus the chosen one, even when nobody is there yet).
-  const knownNiche = (key) => WisecallI18n.niches().some((n) => n.key === key);
+  const knownNiche = (key) => key === 'other' || WisecallI18n.niches().some((n) => n.key === key);
   function drawChips() {
     const used = new Set(allExperts.map((e) => e.niche));
-    const keys = WisecallI18n.niches().map((n) => n.key).filter((k) => used.has(k) || k === activeNiche);
+    const keys = WisecallI18n.niches().map((n) => n.key).concat('other').filter((k) => used.has(k) || k === activeNiche);
     filters.innerHTML = [`<button type="button" class="chip" data-niche="all">${escapeHtml(t('niche.all'))}</button>`,
       ...keys.map((k) => `<button type="button" class="chip" data-niche="${escapeHtml(k)}">${escapeHtml(t('niche.' + k))}</button>`)].join('');
   }
@@ -114,11 +116,9 @@
     let list = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
     if (searchTerm) {
       const needle = searchTerm.toLowerCase();
-      list = list.filter(e =>
-        (e.name && e.name.toLowerCase().includes(needle)) ||
-        (e.roleTitle && e.roleTitle.toLowerCase().includes(needle)) ||
-        (e.bio && e.bio.toLowerCase().includes(needle))
-      );
+      const has = (s) => Boolean(s) && String(s).toLowerCase().includes(needle);
+      list = list.filter(e => has(e.name) || has(e.roleTitle) || has(e.bio) || has(e.customNiche)
+        || (e.niche && has(t('niche.' + e.niche))) || Boolean(serverMatches && serverMatches.has(e.id)));
     }
     list = sortList(list);
     shown = list.length;
@@ -148,7 +148,7 @@
           ${WisecallAPI.avatar(e)}
           <div>
             <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
-            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(WisecallI18n.nicheName(e.niche, e.customNiche))}` : ''}</div>
+            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(WisecallI18n.fieldName(e))}` : ''}</div>
           </div>
         </div>
         <div class="card-bio">${escapeHtml(e.bio || '')}</div>
@@ -201,9 +201,18 @@
   let searchTimer;
   searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
+    searchTimer = setTimeout(async () => {
       searchTerm = searchInput.value.trim();
+      serverMatches = null;
       render();
+      if (!searchTerm || prelaunch) return;
+      const asked = searchTerm;
+      try {
+        const data = await WisecallAPI.apiFetch('/experts?q=' + encodeURIComponent(asked));
+        if (asked !== searchTerm) return; // (the visitor typed on meanwhile)
+        serverMatches = new Set(data.experts.map((e) => e.id));
+        render();
+      } catch (e) { /* the page's own matching still works */ }
     }, 150);
   });
 

@@ -25,13 +25,14 @@ const STATUS_FOR_CODE = {
   not_found: 404, unknown_step: 404,
   reason_required: 400, invalid_decision: 400,
   not_manual: 409, not_submitted: 409, invalid_state: 409, steps_incomplete: 409,
-  invalid_slot: 400, invalid_link: 400, not_started: 409, already_passed: 409
+  invalid_slot: 400, invalid_link: 400, not_started: 409, already_passed: 409,
+  invalid_custom_niche: 400, invalid_niche: 400, regulated_words: 409, licence_missing: 409
 };
 
 // Turns a VerificationError into a JSON reply; anything else is a real error.
 function fail(res, e) {
   if (e instanceof steps.VerificationError) {
-    return res.status(STATUS_FOR_CODE[e.code] || 400).json({ error: e.code, missing: e.missing });
+    return res.status(STATUS_FOR_CODE[e.code] || 400).json({ error: e.code, missing: e.missing, ...(e.code === 'regulated_words' ? { category: e.field } : {}) });
   }
   throw e;
 }
@@ -70,7 +71,9 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
     },
     // Step 2 as the mentor filled it in, and step 3: the latest analysis first (AI summary, scores, flags, link checks, cost).
     application: {
-      roleTitle: mentor.roleTitle, niche: mentor.niche, specialtyTags: mentor.specialtyTags, yearsExperience: mentor.yearsExperience,
+      roleTitle: mentor.roleTitle, niche: mentor.niche, customNiche: mentor.customNiche, fieldOverride: mentor.fieldOverride,
+      wordsCategory: require('../fieldRules').regulatedCategoryIn(mentor.customNiche, mentor.roleTitle),
+      specialtyTags: mentor.specialtyTags, yearsExperience: mentor.yearsExperience,
       story: mentor.story, sampleAnswer: mentor.sampleAnswer, submittedAt: mentor.applicationSubmittedAt, submitted: experience.submitted(mentor)
     },
     evidence: evidence.map((e) => ({ ...e, registry: e.kind === 'company' ? rules.COMPANY_REGISTRY : undefined })),
@@ -109,6 +112,17 @@ router.post('/mentors/:id/steps/:step', requireAuth, requireAdmin, asyncHandler(
   try {
     const summary = await review.decideStep({ mentorId: req.params.id, step: req.params.step, decision, reason, admin: req.adminUser });
     res.json({ ready: summary.ready, missing: summary.missing });
+  } catch (e) { fail(res, e); }
+}));
+
+// A mentor's field: the words and the category ("Your field"), and "not a licensed profession".
+router.post('/mentors/:id/field', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const b = req.body || {};
+  if (typeof b.text !== 'string' || typeof b.niche !== 'string') return res.status(400).json({ error: 'invalid_field' });
+  try {
+    const mentor = await require('../verification/experience').setFieldByAdmin({ mentorId: req.params.id, admin: req.adminUser, text: b.text, niche: b.niche, notRegulated: b.notRegulated === true });
+    res.json({ mentor: meProfile(mentor) });
   } catch (e) { fail(res, e); }
 }));
 

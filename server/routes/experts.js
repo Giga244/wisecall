@@ -24,7 +24,9 @@ router.get('/', asyncHandler(async (req, res) => {
   if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND niche = $${params.length}`; }
   if (q && String(q).trim()) {
     params.push('%' + escapeLike(String(q).trim().slice(0, 100)) + '%');
-    where += ` AND (name ILIKE $${params.length} OR role_title ILIKE $${params.length} OR bio ILIKE $${params.length} OR custom_niche ILIKE $${params.length})`;
+    const p = `$${params.length}`;
+    where += ` AND (name ILIKE ${p} OR role_title ILIKE ${p} OR bio ILIKE ${p} OR custom_niche ILIKE ${p} OR array_to_string(specialty_tags, ' ') ILIKE ${p}
+                OR EXISTS (SELECT 1 FROM niches n WHERE n.key = users.niche AND (n.name_en ILIKE ${p} OR n.name_ka ILIKE ${p})))`;
   }
   const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
   res.json({ experts: await withStats(rows.map(userFromRow)) });

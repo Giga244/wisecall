@@ -81,6 +81,8 @@
   const niches = () => loadedConfig.niches || [];
   // A niche's name in the current language; "Other" shows the mentor's own words when there are some.
   const nicheName = (key, custom) => (key === 'other' && custom ? custom : t('niche.' + key));
+  // "Your field": what a mentor wrote about their field, shown instead of the category (older profiles have only the category).
+  const fieldName = (m) => (m && m.customNiche) || (m && m.niche ? nicheName(m.niche) : '');
 
   function applyDict(dict) {
     currentDict = dict;
@@ -149,5 +151,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName, path };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName, fieldName, path };
 })();

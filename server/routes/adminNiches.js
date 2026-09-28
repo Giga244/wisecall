@@ -50,12 +50,13 @@ async function suggestions() {
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
 
-// Moves the mentors of one suggestion group into a niche. Returns how many moved. Each move is in the mentor's audit log.
+// Moves the mentors of one suggestion group into a niche. Returns how many moved. Each move is in the mentor's audit log. Their own words
+// stay: they are "Your field" on the profile, next to the category.
 async function moveGroup(group, key, admin) {
   const { rows } = await query(`SELECT id, custom_niche FROM users WHERE niche = 'other' AND custom_niche IS NOT NULL`);
   const ids = rows.filter((r) => customNiche.groupKey(r.custom_niche) === group);
   for (const r of ids) {
-    await query(`UPDATE users SET niche = $2, custom_niche = NULL WHERE id = $1 AND niche = 'other'`, [r.id, key]);
+    await query(`UPDATE users SET niche = $2 WHERE id = $1 AND niche = 'other'`, [r.id, key]);
     await steps.audit(r.id, steps.adminActor(admin), 'niche_changed', { reason: `"${r.custom_niche}" is now the niche "${key}"` });
   }
   return ids.length;

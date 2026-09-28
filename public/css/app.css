@@ -20,6 +20,8 @@
 .settings { max-width: 760px; }
 .app-progress { background: var(--card); border-radius: var(--radius); padding: 18px 22px; margin: 0 0 22px; box-shadow: 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3); border-left: 6px solid var(--accent2); }
 .app-progress[hidden] { display: none; }
+.mv-field-form { display: grid; gap: 10px; max-width: 420px; margin-top: 8px; }
+.mv-field-form label.check { display: flex; gap: 8px; align-items: center; }
 /* Settings: the progress box (mentors only) is drawn above the tabs once the account is known; until then the tabs and panels are
    not shown, so they appear in place instead of jumping down (layout shift). */
 main[data-loading] .app-progress, main[data-loading] .tabs, main[data-loading] .tab-panel { visibility: hidden; }

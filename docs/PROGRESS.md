@@ -41,3 +41,10 @@ refunds, disputes, money), dark-mode friendly emails, and docs/KA-REVIEW.md (467
 test data: every page 95-100 on mobile and desktop (Settings' layout shift fixed: 89 -> 96).
 Tests: unit 656 (2 site-wide checks updated for the server-filled and error pages, then green), cloud 28 + 6 todo, e2e 144 passed / 5
 skipped.
+
+## PART 2 — "Your field"
+Every mentor writes their field in their own words (3–60 characters, required for new applications) and picks the closest category or
+"Other". Cards, profiles and field pages show the words; search (server and Browse) matches the words, specialty tags and category
+names in EN/KA; "Other" is a Browse filter. Words or titles naming a licensed profession (EN + KA) keep the application regulated;
+admins can edit a mentor's field and category and mark "not a licensed profession" (audited). Migration 028 (widens a limit, adds one
+column; undo script). Tests: tests/your-field.test.js (8), fixtures updated, e2e niches/full-flow.

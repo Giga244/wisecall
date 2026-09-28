@@ -25,6 +25,24 @@
     }).join('')}</ul>`;
   }
 
+  // "Your field": the mentor's words and category; an admin can change both, and keep a category that needs no licence when the words
+  // only look like a licensed profession.
+  function fieldBlock(a) {
+    const options = WisecallI18n.niches().map((n) => `<option value="${esc(n.key)}"${a.niche === n.key ? ' selected' : ''}>${esc(t('niche.' + n.key))}</option>`).join('')
+      + `<option value="other"${a.niche === 'other' ? ' selected' : ''}>${esc(t('niche.other'))}</option>`;
+    return `
+      <details class="mv-audit mv-field">
+        <summary>${t('admin.mv.field.title')}: ${esc(a.customNiche || '—')} · ${esc(a.niche ? t('niche.' + a.niche) : '—')}${a.fieldOverride ? ` · ${t('admin.mv.field.overridden')}` : ''}</summary>
+        ${a.wordsCategory && !a.fieldOverride ? `<p class="muted small">${esc(t('admin.mv.field.wordsSay').replace('{niche}', t('niche.' + a.wordsCategory)))}</p>` : ''}
+        <div class="mv-field-form">
+          <label><span>${t('admin.mv.field.text')}</span><input type="text" class="mv-field-text" maxlength="60" value="${esc(a.customNiche || '')}"></label>
+          <label><span>${t('admin.mv.field.category')}</span><select class="mv-field-niche">${options}</select></label>
+          <label class="check"><input type="checkbox" class="mv-field-notreg"${a.fieldOverride ? ' checked' : ''}> <span>${t('admin.mv.field.notRegulated')}</span></label>
+          <button type="button" class="btn btn-outline btn-sm mv-field-save">${t('admin.mv.field.save')}</button>
+        </div>
+      </details>`;
+  }
+
   function stepRow(s) {
     const canDecide = s.manual && s.status !== 'todo';
     return `
@@ -236,6 +254,7 @@
         <p class="muted small">${t('admin.mv.progress').replace('{done}', done).replace('{total}', total)}</p>
         <div class="mv-steps">${rows}${optional}</div>
         ${legacy ? `<details class="mv-audit"><summary>${t('admin.ai.legacySteps')}</summary><div class="mv-steps">${legacy}</div></details>` : ''}
+        ${fieldBlock(d.application)}
         <div class="mv-final">
           ${d.standing && d.standing.backInReview ? `<p class="mv-note" role="note"><strong>${t('admin.mv.reinstateNote')}</strong></p>` : ''}
           <button class="btn btn-primary mv-approve" ${d.ready && d.mentor.verificationStatus === 'pending' ? '' : 'disabled'}>${t(d.standing && d.standing.wasApproved ? 'admin.reapprove' : 'admin.approve')}</button>
@@ -276,7 +295,7 @@
           <div class="booking-amount">${m.price ? WisecallAPI.formatPrice(m.price) : '—'}</div>
         </div>
         <p class="booking-question">
-          <strong>${esc(m.roleTitle || '—')}</strong> · ${m.niche ? esc(t('niche.' + m.niche)) : '—'}
+          <strong>${esc(m.roleTitle || '—')}</strong> · ${m.customNiche ? `${esc(m.customNiche)} <span class="muted small">(${esc(m.niche ? t('niche.' + m.niche) : '—')})</span>` : (m.niche ? esc(t('niche.' + m.niche)) : '—')}
           ${v.level === 'regulated' ? `<span class="badge badge-paid">${t('verify.level.regulated')}</span>` : ''}
         </p>
         ${m.analysis && m.analysis.summary ? `<p class="mv-ai-summary small">${riskBadge(m.analysis.risk)} <span class="badge badge-paid">${t('admin.ai.summaryLabel')}</span> ${esc(m.analysis.summary)}</p>` : (m.analysis && m.analysis.risk ? `<p class="small">${riskBadge(m.analysis.risk)} ${m.analysis.aiError ? esc(aiErrorText(m.analysis.aiError)) : ''}</p>` : '')}
@@ -421,6 +440,20 @@
             WisecallNav.showToast(t('admin.mv.kycRerun.' + r.outcome));
             await loadPanel(); onChange({ soft: true });
           } catch (e) { WisecallNav.showToast(t('toast.error')); rerunId.disabled = false; }
+        });
+        const fieldSave = body.querySelector('.mv-field-save');
+        if (fieldSave) fieldSave.addEventListener('click', async () => {
+          const form = body.querySelector('.mv-field');
+          fieldSave.disabled = true;
+          try {
+            await WisecallAPI.apiFetch(`/admin/mentors/${id}/field`, { method: 'POST', body: { text: form.querySelector('.mv-field-text').value, niche: form.querySelector('.mv-field-niche').value, notRegulated: form.querySelector('.mv-field-notreg').checked } });
+            WisecallNav.showToast(t('toast.saved'));
+            await loadPanel(); onChange({ soft: true });
+          } catch (e) {
+            const msg = { regulated_words: 'admin.mv.field.regulatedWords', licence_missing: 'admin.mv.field.licenceMissing', invalid_custom_niche: 'ap.err.invalid_custom_niche' }[e.code];
+            WisecallNav.showToast(msg ? t(msg).replace('{niche}', e.data && e.data.category ? t('niche.' + e.data.category) : '') : t('toast.error'));
+            fieldSave.disabled = false;
+          }
         });
         const approve = body.querySelector('.mv-approve');
         if (approve) approve.addEventListener('click', async () => {

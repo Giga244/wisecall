@@ -455,5 +455,14 @@
   "admin.ov.debt": "Owed back by mentors",
   "admin.ov.paidOut": "Paid out to mentors",
   "admin.ov.moneyHelp": "Received counts paid questions that are not being refunded, minus partial refunds. The fee counts answered questions only and is before bank fees and tax.",
-  "admin.ov.testPayments": "Includes {n} test payment(s) (no real money)."
+  "admin.ov.testPayments": "Includes {n} test payment(s) (no real money).",
+  "admin.mv.field.title": "Field",
+  "admin.mv.field.text": "Field, in the mentor's words",
+  "admin.mv.field.category": "Category",
+  "admin.mv.field.notRegulated": "Not a licensed profession (keep a category without a licence)",
+  "admin.mv.field.save": "Save field",
+  "admin.mv.field.overridden": "not a licensed profession (admin)",
+  "admin.mv.field.wordsSay": "The words name a licensed profession ({niche}): without \"Not a licensed profession\" the category stays {niche}.",
+  "admin.mv.field.regulatedWords": "The words name a licensed profession ({niche}). Tick \"Not a licensed profession\" to keep this category.",
+  "admin.mv.field.licenceMissing": "This category needs a licence this approved mentor has not passed. Ask them to add it first."
 }

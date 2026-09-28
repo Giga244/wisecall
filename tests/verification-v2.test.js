@@ -61,7 +61,7 @@ async function passKyc(m, fullName, dateOfBirth = ADULT) {
 async function fillIn(m, seed, over = {}) {
   const r = await m.c.api('/verification/experience', {
     method: 'PUT',
-    body: { roleTitle: 'Illustrator and brand designer', niche: 'design', specialtyTags: ['book covers', 'packaging', 'branding'], yearsExperience: 11, story: prose(seed), sampleAnswer: prose(seed + 1000), ...over }
+    body: { roleTitle: 'Illustrator and brand designer', customNiche: 'Book covers and branding', niche: 'design', specialtyTags: ['book covers', 'packaging', 'branding'], yearsExperience: 11, story: prose(seed), sampleAnswer: prose(seed + 1000), ...over }
   });
   assert.equal(r.status, 200, r.text);
 }
@@ -106,7 +106,7 @@ describe('server 1: AUTO_APPROVE=on', () => {
     const empty = await anna.c.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.status, 400);
     assert.equal(empty.error, 'incomplete');
-    assert.deepEqual(empty.missing, ['title', 'niche', 'tags', 'years', 'story', 'sample', 'evidence']);
+    assert.deepEqual(empty.missing, ['title', 'field', 'niche', 'tags', 'years', 'story', 'sample', 'evidence']);
 
     await fillIn(anna, 1, { story: prose(1) + ' Write to me at anna.private@mail.ge or call +995 555 123 456 for work.' });
     await addLink(anna, 'portfolio', web.url('/w01'));
@@ -147,7 +147,7 @@ describe('server 1: AUTO_APPROVE=on', () => {
     const app = ai.application();
     assert.match(app.story, /\[email removed\]/);
     assert.match(app.story, /\[number removed\]/);
-    assert.equal(app.niche, 'Design');
+    assert.equal(app.niche, 'Design (Book covers and branding)', "the category and the mentor's own words");
     assert.deepEqual(Object.keys(app).sort(), ['evidence', 'niche', 'regulated_niche', 'sample_answer', 'specialty_tags', 'story', 'title', 'years_of_experience']);
     assert.equal(app.evidence[0].shows_applicant_name, true);
 

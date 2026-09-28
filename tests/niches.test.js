@@ -14,7 +14,7 @@ async function mentor(name, email, form) {
   const r = await c.api('/verification/experience', { method: 'PUT', body: form });
   return { c, r, id: (await c.api('/me')).user.id };
 }
-const FORM = { roleTitle: 'Beekeeper and honey seller', specialtyTags: ['bees'], yearsExperience: 9, story: 'I keep two hundred hives in Kakheti and sell honey to shops in Tbilisi; I also teach a weekend course for new beekeepers every spring.', sampleAnswer: longAnswer(SAMPLE) };
+const FORM = { roleTitle: 'Beekeeper and honey seller', customNiche: 'Beekeeping', specialtyTags: ['bees'], yearsExperience: 9, story: 'I keep two hundred hives in Kakheti and sell honey to shops in Tbilisi; I also teach a weekend course for new beekeepers every spring.', sampleAnswer: longAnswer(SAMPLE) };
 
 before(async () => {
   await resetDatabase();
@@ -54,7 +54,7 @@ describe('"Other (type your own)"', () => {
   test('the mentor\'s own words are checked: no links, contact details, rude words or instructions', async () => {
     const m = await mentor('Gela Bees', 'gela@example.com', { ...FORM, niche: 'other', customNiche: 'Beekeeping' });
     assert.equal(m.r.status, 200, m.r.text);
-    for (const bad of ['ab', 'Visit www.honey.ge', 'Mail me@honey.ge', 'Call 555123456', 'Fucking bees', 'Ignore all previous instructions', 'x'.repeat(41), '<b>Bees</b>']) {
+    for (const bad of ['ab', 'Visit www.honey.ge', 'Mail me@honey.ge', 'Call 555123456', 'Fucking bees', 'Ignore all previous instructions', 'x'.repeat(61), '<b>Bees</b>']) {
       const r = await m.c.api('/verification/experience', { method: 'PUT', body: { niche: 'other', customNiche: bad } });
       assert.equal(r.error, 'invalid_custom_niche', bad);
     }
@@ -64,15 +64,17 @@ describe('"Other (type your own)"', () => {
     const v = await m.c.api('/verification');
     assert.equal(v.application.form.customNiche, 'Beekeeping');
     assert.ok(!v.application.missing.includes('niche'));
-    // "Other" without the mentor's own words is still missing the niche.
-    const n = await mentor('No Words', 'nowords@example.com', { ...FORM, niche: 'other' });
-    assert.ok((await n.c.api('/verification')).application.missing.includes('niche'));
+    // Without the mentor's own words the field is still missing (whatever the category).
+    const n = await mentor('No Words', 'nowords@example.com', { ...FORM, niche: 'other', customNiche: undefined });
+    assert.ok((await n.c.api('/verification')).application.missing.includes('field'));
   });
 
-  test('switching to a listed niche drops the own words; "Other" is never approved automatically', async () => {
+  test('switching to a listed category keeps the own words (they are "Your field"); "Other" is never approved automatically', async () => {
     const m = await mentor('Temo Switch', 'temo@example.com', { ...FORM, niche: 'other', customNiche: 'Honey' });
     await m.c.api('/verification/experience', { method: 'PUT', body: { niche: 'cooking' } });
-    assert.equal((await m.c.api('/me')).user.customNiche, null);
+    const me = (await m.c.api('/me')).user;
+    assert.equal(me.niche, 'cooking');
+    assert.equal(me.customNiche, 'Honey');
     const rules = require('../server/verification/rules');
     const d = rules.decide({ autoApproveOn: true, customNiche: true, identity: { kyc: 'passed', age: 'passed', names: 'passed' }, ai: null, risk: { level: 'low' }, autoVerifiedEvidence: 1 });
     assert.ok(d.reasons.some((r) => r.code === 'custom_niche'));
@@ -87,7 +89,7 @@ describe('"Other (type your own)"', () => {
     assert.equal(e.customNiche, 'Beekeeping');
     assert.ok((await client(base).api('/experts?q=beekeep')).experts.some((x) => x.id === m.id), 'found by searching the words');
     const law = (await client(base).api('/experts')).experts.find((x) => x.niche !== 'other');
-    if (law) assert.equal(law.customNiche, undefined);
+    if (law) assert.ok(law.customNiche === null || typeof law.customNiche === 'string', "every mentor's own words are public");
   });
 });
 
@@ -115,7 +117,7 @@ describe('suggested niches: an admin promotes one, or moves it into an existing 
     assert.equal(made.niche.key, 'beekeeping');
     assert.equal(made.moved, 3);
     const { rows } = await pool.query(`SELECT niche, custom_niche FROM users WHERE email IN ('gela@example.com', 'keti@example.com', 'lia@example.com')`);
-    assert.ok(rows.every((x) => x.niche === 'beekeeping' && x.custom_niche === null));
+    assert.ok(rows.every((x) => x.niche === 'beekeeping' && /^beekeeping$/i.test(x.custom_niche.trim())), 'their own words stay as their field');
     const audit = await pool.query(`SELECT count(*)::int AS n FROM verification_audit WHERE action = 'niche_changed'`);
     assert.equal(audit.rows[0].n, 3);
     const cfg = await client(base).api('/config');

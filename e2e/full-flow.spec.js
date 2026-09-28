@@ -58,6 +58,7 @@ test('a mentor signs up, sets a price, and fills in the Experience form for the 
   await expect(exp).toContainText('Self-taught?');
   const form = exp.locator('form[data-form="experience"]');
   await form.locator('[name="roleTitle"]').fill('Tax lawyer for small businesses');
+  await form.locator('[name="customNiche"]').fill('Tax law for small businesses');
   await form.locator('[name="niche"]').selectOption('law');
   await form.locator('[name="specialtyTags"]').fill('VAT, small business tax, contracts');
   await form.locator('[name="yearsExperience"]').fill('11');

@@ -198,7 +198,7 @@ function profileJsonLd(u, stats, lang) {
   const url = lang === 'ka' ? kaUrl(`/u/${u.username}`) : `${config.PUBLIC_URL}/u/${u.username}`;
   const niches = require('./niches');
   const service = {
-    '@type': 'Service', name: lang === 'ka' ? `კითხვა: ${u.name}` : `A question to ${u.name}`, serviceType: niches.nameOf(u.niche, lang, u.customNiche),
+    '@type': 'Service', name: lang === 'ka' ? `კითხვა: ${u.name}` : `A question to ${u.name}`, serviceType: niches.fieldOf(u, lang),
     provider: { '@id': `${url}#person` },
     offers: { '@type': 'Offer', price: String(u.price), priceCurrency: 'GEL', url }
   };
@@ -315,7 +315,7 @@ async function sendAdvice(req, res, key) {
   await require('./launch').ensureFresh(5000);
   const live = config.LAUNCH_MODE !== 'prelaunch';
   const rows = live ? (await query(
-    `SELECT name, username, role_title, price FROM users WHERE ${listableSql()} AND niche = $1 AND username IS NOT NULL AND profile_visibility = 'public'
+    `SELECT name, username, role_title, custom_niche, price FROM users WHERE ${listableSql()} AND niche = $1 AND username IS NOT NULL AND profile_visibility = 'public'
       ORDER BY created_at DESC LIMIT 60`, [key])).rows : [];
   const lang = langOf(res);
   const ka = lang === 'ka';
@@ -339,7 +339,7 @@ async function sendAdvice(req, res, key) {
       ? `${name} რეგულირებადი სფეროა: აქაურმა მენტორებმა ლიცენზიაც წარმოადგინეს და ჩვენი გუნდის წევრმა შეამოწმა. პასუხები პირადი გამოცდილება და აზრია და არა პროფესიული რჩევა შენი კონკრეტული შემთხვევისთვის.`
       : `${name} is a regulated field: mentors here also showed their licence, and a person on our team checked it. Answers are personal experience and opinion, not professional advice for your situation.`) : '',
     MENTORS: rows.length
-      ? rows.map((r) => `<a class="expert-card" href="/u/${encodeURIComponent(r.username)}"><div class="card-top"><div><div class="card-name">${escapeHtml(r.name)}</div><div class="card-role">${escapeHtml(r.role_title || '')}</div></div></div><div class="card-bottom"><span class="price">${escapeHtml(String(r.price))} ₾</span></div></a>`).join('')
+      ? rows.map((r) => `<a class="expert-card" href="/u/${encodeURIComponent(r.username)}"><div class="card-top"><div><div class="card-name">${escapeHtml(r.name)}</div><div class="card-role">${escapeHtml([r.role_title, r.custom_niche].filter(Boolean).join(' · '))}</div></div></div><div class="card-bottom"><span class="price">${escapeHtml(String(r.price))} ₾</span></div></a>`).join('')
       : `<p class="muted">${escapeHtml(live ? (ka ? `${name}: მენტორები ჯერ არ არიან.` : `No mentors in ${name} yet.`) : (ka ? 'Wisecall მალე გაიხსნება.' : 'Wisecall opens soon.'))}</p>`,
     OTHER_NICHES: niches.active().filter((x) => x.key !== key).map((x) => `<li><a class="niche-chip" href="${ka ? '/ka' : ''}/advice/${x.key}"><span>${escapeHtml(ka ? x.ka : x.en)}</span></a></li>`).join('')
   };
