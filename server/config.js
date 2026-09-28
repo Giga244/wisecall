@@ -56,6 +56,11 @@ const config = {
   TBC_CLIENT_ID: env.TBC_CLIENT_ID || '',
   TBC_CLIENT_SECRET: env.TBC_CLIENT_SECRET || '',
   TBC_API_URL: (env.TBC_API_URL || 'https://api.tbcbank.ge').replace(/\/+$/, ''),
+  // [CONFIRM WITH BANK] (docs/BANK-GOLIVE.md B1, B2). The longest payment window TBC accepts: their example uses 12 minutes and the maximum
+  // is not published, so 12 is what we send unless TBC confirms more (PAYMENT_TTL_MINUTES is still our own give-up time). The spelling of
+  // the sub-total field: the published examples use "subTotal".
+  TBC_MAX_EXPIRATION_MINUTES: Math.max(1, int(env.TBC_MAX_EXPIRATION_MINUTES, 12)),
+  TBC_SUBTOTAL_FIELD: ['subTotal', 'subtotal'].includes(env.TBC_SUBTOTAL_FIELD) ? env.TBC_SUBTOTAL_FIELD : 'subTotal',
 
   // ID verification (KYC) for mentors: didit | mock. "mock" is a fake for local development only and is
   // refused in production.

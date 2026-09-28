@@ -90,6 +90,9 @@ describe('Bank of Georgia (BOG)', () => {
       assert.equal(req.external_order_id, b.id);
       assert.equal(req.capture, 'automatic');
       assert.equal(req.ttl, 30);
+      const sent = fake.state.calls.find((c) => c.method === 'POST' && c.path.endsWith('/ecommerce/orders') && c.body && c.body.external_order_id === b.id);
+      assert.equal(sent.headers['accept-language'], 'en', "B6: the buyer's language chooses the payment page's language");
+      assert.match(sent.headers['idempotency-key'], /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/, 'B7: an idempotency key per booking');
       assert.equal(req.redirect_urls.success, `${base}/u/${mentorUsername}?booking=${b.id}&status=success`);
       assert.equal(req.redirect_urls.fail, `${base}/u/${mentorUsername}?booking=${b.id}&status=fail`);
     });
@@ -299,11 +302,11 @@ describe('TBC Bank (tpay)', () => {
     assert.match(r.booking.providerOrderId, /^tpay-/);
     assert.equal(r.checkoutUrl, `${fake.url}/checkout/${r.booking.providerOrderId}`);
     const req = fake.state.tbc.get(r.booking.providerOrderId).request;
-    assert.deepEqual(req.amount, { currency: 'GEL', total: 25, subtotal: 25, tax: 0, shipping: 0 });
+    assert.deepEqual(req.amount, { currency: 'GEL', total: 25, subTotal: 25, tax: 0, shipping: 0 }); // (B2: the documented spelling)
     assert.equal(req.callbackUrl, `${base}/api/payments/callback`);
     assert.equal(req.returnurl, `${base}/u/${mentorUsername}?booking=${r.booking.id}&status=return`);
     assert.equal(req.merchantPaymentId, r.booking.id);
-    assert.equal(req.expirationMinutes, 30);
+    assert.equal(req.expirationMinutes, 12, 'B1: capped at what TBC is known to accept');
     assert.equal(req.language, 'EN');
   });
 

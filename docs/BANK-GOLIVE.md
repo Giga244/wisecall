@@ -102,13 +102,13 @@ Pick **one** bank for launch (`PAYMENT_PROVIDER=bog` or `tbc`); the other can be
 ## 4. Summary of mismatches (also in `docs/TODO-FROM-CLOUD.md`)
 | # | Bank | Issue | Severity |
 |---|---|---|---|
-| B1 | TBC | `expirationMinutes` = 30 by default; TBC's allowed maximum unconfirmed | 🟠 could block every TBC payment |
-| B2 | TBC | `amount.subtotal` vs documented `subTotal` | 🟠 could block every TBC payment |
+| B1 | TBC | `expirationMinutes` = 30 by default; TBC's allowed maximum unconfirmed | ✅ in code: capped by `TBC_MAX_EXPIRATION_MINUTES` (default 12) — **[CONFIRM WITH BANK]** |
+| B2 | TBC | `amount.subtotal` vs documented `subTotal` | ✅ in code: `subTotal` by default, `TBC_SUBTOTAL_FIELD` can switch it — **[CONFIRM WITH BANK]** |
 | B3 | TBC | Callback URL must be registered on the merchant dashboard (ops step, not code) | 🟠 |
-| B4 | both | Refund after a lost response never completes (AUDIT #5); TBC has no idempotency key (AUDIT #13) | 🟠 |
-| B5 | both | A payment completing after our 40-minute give-up is lost (AUDIT #4) | 🟠 |
-| B6 | BOG | `Accept-Language` always `en`: Georgian buyers see an English payment page | 🟡 |
-| B7 | BOG | No `Idempotency-Key` on order creation | 🟡 |
+| B4 | both | Refund after a lost response never completes (AUDIT #5); TBC has no idempotency key (AUDIT #13) | ✅ #5 fixed (the bank is asked before a retry); TBC idempotency: none offered |
+| B5 | both | A payment completing after our 40-minute give-up is lost (AUDIT #4) | ✅ fixed: recorded as paid or refunded at once |
+| B6 | BOG | `Accept-Language` always `en`: Georgian buyers see an English payment page | ✅ the buyer's language is sent |
+| B7 | BOG | No `Idempotency-Key` on order creation | ✅ one key per booking |
 | B8 | both | `refunded_partially` never finished (AUDIT #12) | 🟡 |
 | B9 | TBC | `methods` not set: decide which payment methods to offer | 🟡 |
 | B10 | BOG | Built-in callback key: confirm with BOG and set `BOG_CALLBACK_PUBLIC_KEY` explicitly | 🟡 |

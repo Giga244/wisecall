@@ -43,12 +43,12 @@ async function call(method, path, json) {
 async function createPayment({ bookingId, amount, description, callbackUrl, returnUrl, ttlMinutes, language }) {
   const total = toDecimal(amount);
   const res = await call('POST', '/v1/tpay/payments', {
-    amount: { currency: 'GEL', total, subtotal: total, tax: 0, shipping: 0 },
+    amount: { currency: 'GEL', total, [config.TBC_SUBTOTAL_FIELD]: total, tax: 0, shipping: 0 },
     returnurl: returnUrl,
     callbackUrl,
     merchantPaymentId: bookingId,
     description: String(description || 'Wisecall').slice(0, 30),
-    expirationMinutes: ttlMinutes,
+    expirationMinutes: Math.min(ttlMinutes, config.TBC_MAX_EXPIRATION_MINUTES), // (B1: never more than TBC accepts)
     language: language === 'ka' ? 'KA' : 'EN'
   });
   const link = res && Array.isArray(res.links) ? res.links.find((l) => l.rel === 'approval_url') : null;

@@ -203,6 +203,7 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `PAYMENT_PROVIDER` | `bog` or `tbc`. **Needed for `LAUNCH_MODE=live`; leave it out in prelaunch** (nothing can be booked or paid until it is set) |
 | `BOG_CLIENT_ID`, `BOG_CLIENT_SECRET` | From BOG (when `PAYMENT_PROVIDER=bog`). Required for `live`, not for prelaunch |
 | `TBC_API_KEY`, `TBC_CLIENT_ID`, `TBC_CLIENT_SECRET` | From TBC (when `PAYMENT_PROVIDER=tbc`). Required for `live`, not for prelaunch |
+| `TBC_MAX_EXPIRATION_MINUTES`, `TBC_SUBTOTAL_FIELD` | [CONFIRM WITH BANK] Defaults 12 and `subTotal` (TBC's published example). Change only after TBC confirms other values |
 | `KYC_PROVIDER` | `didit`. **Needed for `LAUNCH_MODE=live`; leave it out in prelaunch** (mentors then see "ID checks open soon") |
 | `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | From Didit ([step 2b](#2b-set-up-id-verification-for-mentors-didit)). Required for `live`, not for prelaunch |
 | `ANTHROPIC_API_KEY` | Optional but recommended: the key from [console.anthropic.com](https://console.anthropic.com) (Settings → API keys). With it, every mentor application gets an AI summary and scores for the admin (about 2 US cents per application with the default model; the admin panel shows what the reviews cost). Without it the AI part is skipped and every application goes to a person with the link checks only. The AI never receives ID data, dates of birth, emails, phone numbers, IBANs or documents |

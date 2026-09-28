@@ -58,10 +58,13 @@ function uuidFrom(text) {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
 }
 
-// createPayment({ bookingId, amount (tetri), description, callbackUrl, successUrl, failUrl, ttlMinutes })
-async function createPayment({ bookingId, amount, callbackUrl, successUrl, failUrl, ttlMinutes }) {
+// createPayment({ bookingId, amount (tetri), description, callbackUrl, successUrl, failUrl, ttlMinutes, language })
+// The buyer's language chooses the language of BOG's payment page (B6), and the booking id makes the order request idempotent (B7): a
+// retried request cannot open a second order for the same question.
+async function createPayment({ bookingId, amount, callbackUrl, successUrl, failUrl, ttlMinutes, language }) {
   const total = toDecimal(amount);
   const res = await call('POST', '/payments/v1/ecommerce/orders', {
+    headers: { 'Accept-Language': language === 'ka' ? 'ka' : 'en', 'Idempotency-Key': uuidFrom(`order-${bookingId}`) },
     json: {
       callback_url: callbackUrl,
       external_order_id: bookingId,
