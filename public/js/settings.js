@@ -188,9 +188,11 @@
   SettingsProfile.init(user);
   SettingsAccounts.init();
   loadPayout();
-  loadProgress();
   updateTabVisibility();
   selectTab(new URLSearchParams(window.location.search).get('tab') || 'profile', { push: false });
+  // Show the tabs once the progress box above them is drawn (or after 2 s at most), so nothing jumps down.
+  const main = document.getElementById('main');
+  Promise.race([loadProgress(), new Promise((r) => setTimeout(r, 2000))]).finally(() => main.removeAttribute('data-loading'));
   document.addEventListener('wisecall:lang-changed', () => { if (activeTab === 'verification') SettingsVerification.reload(); });
 
   payoutForm.addEventListener('submit', async (ev) => {

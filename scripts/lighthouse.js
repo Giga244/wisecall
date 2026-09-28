@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// npm run lighthouse -- [--base http://localhost:4242] [--login email:password] [--pages home,expert,signup,dashboard,settings] [--details] [--dark] [--shots folder]
+// npm run lighthouse -- [--base http://localhost:4242] [--login email:password] [--pages home,expert,signup,dashboard,settings]
+//   (other pages: login, contact, faq, verify, help, ka = the Georgian home) [--details] [--dark] [--shots folder]
 // Runs Lighthouse (mobile and desktop) on the main pages of a RUNNING site and prints the four scores per page. Pages
 // that need an account (dashboard, settings) are audited signed in as --login. Set CHROME_PATH to use a browser other
 // than the one Chrome finds by itself. The exit code is 1 when any score is below 90.
@@ -32,12 +33,17 @@ async function signedInCookie() {
     signup: '/signup.html',
     login: '/login.html',
     contact: '/contact.html',
+    faq: '/faq.html',
+    verify: '/how-we-verify.html',
+    help: '/help.html',
+    ka: '/ka/',
     dashboard: LOGIN ? '/dashboard.html' : null,
     settings: LOGIN ? '/settings.html' : null
   };
-  // Signed-in pages are kept out of search engines on purpose (noindex and robots.txt). Lighthouse's "page is blocked from
-  // indexing" check always fails for them, so it is left out of their SEO score here and reported as n/a.
-  const PRIVATE = new Set(['dashboard', 'settings']);
+  // Signed-in pages, and the sign-up and login pages, are kept out of search engines on purpose (noindex, and robots.txt for the
+  // signed-in ones). Lighthouse's "page is blocked from indexing" check always fails for them, so it is left out of their SEO score here
+  // and reported as n/a.
+  const PRIVATE = new Set(['dashboard', 'settings', 'signup', 'login']);
   const cookie = LOGIN ? await signedInCookie() : '';
 
   const chrome = await chromeLauncher.launch({ chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu'], chromePath: process.env.CHROME_PATH });
@@ -90,7 +96,7 @@ async function signedInCookie() {
   console.log('\nLighthouse scores (Performance / Accessibility / Best Practices / SEO)');
   console.log('page'.padEnd(12) + 'device'.padEnd(10) + 'Perf'.padStart(6) + 'A11y'.padStart(6) + 'BP'.padStart(6) + 'SEO'.padStart(6));
   for (const r of rows) console.log(r.page.padEnd(12) + r.form.padEnd(10) + r.scores.map((s, i) => (r.seoNa && i === 3 ? 'n/a*' : String(s)).padStart(6)).join(''));
-  if (rows.some((r) => r.seoNa)) console.log('* signed-in pages are kept out of search engines on purpose, so the indexing check does not apply to them');
+  if (rows.some((r) => r.seoNa)) console.log('* signed-in pages and the sign-up / login pages are kept out of search engines on purpose, so the indexing check does not apply to them');
   console.log(worst >= TARGET ? `\nEvery score is ${TARGET} or more.` : `\nLowest score: ${worst} (target ${TARGET}).`);
   process.exitCode = worst >= TARGET ? 0 : 1;
 })().catch((e) => { console.error(e); process.exitCode = 2; });
