@@ -41,7 +41,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   if (mentor.id === seeker.id) return res.status(400).json({ error: 'cannot_book_self' });
 
   const amount = Math.round(mentor.price * 100);
-  const feeAmount = Math.round(amount * (config.PLATFORM_FEE_PERCENT / 100));
+  const feeAmount = Math.round((amount * Math.round(config.PLATFORM_FEE_PERCENT * 100)) / 10000); // (integer maths, docs/AUDIT.md #18)
   const cleanQuestion = checked.text;
 
   let providerName;
@@ -129,12 +129,14 @@ router.post('/:id/sync', requireAuth, asyncHandler(async (req, res) => {
 router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   const existing = await getBookingById(req.params.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });
-  if (existing.mentorId !== req.userToken.id) return res.status(400).json({ error: 'forbidden' });
+  if (existing.mentorId !== req.userToken.id) return res.status(403).json({ error: 'forbidden' }); // (docs/AUDIT.md #14)
   // A suspended mentor cannot answer (their open questions were refunded).
   const mentorNow = await getUserById(existing.mentorId);
   if (!mentorNow || mentorNow.verificationStatus === 'suspended') return res.status(403).json({ error: 'suspended' });
   if (existing.status === 'answered' || existing.answeredAt) return res.status(409).json({ error: 'already_answered' });
   if (existing.status !== 'paid') return res.status(400).json({ error: 'not_paid' });
+  // After the deadline the buyer is owed their money back (the sweep refunds it), so a late answer is refused (docs/AUDIT.md #7).
+  if (existing.answerDeadline && new Date(existing.answerDeadline) <= new Date()) return res.status(409).json({ error: 'deadline_passed' });
 
   const checked = content.checkAnswer((req.body || {}).answer);
   if (checked.error) return res.status(400).json({ error: checked.error, ...(checked.min ? { min: checked.min } : {}), ...(checked.max ? { max: checked.max } : {}) });
@@ -142,9 +144,11 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   // One of a new mentor's first answers? Then it waits for an admin before the buyer sees it.
   const held = await probation.shouldHold(existing.mentorId);
   const booking = await claimAnswer(existing.id, checked.text, held ? probation.holdPatch() : null);
-  if (!booking) { // somebody (the same mentor, twice) answered a moment before, or the question was refunded meanwhile
+  if (!booking) { // somebody (the same mentor, twice) answered a moment before, the question was refunded meanwhile, or the deadline passed
     const now = await getBookingById(existing.id);
-    return res.status(now && (now.status === 'answered' || now.answeredAt) ? 409 : 400).json({ error: now && (now.status === 'answered' || now.answeredAt) ? 'already_answered' : 'not_paid' });
+    if (now && (now.status === 'answered' || now.answeredAt)) return res.status(409).json({ error: 'already_answered' });
+    if (now && now.status === 'paid' && now.answerDeadline && new Date(now.answerDeadline) <= new Date()) return res.status(409).json({ error: 'deadline_passed' });
+    return res.status(400).json({ error: 'not_paid' });
   }
 
   if (!held) {

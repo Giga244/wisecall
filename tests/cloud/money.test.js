@@ -115,7 +115,7 @@ describe('bank callbacks and refunds (BOG)', () => {
     assert.equal(b.platform_fee_amount + b.mentor_net_amount, b.amount);
   });
 
-  test('an answer racing an admin refund never leaves a pending payout on a refunded booking', { todo: 'AUDIT #6 (a race: may pass on a given run)' }, async () => {
+  test('an answer racing an admin refund never leaves a pending payout on a refunded booking', async () => {
     const paid = [];
     for (let i = 0; i < 8; i++) paid.push(await payAtBank(await create(`Race question number ${i}: which database should I pick for a startup?`)));
     await Promise.all(paid.map((b) => Promise.all([
@@ -142,7 +142,7 @@ describe('answering after the deadline', () => {
     assert.equal(r.status, 200, r.text);
   });
 
-  test('an answer after the deadline is refused (the buyer is owed a refund)', { todo: 'AUDIT #7' }, async () => {
+  test('an answer after the deadline is refused (the buyer is owed a refund)', async () => {
     const b = await bookAndPay(ctx.base, ctx.seeker, ctx.mentorId, 'Is it too late to switch careers into software at 35?');
     assert.equal(b.status, 'paid');
     await pool.query(`UPDATE bookings SET answer_deadline = now() - interval '1 minute' WHERE id = $1`, [b.id]);
@@ -195,7 +195,7 @@ describe('platform fee for every price', () => {
     assert.deepEqual(r.range, [5, 2000]);
     assert.deepEqual(r.problems, []);
   });
-  test('17.5% (a fee that needs rounding): fee rounded to the nearest tetri, never a tetri lost', { todo: 'AUDIT #18' }, async () => {
+  test('17.5% (a fee that needs rounding): fee rounded to the nearest tetri, never a tetri lost', async () => {
     const r = await feeSweep(4804, 17.5);
     assert.deepEqual(r.problems, []);
   });

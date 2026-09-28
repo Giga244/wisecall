@@ -176,7 +176,7 @@ describe('nobody can read or change someone else\'s booking (IDOR)', () => {
     assert.equal((await ctx.mentor.api(`/bookings/${booking.id}/sync`, { method: 'POST' })).status, 403);
   });
 
-  test('someone else\'s answer is refused with 403 (not 400)', { todo: 'AUDIT #14' }, async () => {
+  test('someone else\'s answer is refused with 403 (not 400)', async () => {
     const r = await stranger.api(`/bookings/${booking.id}/answer`, { method: 'POST', body: { answer: longAnswer('Not mine to answer.') } });
     assert.equal(r.status, 403);
   });

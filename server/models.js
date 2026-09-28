@@ -207,7 +207,7 @@ async function claimAnswer(id, answer, hold) {
   const { rows } = await query(
     `UPDATE bookings SET answer = $2, status = 'answered', answered_at = now(),
             answer_review = COALESCE($3, answer_review), answer_held_until = COALESCE($4, answer_held_until)
-      WHERE id = $1 AND status = 'paid' AND answered_at IS NULL RETURNING *`,
+      WHERE id = $1 AND status = 'paid' AND answered_at IS NULL AND (answer_deadline IS NULL OR answer_deadline > now()) RETURNING *`,
     [id, answer, hold ? hold.answerReview : null, hold ? hold.answerHeldUntil : null]
   );
   return bookingFromRow(rows[0]);

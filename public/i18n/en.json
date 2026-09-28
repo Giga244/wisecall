@@ -1640,5 +1640,6 @@
   "meta.status.description": "Whether every part of Wisecall is working right now.",
   "ap.f.niche.hint": "Used for browsing and search. Choose \"Other\" if none fits.",
   "ap.f.regulatedByWords": "Your field or title names a licensed profession, so it counts as \"{niche}\": a licence is needed and a person reviews your application. If that is a mistake, write to support.",
-  "ap.missing.field": "Your field, in your own words"
+  "ap.missing.field": "Your field, in your own words",
+  "dash.answer.err.deadline": "The time to answer this question has passed, so the asker gets their money back. It can no longer be answered."
 }

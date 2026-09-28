@@ -349,7 +349,7 @@
           WisecallNav.showToast(t('toast.answerSent'));
           load();
         } catch (e) {
-          const map = { answer_too_short: 'dash.answer.tooShort', answer_repetitive: 'dash.answer.err.repetitive', answer_too_long: 'dash.answer.err.long', already_answered: 'dash.answer.err.already' };
+          const map = { answer_too_short: 'dash.answer.tooShort', answer_repetitive: 'dash.answer.err.repetitive', answer_too_long: 'dash.answer.err.long', already_answered: 'dash.answer.err.already', deadline_passed: 'dash.answer.err.deadline' };
           sendError.textContent = t(map[e.code] || 'toast.error');
           btn.disabled = false;
           if (e.code === 'already_answered') load();
