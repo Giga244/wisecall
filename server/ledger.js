@@ -23,11 +23,14 @@ const holdDays = () => Math.max(config.PAYOUT_HOLD_DAYS, config.DISPUTE_DAYS);
 // Called when a mentor answers, or, for a held answer (probation), when it is released to the buyer:
 // the hold period always starts when the buyer can see the answer. The unique booking_id makes
 // editing an answer harmless.
+// The booking row is locked and must still be answered: a refund that won the race (it locks the same row) leaves no payout behind, and
+// one that comes after finds this payout and voids it (docs/AUDIT.md #6).
 async function onAnswered(booking, from) {
   const payableAt = new Date(new Date(from || booking.answeredAt || Date.now()).getTime() + holdDays() * 86400000);
   await query(
     `INSERT INTO payouts (booking_id, mentor_id, amount, currency, payable_at)
-     VALUES ($1, $2, $3, $4, $5) ON CONFLICT (booking_id) DO NOTHING`,
+     SELECT b.id, $2, $3, $4, $5 FROM bookings b WHERE b.id = $1 AND b.status = 'answered' FOR UPDATE
+     ON CONFLICT (booking_id) DO NOTHING`,
     [booking.id, booking.mentorId, booking.mentorNetAmount, booking.currency, payableAt]
   );
 }
