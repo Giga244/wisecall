@@ -56,3 +56,16 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - Quality audit UX-3: the review page does not promise a time ("within 2 working days") until the team agrees one; the mentor gets an
   email the moment it is decided. UX-6: the browser's own confirm() dialogs stay (they are accessible and the tests rely on them);
   the tab-row fade mask was left out (the active tab is already scrolled into view).
+
+## PART 0 / Phase 5 — backups, admin overview, emails, Georgian review list
+- Help article 07 ("How mentors get paid") still has [CHECK] notes, so it stays unpublished (the help centre skips articles with
+  [CHECK]); PART 5 rewrites it for the new balance and withdrawals.
+- Backups: `npm run backup` / `npm run backup:check` wrap pg_dump / pg_restore. The check restores into a NEW scratch database and only
+  reads the source, so it can never overwrite data; it was tested on the local test database, never on the owner's dev or live database.
+- The admin overview is a new last tab, not the page admins land on: "Mentor applications" stays the first view (it is the daily work
+  queue in RUNBOOK §1, and the browser tests expect it). The numbers are counts and sums only (no names or emails). "Wisecall fee" is
+  gross (before bank fees and tax) and counts answered questions only; fake-bank payments are labelled as test money.
+- Emails get a dark version through CSS that only mail apps following the reader's dark mode use; the others keep the light design.
+  Gmail's apps ignore that CSS and recolour by themselves, so a real Gmail check (Android and iOS) is left to the owner.
+- docs/KA-REVIEW.md lists every Georgian text added or changed since the cloud packs were merged (`node scripts/ka-review.js 0c67940`),
+  for a native speaker; it is regenerated after PART 4.

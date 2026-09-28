@@ -31,3 +31,13 @@ question (full refund, reason shown). "Report a problem with this answer" within
 Account tools: signed-in devices + sign out others (AUDIT #3), data export, deletion with a 14-day grace (records kept pseudonymised),
 optional two-step verification for all, a breached-password check (HIBP k-anonymity) and 18+ at sign-up. Migrations 022–027.
 Tests: safety, disputes, receipts, sessions, account, account-security (+ e2e safety). Unit 627, cloud 28 + 6 todo, e2e green.
+
+## PART 0.1 / Phase 5 — polish: SEO, info pages, help centre, observability, backups, admin overview, emails, speed
+Georgian addresses under /ka with their own head, hreflang and a bilingual sitemap; mentor profiles rendered on the server with
+structured data; FAQ, "How we verify", a help centre (articles 02/03/05/10/12 rewritten; 07 waits for PART 5), footer legal line and
+founder block. Plausible (server-side, no cookies) and Sentry (scrubbed, off without a DSN), a public /status page. `npm run backup` and
+a tested restore check (`backup:check`), an admin Overview tab (sign-ups, applications by status and risk, waiting list, questions,
+refunds, disputes, money), dark-mode friendly emails, and docs/KA-REVIEW.md (467 Georgian texts for a native speaker). Lighthouse on the
+test data: every page 95-100 on mobile and desktop (Settings' layout shift fixed: 89 -> 96).
+Tests: unit 656 (2 site-wide checks updated for the server-filled and error pages, then green), cloud 28 + 6 todo, e2e 144 passed / 5
+skipped.
