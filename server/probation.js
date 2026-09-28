@@ -95,11 +95,13 @@ async function queue() {
 
 // What the buyer may see: a held answer is hidden from them until it is released, and a rejected one
 // (the buyer was refunded) is never shown.
+// (the bank's order and refund ids and its error messages are for admins only)
 function forViewer(booking, viewerId) {
+  const { refundError, providerOrderId, providerRefundId, ...shown } = booking; // eslint-disable-line no-unused-vars
   const held = booking.answerReview === 'held';
   const hidden = held || booking.answerReview === 'rejected';
-  if (hidden && booking.seekerId === viewerId) return { ...booking, answer: null, answerHeld: held };
-  return { ...booking, answerHeld: held };
+  if (hidden && booking.seekerId === viewerId) return { ...shown, answer: null, answerHeld: held };
+  return { ...shown, answerHeld: held };
 }
 
 module.exports = { shouldHold, holdPatch, release, flag, reject, releaseDue, queue, forViewer };

@@ -349,7 +349,9 @@
     } catch (e) {
       submitBtn.disabled = false;
       if (e.code === 'emergency') { showEmergencyHelp(); return; }
-      errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION) : (e.message2 || t('expert.sendError'));
+      const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings' };
+      errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION)
+        : (limits[e.code] ? t(limits[e.code]).replace('{n}', (e.data && e.data.max) || '') : (e.message2 || t('expert.sendError')));
     }
   }
 

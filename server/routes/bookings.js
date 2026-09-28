@@ -39,6 +39,16 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   if (!seeker) return res.status(401).json({ error: 'not_authenticated' });
   if (!isListable(mentor)) return res.status(404).json({ error: 'mentor_not_found' });
   if (mentor.id === seeker.id) return res.status(400).json({ error: 'cannot_book_self' });
+  // Limits per account (one address can be many accounts, one account many addresses): a flood of attempts would open bank orders and
+  // fill a mentor's list. An attempt counts as open while the bank could still complete it.
+  if (config.BOOKINGS_PER_HOUR || config.MAX_OPEN_UNPAID_BOOKINGS) {
+    const { rows: [n] } = await query(
+      `SELECT count(*) FILTER (WHERE created_at > now() - interval '1 hour')::int AS hour,
+              count(*) FILTER (WHERE status = 'pending_payment' AND created_at > now() - make_interval(mins => $2))::int AS open
+         FROM bookings WHERE seeker_id = $1`, [seeker.id, config.PAYMENT_TTL_MINUTES + 10]);
+    if (config.MAX_OPEN_UNPAID_BOOKINGS && n.open >= config.MAX_OPEN_UNPAID_BOOKINGS) return res.status(409).json({ error: 'too_many_unpaid', max: config.MAX_OPEN_UNPAID_BOOKINGS });
+    if (config.BOOKINGS_PER_HOUR && n.hour >= config.BOOKINGS_PER_HOUR) return res.status(429).json({ error: 'too_many_bookings', max: config.BOOKINGS_PER_HOUR });
+  }
 
   const amount = Math.round(mentor.price * 100);
   const feeAmount = Math.round((amount * Math.round(config.PLATFORM_FEE_PERCENT * 100)) / 10000); // (integer maths, docs/AUDIT.md #18)
@@ -59,7 +69,8 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   try {
     const order = await payments.startPayment(booking, mentor, seeker);
     const updated = await updateBooking(booking.id, { providerOrderId: order.orderId });
-    res.status(201).json({ booking: updated, checkoutUrl: order.redirectUrl });
+    // (the bank's order id is part of the checkout address the buyer is sent to anyway)
+    res.status(201).json({ booking: { ...probation.forViewer(updated, seeker.id), providerOrderId: updated.providerOrderId }, checkoutUrl: order.redirectUrl });
   } catch (err) {
     console.error('[payments] could not start the bank payment:', err.message);
     await updateBooking(booking.id, { status: 'expired' });
@@ -85,7 +96,7 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   const askedRaw = await ratings.attach((await list('seeker', 'mentor')).map((b) => probation.forViewer(b, me)), me, 'asker');
   const receiptsFor = await require('../receipts').forBookings(askedRaw.map((b) => b.id));
   const asked = askedRaw.map((b) => ({ ...b, receipts: receiptsFor[b.id] || [] }));
-  const received = await ratings.attach((await list('mentor', 'seeker')).map((b) => ({ ...b, answerHeld: b.answerReview === 'held' })), me, 'mentor');
+  const received = await ratings.attach((await list('mentor', 'seeker')).map((b) => probation.forViewer(b, me)), me, 'mentor');
   // Reported problems with answers, and until when the asker can still report one.
   const disputes = require('../disputes');
   const found = await disputes.forBookings([...asked, ...received].map((b) => b.id));

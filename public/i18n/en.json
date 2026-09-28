@@ -1641,5 +1641,7 @@
   "ap.f.niche.hint": "Used for browsing and search. Choose \"Other\" if none fits.",
   "ap.f.regulatedByWords": "Your field or title names a licensed profession, so it counts as \"{niche}\": a licence is needed and a person reviews your application. If that is a mistake, write to support.",
   "ap.missing.field": "Your field, in your own words",
-  "dash.answer.err.deadline": "The time to answer this question has passed, so the asker gets their money back. It can no longer be answered."
+  "dash.answer.err.deadline": "The time to answer this question has passed, so the asker gets their money back. It can no longer be answered.",
+  "expert.err.tooManyUnpaid": "You already have {n} payments you started and did not finish. Finish or cancel one at the bank (or wait about 40 minutes) before asking another question.",
+  "expert.err.tooManyBookings": "You have started {n} questions in the last hour. Please wait a little before asking another one."
 }

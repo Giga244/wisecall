@@ -166,7 +166,8 @@ describe('answering after the deadline', () => {
 // Every whole-lari price a mentor can set (5..2000 GEL): the amount is exact in tetri, fee + mentor share always add up to the amount,
 // and the fee is the configured percent rounded to the nearest tetri.
 async function feeSweep(port, feePercent) {
-  const ctx = await marketplace(port, { SWEEP_INTERVAL_SECONDS: '3600', PLATFORM_FEE_PERCENT: String(feePercent) });
+  // (about 2,000 questions from one address: above the per-address limit on starting questions, so it is raised here)
+  const ctx = await marketplace(port, { SWEEP_INTERVAL_SECONDS: '3600', PLATFORM_FEE_PERCENT: String(feePercent), RATE_LIMIT_MULTIPLIER: '100' });
   try {
     const cfg = await client(ctx.base).api('/config');
     assert.equal(cfg.platformFeePercent, feePercent);

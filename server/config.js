@@ -59,6 +59,10 @@ const config = {
   // [CONFIRM WITH BANK] (docs/BANK-GOLIVE.md B1, B2). The longest payment window TBC accepts: their example uses 12 minutes and the maximum
   // is not published, so 12 is what we send unless TBC confirms more (PAYMENT_TTL_MINUTES is still our own give-up time). The spelling of
   // the sub-total field: the published examples use "subTotal".
+  // Asking: at most this many questions started per account per hour, and this many unpaid attempts open at once (0 = no limit; the
+  // tests switch them off except where they test them).
+  BOOKINGS_PER_HOUR: Math.max(0, int(env.BOOKINGS_PER_HOUR, 10)),
+  MAX_OPEN_UNPAID_BOOKINGS: Math.max(0, int(env.MAX_OPEN_UNPAID_BOOKINGS, 3)),
   TBC_MAX_EXPIRATION_MINUTES: Math.max(1, int(env.TBC_MAX_EXPIRATION_MINUTES, 12)),
   TBC_SUBTOTAL_FIELD: ['subTotal', 'subtotal'].includes(env.TBC_SUBTOTAL_FIELD) ? env.TBC_SUBTOTAL_FIELD : 'subTotal',
 
