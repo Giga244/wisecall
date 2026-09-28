@@ -15,6 +15,7 @@ const { bookingFromRow, getUserById, getBookingById, updateBooking } = require('
 const notify = require('./notify');
 const ledger = require('./ledger');
 const receipts = require('./receipts');
+const { isListable } = require('./util');
 
 class PaymentError extends Error {
   constructor(code, message) { super(message || code); this.code = code; }
@@ -83,6 +84,28 @@ async function applyBankStatus(client, booking, s) {
     return { booking, after };
   }
 
+  // The bank took the money after we had closed the attempt (a slow 3-D Secure, a buyer who came back late; docs/AUDIT.md #4). The money
+  // is never lost: the question is opened again as paid when the mentor can still be asked, otherwise it is refunded at once. Admins are
+  // told either way.
+  if (booking.status === 'expired' && s.status === 'paid') {
+    if (s.amount !== booking.amount || (s.currency && s.currency !== booking.currency)) {
+      console.error(`[payments] late payment with the wrong amount for booking ${booking.id}: expected ${booking.amount}, bank says ${s.amount}. Not recorded.`);
+      after.push(async () => notify.notifyAdmins('A late bank payment did not match its question', `<p>Booking ${booking.id}: the bank reports a payment of ${s.amount} tetri for a question of ${booking.amount}. Check it in the bank's merchant portal.</p>`));
+      return { booking, after };
+    }
+    const mentor = await getUserById(booking.mentorId);
+    const askable = isListable(mentor);
+    const updated = await updateBooking(booking.id, { status: 'paid', paidAt: new Date(), answerDeadline: deadlineFromNow() }, client);
+    const receipt = await receipts.issue(updated.id, 'payment', updated.amount, client);
+    after.push(async () => {
+      await receipts.email(receipt);
+      if (askable) notify.notifyMentorNewQuestion(mentor, updated);
+      else await refundBooking(updated.id, 'late_payment').catch((e) => console.error(`[payments] refund of late payment ${updated.id} failed:`, e.message));
+      notify.notifyAdmins('A late bank payment was recorded', `<p>Booking ${updated.id} was closed before the bank confirmed its payment. It is now ${askable ? 'paid and sent to the mentor' : 'being refunded (the mentor can no longer be asked)'}.</p>`);
+    });
+    return { booking: updated, after };
+  }
+
   // A refund we asked for (or one made in the bank's own dashboard) has completed.
   if (s.status === 'refunded' && ['paid', 'answered', 'refund_pending'].includes(booking.status)) {
     const updated = await updateBooking(booking.id, {
@@ -106,7 +129,8 @@ async function applyBankStatus(client, booking, s) {
 async function syncBooking(bookingId) {
   const booking = await getBookingById(bookingId);
   if (!booking || !booking.providerOrderId) return booking;
-  if (!['pending_payment', 'paid', 'answered', 'refund_pending'].includes(booking.status)) return booking;
+  // ("expired" too: the bank can still complete a payment we stopped waiting for, docs/AUDIT.md #4)
+  if (!['pending_payment', 'paid', 'answered', 'refund_pending', 'expired'].includes(booking.status)) return booking;
 
   const status = await pay.forProvider(booking.provider).getPaymentStatus(booking.providerOrderId); // network call, outside the transaction
   let result = { booking, after: [] };
@@ -165,6 +189,9 @@ async function refundBooking(bookingId, reason) {
   } catch (err) {
     console.error(`[payments] bank refused or failed the refund for booking ${claimed.id}:`, err.message);
     await updateBooking(claimed.id, { refundError: String(err.message).slice(0, 300) });
+    // The request may have reached the bank and only the answer was lost (a timeout): ask the bank before calling it a failure.
+    const now = await syncBooking(claimed.id).catch(() => null);
+    if (now && now.status === 'refunded') return now;
     throw new PaymentError('refund_failed', err.message);
   }
   // Some banks confirm at once, so look straight away instead of waiting for the sweep.

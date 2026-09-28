@@ -34,13 +34,18 @@ async function sendReminders() {
   }
 }
 
-// Refund requests the bank rejected or that failed to reach it: ask again.
+// Refund requests the bank rejected or that failed to reach it: first ask the bank whether it was carried out after all (a lost answer,
+// docs/AUDIT.md #5), and only ask again (with the same idempotency key) when it was not.
 async function retryRefunds() {
   const { rows } = await query(
     `SELECT id, refund_reason FROM bookings WHERE status = 'refund_pending' AND refund_error IS NOT NULL ORDER BY refund_requested_at LIMIT 50`
   );
   for (const { id, refund_reason: reason } of rows) {
-    try { await payments.refundBooking(id, reason || 'no_answer_deadline'); }
+    try {
+      const now = await payments.syncBooking(id);
+      if (now && now.status === 'refunded') continue;
+      await payments.refundBooking(id, reason || 'no_answer_deadline');
+    }
     catch (err) { console.error(`[jobs] refund retry for ${id} failed:`, err.message); }
   }
 }
@@ -52,8 +57,13 @@ async function confirmRefunds() {
       ORDER BY refund_requested_at LIMIT 50`
   );
   for (const { id } of rows) {
-    try { await payments.syncBooking(id); }
-    catch (err) { console.error(`[jobs] could not confirm refund for ${id}:`, err.message); }
+    try {
+      const b = await payments.syncBooking(id);
+      if (b && b.status === 'refund_pending') {
+        await query(`UPDATE bookings SET refund_error = 'the bank still shows the payment as paid'
+                      WHERE id = $1 AND status = 'refund_pending' AND refund_error IS NULL AND refund_requested_at < now() - interval '5 minutes'`, [id]);
+      }
+    } catch (err) { console.error(`[jobs] could not confirm refund for ${id}:`, err.message); }
   }
 }
 
@@ -76,10 +86,17 @@ async function reconcilePending() {
 // Attempts to ask a question that were never paid (cancelled, failed or timed out at the bank) are deleted after a week: nobody was charged,
 // there is nothing to pay out or refund, and the buyer's dashboard hides them anyway. A booking that was ever paid is never touched.
 async function purgeUnpaid() {
+  const { rows: candidates } = await query(
+    `SELECT id FROM bookings b WHERE b.paid_at IS NULL AND b.status IN ('expired', 'pending_payment') AND b.provider_order_id IS NOT NULL
+        AND b.created_at < now() - make_interval(days => $1) ORDER BY b.created_at LIMIT 200`, [config.UNPAID_ATTEMPT_DAYS]);
+  const unsure = [];
+  for (const { id } of candidates) {
+    try { await payments.syncBooking(id); } catch (e) { unsure.push(id); } // (a late payment is recorded now; an unreachable bank: keep it)
+  }
   const { rowCount } = await query(
     `DELETE FROM bookings b
       WHERE b.paid_at IS NULL AND b.status IN ('expired', 'pending_payment') AND b.created_at < now() - make_interval(days => $1)
-        AND NOT EXISTS (SELECT 1 FROM payouts p WHERE p.booking_id = b.id)`, [config.UNPAID_ATTEMPT_DAYS]
+        AND NOT EXISTS (SELECT 1 FROM payouts p WHERE p.booking_id = b.id) AND NOT (b.id = ANY($2::uuid[]))`, [config.UNPAID_ATTEMPT_DAYS, unsure]
   );
   if (rowCount) console.log(`[jobs] deleted ${rowCount} unpaid attempt(s) older than ${config.UNPAID_ATTEMPT_DAYS} days`);
   return rowCount;

@@ -57,7 +57,7 @@ describe('bank callbacks and refunds (BOG)', () => {
     assert.equal((await bookingRow(b.id)).status, 'pending_payment');
   });
 
-  test('a late "paid" from the bank on a booking the sweep already expired is not lost (booking paid, or refunded at once)', { todo: 'AUDIT #4' }, async () => {
+  test('a late "paid" from the bank on a booking the sweep already expired is not lost (booking paid, or refunded at once)', async () => {
     const b = await create();
     // The bank order is still open, but the booking is older than PAYMENT_TTL_MINUTES + 10, so the sweep closes it.
     await pool.query(`UPDATE bookings SET created_at = now() - interval '2 hours' WHERE id = $1`, [b.id]);
@@ -94,7 +94,7 @@ describe('bank callbacks and refunds (BOG)', () => {
     assert.equal(new Set(keys).size, 1, 'every attempt must carry the same Idempotency-Key');
   });
 
-  test('a refund whose response was lost (timeout) but that the bank carried out ends "refunded"', { todo: 'AUDIT #5' }, async () => {
+  test('a refund whose response was lost (timeout) but that the bank carried out ends "refunded"', async () => {
     const b = await payAtBank(await create());
     assert.ok(b);
     // What a timeout leaves behind: the bank has the refund, our database only has the error of the request that timed out.
