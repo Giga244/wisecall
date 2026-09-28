@@ -156,6 +156,16 @@ describe('private documents', () => {
     assert.equal((await admin.api('/admin/documents/not-an-id')).status, 404);
   });
 
+  test('a file with a Georgian name downloads with its name (docs/AUDIT.md #9)', async () => {
+    const up = await upload(doctor, 'diploma', PDF, { name: 'დიპლომი.pdf' });
+    assert.equal(up.status, 201, up.text);
+    const { rows } = await pool.query(`SELECT id FROM verification_documents WHERE user_id = $1 AND step = 'diploma' ORDER BY uploaded_at DESC LIMIT 1`, [doctorId]);
+    const res = await admin.raw(`/api/admin/documents/${rows[0].id}`);
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-disposition'), /^attachment; filename="[^"]*\.pdf"; filename\*=UTF-8''%E1%83%93%E1%83%98%E1%83%9E/);
+    assert.equal((await doctor.api(`/verification/documents/${rows[0].id}`, { method: 'DELETE' })).status, 200); // (the next tests count the licence files)
+  });
+
   test('files are never reachable as static content and never appear in the mentor\'s own or public data', async () => {
     assert.equal((await client(base)(`/uploads/${docId}`)).status, 404);
     const own = await doctor.api('/verification');

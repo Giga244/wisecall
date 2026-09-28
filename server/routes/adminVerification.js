@@ -303,12 +303,8 @@ router.get('/documents/:id', requireAuth, requireAdmin, asyncHandler(async (req,
   const doc = await credentials.getDocument(req.params.id);
   if (!doc) return res.status(404).json({ error: 'not_found' });
   await steps.audit(doc.meta.userId, steps.adminActor(req.adminUser), 'document_viewed', { step: doc.meta.step, reason: doc.meta.filename });
-  res.set({
-    'Content-Type': doc.meta.mime,
-    'Content-Disposition': `attachment; filename="${doc.meta.filename.replace(/"/g, '')}"`,
-    'Cache-Control': 'no-store, private',
-    'X-Content-Type-Options': 'nosniff'
-  });
+  res.attachment(doc.meta.filename); // (Georgian letters too: docs/AUDIT.md #9)
+  res.set({ 'Content-Type': doc.meta.mime, 'Cache-Control': 'no-store, private', 'X-Content-Type-Options': 'nosniff' });
   res.send(doc.bytes);
 }));
 
