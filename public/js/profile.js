@@ -31,6 +31,14 @@
   if (!answer.profile) {
     // Nobody by that name, or the request failed (then say so, with a way to try again: it is not "not found").
     if (answer.error && answer.error !== 'not_found') {
+      // The server already wrote the profile into the page (name, role, bio: what search engines read, since robots.txt keeps them
+      // away from /api/). Keep it, and offer to load the rest again.
+      if (page.querySelector('.profile-ssr')) {
+        page.setAttribute('aria-busy', 'false');
+        page.insertAdjacentHTML('beforeend', `<p class="muted profile-retry">${t('profile.loadError')} <button type="button" class="linklike" data-retry>${t('common.retry')}</button></p>`);
+        page.querySelector('[data-retry]').addEventListener('click', () => location.reload());
+        return;
+      }
       showMessage('profile.loadError', `<p><button type="button" class="btn btn-outline" data-retry>${t('common.retry')}</button></p>`);
       page.querySelector('[data-retry]').addEventListener('click', () => location.reload());
       return;
