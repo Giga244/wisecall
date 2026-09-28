@@ -49,3 +49,10 @@ names in EN/KA; "Other" is a Browse filter. Words or titles naming a licensed pr
 admins can edit a mentor's field and category and mark "not a licensed profession" (audited). Migration 028 (widens a limit, adds one
 column; undo script). Tests: tests/your-field.test.js (8), fixtures updated, e2e niches/full-flow.
 Tests: unit 664, cloud 28 + 6 todo, e2e 145 passed / 5 skipped.
+
+## PART 3 — security fixes from the audits
+Top 5 done (#1, #2, #3, #8 earlier; now #4 late bank payments, #5 lost refund answers). 🟠: #6 answer/refund race, #7 no answer after
+the deadline, #9 Georgian file names, #10 new accounts start private; also #14, #17, #18. Bank B1/B2 (TBC, settings marked [CONFIRM WITH
+BANK]), B6/B7 (BOG language, idempotency key). From FIX-PROMPT: per-account asking limits, payout details need the password (email +
+72-hour hold on a change), bank internals hidden from buyers and mentors. Every { todo } in tests/cloud is gone and `npm test` runs them;
+the cloud pack's four test.fixme browser tests pass. Left: 🟡 #11, #12 (see DECISIONS.md).

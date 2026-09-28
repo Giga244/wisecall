@@ -88,3 +88,24 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - Specialty tags stay out of the public data (as before); Browse's search box also asks the server, which matches them, and shows
   the union with its own instant matches. When an admin turns a suggested "Other" field into a category, the mentors keep their own
   words as their field.
+
+## PART 3 — security fixes
+- #4 A late "paid" on an attempt we had closed: the question is opened again as paid when the mentor can still be asked, otherwise it is
+  refunded at once; admins are emailed either way. Unpaid attempts are only deleted after one last look at the bank.
+- #5 A refund whose answer was lost: before asking again, the sweep asks the bank; a refund the bank accepted but still shows as paid
+  after 5 minutes is asked for again (same idempotency key).
+- #10 changes the earlier decision "asker profiles are public by default" for NEW accounts only (the audit's 🟠 row, which the master
+  prompt asks to fix): existing accounts keep what they have. Approved mentors' profiles are made public at approval (they are listed
+  anyway). Reviews by an asker with a private profile show "Anonymous asker", as before. The Privacy Policy should say so
+  (LEGAL-REVIEW.md 50).
+- Bank items without confirmation are settings: TBC_MAX_EXPIRATION_MINUTES (default 12, the value in TBC's example) and
+  TBC_SUBTOTAL_FIELD (default "subTotal", TBC's documented spelling), both [CONFIRM WITH BANK] in docs/BANK-GOLIVE.md.
+- Asking limits per account: 3 unpaid attempts open at once and 10 questions started per hour (BOOKINGS_PER_HOUR,
+  MAX_OPEN_UNPAID_BOOKINGS; 0 turns a limit off), on top of an IP limit of 30 per hour.
+- Payout details: the current password is needed even for the first details (an account taken over before the mentor saved them could
+  otherwise set its own IBAN). Accounts without a password (Google) must have signed in within 10 minutes. A change (not the first save)
+  emails the mentor and holds payouts for 72 hours (PAYOUT_CHANGE_HOLD_HOURS).
+- Buyers and mentors no longer get the bank's order and refund ids or its error messages; the buyer's answer to "start a payment" still
+  carries the order id, which is part of the bank address they are sent to anyway.
+- Left for later (🟡, not required by the master prompt): #11 (who can raise a "reports" flag), #12 (the bank's "partially refunded"
+  status). #14, #17 and #18 were small and are done.

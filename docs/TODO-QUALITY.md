@@ -7,6 +7,9 @@ the exact fix, so it can be applied on `main` without merge conflicts. IDs match
 
 File: `tests/e2e-cloud/known-issues.spec.js`. When the fix lands, change `test.fixme(` to `test(`.
 
+**All four are fixed (PART 3, 2026-09-28) and are plain `test(` now:** SEO-1 (profiles rendered on the server, kept when /api/ is
+blocked), SEO-2 (/ka/ addresses), AUDIT #9 (res.attachment), AUDIT #3 (session versions).
+
 | Test | Fails today because | Fix |
 |---|---|---|
 | QUALITY-SEO-1: a mentor profile is readable without calling /api/ | With `/api/` blocked (as robots.txt tells crawlers), the page shows “We couldn’t find that profile” | SEO-1 below |
