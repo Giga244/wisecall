@@ -73,7 +73,7 @@ async function listedMentor(admin, { name, email, niche = 'business', price = 20
     if (f.status !== 200) throw new Error('field setup failed: ' + f.text);
   }
   await approveMentor(admin, m);
-  await addPayoutDetails(m, GOOD_IBAN, name);
+  await addPayoutDetails(m, GOOD_IBAN, name, PASSWORD);
   const me = (await m.api('/me')).user;
   return { client: m, id: me.id, username: me.username, name, email, price };
 }

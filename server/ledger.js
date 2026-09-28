@@ -12,8 +12,10 @@ const config = require('./config');
 
 // ---- The rules, as SQL on a payouts row named `p` (one definition, used everywhere money is summed) ---------------------------
 // Payable: earned, the hold has passed, and no dispute about its booking is open (a dispute holds the money until an admin decides).
+// ...and the mentor's payout details were not changed in the last PAYOUT_CHANGE_HOLD_HOURS.
 const payableSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.payable_at <= now()
-  AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.booking_id = ${p}.booking_id AND d.status = 'open')`;
+  AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.booking_id = ${p}.booking_id AND d.status = 'open')
+  AND NOT EXISTS (SELECT 1 FROM users hu WHERE hu.id = ${p}.mentor_id AND hu.payout_hold_until > now())`;
 // Owed back: paid, then (partly) refunded, and not settled yet. debt_amount is the part owed after a partial refund.
 const debtSql = (p = 'payouts') => `${p}.status = 'paid' AND ${p}.debt_flagged_at IS NOT NULL AND ${p}.debt_settled_batch_id IS NULL`;
 const debtAmountSql = (p = 'payouts') => `COALESCE(${p}.debt_amount, ${p}.amount)`;

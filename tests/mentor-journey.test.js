@@ -110,7 +110,7 @@ describe('a new Medicine mentor (regulated)', () => {
   test('approved but without payout details: still hidden; then listed with the right badges', async () => {
     assert.equal((await admin.api(`/admin/mentors/${id}/approve`, { method: 'POST' })).status, 200);
     assert.equal(await listed(id), undefined, 'a mentor we cannot pay is not listed');
-    assert.equal((await doc.api('/me/payout', { method: 'PUT', body: { name: 'Levan Kiknadze', iban: GOOD_IBAN } })).status, 200);
+    assert.equal((await doc.api('/me/payout', { method: 'PUT', body: { name: 'Levan Kiknadze', iban: GOOD_IBAN, currentPassword: 'test-pass-12345' } })).status, 200);
     const e = await listed(id);
     assert.ok(e, 'listed');
     assert.deepEqual(e.badges.map((b) => b.key).sort(), ['experience', 'id', 'interview', 'license']);
@@ -165,7 +165,7 @@ describe('a new Design mentor (standard)', () => {
 
   test('after the admin accepts the name, the approval completes it; a confirmed work email adds a badge', async () => {
     // A payout account in another name only holds payouts (its own flag); it does not stop the application.
-    assert.equal((await des.api('/me/payout', { method: 'PUT', body: { name: 'Nino Beridze', iban: GOOD_IBAN } })).status, 200);
+    assert.equal((await des.api('/me/payout', { method: 'PUT', body: { name: 'Nino Beridze', iban: GOOD_IBAN, currentPassword: 'test-pass-12345' } })).status, 200);
     const flags = (await admin.api(`/admin/mentors/${id}/verification`)).flags.map((f) => f.kind);
     assert.ok(flags.includes('payout_name_mismatch'));
     assert.equal((await decide(id, 'name_match', 'passed', 'Legal name differs from the professional name; documents checked')).status, 200);

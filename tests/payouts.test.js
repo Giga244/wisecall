@@ -57,14 +57,14 @@ after(async () => { if (srv) srv.proc.kill(); await pool.end(); fs.rmSync(OUTBOX
 
 describe('payout details', () => {
   test('the IBAN is validated: format, country and check digits', async () => {
-    const put = (name, iban) => mentorA.api('/me/payout', { method: 'PUT', body: { name, iban } });
+    const put = (name, iban) => mentorA.api('/me/payout', { method: 'PUT', body: { name, iban, currentPassword: 'test-pass-12345' } });
     assert.equal((await put('Nino Beridze', 'GE30NB0000000101904917')).error, 'invalid_iban', 'wrong check digits');
     assert.equal((await put('Nino Beridze', 'DE89370400440532013000')).error, 'invalid_iban', 'not Georgian');
     assert.equal((await put('Nino Beridze', 'GE29NB000000010190491')).error, 'invalid_iban', 'too short');
     assert.equal((await put('Nino Beridze', 'GE29 NB00 0000 0101 90')).error, 'invalid_iban');
     assert.equal((await put('Nino', GOOD_IBAN)).error, 'invalid_payout_name', 'first and last name are required');
     assert.equal((await put('Nino Beridze', { a: 1 })).status, 400);
-    assert.equal((await seeker.api('/me/payout', { method: 'PUT', body: { name: 'Sam Seeker', iban: GOOD_IBAN } })).error, 'not_a_mentor');
+    assert.equal((await seeker.api('/me/payout', { method: 'PUT', body: { name: 'Sam Seeker', iban: GOOD_IBAN, currentPassword: 'test-pass-12345' } })).error, 'not_a_mentor');
   });
 
   test('a mentor without payout details is approved but hidden and not bookable', async () => {
@@ -78,7 +78,7 @@ describe('payout details', () => {
   });
 
   test('saving accepts spaces and lower case, stores the IBAN encrypted, and lists the mentor', async () => {
-    const r = await mentorA.api('/me/payout', { method: 'PUT', body: { name: '  Nino   Beridze ', iban: 'ge29 nb00 0000 0101 9049 17' } });
+    const r = await mentorA.api('/me/payout', { method: 'PUT', body: { name: '  Nino   Beridze ', iban: 'ge29 nb00 0000 0101 9049 17', currentPassword: 'test-pass-12345' } });
     assert.equal(r.status, 200);
     assert.equal(r.iban, 'GE29 NB00 0000 0101 9049 17');
     assert.equal(r.name, 'Nino Beridze');

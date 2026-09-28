@@ -216,6 +216,8 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `PLATFORM_FEE_PERCENT` | `20` (Wisecall's cut; the mentor gets the rest) |
 | `ANSWER_DEADLINE_DAYS` | `7` (also written in the Terms; keep them in step) |
 | `PAYOUT_HOLD_DAYS` | `7` (also written in the Terms) |
+| `PAYOUT_CHANGE_HOLD_HOURS`, `REAUTH_MINUTES` | `72` and `10`: payouts wait after a change of payout details; a Google-only account signs in again before changing them |
+| `BOOKINGS_PER_HOUR`, `MAX_OPEN_UNPAID_BOOKINGS` | `10` and `3` per account (0 = no limit) |
 | `DISPUTE_DAYS` | `7`: how long the asker can report a problem with an answer; earnings are held at least this long |
 | `LEGAL_NAME`, `LEGAL_ID`, `LEGAL_ADDRESS` | Your company or individual entrepreneur's name, identification number and legal address, printed on every receipt and shown in the footer. Each one is hidden while empty; set them before the first real payment |
 | `FOUNDER_NAME`, `FOUNDER_ROLE`, `FOUNDER_PHOTO`, `FOUNDER_STORY_EN`, `FOUNDER_STORY_KA` | Optional: the founder section on the About page (hidden while the name is empty). The photo must be a file on the site, such as `/brand/founder.jpg` |

@@ -176,6 +176,7 @@ test('the mentor adds payout details and appears in Browse experts', async () =>
   await mentorPage.click('#tab-payouts');
   await mentorPage.fill('#payoutName', mentor.name);
   await mentorPage.fill('#payoutIban', S.GOOD_IBAN);
+  await mentorPage.fill('#payoutPassword', S.PASSWORD); // (payout details need the current password)
   await mentorPage.click('#payoutForm button[type="submit"]');
   await expect.poll(async () => (await S.sql('SELECT payout_iban_enc IS NOT NULL AS has FROM users WHERE id = $1', [mentorId]))[0].has).toBe(true);
 

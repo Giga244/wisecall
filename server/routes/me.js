@@ -149,23 +149,41 @@ router.get('/payout', requireAuth, asyncHandler(async (req, res) => {
 }));
 
 router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
-  const { name, iban } = req.body || {};
+  const { name, iban, currentPassword } = req.body || {};
   if (typeof name !== 'string' || typeof iban !== 'string') return res.status(400).json({ error: 'missing_fields' });
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
   if (!isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
+  // Where the money goes is protected like the password: the current password, or (an account made with Google) a recent sign-in.
+  if (user.passwordHash) {
+    if (typeof currentPassword !== 'string' || !currentPassword) return res.status(400).json({ error: 'password_required' });
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
+  } else {
+    const { rows } = await require('../db').query('SELECT created_at FROM sessions WHERE id = $1 AND user_id = $2', [req.userToken.sid || null, user.id]);
+    if (!rows[0] || Date.now() - new Date(rows[0].created_at).getTime() > config.REAUTH_MINUTES * 60000) return res.status(403).json({ error: 'reauth_required', minutes: config.REAUTH_MINUTES });
+  }
 
   const cleanName = name.trim().replace(/\s+/g, ' ');
   if (cleanName.length < 5 || cleanName.length > 100 || !cleanName.includes(' ')) return res.status(400).json({ error: 'invalid_payout_name' });
   if (!isValidGeorgianIban(iban)) return res.status(400).json({ error: 'invalid_iban' });
 
   const normalized = normalize(iban);
+  // Changing details that were already saved: the mentor is told by email, and their payouts wait (a stolen account cannot redirect
+  // money before the owner can react). The first details a mentor saves are not a change.
+  const before = user.payoutIbanEnc ? decrypt(user.payoutIbanEnc) : null;
+  const changed = Boolean(before) && (before !== normalized || user.payoutName !== cleanName);
+  const holdUntil = changed && config.PAYOUT_CHANGE_HOLD_HOURS ? new Date(Date.now() + config.PAYOUT_CHANGE_HOLD_HOURS * 3600000) : undefined;
   const updated = await updateUser(user.id, {
     payoutName: cleanName,
     payoutIbanEnc: encrypt(normalized),
     payoutIbanLast4: normalized.slice(-4),
-    payoutUpdatedAt: new Date()
+    payoutUpdatedAt: new Date(),
+    ...(holdUntil ? { payoutHoldUntil: holdUntil } : {})
   });
+  if (changed) {
+    require('../notify').notifyPayoutChanged(updated, { oldLast4: before.slice(-4), newLast4: normalized.slice(-4), holdUntil });
+    await verification.audit(user.id, verification.mentorActor(user), 'payout_changed', { reason: `account ending ${before.slice(-4)} -> ${normalized.slice(-4)}${holdUntil ? `; payouts held until ${holdUntil.toISOString()}` : ''}` });
+  }
   // The account holder's name is compared with the name on the ID.
   await names.recompute(user.id);
   require('../waitlist').afterMaybeListed(user.id); // an approved mentor becomes visible once they can be paid

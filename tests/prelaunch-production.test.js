@@ -83,7 +83,7 @@ describe('production + LAUNCH_MODE=prelaunch, with no bank and no Didit keys', (
     assert.equal(v.error, undefined, v.text);
     assert.equal(v.status, 'pending', 'the application is waiting for review'); // (this route's own "status" field: the mentor's verification status)
     assert.equal(v.requirements.find((x) => x.step === 'id_kyc').status, 'todo');
-    assert.equal((await mentor.api('/me/payout', { method: 'PUT', body: { name: 'Nino Mentor', iban: 'GE29NB0000000101904917' } })).status, 200);
+    assert.equal((await mentor.api('/me/payout', { method: 'PUT', body: { name: 'Nino Mentor', iban: 'GE29NB0000000101904917', currentPassword: 'test-pass-12345' } })).status, 200);
     assert.equal((await mentor.api('/me')).user.verificationStatus, 'pending', 'waiting for review');
   });
 

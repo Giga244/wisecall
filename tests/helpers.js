@@ -143,8 +143,8 @@ const longAnswer = (text) => (size(text) >= LIMITS.answerMin ? text : text + ANS
 
 const GOOD_IBAN = 'GE29NB0000000101904917';
 // Mentors only appear in listings (and can be booked) once they have saved payout details.
-async function addPayoutDetails(mentorClient, iban = GOOD_IBAN, name = 'Test Mentor') {
-  const r = await mentorClient.api('/me/payout', { method: 'PUT', body: { name: name + ' Name', iban } });
+async function addPayoutDetails(mentorClient, iban = GOOD_IBAN, name = 'Test Mentor', password = 'test-pass-12345') {
+  const r = await mentorClient.api('/me/payout', { method: 'PUT', body: { name: name + ' Name', iban, currentPassword: password } });
   if (r.status !== 200) throw new Error('payout details failed: ' + r.text);
   return r;
 }

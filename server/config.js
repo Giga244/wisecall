@@ -61,6 +61,9 @@ const config = {
   // the sub-total field: the published examples use "subTotal".
   // Asking: at most this many questions started per account per hour, and this many unpaid attempts open at once (0 = no limit; the
   // tests switch them off except where they test them).
+  // Payout details: a change holds the mentor's payouts this long; an account without a password must have signed in this recently.
+  PAYOUT_CHANGE_HOLD_HOURS: Math.max(0, int(env.PAYOUT_CHANGE_HOLD_HOURS, 72)),
+  REAUTH_MINUTES: Math.max(1, int(env.REAUTH_MINUTES, 10)),
   BOOKINGS_PER_HOUR: Math.max(0, int(env.BOOKINGS_PER_HOUR, 10)),
   MAX_OPEN_UNPAID_BOOKINGS: Math.max(0, int(env.MAX_OPEN_UNPAID_BOOKINGS, 3)),
   TBC_MAX_EXPIRATION_MINUTES: Math.max(1, int(env.TBC_MAX_EXPIRATION_MINUTES, 12)),

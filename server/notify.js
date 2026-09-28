@@ -75,6 +75,11 @@ const notifyPayoutPaid = (mentor, batch) => Promise.all([
   })
 ]);
 
+// Payout details were changed: always sent (it is a security notice, not an optional email).
+const notifyPayoutChanged = (mentor, { oldLast4, newLast4, holdUntil }) => safeSend('payout change notify', 'payoutChanged', mentor, {
+  oldLast4, newLast4, holdUntil: holdUntil ? utcDate(holdUntil, mentor.language) : ''
+});
+
 // A time written for the person receiving it, always with the zone spelled out.
 const utcDate = (date, lang) => new Date(date).toLocaleString(lang === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
 
@@ -115,4 +120,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyDeletionScheduled, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyDeletionScheduled, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

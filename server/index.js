@@ -99,6 +99,7 @@ app.post('/api/bookings', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
 app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.use('/api/me/export', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.put('/api/me/payout', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
 app.use('/api/me/delete', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 // The Inbox: sending (a follow-up, a support message), starting support conversations, reporting, unsubscribing.
 app.use(/^\/api\/inbox\/threads\/[^/]+\/messages$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));

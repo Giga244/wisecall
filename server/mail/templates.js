@@ -175,6 +175,12 @@ const S = {
       intro: 'We sent {amount} to your bank account ending in {last4}.', referenceLabel: 'Bank transfer reference:',
       after: 'Bank transfers usually arrive within 1 to 3 working days. You can see all your earnings in your dashboard.', button: 'Open dashboard'
     },
+    payoutChanged: {
+      subject: 'Your Wisecall payout details were changed', heading: 'Your payout details were changed',
+      intro: 'The bank account for your Wisecall payouts was changed from the one ending in {oldLast4} to the one ending in {newLast4}.',
+      hold: 'For your safety, payouts wait until {holdUntil}.',
+      notYou: 'If you did not do this, change your password now and write to us: someone may be using your account.', button: 'Open payout settings'
+    },
     contact: { subject: 'New message from the Wisecall contact form', heading: 'New contact message' }
   },
 
@@ -334,6 +340,12 @@ const S = {
       intro: '{amount} გავგზავნეთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.', referenceLabel: 'საბანკო გადარიცხვის რეფერენსი:',
       after: 'საბანკო გადარიცხვა ჩვეულებრივ 1-3 სამუშაო დღეში აისახება. ყველა შემოსავალი შეგიძლია იხილო დაფაზე.', button: 'დაფის გახსნა'
     },
+    payoutChanged: {
+      subject: 'შენი Wisecall-ის ანაზღაურების მონაცემები შეიცვალა', heading: 'შენი ანაზღაურების მონაცემები შეიცვალა',
+      intro: 'Wisecall-ის ანაზღაურებისთვის განკუთვნილი საბანკო ანგარიში შეიცვალა: {oldLast4}-ით დამთავრებულის ნაცვლად ახლა არის {newLast4}-ით დამთავრებული.',
+      hold: 'შენი უსაფრთხოებისთვის ანაზღაურება {holdUntil}-მდე შეჩერებულია.',
+      notYou: 'თუ ეს შენ არ გაგიკეთებია, ახლავე შეცვალე პაროლი და მოგვწერე: შესაძლოა, შენს ანგარიშს სხვა იყენებს.', button: 'ანაზღაურების პარამეტრები'
+    },
     contact: { subject: 'ახალი შეტყობინება Wisecall-ის საკონტაქტო ფორმიდან', heading: 'ახალი შეტყობინება' }
   }
 };
@@ -485,6 +497,11 @@ const BUILDERS = {
   payoutPaid: (s, d) => ({
     heading: s.payoutPaid.heading,
     blocks: [{ p: fill(s.payoutPaid.intro, d), raw: true }, { quote: `${s.payoutPaid.referenceLabel} ${d.reference}` }, { p: s.payoutPaid.after }, { button: s.payoutPaid.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  payoutChanged: (s, d) => ({
+    heading: s.payoutChanged.heading,
+    blocks: [{ p: fill(s.payoutChanged.intro, d), raw: true }, ...(d.holdUntil ? [{ p: fill(s.payoutChanged.hold, d), raw: true }] : []), { p: s.payoutChanged.notYou },
+      { button: s.payoutChanged.button, url: `${config.PUBLIC_URL}/settings.html?tab=payouts` }]
   }),
   contact: (s, d) => ({
     heading: s.contact.heading,

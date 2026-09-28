@@ -1643,5 +1643,12 @@
   "ap.missing.field": "Your field, in your own words",
   "dash.answer.err.deadline": "The time to answer this question has passed, so the asker gets their money back. It can no longer be answered.",
   "expert.err.tooManyUnpaid": "You already have {n} payments you started and did not finish. Finish or cancel one at the bank (or wait about 40 minutes) before asking another question.",
-  "expert.err.tooManyBookings": "You have started {n} questions in the last hour. Please wait a little before asking another one."
+  "expert.err.tooManyBookings": "You have started {n} questions in the last hour. Please wait a little before asking another one.",
+  "settings.payouts.password": "Your current password",
+  "settings.payouts.passwordHint": "Needed to save payout details, so nobody else can redirect your money.",
+  "settings.payouts.reauth": "For your safety, sign out and sign in again right before you change payout details (within 10 minutes).",
+  "settings.payouts.err.password": "Enter your current password to save payout details.",
+  "settings.payouts.err.wrongPassword": "That password is not right.",
+  "settings.payouts.err.tooMany": "Too many tries. Please wait 15 minutes and try again.",
+  "settings.payouts.held": "Because they changed, payouts wait until {date}."
 }

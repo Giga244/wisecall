@@ -62,6 +62,11 @@
       payoutNameInput.value = data.name || '';
       payoutIbanInput.value = data.iban || '';
       payoutStatus.textContent = data.hasPayoutDetails ? t('settings.payouts.saved') : t('settings.payouts.notSaved');
+      document.getElementById('payoutPasswordField').hidden = !user.hasPassword;
+      document.getElementById('payoutReauth').hidden = Boolean(user.hasPassword);
+      if (user.payoutHoldUntil && new Date(user.payoutHoldUntil) > new Date()) {
+        payoutStatus.textContent += ' ' + t('settings.payouts.held').replace('{date}', new Date(user.payoutHoldUntil).toLocaleString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' }));
+      }
     } catch (e) { /* the form still works */ }
   }
 
@@ -199,15 +204,18 @@
     ev.preventDefault();
     payoutError.textContent = '';
     try {
-      const data = await WisecallAPI.apiFetch('/me/payout', { method: 'PUT', body: { name: payoutNameInput.value, iban: payoutIbanInput.value } });
+      const passwordInput = document.getElementById('payoutPassword');
+      const data = await WisecallAPI.apiFetch('/me/payout', { method: 'PUT', body: { name: payoutNameInput.value, iban: payoutIbanInput.value, currentPassword: passwordInput.value } });
+      passwordInput.value = '';
       Object.assign(user, data.user);
+      loadPayout();
       payoutIbanInput.value = data.iban;
       payoutNameInput.value = data.name;
       payoutStatus.textContent = t('settings.payouts.saved');
       renderVerification(user);
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
-      const map = { invalid_iban: 'settings.payouts.err.iban', invalid_payout_name: 'settings.payouts.err.name' };
+      const map = { invalid_iban: 'settings.payouts.err.iban', invalid_payout_name: 'settings.payouts.err.name', password_required: 'settings.payouts.err.password', wrong_password: 'settings.payouts.err.wrongPassword', reauth_required: 'settings.payouts.reauth', too_many_requests: 'settings.payouts.err.tooMany' };
       payoutError.textContent = t(map[e.code] || 'toast.error');
     }
   });

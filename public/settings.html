@@ -166,6 +166,11 @@
         <input type="text" id="payoutIban" maxlength="40" placeholder="GE00XX0000000000000000" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
         <span class="hint" data-i18n="settings.payouts.ibanHint">22 characters, starting with GE. You can find it in your bank app.</span>
       </label>
+      <label for="payoutPassword" id="payoutPasswordField"><span data-i18n="settings.payouts.password">Your current password</span>
+        <input type="password" id="payoutPassword" autocomplete="current-password">
+        <span class="hint" data-i18n="settings.payouts.passwordHint">Needed to save payout details, so nobody else can redirect your money.</span>
+      </label>
+      <p class="muted small" id="payoutReauth" data-i18n="settings.payouts.reauth" hidden>For your safety, sign out and sign in again right before you change payout details.</p>
       <p class="form-error" id="payoutError" role="alert"></p>
       <p class="muted small" id="payoutStatus"></p>
       <button type="submit" class="btn btn-primary" data-i18n="settings.payouts.save">Save payout details</button>
