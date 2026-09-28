@@ -48,3 +48,4 @@ Every mentor writes their field in their own words (3–60 characters, required 
 names in EN/KA; "Other" is a Browse filter. Words or titles naming a licensed profession (EN + KA) keep the application regulated;
 admins can edit a mentor's field and category and mark "not a licensed profession" (audited). Migration 028 (widens a limit, adds one
 column; undo script). Tests: tests/your-field.test.js (8), fixtures updated, e2e niches/full-flow.
+Tests: unit 664, cloud 28 + 6 todo, e2e 145 passed / 5 skipped.
