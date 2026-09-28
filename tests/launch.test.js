@@ -25,7 +25,9 @@ describe('PUBLIC_URL is the only address the site ever gives out', () => {
       const html = await (await fetch(srv.base + url)).text();
       assert.doesNotMatch(html, /localhost|127\.0\.0\.1/, `${f} mentions localhost`);
       assert.doesNotMatch(html, /\{\{\w+\}\}/, `${f} has an unfilled placeholder`);
-      assert.match(html, /rel="canonical" href="https:\/\/wisecall\.example\//, `${f} canonical`);
+      // Error pages are never indexed, so they name no canonical address (the rest of the head still uses PUBLIC_URL).
+      if (/<meta name="robots" content="noindex">/.test(html) && /class="error-code"/.test(html)) assert.doesNotMatch(html, /rel="canonical"/, `${f} is an error page`);
+      else assert.match(html, /rel="canonical" href="https:\/\/wisecall\.example\//, `${f} canonical`);
       assert.match(html, /og:url" content="https:\/\/wisecall\.example\//, `${f} og:url`);
       assert.match(html, /og:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/, `${f} og:image`);
       assert.match(html, /twitter:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/, `${f} twitter:image`);

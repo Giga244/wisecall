@@ -382,6 +382,7 @@ describe('SEO, error pages and the contact form', () => {
       const title = html.match(/<title>(.*?)<\/title>/)[1];
       const desc = html.match(/name="description" content="([^"]*)"/)[1];
       assert.ok(title && desc, f);
+      if (/^\{\{\w+\}\}$/.test(title)) continue; // (a page the server fills in per address: help and field pages, tested in seo/info-pages)
       assert.ok(!seen.has(title) && !seen.has(desc), `${f} repeats a title or description`);
       seen.add(title); seen.add(desc);
     }
