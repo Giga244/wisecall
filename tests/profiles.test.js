@@ -127,7 +127,7 @@ describe('profiles', () => {
       assert.equal(r.user.headline, 'Medical student at TSMU');
       assert.deepEqual(r.user.languages, ['ka', 'en']);
       assert.equal(r.user.linkedinUrl, 'https://linkedin.com/in/elene', 'a link without https:// is completed');
-      assert.equal(r.user.profileVisibility, 'public', 'public by default');
+      assert.equal(r.user.profileVisibility, 'contacts', 'a new account starts private (docs/AUDIT.md #10)');
       // empty values clear a field
       const cleared = await c.api('/me', { method: 'PATCH', body: { city: '', websiteUrl: '' } });
       assert.equal(cleared.user.city, null);
@@ -162,6 +162,12 @@ describe('profiles', () => {
       assert.equal(r.status, 200);
       assert.equal(r.user.bio.length, 500);
       assert.equal(r.user.headline.length, 100);
+    });
+
+    test('a new account starts private (only people I had a question with); the owner can make it public', async () => {
+      assert.equal((await c.api('/users/elene')).profile.visibility, 'contacts');
+      assert.equal((await client(base).api('/users/elene')).private, true);
+      assert.equal((await c.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } })).status, 200);
     });
 
     test('the public page shows the profile, and never an email, bank or document detail', async () => {
@@ -255,7 +261,11 @@ describe('profiles', () => {
 
   describe('photos', () => {
     let c, me;
-    before(async () => { ({ c } = await signup('Photo Person', 'photo@example.com', 'photo-person')); me = (await c.api('/me')).user; });
+    before(async () => {
+      ({ c } = await signup('Photo Person', 'photo@example.com', 'photo-person'));
+      await c.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } }); // (new accounts start private; this one is public)
+      me = (await c.api('/me')).user;
+    });
 
     test('nobody has one at first: the page draws their initials', async () => {
       assert.equal(me.photoUrl, null);

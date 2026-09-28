@@ -49,6 +49,7 @@ before(async () => {
   await addPayoutDetails(mentor);
   await approveMentor(admin, mentor);
   await newAsker('sam', 'Sam Seeker');
+  await askers.sam.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } }); // (new accounts start private)
 });
 after(async () => { if (srv) srv.proc.kill(); await resend.stop(); await pool.end(); });
 
@@ -403,6 +404,7 @@ describe('asking well: how mentors rate askers', () => {
 
   test('a mentor sees the asker\'s rating on the question in their dashboard, from the first rating on', async () => {
     dana = await newAsker('dana', 'Dana Askerson');
+    await dana.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } }); // (new accounts start private; Dana's is public)
     const b1 = await answered(dana, mentor, mentorId, 'What certificates matter most for a junior doctor?');
     let received = (await mentor.api('/bookings/mine')).received.find((x) => x.id === b1);
     assert.equal(received.askerRating, null, 'a new asker has no rating yet');
@@ -436,6 +438,7 @@ describe('asking well: how mentors rate askers', () => {
 
   test('an average under 2.5 after 3 ratings opens a flag for the admins (and 2 ratings do not)', async () => {
     const carl = await newAsker('carl', 'Carl Careless');
+    await carl.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } }); // (new accounts start private; Carl's is public)
     const bs = [];
     for (let i = 0; i < 3; i++) bs.push(await answered(carl, mentor, mentorId, `Question number ${i + 1} typed in a big hurry?`));
     await rateAsker(bs[0], 1, []);

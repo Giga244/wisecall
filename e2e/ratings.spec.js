@@ -30,6 +30,7 @@ test.beforeAll(async ({ browser }) => {
   } else admin = await S.apiUser('E2E Admin', 'e2e-admin@example.com');
   mentor = await S.listedMentor(admin, { name: 'Rita Rated', email: 'rita@e2e.test', niche: 'business', price: 18, roleTitle: 'Consultant' });
   asker = await S.apiUser('Alex Asker', 'alex@e2e.test');
+  await asker.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } }); // (new accounts start private; Alex chose public)
   await S.apiUser('Rex Reporter', 'rex@e2e.test');
   askerPage = await ctxPage(browser, 'alex@e2e.test');
   mentorPage = await ctxPage(browser, 'rita@e2e.test');

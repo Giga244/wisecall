@@ -83,6 +83,8 @@ test('Settings → Profile: everything can be edited, and the preview follows wh
   await expect(page.locator('#profileError')).toHaveText(/LinkedIn/);
   await page.fill('#linkedinUrl', 'linkedin.com/in/maia-profile');
   await page.fill('#websiteUrl', 'https://maia.example.com');
+  await expect(page.locator('#profileVisibility')).toHaveValue('contacts'); // (a new account starts private: docs/AUDIT.md #10)
+  await page.selectOption('#profileVisibility', 'public');
   await page.click('#profileForm button[type="submit"]');
   await expect(page.locator('#toast')).toContainText(/saved/i);
   await expect(page.locator('#linkedinUrl')).toHaveValue('https://linkedin.com/in/maia-profile');

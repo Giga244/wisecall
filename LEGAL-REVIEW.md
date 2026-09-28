@@ -119,3 +119,6 @@ Mentor applications now go through three steps (Identity → Experience → Revi
     visitor hash (Plausible does not store them), sets no cookie, and skips visitors with Do Not Track / Global Privacy Control. With
     SENTRY_DSN set, server errors go to Sentry with personal data removed. List both as processors in the Privacy Policy and confirm no
     consent banner is needed.
+50. **Profiles of people who ask start private.** Accounts made from now on show their profile only to people they had a question with
+    (existing accounts keep their setting); mentors' profiles become public when they are approved. Reviews by an asker with a private
+    profile show "Anonymous asker". Say this in the Privacy Policy (what is public, and how to change it in Settings → Profile).
