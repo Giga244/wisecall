@@ -170,3 +170,8 @@ e2e/ux-extras.spec.js; the specs that used to accept browser pop-ups press the d
 public/js/back-to-top.js on the home page, help, FAQ, Terms and Privacy: appears after 1.5 screens, scrolls up smoothly (at once with
 reduced motion), moves the keyboard focus to the top, rises above the footer's language switch, icon-only on phones (the label stays for
 screen readers), EN+KA. Checked in a browser: desktop, phone, Georgian dark theme, reduced motion.
+
+## PART 9.5 — print stylesheet
+One @media print block in style.css: no header, footer, menus, buttons, dialogs or "back to top"; black text on white; full width; links
+in the content show their address; headings kept with their text. Receipts and statements are PDFs already. Checked by rendering Terms,
+a help article and the FAQ as print in a browser.
