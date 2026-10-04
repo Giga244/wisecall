@@ -61,6 +61,7 @@ test('a mentor applies: price, Experience form with evidence, submit, then the (
   const exp = page.locator('#ap-experience');
   const form = exp.locator('form[data-form="experience"]');
   await form.locator('[name="roleTitle"]').fill('Mobile app developer');
+  await form.locator('[name="customNiche"]').fill('Mobile apps for small shops');
   await form.locator('[name="niche"]').selectOption('tech');
   await form.locator('[name="specialtyTags"]').fill('iOS, Android, Flutter');
   await form.locator('[name="yearsExperience"]').fill('7');
@@ -105,6 +106,7 @@ test('the mentor saves payout details and becomes visible', async () => {
   await page.click('#tab-payouts');
   await page.fill('#payoutName', people.mentor.name);
   await page.fill('#payoutIban', S.GOOD_IBAN);
+  await page.fill('#payoutPassword', S.PASSWORD); // (payout details need the current password)
   await page.click('#payoutForm button[type="submit"]');
   await expect.poll(async () => (await S.sql('SELECT payout_iban_enc IS NOT NULL AS has FROM users WHERE id = $1', [mentorId]))[0].has).toBe(true);
 });

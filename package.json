@@ -16,7 +16,7 @@
     "admin:reset-2fa": "node scripts/reset-admin-2fa.js",
     "check:colors": "node scripts/check-colors.js",
     "check:contrast": "node scripts/check-contrast.js",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test && playwright test -c tests/e2e-cloud",
     "lighthouse": "node scripts/lighthouse.js",
     "backup": "node scripts/backup.js",
     "backup:check": "node scripts/backup.js check"

@@ -83,3 +83,11 @@ and is escaped or set as text; links only http(s); CSP unchanged (no inline scri
 text field (names, profile, application, question, answer, review, note, reply, follow-up, support, report, dispute, contact form) and
 opens every page and admin tab: nothing runs, nothing is injected, the text shows as text. Nothing needed fixing.
 docs/SECURITY-XSS.md lists where and how.
+
+## PART 6B — quality pack
+Already done earlier and only checked here: profiles rendered on the server (Phase 5), Georgian addresses, hreflang, canonical,
+dynamic bilingual sitemap and JSON-LD (Phase 5), the informal Georgian, „ანაზღაურება“ and names without hyphenated endings (PART 4),
+network errors vs "not found", "your rating is visible", "in review" instead of "continue", readable admin AI errors, Terms on review
+names, the password field size (Phase 5 UX fixes), the four test.fixme browser tests (PART 3), help articles published and linked from
+the footer and FAQ (Phase 5; 07 in PART 5). New here: the cloud pack's journey test follows the form changes, and `npm run test:e2e` now
+runs tests/e2e-cloud too (30 passed: journey and known issues, desktop and phone).

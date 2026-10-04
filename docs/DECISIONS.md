@@ -133,3 +133,8 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - The bank fee in the money overview is an estimate (BANK_FEE_PERCENT, default 2) and is labelled as one.
 - Help article 07 is rewritten for withdrawals and published (no [CHECK] left); taxes are described without a legal claim ("the
   Revenue Service or an accountant can tell you what applies to you").
+
+## PART 6B — quality pack
+- Georgian name endings: instead of a helper that adds case endings to names ("თამარ ლომიძეს"), the texts were rewritten so a name
+  never needs an ending ("დაუსვი კითხვა — {name}", the quality pack's KA-2 proposal). Automatic Georgian declension of names (foreign
+  names, double names, names ending in a vowel) is easy to get wrong in public; a sentence without the ending is always right.
