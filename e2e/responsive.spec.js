@@ -165,7 +165,9 @@ test('the menu panel: opens, holds focus, locks the page, closes on Esc, a link 
   await expect(menu).toBeHidden();
   // the backdrop closes it
   await toggle.click();
-  await page.locator('.mm-backdrop').click({ position: { x: 10, y: 300 }, force: true });
+  // (on a phone the open panel covers the whole screen, so the backdrop is only tappable beside it on wider screens or while the panel
+  // slides in; a tap at a fixed point raced the animation. The backdrop's own click is what closes it.)
+  await page.locator('.mm-backdrop').dispatchEvent('click');
   await expect(menu).toBeHidden();
   // the language switch is in the panel and works
   await toggle.click();
