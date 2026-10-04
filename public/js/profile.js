@@ -174,6 +174,11 @@
 
         ${isMentor && (expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')} <a href="/how-we-verify.html">${t('hv.title')}</a></p></section>` : ''}
 
+        ${isMentor ? `<section class="profile-section profile-answers" aria-labelledby="answersTitle" id="publicAnswers" hidden>
+          <h2 id="answersTitle">${t('pa.profile.title')}</h2>
+          <div id="publicAnswersBody"></div>
+        </section>` : ''}
+
         ${isMentor ? `<section class="profile-section profile-reviews" aria-labelledby="reviewsTitle">
           <h2 id="reviewsTitle">${t('expert.reviewsTitle')}</h2>
           <div id="reviewsBody"><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w60"></span></div>
@@ -195,10 +200,21 @@
     updateBar();
     WisecallReport.wire(page);
     loadReviews();
+    loadPublicAnswers();
     if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState;
   }
   const askArea = () => document.getElementById('askArea');
   // ---- Reviews ------------------------------------------------------------------------------------------------
+  // Answers this mentor and their askers agreed to publish (shown only when there are some).
+  async function loadPublicAnswers() {
+    let d;
+    try { d = await WisecallAPI.apiFetch(`/answers?mentor=${encodeURIComponent(expert.id)}&limit=10`); } catch (e) { return; }
+    if (!d.answers.length) return;
+    const prefix = WisecallI18n.getLang() === 'ka' ? '/ka' : '';
+    document.getElementById('publicAnswersBody').innerHTML = `<ul class="earn-list">${d.answers.map((a) => `<li><a class="plain-link" href="${prefix}/answers/${encodeURIComponent(a.slug)}">${escapeHtml(a.question.length > 140 ? a.question.slice(0, 139) + '…' : a.question)}</a></li>`).join('')}</ul>`;
+    document.getElementById('publicAnswers').hidden = false;
+  }
+
   async function loadReviews() {
     const body = document.getElementById('reviewsBody');
     if (!body) return;

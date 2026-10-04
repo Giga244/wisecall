@@ -138,3 +138,15 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - Georgian name endings: instead of a helper that adds case endings to names ("თამარ ლომიძეს"), the texts were rewritten so a name
   never needs an ending ("დაუსვი კითხვა — {name}", the quality pack's KA-2 proposal). Automatic Georgian declension of names (foreign
   names, double names, names ending in a vowel) is easy to get wrong in public; a sentence without the ending is always right.
+
+## PART 7A — public answers
+- Nothing is published automatically: three yeses are needed (the asker after a 4–5★ rating, the mentor, an admin), and the database
+  refuses a published row without both consents. A mentor's "Always allow" only skips asking the mentor; the admin still approves.
+- The question is cleaned on the server every time it is saved (and again when the admin edits it), whatever the page sent: the
+  asker's and the mentor's names, emails, phone numbers, links, @handles, IBAN-like and long numbers become [name], [email], … The
+  answer is the mentor's own text (they may edit it); it is not rewritten.
+- Withdrawn or taken down = 410 Gone (noindex), unknown or not yet published = 404, a search result page is noindex; only published
+  answers are in the sitemap. Closing an account takes its public answers down at once (not after the 14 days).
+- "Helpful" counts once per visitor using a random id kept in the browser (stored only as a keyed hash), plus an IP rate limit; no cookie.
+- The library and the answer pages are rendered on the server in the page's language (/answers, /ka/answers/…); the home page swaps its
+  three example cards for real answers once three are published.

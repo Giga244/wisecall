@@ -303,6 +303,92 @@ function homeJsonLd(lang) {
   return jsonLd({ '@context': 'https://schema.org', '@graph': [org, site] });
 }
 
+// ---- Public answers (server/publicAnswers.js) -------------------------------------------------------------------------------------------
+// /answers: the published answers (search, field, newest or most helpful), and /answers/<slug>: one of them, with the mentor and three
+// related answers. Written in the page's language for search engines and link previews; only published answers exist here (a withdrawn
+// one is 410 Gone, anything else 404), and a search result page is not indexed.
+const paText = (text) => escapeHtml(String(text || '')).replace(/\n/g, '<br>');
+function answerCard(a, prefix, d) {
+  return `<article class="answer-card">
+      <h2 class="answer-q"><a href="${prefix}/answers/${encodeURIComponent(a.slug)}">${escapeHtml(shortText(a.question, 160))}</a></h2>
+      <p class="answer-a">${escapeHtml(shortText(a.answer, 240))}</p>
+      <p class="muted small">${escapeHtml(a.mentor.name)}${a.mentor.field || a.mentor.roleTitle ? ' · ' + escapeHtml(a.mentor.field || a.mentor.roleTitle) : ''} · ${escapeHtml((d['answers.helpfulCount'] || '{n} found this helpful').replace('{n}', a.helpful))}</p>
+    </article>`;
+}
+
+async function sendAnswers(req, res) {
+  const html = readPage('answers.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const ka = lang === 'ka';
+  const prefix = ka ? '/ka' : '';
+  const niches = require('./niches');
+  const q = String(req.query.q || '').slice(0, 100);
+  const niche = niches.isValid(String(req.query.niche || '')) ? String(req.query.niche) : 'all';
+  const sort = req.query.sort === 'helpful' ? 'helpful' : 'newest';
+  const list = await require('./publicAnswers').list({ q, niche, sort, limit: 30 });
+  const searching = Boolean(q) || niche !== 'all' || sort !== 'newest';
+  const h1 = d['answers.title'];
+  sendHtml(res, 200, fill(html, {
+    ...baseVars('/answers'),
+    TITLE: escapeHtml(`${h1} — Wisecall`), DESCRIPTION: escapeHtml(d['answers.intro']), OG_TYPE: 'website',
+    ROBOTS: !searching && list.length ? 'index, follow' : 'noindex', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']),
+    H1: escapeHtml(h1), INTRO: escapeHtml(d['answers.intro']), Q: escapeHtml(q), SEARCH: escapeHtml(d['answers.search']), FIELD: escapeHtml(d['answers.field']),
+    SORT: escapeHtml(d['answers.sort']), SEARCH_BUTTON: escapeHtml(d['answers.searchButton']),
+    NICHE_OPTIONS: [`<option value="all">${escapeHtml(d['niche.all'])}</option>`].concat(niches.active().map((n) => `<option value="${n.key}"${n.key === niche ? ' selected' : ''}>${escapeHtml(ka ? n.ka : n.en)}</option>`)).join(''),
+    SORT_OPTIONS: ['newest', 'helpful'].map((s) => `<option value="${s}"${s === sort ? ' selected' : ''}>${escapeHtml(d['answers.sort.' + s])}</option>`).join(''),
+    LIST: list.length ? list.map((a) => answerCard(a, prefix, d)).join('') : `<p class="muted">${escapeHtml(d[searching ? 'answers.noMatch' : 'answers.none'])}</p>`,
+    NOTE: escapeHtml(d['answers.note'])
+  }));
+}
+
+async function sendAnswer(req, res, slug) {
+  const found = await require('./publicAnswers').bySlug(slug);
+  if (!found) return notFoundHandler(req, res);
+  const html = readPage('answer.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const base = { ...baseVars(`/answers/${slug}`), PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']), LIBRARY: escapeHtml(d['answers.title']), OG_TYPE: 'article' };
+  // Withdrawn by the asker or the mentor, or taken down: gone, and said so.
+  if (found.gone) {
+    res.set('Cache-Control', 'no-store');
+    return void sendHtml(res, 410, fill(html, { ...base, TITLE: escapeHtml(`${d['answers.gone.title']} — Wisecall`), DESCRIPTION: escapeHtml(d['answers.gone.body']), ROBOTS: 'noindex',
+      CRUMB: escapeHtml(d['answers.gone.title']), BODY: `<h1>${escapeHtml(d['answers.gone.title'])}</h1><p>${escapeHtml(d['answers.gone.body'])}</p><p><a class="btn btn-outline" href="${prefix}/answers">${escapeHtml(d['answers.title'])}</a></p>` }));
+  }
+  const a = found.answer;
+  const m = a.mentor;
+  const title = shortText(a.question, 70);
+  const profile = `${prefix}/u/${encodeURIComponent(m.username || '')}`;
+  const mentorCard = `<aside class="answer-mentor settings-card">
+      <p class="muted small">${escapeHtml(d['answers.answeredBy'])}</p>
+      <p class="card-name">${m.username ? `<a class="plain-link" href="${profile}">${escapeHtml(m.name)}</a>` : escapeHtml(m.name)}</p>
+      <p class="muted small">${escapeHtml([m.roleTitle, m.field].filter(Boolean).join(' · '))}</p>
+      ${m.listed && m.username ? `<a class="btn btn-primary" href="${profile}">${escapeHtml((d['answers.askOwn'] || 'Ask {name} your own question').replace('{name}', m.name))}</a>` : ''}
+    </aside>`;
+  const body = `
+  <article class="answer-full">
+    <h1 class="answer-full-q">${paText(a.question)}</h1>
+    <p class="muted small">${escapeHtml(d['answers.asker'])}</p>
+    ${a.regulated ? `<p class="advice-regulated">${escapeHtml(d['answers.regulated'])}</p>` : ''}
+    <div class="answer-full-a">${paText(a.answer)}</div>
+    <p class="answer-helpful"><button type="button" class="btn btn-outline btn-sm" id="helpfulBtn" data-slug="${escapeHtml(a.slug)}">${escapeHtml(d['answers.helpful'])}</button>
+      <span class="muted small" id="helpfulCount" aria-live="polite">${escapeHtml((d['answers.helpfulCount'] || '{n}').replace('{n}', a.helpful))}</span></p>
+  </article>
+  ${mentorCard}
+  ${found.related.length ? `<section class="answers-related"><h2>${escapeHtml(d['answers.related'])}</h2>${found.related.map((x) => answerCard(x, prefix, d)).join('')}</section>` : ''}
+  <p class="muted small">${escapeHtml(d['answers.note'])}</p>`;
+  const url = lang === 'ka' ? kaUrl(`/answers/${a.slug}`) : `${config.PUBLIC_URL}/answers/${a.slug}`;
+  const ld = jsonLd({ '@context': 'https://schema.org', '@type': 'QAPage', url, inLanguage: lang,
+    mainEntity: { '@type': 'Question', name: title, text: a.question, answerCount: 1, datePublished: new Date(a.publishedAt).toISOString(),
+      acceptedAnswer: { '@type': 'Answer', text: a.answer, datePublished: new Date(a.publishedAt).toISOString(), upvoteCount: a.helpful,
+        author: { '@type': 'Person', name: m.name, ...(m.username ? { url: `${config.PUBLIC_URL}/u/${m.username}` } : {}) } } } });
+  sendHtml(res, 200, addToHead(fill(html, { ...base, TITLE: escapeHtml(`${title} — Wisecall`), DESCRIPTION: escapeHtml(shortText(a.answer)), ROBOTS: 'index, follow',
+    CRUMB: escapeHtml(shortText(a.question, 40)), BODY: body }), ld));
+}
+
 // A page per field: /advice/<niche>. The title, description, mentor list and links to the other fields are written in here, in English,
 // for search engines and link previews; the page script then draws it in the visitor's language, with badges and ratings. Before launch
 // no mentor is listed (the page offers the waiting list), and only a field with a listed mentor may be indexed.
@@ -384,6 +470,14 @@ function pageRoutes() {
   });
   router.get('/help', (req, res) => res.redirect(301, (res.locals.pageLang === 'ka' ? '/ka' : '') + '/help.html'));
 
+  // Public answers: the library, and one answer.
+  router.get(/^\/answers\/?$/, async (req, res, next) => {
+    try { await sendAnswers(req, res); } catch (e) { next(e); }
+  });
+  router.get(/^\/answers\/([a-z0-9-]{3,80})\/?$/, async (req, res, next) => {
+    try { await sendAnswer(req, res, req.params[0]); } catch (e) { next(e); }
+  });
+
   // A page per field: /advice/<niche>.
   router.get(/^\/advice\/([a-z][a-z0-9_]{1,30})\/?$/, async (req, res, next) => {
     try { await sendAdvice(req, res, req.params[0]); } catch (e) { next(e); }
@@ -419,7 +513,7 @@ function pageRoutes() {
       const name = req.params[0];
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
-      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice') return notFoundHandler(req, res); // (sent only by their own routes)
+      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (name === 'faq') {
         const html = readPage('faq.html');
@@ -466,6 +560,8 @@ function seoRoutes() {
       // A field's page, once it has a mentor people can ask.
       const fields = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT DISTINCT niche FROM users WHERE ${listableSql()} AND profile_visibility = 'public'`)).rows
         .map((r) => r.niche).filter((k) => require('./niches').isValid(k));
+      // Published answers (only those: a withdrawn one is gone).
+      const answers = config.LAUNCH_MODE === 'prelaunch' ? [] : await require('./publicAnswers').sitemapSlugs();
       // Each page in both languages, each naming the other (and Georgian as the default).
       const both = (p, extra) => {
         const en = config.PUBLIC_URL + p, ka = kaUrl(p);
@@ -475,7 +571,9 @@ function seoRoutes() {
       const urls = [
         ...staticPages.flatMap(([p, prio]) => both(p, `<priority>${prio}</priority>`)),
         ...fields.flatMap((k) => both(`/advice/${k}`, '<priority>0.8</priority>')),
-        ...rows.flatMap((r) => both(`/u/${r.username}`, `<lastmod>${new Date(r.changed_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority>`))
+        ...rows.flatMap((r) => both(`/u/${r.username}`, `<lastmod>${new Date(r.changed_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority>`)),
+        ...answers.flatMap((a) => both(`/answers/${a.slug}`, `<lastmod>${new Date(a.published_at).toISOString().slice(0, 10)}</lastmod><priority>0.6</priority>`)),
+        ...(answers.length ? both('/answers', '<priority>0.7</priority>') : [])
       ];
       res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
     } catch (e) { next(e); }

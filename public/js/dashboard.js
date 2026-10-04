@@ -136,6 +136,7 @@
     WisecallReport.wire(askedList);
 
     WisecallRatings.wire(askedList, { reload: load });
+    WisecallPublicAnswers.wire(askedList, { reload: load });
     askedList.querySelectorAll('.dispute-form').forEach((form) => form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const err = form.querySelector('.form-error');
@@ -172,6 +173,7 @@
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
+        ${WisecallPublicAnswers.html(b, 'asker')}
         ${disputeHtml(b, 'asker')}
         ${receiptLinks(b)}
         ${conversationLink(b)}
@@ -286,11 +288,13 @@
             </form>` : '')}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'paid' && !b.answer ? declineHtml(b) : ''}
+        ${WisecallPublicAnswers.html(b, 'mentor')}
         ${disputeHtml(b, 'mentor')}
         ${conversationLink(b)}
       </article>`;
     }).join('');
     WisecallRatings.wire(receivedList, { reload: load });
+    WisecallPublicAnswers.wire(receivedList, { reload: load });
 
     // Declining a question: the asker is refunded in full at once and sees the reason.
     receivedList.querySelectorAll('.decline-form').forEach((form) => form.addEventListener('submit', async (ev) => {

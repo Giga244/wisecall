@@ -499,5 +499,17 @@
   "admin.wd.status.rejected": "Rejected",
   "admin.wd.direct": "Pay without a request",
   "admin.wd.directHelp": "For a closed or removed account that cannot ask any more. Mentors who can ask are paid through their request.",
-  "admin.wd.requestOpen": "This mentor has an open request: pay it above."
+  "admin.wd.requestOpen": "This mentor has an open request: pay it above.",
+  "admin.tab.answers": "Public answers",
+  "admin.pa.help": "Nothing is published without your approval. Both people agreed; you can edit the question and the answer first. A regulated field needs \"allow\" ticked.",
+  "admin.pa.empty": "Nothing waits for review.",
+  "admin.pa.regulated": "Regulated field",
+  "admin.pa.question": "Question (public, without names)",
+  "admin.pa.answer": "Answer (public)",
+  "admin.pa.allowRegulated": "Allow this answer from a regulated field (the page shows the \"not professional advice\" note)",
+  "admin.pa.approve": "Approve and publish",
+  "admin.pa.reasonPlaceholder": "Reason for not publishing",
+  "admin.pa.reject": "Don't publish",
+  "admin.pa.published": "Published.",
+  "admin.pa.needAllow": "A regulated field: tick \"allow\" to publish it."
 }

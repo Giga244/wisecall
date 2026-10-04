@@ -105,7 +105,28 @@
 
   initFaq();
   // The strip's labels need the dictionary, so main.js draws it after the language is loaded.
-  document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(initExamples));
+  // "Real answers": once three answers are published, they take the place of the three examples (same cards, real content).
+  async function loadRealAnswers() {
+    const grid = document.querySelector('.example-grid');
+    if (!grid) return;
+    let d;
+    try { d = await fetch('/api/answers?limit=3').then((r) => (r.ok ? r.json() : { answers: [] })); } catch (e) { return; }
+    if (!d.answers || d.answers.length < 3) return;
+    const prefix = WisecallI18n.getLang() === 'ka' ? '/ka' : '';
+    const cut = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+    grid.innerHTML = d.answers.map((a) => `
+      <article class="example-card">
+        <header><span class="ex-niche">${esc(a.niche ? t('niche.' + a.niche) : '')}</span><span class="ex-tag">${esc(t('pa.home.label'))}</span></header>
+        <h3 class="ex-q"><a class="plain-link" href="${prefix}/answers/${encodeURIComponent(a.slug)}">${esc(cut(a.question, 160))}</a></h3>
+        <p class="ex-a">${esc(cut(a.answer, 260))}</p>
+        <p class="ex-who">${esc(a.mentor.name)}</p>
+      </article>`).join('');
+    const title = document.getElementById('exTitle');
+    if (title) title.textContent = t('pa.home.title');
+    const sub = title && title.nextElementSibling;
+    if (sub) sub.innerHTML = `${esc(t('pa.home.sub'))} <a class="plain-link" href="${prefix}/answers">${esc(t('pa.home.more'))}</a>`;
+  }
+  document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(loadRealAnswers).then(initExamples));
   document.addEventListener('wisecall:lang-changed', drawStrip);
 
   window.WisecallHome = { icon, drawStrip, emptyArt: EMPTY_ART };

@@ -82,6 +82,7 @@
     becomeMentorCheckbox.checked = isMentor;
     mentorForm.style.display = isMentor ? 'grid' : 'none';
     priceInput.value = u.price || '';
+    document.getElementById('publicAnswersPref').value = u.publicAnswersPref || 'ask';
     renderVerification(u);
   }
 
@@ -250,6 +251,13 @@
     } catch (e) {
       WisecallNav.showToast(t(e.code === 'invalid_price' ? 'settings.mentor.price.invalid' : 'toast.error'));
     }
+  });
+  document.getElementById('publicAnswersPref').addEventListener('change', async (ev) => {
+    try {
+      const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { publicAnswersPref: ev.target.value } });
+      Object.assign(user, data.user);
+      WisecallNav.showToast(t('toast.saved'));
+    } catch (e) { WisecallNav.showToast(t('toast.error')); }
   });
   mentorForm.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-goto-tab]');

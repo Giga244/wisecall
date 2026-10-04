@@ -153,6 +153,25 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
   });
 }));
 
+// ---- Public answers (server/publicAnswers.js): every one is approved by an admin; a regulated field needs it explicitly ----------------
+const PA_STATUS = { not_found: 404, not_ready: 409, regulated_needs_permission: 409, invalid_question: 400, invalid_answer: 400, reason_required: 400 };
+const paFail = (res, e) => {
+  if (!(e instanceof require('../publicAnswers').AnswerError)) throw e;
+  res.status(PA_STATUS[e.code] || 400).json({ error: e.code });
+};
+router.get('/public-answers', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ queue: await require('../publicAnswers').queue() });
+}));
+router.post('/public-answers/:id/approve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { res.json({ publicAnswer: await require('../publicAnswers').approve(req.adminUser, req.params.id, { question: b.question, answer: b.answer, allowRegulated: b.allowRegulated === true }) }); }
+  catch (e) { paFail(res, e); }
+}));
+router.post('/public-answers/:id/reject', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  try { res.json({ publicAnswer: await require('../publicAnswers').reject(req.adminUser, req.params.id, (req.body || {}).reason) }); }
+  catch (e) { paFail(res, e); }
+}));
+
 // ---- Withdrawals (server/withdrawals.js) ---------------------------------------------------------------------------------------------
 const WD_STATUS = { not_found: 404, not_open: 409, amount_changed: 409, reference_required: 400, reason_required: 400 };
 const wdFail = (res, e) => {

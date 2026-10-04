@@ -93,3 +93,10 @@ the footer and FAQ (Phase 5; 07 in PART 5). New here: the cloud pack's journey t
 runs tests/e2e-cloud too (30 passed: journey and known issues, desktop and phone).
 
 Parts 1–6B all green together: unit 691, cloud 34, e2e 152 passed / 5 skipped (plus tests/e2e-cloud 30 passed).
+
+## PART 7A — public answers
+After a 4–5★ rating the asker can offer the answer for the public library (question cleaned of names and contact details, editable,
+1,000 characters max); the mentor agrees and may edit (Settings: always / ask each time / never); an admin approves (regulated fields only
+with explicit permission); either can withdraw (410 at once). /answers (search, field, newest / most helpful) and /answers/<slug> (QAPage
+JSON-LD, mentor card with "Ask", 3 related, Helpful once per visitor), both languages, sitemap; "Public answers" on mentor profiles; the
+home page shows real answers once there are three. Migration 032 (undo script). Tests: public-answers.test.js (9), e2e public-answers (3).

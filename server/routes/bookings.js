@@ -104,7 +104,10 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
     const w = role === 'asker' ? disputes.windowFor(b) : null;
     return { ...b, dispute: found[b.id] || null, disputeUntil: w && Date.now() < +w.until && !found[b.id] ? w.until : null };
   };
-  res.json({ asked: asked.map((b) => withDispute(b, 'asker')), received: received.map((b) => withDispute(b, 'mentor')) });
+  // Public answers: the offer after a 4–5★ rating, and where each one stands (server/publicAnswers.js).
+  const publicAnswers = await require('../publicAnswers').forBookings([...asked, ...received], me);
+  const withPa = (b) => ({ ...b, publicAnswer: publicAnswers[b.id] || null });
+  res.json({ asked: asked.map((b) => withPa(withDispute(b, 'asker'))), received: received.map((b) => withPa(withDispute(b, 'mentor'))) });
 }));
 
 router.get('/:id', requireAuth, asyncHandler(async (req, res) => {

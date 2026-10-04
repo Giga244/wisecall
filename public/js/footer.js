@@ -33,6 +33,7 @@
             <li><a href="/faq.html" data-i18n="footer.faq">FAQ</a></li>
             <li><a href="/how-we-verify.html" data-i18n="hv.title">How we verify mentors</a></li>
             <li><a href="/help.html" data-i18n="help.title">Help centre</a></li>
+            <li><a href="/answers" data-i18n="answers.title">Real answers</a></li>
           </ul>
         </nav>
         <nav class="footer-col" aria-labelledby="footLegal">

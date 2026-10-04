@@ -75,6 +75,12 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     }
   }
 
+  // Public answers: always allow / ask me each time / never (mentors).
+  if (updates.publicAnswersPref !== undefined) {
+    if (!require('../publicAnswers').PREFS.includes(updates.publicAnswersPref)) return res.status(400).json({ error: 'invalid_field', field: 'publicAnswersPref' });
+    patch.publicAnswersPref = updates.publicAnswersPref;
+  }
+
   // The public profile: headline, current work, city, languages, bio, links, who may see it.
   const profile = parseProfileUpdates(updates, { listable: isListable(existing) });
   if (profile.error) return res.status(400).json({ error: profile.error, field: profile.field });

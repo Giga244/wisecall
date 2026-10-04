@@ -21,6 +21,17 @@
 .app-progress { background: var(--card); border-radius: var(--radius); padding: 18px 22px; margin: 0 0 22px; box-shadow: 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3); border-left: 6px solid var(--accent2); }
 .app-progress[hidden] { display: none; }
 .bal-card { margin-bottom: 18px; }
+.answers-search { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 22px; }
+.answers-search input[type="search"] { flex: 1 1 240px; }
+.answer-card { background: var(--card); border-radius: var(--radius); padding: 18px 20px; margin: 0 0 14px; box-shadow: 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3); }
+.answer-card h2 { font-size: 1.1rem; margin: 0 0 8px; }
+.answer-card .answer-a { margin: 0 0 8px; }
+.answer-full { margin: 0 0 22px; }
+.answer-full-q { font-size: 1.45rem; line-height: 1.35; }
+.answer-full-a { background: var(--card); border-radius: var(--radius); padding: 18px 20px; line-height: 1.6; margin: 12px 0; }
+.answer-mentor { margin: 0 0 22px; }
+.answers-related h2 { font-size: 1.15rem; }
+.pa-status .linklike { margin-left: 6px; }
 .bal-holds { margin: 4px 0 12px; padding-left: 18px; }
 .bal-withdraw { display: grid; gap: 10px; max-width: 420px; margin: 8px 0 4px; }
 .wd-held { font-size: 1.35rem; margin: 6px 0 12px; }
