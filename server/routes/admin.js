@@ -130,7 +130,7 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
     query(`SELECT count(*)::int AS n FROM safety_events WHERE reviewed_at IS NULL`),
     query(`SELECT count(*)::int AS n FROM threads WHERE kind = 'support' AND status = 'open'`),
     query(`SELECT COALESCE(sum(p.amount) FILTER (WHERE ${ledger.payableSql('p')}), 0)::bigint AS payable,
-                   COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND NOT (${ledger.payableSql('p')})), 0)::bigint AS holding,
+                   COALESCE(sum(p.amount) FILTER (WHERE ${ledger.holdingSql('p')} OR ${ledger.requestedSql('p')}), 0)::bigint AS holding,
                    COALESCE(sum(${ledger.debtAmountSql('p')}) FILTER (WHERE ${ledger.debtSql('p')}), 0)::bigint AS debt,
                    COALESCE(sum(p.amount) FILTER (WHERE p.status = 'paid'), 0)::bigint AS paid_out
               FROM payouts p`)
@@ -151,6 +151,41 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
     money: { received: Number(m.received), fee: Number(m.fee), testPayments: m.test_payments },
     payouts: { payable: Number(p.payable), holding: Number(p.holding), debt: Number(p.debt), paidOut: Number(p.paid_out) }
   });
+}));
+
+// ---- Withdrawals (server/withdrawals.js) ---------------------------------------------------------------------------------------------
+const WD_STATUS = { not_found: 404, not_open: 409, amount_changed: 409, reference_required: 400, reason_required: 400 };
+const wdFail = (res, e) => {
+  if (!(e instanceof require('../withdrawals').WithdrawalError)) throw e;
+  res.status(WD_STATUS[e.code] || 400).json({ error: e.code, ...(e.amount !== undefined ? { amount: e.amount } : {}) });
+};
+const isId = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s));
+// The queue (with the full IBANs: every view is logged), the money overview and the recent decisions.
+router.get('/withdrawals', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const w = require('../withdrawals');
+  const [overview, queue, recent] = await Promise.all([w.overview(), w.queue(req.adminUser), w.recent()]);
+  res.set('Cache-Control', 'no-store');
+  res.json({ currency: config.CURRENCY, minimum: w.minimum(), overview, queue, recent });
+}));
+router.post('/withdrawals/:id/pay', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!isId(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const b = req.body || {};
+  try { res.json({ request: await require('../withdrawals').markPaid({ batchId: req.params.id, reference: b.reference, amount: b.amount, admin: req.adminUser }) }); }
+  catch (e) { wdFail(res, e); }
+}));
+router.post('/withdrawals/:id/reject', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!isId(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try { res.json({ request: await require('../withdrawals').reject({ batchId: req.params.id, reason: (req.body || {}).reason, admin: req.adminUser }) }); }
+  catch (e) { wdFail(res, e); }
+}));
+// The open requests as a CSV for one bulk transfer (each exported request remembers its amount), then one reference for all of them.
+router.get('/withdrawals.csv', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const csv = await require('../withdrawals').exportCsv(req.adminUser);
+  res.set({ 'Content-Type': 'text/csv; charset=utf-8', 'Cache-Control': 'no-store' }).attachment(`wisecall-withdrawals-${new Date().toISOString().slice(0, 10)}.csv`).send('\uFEFF' + csv);
+}));
+router.post('/withdrawals/pay-exported', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  try { res.json(await require('../withdrawals').markExportedPaid({ reference: (req.body || {}).reference, admin: req.adminUser })); }
+  catch (e) { wdFail(res, e); }
 }));
 
 const BOOKING_STATUSES = ['pending_payment', 'paid', 'answered', 'refund_pending', 'refunded', 'expired'];
@@ -214,7 +249,7 @@ async function payoutRows() {
   const { rows } = await query(
     `SELECT u.id, u.name, u.email, u.payout_name, u.payout_iban_enc, u.payout_iban_last4,
             COALESCE(sum(p.amount) FILTER (WHERE ${ledger.payableSql('p')}), 0)::int AS payable,
-            COALESCE(sum(p.amount) FILTER (WHERE p.status = 'pending' AND NOT (${ledger.payableSql('p')})), 0)::int AS holding,
+            COALESCE(sum(p.amount) FILTER (WHERE ${ledger.holdingSql('p')} OR ${ledger.requestedSql('p')}), 0)::int AS holding,
             COALESCE(sum(${ledger.debtAmountSql('p')}) FILTER (WHERE ${ledger.debtSql('p')}), 0)::int AS debt,
             count(*) FILTER (WHERE ${ledger.payableSql('p')})::int AS payable_count,
             EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = u.id AND f.status = 'open' AND f.kind IN ('name_mismatch', 'payout_name_mismatch')) AS flagged,
@@ -262,8 +297,8 @@ router.get('/payouts.csv', requireAuth, requireAdmin, asyncHandler(async (req, r
 
 async function historyRows(mentorId) {
   const params = [];
-  let where = 'TRUE';
-  if (mentorId) { params.push(mentorId); where = 'pb.mentor_id = $1'; }
+  let where = "pb.status = 'paid'"; // (transfers that were made; requests are in the Withdrawals view)
+  if (mentorId) { params.push(mentorId); where += ' AND pb.mentor_id = $1'; }
   const { rows } = await query(
     `SELECT pb.*, u.name AS mentor_name, u.email AS mentor_email, a.email AS paid_by_email
        FROM payout_batches pb JOIN users u ON u.id = pb.mentor_id LEFT JOIN users a ON a.id = pb.paid_by
@@ -307,7 +342,7 @@ router.post('/payouts/:mentorId/pay', requireAuth, requireAdmin, asyncHandler(as
     if (batch.amount > 0) notify.notifyPayoutPaid(mentor, batch);
     res.json({ batch: { id: batch.id, amount: batch.amount, reference: batch.reference, paidAt: batch.paid_at } });
   } catch (e) {
-    if (e instanceof ledger.LedgerError) return res.status(409).json({ error: e.code });
+    if (e instanceof ledger.LedgerError) return res.status(409).json({ error: e.code }); // (request_open: pay the mentor's request instead)
     throw e;
   }
 }));

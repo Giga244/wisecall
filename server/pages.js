@@ -221,7 +221,7 @@ function profileJsonLd(u, stats, lang) {
 function withSettings(text) {
   const v = {
     answerDays: config.ANSWER_DEADLINE_DAYS, holdDays: config.PAYOUT_HOLD_DAYS, disputeDays: config.DISPUTE_DAYS, feePct: config.PLATFORM_FEE_PERCENT,
-    sharePct: 100 - config.PLATFORM_FEE_PERCENT, priceMin: config.PRICE_MIN, priceMax: config.PRICE_MAX
+    sharePct: 100 - config.PLATFORM_FEE_PERCENT, priceMin: config.PRICE_MIN, priceMax: config.PRICE_MAX, payoutMin: config.PAYOUT_MIN_GEL
   };
   return String(text || '').replace(/\{(\w+)\}/g, (m, k) => (v[k] !== undefined ? String(v[k]) : m));
 }

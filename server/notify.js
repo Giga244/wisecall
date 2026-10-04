@@ -75,6 +75,14 @@ const notifyPayoutPaid = (mentor, batch) => Promise.all([
   })
 ]);
 
+// A withdrawal was asked for, or not sent (with the reason). (Sent: notifyPayoutPaid.)
+const notifyWithdrawal = (mentor, kind, batch) => Promise.all([
+  inbox().systemMessage(mentor.id, `withdrawal_${kind}`, { amount: batch.amount, ...(kind === 'rejected' ? { reason: batch.reject_reason || '' } : {}) }),
+  safeSend(`withdrawal ${kind} notify`, kind === 'rejected' ? 'withdrawalRejected' : 'withdrawalRequested', mentor, {
+    amount: money(batch), last4: batch.iban_last4 || '----', reason: batch.reject_reason || ''
+  })
+]);
+
 // Payout details were changed: always sent (it is a security notice, not an optional email).
 const notifyPayoutChanged = (mentor, { oldLast4, newLast4, holdUntil }) => safeSend('payout change notify', 'payoutChanged', mentor, {
   oldLast4, newLast4, holdUntil: holdUntil ? utcDate(holdUntil, mentor.language) : ''
@@ -120,4 +128,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyDeletionScheduled, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyDeletionScheduled, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

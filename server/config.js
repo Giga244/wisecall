@@ -64,6 +64,11 @@ const config = {
   // Payout details: a change holds the mentor's payouts this long; an account without a password must have signed in this recently.
   PAYOUT_CHANGE_HOLD_HOURS: Math.max(0, int(env.PAYOUT_CHANGE_HOLD_HOURS, 72)),
   REAUTH_MINUTES: Math.max(1, int(env.REAUTH_MINUTES, 10)),
+  // Withdrawals: the smallest amount a mentor can take out (lari; any amount when the account is closing), the estimated bank fee for
+  // the admin's money overview (percent of what was received), and how payouts reach the bank ('manual' for now: server/payoutMethods).
+  PAYOUT_MIN_GEL: Math.max(0, int(env.PAYOUT_MIN_GEL, 100)),
+  BANK_FEE_PERCENT: Math.max(0, int(env.BANK_FEE_PERCENT, 2)),
+  PAYOUT_METHOD: env.PAYOUT_METHOD || 'manual',
   BOOKINGS_PER_HOUR: Math.max(0, int(env.BOOKINGS_PER_HOUR, 10)),
   MAX_OPEN_UNPAID_BOOKINGS: Math.max(0, int(env.MAX_OPEN_UNPAID_BOOKINGS, 3)),
   TBC_MAX_EXPIRATION_MINUTES: Math.max(1, int(env.TBC_MAX_EXPIRATION_MINUTES, 12)),
@@ -205,6 +210,7 @@ const problems = [];
 if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresql://user:pass@localhost:5432/wisecall)');
 if (!['resend', 'postmark', 'log'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend, postmark or log');
 if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) problems.push('PLATFORM_FEE_PERCENT must be between 0 and 99');
+if (!['manual'].includes(config.PAYOUT_METHOD)) problems.push('PAYOUT_METHOD must be "manual" (bank_api and split are not built yet)');
 if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
 if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negative');
 if (config.UNPAID_ATTEMPT_DAYS < 1) problems.push('UNPAID_ATTEMPT_DAYS must be at least 1');

@@ -100,6 +100,7 @@ app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
 app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.use('/api/me/export', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.put('/api/me/payout', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
+app.post('/api/me/withdrawals', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.use('/api/me/delete', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 // The Inbox: sending (a follow-up, a support message), starting support conversations, reporting, unsubscribing.
 app.use(/^\/api\/inbox\/threads\/[^/]+\/messages$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
@@ -148,6 +149,7 @@ app.get('/api/config', async (req, res) => {
     priceMin: config.PRICE_MIN,
     priceMax: config.PRICE_MAX,
     payoutHoldDays: require('./ledger').holdDays(),
+    payoutMinGel: config.PAYOUT_MIN_GEL,
     disputeDays: config.DISPUTE_DAYS,
     // The seller's legal details for the footer (each only when set), and whether card logos belong there (only once payments are open).
     legal: { name: config.LEGAL_NAME || null, id: config.LEGAL_ID || null, address: config.LEGAL_ADDRESS || null },

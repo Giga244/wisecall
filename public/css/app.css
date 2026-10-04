@@ -20,6 +20,10 @@
 .settings { max-width: 760px; }
 .app-progress { background: var(--card); border-radius: var(--radius); padding: 18px 22px; margin: 0 0 22px; box-shadow: 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3); border-left: 6px solid var(--accent2); }
 .app-progress[hidden] { display: none; }
+.bal-card { margin-bottom: 18px; }
+.bal-holds { margin: 4px 0 12px; padding-left: 18px; }
+.bal-withdraw { display: grid; gap: 10px; max-width: 420px; margin: 8px 0 4px; }
+.wd-held { font-size: 1.35rem; margin: 6px 0 12px; }
 .mv-field-form { display: grid; gap: 10px; max-width: 420px; margin-top: 8px; }
 .mv-field-form label.check { display: flex; gap: 8px; align-items: center; }
 /* Settings: the progress box (mentors only) is drawn above the tabs once the account is known; until then the tabs and panels are

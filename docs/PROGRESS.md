@@ -65,3 +65,12 @@ names in every date (formatDate). tests/i18n.test.js checks keys and placeholder
 words and the dates. docs/KA-REVIEW.md regenerated for the native speaker.
 Also fixed: right after an ID check the page said "your name doesn't match" until the comparison ran a moment later (now "checking…",
 refreshed until decided). Tests: unit 685, cloud 34, e2e 145 passed / 5 skipped.
+
+## PART 5 — mentor balance and withdrawals
+A Balance card (Dashboard → Earnings and Settings → Payouts): available, on hold (with the date each part frees up), requested, paid
+out, owed back, and the history. "Withdraw" from 100 ₾ (PAYOUT_MIN_GEL), the whole available amount minus debts, with the password
+(or a fresh sign-in), one open request (FOR UPDATE + a unique index), the amount always computed by the server. Admin → Payouts:
+money overview ("Mentor money held in your account"), the queue with the full IBAN (logged), Mark as paid / Reject, CSV for a bulk
+transfer and "Mark all exported as paid". Refunds during a request recompute or close it; emails and inbox messages EN+KA; payout
+method behind server/payoutMethods ('manual'). FAQ, home and help 07 updated. Migration 031 (undo script). Tests: withdrawals.test.js
+(6), e2e/withdrawals.spec.js (2).

@@ -200,7 +200,7 @@ router.get('/earnings', requireAuth, asyncHandler(async (req, res) => {
       `SELECT p.booking_id, p.amount, p.status, p.payable_at, p.debt_flagged_at, p.debt_settled_batch_id, pb.paid_at, pb.reference, b.question
          FROM payouts p JOIN bookings b ON b.id = p.booking_id LEFT JOIN payout_batches pb ON pb.id = p.batch_id
         WHERE p.mentor_id = $1 ORDER BY p.created_at DESC LIMIT 200`, [user.id]),
-    query('SELECT id, amount, reference, paid_at FROM payout_batches WHERE mentor_id = $1 ORDER BY paid_at DESC LIMIT 100', [user.id])
+    query(`SELECT id, amount, reference, paid_at FROM payout_batches WHERE mentor_id = $1 AND status = 'paid' ORDER BY paid_at DESC LIMIT 100`, [user.id])
   ]);
   res.json({
     currency: config.CURRENCY,
@@ -212,6 +212,29 @@ router.get('/earnings', requireAuth, asyncHandler(async (req, res) => {
     })),
     batches: batches.rows.map((r) => ({ id: r.id, amount: r.amount, reference: r.reference, paidAt: r.paid_at }))
   });
+}));
+
+// The Balance card (Dashboard and Settings → Payouts): available, on hold (with dates), requested, paid out, owed back; the withdrawal
+// history; and what, if anything, stands in the way of a withdrawal.
+router.get('/balance', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  res.json(await require('../withdrawals').summary(user));
+}));
+
+// "Withdraw": the whole available amount (the server computes it; nothing the page sends changes it). Needs the current password, or a
+// recent sign-in for an account without one. Asking again while a request is open returns that request.
+const WITHDRAW_STATUS = { not_found: 404, password_required: 400, wrong_password: 400, reauth_required: 403, suspended: 403, no_payout_details: 409,
+  name_mismatch: 409, open_flags: 409, nothing_available: 409, below_minimum: 409, debt_exceeds_available: 409 };
+router.post('/withdrawals', requireAuth, asyncHandler(async (req, res) => {
+  const withdrawals = require('../withdrawals');
+  try {
+    const r = await withdrawals.request({ mentorId: req.userToken.id, password: (req.body || {}).currentPassword, sessionId: req.userToken.sid });
+    res.status(r.existing ? 200 : 201).json(r);
+  } catch (e) {
+    if (!(e instanceof withdrawals.WithdrawalError)) throw e;
+    res.status(WITHDRAW_STATUS[e.code] || 400).json({ error: e.code, ...(e.minimum ? { minimum: e.minimum } : {}), ...(e.minutes ? { minutes: e.minutes } : {}) });
+  }
 }));
 
 router.post('/password', requireAuth, asyncHandler(async (req, res) => {

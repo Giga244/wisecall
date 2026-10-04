@@ -56,7 +56,10 @@
 
   async function loadPayout() {
     payoutCard.style.display = isMentorUser(user) ? 'block' : 'none';
+    const balanceBox = document.getElementById('balanceSettings');
+    balanceBox.hidden = !isMentorUser(user);
     if (!isMentorUser(user)) return;
+    WisecallBalance.render(balanceBox);
     try {
       const data = await WisecallAPI.apiFetch('/me/payout');
       payoutNameInput.value = data.name || '';

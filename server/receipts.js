@@ -106,7 +106,7 @@ async function statementMonths(mentorId) {
   const { rows } = await query(
     `SELECT DISTINCT to_char(date_trunc('month', t AT TIME ZONE 'UTC'), 'YYYY-MM') AS m FROM (
         SELECT created_at AS t FROM payouts WHERE mentor_id = $1
-        UNION ALL SELECT paid_at FROM payout_batches WHERE mentor_id = $1) x ORDER BY m DESC LIMIT 36`, [mentorId]);
+        UNION ALL SELECT paid_at FROM payout_batches WHERE mentor_id = $1 AND status = 'paid') x ORDER BY m DESC LIMIT 36`, [mentorId]);
   return rows.map((r) => r.m);
 }
 
@@ -117,7 +117,7 @@ async function statement(mentorId, month) {
     query(`SELECT p.created_at, p.status, p.amount, p.refunded_share, b.amount AS price, b.platform_fee_amount AS fee, b.mentor_net_amount AS net, left(b.question, 80) AS question
              FROM payouts p JOIN bookings b ON b.id = p.booking_id WHERE p.mentor_id = $1 AND p.created_at >= $2 AND p.created_at < $3 ORDER BY p.created_at`,
       [mentorId, range.from, range.to]),
-    query(`SELECT paid_at, amount, reference FROM payout_batches WHERE mentor_id = $1 AND paid_at >= $2 AND paid_at < $3 ORDER BY paid_at`, [mentorId, range.from, range.to])
+    query(`SELECT paid_at, amount, reference FROM payout_batches WHERE mentor_id = $1 AND status = 'paid' AND paid_at >= $2 AND paid_at < $3 ORDER BY paid_at`, [mentorId, range.from, range.to])
   ]);
   const lines = earned.rows.map((r) => ({
     date: new Date(r.created_at).toISOString().slice(0, 10), question: r.question, price: r.price, fee: r.fee, share: r.net,

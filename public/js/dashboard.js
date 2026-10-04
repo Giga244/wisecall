@@ -363,7 +363,6 @@
     earningsBox.innerHTML = skeleton();
     try {
       const e = await WisecallAPI.apiFetch('/me/earnings');
-      const b = e.balance;
       const itemNote = (i) => {
         if (i.status === 'void') return t('dash.earnings.void');
         if (i.status === 'paid') {
@@ -372,22 +371,16 @@
         }
         return new Date(i.payableAt) <= new Date() ? t('dash.earnings.payableNow') : t('dash.earnings.payableFrom').replace('{date}', fmtDate(i.payableAt));
       };
+      // (the Balance card: available, on hold, requested, paid out, owed back, "Withdraw" and the withdrawals: public/js/balance.js)
       earningsBox.innerHTML = `
-        <div class="earn-cards">
-          <div class="earn-card"><span>${t('dash.earnings.available')}</span><strong>${money(Math.max(b.net, 0))}</strong></div>
-          <div class="earn-card"><span>${t('dash.earnings.holding').replace('{days}', e.holdDays)}</span><strong>${money(b.holding)}</strong></div>
-          <div class="earn-card"><span>${t('dash.earnings.paid')}</span><strong>${money(b.paid)}</strong></div>
-          ${b.debt > 0 ? `<div class="earn-card warn"><span>${t('dash.earnings.debt')}</span><strong>${money(b.debt)}</strong></div>` : ''}
-        </div>
+        <div class="settings-card bal-card" id="balanceCard"><p class="muted">${t('experts.loading')}</p></div>
         <p class="muted small">${t('dash.earnings.note').replace('{days}', e.holdDays)}</p>
-        ${e.batches.length ? `
-          <h2 class="earn-h">${t('dash.earnings.history')}</h2>
-          <ul class="earn-list">${e.batches.map((x) => `<li><span>${fmtDate(x.paidAt)}</span><span>${escapeHtml(x.reference)}</span><strong>${money(x.amount)}</strong></li>`).join('')}</ul>` : ''}
         ${e.items.length ? `
           <h2 class="earn-h">${t('dash.earnings.items')}</h2>
           <ul class="earn-list">${e.items.map((i) => `<li><span>${escapeHtml(i.question)}</span><span class="muted small">${escapeHtml(itemNote(i))}</span><strong>${money(i.amount)}</strong></li>`).join('')}</ul>`
           : emptyState('dash.earnings.empty.title', 'dash.earnings.empty', '')}
         <div id="statements"></div>`;
+      WisecallBalance.render(document.getElementById('balanceCard'));
       // Monthly statements (PDF / CSV) for the months with earnings or payouts.
       const st = await WisecallAPI.apiFetch('/me/statements').catch(() => ({ months: [] }));
       if (st.months.length) {

@@ -51,7 +51,9 @@
         await AdminDisputes.render(content);
       } else if (tab === 'payouts') {
         const [owed, history] = await Promise.all([WisecallAPI.apiFetch('/admin/payouts'), WisecallAPI.apiFetch('/admin/payouts/history')]);
-        renderPayouts(owed, history.batches);
+        content.innerHTML = '<div id="wdBox"></div><div id="directBox"></div>';
+        renderPayouts(owed, history.batches, document.getElementById('directBox'));
+        await AdminWithdrawals.render(document.getElementById('wdBox'), load);
       } else if (tab === 'bookings') {
         const data = await WisecallAPI.apiFetch(`/admin/bookings${qs}`);
         renderBookings(data.bookings);
@@ -135,9 +137,11 @@
   }
 
   // Manual mentor payouts: who to pay how much, and a record of what was sent.
-  function renderPayouts(owed, batches) {
+  function renderPayouts(owed, batches, box) {
     const rows = owed.mentors;
     const toolbar = `
+      <h2 class="reviews-title" style="margin-top:32px">${t('admin.wd.direct')}</h2>
+      <p class="muted small">${t('admin.wd.directHelp')}</p>
       <div class="payout-toolbar">
         <a class="btn btn-outline btn-sm" href="/api/admin/payouts.csv" download>${t('admin.po.csv')}</a>
         <a class="btn btn-ghost btn-sm" href="/api/admin/payouts/history.csv" download>${t('admin.po.historyCsv')}</a>
@@ -170,9 +174,9 @@
     const hist = batches.length === 0 ? '' : `
       <h2 class="reviews-title" style="margin-top:32px">${t('admin.po.history')}</h2>
       <ul class="earn-list">${batches.map(b => `<li><span>${fmtDate(b.paidAt)}</span><span>${escapeHtml(b.mentorName)} · ${escapeHtml(b.reference)}</span><strong>${money(b.amount, 'gel')}</strong></li>`).join('')}</ul>`;
-    content.innerHTML = toolbar + cards + hist;
+    box.innerHTML = toolbar + cards + hist;
 
-    content.querySelectorAll('.pay-btn').forEach(btn => {
+    box.querySelectorAll('.pay-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const card = btn.closest('.booking-card');
         const net = Number(card.dataset.net);
@@ -184,7 +188,7 @@
           await WisecallAPI.apiFetch(`/admin/payouts/${card.dataset.mentor}/pay`, { method: 'POST', body: { amount: net, reference } });
           WisecallNav.showToast(t('admin.po.recorded'));
         } catch (e) {
-          WisecallNav.showToast(e.code === 'amount_changed' ? t('admin.po.changed') : (e.code === 'nothing_to_pay' ? t('admin.po.nothing') : t('toast.error')));
+          WisecallNav.showToast(e.code === 'amount_changed' ? t('admin.po.changed') : (e.code === 'nothing_to_pay' ? t('admin.po.nothing') : (e.code === 'request_open' ? t('admin.wd.requestOpen') : t('toast.error'))));
         }
         load();
       });

@@ -2,17 +2,22 @@
 
 **What you earn:** for each answered question, the price **minus Wisecall's 20% fee**. You keep **80%**. Example: price 25 ₾ → fee 5 ₾ → you earn **20 ₾**. The bank's card fees come out of Wisecall's share, not yours.
 
-**When:** your earning becomes payable **7 days after the buyer can read your answer**. That's the buyer's window to report a problem. (For your first 5 answers, the 7 days start when our team releases the answer, up to 24 hours after you wrote it.)
+**When it becomes available:** **7 days after the buyer can read your answer** (the buyer's window to report a problem). Until then it is **on hold**, and your Balance shows the date each amount becomes available. For your first 5 answers the 7 days start when our team releases the answer, up to 24 hours after you wrote it.
 
-**How:** Wisecall pays payable earnings by **bank transfer** to the Georgian IBAN you saved in **Settings → Payouts**, in periodic transfers made by our team ([CHECK: payout schedule, e.g. weekly]). You get an email for every transfer, with the amount and the reference.
+**Your balance:** **Dashboard → Earnings** (and **Settings → Payouts**) shows:
+- **Available**: yours to withdraw now.
+- **On hold**: still inside the 7 days, or waiting for a reported problem to be decided.
+- **Requested**: in a withdrawal you asked for.
+- **Paid out**: what we have sent you.
+- **Owed back**: if a buyer was refunded after you were paid for that answer; it is deducted from your next withdrawal.
 
-**Where to see it:** **Dashboard → Earnings** shows what's on hold, what's payable, what has been paid, and your payout history.
+**How to withdraw:** press **Withdraw** once your available balance is **100 ₾ or more**. You withdraw the whole available amount (minus anything owed back), and you confirm with your password (if you sign in with Google, sign in again first). One request at a time. Our team sends it by **bank transfer** to the Georgian IBAN in **Settings → Payouts**, and you get an email with the bank reference. If a request can't be sent, you get an email with the reason and the money is available again.
 
-**Things that can hold a payout**
-- The account holder's name must match the name on your ID. If it doesn't, payouts wait until our team checks it.
-- While a mentor is suspended, payouts are on hold.
-- If a buyer is refunded **after** you were paid for that answer, that amount is deducted from your next payout.
+**Closing your mentor account?** Then you can withdraw any amount above zero.
 
-> **[CHECK] Balance and "withdraw from 100 ₾":** the current code has **no withdraw button and no minimum amount**. Our team pays out everything that is payable. If a minimum payout (for example 100 ₾) or a withdraw request is planned, this article must change when it ships.
+**What can stop a withdrawal**
+- The account holder's name must match the name on your ID.
+- No withdrawals while your account is suspended or our team is checking something on it.
+- After you change your payout details, payouts wait 72 hours, and you get an email about the change.
 
-**Taxes:** you're responsible for your own taxes on what you earn ([CHECK: whether you need to register as an individual entrepreneur; ask the Revenue Service or an accountant]).
+**Taxes:** you're responsible for the taxes on what you earn. The Revenue Service or an accountant can tell you what applies to you.

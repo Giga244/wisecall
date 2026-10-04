@@ -12,10 +12,13 @@ const config = require('./config');
 
 // ---- The rules, as SQL on a payouts row named `p` (one definition, used everywhere money is summed) ---------------------------
 // Payable: earned, the hold has passed, and no dispute about its booking is open (a dispute holds the money until an admin decides).
-// ...and the mentor's payout details were not changed in the last PAYOUT_CHANGE_HOLD_HOURS.
-const payableSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.payable_at <= now()
+// ...and the mentor's payout details were not changed in the last PAYOUT_CHANGE_HOLD_HOURS, and it is not in a withdrawal request.
+const payableSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.payable_at <= now() AND ${p}.batch_id IS NULL
   AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.booking_id = ${p}.booking_id AND d.status = 'open')
   AND NOT EXISTS (SELECT 1 FROM users hu WHERE hu.id = ${p}.mentor_id AND hu.payout_hold_until > now())`;
+// On hold: earned, not payable yet, not in a request. Requested: in an open withdrawal request (server/withdrawals.js).
+const holdingSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.batch_id IS NULL AND NOT (${payableSql(p)})`;
+const requestedSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.batch_id IS NOT NULL`;
 // Owed back: paid, then (partly) refunded, and not settled yet. debt_amount is the part owed after a partial refund.
 const debtSql = (p = 'payouts') => `${p}.status = 'paid' AND ${p}.debt_flagged_at IS NOT NULL AND ${p}.debt_settled_batch_id IS NULL`;
 const debtAmountSql = (p = 'payouts') => `COALESCE(${p}.debt_amount, ${p}.amount)`;
@@ -44,6 +47,8 @@ async function onRefundRequested(client, booking) {
   if (!payout) return;
   if (payout.status === 'pending') {
     await client.query(`UPDATE payouts SET status = 'void' WHERE id = $1`, [payout.id]);
+    // (in a withdrawal request: the request's amount is computed again, or it is closed when nothing is left)
+    if (payout.batch_id) await require('./withdrawals').recompute(client, payout.batch_id);
   } else if (payout.status === 'paid' && (!payout.debt_flagged_at || payout.debt_amount !== null)) {
     // (the whole payout is owed back now, even if a part of it already was after a partial refund)
     await client.query('UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = NULL WHERE id = $1', [payout.id]);
@@ -62,6 +67,7 @@ async function onPartialRefund(client, booking, refundAmount) {
   if (payout.status === 'pending') {
     const take = Math.min(share, payout.amount);
     await client.query('UPDATE payouts SET amount = amount - $2, refunded_share = refunded_share + $2 WHERE id = $1', [payout.id, take]);
+    if (payout.batch_id) await require('./withdrawals').recompute(client, payout.batch_id);
   } else if (payout.status === 'paid') {
     await client.query(
       `UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = LEAST(amount, COALESCE(debt_amount, 0) + $2), refunded_share = refunded_share + $2
@@ -80,7 +86,7 @@ async function balanceFor(mentorId, client) {
   const { rows } = await run(
     `SELECT
        COALESCE(sum(amount) FILTER (WHERE ${payableSql()}), 0)::int AS payable,
-       COALESCE(sum(amount) FILTER (WHERE status = 'pending' AND NOT (${payableSql()})), 0)::int AS holding,
+       COALESCE(sum(amount) FILTER (WHERE ${holdingSql()}), 0)::int AS holding,
        COALESCE(sum(${debtAmountSql()}) FILTER (WHERE ${debtSql()}), 0)::int AS debt,
        COALESCE(sum(amount) FILTER (WHERE status = 'paid' AND debt_flagged_at IS NULL), 0)::int AS paid,
        count(*) FILTER (WHERE ${payableSql()})::int AS payable_count
@@ -101,6 +107,9 @@ async function markPaid({ mentorId, expectedAmount, reference, adminId }) {
   return tx(async (client) => {
     // Lock the mentor's payout rows so two admins cannot record the same transfer twice.
     await client.query('SELECT id FROM payouts WHERE mentor_id = $1 FOR UPDATE', [mentorId]);
+    // (a mentor who asked for their money is paid through their request: server/withdrawals.js)
+    const { rows: open } = await client.query(`SELECT 1 FROM payout_batches WHERE mentor_id = $1 AND status = 'requested'`, [mentorId]);
+    if (open.length) throw new LedgerError('request_open');
     const balance = await balanceFor(mentorId, client);
     if (balance.payable === 0 && balance.debt === 0) throw new LedgerError('nothing_to_pay');
     if (balance.net < 0) throw new LedgerError('debt_exceeds_earnings');
@@ -109,8 +118,8 @@ async function markPaid({ mentorId, expectedAmount, reference, adminId }) {
 
     const { rows: mentorRows } = await client.query('SELECT payout_iban_last4 FROM users WHERE id = $1', [mentorId]);
     const { rows } = await client.query(
-      `INSERT INTO payout_batches (mentor_id, amount, currency, reference, iban_last4, paid_by)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO payout_batches (mentor_id, amount, currency, reference, iban_last4, paid_by, status, paid_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'paid', now()) RETURNING *`,
       [mentorId, balance.net, config.CURRENCY, reference, mentorRows[0] && mentorRows[0].payout_iban_last4, adminId]
     );
     const batch = rows[0];
@@ -127,4 +136,4 @@ async function markPaid({ mentorId, expectedAmount, reference, adminId }) {
   });
 }
 
-module.exports = { onAnswered, onRefundRequested, onPartialRefund, balanceFor, markPaid, LedgerError, payableSql, debtSql, debtAmountSql, holdDays };
+module.exports = { onAnswered, onRefundRequested, onPartialRefund, balanceFor, markPaid, LedgerError, payableSql, holdingSql, requestedSql, debtSql, debtAmountSql, holdDays };

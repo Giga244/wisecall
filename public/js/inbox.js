@@ -50,6 +50,8 @@
         return s;
       }
       case 'payout_sent': return esc(fill('inbox.ev.payout_sent', { amount: WisecallAPI.formatAmount(d.amount || 0), reference: d.reference || '—' }));
+      case 'withdrawal_requested': return esc(fill('inbox.ev.withdrawal_requested', { amount: WisecallAPI.formatAmount(d.amount || 0) }));
+      case 'withdrawal_rejected': return esc(fill('inbox.ev.withdrawal_rejected', { amount: WisecallAPI.formatAmount(d.amount || 0) })) + (d.reason ? `<span class="ev-note">${esc(d.reason)}</span>` : '');
       case 'refunded': return esc(fill('inbox.ev.refunded', { amount: WisecallAPI.formatAmount(d.amount || 0) }));
       case 'dispute_resolved': {
         const s = esc(fill('inbox.ev.dispute.' + d.outcome, { amount: d.amount ? WisecallAPI.formatAmount(d.amount) : '' }));
@@ -319,7 +321,7 @@
     const d = n.data || {};
     const key = 'inbox.n.' + n.kind;
     if (n.kind === 'verification_update') return fill(d.status === 'passed' ? 'inbox.ev.stepPassed' : 'inbox.ev.stepFailed', { step: t('verify.step.' + d.step) });
-    if (n.kind === 'payout_sent' || n.kind === 'refunded') return fill(key, { amount: WisecallAPI.formatAmount(d.amount || 0) });
+    if (['payout_sent', 'refunded', 'withdrawal_requested', 'withdrawal_rejected'].includes(n.kind)) return fill(key, { amount: WisecallAPI.formatAmount(d.amount || 0) });
     return t(key);
   }
   async function loadNotifications() {

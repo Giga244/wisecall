@@ -34,12 +34,12 @@
   // from the server's settings so the page never disagrees with what the server really does.
   let vars = {};
   function fillVars(s) {
-    return typeof s === 'string' ? s.replace(/\{(answerDays|holdDays|disputeDays|feePct|sharePct|priceMin|priceMax|questionMin|questionMax|answerMin|answerMax|unpaidDays)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m)) : s;
+    return typeof s === 'string' ? s.replace(/\{(answerDays|holdDays|disputeDays|feePct|sharePct|priceMin|priceMax|questionMin|questionMax|answerMin|answerMax|unpaidDays|payoutMin)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m)) : s;
   }
   function setVarsFrom(cfg) {
     vars = {
       answerDays: cfg.answerDeadlineDays, holdDays: cfg.payoutHoldDays === undefined ? 7 : cfg.payoutHoldDays, disputeDays: cfg.disputeDays === undefined ? 7 : cfg.disputeDays,
-      feePct: cfg.platformFeePercent, sharePct: cfg.mentorSharePercent, priceMin: cfg.priceMin, priceMax: cfg.priceMax,
+      feePct: cfg.platformFeePercent, sharePct: cfg.mentorSharePercent, priceMin: cfg.priceMin, priceMax: cfg.priceMax, payoutMin: cfg.payoutMinGel === undefined ? 100 : cfg.payoutMinGel,
       questionMin: cfg.questionMin, questionMax: cfg.questionMax, answerMin: cfg.answerMin, answerMax: cfg.answerMax, unpaidDays: cfg.unpaidAttemptDays
     };
   }

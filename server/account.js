@@ -36,7 +36,7 @@ async function exportData(user) {
              WHERE m.sender_id = $1 AND m.kind <> 'internal_note' ORDER BY m.created_at`, [id]),
     rowsOf('SELECT kind, data, read_at, created_at FROM notifications WHERE user_id = $1 ORDER BY created_at', [id]),
     rowsOf('SELECT booking_id, amount, currency, status, payable_at, refunded_share, debt_amount, debt_flagged_at, created_at FROM payouts WHERE mentor_id = $1 ORDER BY created_at', [id]),
-    rowsOf('SELECT amount, currency, reference, paid_at FROM payout_batches WHERE mentor_id = $1 ORDER BY paid_at', [id]),
+    rowsOf('SELECT amount, currency, status, reference, requested_at, paid_at, reject_reason FROM payout_batches WHERE mentor_id = $1 ORDER BY COALESCE(requested_at, paid_at)', [id]),
     rowsOf('SELECT step, status, reason, decided_at, expires_at FROM verification_steps WHERE user_id = $1 ORDER BY step', [id]),
     rowsOf('SELECT kind, url, registry_id, note, check_status, created_at FROM mentor_evidence WHERE user_id = $1 ORDER BY created_at', [id]),
     rowsOf('SELECT device_label, created_at, last_seen_at, revoked_at FROM sessions WHERE user_id = $1 ORDER BY created_at', [id]),

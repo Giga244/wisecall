@@ -118,3 +118,18 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - Georgian may leave out a {name} where English has it, when keeping it would mean a case ending hyphenated onto a name ({name}-ს):
   „როგორი იყო პასუხი?“. The placeholder test allows exactly that and nothing else.
 - Dates: WisecallI18n.formatDate writes Georgian month names by hand in browsers without Georgian locale data; every page uses it.
+
+## PART 5 — balance and withdrawals
+- No second source of truth: a withdrawal request is a payout_batches row with status 'requested' and its payout rows point at it
+  (payouts.batch_id), exactly as a paid transfer always has. "Available", "on hold", "requested" and "owed back" are rules on the payout
+  rows (server/ledger.js). Existing transfers become status 'paid' (migration 031 only adds columns and relaxes two NOT NULLs).
+- Withdraw needs Available ≥ PAYOUT_MIN_GEL (100) and takes the whole available amount minus anything owed back; when what is owed
+  back is more than what is available, nothing can be sent yet (the debt is not split). "Closing" waives the minimum: the account is
+  being deleted, or the person stopped being a mentor (Settings → Mentor). A removed account that cannot sign in any more is paid by an
+  admin with "Pay without a request" (the old per-mentor payment, kept for that and refused while the mentor has an open request).
+- The admin's "Mark as paid" sends back the amount the admin saw; if a refund changed the request meanwhile, nothing is recorded
+  ("amount changed"). "Mark all exported as paid" only pays requests whose amount did not change since the CSV was exported.
+- Every view of the queue (and every CSV) writes "iban_viewed" to each mentor's audit log, since it shows full IBANs.
+- The bank fee in the money overview is an estimate (BANK_FEE_PERCENT, default 2) and is labelled as one.
+- Help article 07 is rewritten for withdrawals and published (no [CHECK] left); taxes are described without a legal claim ("the
+  Revenue Service or an accountant can tell you what applies to you").

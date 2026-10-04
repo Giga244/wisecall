@@ -175,6 +175,16 @@ const S = {
       intro: 'We sent {amount} to your bank account ending in {last4}.', referenceLabel: 'Bank transfer reference:',
       after: 'Bank transfers usually arrive within 1 to 3 working days. You can see all your earnings in your dashboard.', button: 'Open dashboard'
     },
+    withdrawalRequested: {
+      subject: 'We received your withdrawal request', heading: 'Withdrawal requested',
+      intro: 'You asked us to send {amount} to your bank account ending in {last4}.',
+      after: 'We will email you as soon as the transfer is made, with its bank reference.', button: 'See your balance'
+    },
+    withdrawalRejected: {
+      subject: 'Your withdrawal was not sent', heading: 'Withdrawal not sent',
+      intro: 'We did not send your withdrawal of {amount}. The money is back in your available balance.', reasonLabel: 'Reason:',
+      after: 'If anything is unclear, write to us.', button: 'See your balance'
+    },
     payoutChanged: {
       subject: 'Your Wisecall payout details were changed', heading: 'Your payout details were changed',
       intro: 'The bank account for your Wisecall payouts was changed from the one ending in {oldLast4} to the one ending in {newLast4}.',
@@ -340,6 +350,16 @@ const S = {
       intro: '{amount} გავგზავნეთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.', referenceLabel: 'საბანკო გადარიცხვის რეფერენსი:',
       after: 'საბანკო გადარიცხვა ჩვეულებრივ 1-3 სამუშაო დღეში აისახება. ყველა შემოსავალი შეგიძლია იხილო დაფაზე.', button: 'დაფის გახსნა'
     },
+    withdrawalRequested: {
+      subject: 'თანხის გატანის მოთხოვნა მივიღეთ', heading: 'თანხის გატანა მოთხოვნილია',
+      intro: 'გვთხოვე, {amount} გადაგირიცხოთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.',
+      after: 'გადარიცხვისთანავე მოგწერთ ელფოსტით, საბანკო რეფერენსითურთ.', button: 'ბალანსის ნახვა'
+    },
+    withdrawalRejected: {
+      subject: 'თანხის გატანა არ შესრულდა', heading: 'თანხა არ გადაირიცხა',
+      intro: '{amount}-ის გატანა არ შევასრულეთ. თანხა ისევ შენს ხელმისაწვდომ ბალანსზეა.', reasonLabel: 'მიზეზი:',
+      after: 'თუ რამე გაუგებარია, მოგვწერე.', button: 'ბალანსის ნახვა'
+    },
     payoutChanged: {
       subject: 'შენი Wisecall-ის ანაზღაურების მონაცემები შეიცვალა', heading: 'შენი ანაზღაურების მონაცემები შეიცვალა',
       intro: 'Wisecall-ის ანაზღაურებისთვის განკუთვნილი საბანკო ანგარიში შეიცვალა: {oldLast4}-ით დამთავრებულის ნაცვლად ახლა არის {newLast4}-ით დამთავრებული.',
@@ -497,6 +517,16 @@ const BUILDERS = {
   payoutPaid: (s, d) => ({
     heading: s.payoutPaid.heading,
     blocks: [{ p: fill(s.payoutPaid.intro, d), raw: true }, { quote: `${s.payoutPaid.referenceLabel} ${d.reference}` }, { p: s.payoutPaid.after }, { button: s.payoutPaid.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  withdrawalRequested: (s, d) => ({
+    heading: s.withdrawalRequested.heading,
+    blocks: [{ p: fill(s.withdrawalRequested.intro, d), raw: true }, { p: s.withdrawalRequested.after },
+      { button: s.withdrawalRequested.button, url: `${config.PUBLIC_URL}/dashboard.html?tab=earnings` }]
+  }),
+  withdrawalRejected: (s, d) => ({
+    heading: s.withdrawalRejected.heading,
+    blocks: [{ p: fill(s.withdrawalRejected.intro, d), raw: true }, ...(d.reason ? [{ quote: `${s.withdrawalRejected.reasonLabel} ${d.reason}` }] : []),
+      { p: s.withdrawalRejected.after }, { button: s.withdrawalRejected.button, url: `${config.PUBLIC_URL}/dashboard.html?tab=earnings` }]
   }),
   payoutChanged: (s, d) => ({
     heading: s.payoutChanged.heading,

@@ -70,7 +70,12 @@ describe('the help centre', () => {
   test('the list and an article, in both languages; nothing unsettled is published; unknown articles are 404', async () => {
     const list = await html('/help.html');
     assert.match(list, /<a href="\/help\/refunds">Refunds<\/a>/);
-    assert.doesNotMatch(list, /how-mentors-get-paid/, 'an article with a [CHECK] note waits');
+    assert.match(list, /how-mentors-get-paid/, 'article 07 is published since withdrawals were built (PART 5)');
+    // An article with a [CHECK] note (a fact not settled yet) waits: exactly the files without one are published.
+    const fsx = require('fs');
+    const dir = require('path').join(__dirname, '..', 'docs', 'help', 'en');
+    const settled = fsx.readdirSync(dir).filter((f) => f.endsWith('.md') && !fsx.readFileSync(require('path').join(dir, f), 'utf8').includes('[CHECK'));
+    assert.equal(require('../server/help').articles('en').length, settled.length);
     const a = await html('/help/refunds');
     assert.match(a, /<title>Refunds — Wisecall<\/title>/);
     assert.match(a, /<strong>full price<\/strong>/);
