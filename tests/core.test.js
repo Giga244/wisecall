@@ -117,6 +117,7 @@ describe('mentor application and approval', () => {
     assert.equal(pub.experts.length, 0);
     assert.equal((await client(base).api(`/experts/${ids.mentor}`)).status, 404);
     const s = await signupVerified(base, 'Sam Seeker', 'seeker@example.com');
+    await s.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } }); // (new accounts start private; Sam chose public)
     ids.seekerClient = s;
     const b = await s.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: longQuestion('Can I book a pending mentor?') } });
     assert.equal(b.status, 404);

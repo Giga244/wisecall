@@ -61,7 +61,7 @@ describe('name match in the verification flow (with the fake ID check)', () => {
 
   before(async () => {
     await resetDatabase();
-    srv = await startServer(4578, {});
+    srv = await startServer(4578, { PAYOUT_CHANGE_HOLD_HOURS: '0' }); // (the 72-hour hold after a change has its own tests)
     base = srv.base;
     admin = await signupVerified(base, 'QA Admin', 'qa-admin@example.com');
     seeker = await signupVerified(base, 'Sam Seeker', 'seeker@example.com');

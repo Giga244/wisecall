@@ -109,6 +109,7 @@ describe('the choice is kept on the account', () => {
     assert.equal((await me.api('/me')).user.theme, 'dark', 'refused values changed nothing');
     const anon = require('./helpers').client(base);
     assert.equal((await anon.api('/me', { method: 'PATCH', body: { theme: 'light' } })).status, 401);
+    await me.api('/me', { method: 'PATCH', body: { profileVisibility: 'public' } });
     assert.equal((await anon.api('/users/dara-darkmode')).profile.theme, undefined, 'the public profile does not carry it');
   });
 

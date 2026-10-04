@@ -156,7 +156,7 @@ describe('Google sign-in', () => {
       assert.equal(me.username, 'giorgi-google');
       assert.equal(me.usernameConfirmed, false, 'the username is only a suggestion until they accept it');
       assert.ok(me.photoUrl, 'the Google picture became their photo');
-      const photo = await fetch(base + me.photoUrl);
+      const photo = await b.get(me.photoUrl); // (their own photo: a new profile starts private, docs/AUDIT.md #10)
       assert.equal(photo.status, 200);
       assert.equal(photo.headers.get('content-type'), 'image/webp');
       assert.equal((await pool.query('SELECT source FROM user_photos WHERE user_id = $1', [me.id])).rows[0].source, 'google');
@@ -401,7 +401,7 @@ describe('Google sign-in', () => {
       await b.api('/me/password', { method: 'POST', body: { newPassword: 'mentor-password-1' } });
       await client.api('/auth/login', { method: 'POST', body: { email: 'mentorish@e2e.test', password: 'mentor-password-1' } });
       await approveMentor(admin, client);
-      await addPayoutDetails(client);
+      await addPayoutDetails(client, undefined, undefined, 'mentor-password-1');
       assert.equal((await b.me()).isListedMentor, true);
       assert.equal(me.id, (await client.api('/me')).user.id);
     });

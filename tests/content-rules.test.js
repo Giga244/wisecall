@@ -165,7 +165,7 @@ describe('an answer is written once', () => {
 
   test('only the mentor of a paid question can answer; an unpaid or refunded one cannot be answered', async () => {
     const b = await paid('A question that only its own mentor may answer, nobody else?');
-    assert.equal((await post(b.id, text(160), seeker)).status, 400);
+    assert.equal((await post(b.id, text(160), seeker)).status, 403); // (someone else's question: docs/AUDIT.md #14)
     assert.equal((await post(b.id, text(160), client(base))).status, 401);
     assert.equal((await post('not-an-id', text(160))).status, 404);
     // refunded
