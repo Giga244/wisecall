@@ -140,3 +140,7 @@ Bookings sent to askers and mentors no longer carry reminderSentAt, answerFlagge
 refundRequestedAt or answerReview, and a mentor no longer gets the asker's account id. The export includes public answers and mentor
 requests. Tests: api-trim.test.js (7): one per route (answering, one question, dashboard, inbox list/conversation/notifications, dispute,
 receipts + statements, export, admin overview + support inbox), checking for internal fields, IBANs, other people's emails and ids.
+
+**PART 7 and PART 8 test runs.** After PART 7: unit 710/710 (after a fix to the email-template test's sample), cloud 34/34, browser
+154 passed / 5 skipped (one navigation abort in e2e/dev-setup on that run; the spec passes 6/6 when re-run), browser-cloud 30/30.
+After PART 8: unit 726/726, cloud 34/34, browser 157 passed / 5 skipped, browser-cloud 30/30.
