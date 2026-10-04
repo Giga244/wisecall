@@ -25,7 +25,8 @@ const rowsOf = async (sql, params) => (await query(sql, params)).rows;
 
 async function exportData(user) {
   const id = user.id;
-  const [asked, answered, ratingsGiven, ratingsReceived, messages, notifications, payouts, batches, steps, evidence, sessions, receipts, waitlist, identities, settings] = await Promise.all([
+  const [asked, answered, ratingsGiven, ratingsReceived, messages, notifications, payouts, batches, steps, evidence, sessions, receipts, waitlist, identities, settings,
+    publicAnswers, mentorRequests] = await Promise.all([
     rowsOf(`SELECT b.id, b.question, b.answer, b.amount, b.currency, b.status, b.created_at, b.paid_at, b.answered_at, b.refunded_at, b.refund_reason, b.refunded_amount,
                    m.name AS mentor_name FROM bookings b JOIN users m ON m.id = b.mentor_id WHERE b.seeker_id = $1 ORDER BY b.created_at`, [id]),
     rowsOf(`SELECT id, question, answer, amount, platform_fee_amount, mentor_net_amount, currency, status, created_at, paid_at, answered_at, refunded_at, refund_reason
@@ -43,7 +44,13 @@ async function exportData(user) {
     rowsOf('SELECT r.number, r.kind, r.amount, r.issued_at, r.booking_id FROM receipts r JOIN bookings b ON b.id = r.booking_id WHERE b.seeker_id = $1 ORDER BY r.number', [id]),
     rowsOf('SELECT niche, language, created_at, notified_at FROM waitlist WHERE lower(email) = lower($1)', [user.email]),
     rowsOf('SELECT provider, email, created_at, last_login_at FROM user_identities WHERE user_id = $1', [id]),
-    rowsOf('SELECT email_off FROM notification_settings WHERE user_id = $1', [id])
+    rowsOf('SELECT email_off FROM notification_settings WHERE user_id = $1', [id]),
+    // (public answers this person asked or answered, and "find me a mentor" requests sent from the account or its email)
+    rowsOf(`SELECT CASE WHEN asker_id = $1 THEN 'asker' ELSE 'mentor' END AS my_role, status, asker_consent, mentor_consent, question_public, answer_public,
+                   slug, published_at, withdrawn_at, created_at
+              FROM public_answers WHERE asker_id = $1 OR mentor_id = $1 ORDER BY created_at`, [id]),
+    rowsOf(`SELECT field_text, niche, need, language, budget_min, budget_max, show_public, status, created_at, expires_at, notified_at
+              FROM mentor_requests WHERE user_id = $1 OR lower(email) = lower($2) ORDER BY created_at`, [id, user.email])
   ]);
   const iban = decrypt(user.payoutIbanEnc);
   return {
@@ -58,7 +65,7 @@ async function exportData(user) {
     payoutDetails: user.payoutName || iban ? { name: user.payoutName, ibanEndsWith: iban ? iban.slice(-4) : null } : null,
     questionsAsked: asked, questionsAnswered: answered, ratingsGiven, ratingsReceived, messagesWritten: messages, notifications,
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
-    waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }
+    waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests
   };
 }
 

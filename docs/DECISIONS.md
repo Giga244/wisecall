@@ -178,3 +178,13 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - During the 5 minutes even the right password waits (otherwise the lock would not slow guessing). This lets someone delay a known
   account by 5 minutes at a time; accepted, because a password reset ends the wait at once and the owner is told by email.
 - After the wait, every try still needs the Turnstile check (when it is on); counting starts again from zero.
+
+## PART 8.5 — trimming API responses
+- Reviewed: Inbox (list, conversation, notifications, admin support), disputes, receipts and statements, the data export, the admin
+  overview. They were already curated (other people only by public name, IBAN only by its last 4, no provider errors); what was left:
+  bookings sent to askers and mentors still carried moderation and bank internals (flag and hold times, refund attempt time, review state)
+  and, for a mentor, the asker's account id. These are now removed at the edge of the API (probation.toClient / trimForClient), after the
+  server has used them, so nothing inside the server changes. The pages use answerHeld, which stays.
+- Kept on purpose: the bank's order id in the reply that starts a payment (it is in the checkout address the buyer is sent to anyway;
+  PART 3), and the mentor's public id on the asker's dashboard (the "report this mentor" link; it is on the public profile too).
+- The data export now also includes the person's public answers and "find me a mentor" requests (it is meant to be everything).

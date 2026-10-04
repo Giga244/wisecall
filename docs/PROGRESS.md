@@ -134,3 +134,9 @@ lines) with the main gitleaks rules (cloud keys, private keys, Anthropic/OpenAI/
 JWTs, database URLs with passwords, generic secret assignments): **nothing found**. Two first hits were false positives (a translation key
 name, and the fake webhook secret of the test ID-check server); the script now skips those kinds. No key needs rotating, so nothing was
 added to docs/QUESTIONS.md; history was not rewritten. The real gitleaks runs in CI on every push.
+
+## PART 8.5 — trimmed API responses
+Bookings sent to askers and mentors no longer carry reminderSentAt, answerFlaggedAt, answerHeldUntil, partialRefundStartedAt,
+refundRequestedAt or answerReview, and a mentor no longer gets the asker's account id. The export includes public answers and mentor
+requests. Tests: api-trim.test.js (7): one per route (answering, one question, dashboard, inbox list/conversation/notifications, dispute,
+receipts + statements, export, admin overview + support inbox), checking for internal fields, IBANs, other people's emails and ids.

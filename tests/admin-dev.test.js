@@ -62,7 +62,7 @@ describe('what a fast-forward makes happen', () => {
   test('a held first answer is released, ratings stay hidden until both have rated or 7 days pass, and the earnings become payable', async () => {
     const b = await bookAndPay(base, seeker, mentorId, 'A question with an answer, so its whole life can be followed?');
     const answered = await mentor.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer(SAMPLE) } });
-    assert.equal(answered.booking.answerReview, 'held', 'a new mentor\'s first answer waits for a check');
+    assert.equal(answered.booking.answerHeld, true, 'a new mentor\'s first answer waits for a check');
     const asker = (await seeker.api(`/bookings/${b.id}`)).booking;
     assert.equal(asker.answer, null, 'the buyer cannot read it yet');
     assert.equal(asker.answerHeld, true);

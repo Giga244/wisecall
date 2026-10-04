@@ -70,7 +70,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     const order = await payments.startPayment(booking, mentor, seeker);
     const updated = await updateBooking(booking.id, { providerOrderId: order.orderId });
     // (the bank's order id is part of the checkout address the buyer is sent to anyway)
-    res.status(201).json({ booking: { ...probation.forViewer(updated, seeker.id), providerOrderId: updated.providerOrderId }, checkoutUrl: order.redirectUrl });
+    res.status(201).json({ booking: { ...probation.toClient(updated, seeker.id), providerOrderId: updated.providerOrderId }, checkoutUrl: order.redirectUrl });
   } catch (err) {
     console.error('[payments] could not start the bank payment:', err.message);
     await updateBooking(booking.id, { status: 'expired' });
@@ -107,7 +107,8 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   // Public answers: the offer after a 4–5★ rating, and where each one stands (server/publicAnswers.js).
   const publicAnswers = await require('../publicAnswers').forBookings([...asked, ...received], me);
   const withPa = (b) => ({ ...b, publicAnswer: publicAnswers[b.id] || null });
-  res.json({ asked: asked.map((b) => withPa(withDispute(b, 'asker'))), received: received.map((b) => withPa(withDispute(b, 'mentor'))) });
+  const send = (b) => probation.trimForClient(b, me); // (what the page needs: no internals, no other person's account id)
+  res.json({ asked: asked.map((b) => send(withPa(withDispute(b, 'asker')))), received: received.map((b) => send(withPa(withDispute(b, 'mentor')))) });
 }));
 
 router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
@@ -116,7 +117,7 @@ router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
   if (booking.seekerId !== req.userToken.id && booking.mentorId !== req.userToken.id) {
     return res.status(403).json({ error: 'forbidden' });
   }
-  res.json({ booking: probation.forViewer(booking, req.userToken.id) });
+  res.json({ booking: probation.toClient(booking, req.userToken.id) });
 }));
 
 // The buyer came back from the bank (or is waiting on the page). We do not believe the redirect:
@@ -135,7 +136,7 @@ router.post('/:id/sync', requireAuth, asyncHandler(async (req, res) => {
     try { booking = (await payments.syncBooking(existing.id)) || existing; }
     catch (err) { console.error('[payments] status check failed:', err.message); }
   }
-  res.json({ booking: probation.forViewer(booking, req.userToken.id) });
+  res.json({ booking: probation.toClient(booking, req.userToken.id) });
 }));
 // A mentor answers ONCE. There is no way to change an answer afterwards, held for a check or not: a second request gets 409
 // "already_answered" and the first answer stays exactly as it was (a wrong answer is dealt with by an admin: reject it, and the buyer is
@@ -171,7 +172,7 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
     const [seeker, mentor] = await Promise.all([getUserById(booking.seekerId), getUserById(booking.mentorId)]);
     if (seeker && mentor) notify.notifySeekerAnswered(seeker, mentor, booking);
   }
-  res.json({ booking: probation.forViewer(booking, req.userToken.id) });
+  res.json({ booking: probation.toClient(booking, req.userToken.id) });
 }));
 
 // "Report a problem with this answer" (the asker, within DISPUTE_DAYS of being able to read it; once per question).
@@ -210,7 +211,7 @@ router.post('/:id/decline', requireAuth, asyncHandler(async (req, res) => {
     console.error(`[bookings] refund after a decline failed for ${booking.id}:`, e.message);
   }
   require('../inbox').onDeclined(booking, reason);
-  res.json({ booking: probation.forViewer(await getBookingById(booking.id), req.userToken.id) });
+  res.json({ booking: probation.toClient(await getBookingById(booking.id), req.userToken.id) });
 }));
 
 module.exports = router;
