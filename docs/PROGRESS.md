@@ -165,3 +165,8 @@ with showModal(), Tab kept inside, Esc / Cancel / a click outside = no, focus ba
 and an action button that says what happens ("Refund 25.00 ₾", "Decline and refund …", "Delete my account"), red when it cannot be
 undone (own colour in the dark theme). No alert() existed. Hiding a review now checks the reason before asking. Tests: the dialog in
 e2e/ux-extras.spec.js; the specs that used to accept browser pop-ups press the dialog's button (e2e/support.js confirm()).
+
+## PART 9.4 — Back to top
+public/js/back-to-top.js on the home page, help, FAQ, Terms and Privacy: appears after 1.5 screens, scrolls up smoothly (at once with
+reduced motion), moves the keyboard focus to the top, rises above the footer's language switch, icon-only on phones (the label stays for
+screen readers), EN+KA. Checked in a browser: desktop, phone, Georgian dark theme, reduced motion.

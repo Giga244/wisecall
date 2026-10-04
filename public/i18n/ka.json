@@ -1804,5 +1804,6 @@
   "pa.withdrawButton": "წაშლა",
   "settings.sessions.button": "სხვა მოწყობილობებიდან გასვლა",
   "settings.data.button": "ჩემი ანგარიშის წაშლა",
-  "ap.edit.button": "განაცხადის შეცვლა"
+  "ap.edit.button": "განაცხადის შეცვლა",
+  "top.back": "ზემოთ დაბრუნება"
 }

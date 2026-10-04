@@ -1045,3 +1045,11 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 .share-card[hidden] { display: none; }
 .share-card-title { font-size: 1.05rem; margin: 0 0 4px; }
 .share-url { margin: 6px 0 0; font-weight: 700; word-break: break-all; }
+
+/* "Back to top" (public/js/back-to-top.js) */
+.back-to-top { position: fixed; right: 16px; bottom: 16px; z-index: 40; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 10px 16px;
+  border: none; border-radius: 999px; background: var(--card); color: var(--ink); font: inherit; font-weight: 800; font-size: 0.88rem; cursor: pointer;
+  box-shadow: 0 10px 26px -10px rgba(var(--shadow-rgb), 0.55); }
+.back-to-top[hidden] { display: none; }
+.back-to-top:hover { color: var(--accent-text); }
+@media (max-width: 560px) { .back-to-top-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .back-to-top { padding: 10px 12px; } }
