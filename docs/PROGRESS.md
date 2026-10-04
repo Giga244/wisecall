@@ -185,3 +185,8 @@ browser (0 at the top, half at the middle of the article, full at its end).
 A "Need help? Contact us" link to /contact.html (which opens a support conversation for signed-in people) under the dashboard's title,
 under the question box on a mentor's profile, and under every result after the bank (paid, still checking, failed, cancelled); no
 floating widget. EN+KA. Checked in a browser, including after cancelling at the fake bank.
+
+## PART 10 — Flitt (skipped)
+Not built: the master prompt says to build it only if docs/QUESTIONS.md or the owner confirms Flitt as the provider, and neither does.
+docs/QUESTIONS.md now asks (is Flitt chosen, is there a merchant account, is the IBAN-credit payout in the contract, keep manual payouts as
+a fallback?) and lists what only the owner can do before launch. Payments stay BOG/TBC; payouts stay manual (Admin → Withdrawals).
