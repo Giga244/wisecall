@@ -180,3 +180,8 @@ a help article and the FAQ as print in a browser.
 public/js/reading-progress.js on help article pages only (and any future `article.blog-article`): a 4px bar at the top showing how far
 through the article the reader is; not on the help list; hidden from screen readers; no animation with reduced motion. Checked in a
 browser (0 at the top, half at the middle of the article, full at its end).
+
+## PART 9.7 — "Need help?" links
+A "Need help? Contact us" link to /contact.html (which opens a support conversation for signed-in people) under the dashboard's title,
+under the question box on a mentor's profile, and under every result after the bank (paid, still checking, failed, cancelled); no
+floating widget. EN+KA. Checked in a browser, including after cancelling at the fake bank.

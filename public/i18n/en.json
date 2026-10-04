@@ -1805,5 +1805,6 @@
   "settings.sessions.button": "Sign out the other devices",
   "settings.data.button": "Delete my account",
   "ap.edit.button": "Edit my application",
-  "top.back": "Back to top"
+  "top.back": "Back to top",
+  "help.need": "Need help? Contact us"
 }

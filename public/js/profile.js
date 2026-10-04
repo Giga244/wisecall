@@ -203,7 +203,7 @@
     WisecallCopy.wire(page);
     loadReviews();
     loadPublicAnswers();
-    if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState;
+    if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
   }
   const askArea = () => document.getElementById('askArea');
   // ---- Reviews ------------------------------------------------------------------------------------------------
@@ -256,7 +256,8 @@
     <ul class="ask-notes">
       <li>${NOTE_ICON}<span>${t('expert.refundNote')}</span></li>
       <li>${NOTE_ICON}<span>${t('expert.secureNote')}</span></li>
-    </ul>`;
+    </ul>
+    <p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
 
   // Ask our server to check the payment with the bank; only its answer decides what we show.
   async function confirmPayment() {
@@ -270,7 +271,7 @@
         if (booking.status === 'paid' || booking.status === 'answered') {
           stored.set(''); draft = ''; // it was sent: nothing to keep
           askState = `<div class="booking-result success"><div class="success-icon" aria-hidden="true">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
-          askArea().innerHTML = askState;
+          askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
           return;
         }
         if (booking.status === 'expired' || booking.status === 'refunded') break;
@@ -291,7 +292,7 @@
       return;
     }
     askState = `<div class="booking-result"><p class="muted">${t('expert.paymentPending')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
-    askArea().innerHTML = askState;
+    askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
   }
 
   function renderAskForm() {

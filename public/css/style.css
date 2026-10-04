@@ -1073,3 +1073,9 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 .reading-progress { position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 60; pointer-events: none; }
 .reading-progress span { display: block; height: 100%; background: var(--accent-strong); transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.1s linear; }
 @media (prefers-reduced-motion: reduce) { .reading-progress span { transition: none; } }
+
+/* "Need help?" links (dashboard, the question box, after the bank) */
+.need-help { margin: 6px 0 14px; }
+.need-help a { text-decoration: underline; text-underline-offset: 3px; }
+.page-head .need-help { margin: 4px 0 0; }
+.ask-card .need-help, .booking-result + .need-help { text-align: center; margin: 12px 0 0; }
