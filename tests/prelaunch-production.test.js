@@ -189,9 +189,11 @@ describe('what the mentor sees, and the documents', () => {
   });
 
   test('DEPLOY.md, .env.example and render.yaml use wisecallge.ge and explain going online in prelaunch', () => {
-    const deploy = fs.readFileSync(path.join(ROOT, 'DEPLOY.md'), 'utf8');
-    const example = fs.readFileSync(path.join(ROOT, '.env.example'), 'utf8');
-    const render = fs.readFileSync(path.join(ROOT, 'render.yaml'), 'utf8');
+    // (Windows checkouts may have CRLF line endings: the files in git have LF)
+    const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
+    const deploy = read('DEPLOY.md');
+    const example = read('.env.example');
+    const render = read('render.yaml');
     for (const text of [deploy, example]) {
       assert.match(text, /https:\/\/wisecallge\.ge/);
       assert.match(text, /hello@wisecallge\.ge/);
