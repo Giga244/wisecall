@@ -56,3 +56,4 @@ the deadline, #9 Georgian file names, #10 new accounts start private; also #14, 
 BANK]), B6/B7 (BOG language, idempotency key). From FIX-PROMPT: per-account asking limits, payout details need the password (email +
 72-hour hold on a change), bank internals hidden from buyers and mentors. Every { todo } in tests/cloud is gone and `npm test` runs them;
 the cloud pack's four test.fixme browser tests pass. Left: 🟡 #11, #12 (see DECISIONS.md).
+Tests: unit 672, cloud 34 (no todo left), e2e 145 passed / 5 skipped.
