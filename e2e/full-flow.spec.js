@@ -281,5 +281,5 @@ test('the mentor\'s earnings are in the payout ledger, and the admin pays them o
   const [batch] = await S.sql('SELECT amount, reference FROM payout_batches WHERE mentor_id = $1', [mentorId]);
   expect(batch).toMatchObject({ amount: 2400, reference: 'BANK-TRANSFER-E2E-1' });
   await S.waitForMail(mentor.email, 'payout has been sent');
-  await expect(adminPage.locator('.earn-list')).toContainText('BANK-TRANSFER-E2E-1');
+  await expect(adminPage.locator('#directBox .earn-list')).toContainText('BANK-TRANSFER-E2E-1'); // (paid without a request: the history under it)
 });
