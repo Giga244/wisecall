@@ -91,3 +91,5 @@ network errors vs "not found", "your rating is visible", "in review" instead of 
 names, the password field size (Phase 5 UX fixes), the four test.fixme browser tests (PART 3), help articles published and linked from
 the footer and FAQ (Phase 5; 07 in PART 5). New here: the cloud pack's journey test follows the form changes, and `npm run test:e2e` now
 runs tests/e2e-cloud too (30 passed: journey and known issues, desktop and phone).
+
+Parts 1–6B all green together: unit 691, cloud 34, e2e 152 passed / 5 skipped (plus tests/e2e-cloud 30 passed).

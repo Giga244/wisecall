@@ -75,7 +75,9 @@ async function openItems(userId) {
   if (b.rows[0].asked) out.push('questions_waiting');
   if (b.rows[0].received) out.push('questions_to_answer');
   if (d.rows[0].n) out.push('open_reports');
-  if (p.payable + p.holding > 0) out.push('money_to_pay_out');
+  // (money in an open withdrawal request is still to be paid out: the payout needs the account's bank details until then)
+  const { rows: [open] } = await query("SELECT count(*)::int AS n FROM payout_batches WHERE mentor_id = $1 AND status = 'requested'", [userId]);
+  if (p.payable + p.holding > 0 || open.n > 0) out.push('money_to_pay_out');
   if (p.debt > 0) out.push('money_owed');
   return out;
 }

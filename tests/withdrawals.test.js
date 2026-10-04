@@ -174,6 +174,8 @@ describe('what blocks a withdrawal', () => {
     const w = await withdraw();
     assert.equal(w.status, 201);
     assert.equal(w.request.amount, 4800);
+    // (closing the account waits until that transfer is made: it needs the bank details)
+    assert.ok((await mentor.api('/me/delete/check')).items.includes('money_to_pay_out'));
     // (a seeker never sees anything: no payouts at all)
     const plain = await client(base).api('/me/balance');
     assert.equal(plain.status, 401);
