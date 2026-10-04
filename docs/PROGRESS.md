@@ -126,3 +126,11 @@ Tests: login-lockout.test.js (4).
 --audit-level=high`, the unit + cloud tests and the browser tests against a throwaway Postgres 16 (fake bank, fake ID check, mail log, no
 real keys), and gitleaks over the whole history. `npm audit --audit-level=high` today: 0 vulnerabilities, nothing to fix. The workflow has
 not run on GitHub yet (nothing is pushed); the first push will show whether the browser tests need any Linux-specific adjustment.
+
+## PART 8.4 — secrets in git history
+gitleaks could not run on this computer: there is no Docker, and the npm package called "gitleaks" is an unrelated third-party package
+(not the real tool), so it was not used. Instead scripts/secret-scan.js (`npm run check:secrets`) scanned all 128 commits (72,736 added
+lines) with the main gitleaks rules (cloud keys, private keys, Anthropic/OpenAI/Resend/Google/GitHub/Slack/Stripe/Cloudflare/Sentry,
+JWTs, database URLs with passwords, generic secret assignments): **nothing found**. Two first hits were false positives (a translation key
+name, and the fake webhook secret of the test ID-check server); the script now skips those kinds. No key needs rotating, so nothing was
+added to docs/QUESTIONS.md; history was not rewritten. The real gitleaks runs in CI on every push.

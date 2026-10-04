@@ -19,7 +19,8 @@
     "test:e2e": "playwright test && playwright test -c tests/e2e-cloud",
     "lighthouse": "node scripts/lighthouse.js",
     "backup": "node scripts/backup.js",
-    "backup:check": "node scripts/backup.js check"
+    "backup:check": "node scripts/backup.js check",
+    "check:secrets": "node scripts/secret-scan.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
