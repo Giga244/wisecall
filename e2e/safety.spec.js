@@ -40,8 +40,8 @@ test('the mentor declines a paid question from the dashboard; the asker is refun
   const card = mentorPage.locator(`.booking-card[data-id="${b.id}"]`);
   await card.locator('.decline-box summary').click();
   await card.locator('input[value="not_qualified"]').check();
-  mentorPage.once('dialog', (d) => d.accept());
   await card.locator('.decline-form button[type="submit"]').click();
+  await S.confirm(mentorPage);
   await S.untilBooking(b.id, (x) => ['refunded', 'refund_pending'].includes(x.status), 'the question was not refunded');
   await buyerPage.goto('/dashboard.html');
   await expect(buyerPage.locator(`.booking-card[data-id="${b.id}"] .booking-note`)).toContainText('outside what they can answer well');

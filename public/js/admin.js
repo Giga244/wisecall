@@ -80,7 +80,7 @@
       return;
     }
     content.innerHTML = list.map(b => `
-      <div class="booking-card" data-id="${b.id}" data-payout="${b.payoutStatus || ''}">
+      <div class="booking-card" data-id="${b.id}" data-payout="${b.payoutStatus || ''}" data-amount="${Number(b.amount) - Number(b.refundedAmount || 0)}">
         <div class="booking-top">
           <div>
             <div class="card-name">${escapeHtml(b.seekerName)} → ${escapeHtml(b.mentorName)}</div>
@@ -127,7 +127,8 @@
     content.querySelectorAll('.refund-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const paidOut = btn.closest('.booking-card').dataset.payout === 'paid';
-        if (!window.confirm(t(paidOut ? 'admin.bk.refundConfirmPaidOut' : 'admin.bk.refundConfirm'))) return;
+        const refund = money(Number(btn.closest('.booking-card').dataset.amount), 'gel');
+        if (!(await WisecallDialog.confirm({ message: t(paidOut ? 'admin.bk.refundConfirmPaidOut' : 'admin.bk.refundConfirm'), confirmText: t('admin.bk.refundButton').replace('{amount}', refund), danger: true }))) return;
         btn.disabled = true;
         try {
           const res = await WisecallAPI.apiFetch(`/admin/bookings/${btn.closest('.booking-card').dataset.id}/refund`, { method: 'POST' });
@@ -186,7 +187,8 @@
         const net = Number(card.dataset.net);
         const reference = card.querySelector('.payout-ref').value.trim();
         if (!reference) { WisecallNav.showToast(t('admin.po.refRequired')); return; }
-        if (!window.confirm(t(net === 0 ? 'admin.po.confirmSettle' : 'admin.po.confirmPaid').replace('{amount}', money(net, 'gel')))) return;
+        if (!(await WisecallDialog.confirm({ message: t(net === 0 ? 'admin.po.confirmSettle' : 'admin.po.confirmPaid').replace('{amount}', money(net, 'gel')),
+          confirmText: net === 0 ? t('admin.po.settleButton') : t('admin.po.payButton').replace('{amount}', money(net, 'gel')) }))) return;
         btn.disabled = true;
         try {
           await WisecallAPI.apiFetch(`/admin/payouts/${card.dataset.mentor}/pay`, { method: 'POST', body: { amount: net, reference } });

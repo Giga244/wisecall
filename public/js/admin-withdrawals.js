@@ -82,7 +82,7 @@
       card.querySelector('.wd-pay').addEventListener('click', async (ev) => {
         const reference = card.querySelector('.wd-ref').value.trim();
         if (reference.length < 2) { WisecallNav.showToast(t('admin.wd.refRequired')); return; }
-        if (!window.confirm(fill('admin.wd.confirmPaid', { amount: money(amount), name: card.dataset.name }))) return;
+        if (!(await WisecallDialog.confirm({ message: fill('admin.wd.confirmPaid', { amount: money(amount), name: card.dataset.name }), confirmText: fill('admin.wd.payButton', { amount: money(amount) }) }))) return;
         ev.target.disabled = true;
         try { await WisecallAPI.apiFetch(`/admin/withdrawals/${id}/pay`, { method: 'POST', body: { reference, amount } }); await after(t('admin.wd.paid')); }
         catch (e) { WisecallNav.showToast(t(e.code === 'amount_changed' ? 'admin.wd.changed' : 'toast.error')); ev.target.disabled = false; }
@@ -99,7 +99,7 @@
     if (bulk) bulk.addEventListener('click', async () => {
       const reference = container.querySelector('.wd-bulk-ref').value.trim();
       if (reference.length < 2) { WisecallNav.showToast(t('admin.wd.refRequired')); return; }
-      if (!window.confirm(fill('admin.wd.payExportedConfirm', { ref: reference }))) return;
+      if (!(await WisecallDialog.confirm({ message: fill('admin.wd.payExportedConfirm', { ref: reference }), confirmText: t('admin.wd.payExportedButton') }))) return;
       bulk.disabled = true;
       try {
         const r = await WisecallAPI.apiFetch('/admin/withdrawals/pay-exported', { method: 'POST', body: { reference } });

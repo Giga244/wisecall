@@ -413,7 +413,8 @@
         const changeStanding = (btn, path, confirmKey, extra) => async () => {
           const reason = body.querySelector('.mv-suspend-reason').value.trim();
           if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
-          if (confirmKey && !window.confirm(t(confirmKey).replace('{name}', el.querySelector('.card-name').textContent))) return;
+          const who = el.querySelector('.card-name').textContent;
+          if (confirmKey && !(await WisecallDialog.confirm({ message: t(confirmKey).replace('{name}', who), confirmText: t('admin.mv.suspendButton').replace('{name}', who), danger: true }))) return;
           btn.disabled = true;
           try {
             const r = await WisecallAPI.apiFetch(`/admin/mentors/${id}/${path}`, { method: 'POST', body: { reason, ...(extra || {}) } });

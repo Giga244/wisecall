@@ -76,10 +76,10 @@
       const on = (sel, fn) => { const el = card.querySelector(sel); if (el) el.addEventListener('click', fn); };
       on('.q-approve', () => post(`/admin/answers/${id}/approve`));
       on('.q-hold', () => post(`/admin/answers/${id}/flag`));
-      on('.q-reject', () => {
+      on('.q-reject', async () => {
         const reason = card.querySelector('.q-reason').value.trim();
         if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
-        if (!window.confirm(t('admin.q.rejectConfirm'))) return;
+        if (!(await WisecallDialog.confirm({ message: t('admin.q.rejectConfirm'), confirmText: t('admin.q.rejectButton'), danger: true }))) return;
         post(`/admin/answers/${id}/reject`, { reason });
       });
       const resolve = (resolution) => () => {

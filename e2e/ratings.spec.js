@@ -16,7 +16,6 @@ async function ctxPage(browser, login) {
   const ctx = await browser.newContext();
   contexts.push(ctx);
   const page = await ctx.newPage();
-  page.on('dialog', (d) => d.accept());
   if (login) await S.logIn(page, { email: login });
   return page;
 }
@@ -174,6 +173,7 @@ test('an admin sees the report, and hiding the review needs a written reason', a
   expect(await S.sql('SELECT hidden_at FROM ratings WHERE booking_id = $1 AND direction = $2', [bookingId, 'asker_to_mentor'])).toEqual([{ hidden_at: null }]);
   await card.locator('.rv-reason').fill('Mentions a private person by name');
   await card.locator('.rv-hide').click();
+  await S.confirm(adminPage);
   await expect.poll(async () => (await S.sql('SELECT hidden_at FROM ratings WHERE booking_id = $1 AND direction = $2', [bookingId, 'asker_to_mentor']))[0].hidden_at).not.toBeNull();
 
   // it is gone from the profile and from the numbers

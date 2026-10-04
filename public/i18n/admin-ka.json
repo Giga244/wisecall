@@ -541,5 +541,13 @@
   "admin.ov.src.applications": "მენტორის განაცხადები",
   "admin.ov.src.paid": "პირველი გადახდილი კითხვები",
   "admin.ov.src.help": "პირველი ვიზიტიდან (utm_source, utm_campaign ან საიტი, საიდანაც სტუმარი მოვიდა), ინახება 30 დღე. აქ არ ითვლება ის, ვინც პირდაპირ შემოვიდა, ან ვისი ბრაუზერიც ითხოვს, რომ არ ვადევნოთ თვალი.",
-  "admin.ov.src.none": "ჯერ არავინ მოსულა კამპანიიდან ან სხვა საიტიდან. დაამატე utm_source და utm_campaign ბმულებს, რომლებსაც აზიარებ (მაგალითად ?utm_source=facebook&utm_campaign=launch)."
+  "admin.ov.src.none": "ჯერ არავინ მოსულა კამპანიიდან ან სხვა საიტიდან. დაამატე utm_source და utm_campaign ბმულებს, რომლებსაც აზიარებ (მაგალითად ?utm_source=facebook&utm_campaign=launch).",
+  "admin.mv.suspendButton": "შეჩერება: {name}",
+  "admin.q.rejectButton": "პასუხის უარყოფა",
+  "admin.rv.hideButton": "შეფასების დამალვა",
+  "admin.wd.payButton": "გადახდილად მონიშვნა: {amount}",
+  "admin.wd.payExportedButton": "ყველას გადახდილად მონიშვნა",
+  "admin.bk.refundButton": "დაბრუნება: {amount}",
+  "admin.po.payButton": "გადახდილად მონიშვნა: {amount}",
+  "admin.po.settleButton": "დაფარულად აღრიცხვა"
 }

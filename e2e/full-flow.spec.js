@@ -20,8 +20,6 @@ let mentorId, mentorUsername, bookingId;
 test.beforeAll(async ({ browser }) => {
   contexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()]);
   [seekerPage, mentorPage, adminPage] = await Promise.all(contexts.map((c) => c.newPage()));
-  // Native confirm() boxes (refunds, payouts) are answered "OK", as a person would.
-  for (const p of [seekerPage, mentorPage, adminPage]) p.on('dialog', (d) => d.accept());
 });
 test.afterAll(async () => { await Promise.all(contexts.map((c) => c.close())); });
 
@@ -276,6 +274,7 @@ test('the mentor\'s earnings are in the payout ledger, and the admin pays them o
   await expect(due.locator('.mono')).toBeVisible(); // the mentor's IBAN
   await due.locator('.payout-ref').fill('BANK-TRANSFER-E2E-1');
   await due.locator('.pay-btn').click();
+  await S.confirm(adminPage);
 
   await expect.poll(async () => (await S.sql('SELECT status FROM payouts WHERE booking_id = $1', [bookingId]))[0].status).toBe('paid');
   const [batch] = await S.sql('SELECT amount, reference FROM payout_batches WHERE mentor_id = $1', [mentorId]);

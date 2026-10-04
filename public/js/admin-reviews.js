@@ -76,7 +76,9 @@
         try { await WisecallAPI.apiFetch(path, { method: 'POST', body }); WisecallNav.showToast(t('toast.saved')); reload(); } catch (e) { WisecallNav.showToast(t(e.code === 'reason_required' ? 'admin.mv.reasonRequired' : 'toast.error')); }
       };
       const on = (sel, fn) => { const el = card.querySelector(sel); if (el) el.addEventListener('click', fn); };
-      on('.rv-hide', () => { if (window.confirm(t('admin.rv.hideConfirm'))) post(`/admin/review-reports/${card.dataset.report}/resolve`, { decision: 'hide', reason: reason() }); });
+      on('.rv-hide', async () => {
+        if (reason().length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; } // (before asking to confirm)
+        if (await WisecallDialog.confirm({ message: t('admin.rv.hideConfirm'), confirmText: t('admin.rv.hideButton'), danger: true })) post(`/admin/review-reports/${card.dataset.report}/resolve`, { decision: 'hide', reason: reason() }); });
       on('.rv-dismiss', () => post(`/admin/review-reports/${card.dataset.report}/resolve`, { decision: 'dismiss', reason: reason() }));
       on('.rv-unhide', () => post(`/admin/reviews/${card.dataset.rating}/unhide`, { reason: reason() }));
       on('.rv-resolve', () => post(`/admin/flags/${card.dataset.flag}/resolve`, { reason: reason() }));

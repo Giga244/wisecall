@@ -210,7 +210,7 @@
   const declineHtml = (b) => `
     <details class="decline-box">
       <summary>${t('dash.decline.open')}</summary>
-      <form class="decline-form" data-id="${b.id}" novalidate>
+      <form class="decline-form" data-id="${b.id}" data-amount="${b.amount}" novalidate>
         <fieldset>
           <legend class="small">${t('dash.decline.why')}</legend>
           <label class="checkbox-row"><input type="radio" name="reason" value="not_qualified"> <span>${t('dash.decline.not_qualified')}</span></label>
@@ -318,7 +318,7 @@
       const reason = (form.querySelector('input[name="reason"]:checked') || {}).value;
       const err = form.querySelector('.form-error');
       if (!reason) { err.textContent = t('dash.decline.pick'); return; }
-      if (!window.confirm(t('dash.decline.confirm'))) return;
+      if (!(await WisecallDialog.confirm({ message: t('dash.decline.confirm'), confirmText: t('dash.decline.button').replace('{amount}', WisecallAPI.formatAmount(Number(form.dataset.amount))), danger: true }))) return;
       const btn = form.querySelector('button[type="submit"]');
       btn.disabled = true;
       try {

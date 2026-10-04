@@ -541,5 +541,13 @@
   "admin.ov.src.applications": "Mentor applications",
   "admin.ov.src.paid": "First paid questions",
   "admin.ov.src.help": "From the first visit (utm_source, utm_campaign, or the site a visitor came from), kept 30 days. Visitors who arrive directly, or whose browser asks not to be tracked, are not counted here.",
-  "admin.ov.src.none": "No visits from a campaign or another site yet. Add utm_source and utm_campaign to the links you share (for example ?utm_source=facebook&utm_campaign=launch)."
+  "admin.ov.src.none": "No visits from a campaign or another site yet. Add utm_source and utm_campaign to the links you share (for example ?utm_source=facebook&utm_campaign=launch).",
+  "admin.mv.suspendButton": "Suspend {name}",
+  "admin.q.rejectButton": "Reject the answer",
+  "admin.rv.hideButton": "Hide the review",
+  "admin.wd.payButton": "Mark {amount} as paid",
+  "admin.wd.payExportedButton": "Mark them all as paid",
+  "admin.bk.refundButton": "Refund {amount}",
+  "admin.po.payButton": "Mark {amount} as paid",
+  "admin.po.settleButton": "Record it as settled"
 }

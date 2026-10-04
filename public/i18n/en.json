@@ -1797,5 +1797,12 @@
   "copy.done": "Copied!",
   "copy.failed": "Could not copy",
   "share.title": "Your profile link",
-  "share.body": "Share it where people who need your experience will see it: they can ask you a question straight from your profile."
+  "share.body": "Share it where people who need your experience will see it: they can ask you a question straight from your profile.",
+  "dialog.ok": "OK",
+  "dialog.cancel": "Cancel",
+  "dash.decline.button": "Decline and refund {amount}",
+  "pa.withdrawButton": "Take it down",
+  "settings.sessions.button": "Sign out the other devices",
+  "settings.data.button": "Delete my account",
+  "ap.edit.button": "Edit my application"
 }

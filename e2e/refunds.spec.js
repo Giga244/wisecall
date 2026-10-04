@@ -26,7 +26,6 @@ test.beforeAll(async ({ browser }) => {
 
   contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   [buyerPage, adminPage] = await Promise.all(contexts.map((c) => c.newPage()));
-  for (const p of [buyerPage, adminPage]) p.on('dialog', (d) => d.accept());
   await S.logIn(buyerPage, { email: 'bea@e2e.test' });
   await S.logIn(adminPage, { email: 'e2e-admin@example.com' });
 });
@@ -78,6 +77,7 @@ test('an admin suspends a mentor: the open question is refunded, the buyer is em
   await card.locator('.mv-open').click();
   await card.locator('.mv-suspend-reason').fill('Complaints about misleading advice');
   await card.locator('.mv-suspend-btn').click();
+  await S.confirm(adminPage);
 
   const b = await S.untilBooking(bookingId, (x) => x.status === 'refunded', 'the open question was not refunded after the suspension');
   expect(b.refund_reason).toMatch(/suspend/i);

@@ -22,7 +22,6 @@ test.beforeAll(async ({ browser }, info) => {
   const opts = info.project.use;
   contexts = await Promise.all([0, 1, 2].map(() => browser.newContext({ viewport: opts.viewport, userAgent: opts.userAgent, isMobile: opts.isMobile, hasTouch: opts.hasTouch, deviceScaleFactor: opts.deviceScaleFactor })));
   [pages.buyer, pages.mentor, pages.admin] = await Promise.all(contexts.map((c) => c.newPage()));
-  for (const pg of Object.values(pages)) pg.on('dialog', (d) => d.accept());
 });
 test.afterAll(async () => { await Promise.all(contexts.map((c) => c.close())); });
 

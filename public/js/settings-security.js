@@ -27,7 +27,7 @@
     }));
     const all = box.querySelector('#logoutOthers');
     if (all) all.addEventListener('click', async () => {
-      if (!window.confirm(t('settings.sessions.confirm'))) return;
+      if (!(await WisecallDialog.confirm({ message: t('settings.sessions.confirm'), confirmText: t('settings.sessions.button') }))) return;
       all.disabled = true;
       try { sessions = (await WisecallAPI.apiFetch('/me/sessions/logout-others', { method: 'POST' })).sessions; drawSessions(); WisecallNav.showToast(t('settings.sessions.doneAll')); }
       catch (e) { all.disabled = false; WisecallNav.showToast(t('toast.error')); }
@@ -132,7 +132,7 @@
       ev.preventDefault();
       const err = box.querySelector('#deleteError');
       err.textContent = '';
-      if (!window.confirm(t('settings.data.confirm').replace('{days}', graceDays))) return;
+      if (!(await WisecallDialog.confirm({ message: t('settings.data.confirm').replace('{days}', graceDays), confirmText: t('settings.data.button'), danger: true }))) return;
       const btn = form.querySelector('button[type="submit"]');
       btn.disabled = true;
       try {

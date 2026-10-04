@@ -27,6 +27,14 @@ async function waitForMail(to, subjectPart, { after = 0, timeout = 15000 } = {})
 const codeIn = (mail) => (mail.html.match(/letter-spacing:8px[^>]*>(\d{6})</) || [])[1];
 
 // ---- Steps a person does in the browser -------------------------------------------------------------------------
+// Answers the site's confirmation dialog (public/js/dialog.js) with its action button ("Refund 25.00 ₾"), as a person would.
+async function confirm(page) {
+  const dialog = page.locator('dialog.wc-dialog[open]');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('[data-ok]').click();
+  await expect(dialog).toBeHidden();
+}
+
 // Creates an account on the sign-up page, types the code from the email, and ends up signed in.
 async function signUp(page, { name, email, password = PASSWORD }) {
   await page.goto('/signup.html');
@@ -103,4 +111,4 @@ async function untilBooking(id, predicate, message, timeout = 20000) {
 // Where the fake evidence pages are (e2e/global-setup.js writes it): /p/<name-with-dashes> shows that name.
 const fakeWeb = () => JSON.parse(fs.readFileSync(path.join(__dirname, '.tmp', 'fakes.json'), 'utf8')).web;
 
-module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, askAndPay, bookingRow, untilBooking, GOOD_IBAN, SAMPLE };
+module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };

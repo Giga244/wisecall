@@ -40,6 +40,7 @@
   --gold-text: #9a5b00;        /* star ratings */
   --red: #d1567e;
   --red-strong: #b3365c;       /* error text */
+  --danger-bg: #b3365c;  --on-danger: #ffffff;  /* a button for an action that cannot be undone */
   /* Soft fills for badges, banners and icon tiles, each with the text colour that goes on it */
   --mint-soft: #e3f7ef;  --mint-line: #bfe8d6;  --mint-banner-ink: #17563f;
   --sun-soft: #fdf0d9;   --sun-tint: #fff7e3;   --sun-ink: #7a4f10;
@@ -102,6 +103,7 @@
   --gold-text: #f8c56b;
   --red: #e0698f;
   --red-strong: #ff93b0;
+  --danger-bg: #ff93b0;  --on-danger: #2a1320;
   --mint-soft: #1e3a33;  --mint-line: #2c5a4d;  --mint-banner-ink: #a6e6cb;
   --sun-soft: #6b5a1e;   --sun-tint: #332d1c;   --sun-ink: #ffe7a3;
   --pink-soft: #4a2436;  --pink-ink: #ffb3c7;
@@ -239,6 +241,16 @@ html[lang="ka"] .nav-links .nl-faq { display: none; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 .btn-primary { background: var(--accent-strong); color: var(--on-accent); box-shadow: 0 8px 20px -8px rgba(var(--accent-strong-rgb), 0.6); }
 .btn-primary:hover { background: var(--accent-strong-hover); }
+.btn-danger { background: var(--danger-bg); color: var(--on-danger); }
+.btn-danger:hover { filter: brightness(1.06); }
+/* The confirmation dialog (public/js/dialog.js) */
+.wc-dialog { border: none; border-radius: var(--radius); padding: 0; max-width: min(440px, calc(100vw - 32px)); background: var(--card); color: var(--ink);
+  box-shadow: 0 24px 60px -20px rgba(var(--shadow-rgb), 0.55); }
+.wc-dialog::backdrop { background: rgba(15, 13, 24, 0.55); }
+.wc-dialog-inner { padding: 22px 22px 18px; margin: 0; }
+.wc-dialog-message { margin: 0 0 18px; font-size: 1rem; line-height: 1.5; font-weight: 600; }
+.wc-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.wc-dialog-actions .btn { min-height: 44px; }
 .btn-ghost { background: transparent; color: var(--ink); }
 .btn-outline { background: var(--card); color: var(--ink); border: 2px solid var(--border); }
 .btn-outline:hover { border-color: var(--accent); color: var(--accent-text); }

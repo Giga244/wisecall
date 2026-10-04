@@ -53,8 +53,8 @@ test('the admin sees the request with the full IBAN, marks it paid, and the ment
   await expect(adminPage.locator('.wd-held')).toContainText('Mentor money held in your account');
   if (process.env.E2E_SHOTS) await adminPage.locator('#wdBox').screenshot({ path: `${process.env.E2E_SHOTS}/admin-withdrawals.png` });
   await req.locator('.wd-ref').fill('TR-E2E-1');
-  adminPage.once('dialog', (d) => d.accept());
   await req.locator('.wd-pay').click();
+  await S.confirm(adminPage);
   await expect(adminPage.locator('.wd-request', { hasText: 'Wanda Withdraw' })).toHaveCount(0);
   await mentorPage.goto('/dashboard.html?tab=earnings');
   await expect(mentorPage.locator('#balanceCard')).toContainText('Sent');

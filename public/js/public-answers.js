@@ -88,7 +88,7 @@
       form.querySelector('.pa-decline').addEventListener('click', () => decide(false));
     });
     container.querySelectorAll('.pa-withdraw').forEach((btn) => btn.addEventListener('click', async () => {
-      if (!window.confirm(t('pa.withdrawConfirm'))) return;
+      if (!(await WisecallDialog.confirm({ message: t('pa.withdrawConfirm'), confirmText: t('pa.withdrawButton'), danger: true }))) return;
       btn.disabled = true;
       try { await WisecallAPI.apiFetch(`/answers/${btn.dataset.pa}/withdraw`, { method: 'POST' }); WisecallNav.showToast(t('pa.withdrawn')); reload(); }
       catch (e) { WisecallNav.showToast(t('toast.error')); btn.disabled = false; }

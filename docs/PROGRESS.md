@@ -157,3 +157,11 @@ public/js/copy-link.js (Clipboard API with the older fallback; the button says "
 on a mentor's profile (the address without its ?query), on a public answer (next to Helpful), and on the mentor's dashboard a new "Your
 profile link" card (only for a listed mentor), EN+KA. There was no share card yet; this card is it. Tests: e2e/ux-extras.spec.js (2,
 reading the clipboard).
+
+## PART 9.3 — confirmation dialog
+All 12 window.confirm() calls (admin: suspend, reject an answer, hide a review, refunds, payouts, withdrawals; dashboard: decline; public
+answer: take down; settings: sign out other devices, delete account, edit application) now use public/js/dialog.js: a native <dialog>
+with showModal(), Tab kept inside, Esc / Cancel / a click outside = no, focus back to the button that opened it, Cancel focused first,
+and an action button that says what happens ("Refund 25.00 ₾", "Decline and refund …", "Delete my account"), red when it cannot be
+undone (own colour in the dark theme). No alert() existed. Hiding a review now checks the reason before asking. Tests: the dialog in
+e2e/ux-extras.spec.js; the specs that used to accept browser pop-ups press the dialog's button (e2e/support.js confirm()).

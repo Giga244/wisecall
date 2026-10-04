@@ -31,7 +31,6 @@ test.beforeAll(async ({ browser }) => {
   await S.apiUser('Fay Buyer', 'fay@e2e.test');
   contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   [buyerPage, adminPage] = await Promise.all(contexts.map((c) => c.newPage()));
-  for (const p of [buyerPage, adminPage]) p.on('dialog', (d) => d.accept());
   await S.logIn(buyerPage, { email: 'fay@e2e.test' });
   await S.logIn(adminPage, { email: 'e2e-admin@example.com' });
 });
@@ -107,6 +106,7 @@ test('an answer is held for a check, then released; the ratings stay hidden; aft
   await owed.locator('.payout-ref').fill('e2e-local-flow-1');
   await expect(owed.locator('.pay-btn')).toBeEnabled();
   await owed.locator('.pay-btn').click();
+  await S.confirm(adminPage);
   await expect(toast()).toContainText(/recorded/i);
   expect(await S.sql(`SELECT status FROM payouts WHERE booking_id = $1`, [bookingId])).toEqual([{ status: 'paid' }]);
 });
@@ -119,6 +119,8 @@ test('an admin can refund a question from the list (the answer is not needed)', 
 
   const card = await openBooking('answered', q);
   await card.locator('.refund-btn').click();
+  await expect(adminPage.locator('dialog.wc-dialog[open] [data-ok]')).toHaveText(/^Refund \d+\.\d\d/); // (the button says how much)
+  await S.confirm(adminPage);
   await expect(toast()).toContainText(/refund/i);
   const b = await S.untilBooking(bookingId, (x) => x.status === 'refunded', 'the refund did not happen');
   expect(b.refund_reason).toBe('admin');

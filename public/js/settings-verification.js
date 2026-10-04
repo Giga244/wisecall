@@ -518,7 +518,7 @@
 
     const edit = root.querySelector('[data-edit]');
     if (edit) edit.addEventListener('click', async () => {
-      if (edit.dataset.confirm && !window.confirm(t('ap.edit.confirm'))) return;
+      if (edit.dataset.confirm && !(await WisecallDialog.confirm({ message: t('ap.edit.confirm'), confirmText: t('ap.edit.button') }))) return;
       edit.disabled = true;
       try { const r = await WisecallAPI.apiFetch('/verification/edit', { method: 'POST' }); Object.assign(data.user, r.user); await reload(); }
       catch (e) { WisecallNav.showToast(t('toast.error')); edit.disabled = false; }
