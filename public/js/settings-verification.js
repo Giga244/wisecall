@@ -18,6 +18,9 @@
   let options = {};
 
   const errText = (map, e, fallback) => t(map[e.code] || fallback || 'toast.error');
+  // Right after an ID check the age and the names are compared a moment later: the page looks again until they are (at most a minute).
+  let recheckTimer = null;
+  let rechecks = 0;
   const statusOf = (step) => { const r = data.v.requirements.find((x) => x.step === step); return r ? r.status : 'todo'; };
   const req = (step) => data.v.requirements.find((x) => x.step === step) || { step, status: 'todo' };
 
@@ -92,8 +95,10 @@
     if (statusOf('id_kyc') === 'passed') {
       if (age === 'passed') lines.push(`<p class="ap-line ap-ok">✓ ${t('ap.age.passed')}</p>`);
       else if (age === 'failed') lines.push(`<p class="form-error">${t('ap.age.failed')}</p>`);
-      else lines.push(`<p class="muted small">${t('ap.age.pending')}</p>`);
+      else lines.push(`<p class="muted small"${age === 'todo' ? ' data-still-checking' : ''}>${t('ap.age.pending')}</p>`);
       if (names === 'passed') lines.push(`<p class="ap-line ap-ok">✓ ${t('ap.name.passed')}</p>`);
+      // (not compared yet: never say "doesn't match" before it was checked)
+      else if (names === 'todo') lines.push(`<p class="muted small" data-still-checking>${t('ap.name.checking')}</p>`);
       else lines.push(`<div class="ap-note"><p>${t('ap.name.pending')}</p><button type="button" class="btn btn-outline btn-sm" data-goto="profile">${t('ap.name.fix')}</button></div>`);
     }
     const state = identityState();
@@ -554,6 +559,9 @@
 
     root.querySelectorAll('[data-reload]').forEach((btn) => btn.addEventListener('click', () => reload()));
     root.querySelectorAll('[data-goto]').forEach((btn) => btn.addEventListener('click', () => options.goto && options.goto(btn.dataset.goto)));
+    clearTimeout(recheckTimer);
+    if (!root.querySelector('[data-still-checking]')) rechecks = 0;
+    else if (rechecks < 30) recheckTimer = setTimeout(() => { rechecks += 1; reload(); }, 2000);
   }
 
   // ---- Loading ----------------------------------------------------------------------------------------------------------------

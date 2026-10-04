@@ -1650,5 +1650,6 @@
   "settings.payouts.err.password": "Enter your current password to save payout details.",
   "settings.payouts.err.wrongPassword": "That password is not right.",
   "settings.payouts.err.tooMany": "Too many tries. Please wait 15 minutes and try again.",
-  "settings.payouts.held": "Because they changed, payouts wait until {date}."
+  "settings.payouts.held": "Because they changed, payouts wait until {date}.",
+  "ap.name.checking": "We are comparing the name on your ID with your profile name…"
 }
