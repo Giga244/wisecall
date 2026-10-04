@@ -120,3 +120,9 @@ errors. Tests: turnstile.test.js (5, fake Cloudflare); a live check with Cloudfl
 long), the owner gets one email ("someone is trying to sign in", EN/KA) per lock; unknown emails behave the same; a password reset clears
 it; old rows purged daily. Migration 034 (undo script). Settings LOGIN_LOCK_* and the Turnstile/withdrawal settings added to .env.example.
 Tests: login-lockout.test.js (4).
+
+## PART 8.3 — dependency scanning
+.github/dependabot.yml (npm and GitHub Actions, weekly) and .github/workflows/ci.yml: on every push and pull request, `npm audit
+--audit-level=high`, the unit + cloud tests and the browser tests against a throwaway Postgres 16 (fake bank, fake ID check, mail log, no
+real keys), and gitleaks over the whole history. `npm audit --audit-level=high` today: 0 vulnerabilities, nothing to fix. The workflow has
+not run on GitHub yet (nothing is pushed); the first push will show whether the browser tests need any Linux-specific adjustment.
