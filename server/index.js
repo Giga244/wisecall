@@ -69,6 +69,7 @@ if (!useMockBank) {
 app.use('/api', csrfGuard);
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
+app.use(require('./attribution').capture); // (where visitors come from: a first-party cookie, see server/attribution.js)
 
 const authLimit = (max) => rateLimit({ windowMs: 15 * 60 * 1000, max });
 app.use('/api/auth/google', authLimit(40));

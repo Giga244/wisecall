@@ -59,7 +59,8 @@ async function exportData(user) {
     account: {
       ...pick(user, ['id', 'name', 'email', 'emailVerified', 'username', 'language', 'theme', 'role', 'headline', 'currentWork', 'city', 'languages',
         'linkedinUrl', 'websiteUrl', 'profileVisibility', 'bio', 'createdAt']),
-      hasPhoto: Boolean(user.photoUpdatedAt)
+      hasPhoto: Boolean(user.photoUpdatedAt),
+      cameFrom: (await query('SELECT signup_source FROM users WHERE id = $1', [id])).rows[0].signup_source || null
     },
     mentorProfile: (user.role === 'mentor' || user.role === 'both') ? pick(user, ['roleTitle', 'niche', 'customNiche', 'price', 'specialtyTags', 'yearsExperience', 'story', 'sampleAnswer', 'verificationStatus', 'applicationSubmittedAt']) : null,
     payoutDetails: user.payoutName || iban ? { name: user.payoutName, ibanEndsWith: iban ? iban.slice(-4) : null } : null,

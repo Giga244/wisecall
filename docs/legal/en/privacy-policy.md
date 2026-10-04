@@ -30,6 +30,9 @@ categories — biometric data in the ID check — or large volumes)? If so, name
 | "Helpful" on a public answer: a random identifier your browser keeps (localStorage), stored by us only as a keyed hash | When you press "Helpful" | Counting each visitor once | Legitimate interest |
 | **"Find me a mentor" requests:** email, the field in your words, the closest category, what you need, language, an optional budget, and whether it may be shown anonymously | "Find me a mentor" form (people who are not signed in confirm by email) | One email when a matching Mentor joins; anonymous counts by field on a public board (the text only if you allow it); our team sees the requests to invite Mentors | Consent (a remove link in every email); ends after 60 days or when you delete your account |
 | **Security data:** a keyed hash of your IP address and of a random browser identifier (`wisecall_device` cookie), recorded at sign-up, sign-in and mentor application | Automatically | Detecting fake or duplicate accounts and applications | Legitimate interest |
+| **Bot check:** when you use the sign-up, login, forgot-password, contact, waiting-list or "find me a mentor" form, Cloudflare Turnstile checks that you are a person; we send Cloudflare the check's token and your IP address and receive pass or fail | Automatically | Keeping bots and abuse out | Legitimate interest |
+| **Where you came from:** the campaign (utm_source, utm_medium, utm_campaign, utm_content) or the referring website's domain from your first visit (`wc_src` cookie), copied onto your account at sign-up, onto your questions and onto a mentor application | Automatically, unless your browser sends Do Not Track or Global Privacy Control | Counting sign-ups, applications and first questions per campaign (aggregate numbers only) | Legitimate interest [LAWYER: confirm] |
+| **Wrong passwords:** a keyed hash of the email that was typed, and the time, for each wrong password | At sign-in | Pausing sign-in after 10 wrong passwords in 15 minutes and telling the account's owner | Legitimate interest (security); deleted after one day |
 | Server logs: time, method, page address (never the query string), response code, duration | Every request | Running and securing the service | Legitimate interest |
 
 ### Additionally, for Mentors
@@ -100,8 +103,8 @@ complain to the **Personal Data Protection Service of Georgia** (personaldata.ge
 
 ## 7. Cookies
 
-See the Cookie Notice. In short: we use only cookies that are strictly necessary for the site to work and to keep it secure; no
-analytics or advertising cookies.
+See the Cookie Notice. In short: we use cookies that are strictly necessary for the site to work and to keep it secure, and one first-party statistics
+cookie (`wc_src`) that only counts which campaigns and websites bring people; no advertising cookies.
 
 ## 8. Children
 

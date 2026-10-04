@@ -149,7 +149,9 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
     refunds: { pending: q.refund_pending || 0, full: q.refunded || 0, partial: m.partial, amount: Number(m.refunded) },
     disputes: { open: disputes.rows[0].open, resolved: disputes.rows[0].resolved, openSafety: safety.rows[0].n, openSupport: support.rows[0].n },
     money: { received: Number(m.received), fee: Number(m.fee), testPayments: m.test_payments },
-    payouts: { payable: Number(p.payable), holding: Number(p.holding), debt: Number(p.debt), paidOut: Number(p.paid_out) }
+    payouts: { payable: Number(p.payable), holding: Number(p.holding), debt: Number(p.debt), paidOut: Number(p.paid_out) },
+    // Where people come from: per campaign source (or referring site) and campaign (server/attribution.js).
+    sources: await require('../attribution').bySource()
   });
 }));
 

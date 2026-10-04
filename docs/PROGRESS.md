@@ -144,3 +144,10 @@ receipts + statements, export, admin overview + support inbox), checking for int
 **PART 7 and PART 8 test runs.** After PART 7: unit 710/710 (after a fix to the email-template test's sample), cloud 34/34, browser
 154 passed / 5 skipped (one navigation abort in e2e/dev-setup on that run; the spec passes 6/6 when re-run), browser-cloud 30/30.
 After PART 8: unit 726/726, cloud 34/34, browser 157 passed / 5 skipped, browser-cloud 30/30.
+
+## PART 9.1 — UTM tracking
+server/attribution.js: on the first page view with utm_source/medium/campaign/content or from another site, a first-party cookie
+`wc_src` (30 days, HttpOnly, cleaned values and the referrer's domain only; none under DNT/GPC; ATTRIBUTION_COOKIE=off disables it).
+Saved on sign-up (email and Google), on every question and on a mentor application (migration 035, undo script); Admin → Overview
+"Where people come from" shows sign-ups, mentor applications and first paid questions per source and campaign (EN+KA). Privacy Policy and
+Cookie Notice drafts updated (also for Turnstile, login lockout and the Helpful id); LEGAL-REVIEW 53–54. Tests: attribution.test.js (5).

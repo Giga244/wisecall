@@ -188,3 +188,13 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - Kept on purpose: the bank's order id in the reply that starts a payment (it is in the checkout address the buyer is sent to anyway;
   PART 3), and the mentor's public id on the asker's dashboard (the "report this mentor" link; it is on the public profile too).
 - The data export now also includes the person's public answers and "find me a mentor" requests (it is meant to be everything).
+
+## PART 9.1 — where people come from (UTM)
+- First touch: the first visit with utm_* (or from another site) is kept; a later campaign does not replace it (30 days). Only campaign
+  names (letters, digits, spaces, a few signs; 60 characters) and the referring site's DOMAIN are kept: never a full address, a path, a
+  query, an email or an identifier. The cookie is checked again when it is read (a visitor can edit it).
+- The Privacy Policy and Cookie Notice drafts said "no analytics cookies"; they now name `wc_src` honestly, and the lawyer is asked whether
+  it needs consent (LEGAL-REVIEW 54). Until then it respects Do Not Track / Global Privacy Control, like the existing Plausible statistics,
+  and ATTRIBUTION_COOKIE=off turns it off at once without a code change.
+- "First paid question" = the source stored on each person's first paid question (every question keeps the source of its visit).
+- The legal drafts were also brought up to date for PART 7A/8 (Turnstile on six forms, the wrong-password hashes, the "Helpful" browser id).

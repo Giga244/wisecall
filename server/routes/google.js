@@ -146,6 +146,8 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
   try {
     user = await insertUser({ name, email, passwordHash: null, color: randomColor(), language: remembered.lang === 'ka' ? 'ka' : 'en', emailVerified });
     require('../analytics').event('signup', req, { method: 'google' });
+    const source = require('../attribution').read(req);
+    if (source) await require('../db').query('UPDATE users SET signup_source = $2 WHERE id = $1', [user.id, JSON.stringify(source)]);
   } catch (e) {
     if (e.code === '23505') return backWith(res, mode, 'error', redirect); // (the same address was registered a moment ago)
     throw e;

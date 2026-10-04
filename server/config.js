@@ -156,6 +156,9 @@ const config = {
   // Development only: let the link checker reach addresses on this computer (the tests' fake web pages). Refused in production.
   LINK_CHECK_ALLOW_PRIVATE: env.LINK_CHECK_ALLOW_PRIVATE === '1',
 
+  // Where visitors come from (server/attribution.js): the wc_src cookie with the campaign of the first visit. "off" stops setting it.
+  ATTRIBUTION_COOKIE: String(env.ATTRIBUTION_COOKIE || 'on').trim().toLowerCase() !== 'off',
+
   // Per-account login lockout (server/loginGuard.js): this many wrong passwords for one email within the window, and it waits this long.
   LOGIN_LOCK_FAILURES: int(env.LOGIN_LOCK_FAILURES, 10),
   LOGIN_LOCK_WINDOW_MINUTES: int(env.LOGIN_LOCK_WINDOW_MINUTES, 15),

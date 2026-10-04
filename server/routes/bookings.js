@@ -59,10 +59,10 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 
   const { rows } = await query(
     `INSERT INTO bookings (seeker_id, mentor_id, question, amount, currency, platform_fee_percent,
-                           platform_fee_amount, mentor_net_amount, status, provider)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9) RETURNING *`,
+                           platform_fee_amount, mentor_net_amount, status, provider, source)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9, $10) RETURNING *`,
     [seeker.id, mentor.id, cleanQuestion, amount, config.CURRENCY, config.PLATFORM_FEE_PERCENT,
-      feeAmount, amount - feeAmount, providerName]
+      feeAmount, amount - feeAmount, providerName, (() => { const src = require('../attribution').read(req); return src ? JSON.stringify(src) : null; })()]
   );
   const booking = bookingFromRow(rows[0]);
 

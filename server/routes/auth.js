@@ -81,6 +81,8 @@ router.post('/signup', asyncHandler(async (req, res) => {
   await startSession(req, res, user);
   await require('../verification/signals').record(req, res, user.id, 'signup');
   require('../analytics').event('signup', req, { method: 'email' });
+  const source = require('../attribution').read(req);
+  if (source) await query('UPDATE users SET signup_source = $2 WHERE id = $1', [user.id, JSON.stringify(source)]);
   res.status(201).json({
     user: meProfile(user),
     emailSent,

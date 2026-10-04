@@ -124,6 +124,8 @@ router.delete('/evidence/:id', ...submit(async (user, b, req) => { await experie
 router.post('/submit', ...submit(async (user, b, req, res) => {
   const out = { user: meProfile(await experience.submit(user, { req, res })) };
   require('../analytics').event('mentor_application_submitted', req);
+  const source = require('../attribution').read(req);
+  if (source) await require('../db').query('UPDATE users SET application_source = $2 WHERE id = $1 AND application_source IS NULL', [user.id, JSON.stringify(source)]);
   return out;
 }));
 router.post('/edit', ...submit(async (user) => ({ user: meProfile(await experience.withdraw(user)) })));

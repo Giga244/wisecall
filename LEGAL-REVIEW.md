@@ -129,3 +129,9 @@ Mentor applications now go through three steps (Identity → Experience → Revi
 52. **"Find me a mentor" requests.** Email, field, need, language, budget; confirmed by email when not signed in; one email when a mentor
     matches; anonymous counts on a public board (text only with consent); admins use them to invite mentors; 60 days. Confirm this is
     consent-based processing and the wording of the form and the emails.
+53. **Bot check and sign-in protection.** Cloudflare Turnstile on six public forms (Cloudflare receives the token and the IP
+    address; it may set its own strictly necessary cookies in its frame), and a keyed hash of typed emails for wrong passwords (one day).
+    Confirm legitimate interest, the Cloudflare transfer (processor terms), and that Turnstile needs no consent.
+54. **Campaign attribution cookie (`wc_src`).** First-party, 30 days, campaign names and a referring domain only, no identifier,
+    not set under Do Not Track / Global Privacy Control; copied onto the account, questions and a mentor application; the admin sees only
+    counts per campaign. Confirm it needs no consent (otherwise ATTRIBUTION_COOKIE=off) and the wording in the Cookie Notice.

@@ -42,7 +42,13 @@
         card(t('admin.ov.payable'), money(d.payouts.payable), d.payouts.payable > 0), card(t('admin.ov.holding'), money(d.payouts.holding)),
         card(t('admin.ov.debt'), money(d.payouts.debt), d.payouts.debt > 0), card(t('admin.ov.paidOut'), money(d.payouts.paidOut))])
         + `<p class="muted small">${esc(t('admin.ov.moneyHelp'))}</p>`
-        + (d.money.testPayments ? `<p class="muted small">${esc(t('admin.ov.testPayments').replace('{n}', n(d.money.testPayments)))}</p>` : ''))
+        + (d.money.testPayments ? `<p class="muted small">${esc(t('admin.ov.testPayments').replace('{n}', n(d.money.testPayments)))}</p>` : '')),
+      section(t('admin.ov.sources'), (d.sources && d.sources.length)
+        ? `<div class="table-scroll"><table class="ov-sources"><thead><tr><th scope="col">${esc(t('admin.ov.src.source'))}</th><th scope="col">${esc(t('admin.ov.src.campaign'))}</th>
+            <th scope="col">${esc(t('admin.ov.src.signups'))}</th><th scope="col">${esc(t('admin.ov.src.applications'))}</th><th scope="col">${esc(t('admin.ov.src.paid'))}</th></tr></thead>
+            <tbody>${d.sources.map((s) => `<tr><td>${esc(s.source)}</td><td>${esc(s.campaign || '-')}</td><td>${n(s.signups)}</td><td>${n(s.applications)}</td><td>${n(s.paid)}</td></tr>`).join('')}</tbody></table></div>
+            <p class="muted small">${esc(t('admin.ov.src.help'))}</p>`
+        : `<p class="muted small">${esc(t('admin.ov.src.none'))}</p>`)
     ].join('');
   }
 
