@@ -190,3 +190,8 @@ floating widget. EN+KA. Checked in a browser, including after cancelling at the 
 Not built: the master prompt says to build it only if docs/QUESTIONS.md or the owner confirms Flitt as the provider, and neither does.
 docs/QUESTIONS.md now asks (is Flitt chosen, is there a merchant account, is the IBAN-credit payout in the contract, keep manual payouts as
 a fallback?) and lists what only the owner can do before launch. Payments stay BOG/TBC; payouts stay manual (Admin → Withdrawals).
+
+## FINAL — test results
+Unit 731/731, cloud 34/34, browser 160 passed / 5 skipped, browser-cloud 30/30. (The first final run found three colours written
+outside the design tokens: the dialog's backdrop and the print colours. They were moved into tokens; the unit suite was run again,
+731/731, and the dialog's browser tests too.)
