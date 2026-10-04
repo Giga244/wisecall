@@ -2,7 +2,7 @@
 (function () {
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const day = (d) => new Date(d).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium' });
+  const day = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium' });
   const field = (niche) => (niche === 'any' ? t('wait.any') : t('niche.' + niche));
 
   async function render(container) {

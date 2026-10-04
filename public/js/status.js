@@ -14,7 +14,7 @@
       const c = data.components[k];
       return `<li><span>${esc(t('status.c.' + k))}</span><span class="badge badge-${TONE[c.status] || 'badge-muted'}">${esc(t('status.s.' + c.status))}</span></li>`;
     }).join('');
-    document.getElementById('statusChecked').textContent = t('status.checked').replace('{time}', new Date(data.checkedAt).toLocaleTimeString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB'));
+    document.getElementById('statusChecked').textContent = t('status.checked').replace('{time}', WisecallI18n.formatDate(data.checkedAt, { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
   }
   async function load() {
     try { data = await fetch('/api/status', { cache: 'no-store' }).then((r) => r.json()); } catch (e) { data = { status: 'down', checkedAt: new Date().toISOString(), components: { website: { status: 'down' } } }; }

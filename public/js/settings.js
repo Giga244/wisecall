@@ -65,7 +65,7 @@
       document.getElementById('payoutPasswordField').hidden = !user.hasPassword;
       document.getElementById('payoutReauth').hidden = Boolean(user.hasPassword);
       if (user.payoutHoldUntil && new Date(user.payoutHoldUntil) > new Date()) {
-        payoutStatus.textContent += ' ' + t('settings.payouts.held').replace('{date}', new Date(user.payoutHoldUntil).toLocaleString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' }));
+        payoutStatus.textContent += ' ' + t('settings.payouts.held').replace('{date}', WisecallI18n.formatDate(user.payoutHoldUntil, { dateStyle: 'medium', timeStyle: 'short' }));
       }
     } catch (e) { /* the form still works */ }
   }

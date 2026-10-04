@@ -116,7 +116,7 @@
 
   // ---- The details every profile has: work or study, city, languages, links, member since -----------------------------
   const LINK_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
-  const monthYear = (d) => new Date(d).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { month: 'long', year: 'numeric' });
+  const monthYear = (d) => WisecallI18n.formatDate(d, { month: 'long', year: 'numeric' });
   function detailsHtml() {
     const rows = [];
     if (expert.currentWork) rows.push(`<li><span class="muted small">${t('profile.currentWork')}</span><strong>${escapeHtml(expert.currentWork)}</strong></li>`);

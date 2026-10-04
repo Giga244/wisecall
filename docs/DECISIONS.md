@@ -109,3 +109,12 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   carries the order id, which is part of the bank address they are sent to anyway.
 - Left for later (🟡, not required by the master prompt): #11 (who can raise a "reports" flag), #12 (the bank's "partially refunded"
   status). #14, #17 and #18 were small and are done.
+
+## PART 4 — Georgian
+- The Terms and Privacy Policy (legal.*) keep their formal თქვენ: legal texts are written that way on purpose, and the lawyer decides them
+  (docs/legal/). Everything else speaks informally (შენ, „გთხოვ“), and a test keeps it so.
+- „ორსაფეხურიანი ვერიფიკაცია“ (two-step verification) stays: it is the name of a process, like the mentor ვერიფიკაცია; single checks are
+  შემოწმება.
+- Georgian may leave out a {name} where English has it, when keeping it would mean a case ending hyphenated onto a name ({name}-ს):
+  „როგორი იყო პასუხი?“. The placeholder test allows exactly that and nothing else.
+- Dates: WisecallI18n.formatDate writes Georgian month names by hand in browsers without Georgian locale data; every page uses it.

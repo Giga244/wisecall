@@ -2,7 +2,7 @@
 (function () {
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = (d) => new Date(d).toLocaleString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  const fmt = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium', timeStyle: 'short' });
   const initials = (name) => (name || '?').split(' ').map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
   const STATUS_BADGE = { passed: 'answered', pending: 'pending_payment', failed: 'rejected', todo: 'badge-muted' };
@@ -212,7 +212,7 @@
             <li>
               <span>${esc(stepTitle(f.step))} · ${esc(f.filename)} · ${Math.max(1, Math.round(f.size / 1024))} KB</span>
               <a class="btn btn-outline btn-sm" href="/api/admin/documents/${esc(f.id)}" download>${t('admin.mv.download')}</a>
-              ${f.deleteAfter ? `<span class="muted small">${t('admin.mv.deleteOn').replace('{date}', new Date(f.deleteAfter).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB'))}</span>` : ''}
+              ${f.deleteAfter ? `<span class="muted small">${t('admin.mv.deleteOn').replace('{date}', WisecallI18n.formatDate(f.deleteAfter, { dateStyle: 'medium' }))}</span>` : ''}
             </li>`).join('')}</ul>` : ''}
       </div>`;
   }

@@ -8,7 +8,7 @@ window.WisecallRatings = (function () {
   const TAGS = { asker: ['helpful', 'detailed', 'clear', 'fast'], mentor: ['clear_question', 'gave_context', 'respectful', 'thankful'] };
   const REPORT_REASONS = ['abusive', 'false', 'personal_info', 'spam', 'other'];
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
-  const dateOf = (d) => new Date(d).toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' });
+  const dateOf = (d) => WisecallI18n.formatDate(d, { day: 'numeric', month: 'long', year: 'numeric' });
 
   const stars = (n) => `<span class="review-stars" role="img" aria-label="${esc(fill(t('expert.reviews.stars'), { n }))}">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>`;
   const tagList = (tags) => (tags && tags.length ? `<ul class="tag-list">${tags.map((g) => `<li class="chip-tag">${esc(t('rate.tag.' + g))}</li>`).join('')}</ul>` : '');

@@ -23,7 +23,7 @@
   }
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
   const money = (tetri) => WisecallAPI.formatAmount(tetri); // amounts arrive as whole tetri; the site is lari only
-  const fmtDate = (d) => new Date(d).toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtDate = (d) => WisecallI18n.formatDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
 
   function initials(name) {
     return (name || '?').split(' ').map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();

@@ -57,3 +57,9 @@ BANK]), B6/B7 (BOG language, idempotency key). From FIX-PROMPT: per-account aski
 72-hour hold on a change), bank internals hidden from buyers and mentors. Every { todo } in tests/cloud is gone and `npm test` runs them;
 the cloud pack's four test.fixme browser tests pass. Left: 🟡 #11, #12 (see DECISIONS.md).
 Tests: unit 672, cloud 34 (no todo left), e2e 145 passed / 5 skipped.
+
+## PART 4 — Georgian texts
+The earnings note (fixed before), informal შენ in every non-legal text, „კითხვის ავტორი“, „ანაზღაურება“ for mentors' money (Settings tab,
+payout texts, help 05/07), no case endings hyphenated onto names, „MB“ everywhere, the review's KA-1..KA-5 rewrites, and Georgian month
+names in every date (formatDate). tests/i18n.test.js checks keys and placeholders (site, admin, admin 2FA), the informal form, the agreed
+words and the dates. docs/KA-REVIEW.md regenerated for the native speaker.

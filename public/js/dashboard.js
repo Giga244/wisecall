@@ -22,7 +22,7 @@
   const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const money = (cents) => WisecallAPI.formatAmount(cents);
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
-  const fmtDate = (d) => new Date(d).toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtDate = (d) => WisecallI18n.formatDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
   const HOUR = 3600000;
 
   const skeleton = () => `<div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span></div>`.repeat(2);
@@ -193,7 +193,7 @@
       <details class="decline-box dispute-box">
         <summary>${t('dash.dispute.open')}</summary>
         <form class="dispute-form" data-id="${b.id}" novalidate>
-          <p class="small muted">${escapeHtml(t('dash.dispute.help').replace('{date}', new Date(b.disputeUntil).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium' })))}</p>
+          <p class="small muted">${escapeHtml(t('dash.dispute.help').replace('{date}', WisecallI18n.formatDate(b.disputeUntil, { dateStyle: 'medium' })))}</p>
           <label class="field-label small" for="dispute-reason-${b.id}">${t('dash.dispute.reason')}</label>
           <select id="dispute-reason-${b.id}">${reasons.map((r) => `<option value="${r}">${t('dash.dispute.r.' + r)}</option>`).join('')}</select>
           <label class="field-label small" for="dispute-details-${b.id}">${t('dash.dispute.details')}</label>

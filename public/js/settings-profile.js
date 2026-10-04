@@ -65,7 +65,7 @@ window.SettingsProfile = (function () {
     const at = new Date(user.usernameChangedAt).getTime() + 30 * DAY;
     return at > Date.now() ? new Date(at) : null;
   }
-  const dateText = (d) => new Date(d).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const dateText = (d) => WisecallI18n.formatDate(d, { day: 'numeric', month: 'long', year: 'numeric' });
 
   function drawUsernameHint() {
     const wait = nextChangeAt();

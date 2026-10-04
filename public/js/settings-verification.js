@@ -4,8 +4,8 @@
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
-  const fmtDay = (d) => new Date(d).toLocaleDateString(locale(), { dateStyle: 'medium' });
-  const fmtSlot = (d) => new Date(d).toLocaleString(locale(), { dateStyle: 'full', timeStyle: 'short' });
+  const fmtDay = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium' });
+  const fmtSlot = (d) => WisecallI18n.formatDate(d, { dateStyle: 'full', timeStyle: 'short' });
   const fill = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
   const chars = (s) => [...String(s || '').trim().replace(/\s+/g, ' ')].length;
 

@@ -16,7 +16,7 @@
 
   const KEYS = ['id', 'experience', 'license', 'workEmail', 'diploma', 'interview'];
   const label = (key) => WisecallI18n.t('badge.' + key);
-  const dateOf = (d) => new Date(d).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium' });
+  const dateOf = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium' });
   const tip = (b) => WisecallI18n.t('badge.' + b.key + '.tip').replace('{date}', dateOf(b.date));
 
   function known(badges) {

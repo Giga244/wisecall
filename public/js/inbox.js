@@ -10,8 +10,8 @@
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fill = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
-  const when = (d) => new Date(d).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' });
-  const day = (d) => new Date(d).toLocaleDateString(locale(), { dateStyle: 'medium' });
+  const when = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium', timeStyle: 'short' });
+  const day = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium' });
   const hasLink = (s) => /https?:\/\/|www\./i.test(String(s || ''));
 
   const layout = document.getElementById('inboxLayout');

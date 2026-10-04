@@ -4,7 +4,7 @@ Every Georgian text added or changed since commit `0c67940`, with its English te
 natural, use the informal შენ, and mean the same as the English. Placeholders such as `{amount}` are filled in by the site; keep them.
 Regenerate with `node scripts/ka-review.js 0c67940`.
 
-## Site (343)
+## Site (403)
 
 ### about
 
@@ -20,6 +20,18 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | Key | English | Georgian | |
 |---|---|---|---|
 | `ap.age.failed` | Your ID shows you are under 18. Mentors must be 18 or older. This result is final for this ID; if it was read wrongly, contact support and an admin can run the check again. | შენი დოკუმენტის მიხედვით 18 წლამდე ხარ. მენტორი უნდა იყოს 18 წლის ან მეტის. ეს შედეგი ამ დოკუმენტისთვის საბოლოოა; თუ დოკუმენტი არასწორად წაიკითხა სისტემამ, დაუკავშირდი მხარდაჭერას და ადმინისტრატორი შემოწმებას თავიდან გაუშვებს. | changed |
+| `ap.err.invalid_custom_niche` | Write your field in 3 to 60 characters, without links, email addresses, phone numbers or rude words. | ჩაწერე შენი სფერო 3-დან 60 სიმბოლომდე, ბმულების, ელფოსტის მისამართების, ტელეფონის ნომრების და უხეში სიტყვების გარეშე. | changed |
+| `ap.ev.upload` | Upload a diploma or certificate (PDF or JPG, up to 10 MB) | ატვირთე დიპლომი ან სერტიფიკატი (PDF ან JPG, მაქსიმუმ 10 MB) | changed |
+| `ap.f.customNiche` | Your field | შენი სფერო | changed |
+| `ap.f.customNiche.hint` | In your own words, 3 to 60 characters, for example "Crypto trading", "Nail artist" or "Study in Germany". This is what people see on your profile and card. | შენი სიტყვებით, 3-დან 60 სიმბოლომდე, მაგალითად „კრიპტოვაჭრობა“, „ფრჩხილების მასტერი“ ან „სწავლა გერმანიაში“. ეს გამოჩნდება შენს პროფილსა და ბარათზე. | changed |
+| `ap.f.niche` | Closest category | უახლოესი კატეგორია | changed |
+| `ap.f.niche.choose` | Choose the closest category | აირჩიე უახლოესი კატეგორია | changed |
+| `ap.f.niche.hint` | Used for browsing and search. Choose "Other" if none fits. | გამოიყენება დათვალიერებისა და ძიებისთვის. თუ არცერთი არ შეესაბამება, აირჩიე „სხვა“. | new |
+| `ap.f.niche.other` | Other (none of these fits) | სხვა (არცერთი არ შეესაბამება) | changed |
+| `ap.f.regulatedByWords` | Your field or title names a licensed profession, so it counts as "{niche}": a licence is needed and a person reviews your application. If that is a mistake, write to support. | შენი სფერო ან წოდება ლიცენზირებულ პროფესიას ასახელებს, ამიტომ ის „{niche}“ კატეგორიად ითვლება: საჭიროა ლიცენზია და შენს განაცხადს ადამიანი განიხილავს. თუ ეს შეცდომაა, მოგვწერე მხარდაჭერაში. | new |
+| `ap.missing.field` | Your field, in your own words | შენი სფერო, შენი სიტყვებით | new |
+| `ap.missing.niche` | The closest category | უახლოესი კატეგორია | changed |
+| `ap.progressText` | {done} of {total} steps done | {done} / {total} ნაბიჯი დასრულებულია | changed |
 | `ap.rev.needs_attention` | A required step above needs your attention. Until it is sorted out your profile is hidden from Browse experts and nobody can book you. | ზემოთ მოცემული სავალდებულო ნაბიჯი შენს ყურადღებას საჭიროებს. სანამ ეს არ მოგვარდება, შენი პროფილი ექსპერტების სიაში დამალულია და ვერავინ დაგიჯავშნის. | new |
 
 ### auth
@@ -29,6 +41,12 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | `auth.adult` | I'm 18 or older | 18 წლის ან უფროსი ვარ | new |
 | `auth.adultRequired` | Wisecall is for people who are 18 or older. Please confirm your age. | Wisecall 18 წლის და უფროსი ადამიანებისთვისაა. გთხოვ, დაადასტურე შენი ასაკი. | new |
 | `auth.error.breached` | This password has appeared in a data breach on another site, so it's easy to guess. Please choose a different one. | ეს პაროლი სხვა საიტზე მონაცემების გაჟონვაში გამოჩნდა, ამიტომ მისი გამოცნობა მარტივია. გთხოვ, აირჩიე სხვა. | new |
+| `auth.error.missingFields` | Please fill in every field. | შეავსე ყველა ველი. | changed |
+| `auth.field.username.hint` | your profile link. You can change it later. | შენი პროფილის ბმული. მოგვიანებით შეცვლაც შეგიძლია. | changed |
+| `auth.google.err.bad_state` | That sign-in link expired, or it was opened in a different browser. Please start again. | შესვლის ბმულს ვადა გაუვიდა ან სხვა ბრაუზერში გაიხსნა. დაიწყე თავიდან. | changed |
+| `auth.google.err.link_needed` | An account with this email address already exists. To keep it safe, log in with your password first, then connect Google in Settings → Account. | ამ ელფოსტით ანგარიში უკვე არსებობს. უსაფრთხოებისთვის ჯერ პაროლით შედი, შემდეგ კი პარამეტრები → ანგარიშში დააკავშირე Google. | changed |
+| `auth.google.err.no_email` | Google did not share an email address with us, so we could not sign you in. Please sign up with your email instead. | Google-მა ელფოსტის მისამართი არ გადმოგვცა, ამიტომ შესვლა ვერ მოხერხდა. დარეგისტრირდი ელფოსტით. | changed |
+| `auth.google.err.unavailable` | Google sign-in is not available right now. Please use your email and password. | Google-ით შესვლა ახლა მიუწვდომელია. გამოიყენე ელფოსტა და პაროლი. | changed |
 | `auth.twoStep.again` | This took too long. Please sign in again. | ძალიან დიდი დრო გავიდა. გთხოვ, თავიდან შედი. | new |
 | `auth.twoStep.code` | Code | კოდი | new |
 | `auth.twoStep.cta` | Continue | გაგრძელება | new |
@@ -59,7 +77,9 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 
 | Key | English | Georgian | |
 |---|---|---|---|
+| `dash.answer.err.deadline` | The time to answer this question has passed, so the asker gets their money back. It can no longer be answered. | ამ კითხვაზე პასუხის გაცემის დრო ამოიწურა, ამიტომ კითხვის ავტორს თანხა უბრუნდება. მასზე პასუხის გაცემა აღარ შეიძლება. | new |
 | `dash.conversation` | Conversation | საუბარი | new |
+| `dash.deadline.seeker` | {name} has until {date} to answer. If they don't, you are refunded automatically. | მენტორს პასუხისთვის {date}-მდე აქვს დრო. თუ არ გიპასუხებს, თანხა ავტომატურად დაგიბრუნდება. | changed |
 | `dash.decline.against_rules` | It's against Wisecall's rules | კითხვა Wisecall-ის წესებს ეწინააღმდეგება | new |
 | `dash.decline.confirm` | Decline this question? The asker is refunded in full, and you can't answer it afterwards. | უარყოფ ამ კითხვას? კითხვის ავტორს თანხა სრულად დაუბრუნდება და მასზე პასუხს ვეღარ გასცემ. | new |
 | `dash.decline.done` | Declined. The asker is being refunded. | უარყოფილია. კითხვის ავტორს თანხა უბრუნდება. | new |
@@ -91,11 +111,21 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | `dash.dispute.why` | Why: | მიზეზი: | new |
 | `dash.receipt.payment` | Receipt | ქვითარი | new |
 | `dash.receipt.refund` | Refund receipt | დაბრუნების ქვითარი | new |
+| `dash.received.notListed.body` | Finish your verification and add your payout details, then people can find you and ask you questions. | დაასრულე ვერიფიკაცია და დაამატე ანაზღაურების მონაცემები, შემდეგ ადამიანები შეძლებენ შენს პოვნას და კითხვების დასმას. | changed |
 | `dash.refund.declined_against_rules` | Refunded in full: the mentor declined it because the question is against Wisecall's rules. | თანხა სრულად დაბრუნდა: მენტორმა კითხვა უარყო, რადგან ის Wisecall-ის წესებს ეწინააღმდეგება. | new |
 | `dash.refund.declined_not_qualified` | Refunded in full: the mentor declined it because it's outside what they can answer well. | თანხა სრულად დაბრუნდა: მენტორმა კითხვა უარყო, რადგან ის სცდება იმას, რაზეც კარგად უპასუხებს. | new |
 | `dash.refund.dispute` | Refunded: our team agreed with the report about the answer. | თანხა დაბრუნდა: ჩვენმა გუნდმა გაიზიარა საჩივარი პასუხზე. | new |
 | `dash.refund.partial` | Partly refunded: {amount}. | ნაწილობრივ დაბრუნდა: {amount}. | new |
 | `dash.statements.title` | Monthly statements | თვიური ამონაწერები | new |
+
+### expert
+
+| Key | English | Georgian | |
+|---|---|---|---|
+| `expert.askTitle` | Ask {name} a question | დაუსვი კითხვა — {name} | changed |
+| `expert.err.tooManyBookings` | You have started {n} questions in the last hour. Please wait a little before asking another one. | ბოლო ერთ საათში {n} კითხვა დაიწყე. გთხოვ, ცოტა დაელოდე, სანამ კიდევ ერთს დასვამ. | new |
+| `expert.err.tooManyUnpaid` | You already have {n} payments you started and did not finish. Finish or cancel one at the bank (or wait about 40 minutes) before asking another question. | უკვე გაქვს {n} დაწყებული და დაუსრულებელი გადახდა. სანამ ახალ კითხვას დასვამ, ერთი მათგანი ბანკში დაასრულე ან გააუქმე (ან დაელოდე დაახლოებით 40 წუთი). | new |
+| `expert.loginToAsk` | Log in to ask {name} a question. | შედი სისტემაში, რომ კითხვა დაუსვა — {name}. | changed |
 
 ### faq
 
@@ -134,6 +164,12 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | `help.intro` | Short guides for asking, paying, refunds, becoming a mentor and your account. | მოკლე სახელმძღვანელოები კითხვის დასმაზე, გადახდაზე, თანხის დაბრუნებაზე, მენტორობასა და შენს ანგარიშზე. | new |
 | `help.more` | More help | მეტი დახმარება | new |
 | `help.title` | Help centre | დახმარების ცენტრი | new |
+
+### hero
+
+| Key | English | Georgian | |
+|---|---|---|---|
+| `hero.sub` | Doctors, founders, teachers, engineers, and more — book a real answer from someone who's lived the path you want to walk. | ექიმები, დამფუძნებლები, მასწავლებლები, ინჟინრები და სხვები — მიიღე რეალური პასუხი მისგან, ვინც უკვე გაიარა შენთვის საინტერესო გზა. | changed |
 
 ### hvp
 
@@ -335,12 +371,21 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | Key | English | Georgian | |
 |---|---|---|---|
 | `profile.loadError` | We couldn't load this profile. Check your connection and try again. | პროფილი ვერ ჩაიტვირთა. შეამოწმე ინტერნეტი და სცადე თავიდან. | new |
+| `profile.photo.err.size` | That picture is bigger than 5 MB. | ეს სურათი ძალიან დიდია: მაქსიმუმ 5 MB. | changed |
+| `profile.photo.hint` | JPG, PNG or WebP, up to 5 MB. We crop it to a square, resize it and remove hidden data such as the place it was taken. | JPG, PNG ან WebP, მაქსიმუმ 5 MB. ვჭრით კვადრატად, ვამცირებთ და ვშლით დამალულ მონაცემებს, მაგალითად გადაღების ადგილს. | changed |
+| `profile.username.invalid` | Use 3–30 lowercase letters, numbers or single dashes (no dash at the start or the end). | გამოიყენე 3–30 პატარა ლათინური ასო, ციფრი ან ერთი დეფისი (დეფისი არ შეიძლება დასაწყისში ან ბოლოში). | changed |
+| `profile.username.rule` | 3–30 lowercase letters, numbers or dashes. You can change it once every 30 days; the old link keeps working. | 3–30 პატარა ლათინური ასო, ციფრი ან დეფისი. შეცვლა 30 დღეში ერთხელ შეგიძლია; ძველი ბმულიც იმუშავებს. | changed |
+| `profile.visibility.contactsHint` | Only people you have asked or answered a question with can see your profile. Search engines can’t find it. | პროფილს ხედავენ მხოლოდ ისინი, ვისთანაც კითხვა-პასუხი გქონია. საძიებო სისტემები მას ვერ პოულობენ. | changed |
 
 ### rate
 
 | Key | English | Georgian | |
 |---|---|---|---|
+| `rate.asker.hint` | Was this a clear, respectful question from {name}? | იყო თუ არა კითხვა გასაგები და პატივისცემით დაწერილი? | changed |
+| `rate.mentor.hint` | How was the answer from {name}? | როგორი იყო პასუხი? | changed |
 | `rate.revealedOne` | Your rating is now visible. {name} didn’t rate this question. | შენი შეფასება ახლა ჩანს. {name}: ამ კითხვის შეფასება არ დაუტოვებია. | new |
+| `rate.theirNone` | {name} did not rate this question. | {name}: ამ კითხვის შეფასება არ დაუტოვებია. | changed |
+| `rate.theirs` | {name}’s rating | შეფასება — {name} | changed |
 
 ### safety
 
@@ -357,6 +402,9 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 
 | Key | English | Georgian | |
 |---|---|---|---|
+| `settings.connected.body` | Sign in faster by connecting your Google account. Wisecall only learns your name, email address and picture, and Google learns nothing about your questions. | დააკავშირე Google-ის ანგარიში და უფრო სწრაფად შედი. Wisecall იგებს მხოლოდ შენს სახელს, ელფოსტასა და სურათს, Google კი შენი კითხვების შესახებ არაფერს იგებს. | changed |
+| `settings.connected.err.hasOther` | A different Google account is already connected. Disconnect it first. | სხვა Google ანგარიში უკვე დაკავშირებულია. ჯერ ის გათიშე. | changed |
+| `settings.connected.err.setPassword` | Google is currently the only way you can log in. Set a password below first, then disconnect Google. | ამჟამად Google შესვლის ერთადერთი გზაა. ჯერ ქვემოთ დააყენე პაროლი, შემდეგ გათიშე Google. | changed |
 | `settings.data.already` | Deleting this account is already scheduled. | ამ ანგარიშის წაშლა უკვე დაგეგმილია. | new |
 | `settings.data.confirm` | Delete your account? It closes now and is deleted after {days} days. | წავშალოთ შენი ანგარიში? ის ახლავე დაიხურება და {days} დღის შემდეგ წაიშლება. | new |
 | `settings.data.delete` | Delete my account | ანგარიშის წაშლა | new |
@@ -384,6 +432,18 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | `settings.notif.saved` | Saved. | შენახულია. | new |
 | `settings.notif.tips` | Tips and news from Wisecall (rarely) | რჩევები და სიახლეები Wisecall-ისგან (იშვიათად) | new |
 | `settings.notif.title` | Emails from Wisecall | Wisecall-ის წერილები | new |
+| `settings.payouts.err.password` | Enter your current password to save payout details. | ანაზღაურების მონაცემების შესანახად შეიყვანე შენი მიმდინარე პაროლი. | new |
+| `settings.payouts.err.tooMany` | Too many tries. Please wait 15 minutes and try again. | ძალიან ბევრი მცდელობა. დაელოდე 15 წუთი და სცადე თავიდან. | new |
+| `settings.payouts.err.wrongPassword` | That password is not right. | პაროლი არასწორია. | new |
+| `settings.payouts.held` | Because they changed, payouts wait until {date}. | რადგან მონაცემები შეიცვალა, ანაზღაურება {date}-მდე შეჩერებულია. | new |
+| `settings.payouts.needForListing` | You're approved! Add your payout details below so you appear in Browse experts and can receive questions. | დამტკიცდი! ქვემოთ დაამატე ანაზღაურების მონაცემები, რომ ექსპერტების სიაში გამოჩნდე და კითხვები მიიღო. | changed |
+| `settings.payouts.notSaved` | No payout details yet. You won't appear in Browse experts until you add them. | ანაზღაურების მონაცემები ჯერ არ გაქვს. ექსპერტების სიაში არ გამოჩნდები, სანამ არ დაამატებ. | changed |
+| `settings.payouts.password` | Your current password | შენი მიმდინარე პაროლი | new |
+| `settings.payouts.passwordHint` | Needed to save payout details, so nobody else can redirect your money. | საჭიროა ანაზღაურების მონაცემების შესანახად, რომ შენი თანხა სხვამ ვერ გადაამისამართოს. | new |
+| `settings.payouts.reauth` | For your safety, sign out and sign in again right before you change payout details (within 10 minutes). | შენი უსაფრთხოებისთვის, ანაზღაურების მონაცემების შეცვლამდე გამოდი და თავიდან შედი (10 წუთის განმავლობაში). | new |
+| `settings.payouts.save` | Save payout details | ანაზღაურების მონაცემების შენახვა | changed |
+| `settings.payouts.saved` | Payout details saved. | ანაზღაურების მონაცემები შენახულია. | changed |
+| `settings.payouts.title` | Payout details | ანაზღაურების მონაცემები | changed |
 | `settings.progress.status` | See where it stands | ნახე, რა ეტაპზეა | new |
 | `settings.sessions.body` | Sign out a device you don't recognise, or every device except this one. Changing your password also signs out every other device. | გამოდი მოწყობილობიდან, რომელსაც ვერ ცნობ, ან ყველა მოწყობილობიდან ამის გარდა. პაროლის შეცვლაც ყველა სხვა მოწყობილობიდან გამოგიყვანს. | new |
 | `settings.sessions.confirm` | Sign out every device except this one? | გამოხვიდე ყველა მოწყობილობიდან ამის გარდა? | new |
@@ -395,7 +455,9 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | `settings.sessions.this` | This device | ეს მოწყობილობა | new |
 | `settings.sessions.title` | Where you're signed in | სად ხარ შესული | new |
 | `settings.sessions.unknown` | A device | მოწყობილობა | new |
+| `settings.sub` | Your profile, mentor application, payouts and account. | შენი პროფილი, მენტორის განაცხადი, ანაზღაურება და ანგარიში. | changed |
 | `settings.tab.notifications` | Notifications | შეტყობინებები | new |
+| `settings.tab.payouts` | Payouts | ანაზღაურება | changed |
 | `settings.twoStep.admin` | As an admin you manage two-step verification on the admin page; it can't be turned off. | როგორც ადმინისტრატორი, ორსაფეხურიან ვერიფიკაციას ადმინისტრატორის გვერდზე მართავ; მისი გამორთვა შეუძლებელია. | new |
 | `settings.twoStep.body` | Add a code from an authenticator app (such as Google Authenticator) to your password, so a stolen password alone can't open your account. | პაროლს დაუმატე კოდი ავთენტიფიკატორის აპიდან (მაგალითად, Google Authenticator), რომ მხოლოდ მოპარული პაროლით შენს ანგარიშში ვერავინ შევიდეს. | new |
 | `settings.twoStep.bodyMentor` | Strongly recommended for mentors: your earnings and your public profile are behind this account. Add a code from an authenticator app (such as Google Authenticator) to your password. | მენტორებს მკაცრად ვურჩევთ: ამ ანგარიშზეა შენი შემოსავალი და საჯარო პროფილი. პაროლს დაუმატე კოდი ავთენტიფიკატორის აპიდან (მაგალითად, Google Authenticator). | new |
@@ -451,10 +513,23 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 
 | Key | English | Georgian | |
 |---|---|---|---|
+| `vt.doc.choose` | Choose a PDF or JPG file (up to 10 MB) | აირჩიე PDF ან JPG ფაილი (მაქსიმუმ 10 MB) | changed |
+| `vt.doc.err.size` | That file is larger than 10 MB. | ეს ფაილი ძალიან დიდია: მაქსიმუმ 10 MB. | changed |
+| `vt.fillIn` | Please fill in every field. | შეავსე ყველა ველი. | changed |
+| `vt.iv.none` | No times are available right now. Please check back soon. | ამჟამად თავისუფალი დრო არ არის. მალე ისევ შემოიხედე. | changed |
+| `vt.iv.tooLate` | It's too close to the start time to cancel here. Please contact us. | დაწყებამდე ძალიან ცოტა დროა დარჩენილი და აქ ვეღარ გააუქმებ. დაგვიკავშირდი. | changed |
+| `vt.lic.expired` | Your license has expired. Please submit the renewed one. | შენი ლიცენზიის ვადა ამოიწურა. გამოგვიგზავნე განახლებული. | changed |
+| `vt.progress` | {done} of {total} steps complete | {done} / {total} ნაბიჯი დასრულებულია | changed |
 | `vt.status.needsAttention` | Needs attention: a required step failed. You're hidden from Browse experts until it's sorted out | საჭიროებს ყურადღებას: სავალდებულო ნაბიჯი ვერ შესრულდა. სანამ ეს არ მოგვარდება, ექსპერტების სიაში არ ჩანხარ | new |
 | `vt.we.tooManyAttempts` | Too many wrong codes, so this code no longer works. Send yourself a new one. | ძალიან ბევრჯერ შეიყვანე არასწორი კოდი, ამიტომ ეს კოდი აღარ მუშაობს. გამოიგზავნე ახალი. | new |
 
-## Admin panel (124)
+### wait
+
+| Key | English | Georgian | |
+|---|---|---|---|
+| `wait.error` | Please enter a valid email address. | შეიყვანე სწორი ელფოსტის მისამართი. | changed |
+
+## Admin panel (136)
 
 ### admin
 
@@ -496,6 +571,15 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | `admin.dis.split` | Of this, {mentor} comes off the mentor's payout and {fee} off the platform fee. | აქედან {mentor} მენტორის ანაზღაურებიდან აიქვითება, {fee} კი პლატფორმის საკომისიოდან. | new |
 | `admin.filter.failed_step` | Approved, but a step failed | დამტკიცებული, მაგრამ ნაბიჯი ვერ შესრულდა | new |
 | `admin.mv.failedRequired` | A required step failed | სავალდებულო ნაბიჯი ვერ შესრულდა | new |
+| `admin.mv.field.category` | Category | კატეგორია | new |
+| `admin.mv.field.licenceMissing` | This category needs a licence this approved mentor has not passed. Ask them to add it first. | ამ კატეგორიას სჭირდება ლიცენზია, რომელიც ამ დამტკიცებულ მენტორს არ აქვს გავლილი. ჯერ სთხოვე, დაამატოს. | new |
+| `admin.mv.field.notRegulated` | Not a licensed profession (keep a category without a licence) | არ არის ლიცენზირებული პროფესია (დარჩეს კატეგორია ლიცენზიის გარეშე) | new |
+| `admin.mv.field.overridden` | not a licensed profession (admin) | არ არის ლიცენზირებული პროფესია (ადმინი) | new |
+| `admin.mv.field.regulatedWords` | The words name a licensed profession ({niche}). Tick "Not a licensed profession" to keep this category. | სიტყვები ლიცენზირებულ პროფესიას ასახელებს ({niche}). ამ კატეგორიის შესანარჩუნებლად მონიშნე „არ არის ლიცენზირებული პროფესია“. | new |
+| `admin.mv.field.save` | Save field | სფეროს შენახვა | new |
+| `admin.mv.field.text` | Field, in the mentor's words | სფერო, მენტორის სიტყვებით | new |
+| `admin.mv.field.title` | Field | სფერო | new |
+| `admin.mv.field.wordsSay` | The words name a licensed profession ({niche}): without "Not a licensed profession" the category stays {niche}. | სიტყვები ლიცენზირებულ პროფესიას ასახელებს ({niche}): „არ არის ლიცენზირებული პროფესიის“ მონიშვნის გარეშე კატეგორია {niche} დარჩება. | new |
 | `admin.mv.kycRerun` | Re-run ID check | პირადობის შემოწმების თავიდან გაშვება | new |
 | `admin.mv.kycRerun.age_passed` | The age check now passes. | ასაკის შემოწმება ახლა წარმატებულია. | new |
 | `admin.mv.kycRerun.reopened` | The ID check is open again: the mentor can take it once more. | პირადობის შემოწმება ხელახლა გაიხსნა: მენტორს მისი კიდევ ერთხელ გავლა შეუძლია. | new |
@@ -544,6 +628,9 @@ Regenerate with `node scripts/ka-review.js 0c67940`.
 | `admin.ov.users` | Accounts | ანგარიშები | new |
 | `admin.ov.waitlist` | Waiting list (not told yet) | მოლოდინის სია (ჯერ არ შეგვიტყობინებია) | new |
 | `admin.ov.week` | New, last 7 days | ახალი, ბოლო 7 დღე | new |
+| `admin.po.noIban` | This mentor has no payout details yet. | ამ მენტორს ანაზღაურების მონაცემები ჯერ არ აქვს. | changed |
+| `admin.rv.from` | Written by {name} ({email}) about {ratee} | ავტორი: {name} ({email}) · შეფასებული: {ratee} | changed |
+| `admin.rv.reportedBy` | Reported by {name} ({email}): {reason} | გაასაჩივრა: {name} ({email}) · მიზეზი: {reason} | changed |
 | `admin.safety.cat.abuse` | Abuse | შეურაცხყოფა/ძალადობა ახლობლისგან | new |
 | `admin.safety.cat.medical_emergency` | Medical emergency | სამედიცინო გადაუდებელი შემთხვევა | new |
 | `admin.safety.cat.self_harm` | Self-harm | თვითდაზიანება | new |

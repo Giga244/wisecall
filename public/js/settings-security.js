@@ -3,7 +3,7 @@
 (function () {
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const t = (k) => WisecallI18n.t(k);
-  const when = (d) => new Date(d).toLocaleString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+  const when = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium', timeStyle: 'short' });
 
   let sessions = null;
   function drawSessions() {
@@ -99,7 +99,7 @@
   // ---- Your data: download it, or delete the account (re-authentication, then a grace period) -------------------------------------
   let me = null;
   let graceDays = 14;
-  const fmtDay = (d) => new Date(d).toLocaleDateString(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'long' });
+  const fmtDay = (d) => WisecallI18n.formatDate(d, { dateStyle: 'long' });
   function drawData() {
     const box = document.getElementById('dataCard');
     if (!box || !me) return;

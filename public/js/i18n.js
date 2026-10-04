@@ -56,6 +56,28 @@
     if (saved) return saved;
     return navigator.language && navigator.language.toLowerCase().startsWith('ka') ? 'ka' : 'en';
   }
+  // A date (and time) in the page's language. Browsers without Georgian locale data would show English month names, so Georgian is
+  // then written by hand ("5 ოქტომბერი 2026, 14:30"). options: the Intl options the page wants (dateStyle, timeStyle, day, month, ...).
+  const KA_MONTHS = ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი', 'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'];
+  let kaDates = null;
+  const hasKaDates = () => {
+    if (kaDates === null) { try { kaDates = Intl.DateTimeFormat.supportedLocalesOf(['ka']).length > 0; } catch (e) { kaDates = false; } }
+    return kaDates;
+  };
+  const pad2 = (n) => String(n).padStart(2, '0');
+  function formatDate(date, options) {
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return '';
+    const o = options || { day: 'numeric', month: 'long', year: 'numeric' };
+    const lang = getLang();
+    if (lang !== 'ka' || hasKaDates()) return d.toLocaleString(lang === 'ka' ? 'ka-GE' : 'en-GB', o);
+    const whole = Boolean(o.dateStyle);
+    const day = [whole || o.day ? d.getDate() : null, whole || o.month ? KA_MONTHS[d.getMonth()] : null, whole || o.year ? d.getFullYear() : null]
+      .filter((x) => x !== null).join(' ');
+    const time = o.timeStyle || o.hour ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}${o.second ? ':' + pad2(d.getSeconds()) : ''}` : '';
+    return [day, time].filter(Boolean).join(', ');
+  }
+
   // The page's title in the language (meta.<page>.title), for pages whose title is the same for everyone.
   function applyTitle(dict) {
     const p = path();
@@ -151,5 +173,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName, fieldName, path };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName, fieldName, formatDate, path };
 })();

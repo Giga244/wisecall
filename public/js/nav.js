@@ -134,7 +134,7 @@
         const until = new Date(new Date(user.deletionRequestedAt).getTime() + 14 * 86400000);
         const bar = document.createElement("div");
         bar.className = "verify-banner deletion-banner";
-        bar.innerHTML = `<span>${t("nav.deletionBanner").replace("{date}", until.toLocaleDateString(WisecallI18n.getLang() === "ka" ? "ka-GE" : "en-GB", { dateStyle: "long" }))}</span> <a href="/settings.html?tab=account">${t("nav.deletionKeep")}</a>`;
+        bar.innerHTML = `<span>${t("nav.deletionBanner").replace("{date}", WisecallI18n.formatDate(until, { dateStyle: "long" }))}</span> <a href="/settings.html?tab=account">${t("nav.deletionKeep")}</a>`;
         header.insertAdjacentElement("afterend", bar);
       }
       if (!user.emailVerified && location.pathname !== '/verify-email.html' && header) {

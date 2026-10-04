@@ -4,7 +4,7 @@
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
-  const fmt = (d) => new Date(d).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' });
+  const fmt = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium', timeStyle: 'short' });
   const errKey = { reason_required: 'admin.mv.reasonRequired', invalid_resolution: 'toast.error', refund_failed: 'admin.bk.refundFailed' };
   const fail = (e) => WisecallNav.showToast(t(errKey[e.code] || 'toast.error'));
 
