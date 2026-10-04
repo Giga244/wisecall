@@ -175,6 +175,16 @@ const S = {
       intro: 'We sent {amount} to your bank account ending in {last4}.', referenceLabel: 'Bank transfer reference:',
       after: 'Bank transfers usually arrive within 1 to 3 working days. You can see all your earnings in your dashboard.', button: 'Open dashboard'
     },
+    mentorRequestConfirm: {
+      subject: 'Confirm your request for a mentor', heading: 'Confirm your request',
+      intro: 'You asked Wisecall to find you a mentor for {field}. Confirm it and we will email you once when a matching mentor joins.',
+      button: 'Confirm my request', after: 'If you did not ask for this, ignore this email: nothing is kept without confirmation.'
+    },
+    mentorRequestMatched: {
+      subject: 'A mentor for {field} is on Wisecall', heading: 'We found a mentor for you',
+      intro: 'You asked for a mentor for {field}. {name} has just been listed on Wisecall.', button: 'See the profile',
+      after: 'This is the only email you will get about this request.', unsubscribe: 'Remove my request:'
+    },
     withdrawalRequested: {
       subject: 'We received your withdrawal request', heading: 'Withdrawal requested',
       intro: 'You asked us to send {amount} to your bank account ending in {last4}.',
@@ -350,6 +360,16 @@ const S = {
       intro: '{amount} გავგზავნეთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.', referenceLabel: 'საბანკო გადარიცხვის რეფერენსი:',
       after: 'საბანკო გადარიცხვა ჩვეულებრივ 1-3 სამუშაო დღეში აისახება. ყველა შემოსავალი შეგიძლია იხილო დაფაზე.', button: 'დაფის გახსნა'
     },
+    mentorRequestConfirm: {
+      subject: 'დაადასტურე მენტორის მოთხოვნა', heading: 'დაადასტურე მოთხოვნა',
+      intro: 'Wisecall-ს სთხოვე, მოგიძებნოს მენტორი სფეროში: {field}. დაადასტურე და ერთხელ მოგწერთ, როცა შესაფერისი მენტორი შემოგვიერთდება.',
+      button: 'მოთხოვნის დადასტურება', after: 'თუ ეს შენ არ გითხოვია, ყურადღება არ მიაქციო: დადასტურების გარეშე არაფერი ინახება.'
+    },
+    mentorRequestMatched: {
+      subject: 'Wisecall-ზე გამოჩნდა მენტორი სფეროში: {field}', heading: 'მენტორი ვიპოვეთ',
+      intro: 'მოითხოვე მენტორი სფეროში: {field}. Wisecall-ზე ახლახან გამოჩნდა: {name}.', button: 'პროფილის ნახვა',
+      after: 'ამ მოთხოვნაზე ეს ერთადერთი წერილია.', unsubscribe: 'მოთხოვნის წაშლა:'
+    },
     withdrawalRequested: {
       subject: 'თანხის გატანის მოთხოვნა მივიღეთ', heading: 'თანხის გატანა მოთხოვნილია',
       intro: 'გვთხოვე, {amount} გადაგირიცხოთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.',
@@ -517,6 +537,15 @@ const BUILDERS = {
   payoutPaid: (s, d) => ({
     heading: s.payoutPaid.heading,
     blocks: [{ p: fill(s.payoutPaid.intro, d), raw: true }, { quote: `${s.payoutPaid.referenceLabel} ${d.reference}` }, { p: s.payoutPaid.after }, { button: s.payoutPaid.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  mentorRequestConfirm: (s, d) => ({
+    heading: s.mentorRequestConfirm.heading,
+    blocks: [{ p: fill(s.mentorRequestConfirm.intro, d), raw: true }, { button: s.mentorRequestConfirm.button, url: d.url }, { small: s.linkFallback }, { link: d.url }, { small: s.mentorRequestConfirm.after }]
+  }),
+  mentorRequestMatched: (s, d) => ({
+    heading: s.mentorRequestMatched.heading,
+    blocks: [{ p: fill(s.mentorRequestMatched.intro, d), raw: true }, { button: s.mentorRequestMatched.button, url: d.url }, { small: s.mentorRequestMatched.after },
+      { small: s.mentorRequestMatched.unsubscribe }, { link: d.unsubscribeUrl }]
   }),
   withdrawalRequested: (s, d) => ({
     heading: s.withdrawalRequested.heading,

@@ -150,3 +150,14 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - "Helpful" counts once per visitor using a random id kept in the browser (stored only as a keyed hash), plus an IP rate limit; no cookie.
 - The library and the answer pages are rendered on the server in the page's language (/answers, /ka/answers/…); the home page swaps its
   three example cards for real answers once three are published.
+
+## PART 7B — "Find me a mentor" requests
+- Someone who is not signed in must confirm the request from an email before it counts (stops typos and requests in another person's
+  name); a signed-in person with a confirmed email uses their account email and is active at once.
+- Matching is deliberately simple: the same category, or one word (4+ letters) of the field shared with the mentor's own field, tags or
+  title. Each request is claimed by one UPDATE before its email, so a person gets exactly ONE email ever, even if two mentors are listed at
+  the same moment. No emails while LAUNCH_MODE=prelaunch (requests wait for launch).
+- The public board (/requests) exists only from 5 active requests, shows counts by field without any names or emails, and a request's text
+  only when its author ticked "show anonymously". The need may not contain contact details (it may be shown).
+- Requests end after 60 days (with the background jobs); deleting an account deletes its requests (also those sent with the same email
+  before signing up). Admin outreach text uses "[your name]", not the founder's name.

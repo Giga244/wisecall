@@ -172,6 +172,22 @@ router.post('/public-answers/:id/reject', requireAuth, requireAdmin, asyncHandle
   catch (e) { paFail(res, e); }
 }));
 
+// ---- "Find me a mentor" requests (server/mentorRequests.js): admins only, with the emails --------------------------------------------
+router.get('/requests', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(await require('../mentorRequests').dashboard());
+}));
+router.get('/requests.csv', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const d = await require('../mentorRequests').dashboard();
+  sendCsv(res, `wisecall-mentor-requests-${new Date().toISOString().slice(0, 10)}.csv`, ['created', 'email', 'field', 'category', 'need', 'language', 'budget_min', 'budget_max', 'public', 'status'],
+    d.requests.map((r) => [new Date(r.createdAt).toISOString(), r.email, r.field, r.niche, r.need, r.language, r.budgetMin || '', r.budgetMax || '', r.showPublic ? 'yes' : 'no', r.status]));
+}));
+router.post('/requests/merge', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { res.json({ merged: await require('../mentorRequests').merge(String(b.from || ''), String(b.into || '')) }); }
+  catch (e) { if (e instanceof require('../mentorRequests').RequestError) return res.status(404).json({ error: e.code }); throw e; }
+}));
+
 // ---- Withdrawals (server/withdrawals.js) ---------------------------------------------------------------------------------------------
 const WD_STATUS = { not_found: 404, not_open: 409, amount_changed: 409, reference_required: 400, reason_required: 400 };
 const wdFail = (res, e) => {

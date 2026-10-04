@@ -389,6 +389,29 @@ async function sendAnswer(req, res, slug) {
     CRUMB: escapeHtml(shortText(a.question, 40)), BODY: body }), ld));
 }
 
+// /requests: what people are looking for, as anonymous counts by field (a request's text only when its author allowed it), with a way to
+// become a mentor for it. It exists only from 5 active requests on.
+async function sendRequestsBoard(req, res) {
+  const fields = await require('./mentorRequests').board();
+  if (!fields) return notFoundHandler(req, res);
+  const html = readPage('requests.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const niches = require('./niches');
+  const h1 = d['rq.board.title'];
+  const list = fields.map((f) => `<article class="answer-card">
+      <h2>${escapeHtml(d[f.count === 1 ? 'rq.board.countOne' : 'rq.board.count'].replace('{n}', f.count).replace('{field}', () => f.label))}</h2>
+      ${f.niche !== 'other' && niches.isValid(f.niche) ? `<p class="muted small">${escapeHtml(niches.nameOf(f.niche, lang))}</p>` : ''}
+      ${f.texts.map((x) => `<p class="answer-a">“${escapeHtml(x)}”</p>`).join('')}
+      <p><a class="btn btn-primary btn-sm" href="${prefix}/signup.html?mentor=1">${escapeHtml(d['rq.board.become'])}</a></p>
+    </article>`).join('');
+  sendHtml(res, 200, fill(html, { ...baseVars('/requests'), TITLE: escapeHtml(`${h1} — Wisecall`), DESCRIPTION: escapeHtml(d['rq.board.intro']), OG_TYPE: 'website',
+    ROBOTS: 'index, follow', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']), H1: escapeHtml(h1), INTRO: escapeHtml(d['rq.board.intro']), LIST: list,
+    ASK: escapeHtml(d['rq.cta']) }));
+}
+
 // A page per field: /advice/<niche>. The title, description, mentor list and links to the other fields are written in here, in English,
 // for search engines and link previews; the page script then draws it in the visitor's language, with badges and ratings. Before launch
 // no mentor is listed (the page offers the waiting list), and only a field with a listed mentor may be indexed.
@@ -470,6 +493,11 @@ function pageRoutes() {
   });
   router.get('/help', (req, res) => res.redirect(301, (res.locals.pageLang === 'ka' ? '/ka' : '') + '/help.html'));
 
+  // What people are looking for.
+  router.get(/^\/requests\/?$/, async (req, res, next) => {
+    try { await sendRequestsBoard(req, res); } catch (e) { next(e); }
+  });
+
   // Public answers: the library, and one answer.
   router.get(/^\/answers\/?$/, async (req, res, next) => {
     try { await sendAnswers(req, res); } catch (e) { next(e); }
@@ -513,7 +541,7 @@ function pageRoutes() {
       const name = req.params[0];
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
-      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer') return notFoundHandler(req, res); // (sent only by their own routes)
+      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer' || name === 'requests') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (name === 'faq') {
         const html = readPage('faq.html');
@@ -550,7 +578,7 @@ function seoRoutes() {
 
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
-      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
+      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/find-a-mentor.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
         .filter(([p]) => p === '/' || fs.existsSync(path.join(PUBLIC, p)))
         // (a help article in both languages)
         .concat(require('./help').articles('en').filter((a) => require('./help').article('ka', a.slug)).map((a) => [`/help/${a.slug}`, 0.4]));

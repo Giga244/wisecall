@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Find me a mentor — Wisecall</title>
+<meta name="description" content="Tell us who you need, and we will email you once when a matching mentor joins Wisecall.">
+<link rel="canonical" href="{{PUBLIC_URL}}/find-a-mentor.html">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Find me a mentor — Wisecall">
+<meta property="og:description" content="Tell us who you need, and we will email you once when a matching mentor joins Wisecall.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{PUBLIC_URL}}/find-a-mentor.html">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Find me a mentor — Wisecall">
+<meta name="twitter:description" content="Tell us who you need, and we will email you once when a matching mentor joins Wisecall.">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head><body>
+
+<script src="/js/header.js"></script>
+<main class="auth-page" id="main">
+  <div class="auth-card contact-card">
+    <h1 data-i18n="rq.title">Find me a mentor</h1>
+    <p class="muted" data-i18n="rq.sub">Can't find the right person? Tell us who you need. We'll email you once, when a matching mentor joins.</p>
+    <p class="contact-done" id="rqStatus" role="status" hidden></p>
+    <form id="requestForm" novalidate>
+      <label for="rqField"><span data-i18n="rq.field">The field, in your own words</span>
+        <input type="text" id="rqField" maxlength="60" required>
+        <span class="hint" data-i18n="rq.field.hint">For example "Study in Germany" or "Opening a café".</span>
+      </label>
+      <label for="rqNiche"><span data-i18n="rq.niche">Closest category</span>
+        <select id="rqNiche" required></select>
+      </label>
+      <label for="rqNeed"><span data-i18n="rq.need">What you need help with</span>
+        <textarea id="rqNeed" rows="5" maxlength="500" required></textarea>
+        <span class="hint" data-i18n="rq.need.hint">20 to 500 characters. No names or contact details: we may show it anonymously if you allow it below.</span>
+      </label>
+      <label for="rqLanguage"><span data-i18n="rq.language">Language</span>
+        <select id="rqLanguage"><option value="any" data-i18n="rq.lang.any">Any</option><option value="ka" data-i18n="rq.lang.ka">Georgian</option><option value="en" data-i18n="rq.lang.en">English</option></select>
+      </label>
+      <fieldset class="rq-budget">
+        <legend data-i18n="rq.budget">Budget per question in ₾ (optional)</legend>
+        <label for="rqMin"><span data-i18n="rq.budget.min">From</span><input type="number" id="rqMin" min="5" max="2000" step="1" inputmode="numeric"></label>
+        <label for="rqMax"><span data-i18n="rq.budget.max">To</span><input type="number" id="rqMax" min="5" max="2000" step="1" inputmode="numeric"></label>
+      </fieldset>
+      <label for="rqEmail" id="rqEmailField"><span data-i18n="contact.email">Your email</span>
+        <input type="email" id="rqEmail" maxlength="254" autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false">
+        <span class="hint" data-i18n="rq.email.hint">We'll send a link to confirm it.</span>
+      </label>
+      <label class="checkbox-row" for="rqPublic"><input type="checkbox" id="rqPublic"> <span data-i18n="rq.public">Show my request anonymously on the board of requests</span></label>
+      <div class="hp" aria-hidden="true"><label for="website">Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>
+      <p class="form-error" id="rqError" role="alert"></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="rq.send">Send my request</button>
+    </form>
+    <p class="muted small"><a href="/requests" data-i18n="rq.boardLink">What people are looking for</a></p>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/find-mentor.js"></script>
+</body>
+</html>

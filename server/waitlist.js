@@ -86,7 +86,10 @@ async function afterMaybeListed(userId) {
   try {
     await require('./launch').refresh(); // the first listed mentor can open the site (LAUNCH_MODE left empty)
     const mentor = await getUserById(userId);
-    if (isListable(mentor)) return await mentorJoined(mentor);
+    if (isListable(mentor)) {
+      await require('./mentorRequests').afterMaybeListed(mentor.id); // ("find me a mentor" requests that match)
+      return await mentorJoined(mentor);
+    }
   } catch (e) {
     console.error('[waitlist] could not notify:', e.message);
   }

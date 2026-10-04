@@ -418,6 +418,12 @@ form input, form textarea, form select {
 form input:focus, form textarea:focus, form select:focus { border-color: var(--accent); }
 form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size: 0.76rem; margin-top: 4px; }
 .form-error { color: var(--red-strong); font-size: 0.85rem; margin: -6px 0 14px; min-height: 1em; font-weight: 600; }
+/* "Find me a mentor": the optional budget, from / to side by side */
+.rq-budget { border: 0; padding: 0; margin: 0 0 4px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; min-width: 0; }
+.rq-budget legend { grid-column: 1 / -1; padding: 0; font-size: 0.85rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 6px; }
+.rq-cta { text-align: center; margin: 18px 0 0; font-weight: 700; }
+.rq-merge select { padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--field); color: var(--ink); font-family: 'Nunito', sans-serif; margin-left: 6px; }
+.rq-merge label { display: flex; align-items: center; margin: 0; }
 
 /* Expert profile page */
 .expert-page { padding: 46px 24px 100px; max-width: 640px; }

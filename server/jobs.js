@@ -121,6 +121,8 @@ async function checkLicenses() {
 
 // People on the waiting list are told once the site is open and a mentor in their field is listed.
 async function notifyWaitingList() {
+  const expired = await require('./mentorRequests').expire(); // ("find me a mentor" requests end after 60 days)
+  if (expired) console.log(`[jobs] ${expired} mentor request(s) expired`);
   const n = await require('./waitlist').launchDay();
   if (n) console.log(`[jobs] told ${n} person/people on the waiting list that mentors are available`);
 }

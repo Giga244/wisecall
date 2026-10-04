@@ -122,3 +122,10 @@ Mentor applications now go through three steps (Identity → Experience → Revi
 50. **Profiles of people who ask start private.** Accounts made from now on show their profile only to people they had a question with
     (existing accounts keep their setting); mentors' profiles become public when they are approved. Reviews by an asker with a private
     profile show "Anonymous asker". Say this in the Privacy Policy (what is public, and how to change it in Settings → Profile).
+51. **Public answers (opt-in).** A question and its answer become a public page only when the asker (after a 4–5★ rating) and the mentor
+    agree and an admin approves; the asker is never named and names/contact details are removed from the question. Either can withdraw at
+    any time (the page is gone at once). Confirm consent wording, that edited answers stay the mentor's own text, the "not professional
+    advice" note for regulated fields, and the Terms (who owns the published text; Wisecall's licence to show it).
+52. **"Find me a mentor" requests.** Email, field, need, language, budget; confirmed by email when not signed in; one email when a mentor
+    matches; anonymous counts on a public board (text only with consent); admins use them to invite mentors; 60 days. Confirm this is
+    consent-based processing and the wording of the form and the emails.

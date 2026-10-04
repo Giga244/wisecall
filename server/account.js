@@ -99,6 +99,7 @@ async function requestDeletion(user, { password, sessionId }) {
   if (open.length) throw new AccountError('open_items', { items: open });
   await query('UPDATE users SET deletion_requested_at = now() WHERE id = $1', [user.id]);
   await require('./publicAnswers').onAccountDeleted(user.id);
+  await require('./mentorRequests').onAccountDeleted(user);
   await auth.endAllSessions(user.id);
   const when = new Date(Date.now() + DELETION_GRACE_DAYS * 86400000);
   require('./notify').notifyDeletionScheduled(user, when);

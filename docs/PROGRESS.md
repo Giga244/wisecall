@@ -100,3 +100,11 @@ After a 4–5★ rating the asker can offer the answer for the public library (q
 with explicit permission); either can withdraw (410 at once). /answers (search, field, newest / most helpful) and /answers/<slug> (QAPage
 JSON-LD, mentor card with "Ask", 3 related, Helpful once per visitor), both languages, sitemap; "Public answers" on mentor profiles; the
 home page shows real answers once there are three. Migration 032 (undo script). Tests: public-answers.test.js (9), e2e public-answers (3).
+
+## PART 7B — "Find me a mentor"
+/find-a-mentor.html (field in your own words, closest category, need 20–500, language, optional budget, "show anonymously"; a hidden
+honeypot, 5 per hour per IP). Browse offers it when a search finds nobody (with the words filled in) and under the list. Visitors confirm
+by email; one active request per email and field; ONE email when a matching mentor is listed, with a remove link; 60 days. Public board
+/requests from 5 requests; admin tab "Mentor requests" (by field and week, fields with no mentor + copyable outreach text, every request,
+CSV, merge two spellings). Privacy drafts, help article 15 (EN+KA), LEGAL-REVIEW 51–52. Migration 033 (undo script).
+Tests: mentor-requests.test.js (6), e2e mentor-requests (2).

@@ -102,6 +102,7 @@ app.use('/api/me/export', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.put('/api/me/payout', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
 app.post('/api/me/withdrawals', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.post(/^\/api\/answers\/(offer|decline)$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.post('/api/requests', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
 app.post(/^\/api\/answers\/[^/]+\/helpful$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.use('/api/me/delete', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 // The Inbox: sending (a follow-up, a support message), starting support conversations, reporting, unsubscribing.
@@ -126,6 +127,7 @@ app.use('/api', require('./routes/ratings'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/answers', require('./routes/answers'));
+app.use('/api/requests', require('./routes/requests'));
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/inbox', require('./routes/inbox').router);

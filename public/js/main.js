@@ -132,7 +132,8 @@
     if (list.length === 0) {
       const inField = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
       if (searchTerm && inField.length) {
-        grid.innerHTML = `<p class="muted">${t('experts.noMatch')}</p>`;
+        grid.innerHTML = `<p class="muted">${t('experts.noMatch')}</p>
+          <p><a class="btn btn-outline btn-sm" href="/find-a-mentor.html?field=${encodeURIComponent(searchTerm)}${activeNiche !== 'all' ? '&niche=' + encodeURIComponent(activeNiche) : ''}">${t('rq.cta')}</a></p>`;
       } else {
         grid.innerHTML = emptyState('niche');
         WisecallWaitlist.wire(grid);
