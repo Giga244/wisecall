@@ -74,3 +74,5 @@ money overview ("Mentor money held in your account"), the queue with the full IB
 transfer and "Mark all exported as paid". Refunds during a request recompute or close it; emails and inbox messages EN+KA; payout
 method behind server/payoutMethods ('manual'). FAQ, home and help 07 updated. Migration 031 (undo script). Tests: withdrawals.test.js
 (6), e2e/withdrawals.spec.js (2).
+Tests: unit 691, cloud 34, e2e 143 passed / 5 skipped + 2 fixed and rerun (an ambiguous locator in the old payout test; the known
+flaky dev-setup recovery-code test passed on rerun).
