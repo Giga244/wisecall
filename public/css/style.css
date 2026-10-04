@@ -41,6 +41,7 @@
   --red: #d1567e;
   --red-strong: #b3365c;       /* error text */
   --danger-bg: #b3365c;  --on-danger: #ffffff;  /* a button for an action that cannot be undone */
+  --print-ink: #000000;  --print-paper: #ffffff;  /* what is printed on paper (both themes) */
   /* Soft fills for badges, banners and icon tiles, each with the text colour that goes on it */
   --mint-soft: #e3f7ef;  --mint-line: #bfe8d6;  --mint-banner-ink: #17563f;
   --sun-soft: #fdf0d9;   --sun-tint: #fff7e3;   --sun-ink: #7a4f10;
@@ -246,7 +247,7 @@ html[lang="ka"] .nav-links .nl-faq { display: none; }
 /* The confirmation dialog (public/js/dialog.js) */
 .wc-dialog { border: none; border-radius: var(--radius); padding: 0; max-width: min(440px, calc(100vw - 32px)); background: var(--card); color: var(--ink);
   box-shadow: 0 24px 60px -20px rgba(var(--shadow-rgb), 0.55); }
-.wc-dialog::backdrop { background: rgba(15, 13, 24, 0.55); }
+.wc-dialog::backdrop { background: rgba(var(--shadow-rgb), 0.55); }
 .wc-dialog-inner { padding: 22px 22px 18px; margin: 0; }
 .wc-dialog-message { margin: 0 0 18px; font-size: 1rem; line-height: 1.5; font-weight: 600; }
 .wc-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
@@ -1059,8 +1060,8 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 @media print {
   .nav, #siteHeader, .footer, .toast, .back-to-top, .reading-progress, .skip-link, .breadcrumb, .btn, button, dialog, .copy-link, .share-card,
   .theme-toggle, .lang-switch, .waitlist-form, .help-nav, .answers-related, nav { display: none !important; }
-  *, *::before, *::after { background: transparent !important; color: #000 !important; box-shadow: none !important; text-shadow: none !important; }
-  html, body { background: #fff !important; font-size: 11pt; }
+  *, *::before, *::after { background: transparent !important; color: var(--print-ink) !important; box-shadow: none !important; text-shadow: none !important; }
+  html, body { background: var(--print-paper) !important; font-size: 11pt; }
   main, .container, .advice, .legal, .answers { max-width: none !important; width: auto !important; margin: 0 !important; padding: 0 !important; }
   a { text-decoration: underline; }
   main a[href]:not([href^="#"]):not([href^="javascript"])::after { content: " (" attr(href) ")"; font-size: 0.85em; word-break: break-all; }
