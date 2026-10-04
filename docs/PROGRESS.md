@@ -114,3 +114,9 @@ Sign-up, login, forgot password, contact, the waiting list and "find me a mentor
 TURNSTILE_SECRET_KEY are set (off without them: development and tests). Server-side check (server/turnstile.js), 400 for a refused token,
 503 when Cloudflare is unreachable; CSP allows Cloudflare only when on; widget loads on first use of a form (public/js/turnstile.js), EN+KA
 errors. Tests: turnstile.test.js (5, fake Cloudflare); a live check with Cloudflare's test keys passed.
+
+## PART 8.2 — login lockout
+10 wrong passwords for one email in 15 minutes → that email waits 5 minutes (429 account_locked + Retry-After; the login page says how
+long), the owner gets one email ("someone is trying to sign in", EN/KA) per lock; unknown emails behave the same; a password reset clears
+it; old rows purged daily. Migration 034 (undo script). Settings LOGIN_LOCK_* and the Turnstile/withdrawal settings added to .env.example.
+Tests: login-lockout.test.js (4).

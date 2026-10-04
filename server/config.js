@@ -156,6 +156,11 @@ const config = {
   // Development only: let the link checker reach addresses on this computer (the tests' fake web pages). Refused in production.
   LINK_CHECK_ALLOW_PRIVATE: env.LINK_CHECK_ALLOW_PRIVATE === '1',
 
+  // Per-account login lockout (server/loginGuard.js): this many wrong passwords for one email within the window, and it waits this long.
+  LOGIN_LOCK_FAILURES: int(env.LOGIN_LOCK_FAILURES, 10),
+  LOGIN_LOCK_WINDOW_MINUTES: int(env.LOGIN_LOCK_WINDOW_MINUTES, 15),
+  LOGIN_LOCK_MINUTES: int(env.LOGIN_LOCK_MINUTES, 5),
+
   // Cloudflare Turnstile, the "are you a person?" check on sign-up, login, forgot password, contact, the waiting list and mentor requests
   // (server/turnstile.js). Both keys come from the Cloudflare dashboard (Turnstile -> the site); with either one empty the check is off.
   TURNSTILE_SITE_KEY: (env.TURNSTILE_SITE_KEY || '').trim(),

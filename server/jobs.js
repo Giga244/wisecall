@@ -144,6 +144,7 @@ async function ratingsHousekeeping() {
 async function accountHousekeeping() {
   const n = await require('./account').deletionSweep();
   if (n) console.log(`[jobs] looked at ${n} account(s) due for deletion`);
+  await require('./loginGuard').purgeOld(); // (wrong-password counts and lockouts older than a day)
 }
 
 async function safetyHousekeeping() {

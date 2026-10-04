@@ -171,3 +171,10 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   the Content-Security-Policy allows challenges.cloudflare.com (script + frame) only while the check is on. A token is used once; the
   form gets a fresh check after every answer.
 - Checked with Cloudflare's public always-pass test keys against a local server (real widget, real siteverify): sign-up works.
+
+## PART 8.2 — per-account login lockout
+- Counted per EMAIL, also for addresses with no account, so "locked" never tells an attacker which emails are registered; only an
+  account's real owner is emailed. Emails are stored only as a keyed hash (HMAC with SESSION_SECRET) and deleted after a day.
+- During the 5 minutes even the right password waits (otherwise the lock would not slow guessing). This lets someone delay a known
+  account by 5 minutes at a time; accepted, because a password reset ends the wait at once and the owner is told by email.
+- After the wait, every try still needs the Turnstile check (when it is on); counting starts again from zero.

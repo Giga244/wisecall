@@ -27,6 +27,12 @@ const S = {
       intro: 'Use this code to finish setting up your account:', expiry: 'The code expires in 15 minutes.',
       footer: "If you didn't create a Wisecall account, you can safely ignore this email."
     },
+    loginAttempts: {
+      subject: 'Someone is trying to sign in to your Wisecall account', heading: 'Several wrong passwords',
+      intro: 'Your Wisecall password was entered wrongly {count} times in {window} minutes, so signing in to your account is paused for {minutes} minutes.',
+      after: 'If it was you, wait a few minutes and try again, or choose a new password. If it was not you, nobody got in: your password was not accepted. To be safer, choose a new password you use nowhere else, and turn on two-step verification in Settings.',
+      button: 'Choose a new password'
+    },
     reset: {
       subject: 'Reset your Wisecall password', heading: 'Reset your password',
       intro: 'Someone (hopefully you) asked to reset your password. Choose a new one with the button below. The link expires in 1 hour.',
@@ -211,6 +217,12 @@ const S = {
       subject: 'შენი Wisecall-ის დადასტურების კოდი', heading: 'დაადასტურე ელფოსტა',
       intro: 'გამოიყენე ეს კოდი ანგარიშის შექმნის დასასრულებლად:', expiry: 'კოდი მოქმედია 15 წუთის განმავლობაში.',
       footer: 'თუ Wisecall-ზე ანგარიში შენ არ შეგიქმნია, უბრალოდ უგულებელყავი ეს წერილი.'
+    },
+    loginAttempts: {
+      subject: 'ვიღაც ცდილობს შენს Wisecall-ის ანგარიშში შესვლას', heading: 'რამდენიმე არასწორი პაროლი',
+      intro: 'შენი Wisecall-ის პაროლი {window} წუთში {count}-ჯერ შეიყვანეს არასწორად, ამიტომ ანგარიშში შესვლა {minutes} წუთით შეჩერებულია.',
+      after: 'თუ ეს შენ იყავი, რამდენიმე წუთში სცადე თავიდან ან აირჩიე ახალი პაროლი. თუ შენ არ ყოფილხარ, ანგარიშში ვერავინ შევიდა: პაროლი არ იქნა მიღებული. მეტი უსაფრთხოებისთვის აირჩიე ახალი პაროლი, რომელსაც სხვაგან არ იყენებ, და ჩართე ორსაფეხურიანი დადასტურება პარამეტრებში.',
+      button: 'აირჩიე ახალი პაროლი'
     },
     reset: {
       subject: 'Wisecall-ის პაროლის აღდგენა', heading: 'პაროლის აღდგენა',
@@ -397,6 +409,10 @@ const BUILDERS = {
   verify: (s, d) => ({
     heading: s.verify.heading,
     blocks: [{ p: s.verify.intro }, { code: d.code }, { small: s.verify.expiry }, { small: s.verify.footer }]
+  }),
+  loginAttempts: (s, d) => ({
+    heading: s.loginAttempts.heading,
+    blocks: [{ p: fill(s.loginAttempts.intro, d), raw: true }, { p: s.loginAttempts.after }, { button: s.loginAttempts.button, url: d.url }]
   }),
   reset: (s, d) => ({
     heading: s.reset.heading,

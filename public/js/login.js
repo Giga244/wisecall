@@ -22,7 +22,9 @@
       if (r.twoFactorRequired) { showCodeStep(); return; }
       window.location.href = redirect;
     } catch (e) {
-      errorEl.textContent = WisecallTurnstile.errorText(e.code) || t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error');
+      const minutes = String(Math.max(1, Math.ceil(((e.data && e.data.retryAfter) || 300) / 60)));
+      errorEl.textContent = WisecallTurnstile.errorText(e.code)
+        || (e.code === 'account_locked' ? t('auth.error.locked').replace('{minutes}', minutes) : t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error'));
       WisecallTurnstile.reset(form);
       button.disabled = false;
     }

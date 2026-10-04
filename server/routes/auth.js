@@ -93,10 +93,20 @@ router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body || {};
   if (!isStr(email) || !isStr(password) || !email || !password) return res.status(400).json({ error: 'missing_fields' });
 
+  // Too many wrong passwords for this email lately: wait, whatever the password (server/loginGuard.js).
+  const guard = require('../loginGuard');
+  const locked = (seconds) => { res.set('Retry-After', String(seconds)); return res.status(429).json({ error: 'account_locked', retryAfter: seconds }); };
+  const waiting = await guard.waitFor(email);
+  if (waiting) return locked(waiting);
+
   const user = await getUserByEmail(email.trim());
   // (Someone who only ever signed in with Google has no password: the comparison still runs, and fails.)
   const ok = await bcrypt.compare(password, user && user.passwordHash ? user.passwordHash : DUMMY_HASH) && Boolean(user && user.passwordHash);
-  if (!user || !ok) return res.status(401).json({ error: 'invalid_credentials' });
+  if (!user || !ok) {
+    const wait = await guard.failed(email, user);
+    return wait ? locked(wait) : res.status(401).json({ error: 'invalid_credentials' });
+  }
+  await guard.clear(email);
 
   // Two-step verification turned on (optional for everyone; admins have their own required step after signing in): the code comes
   // next, and only then is there a session.
@@ -202,6 +212,7 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
   });
   // Whoever else was signed in (a stolen cookie, a forgotten device) is signed out now (docs/AUDIT.md #3).
   await endAllSessions(user.id);
+  await require('../loginGuard').clear(user.email); // (a new password ends a lockout at once)
   res.json({ ok: true });
 }));
 
