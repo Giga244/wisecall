@@ -63,3 +63,5 @@ The earnings note (fixed before), informal შენ in every non-legal text, �
 payout texts, help 05/07), no case endings hyphenated onto names, „MB“ everywhere, the review's KA-1..KA-5 rewrites, and Georgian month
 names in every date (formatDate). tests/i18n.test.js checks keys and placeholders (site, admin, admin 2FA), the informal form, the agreed
 words and the dates. docs/KA-REVIEW.md regenerated for the native speaker.
+Also fixed: right after an ID check the page said "your name doesn't match" until the comparison ran a moment later (now "checking…",
+refreshed until decided). Tests: unit 685, cloud 34, e2e 145 passed / 5 skipped.
