@@ -1068,3 +1068,8 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
   p, li, blockquote, .answer-card, .answer-full-a { orphans: 3; widows: 3; break-inside: avoid; }
   img, svg { max-width: 100% !important; }
 }
+
+/* Reading progress on help articles (public/js/reading-progress.js) */
+.reading-progress { position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 60; pointer-events: none; }
+.reading-progress span { display: block; height: 100%; background: var(--accent-strong); transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.1s linear; }
+@media (prefers-reduced-motion: reduce) { .reading-progress span { transition: none; } }

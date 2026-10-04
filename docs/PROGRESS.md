@@ -175,3 +175,8 @@ screen readers), EN+KA. Checked in a browser: desktop, phone, Georgian dark them
 One @media print block in style.css: no header, footer, menus, buttons, dialogs or "back to top"; black text on white; full width; links
 in the content show their address; headings kept with their text. Receipts and statements are PDFs already. Checked by rendering Terms,
 a help article and the FAQ as print in a browser.
+
+## PART 9.6 — reading progress
+public/js/reading-progress.js on help article pages only (and any future `article.blog-article`): a 4px bar at the top showing how far
+through the article the reader is; not on the help list; hidden from screen readers; no animation with reduced motion. Checked in a
+browser (0 at the top, half at the middle of the article, full at its end).
