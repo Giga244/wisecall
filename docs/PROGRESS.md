@@ -76,3 +76,10 @@ method behind server/payoutMethods ('manual'). FAQ, home and help 07 updated. Mi
 (6), e2e/withdrawals.spec.js (2).
 Tests: unit 691, cloud 34, e2e 143 passed / 5 skipped + 2 fixed and rerun (an ambiguous locator in the old payout test; the known
 flaky dev-setup recovery-code test passed on rerun).
+
+## PART 6 — XSS check
+Every place people's text is shown was reviewed (page scripts, server-rendered pages, JSON-LD, meta tags, emails, CSV, PDFs, admin)
+and is escaped or set as text; links only http(s); CSP unchanged (no inline scripts). e2e/xss.spec.js stores both payloads in every
+text field (names, profile, application, question, answer, review, note, reply, follow-up, support, report, dispute, contact form) and
+opens every page and admin tab: nothing runs, nothing is injected, the text shows as text. Nothing needed fixing.
+docs/SECURITY-XSS.md lists where and how.
