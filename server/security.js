@@ -1,11 +1,12 @@
 // Security headers, CSRF protection and request logging.
 const config = require('./config');
 
-// Scripts may only come from our own files (no inline scripts, no eval). Styles allow inline
+// Scripts may only come from our own files (no inline scripts, no eval), and Cloudflare's "are you a person?" check when it is on. Styles allow inline
 // attributes. Fonts are served from this site. Nothing else can load or embed anything.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  "script-src 'self'" + (config.TURNSTILE_ENABLED ? ' https://challenges.cloudflare.com' : ''),
+  ...(config.TURNSTILE_ENABLED ? ['frame-src https://challenges.cloudflare.com'] : []),
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
   "manifest-src 'self'",

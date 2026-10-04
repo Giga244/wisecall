@@ -4,6 +4,7 @@
   const errorEl = document.getElementById('formError');
   const resultEl = document.getElementById('result');
 
+  WisecallTurnstile.watch(form);
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorEl.textContent = '';
@@ -12,7 +13,7 @@
     try {
       const data = await WisecallAPI.apiFetch('/auth/forgot-password', {
         method: 'POST',
-        body: { email: document.getElementById('email').value.trim() }
+        body: { email: document.getElementById('email').value.trim(), turnstileToken: await WisecallTurnstile.token(form) }
       });
       form.style.display = 'none';
       resultEl.style.display = 'block';
@@ -29,7 +30,8 @@
         resultEl.innerHTML = `<p class="muted">${WisecallI18n.t('auth.forgot.sent')}</p>`;
       }
     } catch (e) {
-      errorEl.textContent = WisecallI18n.t('toast.error');
+      errorEl.textContent = WisecallTurnstile.errorText(e.code) || WisecallI18n.t('toast.error');
+      WisecallTurnstile.reset(form);
       submitBtn.disabled = false;
     }
   });

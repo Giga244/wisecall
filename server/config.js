@@ -156,6 +156,13 @@ const config = {
   // Development only: let the link checker reach addresses on this computer (the tests' fake web pages). Refused in production.
   LINK_CHECK_ALLOW_PRIVATE: env.LINK_CHECK_ALLOW_PRIVATE === '1',
 
+  // Cloudflare Turnstile, the "are you a person?" check on sign-up, login, forgot password, contact, the waiting list and mentor requests
+  // (server/turnstile.js). Both keys come from the Cloudflare dashboard (Turnstile -> the site); with either one empty the check is off.
+  TURNSTILE_SITE_KEY: (env.TURNSTILE_SITE_KEY || '').trim(),
+  TURNSTILE_SECRET_KEY: (env.TURNSTILE_SECRET_KEY || '').trim(),
+  // Only outside production: tests point the check at a fake server. Production always asks Cloudflare itself.
+  TURNSTILE_VERIFY_URL: (IS_PROD ? '' : (env.TURNSTILE_VERIFY_URL || '').trim()) || 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+
   // Public social links shown in the footer. An empty one is not shown; a value must be an https address.
   SOCIAL_URLS: Object.fromEntries(
     ['facebook', 'instagram', 'linkedin', 'x', 'tiktok', 'youtube']
@@ -195,6 +202,7 @@ config.ADMIN_2FA_REQUIRED = config.ADMIN_2FA !== 'off';
 config.AUTO_APPROVE = config.AUTO_APPROVE_SETTING === 'on';
 config.AI_REVIEW_ENABLED = Boolean(config.ANTHROPIC_API_KEY);
 config.GOOGLE_ENABLED = Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET);
+config.TURNSTILE_ENABLED = Boolean(config.TURNSTILE_SITE_KEY && config.TURNSTILE_SECRET_KEY);
 config.GOOGLE_CALLBACK_URL = `${config.PUBLIC_URL}/api/auth/google/callback`; // must be listed in Google Cloud Console
 
 config.EMAIL_ENABLED = (() => {

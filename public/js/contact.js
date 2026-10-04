@@ -30,6 +30,7 @@
     document.getElementById('email').value = user.email || '';
   }
 
+  WisecallTurnstile.watch(form);
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorEl.textContent = '';
@@ -42,7 +43,8 @@
           name: document.getElementById('name').value.trim(),
           email: document.getElementById('email').value.trim(),
           message: document.getElementById('message').value.trim(),
-          website: document.getElementById('website').value
+          website: document.getElementById('website').value,
+          turnstileToken: await WisecallTurnstile.token(form)
         }
       });
       form.style.display = 'none';
@@ -57,7 +59,8 @@
       }
     } catch (e) {
       const map = { missing_fields: 'contact.err.missing', invalid_email: 'contact.err.email', too_many_requests: 'contact.err.rate' };
-      errorEl.textContent = t(map[e.code] || 'contact.err.send');
+      errorEl.textContent = WisecallTurnstile.errorText(e.code) || t(map[e.code] || 'contact.err.send');
+      WisecallTurnstile.reset(form);
       submitBtn.disabled = false;
       submitBtn.textContent = t(submitKey);
     }

@@ -1789,5 +1789,7 @@
   "rq.board.become": "Become a mentor for this",
   "meta.find-a-mentor.title": "Find me a mentor — Wisecall",
   "meta.find-a-mentor.description": "Tell us who you need, and we will email you once when a matching mentor joins Wisecall.",
-  "rq.board.countOne": "1 person is looking for: {field}"
+  "rq.board.countOne": "1 person is looking for: {field}",
+  "human.failed": "Please complete the check that you are a person, then try again.",
+  "human.unavailable": "We could not check that you are a person just now. Please try again in a minute."
 }

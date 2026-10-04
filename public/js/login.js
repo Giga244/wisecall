@@ -5,6 +5,7 @@
   const errorEl = document.getElementById('formError');
   const t = WisecallI18n.t;
 
+  window.WisecallTurnstile.watch(form);
   const params = new URLSearchParams(location.search);
   const redirect = WisecallAPI.safeRedirect(params.get('redirect'), '/dashboard.html');
 
@@ -17,11 +18,12 @@
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
     try {
-      const r = await WisecallAPI.apiFetch('/auth/login', { method: 'POST', body: { email, password } });
+      const r = await WisecallAPI.apiFetch('/auth/login', { method: 'POST', body: { email, password, turnstileToken: await WisecallTurnstile.token(form) } });
       if (r.twoFactorRequired) { showCodeStep(); return; }
       window.location.href = redirect;
     } catch (e) {
-      errorEl.textContent = t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error');
+      errorEl.textContent = WisecallTurnstile.errorText(e.code) || t(e.code === 'invalid_credentials' ? 'auth.error.invalidCredentials' : 'toast.error');
+      WisecallTurnstile.reset(form);
       button.disabled = false;
     }
   });

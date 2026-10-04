@@ -29,6 +29,7 @@
 
   const ERR = { invalid_email: 'rq.err.email', invalid_field: 'rq.err.field', invalid_niche: 'rq.err.niche', invalid_need: 'rq.err.need', offensive: 'pa.err.offensive',
     contact_details: 'rq.err.contact', invalid_budget: 'rq.err.budget', already_requested: 'rq.err.already', too_many_requests: 'rq.err.tooMany' };
+  WisecallTurnstile.watch($('requestForm'));
   $('requestForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const err = $('rqError');
@@ -39,11 +40,12 @@
       const r = await WisecallAPI.apiFetch('/requests', { method: 'POST', body: {
         field: $('rqField').value, niche: niche.value, need: $('rqNeed').value, language: $('rqLanguage').value,
         budgetMin: $('rqMin').value ? Number($('rqMin').value) : null, budgetMax: $('rqMax').value ? Number($('rqMax').value) : null,
-        showPublic: $('rqPublic').checked, email: signedIn ? undefined : $('rqEmail').value, website: $('website').value, lang: WisecallI18n.getLang() } });
+        showPublic: $('rqPublic').checked, email: signedIn ? undefined : $('rqEmail').value, website: $('website').value, lang: WisecallI18n.getLang(), turnstileToken: await WisecallTurnstile.token(ev.target) } });
       ev.target.hidden = true;
       say(r.needsConfirmation ? 'rq.sentConfirm' : 'rq.sent');
     } catch (e) {
-      err.textContent = t(ERR[e.code] || 'toast.error');
+      err.textContent = WisecallTurnstile.errorText(e.code) || t(ERR[e.code] || 'toast.error');
+      WisecallTurnstile.reset(ev.target);
       btn.disabled = false;
     }
   });

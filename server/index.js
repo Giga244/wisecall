@@ -103,6 +103,8 @@ app.put('/api/me/payout', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
 app.post('/api/me/withdrawals', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.post(/^\/api\/answers\/(offer|decline)$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.post('/api/requests', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
+// The "are you a person?" check (Cloudflare Turnstile; off without its keys), after the rate limits.
+app.post(['/api/auth/signup', '/api/auth/login', '/api/auth/forgot-password', '/api/contact', '/api/waitlist', '/api/requests'], require('./turnstile').requireHuman);
 app.post(/^\/api\/answers\/[^/]+\/helpful$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.use('/api/me/delete', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 // The Inbox: sending (a follow-up, a support message), starting support conversations, reporting, unsubscribing.
@@ -151,6 +153,8 @@ app.get('/api/config', async (req, res) => {
     idChecksOpen: config.ID_CHECKS_ENABLED,
     // Whether the "Continue with Google" button is shown (both Google keys are set).
     googleEnabled: config.GOOGLE_ENABLED,
+    // The public key of the "are you a person?" check, when it is on.
+    turnstileSiteKey: config.TURNSTILE_ENABLED ? config.TURNSTILE_SITE_KEY : null,
     priceMin: config.PRICE_MIN,
     priceMax: config.PRICE_MAX,
     payoutHoldDays: require('./ledger').holdDays(),

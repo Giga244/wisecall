@@ -418,6 +418,9 @@ form input, form textarea, form select {
 form input:focus, form textarea:focus, form select:focus { border-color: var(--accent); }
 form .hint { display: block; font-weight: 500; color: var(--ink-soft); font-size: 0.76rem; margin-top: 4px; }
 .form-error { color: var(--red-strong); font-size: 0.85rem; margin: -6px 0 14px; min-height: 1em; font-weight: 600; }
+/* The "are you a person?" check (only when it is on) */
+.turnstile-box { margin: 2px 0 14px; }
+.turnstile-box:empty { display: none; }
 /* "Find me a mentor": the optional budget, from / to side by side */
 .rq-budget { border: 0; padding: 0; margin: 0 0 4px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; min-width: 0; }
 .rq-budget legend { grid-column: 1 / -1; padding: 0; font-size: 0.85rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 6px; }

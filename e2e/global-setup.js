@@ -61,6 +61,7 @@ module.exports = async () => {
       EMAIL_PROVIDER: 'log', EMAIL_LOG_FILE: path.join(TMP, 'mail.jsonl'), EMAIL_FROM: 'Wisecall <e2e@wisecall.example>', RESEND_API_KEY: '',
       ADMIN_EMAILS: 'e2e-admin@example.com', ADMIN_EMAIL: '', SUPPORT_EMAIL: 'support@wisecall.example',
       ADMIN_2FA: 'off', // (the specs that are not about it sign the admin in with a password; e2e/two-factor.spec.js starts its own server with it on)
+      TURNSTILE_SITE_KEY: '', TURNSTILE_SECRET_KEY: '',
       LAUNCH_MODE: 'live', SWEEP_INTERVAL_SECONDS: '1', RATE_LIMIT_MULTIPLIER: '100', BOOKINGS_PER_HOUR: '0', MAX_OPEN_UNPAID_BOOKINGS: '0',
       GOOGLE_CLIENT_ID: 'fake-google-client-id.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'fake-google-client-secret', GOOGLE_ISSUER: 'http://localhost:' + GOOGLE_PORT,
       BOG_CLIENT_ID: '', BOG_CLIENT_SECRET: '', TBC_API_KEY: '', TBC_CLIENT_ID: '', TBC_CLIENT_SECRET: '',

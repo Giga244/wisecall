@@ -108,3 +108,9 @@ by email; one active request per email and field; ONE email when a matching ment
 /requests from 5 requests; admin tab "Mentor requests" (by field and week, fields with no mentor + copyable outreach text, every request,
 CSV, merge two spellings). Privacy drafts, help article 15 (EN+KA), LEGAL-REVIEW 51–52. Migration 033 (undo script).
 Tests: mentor-requests.test.js (6), e2e mentor-requests (2).
+
+## PART 8.1 — Turnstile
+Sign-up, login, forgot password, contact, the waiting list and "find me a mentor" need a Turnstile token when TURNSTILE_SITE_KEY and
+TURNSTILE_SECRET_KEY are set (off without them: development and tests). Server-side check (server/turnstile.js), 400 for a refused token,
+503 when Cloudflare is unreachable; CSP allows Cloudflare only when on; widget loads on first use of a form (public/js/turnstile.js), EN+KA
+errors. Tests: turnstile.test.js (5, fake Cloudflare); a live check with Cloudflare's test keys passed.

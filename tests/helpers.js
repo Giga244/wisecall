@@ -40,6 +40,7 @@ async function startServer(port, extraEnv = {}) {
     AUTO_APPROVE: 'off', RDAP_BASE_URL: 'http://127.0.0.1:9/rdap/', LINK_CHECK_ALLOW_PRIVATE: '',
     PROBATION_ANSWERS: '0', // the probation tests turn it on; every other test answers straight away
     LAUNCH_MODE: 'live', // (left empty the site starts in prelaunch until a mentor is listed; the launch tests cover that)
+    TURNSTILE_SITE_KEY: '', TURNSTILE_SECRET_KEY: '', TURNSTILE_VERIFY_URL: '', // (the "are you a person?" check: tests/turnstile.test.js turns it on)
     BOOKINGS_PER_HOUR: '0', MAX_OPEN_UNPAID_BOOKINGS: '0', // (tests/bookings-limits.test.js turns them on)
     ...extraEnv
   };

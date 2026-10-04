@@ -29,6 +29,8 @@
     root.querySelectorAll('.waitlist-form').forEach((form) => {
       if (form.dataset.wired) return;
       form.dataset.wired = '1';
+      const human = window.WisecallTurnstile;
+      if (human) human.watch(form);
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         const error = form.querySelector('.waitlist-error');
@@ -38,10 +40,11 @@
         const button = form.querySelector('button');
         button.disabled = true;
         try {
-          await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang() } });
+          await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang(), turnstileToken: human ? await human.token(form) : undefined } });
           form.outerHTML = `<p class="waitlist-done" role="status">${esc(t('wait.done'))}</p>`;
         } catch (e) {
-          error.textContent = t(e.code === 'invalid_email' ? 'wait.error' : 'toast.error');
+          error.textContent = (human && human.errorText(e.code)) || t(e.code === 'invalid_email' ? 'wait.error' : 'toast.error');
+          if (human) human.reset(form);
           button.disabled = false;
         }
       });

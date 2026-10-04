@@ -72,6 +72,7 @@
     if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
   }
 
+  WisecallTurnstile.watch(form);
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorEl.textContent = '';
@@ -86,7 +87,8 @@
     try {
       const data = await WisecallAPI.apiFetch('/auth/signup', {
         method: 'POST',
-        body: { name, email, password, adult: true, language: WisecallI18n.getLang(), username: usernameInput.value.trim().toLowerCase() || undefined }
+        body: { name, email, password, adult: true, language: WisecallI18n.getLang(), username: usernameInput.value.trim().toLowerCase() || undefined,
+          turnstileToken: await WisecallTurnstile.token(form) }
       });
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}`;
       if (data.devMode && data.devVerifyCode) verifyUrl += `&devCode=${data.devVerifyCode}`;
@@ -94,7 +96,8 @@
       if (!data.emailSent && !data.devMode) verifyUrl += '&emailFailed=1';
       window.location.href = verifyUrl;
     } catch (e) {
-      fail(t(ERROR_KEYS[e.code] || 'toast.error'), FIELD_FOR[e.code]);
+      fail(WisecallTurnstile.errorText(e.code) || t(ERROR_KEYS[e.code] || 'toast.error'), FIELD_FOR[e.code]);
+      WisecallTurnstile.reset(form);
       button.disabled = false;
     }
   });

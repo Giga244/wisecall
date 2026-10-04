@@ -32,6 +32,12 @@ function warnings() {
   if (!config.SUPPORT_EMAIL) {
     list.push('SUPPORT_EMAIL is not set: no contact address appears in the footer, the Terms, the Privacy Policy or the emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@yourdomain.ge before launch (for local testing, support@wisecall.test).');
   }
+  // The "are you a person?" check (Cloudflare Turnstile) needs both of its keys.
+  if (Boolean(config.TURNSTILE_SITE_KEY) !== Boolean(config.TURNSTILE_SECRET_KEY)) {
+    list.push('Only one of TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY is set: the "are you a person?" check on sign-up, login and the public forms is OFF until both are set.');
+  } else if (!config.TURNSTILE_ENABLED && config.IS_PROD) {
+    list.push('TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are not set: sign-up, login and the public forms have no "are you a person?" check (only rate limits). Add both from Cloudflare (Turnstile).');
+  }
   // Before launch the site can run without the bank and the ID-check provider: say plainly what is closed, and why it does not open by itself.
   if (!config.PAYMENTS_ENABLED) list.push('PAYMENTS ARE OFF (no bank keys): bookings and payments are closed and the site stays in prelaunch. Set PAYMENT_PROVIDER (bog or tbc) and the bank keys, then LAUNCH_MODE=live (or empty), before you open it.');
   if (!config.ID_CHECKS_ENABLED) list.push('ID CHECKS ARE OFF (no Didit keys): mentors see "ID checks open soon" and cannot pass the ID step yet. Set KYC_PROVIDER=didit and the Didit keys before you approve mentors.');

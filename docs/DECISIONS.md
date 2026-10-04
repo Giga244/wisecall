@@ -161,3 +161,13 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   only when its author ticked "show anonymously". The need may not contain contact details (it may be shown).
 - Requests end after 60 days (with the background jobs); deleting an account deletes its requests (also those sent with the same email
   before signing up). Admin outreach text uses "[your name]", not the founder's name.
+
+## PART 8.1 — the "are you a person?" check (Cloudflare Turnstile)
+- On only when BOTH TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are set (one alone = off, with a startup warning), so saving one key in
+  Render before the other cannot lock everybody out. Production with no keys also gets a warning (rate limits only).
+- If Cloudflare cannot be reached, or refuses our secret key, the form is refused with "try again in a minute" (503), never let through:
+  a bot must not get in just because the check is down. The rate limits still apply as before.
+- Cloudflare's script is loaded only when somebody starts filling in one of the six forms (not for every visitor of the home page), and
+  the Content-Security-Policy allows challenges.cloudflare.com (script + frame) only while the check is on. A token is used once; the
+  form gets a fresh check after every answer.
+- Checked with Cloudflare's public always-pass test keys against a local server (real widget, real siteverify): sign-up works.
