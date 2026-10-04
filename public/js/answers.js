@@ -6,6 +6,8 @@
   const t = WisecallI18n.t;
   const btn = document.getElementById('helpfulBtn');
   if (!btn) return;
+  btn.insertAdjacentHTML('afterend', ' ' + WisecallCopy.button(location.origin + location.pathname));
+  WisecallCopy.wire(btn.parentNode);
   const KEY = 'wisecall_visitor';
   let visitor = null;
   try { visitor = localStorage.getItem(KEY); } catch (e) { /* storage unavailable */ }

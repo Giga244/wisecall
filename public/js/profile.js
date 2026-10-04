@@ -156,6 +156,7 @@
               </div>
             </div>
           </div>
+          ${isMentor && expert.username ? `<p class="profile-share">${WisecallCopy.button(location.origin + location.pathname)}</p>` : ''}
           ${isSelf ? `<p class="profile-self small"><a class="btn btn-outline btn-sm" href="/settings.html?tab=profile">${t('profile.edit')}</a> ${expert.visibility === 'contacts' ? `<span class="muted">${t('profile.visibleToContacts')}</span>` : ''}</p>` : ''}
           ${detailsHtml()}
           ${isMentor ? `<dl class="profile-stats">
@@ -199,6 +200,7 @@
     mountAsk();
     updateBar();
     WisecallReport.wire(page);
+    WisecallCopy.wire(page);
     loadReviews();
     loadPublicAnswers();
     if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState;

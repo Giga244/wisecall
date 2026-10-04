@@ -1792,5 +1792,10 @@
   "rq.board.countOne": "1 person is looking for: {field}",
   "human.failed": "Please complete the check that you are a person, then try again.",
   "human.unavailable": "We could not check that you are a person just now. Please try again in a minute.",
-  "auth.error.locked": "Too many wrong passwords for this account. Please wait {minutes} minutes and try again, or reset your password."
+  "auth.error.locked": "Too many wrong passwords for this account. Please wait {minutes} minutes and try again, or reset your password.",
+  "copy.link": "Copy link",
+  "copy.done": "Copied!",
+  "copy.failed": "Could not copy",
+  "share.title": "Your profile link",
+  "share.body": "Share it where people who need your experience will see it: they can ask you a question straight from your profile."
 }

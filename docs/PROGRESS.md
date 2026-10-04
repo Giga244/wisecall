@@ -151,3 +151,9 @@ server/attribution.js: on the first page view with utm_source/medium/campaign/co
 Saved on sign-up (email and Google), on every question and on a mentor application (migration 035, undo script); Admin → Overview
 "Where people come from" shows sign-ups, mentor applications and first paid questions per source and campaign (EN+KA). Privacy Policy and
 Cookie Notice drafts updated (also for Turnstile, login lockout and the Helpful id); LEGAL-REVIEW 53–54. Tests: attribution.test.js (5).
+
+## PART 9.2 — Copy link
+public/js/copy-link.js (Clipboard API with the older fallback; the button says "Copied!" for two seconds, announced to screen readers):
+on a mentor's profile (the address without its ?query), on a public answer (next to Helpful), and on the mentor's dashboard a new "Your
+profile link" card (only for a listed mentor), EN+KA. There was no share card yet; this card is it. Tests: e2e/ux-extras.spec.js (2,
+reading the clipboard).

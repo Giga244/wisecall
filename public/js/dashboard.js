@@ -232,6 +232,22 @@
   const conversationLink = (b) => (['paid', 'answered', 'refund_pending', 'refunded'].includes(b.status)
     ? `<p class="booking-conversation"><a class="plain-link" href="/inbox.html?booking=${encodeURIComponent(b.id)}">${t('dash.conversation')} →</a></p>` : '');
 
+  // ---- A listed mentor's profile link, to share -------------------------------------------------------------------------
+  function drawShareCard() {
+    const box = document.getElementById('shareCard');
+    const listed = isMentor && user.isListedMentor && user.username;
+    if (!box || !listed) return;
+    const url = `${location.origin}${WisecallI18n.getLang() === 'ka' ? '/ka' : ''}/u/${encodeURIComponent(user.username)}`;
+    box.className = 'share-card';
+    box.innerHTML = `<div><h2 class="share-card-title">${t('share.title')}</h2><p class="muted small">${t('share.body')}</p>
+      <p class="share-url"><a class="plain-link" href="${escapeHtml(url)}">${escapeHtml(url.replace(/^https?:\/\//, ''))}</a></p></div>
+      ${WisecallCopy.button(url)}`;
+    box.hidden = false;
+    WisecallCopy.wire(box);
+  }
+  drawShareCard();
+  document.addEventListener('wisecall:lang-changed', drawShareCard);
+
   // ---- Questions for me (mentors) -----------------------------------------------------------------------------------
   function receivedEmpty() {
     const listed = user.verificationStatus === 'verified' && user.hasPayoutDetails;
