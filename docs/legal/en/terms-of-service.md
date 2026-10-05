@@ -166,6 +166,14 @@ These Terms are available in Georgian and English. If they differ, the [LAWYER: 
   the planned time, or if Wisecall ends it for a safety reason. **If you do not attend, the ticket is not refunded.** If a session that
   took place was clearly not as described, you can report it within the dispute period and Wisecall decides on a full, partial or no
   refund.
+- **Waiting list.** When a session is sold out you can join its waiting list. A seat that frees up is offered to the first person
+  waiting and kept for them for 2 hours (or until the start); if they do not buy it, it is offered to the next person.
+- **Gifts.** You can buy a ticket for another person by giving their email address, which you confirm you may share with us for this
+  purpose. They claim the seat with a one-time link and a Wisecall account. Until the gift is claimed you may cancel it under the rules
+  above; after that the person who holds it may. Any refund goes back to the card that paid.
+- **Ratings and discount codes.** If you attended, you may rate the session; the rules for reviews apply. You may also receive a
+  one-time code for a discount on a personal question to the same Mentor. A code is personal, works once, cannot be exchanged for money
+  and expires on the date shown; if the question it was used for is refunded or never paid, the code can be used again until it expires.
 - **Not professional advice.** Sessions in medicine, psychology, law, finance and other regulated fields are educational talks and Q&A,
   not a consultation, diagnosis or therapy. If you are in danger or in crisis, call 112.
 - **No recording.** Wisecall does not record live sessions. Do not record, copy or share a session or its participants without their consent.

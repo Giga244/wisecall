@@ -139,3 +139,7 @@ Georgian law applies. Disputes go to the courts of Tbilisi. [LAWYER: arbitration
 - You see participants' first names (or "Guest N") and how many joined, never their emails. Do not record the session, ask participants
   for contact details or offer services outside Wisecall.
 - The video service is Daily.co; it processes the call for Wisecall. Wisecall does not record sessions.
+- **Followers, ratings and codes.** Users may follow you; Wisecall emails your followers when you publish a session (at most once a week).
+  Participants who attended may rate the session and receive a one-time code for up to 15 % off a personal question to you; when a code
+  is used, your share is calculated on the price actually paid. You may send attendees a short summary with up to 5 links; the rules
+  for content apply.

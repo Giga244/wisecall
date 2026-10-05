@@ -221,3 +221,26 @@ Where the brief was unclear or a choice carried risk, the safest option was take
 - Questions in the room are anonymous to everybody (also to the mentor); checkout questions are shown first. Participants appear as
   their first name or "Guest N"; the mentor never gets emails.
 - The fake video room follows the mock-* pages (404 in production); only it may be framed, and only by this site.
+
+## Live sessions, Milestone 2 (waiting list, follows, ratings, summaries, codes, analytics, gifts, share image)
+- Waiting list: a freed seat is "kept" (an offer row) for the first person waiting, 2 hours or until the start; kept seats count as taken
+  for everybody else (sessions.TAKEN_SQL = sold + kept). People still waiting also come before newcomers: a newcomer can buy only a seat
+  nobody on the list waits for. The hand-off runs right after a cancellation and in every sweep; an offer that ran out passes to the next.
+- Follows: at most one email per mentor per follower per 7 days, sent when a session becomes public (once per session). The unfollow
+  link is signed (HMAC of follower + mentor) and opens /unfollow.html, which POSTs the token: a mail scanner opening the link changes
+  nothing by itself (the same pattern as the email-settings unsubscribe).
+- Ratings: one per ticket, by the person who attended with it (in the room >= 60 s, measured by heartbeats), only after a normal end,
+  within 14 days; the answer-rating text rules (no rude words, no contact details); shown without names; an admin can hide one (logged).
+- Summary: only for a normal end; up to 5 http(s) links; sent to the attendees' Inbox (sent again, marked "updated", when edited).
+- Discount code: 15 % off a personal question to the same mentor, 30 days, one per attendee per session, bound to that person (useless to
+  anyone else). The question's price, fee and mentor share are all on the discounted amount (the mentor gives the discount). The code is
+  taken by the question when it is created (one atomic UPDATE: two questions cannot both take it); spent once the question is paid; a
+  question that expired unpaid or was refunded gives it back (until the code expires).
+- Gifts: buyer_id = who paid (receipts, refunds to that card); holder_id = who attends (room, reminders, rating, report a problem). An
+  unclaimed gift has no holder. The claim link carries a random token; only its SHA-256 is stored, cleared once claimed; it works once,
+  needs a verified account, and until the session ends. Cancelling: the buyer until the gift is claimed, then its holder. The gift
+  address is someone else's: deleted 30 days after the session (with the room data) and when its owner deletes their account.
+- Share image: 1080 x 1080 PNG drawn on the server (sharp, from SVG; no third party), public sessions only, cached 5 minutes. Georgian text
+  needs a font with Georgian letters on the server (DejaVu Sans is in most Linux images).
+- Analytics: per session and in total from the existing tables (no tracking added). "Came" = paid tickets whose holder was in the room
+  for at least a minute.
