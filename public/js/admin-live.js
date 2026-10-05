@@ -29,7 +29,8 @@
       <span><a class="plain-link" href="/live/${encodeURIComponent(s.slug)}" target="_blank" rel="noopener">${esc(s.title)}</a><br>
         <span class="muted small">${esc(s.mentor.name)} · ${esc(fill('live.dash.sold', { sold: s.sold, max: s.maxSeats }))}${s.openReports ? ` · <strong>${esc(fill('admin.live.reports', { n: s.openReports }))}</strong>` : ''}${s.cancelReason ? ` · ${esc(t('admin.live.cancel.' + s.cancelReason))}` : ''}</span></span>
       <span class="lv-row-end"><span class="badge ${s.status === 'live' ? 'badge-paid' : 'badge-muted'}">${esc(t('live.status.' + s.status))}</span>
-      ${active ? `<button type="button" class="btn btn-danger btn-sm lv-end">${esc(t('admin.live.end'))}</button>` : ''}</span></li>`;
+      ${active ? `<button type="button" class="btn btn-danger btn-sm lv-end">${esc(t('admin.live.end'))}</button>` : ''}
+      ${s.replayReady ? `<button type="button" class="btn btn-outline btn-sm lv-del-replay">${esc(t('live.replay.delete'))}</button>` : ''}</span></li>`;
   }
 
   async function render(container) {
@@ -98,6 +99,11 @@
       const id = b.closest('li').dataset.id;
       if (!(await WisecallDialog.confirm({ message: t('admin.live.endConfirm'), confirmText: t('admin.live.end'), danger: true }))) return;
       post(`/admin/live/${id}/end`, { reason: t('admin.live.endReason') }, 'admin.live.ended');
+    }));
+    container.querySelectorAll('.lv-del-replay').forEach((b) => b.addEventListener('click', async () => {
+      const id = b.closest('li').dataset.id;
+      if (!(await WisecallDialog.confirm({ message: t('live.replay.deleteConfirm'), confirmText: t('live.replay.delete'), danger: true }))) return;
+      post(`/admin/live/${id}/replay/delete`, { reason: t('admin.live.replayReason') }, 'live.replay.deleted');
     }));
     container.querySelectorAll('.lh-hide').forEach((b) => b.addEventListener('click', () => {
       const li = b.closest('li');

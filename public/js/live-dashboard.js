@@ -47,8 +47,10 @@
         <div class="card-role small">${esc(when(s.startsAt))} · ${esc(s.mentorName)}${s.timeChanged ? ` · <strong>${esc(t('live.dash.timeChanged'))}</strong>` : ''}</div>
       </div>${badge(tk.status === 'paid' ? s.status : tk.status, tk.status === 'paid' ? 'live.status.' + s.status : 'live.ticket.' + tk.status)}</div>
       ${giftLine(tk)}
+      ${tk.series ? `<p class="small">${esc(t('live.series.partOf'))} <a class="plain-link" href="/live/series/${encodeURIComponent(tk.series.slug)}">${esc(tk.series.title)}</a></p>` : ''}
       <p class="live-ticket-actions">
         ${tk.canJoin ? `<a class="btn btn-primary btn-sm" href="/live/${encodeURIComponent(s.slug)}/room">${esc(t('live.join'))}</a>` : ''}
+        ${tk.canWatchReplay ? `<a class="btn btn-primary btn-sm" href="/live/${encodeURIComponent(s.slug)}/replay">${esc(t('live.replay.watch'))}</a>` : ''}
         ${tk.attends && tk.status === 'paid' && ['published', 'live'].includes(s.status) ? `<a class="btn btn-outline btn-sm" href="/api/live/tickets/${encodeURIComponent(tk.id)}/calendar.ics">${esc(t('live.addCalendar'))}</a>` : ''}
         ${tk.canCancel ? `<button type="button" class="btn btn-outline btn-sm lt-cancel" data-price="${tk.price}">${esc(t('live.dash.cancelTicket'))}</button>` : ''}
         ${tk.status === 'refunded' && !(tk.gift && tk.gift.fromSomeone) ? `<span class="muted small">${esc(fill('live.dash.refunded', { amount: money(tk.price) }))}</span>` : ''}
@@ -99,10 +101,27 @@
         ${['draft', 'review', 'rejected', 'published'].includes(s.status) ? `<a class="btn btn-outline btn-sm" href="/live-edit.html?id=${encodeURIComponent(s.id)}">${esc(t('live.dash.edit'))}</a>` : ''}
         <a class="btn btn-outline btn-sm" href="/live/${encodeURIComponent(s.slug)}">${esc(t(s.status === 'draft' ? 'live.edit.preview' : 'live.dash.page'))}</a>
         ${shareable ? `<a class="btn btn-outline btn-sm" href="/api/live-share/${encodeURIComponent(s.id)}.png" download="wisecall-live.png">${esc(t('live.dash.shareImage'))}</a>` : ''}
+        ${s.replayReady ? `<a class="btn btn-outline btn-sm" href="/live/${encodeURIComponent(s.slug)}/replay">${esc(t('live.replay.watch'))}</a>
+          <button type="button" class="btn btn-outline btn-sm ls-del-replay">${esc(t('live.replay.delete'))}</button>` : ''}
         ${['draft', 'review', 'rejected', 'published'].includes(s.status) ? `<button type="button" class="btn btn-outline btn-sm ls-cancel">${esc(t('live.dash.cancelSession'))}</button>` : ''}
       </p>
       ${summaryForm(s)}
     </div>`;
+  }
+
+  // The mentor's series (2-6 sessions sold together).
+  function seriesBlock(list, canHost) {
+    if (!canHost && !list.length) return '';
+    return `<section class="live-dash-series">
+      <div class="live-dash-head"><h2 class="earn-h">${esc(t('live.dash.yourSeries'))}</h2>${canHost ? `<a class="btn btn-outline btn-sm" href="/live-series-edit.html">${esc(t('live.dash.newSeries'))}</a>` : ''}</div>
+      ${list.length ? list.map((x) => `<div class="booking-card"><div class="booking-head"><div>
+          <div class="card-name">${esc(x.title)}</div>
+          <div class="card-role small">${esc(fill('live.series.label', { n: x.sessions.length }))} · ${esc(money(x.price))} · ${esc(fill('live.dash.seriesSold', { n: x.sold }))}</div>
+        </div><span class="badge ${x.status === 'published' ? 'badge-paid' : 'badge-muted'}">${esc(t('live.series.status.' + x.status))}</span></div>
+        <p class="live-ticket-actions">${x.status !== 'cancelled' ? `<a class="btn btn-outline btn-sm" href="/live-series-edit.html?id=${encodeURIComponent(x.id)}">${esc(t('live.dash.edit'))}</a>` : ''}
+          ${x.status !== 'draft' ? `<a class="btn btn-outline btn-sm" href="/live/series/${encodeURIComponent(x.slug)}">${esc(t('live.dash.page'))}</a>` : ''}</p></div>`).join('')
+        : `<p class="muted small">${esc(t('live.dash.noSeries'))}</p>`}
+    </section>`;
   }
 
   // The mentor's numbers: per session and in total.
@@ -143,16 +162,17 @@
     let d;
     try { d = await WisecallAPI.apiFetch('/live/mine'); } catch (e) { box.innerHTML = `<p class="muted">${esc(t('toast.error'))}</p>`; return; }
     const mentor = user && (user.role === 'mentor' || user.role === 'both');
-    const [a, c] = await Promise.all([
+    const [a, c, sr] = await Promise.all([
       mentor && d.sessions.length ? WisecallAPI.apiFetch('/live/analytics').catch(() => null) : null,
-      WisecallAPI.apiFetch('/live/discounts').catch(() => null)
+      WisecallAPI.apiFetch('/live/discounts').catch(() => null),
+      mentor ? WisecallAPI.apiFetch('/live/series/mine').catch(() => null) : null
     ]);
     const hostBlock = !mentor ? '' : `<section class="live-dash-host">
         <div class="live-dash-head"><h2 class="earn-h">${esc(t('live.dash.yourSessions'))}</h2>
           ${d.canHost ? `<a class="btn btn-primary btn-sm" href="/live-edit.html">${esc(t('live.dash.new'))}</a>` : ''}</div>
         ${d.canHost ? '' : `<p class="muted small">${esc(t('live.dash.cannotHost.' + (d.hostReason || 'not_listed')))}</p>`}
         ${d.sessions.length ? d.sessions.map(sessionCard).join('') : (d.canHost ? `<p class="muted small">${esc(t('live.dash.noSessions'))}</p>` : '')}
-      </section>${analytics(a)}`;
+      </section>${seriesBlock((sr && sr.series) || [], d.canHost)}${analytics(a)}`;
     box.innerHTML = `${hostBlock}
       <section class="live-dash-tickets">
         <h2 class="earn-h">${esc(t('live.dash.yourTickets'))}</h2>
@@ -203,6 +223,12 @@
         WisecallNav.showToast(fill('live.summary.sent', { n: r.sentTo }));
         reload();
       } catch (e) { err.textContent = errText(e); }
+    }));
+    box.querySelectorAll('.ls-del-replay').forEach((b) => b.addEventListener('click', async () => {
+      const id = b.closest('[data-session]').dataset.session;
+      if (!(await WisecallDialog.confirm({ message: t('live.replay.deleteConfirm'), confirmText: t('live.replay.delete'), danger: true }))) return;
+      try { await WisecallAPI.apiFetch(`/live/${encodeURIComponent(id)}/replay`, { method: 'DELETE' }); WisecallNav.showToast(t('live.replay.deleted')); reload(); }
+      catch (e) { WisecallNav.showToast(t('toast.error')); }
     }));
     box.querySelectorAll('.ls-cancel').forEach((b) => b.addEventListener('click', async () => {
       const id = b.closest('[data-session]').dataset.session;

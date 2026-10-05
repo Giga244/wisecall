@@ -41,6 +41,7 @@
       <li>${esc(t('live.rule.cameraOff'))}</li>
       ${s.regulated ? `<li><strong>${esc(t('live.regulatedLabel'))}</strong></li>` : ''}
       ${s.crisisNotice ? `<li>${esc(t('live.crisis'))}</li>` : ''}
+      ${s.replay ? `<li><strong>${esc(t('live.rule.recorded'))}</strong></li>` : ''}
     </ul>`;
   }
 
@@ -68,6 +69,7 @@
   }
 
   function draw() {
+    drawSeries();
     const s = data.session;
     const tk = data.ticket;
     const start = new Date(s.startsAt).getTime();
@@ -91,7 +93,8 @@
       return;
     }
     if (!['published', 'live'].includes(s.status) || Date.now() >= start) {
-      box.innerHTML = `<p class="muted">${esc(t(s.status === 'cancelled' ? 'live.cancelledNote' : 'live.notOnSale'))}</p>`;
+      box.innerHTML = `<p class="muted">${esc(t(s.status === 'cancelled' ? 'live.cancelledNote' : 'live.notOnSale'))}</p>`
+        + (data.replayReady ? `<a class="btn btn-primary btn-block" href="/live/${encodeURIComponent(slug)}/replay">${esc(t('live.replay.watch'))}</a>` : '');
       return;
     }
     const offer = data.waitlist && data.waitlist.offered;
@@ -146,6 +149,14 @@
         btn.disabled = false;
       }
     });
+  }
+
+  // Part of a series: a link to buy all its sessions together.
+  function drawSeries() {
+    let el = document.getElementById('liveSeriesNote');
+    if (!data.series) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement('p'); el.id = 'liveSeriesNote'; el.className = 'pay-notice live-series-note'; box.before(el); }
+    el.innerHTML = `${esc(t('live.series.partOf'))} <a class="plain-link" href="/live/series/${encodeURIComponent(data.series.slug)}">${esc(data.series.title)}</a> (${esc(WisecallAPI.formatAmount(data.series.price))})`;
   }
 
   // Follow the mentor: an email when they publish a session, at most one a week.

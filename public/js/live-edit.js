@@ -32,13 +32,15 @@
   const seatsHint = () => { $('lvSeats').max = kind.value === 'circle' ? 8 : 30; if (kind.value === 'circle' && Number($('lvSeats').value) > 8) $('lvSeats').value = 8; };
   kind.addEventListener('change', seatsHint);
   $('lvEarly').addEventListener('change', () => { $('lvEarlyBox').hidden = !$('lvEarly').checked; });
+  $('lvReplay').addEventListener('change', () => { $('lvReplayBox').hidden = !$('lvReplay').checked; });
 
   const body = () => ({
     title: $('lvTitle').value, description: $('lvDescription').value, learnPoints: Array.from(points.querySelectorAll('input')).map((i) => i.value).filter((v) => v.trim()),
     niche: niche.value, kind: kind.value, language: $('lvLanguage').value, date: $('lvDate').value, time: $('lvTime').value,
     durationMin: Number($('lvDuration').value), price: Number($('lvPrice').value), maxSeats: Number($('lvSeats').value), minSeats: Number($('lvMinSeats').value),
     earlyPrice: $('lvEarly').checked ? Number($('lvEarlyPrice').value) : null, earlyUntilDate: $('lvEarly').checked ? $('lvEarlyUntil').value : '',
-    earlySeats: $('lvEarly').checked && $('lvEarlySeats').value ? Number($('lvEarlySeats').value) : null
+    earlySeats: $('lvEarly').checked && $('lvEarlySeats').value ? Number($('lvEarlySeats').value) : null,
+    replay: $('lvReplay').checked, replayPrice: $('lvReplay').checked ? Number($('lvReplayPrice').value) : null
   });
   const ERR = (e) => {
     const key = 'live.err.' + e.code;
@@ -63,9 +65,12 @@
     $('lvEarly').checked = s.earlyPrice !== null;
     $('lvEarlyBox').hidden = s.earlyPrice === null;
     if (s.earlyPrice !== null) { $('lvEarlyPrice').value = s.earlyPrice / 100; $('lvEarlyUntil').value = s.earlyUntilDate || ''; $('lvEarlySeats').value = s.earlySeats || ''; }
+    $('lvReplay').checked = Boolean(s.replay);
+    $('lvReplayBox').hidden = !s.replay;
+    if (s.replay) $('lvReplayPrice').value = s.replayPrice / 100;
     // After the first ticket: only the description, the points, the cover and the time.
     const locked = s.sold > 0;
-    ['lvTitle', 'lvNiche', 'lvKind', 'lvLanguage', 'lvDuration', 'lvPrice', 'lvSeats', 'lvMinSeats', 'lvEarly', 'lvEarlyPrice', 'lvEarlyUntil', 'lvEarlySeats']
+    ['lvTitle', 'lvNiche', 'lvKind', 'lvLanguage', 'lvDuration', 'lvPrice', 'lvSeats', 'lvMinSeats', 'lvEarly', 'lvEarlyPrice', 'lvEarlyUntil', 'lvEarlySeats', 'lvReplay', 'lvReplayPrice']
       .forEach((f) => { $(f).disabled = locked; });
     $('lvLockedNote').hidden = !locked;
     $('lvStatus').textContent = t('live.status.' + s.status) + (s.reviewReason ? ' — ' + s.reviewReason : '');

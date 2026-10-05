@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Live series — Wisecall</title>
+<meta name="description" content="Group your live sessions into a series on Wisecall.">
+<link rel="canonical" href="{{PUBLIC_URL}}/live-series-edit.html">
+<meta name="robots" content="noindex">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Live series — Wisecall">
+<meta property="og:description" content="Group your live sessions into a series on Wisecall.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{PUBLIC_URL}}/live-series-edit.html">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Live series — Wisecall">
+<meta name="twitter:description" content="Group your live sessions into a series on Wisecall.">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+<main class="container live-edit" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="/dashboard.html?tab=live" data-i18n="live.edit.back">Live sessions</a></li><li><span aria-current="page" data-i18n="live.sedit.title">Your series</span></li></ol></nav>
+  <h1 data-i18n="live.sedit.title">Your series</h1>
+  <p class="muted" data-i18n="live.sedit.intro">Put 2 to 6 of your upcoming sessions together and sell them for one price, lower than buying each one. Every session stays on sale on its own too.</p>
+  <p class="pay-notice" id="lsStatus" hidden></p>
+  <p class="muted small" id="lsLockedNote" data-i18n="live.sedit.locked" hidden>Someone bought this series: only the title and the description can change.</p>
+  <form id="seriesForm" class="settings-card live-edit-form" novalidate>
+    <label for="lsTitle"><span data-i18n="live.edit.f.title">Title</span><input type="text" id="lsTitle" maxlength="100" required></label>
+    <label for="lsDescription"><span data-i18n="live.edit.f.description">Description</span><textarea id="lsDescription" rows="5" maxlength="2000" required></textarea>
+      <span class="hint" data-i18n="live.sedit.descriptionHint">What the sessions add up to, and who it's for. 20 to 2,000 characters, no contact details.</span></label>
+    <fieldset><legend data-i18n="live.sedit.sessions">Sessions (2 to 6, published and not started)</legend><div id="lsSessions"></div></fieldset>
+    <label for="lsPrice"><span data-i18n="live.sedit.price">Price for the whole series (₾)</span><input type="number" id="lsPrice" min="10" step="1" inputmode="numeric" required>
+      <span class="hint" id="lsPriceHint"></span></label>
+    <p class="form-error" id="seriesError" role="alert"></p>
+    <div class="lv-actions">
+      <button type="submit" class="btn btn-outline" data-i18n="live.edit.save">Save draft</button>
+      <button type="button" class="btn btn-primary" id="lsPublish" data-i18n="live.edit.publish">Publish</button>
+      <button type="button" class="btn btn-outline" id="lsCancel" data-i18n="live.sedit.cancel" hidden>Cancel the series</button>
+    </div>
+  </form>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dialog.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/live-series-edit.js"></script>
+</body>
+</html>

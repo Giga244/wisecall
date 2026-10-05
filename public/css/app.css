@@ -678,6 +678,14 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .ask-code-row input { margin-top: 0; text-transform: uppercase; flex: 1 1 auto; min-width: 0; }
 .ev-links { margin: 6px 0 0; padding-left: 18px; }
 .ev-links a { overflow-wrap: anywhere; }
+/* Series and replays */
+.live-series-list { padding-left: 22px; display: flex; flex-direction: column; gap: 10px; }
+.live-series-note { margin: 0 0 10px; }
+.live-dash-series { margin-top: 24px; }
+.live-rec { align-self: center; font-weight: 800; letter-spacing: 0.04em; }
+.live-replay-video { width: 100%; max-height: 72vh; background: var(--ink); border-radius: var(--radius); display: block; margin: 12px 0; }
+.live-replay-frame { height: min(60vh, 520px); margin: 12px 0; }
+.live-replay-buy { margin: 14px 0; }
 /* The development-only fake video room is shown inside the room page's frame: no site header or footer in there */
 .fake-room #siteHeader, .fake-room .footer, .fake-room .nav { display: none !important; }
 .fake-room main { padding-top: 16px; }

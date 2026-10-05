@@ -68,7 +68,9 @@
         // Live sessions: the title, and a link to the session page.
         if (String(m.event).startsWith('live_')) {
           const text = esc(fill('inbox.ev.' + m.event, liveVars(d)));
-          const link = d.slug ? ` <a class="plain-link" href="/live/${encodeURIComponent(d.slug)}">${esc(t('live.dash.page'))}</a>` : '';
+          const where = { live_replay_paid: ['/replay', 'live.replay.watch'] }[m.event] || ['', 'live.dash.page'];
+          const base = String(m.event).startsWith('live_series') ? '/live/series/' : '/live/';
+          const link = d.slug ? ` <a class="plain-link" href="${base}${encodeURIComponent(d.slug)}${where[0]}">${esc(t(where[1]))}</a>` : '';
           let extra = '';
           // (the mentor's summary and links: only http(s) links reach here, checked by the server; opened in a new tab, not followed)
           if ((m.event === 'live_summary' || m.event === 'live_summary_updated') && d.summary) {

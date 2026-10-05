@@ -20,12 +20,22 @@
   let role = null;
   let canSpeak = false;
   let joined = false;
+  // A recorded session (a replay): everybody sees REC while it records; nobody but the mentor can speak.
+  let replay = false;
+  let recording = false;
+  const rec = document.createElement('span');
+  rec.className = 'badge badge-rejected live-rec';
+  rec.hidden = true;
+  rec.setAttribute('role', 'status');
+  document.getElementById('liveControls').before(rec);
+  const drawRec = () => { rec.hidden = !recording; rec.textContent = '● ' + t('live.room.rec'); };
 
   async function join(anonymous) {
     try {
       const r = await WisecallAPI.apiFetch(`/live/${encodeURIComponent(id)}/join`, { method: 'POST', body: anonymous === undefined ? {} : { anonymous } });
       role = r.role;
       canSpeak = Boolean(r.canSpeak);
+      replay = Boolean(r.replay);
       // (only a frame from the address the server gave, which is also the only frame this page's security policy allows)
       if (!r.joinUrl.startsWith(r.frameOrigin + '/')) throw new Error('unexpected room address');
       frameBox.innerHTML = '';
@@ -52,6 +62,7 @@
     frameBox.innerHTML = `<div class="live-prejoin settings-card">
       <h2>${esc(t('live.room.ready'))}</h2>
       <p class="muted">${esc(t('live.room.muted'))}</p>
+      ${replay ? `<p class="pay-notice" role="note">${esc(t('live.room.recordedNotice'))}</p>` : ''}
       <label class="checkbox-row" for="joinAnon"><input type="checkbox" id="joinAnon"> <span>${esc(t('live.joinAnonymous'))}</span></label>
       <button type="button" class="btn btn-primary" id="joinBtn">${esc(t('live.join'))}</button>
     </div>`;
@@ -61,7 +72,8 @@
   function drawControls() {
     const box = document.getElementById('liveControls');
     if (role === 'mentor') {
-      box.innerHTML = `<button type="button" class="btn btn-outline btn-sm" id="restartBtn">${esc(t('live.room.restart'))}</button>
+      box.innerHTML = `${replay ? `<button type="button" class="btn btn-outline btn-sm" id="recBtn" aria-pressed="${recording}">${esc(t(recording ? 'live.room.stopRec' : 'live.room.startRec'))}</button>` : ''}
+        <button type="button" class="btn btn-outline btn-sm" id="restartBtn">${esc(t('live.room.restart'))}</button>
         <button type="button" class="btn btn-danger btn-sm" id="endBtn">${esc(t('live.room.end'))}</button>`;
       document.getElementById('endBtn').addEventListener('click', async () => {
         if (!(await WisecallDialog.confirm({ message: t('live.room.endConfirm'), confirmText: t('live.room.end'), danger: true }))) return;
@@ -72,9 +84,17 @@
         try { await WisecallAPI.apiFetch(`/live/${encodeURIComponent(id)}/restart`, { method: 'POST' }); await join(); WisecallNav.showToast(t('live.room.restarted')); }
         catch (e) { WisecallNav.showToast(t('live.room.videoDown')); }
       });
+      const recBtn = document.getElementById('recBtn');
+      if (recBtn) recBtn.addEventListener('click', async () => {
+        try {
+          const r = await WisecallAPI.apiFetch(`/live/${encodeURIComponent(id)}/recording`, { method: 'POST', body: { start: !recording } });
+          recording = r.recording; drawRec(); drawControls();
+        } catch (e) { WisecallNav.showToast(t(e.code === 'not_live' ? 'live.room.recNotLive' : 'live.room.recFailed')); }
+      });
       return;
     }
     if (kind === 'circle') { box.innerHTML = ''; return; }
+    if (replay) { box.innerHTML = `<span class="muted small">${esc(t('live.room.noMicRecorded'))}</span>`; return; }
     box.innerHTML = `<button type="button" class="btn btn-outline btn-sm" id="handBtn" aria-pressed="false">${esc(t('live.room.raise'))}</button>`;
     document.getElementById('handBtn').addEventListener('click', async (ev) => {
       const raise = ev.currentTarget.getAttribute('aria-pressed') !== 'true';
@@ -130,6 +150,8 @@
 
   function apply(st) {
     if (!st) return;
+    if (st.replay !== undefined) replay = Boolean(st.replay);
+    if (st.recording !== undefined && Boolean(st.recording) !== recording) { recording = Boolean(st.recording); drawRec(); if (role === 'mentor' && joined) drawControls(); }
     drawQuestions(st.questions || []);
     drawPeople(st);
     if (st.sessionStatus === 'ended' || st.sessionStatus === 'cancelled') { frameBox.innerHTML = ''; say(st.sessionStatus === 'ended' ? 'live.room.ended' : 'live.room.cancelled'); return; }

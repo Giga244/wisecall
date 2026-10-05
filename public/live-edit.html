@@ -72,6 +72,11 @@
       <label for="lvEarlyUntil"><span data-i18n="live.edit.f.earlyUntil">Until (date)</span><input type="date" id="lvEarlyUntil"></label>
       <label for="lvEarlySeats"><span data-i18n="live.edit.f.earlySeats">For the first … tickets</span><input type="number" id="lvEarlySeats" min="1" max="30" step="1" inputmode="numeric"></label>
     </div>
+    <label class="checkbox-row" for="lvReplay"><input type="checkbox" id="lvReplay"> <span data-i18n="live.edit.f.replay">Record it and sell the replay</span></label>
+    <div class="lv-row" id="lvReplayBox" hidden>
+      <label for="lvReplayPrice"><span data-i18n="live.edit.f.replayPrice">Replay price (₾)</span><input type="number" id="lvReplayPrice" min="5" max="199" step="1" inputmode="numeric"></label>
+      <p class="hint" data-i18n="live.edit.f.replayHint">Only for a Live Q&amp;A or a Workshop. Only your video and screen are recorded; nobody else can speak, and written questions are not in it. Ticket holders watch free for 30 days; others buy a 30-day pass. You can delete it at any time.</p>
+    </div>
     <div class="lv-cover" id="lvCoverBox" hidden>
       <p><strong data-i18n="live.edit.f.cover">Cover picture (optional)</strong></p>
       <img id="lvCoverImg" alt="" width="600" height="315" hidden>

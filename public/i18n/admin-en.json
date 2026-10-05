@@ -613,5 +613,6 @@
   "admin.live.ratingHidden": "Hidden",
   "admin.live.ratingHiddenToast": "The rating is hidden.",
   "admin.ov.live": "Live sessions",
-  "admin.ov.live.help": "Received counts paid tickets minus refunds; the fee is Wisecall's share of them, before bank fees and tax."
+  "admin.ov.live.help": "Received counts paid tickets minus refunds; the fee is Wisecall's share of them, before bank fees and tax.",
+  "admin.live.replayReason": "Deleted by an admin (rules or privacy)."
 }
