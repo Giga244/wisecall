@@ -121,8 +121,8 @@ window.SettingsProfile = (function () {
 
   function drawBioCount() {
     const n = $('bio').value.length;
-    $('bioCount').textContent = fill(t('profile.bio.count'), { n, max: 500 });
-    $('bioCount').classList.toggle('is-over', n > 500);
+    $('bioCount').textContent = fill(t('profile.bio.count'), { n, max: 2000 });
+    $('bioCount').classList.toggle('is-over', n > 2000);
   }
 
   function drawVisibilityHint() {
@@ -196,7 +196,7 @@ window.SettingsProfile = (function () {
     error.textContent = '';
     const v = values();
     if (!v.name) { error.textContent = t('profile.err.name'); return; }
-    if (v.bio.length > 500) { error.textContent = t('profile.err.bioLong'); return; }
+    if (v.bio.length > 2000) { error.textContent = t('profile.err.bioLong'); return; }
     if (v.languages.length > MAX_LANGUAGES) { error.textContent = fill(t('profile.err.languages'), { n: MAX_LANGUAGES }); return; }
     try {
       const body = { ...v };

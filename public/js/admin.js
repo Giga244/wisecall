@@ -47,6 +47,8 @@
         await AdminSupport.render(content);
       } else if (tab === 'live') {
         await AdminLive.render(content);
+      } else if (tab === 'profiles') {
+        await AdminProfiles.render(content);
       } else if (tab === 'requests') {
         await AdminRequests.render(content);
       } else if (tab === 'answers') {

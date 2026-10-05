@@ -692,3 +692,54 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 /* Admin: live sessions */
 .lv-review label { display: block; margin: 10px 0 0; }
 .lv-row-end { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+/* ---- Rich profile sections (Settings → Profile editor, the public profile, Browse cards) ---------------------------------------------- */
+.ps-root { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
+.ps-card > summary { cursor: pointer; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.ps-card-title { font-weight: 800; font-size: 1.05rem; }
+.ps-items { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 8px; }
+.ps-item { display: flex; gap: 10px; align-items: flex-start; background: var(--field); border-radius: var(--radius-sm); padding: 8px 10px; }
+.ps-item.is-dragging { opacity: 0.5; }
+.ps-grip { cursor: grab; color: var(--ink-soft); user-select: none; padding-top: 2px; }
+.ps-item-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.ps-item-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.icon-btn { min-width: 44px; min-height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--card); color: var(--ink); cursor: pointer; }
+.ps-form { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.ps-form fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.ps-date { display: flex; gap: 6px; }
+.ps-date select, .ps-date input { margin-top: 0; }
+.ps-who-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 14px; margin: 8px 0; }
+.ps-who-grid label { margin: 0; }
+.ps-top { display: flex; flex-wrap: wrap; gap: 6px; }
+.ps-thumb { border-radius: var(--radius-sm); vertical-align: middle; object-fit: cover; }
+.ps-strength .ps-bar { height: 10px; background: var(--field); border-radius: 999px; overflow: hidden; margin: 6px 0; }
+.ps-strength .ps-bar span { display: block; height: 100%; background: var(--accent2); border-radius: 999px; }
+.ps-verified { font-size: 0.75rem; }
+/* The public profile */
+.ps-section h2 { margin-bottom: 10px; }
+.ps-exp, .ps-exp-roles, .ps-list, .ps-projects, .ps-timeline { list-style: none; padding: 0; margin: 0; }
+.ps-exp-org { margin-bottom: 14px; }
+.ps-org { margin: 0 0 4px; }
+.ps-exp-roles { border-left: 2px solid var(--border); padding-left: 14px; display: flex; flex-direction: column; gap: 10px; }
+.ps-exp-roles p { margin: 0; }
+.ps-desc { margin: 4px 0 0; white-space: normal; overflow-wrap: anywhere; }
+.ps-ach { margin: 4px 0 0; padding-left: 18px; }
+.ps-list { display: flex; flex-direction: column; gap: 10px; }
+.ps-projects { display: flex; flex-direction: column; gap: 12px; }
+.ps-projects li { display: flex; gap: 12px; align-items: flex-start; }
+.ps-projects img { border-radius: var(--radius-sm); object-fit: cover; flex: 0 0 auto; }
+.ps-timeline { position: relative; padding-left: 22px; display: flex; flex-direction: column; gap: 12px; }
+.ps-timeline::before { content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
+.ps-timeline li { position: relative; }
+.ps-timeline li::before { content: ''; position: absolute; left: -21px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.ps-timeline p { margin: 0; }
+.ps-when { font-weight: 800; font-size: 0.9rem; }
+.ps-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0; }
+.ps-self { margin-top: 6px; }
+.ps-report { margin-top: 12px; }
+.ps-report summary { cursor: pointer; }
+.ps-report form { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-width: 420px; }
+/* Browse cards */
+.card-headline { font-size: 0.9rem; margin-top: 6px; overflow-wrap: anywhere; }
+.card-skills { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+@media (max-width: 520px) { .ps-item { flex-wrap: wrap; } .ps-item-actions { width: 100%; justify-content: flex-end; } }

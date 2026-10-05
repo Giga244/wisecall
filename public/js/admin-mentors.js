@@ -342,6 +342,14 @@
           const d = await WisecallAPI.apiFetch(`/admin/mentors/${id}/verification`);
           body.innerHTML = panelHtml(d);
           wire(d);
+          // (their profile items: self-reported unless marked verified here, next to the evidence above)
+          if (window.AdminProfiles) {
+            const box = document.createElement('details');
+            box.className = 'mv-profile-items';
+            box.innerHTML = `<summary>${t('admin.pr.itemsTitle')}</summary>${await AdminProfiles.itemsBlock(id)}`;
+            body.appendChild(box);
+            AdminProfiles.wireItems(box, loadPanel);
+          }
         } catch (e) { body.innerHTML = `<p class="muted">${t('toast.error')}</p>`; }
       }
 

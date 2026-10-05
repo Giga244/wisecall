@@ -220,6 +220,7 @@
       + `<option value="other"${f.niche === 'other' ? ' selected' : ''}>${esc(t('ap.f.niche.other'))}</option>`;
     return `
       <form class="vt-form ap-form" data-form="experience" novalidate>
+        <p class="small"><button type="button" class="linklike ap-from-profile">${t('ap.f.fromProfile')}</button></p>
         <label><span>${t('ap.f.title')}</span>
           <input type="text" name="roleTitle" maxlength="${L.titleMax}" value="${esc(f.roleTitle)}" autocomplete="organization-title">
           <span class="hint">${t('ap.f.title.hint')}</span></label>
@@ -459,6 +460,17 @@
   }
 
   function wire() {
+    root.querySelectorAll('.ap-from-profile').forEach((b) => b.addEventListener('click', async () => {
+      const f = b.closest('form');
+      try {
+        const p = await WisecallAPI.apiFetch('/me/profile/for-application');
+        let n = 0;
+        if (p.roleTitle && !f.roleTitle.value.trim()) { f.roleTitle.value = p.roleTitle; n += 1; }
+        if (p.yearsExperience !== null && p.yearsExperience !== undefined && f.yearsExperience.value === '') { f.yearsExperience.value = p.yearsExperience; n += 1; }
+        if (p.story && !f.story.value.trim()) { f.story.value = p.story.slice(0, Number(f.story.maxLength) || 1500); n += 1; }
+        WisecallNav.showToast(t(n ? 'ap.f.fromProfileDone' : 'ap.f.fromProfileNothing'));
+      } catch (e) { WisecallNav.showToast(t('toast.error')); }
+    }));
     root.querySelectorAll('form.vt-form').forEach((form) => {
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();

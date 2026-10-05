@@ -149,6 +149,7 @@
               ${title ? `<p class="profile-title">${escapeHtml(title)}</p>` : ''}
               ${isMentor && expert.headline ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
               ${WisecallRatings.askerBadgeHtml(expert.asker)}
+              ${window.WisecallProfileView ? WisecallProfileView.topSkills(expert.sections) : ''}
               <div class="profile-tags">
                 ${isMentor && expert.niche ? (expert.niche === 'other' ? `<span class="tag tag-niche">${escapeHtml(WisecallI18n.fieldName(expert))}</span>` : `<a class="tag tag-niche" href="/advice/${encodeURIComponent(expert.niche)}" title="${escapeHtml(t('niche.' + expert.niche))}">${escapeHtml(WisecallI18n.fieldName(expert))}</a>`) : ''}
                 ${isMentor ? `<span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>` : ''}
@@ -174,6 +175,8 @@
 
         ${expert.bio ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
 
+        ${window.WisecallProfileView ? WisecallProfileView.html(expert.sections) : ''}
+
         ${isMentor && (expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')} <a href="/how-we-verify.html">${t('hv.title')}</a></p></section>` : ''}
 
         ${isMentor ? `<section class="profile-section profile-live" aria-labelledby="liveTitle" id="profileLive" hidden>
@@ -192,6 +195,7 @@
         </section>
 
         <div class="report-section">${WisecallReport.html(expert.id, null, Boolean(user))}</div>` : ''}
+        ${user && !isSelf ? profileReportHtml() : ''}
       </div>`;
   }
 
@@ -202,6 +206,7 @@
     crumbs.innerHTML = crumbsHtml();
     page.setAttribute('aria-busy', 'false');
     page.innerHTML = profileHtml();
+    wireProfileReport();
     if (!isMentor) return;
     mountAsk();
     updateBar();
@@ -215,6 +220,26 @@
     if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
   }
   const askArea = () => document.getElementById('askArea');
+  // "Report this profile" (everyone signed in, any profile): a reason and a few words; an admin looks at it (server/profileSections.js).
+  const REPORT_REASONS = ['fake', 'offensive', 'personal_info', 'spam', 'other'];
+  const profileReportHtml = () => `<details class="ps-report small"><summary>${escapeHtml(t('profile.report.title'))}</summary>
+    <form id="profileReportForm" novalidate>
+      <label><span>${escapeHtml(t('live.dash.reportReason'))}</span><select name="reason">${REPORT_REASONS.map((r) => `<option value="${r}">${escapeHtml(t('profile.report.reason.' + r))}</option>`).join('')}</select></label>
+      <label><span>${escapeHtml(t('live.dash.reportDetails'))}</span><textarea name="details" rows="2" maxlength="1000"></textarea></label>
+      <button type="submit" class="btn btn-outline btn-sm">${escapeHtml(t('live.dash.reportSend'))}</button>
+    </form></details>`;
+  function wireProfileReport() {
+    const f = document.getElementById('profileReportForm');
+    if (!f) return;
+    f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      try {
+        await WisecallAPI.apiFetch(`/users/${encodeURIComponent(expert.username)}/report`, { method: 'POST', body: { reason: f.reason.value, details: f.details.value } });
+        WisecallNav.showToast(t('profile.report.sent'));
+        f.closest('details').open = false;
+      } catch (e) { WisecallNav.showToast(t(e.code === 'already_reported' ? 'profile.report.already' : 'toast.error')); }
+    });
+  }
   // ---- Reviews ------------------------------------------------------------------------------------------------
   // This mentor's upcoming live sessions (shown only when there are some).
   async function loadLive() {

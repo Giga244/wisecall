@@ -195,6 +195,7 @@
   AuthUI.init();
   fillForm(user);
   SettingsProfile.init(user);
+  if (window.WisecallProfileSections) WisecallProfileSections.init(user);
   SettingsAccounts.init();
   loadPayout();
   updateTabVisibility();
