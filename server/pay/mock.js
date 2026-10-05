@@ -24,15 +24,30 @@ async function getPaymentStatus(orderId) {
   return { status: o.status, amount: o.amount, currency: 'gel', raw: o.status };
 }
 
-// `partial`: return only `amount` (a dispute settled with a partial refund); the order then says "refunded_partially".
-async function refund({ orderId, amount, partial }) {
+// `partial`: return only `amount` (a dispute settled with a partial refund, or one session's share of a series); the order then says
+// "refunded_partially", until partial refunds add up to the whole amount ("refunded"). Like the real banks, several partial refunds are
+// allowed up to the amount paid, and the same idempotency key never refunds twice.
+async function refund({ orderId, amount, partial, idempotencyKey }) {
   // The fake bank forgets its orders when the server restarts: a payment made before that is still refundable (nothing real to check).
   if (!orders.has(orderId)) orders.set(orderId, { orderId, status: 'paid' });
   const o = orders.get(orderId);
-  if (!['paid', 'refunded_partially'].includes(o.status) || (o.status === 'refunded_partially' && partial)) throw new Error('mock bank: order is not refundable');
-  if (partial) { o.status = 'refunded_partially'; o.refunded = amount; return { refundId: `mock-partial-refund-${orderId}` }; }
-  o.status = 'refunded';
-  return { refundId: `mock-refund-${orderId}` };
+  o.refundKeys = o.refundKeys || new Map();
+  if (idempotencyKey && o.refundKeys.has(idempotencyKey)) return o.refundKeys.get(idempotencyKey);
+  if (!['paid', 'refunded_partially'].includes(o.status)) throw new Error('mock bank: order is not refundable');
+  let out;
+  if (partial) {
+    const total = (o.refunded || 0) + amount;
+    if (o.amount && total > o.amount) throw new Error('mock bank: more than was paid');
+    o.refunded = total;
+    o.status = o.amount && total >= o.amount ? 'refunded' : 'refunded_partially';
+    out = { refundId: `mock-partial-refund-${orderId}-${o.refundKeys.size + 1}` };
+  } else {
+    o.refunded = o.amount || o.refunded;
+    o.status = 'refunded';
+    out = { refundId: `mock-refund-${orderId}` };
+  }
+  if (idempotencyKey) o.refundKeys.set(idempotencyKey, out);
+  return out;
 }
 
 function verifyCallback({ rawBody, headers }) {

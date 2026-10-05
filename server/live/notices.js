@@ -17,11 +17,14 @@ const safely = (label, fn) => Promise.resolve().then(fn).catch((e) => console.er
 // ---- The calendar file (.ics) and the Google Calendar link -------------------------------------------------------------------------------
 const icsDate = (d) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 const icsText = (v) => String(v || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
-function ics(s, lang) {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Wisecall//Live sessions//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+// One session, or several (a series: one event each).
+function ics(one, lang) {
+  const event = (s) => ['BEGIN:VEVENT',
     `UID:live-${s.id}@wisecallge.ge`, `DTSTAMP:${icsDate(new Date())}`, `DTSTART:${icsDate(s.starts_at)}`, `DTEND:${icsDate(endsAt(s))}`,
     `SUMMARY:${icsText(s.title)}`, `DESCRIPTION:${icsText(`${s.title}\n${urlOf(s, lang)}`)}`, `URL:${urlOf(s, lang)}`,
-    'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(s.title)}`, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'];
+    'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(s.title)}`, 'END:VALARM', 'END:VEVENT'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Wisecall//Live sessions//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    ...(Array.isArray(one) ? one : [one]).flatMap(event), 'END:VCALENDAR'];
   // (lines longer than 75 octets are folded, as the format requires)
   return lines.map((l) => {
     const out = [];
@@ -165,5 +168,30 @@ async function giftClaimed(t, s, holder) {
   await safely('gift claimed inbox', () => inbox().systemMessage(t.buyer_id, 'live_gift_claimed', { title: s.title, slug: s.slug }));
 }
 
+// A series was paid: one email with every session and one calendar file holding them all; the receipt; the Inbox; the mentor is told.
+// (`refunded`: the payment came too late and went straight back — then only the receipt.)
+async function seriesPaid(order, series, receipt, refunded) {
+  const buyer = await getUserById(order.buyer_id);
+  if (!buyer) return;
+  if (receipt) await safely('series receipt', () => require('../receipts').email(receipt));
+  if (refunded) return;
+  const lang = buyer.language;
+  const { rows: list } = await query(
+    `SELECT s.* FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id WHERE t.series_order_id = $1 AND t.status = 'paid' ORDER BY s.starts_at`, [order.id]);
+  if (!list.length) return;
+  const lines = list.map((s) => `${s.title} — ${when(s.starts_at, lang)}`).join('\n');
+  await safely('series email', () => sendTemplate('liveSeriesTicket', { to: buyer.email, lang, data: {
+    title: series.title, count: list.length, sessions: lines, url: `${config.PUBLIC_URL}${lang === 'ka' ? '/ka' : ''}/live/series/${series.slug}`
+  }, attachments: [{ filename: 'wisecall-live.ics', content: Buffer.from(ics(list, lang)).toString('base64'), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }] }));
+  await safely('series inbox', () => inbox().systemMessage(buyer.id, 'live_series_ticket', { title: series.title, slug: series.slug, count: list.length }));
+  await safely('series mentor inbox', () => inbox().systemMessage(series.mentor_id, 'live_series_sold', { title: series.title, slug: series.slug }));
+}
+
+// A replay pass was paid: the receipt and an Inbox message with the link.
+async function replayPaid(purchase, s, receipt) {
+  if (receipt) await safely('replay receipt', () => require('../receipts').email(receipt));
+  await safely('replay inbox', () => inbox().systemMessage(purchase.buyer_id, 'live_replay_paid', { title: s.title, slug: s.slug, until: purchase.access_until }));
+}
+
 module.exports = { ticketPaid, ticketRefunded, timeChanged, cancelled, reviewed, reminder, ended, seatOffered, followerNewSession, discountCode, giftLink,
-  giftClaimed, ics, googleLink, when, urlOf };
+  giftClaimed, seriesPaid, replayPaid, ics, googleLink, when, urlOf };

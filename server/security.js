@@ -3,12 +3,13 @@ const config = require('./config');
 
 // Scripts may only come from our own files (no inline scripts, no eval), and Cloudflare's "are you a person?" check when it is on. Styles allow inline
 // attributes. Fonts are served from this site. Nothing else can load or embed anything.
-function buildCsp({ frameSrc, frameAncestors } = {}) {
+function buildCsp({ frameSrc, frameAncestors, mediaSrc } = {}) {
   const frames = [...(config.TURNSTILE_ENABLED ? ['https://challenges.cloudflare.com'] : []), ...(frameSrc ? [frameSrc] : [])];
   return [
   "default-src 'self'",
   "script-src 'self'" + (config.TURNSTILE_ENABLED ? ' https://challenges.cloudflare.com' : ''),
   ...(frames.length ? ['frame-src ' + frames.join(' ')] : []),
+  ...(mediaSrc ? ["media-src 'self' " + mediaSrc] : []),
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
   "manifest-src 'self'",
@@ -22,8 +23,9 @@ function buildCsp({ frameSrc, frameAncestors } = {}) {
   ].join('; ');
 }
 const CSP = buildCsp();
-// The live-session room (server/pages.js) is the only page that may frame the video provider's call.
-const cspWith = ({ frameSrc, frameAncestors }) => buildCsp({ frameSrc, frameAncestors });
+// The live-session room (server/pages.js) is the only page that may frame the video provider's call; the replay page the only one that
+// may play the provider's video file (or, with the fake provider, frame its page).
+const cspWith = ({ frameSrc, frameAncestors, mediaSrc }) => buildCsp({ frameSrc, frameAncestors, mediaSrc });
 
 function securityHeaders(req, res, next) {
   res.set({

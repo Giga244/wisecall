@@ -253,6 +253,12 @@ const S = {
       intro: '{name} gave you a seat in the live session "{title}": {when}.',
       after: 'Open the link, sign in or create a free account, and the seat is yours. The link works once.', button: 'Claim my seat'
     },
+    liveSeriesTicket: {
+      subject: 'Your series: {title}', heading: 'You are in the series',
+      intro: 'You have a seat in all {count} sessions of "{title}":',
+      after: 'The calendar file has every session. The Join button turns on 10 minutes before each start. You can cancel a session up to 24 hours before it starts and get its share back.',
+      button: 'Open the series'
+    },
     withdrawalRequested: {
       subject: 'We received your withdrawal request', heading: 'Withdrawal requested',
       intro: 'You asked us to send {amount} to your bank account ending in {last4}.',
@@ -506,6 +512,12 @@ const S = {
       intro: '{name} გჩუქნის ადგილს ცოცხალ სესიაზე „{title}“: {when}.',
       after: 'გახსენი ბმული, შედი ან შექმენი უფასო ანგარიში და ადგილი შენია. ბმული მხოლოდ ერთხელ მუშაობს.', button: 'ადგილის მიღება'
     },
+    liveSeriesTicket: {
+      subject: 'შენი სერია: {title}', heading: 'სერიაში ხარ',
+      intro: 'სერიის „{title}“ ყველა {count} სესიაზე ადგილი გაქვს:',
+      after: 'კალენდრის ფაილში ყველა სესიაა. ღილაკი „შესვლა“ თითოეულის დაწყებამდე 10 წუთით ადრე ჩაირთვება. სესიის გაუქმება მის დაწყებამდე 24 საათით ადრე შეგიძლია და მისი წილი დაგიბრუნდება.',
+      button: 'სერიის გახსნა'
+    },
     withdrawalRequested: {
       subject: 'თანხის გატანის მოთხოვნა მივიღეთ', heading: 'თანხის გატანა მოთხოვნილია',
       intro: 'გვთხოვე, {amount} გადაგირიცხოთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.',
@@ -732,6 +744,11 @@ const BUILDERS = {
   liveGift: (s, d) => ({
     heading: s.liveGift.heading,
     blocks: [{ p: fill(s.liveGift.intro, d), raw: true }, { p: s.liveGift.after }, { button: s.liveGift.button, url: d.url }]
+  }),
+  liveSeriesTicket: (s, d) => ({
+    heading: s.liveSeriesTicket.heading,
+    blocks: [{ p: fill(s.liveSeriesTicket.intro, d), raw: true }, { quote: String(d.sessions || '') }, { p: s.liveSeriesTicket.after },
+      { button: s.liveSeriesTicket.button, url: d.url }]
   }),
   withdrawalRequested: (s, d) => ({
     heading: s.withdrawalRequested.heading,

@@ -30,12 +30,20 @@ async function finish(sessionId, { by = 'time' } = {}) {
     // (not held as promised: everybody gets their money back)
     return sessions.cancel(ended.id, ended.mentor_joined_at ? 'short' : 'no_show');
   }
+  await stopRecording(ended);
   if (ended.room_name) require('./rooms').end(ended).catch(() => {});
   await require('./waitlist').close(ended.id).catch(() => {});
   require('./notices').ended(ended, by).catch((e) => console.error('[live] end notices failed:', e.message));
   // (everybody who was in the room: a one-time 15 % code for a question with this mentor)
   require('./after').issueCodes(ended).catch((e) => console.error('[live] discount codes failed:', e.message));
   return ended;
+}
+
+// A recording still running when the session ends is stopped (the sweep then attaches it as the replay: server/live/replays.js).
+async function stopRecording(s) {
+  if (!s.recording_started_at || s.recording_stopped_at) return;
+  await query('UPDATE live_sessions SET recording_stopped_at = now() WHERE id = $1 AND recording_stopped_at IS NULL', [s.id]);
+  if (s.room_name) await require('./provider').forRoomUrl(s.room_url).stopRecording({ roomName: s.room_name }).catch((e) => console.error('[live] stopping the recording failed:', e.message));
 }
 
 async function autoCancelUnderMinimum() {
@@ -94,6 +102,10 @@ async function sweep() {
   await tickets.retryRefunds();
   await waitlist.expireOffers();
   await waitlist.offerFreedSeats();
+  await require('./series').expireHolds();
+  const replays = require('./replays');
+  await replays.expireHolds();
+  await replays.sweep();
   await autoCancelUnderMinimum();
   await cancelNoShows();
   await finishDue();
@@ -101,4 +113,4 @@ async function sweep() {
   await purgeOld();
 }
 
-module.exports = { finish, autoCancelUnderMinimum, cancelNoShows, finishDue, sendReminders, purgeOld, sweep, PRESENT_SHARE, config };
+module.exports = { stopRecording, finish, autoCancelUnderMinimum, cancelNoShows, finishDue, sendReminders, purgeOld, sweep, PRESENT_SHARE, config };

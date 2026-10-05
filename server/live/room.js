@@ -39,14 +39,15 @@ async function join(user, sessionId, { anonymous } = {}) {
   if (a.role === 'mentor') {
     await query(`UPDATE live_sessions SET status = 'live', mentor_joined_at = COALESCE(mentor_joined_at, now()), updated_at = now() WHERE id = $1 AND status IN ('published', 'live')`, [s.id]);
     const t = await rooms.token(s, { userId: user.id, userName: firstName(user.name), owner: true, canSend: ['audio', 'video', 'screenVideo', 'screenAudio'], lang: user.language });
-    return { role: 'mentor', joinUrl: t.joinUrl, frameOrigin: rooms.frameOrigin(s), displayName: firstName(user.name), kind: s.kind };
+    return { role: 'mentor', joinUrl: t.joinUrl, frameOrigin: rooms.frameOrigin(s), displayName: firstName(user.name), kind: s.kind, replay: Boolean(s.replay_enabled) };
   }
   if (anonymous !== undefined) await query('UPDATE live_tickets SET join_anonymous = $2 WHERE id = $1', [a.ticket.id, anonymous === true]);
   const anon = anonymous === undefined ? a.ticket.join_anonymous : anonymous === true;
   const displayName = anon ? `Guest ${a.ticket.guest_number || 1}` : firstName(user.name);
-  const allowed = s.kind === 'circle' || (await speakerState(s.id, user.id)) === 'allowed';
+  // (a recorded session: nobody but the mentor can be heard or seen, so nobody else can be in the replay)
+  const allowed = !s.replay_enabled && (s.kind === 'circle' || (await speakerState(s.id, user.id)) === 'allowed');
   const t = await rooms.token(s, { userId: user.id, userName: displayName, owner: false, canSend: allowed ? ['audio', 'video'] : [], lang: user.language });
-  return { role: 'participant', joinUrl: t.joinUrl, frameOrigin: rooms.frameOrigin(s), displayName, kind: s.kind, canSpeak: allowed };
+  return { role: 'participant', joinUrl: t.joinUrl, frameOrigin: rooms.frameOrigin(s), displayName, kind: s.kind, canSpeak: allowed, replay: Boolean(s.replay_enabled) };
 }
 
 // Every 30 seconds while the room page is open: presence (the mentor's decides the payout; see settle.js).
@@ -133,6 +134,7 @@ async function hand(user, sessionId, raise) {
   const a = await access(user, sessionId);
   if (a.role !== 'participant') throw new LiveError('forbidden');
   if (a.session.kind === 'circle') throw new LiveError('not_needed');
+  if (a.session.replay_enabled) throw new LiveError('recorded_session');
   await query(`INSERT INTO live_speakers (session_id, user_id, state) VALUES ($1, $2, $3)
                ON CONFLICT (session_id, user_id) DO UPDATE SET state = CASE WHEN live_speakers.state = 'allowed' AND $3 = 'raised' THEN 'allowed' ELSE EXCLUDED.state END, updated_at = now()`,
   [a.session.id, user.id, raise ? 'raised' : 'lowered']);
@@ -142,6 +144,7 @@ async function hand(user, sessionId, raise) {
 async function setSpeaker(user, sessionId, participantId, allow) {
   const a = await access(user, sessionId);
   if (a.role !== 'mentor') throw new LiveError('forbidden');
+  if (allow && a.session.replay_enabled) throw new LiveError('recorded_session');
   const { rows: [t] } = await query(`SELECT 1 FROM live_tickets WHERE session_id = $1 AND holder_id = $2 AND status = 'paid'`, [a.session.id, participantId]);
   if (!t) throw new LiveError('not_found');
   await query(`INSERT INTO live_speakers (session_id, user_id, state) VALUES ($1, $2, $3)
@@ -153,7 +156,8 @@ async function setSpeaker(user, sessionId, participantId, allow) {
 async function state(user, sessionId, a0) {
   const a = a0 || await access(user, sessionId, { timeWindow: false });
   const s = await sessions.rowById(a.session.id);
-  const out = { sessionStatus: s.status, role: a.role, kind: s.kind, questions: await questions(user, sessionId, a) };
+  const out = { sessionStatus: s.status, role: a.role, kind: s.kind, questions: await questions(user, sessionId, a),
+    replay: Boolean(s.replay_enabled), recording: require('./replays').isRecording(s) };
   if (a.role === 'participant') out.hand = (await speakerState(s.id, user.id)) || 'lowered';
   if (a.role === 'mentor') {
     const { rows } = await query(

@@ -553,6 +553,94 @@ async function sendLiveRoom(req, res, slug) {
     REGULATED: s.regulated ? `<p class="advice-regulated">${escapeHtml(d['live.regulatedLabel'])}</p>` : '', FRAME_ORIGIN: escapeHtml(origin) }));
 }
 
+// A series: /live/series/<slug> (server/live/series.js). The sessions, the bundle price and what it saves; the page script sells it.
+async function sendLiveSeries(req, res, slug) {
+  const seriesMod = require('./live/series');
+  const sr = await seriesMod.rowBySlug(slug);
+  const viewer = req.userToken ? req.userToken.id : null;
+  if (!sr || (sr.status === 'draft' && sr.mentor_id !== viewer)) return notFoundHandler(req, res);
+  const html = readPage('live-series.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const mentor = await require('./models').getUserById(sr.mentor_id);
+  const list = await seriesMod.sessionsOf(sr.id);
+  const v = seriesMod.publicView(sr, list, mentor);
+  const profile = mentor && mentor.username ? `${prefix}/u/${encodeURIComponent(mentor.username)}` : null;
+  const body = `
+  <article class="live-page live-series-page" data-series="${escapeHtml(sr.id)}" data-slug="${escapeHtml(sr.slug)}" data-status="${escapeHtml(sr.status)}">
+    ${sr.status === 'draft' ? `<p class="pay-notice">${escapeHtml(d['live.previewNote'])}</p>` : ''}
+    ${sr.status === 'cancelled' ? `<p class="pay-notice cancelled">${escapeHtml(d['live.series.cancelled'])}</p>` : ''}
+    <p class="live-card-meta"><span class="live-kind">${escapeHtml((d['live.series.label'] || '{n} sessions').replace('{n}', list.length))}</span></p>
+    <h1>${escapeHtml(sr.title)}</h1>
+    <div class="live-layout">
+      <div class="live-main">
+        <div class="live-description">${escapeHtml(sr.description).replace(/\n/g, '<br>')}</div>
+        <h2>${escapeHtml(d['live.series.sessions'])}</h2>
+        <ol class="live-series-list">${list.map((s) => `<li><a class="plain-link" href="${prefix}/live/${encodeURIComponent(s.slug)}">${escapeHtml(s.title)}</a><br>
+          <span class="muted small"><time datetime="${escapeHtml(new Date(s.starts_at).toISOString())}">${escapeHtml(liveWhen(s.starts_at, lang))}</time> · ${escapeHtml(d['live.kind.' + s.kind])} · ${escapeHtml(liveMoney(s.price))}</span></li>`).join('')}</ol>
+      </div>
+      <aside class="live-side settings-card">
+        <p class="live-price"><strong>${escapeHtml(liveMoney(v.price))}</strong> <span class="muted small"><s>${escapeHtml(liveMoney(v.sumPrice))}</s></span></p>
+        <p class="muted small">${escapeHtml((d['live.series.saving'] || '').replace('{amount}', liveMoney(v.saving)))}</p>
+        <div id="seriesBuy"><noscript><p class="muted small">${escapeHtml(d['live.needsJs'])}</p></noscript></div>
+        <p class="live-share"><button type="button" class="btn btn-outline btn-sm copy-link" data-url="${escapeHtml(`${config.PUBLIC_URL}${prefix}/live/series/${sr.slug}`)}"><span class="copy-label">${escapeHtml(d['copy.link'])}</span></button></p>
+      </aside>
+    </div>
+    ${mentor ? `<aside class="answer-mentor settings-card live-mentor">
+      <p class="muted small">${escapeHtml(d['live.hostedBy'])}</p>
+      <p class="card-name">${profile ? `<a class="plain-link" href="${profile}">${escapeHtml(mentor.name)}</a>` : escapeHtml(mentor.name)} <span class="tag tag-verified">${escapeHtml(d['expert.verified'])}</span></p>
+      <p class="muted small">${escapeHtml(mentor.roleTitle || '')}</p>
+    </aside>` : ''}
+  </article>`;
+  sendHtml(res, 200, fill(html, { ...baseVars(`/live/series/${sr.slug}`), TITLE: escapeHtml(`${sr.title} — Wisecall`), DESCRIPTION: escapeHtml(shortText(sr.description)),
+    ROBOTS: sr.status === 'published' ? 'index, follow' : 'noindex', OG_TYPE: 'website', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']),
+    LIBRARY: escapeHtml(d['live.title']), CRUMB: escapeHtml(shortText(sr.title, 40)), BODY: body }));
+}
+
+// The replay of a session: /live/<slug>/replay. Whoever may watch gets a short-lived address from the video service (made for this view,
+// never stored); this page alone allows that service's origin in its security policy. Others see what it costs (server/live/replays.js).
+async function sendLiveReplay(req, res, slug) {
+  const sessions = require('./live/sessions');
+  const replays = require('./live/replays');
+  const s = await sessions.rowBySlug(slug);
+  if (!s || s.status !== 'ended' || !s.replay_enabled) return notFoundHandler(req, res);
+  const html = readPage('live-replay.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const user = req.userToken ? await require('./models').getUserById(req.userToken.id) : null;
+  const a = await replays.accessFor(user, s);
+  let player = '';
+  if (a.can) {
+    const p = await replays.playback(user, s).catch((e) => { console.error('[live] replay address failed:', e.message); return null; });
+    if (p && p.kind === 'video') {
+      res.set('Content-Security-Policy', require('./security').cspWith({ mediaSrc: p.origin }));
+      player = `<video class="live-replay-video" controls preload="metadata" controlsList="nodownload" src="${escapeHtml(p.url)}"></video>`;
+    } else if (p) {
+      res.set('Content-Security-Policy', require('./security').cspWith({ frameSrc: p.origin }));
+      player = `<iframe class="live-call live-replay-frame" src="${escapeHtml(p.url)}" title="${escapeHtml(d['live.replay.title'])}"></iframe>`;
+    } else player = `<p class="pay-notice failed">${escapeHtml(d['live.replay.unavailable'])}</p>`;
+  }
+  res.set('Cache-Control', 'no-store');
+  const until = a.until ? liveWhen(a.until, lang) : null;
+  const body = `
+  <article class="live-page live-replay-page" data-session="${escapeHtml(s.id)}" data-slug="${escapeHtml(s.slug)}" data-can="${a.can ? '1' : ''}">
+    <p class="live-card-meta"><span class="live-kind">${escapeHtml(d['live.replay.title'])}</span></p>
+    <h1>${escapeHtml(s.title)}</h1>
+    <p class="muted small">${escapeHtml(d['live.replay.what'])}</p>
+    ${a.can ? `${player}${until ? `<p class="muted small">${escapeHtml(d['live.replay.until'].replace('{date}', until))}</p>` : ''}`
+      : `<div class="settings-card live-replay-buy" id="replayBuy" data-price="${escapeHtml(String(a.price || ''))}" data-ready="${a.ready ? '1' : ''}" data-can-buy="${a.canBuy ? '1' : ''}">
+          <noscript><p class="muted small">${escapeHtml(d['live.needsJs'])}</p></noscript></div>`}
+    <p class="small"><a class="plain-link" href="${prefix}/live/${encodeURIComponent(s.slug)}">${escapeHtml(d['live.replay.back'])}</a></p>
+  </article>`;
+  sendHtml(res, 200, fill(html, { ...baseVars(`/live/${s.slug}/replay`), TITLE: escapeHtml(`${s.title} — ${d['live.replay.title']} — Wisecall`),
+    DESCRIPTION: escapeHtml(shortText(s.description)), ROBOTS: 'noindex, nofollow', OG_TYPE: 'website', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']),
+    LIBRARY: escapeHtml(d['live.title']), CRUMB: escapeHtml(shortText(s.title, 40)), BODY: body }));
+}
+
 // A page per field: /advice/<niche>. The title, description, mentor list and links to the other fields are written in here, in English,
 // for search engines and link previews; the page script then draws it in the visitor's language, with badges and ratings. Before launch
 // no mentor is listed (the page offers the waiting list), and only a field with a listed mentor may be indexed.
@@ -646,6 +734,12 @@ function pageRoutes() {
   router.get(/^\/live\/([a-z0-9-]{3,90})\/room\/?$/, async (req, res, next) => {
     try { await sendLiveRoom(req, res, req.params[0]); } catch (e) { next(e); }
   });
+  router.get(/^\/live\/([a-z0-9-]{3,90})\/replay\/?$/, require('./auth').optionalAuth, async (req, res, next) => {
+    try { await sendLiveReplay(req, res, req.params[0]); } catch (e) { next(e); }
+  });
+  router.get(/^\/live\/series\/([a-z0-9-]{3,90})\/?$/, require('./auth').optionalAuth, async (req, res, next) => {
+    try { await sendLiveSeries(req, res, req.params[0]); } catch (e) { next(e); }
+  });
   router.get(/^\/live\/([a-z0-9-]{3,90})\/?$/, require('./auth').optionalAuth, async (req, res, next) => {
     try { await sendLiveSession(req, res, req.params[0]); } catch (e) { next(e); }
   });
@@ -693,7 +787,7 @@ function pageRoutes() {
       const name = req.params[0];
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
-      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer' || name === 'requests' || name === 'live' || name === 'live-session' || name === 'live-room') return notFoundHandler(req, res); // (sent only by their own routes)
+      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer' || name === 'requests' || name === 'live' || name === 'live-session' || name === 'live-room' || name === 'live-series' || name === 'live-replay') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (name === 'faq') {
         const html = readPage('faq.html');

@@ -174,7 +174,8 @@ router.get('/live', requireAuth, requireAdmin, asyncHandler(async (req, res) => 
   const sessions = require('../live/sessions');
   const { rows } = await query(
     `SELECT s.*, ${sessions.TAKEN_SQL} AS taken, ${sessions.SOLD_SQL} AS sold, ${sessions.WAITING_SQL} AS waiting, u.name AS mentor_name, u.email AS mentor_email,
-            (SELECT count(*)::int FROM live_reports r WHERE r.session_id = s.id AND r.status = 'open') AS open_reports
+            (SELECT count(*)::int FROM live_reports r WHERE r.session_id = s.id AND r.status = 'open') AS open_reports,
+            EXISTS (SELECT 1 FROM live_replays rp WHERE rp.session_id = s.id AND rp.status = 'ready') AS replay_ready
        FROM live_sessions s JOIN users u ON u.id = s.mentor_id
       WHERE s.status IN ('review', 'published', 'live') OR (s.status IN ('ended', 'cancelled') AND s.updated_at > now() - interval '30 days')
       ORDER BY (s.status = 'review') DESC, (s.status = 'live') DESC, s.starts_at LIMIT 300`);
@@ -182,6 +183,18 @@ router.get('/live', requireAuth, requireAdmin, asyncHandler(async (req, res) => 
     cancelReason: s.cancel_reason, endKind: s.end_kind, mentorMinutes: Math.round(s.mentor_seconds / 60) });
   res.json({ sessions: rows.map(view), reports: await require('../live/reports').listOpen(), totals: await require('../live/analytics').forAdmin(),
     ratings: await require('../live/after').recentForAdmin() });
+}));
+// Deletes a session's replay (passes still running are refunded). Logged with the reason.
+router.post('/live/:id/replay/delete', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const reason = String((req.body || {}).reason || '').trim();
+  if (reason.length < 5) return res.status(400).json({ error: 'reason_required' });
+  try {
+    const out = await require('../live/replays').remove({ ...req.adminUser, isAdminAction: true }, req.params.id, 'admin: ' + reason);
+    const { rows: [s] } = await query('SELECT id, title, mentor_id FROM live_sessions WHERE id = $1', [req.params.id]);
+    await query(`INSERT INTO verification_audit (mentor_id, actor_id, actor_label, action, reason) VALUES ($1, $2, $3, 'live_replay_deleted', $4)`,
+      [s.mentor_id, req.adminUser.id, req.adminUser.email, `replay of live session ${s.id} "${s.title}": ${reason}`.slice(0, 1000)]);
+    res.json(out);
+  } catch (e) { liveFail(res, e); }
 }));
 // Hides a rating of a live session (rude, personal details...): it no longer counts or shows. Logged with the reason.
 router.post('/live/ratings/:id/hide', requireAuth, requireAdmin, asyncHandler(async (req, res) => {

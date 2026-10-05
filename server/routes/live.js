@@ -22,7 +22,9 @@ const STATUS = {
   payments_closed: 503, video_unavailable: 503, payment_failed_to_start: 502, refund_failed: 502, provider_unavailable: 503, too_many_questions: 429,
   // (Milestone 2: waiting list, follows, ratings, summaries, codes, gifts)
   not_sold_out: 409, own_profile: 403, not_rateable: 409, not_attended: 403, already_rated: 409, window_closed: 409, not_ended: 409,
-  code_used: 409, code_in_use: 409, code_expired: 409, gift_closed: 410, too_many_gifts: 429
+  code_used: 409, code_in_use: 409, code_expired: 409, gift_closed: 410, too_many_gifts: 429,
+  // (Milestone 3: series, replays)
+  series_session_not_open: 409, series_session_taken: 409, not_recorded: 409, not_live: 409, recorded_session: 409, already_have_access: 409, series_unavailable: 503
 };
 const fail = (res, e) => {
   if (!(e instanceof LiveError)) throw e;
@@ -50,6 +52,12 @@ router.get('/s/:slug', optionalAuth, asyncHandler(async (req, res) => {
   if (!s || (!['published', 'live', 'ended', 'cancelled'].includes(s.status) && s.mentor_id !== viewer)) return res.status(404).json({ error: 'not_found' });
   const mentor = await getUserById(s.mentor_id);
   const out = { session: sessions.publicView(s, mentor), ratings: await after.forSession(s.id) };
+  // (part of a series on sale: its page sells all its sessions together)
+  if (s.series_id) {
+    const sr = await require('../live/series').rowById(s.series_id);
+    if (sr && sr.status === 'published') out.series = { title: sr.title, slug: sr.slug, price: sr.price };
+  }
+  if (s.status === 'ended' && s.replay_enabled) out.replayReady = Boolean(await require('../live/replays').replayOf(s.id));
   if (viewer) {
     // (the ticket this person attends with: their own, or a gift they claimed)
     const { rows } = await query(`SELECT * FROM live_tickets WHERE session_id = $1 AND holder_id = $2 ORDER BY created_at DESC LIMIT 1`, [s.id, viewer]);
@@ -64,6 +72,50 @@ router.get('/ratings/:mentorId', asyncHandler(async (req, res) => {
   if (!UUID.test(req.params.mentorId)) return res.status(404).json({ error: 'not_found' });
   res.json(await after.forMentor(req.params.mentorId));
 }));
+
+// ---- Series: 2-6 sessions bought together for a bundle price (server/live/series.js) -------------------------------------------------
+const series = require('../live/series');
+const replays = require('../live/replays');
+router.get('/series/s/:slug', optionalAuth, asyncHandler(async (req, res) => {
+  const sr = await series.rowBySlug(req.params.slug);
+  const viewer = req.userToken ? req.userToken.id : null;
+  if (!sr || (sr.status === 'draft' && sr.mentor_id !== viewer)) return res.status(404).json({ error: 'not_found' });
+  const out = { series: series.publicView(sr, await series.sessionsOf(sr.id), await getUserById(sr.mentor_id)) };
+  if (viewer) {
+    out.isMentor = sr.mentor_id === viewer;
+    const { rows } = await query(`SELECT * FROM live_series_orders WHERE series_id = $1 AND buyer_id = $2 ORDER BY created_at DESC LIMIT 1`, [sr.id, viewer]);
+    out.order = rows[0] ? series.orderView(rows[0]) : null;
+  }
+  res.json(out);
+}));
+router.get('/series/mine', requireAuth, run(async (user, req, res) => { res.set('Cache-Control', 'no-store'); res.json({ series: await series.mine(user.id) }); }));
+router.post('/series', requireAuth, run(async (user, req, res) => { res.status(201).json({ series: await series.create(user, req.body || {}) }); }));
+router.put('/series/:id', requireAuth, run(async (user, req, res) => { res.json({ series: await series.update(user, req.params.id, req.body || {}) }); }));
+router.post('/series/:id/publish', requireAuth, run(async (user, req, res) => { res.json({ series: await series.publish(user, req.params.id) }); }));
+router.post('/series/:id/cancel', requireAuth, run(async (user, req, res) => { res.json({ series: await series.cancel(user, req.params.id) }); }));
+router.post('/series/:id/orders', requireAuth, run(async (user, req, res) => { res.status(201).json(await series.buy(user, req.params.id)); }));
+router.post('/series/orders/:id/sync', requireAuth, run(async (user, req, res) => {
+  const { rows: [o] } = await query('SELECT buyer_id FROM live_series_orders WHERE id = $1', [UUID.test(req.params.id) ? req.params.id : null]);
+  if (!o || o.buyer_id !== user.id) throw new LiveError('not_found');
+  res.json({ order: series.orderView(await series.syncOrder(req.params.id)) });
+}));
+
+// ---- Replays: recording (the mentor, in the room), watching, a pass for those without a ticket, deleting (server/live/replays.js) -----
+router.post('/:id/recording', requireAuth, run(async (user, req, res) => { res.json(await replays.setRecording(user, req.params.id, (req.body || {}).start === true)); }));
+router.get('/:id/replay', requireAuth, run(async (user, req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const s = await sessions.rowById(req.params.id);
+  if (!s || s.status !== 'ended' || !s.replay_enabled) throw new LiveError('not_found');
+  const a = await replays.accessFor(user, s);
+  res.json({ access: { can: a.can, ready: a.ready, until: a.until || null, canBuy: Boolean(a.canBuy), price: a.price || null } });
+}));
+router.post('/:id/replay/purchases', requireAuth, run(async (user, req, res) => { res.status(201).json(await replays.buy(user, req.params.id)); }));
+router.post('/replay/purchases/:id/sync', requireAuth, run(async (user, req, res) => {
+  const { rows: [p] } = await query('SELECT buyer_id FROM live_replay_purchases WHERE id = $1', [UUID.test(req.params.id) ? req.params.id : null]);
+  if (!p || p.buyer_id !== user.id) throw new LiveError('not_found');
+  res.json({ purchase: replays.purchaseView(await replays.sync(req.params.id)) });
+}));
+router.delete('/:id/replay', requireAuth, run(async (user, req, res) => { res.json(await replays.remove(user, req.params.id, 'mentor')); }));
 
 // ---- Following a mentor -------------------------------------------------------------------------------------------------------------
 // The link in the email (signed; no sign-in needed) opens /unfollow.html, which posts its token here.
@@ -96,7 +148,8 @@ router.get('/discounts/check', requireAuth, run(async (user, req, res) => {
 router.get('/mine', requireAuth, run(async (user, req, res) => {
   res.set('Cache-Control', 'no-store');
   const host = await sessions.canHost(user);
-  const { rows } = await query(`SELECT s.*, ${sessions.TAKEN_SQL} AS taken, ${sessions.SOLD_SQL} AS sold, ${sessions.WAITING_SQL} AS waiting FROM live_sessions s WHERE s.mentor_id = $1 ORDER BY s.starts_at DESC LIMIT 200`, [user.id]);
+  const { rows } = await query(`SELECT s.*, ${sessions.TAKEN_SQL} AS taken, ${sessions.SOLD_SQL} AS sold, ${sessions.WAITING_SQL} AS waiting,
+            EXISTS (SELECT 1 FROM live_replays r WHERE r.session_id = s.id AND r.status = 'ready') AS replay_ready FROM live_sessions s WHERE s.mentor_id = $1 ORDER BY s.starts_at DESC LIMIT 200`, [user.id]);
   res.json({ canHost: host.ok, hostReason: host.reason || null, sessions: rows.map(sessions.ownerView), tickets: await tickets.mine(user.id) });
 }));
 // The mentor's numbers: per session and in total (tickets, attendance, money, rating, followers).

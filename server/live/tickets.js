@@ -67,7 +67,7 @@ async function buy(user, sessionId, { questions, anonymous, giftEmail } = {}) {
     if (new Date(locked.starts_at).getTime() <= Date.now()) throw new LiveError('started');
     if (locked.mentor_id === user.id) throw new LiveError('own_session');
     // Holds that ran out free their seat (the sweep also asks the bank about them; a late payment is handled in sync()).
-    await client.query(`UPDATE live_tickets SET status = 'expired' WHERE session_id = $1 AND status = 'held' AND hold_until <= now() AND provider_order_id IS NULL`, [locked.id]);
+    await client.query(`UPDATE live_tickets SET status = 'expired' WHERE session_id = $1 AND status = 'held' AND hold_until <= now() AND provider_order_id IS NULL AND series_order_id IS NULL`, [locked.id]);
     if (gift) {
       const { rows: [g] } = await client.query(
         `SELECT count(*)::int AS n FROM live_tickets WHERE session_id = $1 AND buyer_id = $2 AND gift_email IS NOT NULL AND gift_claimed_at IS NULL AND status IN ${ACTIVE}`, [locked.id, user.id]);
@@ -197,8 +197,17 @@ async function findByOrder(providerName, orderId) {
 }
 
 // ---- Refunds --------------------------------------------------------------------------------------------------------------------------
+// The bank order a ticket was paid in: its own, or (a ticket of a series, server/live/series.js) the series payment it is a share of.
+async function bankOrderOf(t, client) {
+  if (!t.series_order_id) return { provider: t.provider, orderId: t.provider_order_id, shared: false };
+  const run = client ? client.query.bind(client) : query;
+  const { rows: [o] } = await run('SELECT provider, provider_order_id FROM live_series_orders WHERE id = $1', [t.series_order_id]);
+  return { provider: o.provider, orderId: o.provider_order_id, shared: true };
+}
+
 // Full refund of a paid ticket; a hold that was never paid is simply closed. Idempotent; a bank error leaves "refund_pending" with the
-// error recorded, and the sweep tries again.
+// error recorded, and the sweep tries again. A series ticket's refund is its share of the series payment: a partial refund of that one
+// bank order (its own idempotency key), recorded as soon as the bank accepts it (the order's status cannot say which share went back).
 async function refund(ticketId, reason) {
   let claimed = null;
   let done = null;
@@ -210,7 +219,7 @@ async function refund(ticketId, reason) {
       done = { ...t, status: 'expired' };
       return;
     }
-    if (t.status === 'refunded' || t.status === 'expired' || (t.status === 'refund_pending' && !t.refund_error)) { done = t; return; }
+    if (t.status === 'refunded' || t.status === 'expired' || (t.status === 'refund_pending' && !t.refund_error && !t.series_order_id)) { done = t; return; }
     try { pay.forProvider(t.provider); } catch (e) { throw new LiveError('provider_unavailable'); }
     const { rows: [u] } = await client.query(
       `UPDATE live_tickets SET status = 'refund_pending', refund_requested_at = COALESCE(refund_requested_at, now()), refund_reason = COALESCE(refund_reason, $2),
@@ -218,18 +227,42 @@ async function refund(ticketId, reason) {
     claimed = u;
   });
   if (done) return done;
+  const bank = await bankOrderOf(claimed);
+  const amount = claimed.price - (claimed.refunded_amount || 0);
   try {
-    const r = await pay.forProvider(claimed.provider).refund({ orderId: claimed.provider_order_id, amount: claimed.price - (claimed.refunded_amount || 0),
-      idempotencyKey: `live-refund-${claimed.id}` });
+    const r = await pay.forProvider(bank.provider).refund({ orderId: bank.orderId, amount, partial: bank.shared, idempotencyKey: `live-refund-${claimed.id}` });
     await query('UPDATE live_tickets SET provider_refund_id = $2 WHERE id = $1', [claimed.id, r.refundId]);
   } catch (err) {
     console.error(`[live] the bank refused or failed the refund for ticket ${claimed.id}:`, err.message);
     await query('UPDATE live_tickets SET refund_error = $2 WHERE id = $1', [claimed.id, String(err.message).slice(0, 300)]);
+    if (bank.shared) throw new LiveError('refund_failed');
     const now = await sync(claimed.id).catch(() => null);
     if (now && now.status === 'refunded') return now;
     throw new LiveError('refund_failed');
   }
+  if (bank.shared) return shareRefunded(claimed.id, amount);
   try { return (await sync(claimed.id)) || claimed; } catch (e) { return claimed; }
+}
+
+// The bank accepted the refund of a series ticket's share: the ticket is refunded, the mentor's part comes off, a refund receipt, and the
+// series payment is "refunded" once nothing of it is left.
+async function shareRefunded(ticketId, amount) {
+  let u = null;
+  let s = null;
+  let receipt = null;
+  await tx(async (client) => {
+    const t = await lockTicket(client, ticketId);
+    if (!t || t.status !== 'refund_pending') { u = t; return; }
+    ({ rows: [u] } = await client.query(
+      `UPDATE live_tickets SET status = 'refunded', refunded_at = now(), refund_error = NULL WHERE id = $1 RETURNING *`, [t.id]));
+    const already = t.refunded_amount || 0;
+    await require('../ledger').onTicketRefunded(client, u, u.net - shareOf(u, already));
+    receipt = await receipts.issueTicket(u.id, 'refund', amount, client);
+    await require('./series').settleOrder(client, u.series_order_id);
+    ({ rows: [s] } = await client.query('SELECT * FROM live_sessions WHERE id = $1', [u.session_id]));
+  });
+  if (receipt) require('./notices').ticketRefunded(u, s, receipt).catch((e) => console.error('[live] refund notices failed:', e.message));
+  return u;
 }
 
 // The mentor's part of `amount` tetri returned on this ticket: in proportion to their share of its price (the platform keeps the same
@@ -251,7 +284,8 @@ async function partialRefund(ticketId, amount, reason) {
     claimed = t;
   });
   try {
-    await pay.forProvider(claimed.provider).refund({ orderId: claimed.provider_order_id, amount, partial: true, idempotencyKey: `live-partial-refund-${claimed.id}` });
+    const bank = await bankOrderOf(claimed);
+    await pay.forProvider(bank.provider).refund({ orderId: bank.orderId, amount, partial: true, idempotencyKey: `live-partial-refund-${claimed.id}` });
   } catch (err) {
     await query('UPDATE live_tickets SET partial_refund_started_at = NULL WHERE id = $1', [claimed.id]); // (nothing was returned: it can be tried again)
     console.error(`[live] the bank refused the partial refund for ticket ${claimed.id}:`, err.message);
@@ -329,7 +363,8 @@ async function resendGift(user, ticketId) {
 // ---- The sweep --------------------------------------------------------------------------------------------------------------------------
 // Holds that ran out: the bank is asked first (a payment can arrive late), then they are closed.
 async function expireHolds() {
-  const { rows } = await query(`SELECT id FROM live_tickets WHERE status = 'held' AND hold_until <= now() LIMIT 200`);
+  // (a series' seats are held by its payment: server/live/series.js closes them)
+  const { rows } = await query(`SELECT id FROM live_tickets WHERE status = 'held' AND hold_until <= now() AND series_order_id IS NULL LIMIT 200`);
   let n = 0;
   for (const { id } of rows) {
     try {
@@ -346,7 +381,7 @@ async function retryRefunds() {
   const { rows } = await query(`SELECT id FROM live_tickets WHERE status = 'refund_pending' AND (refund_error IS NOT NULL OR refund_requested_at < now() - interval '5 minutes') LIMIT 100`);
   for (const { id } of rows) {
     const { rows: [t] } = await query('SELECT * FROM live_tickets WHERE id = $1', [id]);
-    if (t.refund_error) await refund(id, t.refund_reason).catch(() => {});
+    if (t.refund_error || t.series_order_id) await refund(id, t.refund_reason).catch(() => {});
     else await sync(id).catch(() => {});
   }
 }
@@ -357,8 +392,10 @@ async function mine(userId) {
   const { rows } = await query(
     `SELECT t.*, s.slug, s.title, s.starts_at, s.duration_min, s.status AS session_status, s.kind, s.time_changed_at, s.end_kind, s.ended_at,
             m.name AS mentor_name, m.username AS mentor_username,
-            (SELECT r.stars FROM live_ratings r WHERE r.ticket_id = t.id) AS my_stars
+            (SELECT r.stars FROM live_ratings r WHERE r.ticket_id = t.id) AS my_stars, ser.title AS series_title, ser.slug AS series_slug,
+            EXISTS (SELECT 1 FROM live_replays rp WHERE rp.session_id = s.id AND rp.status = 'ready') AS has_replay
        FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id JOIN users m ON m.id = s.mentor_id
+       LEFT JOIN live_series_orders so ON so.id = t.series_order_id LEFT JOIN live_series ser ON ser.id = so.series_id
       WHERE (t.holder_id = $1 OR t.buyer_id = $1) AND t.status IN ('paid', 'refund_pending', 'refunded') ORDER BY s.starts_at DESC LIMIT 100`, [userId]);
   const disputes = require('../disputes');
   const after = require('./after');
@@ -377,11 +414,13 @@ async function mine(userId) {
         mentorName: r.mentor_name, mentorUsername: r.mentor_username, timeChanged: Boolean(moved) },
       dispute: attends ? (found[r.id] || null) : null, disputeUntil: w && Date.now() < +w.until && !found[r.id] ? w.until : null,
       rating: r.my_stars || null, canRate: rateable && !r.my_stars,
+      series: r.series_title ? { title: r.series_title, slug: r.series_slug } : null,
+      canWatchReplay: attends && r.status === 'paid' && r.has_replay && Date.now() < new Date(r.ended_at).getTime() + 30 * 86400000,
       canCancel: canceller(r) === userId && r.status === 'paid' && Date.now() <= (moved ? start : start - 24 * 3600000),
       canResendGift: giver && !r.gift_claimed_at && r.status === 'paid' && ['published', 'live'].includes(r.session_status),
       canJoin: attends && r.status === 'paid' && ['published', 'live'].includes(r.session_status) && Date.now() >= start - 10 * 60000 && Date.now() <= start + (r.duration_min + 30) * 60000 };
   });
 }
 
-module.exports = { buy, sync, apply, refund, partialRefund, shareOf, cancelByBuyer, claimGift, resendGift, expireHolds, retryRefunds, findByOrder, mine, view,
+module.exports = { buy, sync, apply, refund, shareRefunded, bankOrderOf, partialRefund, shareOf, cancelByBuyer, claimGift, resendGift, expireHolds, retryRefunds, findByOrder, mine, view,
   feeOf, hashToken };

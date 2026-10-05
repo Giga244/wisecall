@@ -155,9 +155,22 @@ async function handleCallback({ rawBody, headers }) {
     // (or a ticket for a live session: the same bank, the same rule, server/live/tickets.js)
     const tickets = require('./live/tickets');
     const ticketId = await tickets.findByOrder(provider.name, orderId);
-    if (!ticketId) return { known: false };
-    await tickets.sync(ticketId);
-    return { known: true, ticketId };
+    if (ticketId) {
+      await tickets.sync(ticketId);
+      return { known: true, ticketId };
+    }
+    // (a whole series in one payment, or a pass to watch a replay)
+    const series = require('./live/series');
+    const seriesOrderId = await series.findByOrder(provider.name, orderId);
+    if (seriesOrderId) {
+      await series.syncOrder(seriesOrderId);
+      return { known: true, seriesOrderId };
+    }
+    const replays = require('./live/replays');
+    const purchaseId = await replays.findByOrder(provider.name, orderId);
+    if (!purchaseId) return { known: false };
+    await replays.sync(purchaseId);
+    return { known: true, purchaseId };
   }
   await syncBooking(rows[0].id);
   return { known: true, bookingId: rows[0].id };

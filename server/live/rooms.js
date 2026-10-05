@@ -12,7 +12,7 @@ const roomNameFor = (s) => `wc-${String(s.id).replace(/-/g, '').slice(0, 20)}-${
 async function create(s) {
   const p = ensureProvider();
   return p.createRoom({ name: roomNameFor(s), startsAt: s.starts_at, endsAt: new Date(endsAt(s).getTime() + 30 * 60000), maxSeats: s.max_seats,
-    screenshare: s.kind !== 'qa' });
+    screenshare: s.kind !== 'qa', recording: Boolean(s.replay_enabled) });
 }
 
 // A new time: a new room for the new time (the old one is ended).

@@ -94,7 +94,23 @@ async function onLiveEnded(client, session) {
 // the payout while it is pending (a payout that reaches 0 is void), or is owed back once it was paid. Inside the refund transaction.
 async function onTicketRefunded(client, ticket, part) {
   const { rows } = await client.query('SELECT * FROM payouts WHERE live_session_id = $1 FOR UPDATE', [ticket.session_id]);
-  const payout = rows[0];
+  return takeBack(client, rows[0], part);
+}
+
+// A replay pass (server/live/replays.js): the mentor's share is a payout of its own, payable after the usual hold; a refund takes it back
+// the same way as a ticket's.
+async function onReplayPaid(client, purchase, mentorId) {
+  const payableAt = new Date(Date.now() + holdDays() * 86400000);
+  await client.query(
+    `INSERT INTO payouts (replay_purchase_id, mentor_id, amount, currency, payable_at) SELECT $1, $2, $3, 'gel', $4 WHERE $3 > 0
+     ON CONFLICT (replay_purchase_id) WHERE replay_purchase_id IS NOT NULL DO NOTHING`, [purchase.id, mentorId, purchase.net, payableAt]);
+}
+async function onReplayRefunded(client, purchase) {
+  const { rows } = await client.query('SELECT * FROM payouts WHERE replay_purchase_id = $1 FOR UPDATE', [purchase.id]);
+  return takeBack(client, rows[0], purchase.net);
+}
+
+async function takeBack(client, payout, part) {
   if (!payout || !(part > 0)) return 0;
   if (payout.status === 'pending') {
     const take = Math.min(part, payout.amount);
@@ -172,4 +188,4 @@ async function markPaid({ mentorId, expectedAmount, reference, adminId }) {
   });
 }
 
-module.exports = { onAnswered, onRefundRequested, onPartialRefund, onLiveEnded, onTicketRefunded, balanceFor, markPaid, LedgerError, payableSql, holdingSql, requestedSql, debtSql, debtAmountSql, holdDays };
+module.exports = { onAnswered, onRefundRequested, onPartialRefund, onLiveEnded, onTicketRefunded, onReplayPaid, onReplayRefunded, balanceFor, markPaid, LedgerError, payableSql, holdingSql, requestedSql, debtSql, debtAmountSql, holdDays };

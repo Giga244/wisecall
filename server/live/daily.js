@@ -28,11 +28,12 @@ async function call(method, path, body) {
 
 const unix = (d) => Math.floor(new Date(d).getTime() / 1000);
 
-async function createRoom({ name: roomName, startsAt, endsAt, maxSeats, screenshare }) {
+async function createRoom({ name: roomName, startsAt, endsAt, maxSeats, screenshare, recording }) {
   const r = await call('POST', '/rooms', {
     name: roomName,
     privacy: 'private', // (only people with a meeting token from us get in)
     properties: {
+      ...(recording ? { enable_recording: 'cloud' } : {}), // (a session with a replay; the server starts and stops it, below)
       nbf: unix(new Date(new Date(startsAt).getTime() - 15 * 60000)),
       exp: unix(endsAt),
       eject_at_room_exp: true,
@@ -73,6 +74,39 @@ async function endRoom(roomName) {
   await call('DELETE', `/rooms/${encodeURIComponent(roomName)}`);
 }
 
+// ---- Replays (cloud recording of the mentor alone) ---------------------------------------------------------------------------------------
+//   GET  /rooms/:name/presence            -> {data: [{id (session id), userId, ...}]}   (the mentor's session id, from our user id)
+//   POST /rooms/:name/recordings/start    {layout: {preset: 'single-participant', session_id}}
+//   POST /rooms/:name/recordings/stop
+//   GET  /recordings?room_name=           -> {data: [{id, status, duration, start_ts}]}
+//   GET  /recordings/:id/access-link      -> {download_link, expires}   (a short-lived address, made for each viewer)
+//   DELETE /recordings/:id
+async function startRecording({ roomName, ownerUserId }) {
+  const presence = await call('GET', `/rooms/${encodeURIComponent(roomName)}/presence`);
+  const me = (presence.data || []).find((p) => String(p.userId) === String(ownerUserId).slice(0, 36));
+  if (!me) throw new Error('the mentor is not in the call yet');
+  await call('POST', `/rooms/${encodeURIComponent(roomName)}/recordings/start`, { layout: { preset: 'single-participant', session_id: me.id } });
+}
+async function stopRecording({ roomName }) {
+  await call('POST', `/rooms/${encodeURIComponent(roomName)}/recordings/stop`);
+}
+// The finished recording of a room (the longest, if the mentor stopped and started again: later parts are kept as one replay only when
+// there is one; see docs/QUESTIONS.md).
+async function findRecording({ roomName }) {
+  const r = await call('GET', `/recordings?room_name=${encodeURIComponent(roomName)}`);
+  const done = (r.data || []).filter((x) => x.status === 'finished').sort((a, b) => (b.duration || 0) - (a.duration || 0));
+  return done[0] ? { id: done[0].id, durationS: done[0].duration || null } : null;
+}
+async function playbackUrl(recordingId) {
+  const r = await call('GET', `/recordings/${encodeURIComponent(recordingId)}/access-link`);
+  const url = new URL(r.download_link);
+  if (url.protocol !== 'https:') throw new Error('not an https address');
+  return { kind: 'video', url: url.toString(), origin: url.origin };
+}
+async function deleteRecording(recordingId) {
+  await call('DELETE', `/recordings/${encodeURIComponent(recordingId)}`);
+}
+
 const owns = (roomUrl) => /^https:\/\/[a-z0-9-]+\.daily\.co\//i.test(String(roomUrl || ''));
 function frameOrigin(roomUrl) {
   const u = new URL(roomUrl);
@@ -80,4 +114,4 @@ function frameOrigin(roomUrl) {
   return u.origin;
 }
 
-module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin };
+module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin, startRecording, stopRecording, findRecording, playbackUrl, deleteRecording };

@@ -8,8 +8,8 @@ const name = 'fake';
 const isConfigured = () => !config.IS_PROD;
 const rooms = new Map(); // roomName -> { ended }
 
-async function createRoom({ name: roomName, maxSeats, screenshare }) {
-  rooms.set(roomName, { ended: false, maxSeats, screenshare: Boolean(screenshare) });
+async function createRoom({ name: roomName, maxSeats, screenshare, recording }) {
+  rooms.set(roomName, { ended: false, maxSeats, screenshare: Boolean(screenshare), recordingAllowed: Boolean(recording) });
   return { roomName, roomUrl: `${config.PUBLIC_URL}/mock-live-room.html?room=${encodeURIComponent(roomName)}` };
 }
 
@@ -36,9 +36,38 @@ async function endRoom(roomName) {
   rooms.set(roomName, { ...r, ended: true });
 }
 
+// Replays: a "recording" is remembered per room (only the mentor is in it, like the real one: the layout records one person); it plays as
+// a page on this site (/mock-live-replay.html) instead of a video.
+const recordings = new Map(); // recordingId -> { roomName, ownerUserId, startedAt, stoppedAt, deleted }
+async function startRecording({ roomName, ownerUserId }) {
+  const r = rooms.get(roomName);
+  if (!r || !r.recordingAllowed) throw new Error('fake video: recording is not enabled for this room');
+  const id = `fake-rec-${roomName}`;
+  recordings.set(id, { roomName, ownerUserId, startedAt: Date.now(), stoppedAt: null, deleted: false });
+}
+async function stopRecording({ roomName }) {
+  const rec = recordings.get(`fake-rec-${roomName}`);
+  if (rec && !rec.stoppedAt) rec.stoppedAt = Date.now();
+}
+async function findRecording({ roomName }) {
+  const rec = recordings.get(`fake-rec-${roomName}`);
+  if (!rec || rec.deleted) return null;
+  return { id: `fake-rec-${roomName}`, durationS: Math.round(((rec.stoppedAt || Date.now()) - rec.startedAt) / 1000) };
+}
+async function playbackUrl(recordingId) {
+  const url = `${config.PUBLIC_URL}/mock-live-replay.html?rec=${encodeURIComponent(recordingId)}`;
+  return { kind: 'frame', url, origin: new URL(config.PUBLIC_URL).origin };
+}
+async function deleteRecording(recordingId) {
+  const rec = recordings.get(recordingId);
+  if (rec) rec.deleted = true;
+}
+const recordingState = (recordingId) => recordings.get(recordingId) || null;
+
 const owns = (roomUrl) => String(roomUrl || '').startsWith(`${config.PUBLIC_URL}/mock-live-room.html`);
 const frameOrigin = () => new URL(config.PUBLIC_URL).origin;
 // (for the fake room page and the tests)
 const roomState = (roomName) => rooms.get(roomName) || null;
 
-module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin, verify, roomState };
+module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin, verify, roomState, startRecording, stopRecording, findRecording, playbackUrl,
+  deleteRecording, recordingState };

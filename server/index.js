@@ -68,10 +68,10 @@ if (!useMockBank) {
 // Development only: the fake video room for live sessions (server/live/fake.js). Never exists in production.
 const useFakeVideo = config.LIVE_PROVIDER === 'fake' && !config.IS_PROD;
 if (!useFakeVideo) {
-  app.use(['/mock-live-room.html', '/js/mock-live-room.js', '/api/live-fake'], pages.notFoundHandler);
+  app.use(['/mock-live-room.html', '/js/mock-live-room.js', '/mock-live-replay.html', '/api/live-fake'], pages.notFoundHandler);
 } else {
   // (the fake room is shown inside the room page of this same site: only it may be framed, and only by this site)
-  app.get('/mock-live-room.html', (req, res, next) => {
+  app.get(['/mock-live-room.html', '/mock-live-replay.html'], (req, res, next) => {
     res.set('X-Frame-Options', 'SAMEORIGIN');
     res.set('Content-Security-Policy', require('./security').cspWith({ frameAncestors: "'self'" }));
     next();
@@ -144,6 +144,11 @@ app.post(/^\/api\/live\/tickets\/[^/]+\/gift\/resend$/, rateLimit({ windowMs: 60
 app.post(/^\/api\/live\/tickets\/[^/]+\/rating$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.post(/^\/api\/live\/[^/]+\/summary$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.get('/api/live/discounts/check', rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }));
+// (Milestone 3: series payments, replay passes, recording)
+app.post(/^\/api\/live\/series\/[^/]+\/orders$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.post(/^\/api\/live\/[^/]+\/replay\/purchases$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.post(/^\/api\/live\/[^/]+\/recording$/, rateLimit({ windowMs: 10 * 60 * 1000, max: 60 }));
+app.post('/api/live/series', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.get(/^\/api\/live-share\//, rateLimit({ windowMs: 10 * 60 * 1000, max: 60 }));
 // The "are you a person?" check (Cloudflare Turnstile; off without its keys), after the rate limits.
 app.post(['/api/auth/signup', '/api/auth/login', '/api/auth/forgot-password', '/api/contact', '/api/waitlist', '/api/requests'], require('./turnstile').requireHuman);

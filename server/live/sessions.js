@@ -90,6 +90,15 @@ function normalize(b, mentor, existing) {
     if (!o.earlyUntil && !o.earlySeats) throw new LiveError('early_needs_limit');
     if (o.earlyUntil && o.earlyUntil >= o.startsAt) throw new LiveError('invalid_early_date');
   }
+  // A replay (Milestone 3, opt-in): only a Live Q&A or a Workshop (in a Small circle everybody's camera is on), for less than a ticket.
+  const wantReplay = has('replay') || !existing ? b.replay === true : Boolean(base.replay_enabled);
+  if (wantReplay) {
+    if (o.kind === 'circle') throw new LiveError('replay_not_for_circle');
+    const rp = has('replayPrice') || !existing ? lari(b.replayPrice) : (base.replay_price === null ? null : base.replay_price / 100);
+    if (!Number.isInteger(rp) || rp < LIMITS.priceMin || rp >= price) throw new LiveError('invalid_replay_price', { min: LIMITS.priceMin, max: price - 1 });
+    o.replay = true;
+    o.replayPrice = rp * 100;
+  } else { o.replay = false; o.replayPrice = null; }
   // (regulated when the session's field is, when its title names a regulated profession, or when the mentor's own field is regulated)
   o.regulated = niches.isRegulated(o.niche) || Boolean(require('../fieldRules').regulatedCategoryIn(o.title)) || niches.isRegulated(mentor.niche);
   return o;
@@ -149,6 +158,7 @@ function publicView(s, mentor) {
     startingSoon: s.status === 'published' && new Date(s.starts_at).getTime() - Date.now() < 86400000,
     almostFull: left > 0 && left <= Math.max(1, Math.ceil(s.max_seats * 0.2)),
     hasCover: Boolean(s.has_cover), cancelReason: s.status === 'cancelled' ? s.cancel_reason : null,
+    replay: Boolean(s.replay_enabled), replayPrice: s.replay_price || null, seriesId: s.series_id || null,
     mentor: mentor ? { id: mentor.id, name: mentor.name, username: mentor.username, niche: mentor.niche, customNiche: mentor.customNiche,
       roleTitle: mentor.roleTitle, photoUrl: require('../util').photoUrl(mentor) } : null
   };
@@ -158,7 +168,7 @@ function ownerView(s) {
   return { ...publicView(s, null), reviewReason: s.status === 'rejected' ? s.review_reason : null, minSeats: s.min_seats,
     sold: Number(s.sold === undefined ? s.taken || 0 : s.sold || 0), waiting: Number(s.waiting || 0), regulatedAgreed: Boolean(s.regulated_agreed_at),
     createdAt: s.created_at, publishedAt: s.published_at, endKind: s.end_kind || null,
-    summary: s.summary || null, summaryLinks: s.summary_links || [], summarySentAt: s.summary_sent_at || null };
+    summary: s.summary || null, summaryLinks: s.summary_links || [], summarySentAt: s.summary_sent_at || null, replayReady: Boolean(s.replay_ready) };
 }
 
 // ---- Writing --------------------------------------------------------------------------------------------------------------------------
@@ -170,10 +180,10 @@ async function create(mentor, b) {
   const id = crypto.randomUUID();
   const { rows: [s] } = await query(
     `INSERT INTO live_sessions (id, slug, mentor_id, title, description, learn_points, niche, kind, language, starts_at, duration_min, price, early_price,
-       early_until, early_seats, max_seats, min_seats, regulated)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
+       early_until, early_seats, max_seats, min_seats, regulated, replay_enabled, replay_price)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
     [id, slugFor(o.title, id), mentor.id, o.title, o.description, o.learnPoints, o.niche, o.kind, o.language, o.startsAt, o.durationMin, o.price,
-      o.earlyPrice, o.earlyUntil, o.earlySeats, o.maxSeats, o.minSeats, o.regulated]);
+      o.earlyPrice, o.earlyUntil, o.earlySeats, o.maxSeats, o.minSeats, o.regulated, o.replay, o.replayPrice]);
   return ownerView(await rowById(s.id));
 }
 
@@ -181,6 +191,7 @@ async function create(mentor, b) {
 // told and may cancel for a full refund until the start).
 async function update(mentor, id, b) {
   let timeChanged = false;
+  let replayChanged = false;
   let out;
   await tx(async (client) => {
     const s = await rowById(id, client);
@@ -190,8 +201,10 @@ async function update(mentor, id, b) {
     const sold = Number((await client.query(`SELECT count(*)::int AS n FROM live_tickets WHERE session_id = $1 AND status IN ('held', 'paid', 'refund_pending')`, [s.id])).rows[0].n);
     const body = b || {};
     if (sold > 0) {
-      const locked = ['title', 'niche', 'kind', 'language', 'durationMin', 'price', 'earlyPrice', 'earlyUntilDate', 'earlySeats', 'maxSeats', 'minSeats'];
-      const tried = locked.filter((k) => body[k] !== undefined && String(body[k]) !== String(currentValue(s, k)));
+      const locked = ['title', 'niche', 'kind', 'language', 'durationMin', 'price', 'earlyPrice', 'earlyUntilDate', 'earlySeats', 'maxSeats', 'minSeats', 'replay', 'replayPrice'];
+      // (an empty field is the same whether it comes as null, '' or false)
+      const same = (v) => (v === null || v === undefined || v === '' || v === false ? '' : String(v));
+      const tried = locked.filter((k) => body[k] !== undefined && same(body[k]) !== same(currentValue(s, k)));
       if (tried.length) throw new LiveError('locked_after_sales', { fields: tried });
     }
     const o = normalize(body, mentor, s);
@@ -199,26 +212,28 @@ async function update(mentor, id, b) {
       if (s.status !== 'draft' || sold > 0) checkLead(o.startsAt);
       timeChanged = sold > 0;
     }
+    replayChanged = o.replay !== Boolean(s.replay_enabled);
     await client.query(
       `UPDATE live_sessions SET title=$2, description=$3, learn_points=$4, niche=$5, kind=$6, language=$7, starts_at=$8, duration_min=$9, price=$10,
          early_price=$11, early_until=$12, early_seats=$13, max_seats=$14, min_seats=$15, regulated=$16, updated_at=now(),
          time_changed_at = CASE WHEN $17 THEN now() ELSE time_changed_at END,
          reminded_24h_at = CASE WHEN $17 THEN NULL ELSE reminded_24h_at END, reminded_1h_at = CASE WHEN $17 THEN NULL ELSE reminded_1h_at END,
-         status = CASE WHEN status = 'rejected' THEN 'draft' ELSE status END
+         status = CASE WHEN status = 'rejected' THEN 'draft' ELSE status END, replay_enabled = $18, replay_price = $19
        WHERE id = $1`,
       [s.id, o.title, o.description, o.learnPoints, o.niche, o.kind, o.language, o.startsAt, o.durationMin, o.price, o.earlyPrice, o.earlyUntil,
-        o.earlySeats, o.maxSeats, o.minSeats, o.regulated, timeChanged]);
+        o.earlySeats, o.maxSeats, o.minSeats, o.regulated, timeChanged, o.replay, o.replayPrice]);
     out = await rowById(s.id, client);
   });
   if (timeChanged) require('./notices').timeChanged(out).catch((e) => console.error('[live] time-change emails failed:', e.message));
-  if (timeChanged && out.room_name) require('./rooms').moveRoom(out).catch((e) => console.error('[live] moving the room failed:', e.message));
+  // (a new time, or a replay switched on or off before any sale: a new room, made for it)
+  if ((timeChanged || replayChanged) && out.room_name) require('./rooms').moveRoom(out).catch((e) => console.error('[live] moving the room failed:', e.message));
   return ownerView(out);
 }
 function currentValue(s, k) {
   return { title: s.title, niche: s.niche, kind: s.kind, language: s.language, durationMin: s.duration_min, price: s.price / 100,
     earlyPrice: s.early_price === null ? '' : s.early_price / 100, earlySeats: s.early_seats === null ? '' : s.early_seats,
     earlyUntilDate: s.early_until ? new Date(new Date(s.early_until).getTime() + 4 * 3600000).toISOString().slice(0, 10) : '',
-    maxSeats: s.max_seats, minSeats: s.min_seats }[k];
+    maxSeats: s.max_seats, minSeats: s.min_seats, replay: s.replay_enabled ? true : '', replayPrice: s.replay_price === null ? '' : s.replay_price / 100 }[k];
 }
 
 // Publishing: checked again, the agreement for a regulated field, then 'review' (the first 3) or 'published' with its room.
@@ -301,6 +316,7 @@ async function cancel(id, reason, { by, note } = {}) {
   for (const t of rows) {
     await tickets.refund(t.id, `session_${reason}`).catch((e) => console.error(`[live] refund of ticket ${t.id} failed (the sweep retries):`, e.message));
   }
+  await require('./settle').stopRecording(s).catch(() => {});
   if (s.room_name) require('./rooms').end(s).catch(() => {});
   await require('./waitlist').close(s.id).catch(() => {});
   require('./notices').cancelled(s).catch((e) => console.error('[live] cancel notices failed:', e.message));

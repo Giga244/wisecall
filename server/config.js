@@ -168,6 +168,9 @@ const config = {
   LIVE_MAX_PARTICIPANTS: int(env.LIVE_MAX_PARTICIPANTS, 30),
   LIVE_HOLD_MINUTES: int(env.LIVE_HOLD_MINUTES, 15),
   LIVE_MIN_LEAD_HOURS: int(env.LIVE_MIN_LEAD_HOURS, 24),
+  // Series (one payment for several sessions; a cancelled session is a partial refund of it): off in production until the bank confirms
+  // that several partial refunds of one payment are allowed (docs/QUESTIONS.md 2b). LIVE_SERIES=on turns it on.
+  LIVE_SERIES_ENABLED: IS_PROD ? env.LIVE_SERIES === 'on' : env.LIVE_SERIES !== 'off',
 
   // Per-account login lockout (server/loginGuard.js): this many wrong passwords for one email within the window, and it waits this long.
   LOGIN_LOCK_FAILURES: int(env.LOGIN_LOCK_FAILURES, 10),

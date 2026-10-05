@@ -26,7 +26,7 @@ const rowsOf = async (sql, params) => (await query(sql, params)).rows;
 async function exportData(user) {
   const id = user.id;
   const [asked, answered, ratingsGiven, ratingsReceived, messages, notifications, payouts, batches, steps, evidence, sessions, receipts, waitlist, identities, settings,
-    publicAnswers, mentorRequests, liveHosted, liveTickets, following, liveRatingsGiven, discountCodes, liveWaiting] = await Promise.all([
+    publicAnswers, mentorRequests, liveHosted, liveTickets, following, liveRatingsGiven, discountCodes, liveWaiting, seriesBought, replayPasses] = await Promise.all([
     rowsOf(`SELECT b.id, b.question, b.answer, b.amount, b.currency, b.status, b.created_at, b.paid_at, b.answered_at, b.refunded_at, b.refund_reason, b.refunded_amount,
                    m.name AS mentor_name FROM bookings b JOIN users m ON m.id = b.mentor_id WHERE b.seeker_id = $1 ORDER BY b.created_at`, [id]),
     rowsOf(`SELECT id, question, answer, amount, platform_fee_amount, mentor_net_amount, currency, status, created_at, paid_at, answered_at, refunded_at, refund_reason
@@ -60,7 +60,12 @@ async function exportData(user) {
     rowsOf('SELECT m.name AS mentor_name, f.created_at, f.last_emailed_at FROM mentor_follows f JOIN users m ON m.id = f.mentor_id WHERE f.follower_id = $1 ORDER BY f.created_at', [id]),
     rowsOf('SELECT s.title, r.stars, r.comment, r.created_at FROM live_ratings r JOIN live_sessions s ON s.id = r.session_id WHERE r.rater_id = $1 ORDER BY r.created_at', [id]),
     rowsOf('SELECT c.code, c.percent, c.expires_at, c.booking_id, m.name AS mentor_name, c.created_at FROM discount_codes c JOIN users m ON m.id = c.mentor_id WHERE c.user_id = $1 ORDER BY c.created_at', [id]),
-    rowsOf('SELECT s.title, w.status, w.offered_at, w.offer_expires_at, w.created_at FROM live_waitlist w JOIN live_sessions s ON s.id = w.session_id WHERE w.user_id = $1 ORDER BY w.created_at', [id])
+    rowsOf('SELECT s.title, w.status, w.offered_at, w.offer_expires_at, w.created_at FROM live_waitlist w JOIN live_sessions s ON s.id = w.session_id WHERE w.user_id = $1 ORDER BY w.created_at', [id]),
+    // (series bought, replay passes)
+    rowsOf(`SELECT ls.title, o.status, o.price, o.paid_at, o.created_at FROM live_series_orders o JOIN live_series ls ON ls.id = o.series_id
+             WHERE o.buyer_id = $1 AND o.status <> 'expired' ORDER BY o.created_at`, [id]),
+    rowsOf(`SELECT s.title, p.status, p.price, p.paid_at, p.access_until, p.refunded_at FROM live_replay_purchases p JOIN live_sessions s ON s.id = p.session_id
+             WHERE p.buyer_id = $1 AND p.status <> 'expired' ORDER BY p.created_at`, [id])
   ]);
   const iban = decrypt(user.payoutIbanEnc);
   return {
@@ -77,7 +82,8 @@ async function exportData(user) {
     questionsAsked: asked, questionsAnswered: answered, ratingsGiven, ratingsReceived, messagesWritten: messages, notifications,
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
     waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests,
-    liveSessionsHosted: liveHosted, liveTickets, mentorsFollowed: following, liveRatingsGiven, discountCodes, liveWaitingLists: liveWaiting
+    liveSessionsHosted: liveHosted, liveTickets, mentorsFollowed: following, liveRatingsGiven, discountCodes, liveWaitingLists: liveWaiting,
+    liveSeriesBought: seriesBought, replayPasses
   };
 }
 
