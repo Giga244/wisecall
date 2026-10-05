@@ -28,6 +28,8 @@ test.beforeAll(async () => {
   askerName = `Asha ${SCRIPT}`;
   asker = await S.apiUser(askerName, 'asha.xss@e2e.test');
   await asker.api('/me', { method: 'PATCH', body: { bio: `Asker bio ${BOTH}`, headline: `Asker ${IMG}`, profileVisibility: 'public' } });
+  // (an asker's parts start as "only me": shown to everyone here, so the escaping can be checked)
+  for (const section of ['about', 'headline']) await asker.api('/me/profile/visibility', { method: 'PUT', body: { section, level: 'everyone' } });
   askerUsername = (await asker.api('/me')).user.username;
 
   // A question, its answer, both ratings with a review, the mentor's reply, a follow-up and its reply.

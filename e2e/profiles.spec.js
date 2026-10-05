@@ -73,9 +73,9 @@ test('Settings → Profile: everything can be edited, and the preview follows wh
   await expect(preview).toContainText('Kutaisi');
   await expect(preview).toContainText('Georgian, English');
 
-  // the bio limit is 500 and is counted
+  // About: up to 2,000 characters, counted
   await page.fill('#bio', 'x'.repeat(120));
-  await expect(page.locator('#bioCount')).toHaveText('120 / 500 characters');
+  await expect(page.locator('#bioCount')).toHaveText('120 / 2000 characters');
   await page.fill('#bio', 'I ask a lot of questions about careers.');
 
   await page.fill('#linkedinUrl', 'https://example.com/not-linkedin');
@@ -89,9 +89,18 @@ test('Settings → Profile: everything can be edited, and the preview follows wh
   await expect(page.locator('#toast')).toContainText(/saved/i);
   await expect(page.locator('#linkedinUrl')).toHaveValue('https://linkedin.com/in/maia-profile');
 
+  // An asker's parts start as "Only me": here they are opened to everyone, one choice at a time (each is saved at once).
+  await page.locator('#psWho summary').click();
+  for (const section of ['headline', 'about', 'languages', 'links']) {
+    await expect(page.locator(`select[data-vis="${section}"]`)).toHaveValue('only_me');
+    await page.selectOption(`select[data-vis="${section}"]`, 'everyone');
+  }
+  await expect.poll(async () => (await page.request.get('/api/users/maia-p')).json().then((r) => r.profile.headline)).toBe('Economics student');
+
   await page.reload();
   await expect(page.locator('#headline')).toHaveValue('Economics student');
   await expect(page.locator('#languageChecks input:checked')).toHaveCount(2);
+  await expect(page.locator('select[data-vis="about"]')).toHaveValue('everyone');
 });
 
 test('a photo: a wrong file is refused, a real picture is shown at once, and it can be removed', async ({ page }) => {
