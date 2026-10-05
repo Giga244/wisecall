@@ -126,7 +126,28 @@
     const sub = title && title.nextElementSibling;
     if (sub) sub.innerHTML = `${esc(t('pa.home.sub'))} <a class="plain-link" href="${prefix}/answers">${esc(t('pa.home.more'))}</a>`;
   }
-  document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(loadRealAnswers).then(initExamples));
+  // The next three live sessions, when there are any (the section stays hidden otherwise).
+  async function loadLive() {
+    const box = document.getElementById('liveHome');
+    if (!box) return;
+    let d;
+    try { d = await fetch('/api/live?limit=3').then((r) => (r.ok ? r.json() : { sessions: [] })); } catch (e) { return; }
+    if (!d.sessions || !d.sessions.length) return;
+    const prefix = WisecallI18n.getLang() === 'ka' ? '/ka' : '';
+    const when = (x) => WisecallI18n.formatDate(x, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('liveHomeGrid').innerHTML = d.sessions.map((s) => `
+      <article class="live-card">
+        ${s.hasCover ? `<img class="live-card-cover" src="/api/live-covers/${esc(s.id)}.webp" alt="" width="600" height="315" loading="lazy">` : ''}
+        <div class="live-card-body">
+          <p class="live-card-meta small"><span class="live-kind">${esc(t('live.kind.' + s.kind))}</span> · ${esc(when(s.startsAt))}</p>
+          <h3 class="live-card-title"><a class="plain-link" href="${prefix}/live/${encodeURIComponent(s.slug)}">${esc(s.title)}</a></h3>
+          <p class="muted small">${esc(s.mentor ? s.mentor.name : '')}</p>
+          <p class="live-card-foot"><strong>${esc(WisecallAPI.formatAmount(s.priceNow))}</strong></p>
+        </div>
+      </article>`).join('');
+    box.hidden = false;
+  }
+  document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(loadRealAnswers).then(initExamples).then(loadLive));
   document.addEventListener('wisecall:lang-changed', drawStrip);
 
   window.WisecallHome = { icon, drawStrip, emptyArt: EMPTY_ART };

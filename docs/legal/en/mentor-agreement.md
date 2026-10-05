@@ -119,3 +119,23 @@ from your breach of this Agreement. [LAWYER: confirm scope and cap.]
 ## 10. Law
 
 Georgian law applies. Disputes go to the courts of Tbilisi. [LAWYER: arbitration?]
+
+## 11. Live sessions
+
+[LAWYER: new section; please review with Terms section 14.]
+
+- You may host live sessions once you are approved, have your payout details saved and have answered at least one question (or Wisecall
+  allows it). Wisecall checks your first 3 sessions before they are public and may change or remove a session's text.
+- You set the title, description, time, length, price (5-200 ₾), the most and the fewest people. After the first ticket is sold only the
+  description, the points, the cover picture and the time can change; if you move the time, every buyer may cancel for a full refund.
+- **Your share.** 80 % of each ticket's price (Wisecall keeps 20 %), recorded only after the session took place normally — you were in it
+  for at least half of the planned time — and payable after the same hold as answers. Reports or disputes during the hold delay it; a
+  refund Wisecall gives later is taken off your earnings in proportion (or owed back if already paid out).
+- **When everybody is refunded:** you cancel; fewer people than your minimum 6 hours before; you do not join within 15 minutes of the
+  start; the session runs for less than half of the planned time; Wisecall ends it for safety. Repeated cancellations or no-shows can lead
+  to removal from live sessions or from Wisecall.
+- In regulated fields you agree, before publishing, that the session is an educational talk and Q&A — not a consultation, diagnosis or
+  therapy — and you say so at the start.
+- You see participants' first names (or "Guest N") and how many joined, never their emails. Do not record the session, ask participants
+  for contact details or offer services outside Wisecall.
+- The video service is Daily.co; it processes the call for Wisecall. Wisecall does not record sessions.

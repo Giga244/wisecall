@@ -2043,5 +2043,8 @@
   "inbox.ev.live_disputed": "A participant reported a problem with \"{title}\". Your payout for it waits until our team decides.",
   "inbox.ev.live_dispute_resolved": "The report about \"{title}\" was decided.",
   "settings.data.open.live_sessions_hosting": "you host a live session that has not ended (cancel it first; everybody is refunded).",
-  "settings.data.open.live_tickets": "you have a ticket for a live session that has not happened yet (cancel it, or wait until it is over)."
+  "settings.data.open.live_tickets": "you have a ticket for a live session that has not happened yet (cancel it, or wait until it is over).",
+  "live.home.title": "Live sessions coming up",
+  "live.home.sub": "Join a verified mentor live: ask in writing, hear the answers, learn from what others ask.",
+  "live.home.all": "All live sessions"
 }

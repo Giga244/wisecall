@@ -132,7 +132,7 @@ describe('who can host, and creating a session', () => {
     const ok = await admin.api(`/admin/live/${c.session.id}/approve`, { method: 'POST' });
     assert.equal(ok.session.status, 'published');
     const row = (await sql('SELECT room_name, room_url FROM live_sessions WHERE id = $1', [c.session.id]))[0];
-    assert.ok(row.room_name && /live-fake-room\.html/.test(row.room_url), 'the room is made when it goes public');
+    assert.ok(row.room_name && /mock-live-room\.html/.test(row.room_url), 'the room is made when it goes public');
     await published({ title: 'Second approved session here' });
     await published({ title: 'Third approved session here' });
     const fourth = await mentor.api('/live', { method: 'POST', body: draft({ title: 'Fourth goes straight out' }) });

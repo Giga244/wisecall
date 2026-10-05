@@ -83,7 +83,7 @@ owner, canSend, startsAt, endsAt }) → token`, `endRoom(roomName)`, `deleteRoom
   {properties:{room_name, user_name, user_id, is_owner, nbf, exp, eject_at_token_exp, start_video_off:true, start_audio_off:true,
   enable_screenshare, permissions:{canSend}}}; DELETE /v1/rooms/:name. Embedded as Daily Prebuilt in an iframe (`room_url?t=token`),
   no third-party script on our pages.
-- `fake` (development and tests): rooms are a local page (/live-fake-room.html) that shows who joined with which rights.
+- `fake` (development and tests): rooms are a local page (/mock-live-room.html) that shows who joined with which rights.
 - Tokens: only for the mentor and holders of a paid ticket, only from 10 min before the start until the end + 30 min, short-lived,
   tied to the user id and display name (first name, or "Guest 12" when joining anonymously). The mentor's token is an owner token.
   Q&A and Workshop: participants get canSend [] (watch and listen) until the mentor allows them to speak (raise hand → allow → the page

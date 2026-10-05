@@ -577,7 +577,7 @@ describe('production safety', () => {
       // Development helpers do not exist in production: no devMode key, no fake bank or ID-check pages or routes.
       const cfg = await (await fetch(`${prod.base}/api/config`)).json();
       assert.ok(!('devMode' in cfg), 'the config does not mention devMode at all');
-      for (const p of ['/mock-bank.html', '/mock-kyc.html', '/js/mock-bank.js', '/js/mock-kyc.js']) {
+      for (const p of ['/mock-bank.html', '/mock-kyc.html', '/js/mock-bank.js', '/js/mock-kyc.js', '/mock-live-room.html', '/js/mock-live-room.js']) {
         assert.equal((await fetch(prod.base + p, { headers: { Accept: 'text/html' } })).status, 404, `${p} is not served`);
       }
       assert.equal((await client(prod.base).api('/mock-bank/orders/x/complete', { method: 'POST', body: {} })).status, 404);

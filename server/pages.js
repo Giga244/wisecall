@@ -735,6 +735,9 @@ function seoRoutes() {
         .map((r) => r.niche).filter((k) => require('./niches').isValid(k));
       // Published answers (only those: a withdrawn one is gone).
       const answers = config.LAUNCH_MODE === 'prelaunch' ? [] : await require('./publicAnswers').sitemapSlugs();
+      // Live sessions people can still join (the list and each session).
+      const live = (await query(`SELECT s.slug, s.updated_at FROM live_sessions s WHERE s.status IN ('published', 'live') AND s.starts_at > now() - interval '2 hours'
+                                     AND EXISTS (SELECT 1 FROM users u WHERE u.id = s.mentor_id AND ${listableSql('u')}) ORDER BY s.starts_at LIMIT 1000`)).rows;
       // Each page in both languages, each naming the other (and Georgian as the default).
       const both = (p, extra) => {
         const en = config.PUBLIC_URL + p, ka = kaUrl(p);
@@ -746,7 +749,9 @@ function seoRoutes() {
         ...fields.flatMap((k) => both(`/advice/${k}`, '<priority>0.8</priority>')),
         ...rows.flatMap((r) => both(`/u/${r.username}`, `<lastmod>${new Date(r.changed_at).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority>`)),
         ...answers.flatMap((a) => both(`/answers/${a.slug}`, `<lastmod>${new Date(a.published_at).toISOString().slice(0, 10)}</lastmod><priority>0.6</priority>`)),
-        ...(answers.length ? both('/answers', '<priority>0.7</priority>') : [])
+        ...(answers.length ? both('/answers', '<priority>0.7</priority>') : []),
+        ...live.flatMap((s) => both(`/live/${s.slug}`, `<lastmod>${new Date(s.updated_at).toISOString().slice(0, 10)}</lastmod><priority>0.6</priority>`)),
+        ...(live.length ? both('/live', '<priority>0.7</priority>') : [])
       ];
       res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
     } catch (e) { next(e); }

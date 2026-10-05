@@ -175,6 +175,11 @@
 
         ${isMentor && (expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')} <a href="/how-we-verify.html">${t('hv.title')}</a></p></section>` : ''}
 
+        ${isMentor ? `<section class="profile-section profile-live" aria-labelledby="liveTitle" id="profileLive" hidden>
+          <h2 id="liveTitle">${t('live.title')}</h2>
+          <div id="profileLiveBody"></div>
+        </section>` : ''}
+
         ${isMentor ? `<section class="profile-section profile-answers" aria-labelledby="answersTitle" id="publicAnswers" hidden>
           <h2 id="answersTitle">${t('pa.profile.title')}</h2>
           <div id="publicAnswersBody"></div>
@@ -203,10 +208,22 @@
     WisecallCopy.wire(page);
     loadReviews();
     loadPublicAnswers();
+    loadLive();
     if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
   }
   const askArea = () => document.getElementById('askArea');
   // ---- Reviews ------------------------------------------------------------------------------------------------
+  // This mentor's upcoming live sessions (shown only when there are some).
+  async function loadLive() {
+    let d;
+    try { d = await WisecallAPI.apiFetch(`/live?mentor=${encodeURIComponent(expert.id)}&limit=6`); } catch (e) { return; }
+    if (!d.sessions || !d.sessions.length) return;
+    const prefix = WisecallI18n.getLang() === 'ka' ? '/ka' : '';
+    document.getElementById('profileLiveBody').innerHTML = `<ul class="earn-list">${d.sessions.map((s) => `<li><span>${escapeHtml(WisecallI18n.formatDate(s.startsAt, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</span>
+      <span><a class="plain-link" href="${prefix}/live/${encodeURIComponent(s.slug)}">${escapeHtml(s.title)}</a><br><span class="muted small">${escapeHtml(t('live.kind.' + s.kind))}</span></span>
+      <strong>${escapeHtml(WisecallAPI.formatAmount(s.priceNow))}</strong></li>`).join('')}</ul>`;
+    document.getElementById('profileLive').hidden = false;
+  }
   // Answers this mentor and their askers agreed to publish (shown only when there are some).
   async function loadPublicAnswers() {
     let d;

@@ -38,6 +38,10 @@ function warnings() {
   } else if (!config.TURNSTILE_ENABLED && config.IS_PROD) {
     list.push('TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are not set: sign-up, login and the public forms have no "are you a person?" check (only rate limits). Add both from Cloudflare (Turnstile).');
   }
+  // Live sessions need a video service; without one, mentors can write sessions but not publish them.
+  if (config.IS_PROD && !(config.LIVE_PROVIDER === 'daily' && config.DAILY_API_KEY)) {
+    list.push('LIVE VIDEO IS OFF: set LIVE_PROVIDER=daily and DAILY_API_KEY (from the Daily.co dashboard) so mentors can publish live sessions.');
+  }
   // Before launch the site can run without the bank and the ID-check provider: say plainly what is closed, and why it does not open by itself.
   if (!config.PAYMENTS_ENABLED) list.push('PAYMENTS ARE OFF (no bank keys): bookings and payments are closed and the site stays in prelaunch. Set PAYMENT_PROVIDER (bog or tbc) and the bank keys, then LAUNCH_MODE=live (or empty), before you open it.');
   if (!config.ID_CHECKS_ENABLED) list.push('ID CHECKS ARE OFF (no Didit keys): mentors see "ID checks open soon" and cannot pass the ID step yet. Set KYC_PROVIDER=didit and the Didit keys before you approve mentors.');

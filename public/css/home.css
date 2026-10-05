@@ -260,4 +260,6 @@ section h2 { font-size: clamp(1.6rem, 3vw + 0.9rem, 2rem); margin: 0 0 12px; tex
   .expert-grid { grid-template-columns: 1fr; gap: 16px; }
   .experts { padding-bottom: 56px; }
   .experts h2 { margin-bottom: 18px; }
-}
+}/* Live sessions coming up (home) */
+.live-home { padding: 56px 0 8px; }
+.live-home-more { margin-top: 16px; font-weight: 700; }

@@ -149,3 +149,25 @@ the right to go to another court. Before going to court, please write to us: we 
 ## 13. Language
 
 These Terms are available in Georgian and English. If they differ, the [LAWYER: Georgian] version prevails.
+
+## 14. Live sessions
+
+[LAWYER: new section for live sessions; please review together with the Mentor Agreement section 11.]
+
+- **What it is.** A Mentor may host a paid live video session (a "Live Q&A", a "Workshop" or a "Small circle"). A ticket gives one person a
+  place in that session. Wisecall sells the ticket on the Mentor's behalf, as it does for questions.
+- **Paying.** A seat is held for 15 minutes while you pay. The ticket is yours only when the bank confirms the payment.
+- **Joining.** You join through the session page from 10 minutes before the start, with your camera and microphone off. In a Live Q&A or a
+  Workshop you speak only if the Mentor lets you; in a Small circle everyone can. Other participants see your first name, or "Guest" if you
+  choose to join anonymously; questions you write are shown without your name.
+- **Refunds.** You can cancel up to 24 hours before the start for a full refund (or until the start if the Mentor moved the time after you
+  bought). Everybody is refunded in full, automatically, if the Mentor cancels, if fewer people than the Mentor's minimum have bought a
+  ticket 6 hours before the start, if the Mentor does not join within 15 minutes of the start, if the session runs for less than half of
+  the planned time, or if Wisecall ends it for a safety reason. **If you do not attend, the ticket is not refunded.** If a session that
+  took place was clearly not as described, you can report it within the dispute period and Wisecall decides on a full, partial or no
+  refund.
+- **Not professional advice.** Sessions in medicine, psychology, law, finance and other regulated fields are educational talks and Q&A,
+  not a consultation, diagnosis or therapy. If you are in danger or in crisis, call 112.
+- **No recording.** Wisecall does not record live sessions. Do not record, copy or share a session or its participants without their consent.
+- **Conduct.** The rules for questions and messages apply. The Mentor can mute or remove a participant who breaks them; Wisecall can end
+  a session at once.

@@ -1,4 +1,4 @@
-// A fake video provider for development and the tests: a "room" is a page on this site (/live-fake-room.html) that shows who joined, as
+// A fake video provider for development and the tests: a "room" is a page on this site (/mock-live-room.html) that shows who joined, as
 // whom, and with which rights. Tokens are signed by the server, so the page can show what a real provider would enforce. Refused in
 // production (config.js).
 const crypto = require('crypto');
@@ -10,7 +10,7 @@ const rooms = new Map(); // roomName -> { ended }
 
 async function createRoom({ name: roomName, maxSeats, screenshare }) {
   rooms.set(roomName, { ended: false, maxSeats, screenshare: Boolean(screenshare) });
-  return { roomName, roomUrl: `${config.PUBLIC_URL}/live-fake-room.html?room=${encodeURIComponent(roomName)}` };
+  return { roomName, roomUrl: `${config.PUBLIC_URL}/mock-live-room.html?room=${encodeURIComponent(roomName)}` };
 }
 
 const sign = (payload) => {
@@ -36,7 +36,7 @@ async function endRoom(roomName) {
   rooms.set(roomName, { ...r, ended: true });
 }
 
-const owns = (roomUrl) => String(roomUrl || '').startsWith(`${config.PUBLIC_URL}/live-fake-room.html`);
+const owns = (roomUrl) => String(roomUrl || '').startsWith(`${config.PUBLIC_URL}/mock-live-room.html`);
 const frameOrigin = () => new URL(config.PUBLIC_URL).origin;
 // (for the fake room page and the tests)
 const roomState = (roomName) => rooms.get(roomName) || null;

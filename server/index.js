@@ -68,10 +68,10 @@ if (!useMockBank) {
 // Development only: the fake video room for live sessions (server/live/fake.js). Never exists in production.
 const useFakeVideo = config.LIVE_PROVIDER === 'fake' && !config.IS_PROD;
 if (!useFakeVideo) {
-  app.use(['/live-fake-room.html', '/js/live-fake-room.js', '/api/live-fake'], pages.notFoundHandler);
+  app.use(['/mock-live-room.html', '/js/mock-live-room.js', '/api/live-fake'], pages.notFoundHandler);
 } else {
   // (the fake room is shown inside the room page of this same site: only it may be framed, and only by this site)
-  app.get('/live-fake-room.html', (req, res, next) => {
+  app.get('/mock-live-room.html', (req, res, next) => {
     res.set('X-Frame-Options', 'SAMEORIGIN');
     res.set('Content-Security-Policy', require('./security').cspWith({ frameAncestors: "'self'" }));
     next();

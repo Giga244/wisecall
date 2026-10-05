@@ -135,3 +135,8 @@ Mentor applications now go through three steps (Identity → Experience → Revi
 54. **Campaign attribution cookie (`wc_src`).** First-party, 30 days, campaign names and a referring domain only, no identifier,
     not set under Do Not Track / Global Privacy Control; copied onto the account, questions and a mentor application; the admin sees only
     counts per campaign. Confirm it needs no consent (otherwise ATTRIBUTION_COOKIE=off) and the wording in the Cookie Notice.
+55. **Live sessions (paid live video).** Terms 14, Mentor Agreement 11, Privacy Policy rows. Tickets sold on the mentor's behalf;
+    refund rules (24 h, automatic full refunds, no refund for not attending, partial refunds via disputes); "not a consultation" in
+    regulated fields with the mentor's agreement; Daily.co as a video processor (no recording; transfer terms); first names / "Guest N"
+    shown to other participants; room data deleted after 30 days. Confirm the consumer-law wording (especially "no refund if you do not
+    attend") and whether event tickets need anything else (invoices, VAT on the platform fee).
