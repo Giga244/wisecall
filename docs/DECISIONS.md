@@ -198,3 +198,26 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   and ATTRIBUTION_COOKIE=off turns it off at once without a code change.
 - "First paid question" = the source stored on each person's first paid question (every question keeps the source of its visit).
 - The legal drafts were also brought up to date for PART 7A/8 (Turnstile on six forms, the wrong-password hashes, the "Helpful" browser id).
+
+## Live sessions, Milestone 1 (docs/LIVE-SESSIONS-PLAN.md)
+- Tickets have their own table and lifecycle on the SAME bank layer (server/pay) and rules as questions (paid only after the bank's
+  status check; idempotent refunds retried by the sweep). Tickets are not bookings: the question flows (answer deadline, overdue refunds,
+  ratings, probation) never touch them. Payouts, receipts and disputes gained an optional link to a session/ticket next to booking_id
+  (exactly one of them), so the ledger, Balance, withdrawals, statements, receipts and the Disputes tab work for both.
+- One payout per session (the paid tickets' shares added up), recorded only after a normal end. "Normal" = the mentor was in the room
+  for at least half the planned time, measured by the room page's heartbeat every 30 s (each beat counts at most 45 s, only between the
+  start and the planned end). A mentor who never joined is a no-show; a session under half the time is "short": both refund everybody.
+- Overselling is impossible: buying locks the session row and counts held + paid tickets inside the lock. Nothing inside that lock may use
+  a second database connection (found and fixed: with 31 buyers waiting, the pool ran out). A hold that ran out frees its seat even before
+  the sweep closes it; if the bank pays it late, the ticket is kept only when a seat is still free, otherwise refunded at once.
+- Sales stay open until the start, also once the mentor opened the room early. A mentor who is no longer listed cannot sell.
+- The video call is Daily Prebuilt in an iframe (no Daily script on our pages). "Raise hand -> allow" re-issues the participant's token
+  with audio+video and reloads their call, so it works without Daily's participant/session ids (and the same way with the fake provider).
+  The room page alone gets frame-src and Permissions-Policy (camera, microphone, display-capture) for the provider's origin.
+- Regulated = the session's field, a regulated profession in its TITLE, or the mentor's own field (not the mentor's job title: a doctor
+  hosting a cooking session is not labelled medical). Crisis line (112) for medicine, psychology, nursing, pharmacy, dentistry.
+- An admin "End now" is a cancellation with everybody refunded (reason admin_safety, in the audit log). The admin's text edits on
+  approval are limited to the title, description and points.
+- Questions in the room are anonymous to everybody (also to the mentor); checkout questions are shown first. Participants appear as
+  their first name or "Guest N"; the mentor never gets emails.
+- The fake video room follows the mock-* pages (404 in production); only it may be framed, and only by this site.

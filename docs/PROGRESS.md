@@ -195,3 +195,16 @@ a fallback?) and lists what only the owner can do before launch. Payments stay B
 Unit 731/731, cloud 34/34, browser 160 passed / 5 skipped, browser-cloud 30/30. (The first final run found three colours written
 outside the design tokens: the dialog's backdrop and the print colours. They were moved into tokens; the unit suite was run again,
 731/731, and the dialog's browser tests too.)
+
+## Live sessions — Milestone 1 (core)
+Mentors (after one answered question, or allowed by an admin) create Live Q&A / Workshop / Small circle sessions (Tbilisi time ≥ 24 h
+ahead, 30–120 min, 5–200 ₾, seats, minimum, early-bird, cover, what you'll learn); the first 3 wait for an admin; regulated fields need
+the agreement and show the label. Public /live (filters, SSR, hreflang) and /live/<slug> (JSON-LD Event, local time, Copy link, share,
+report), the room (/live/<slug>/room: provider frame with its own CSP, question panel with upvotes, raise hand, heartbeats, end/restart),
+the editor, a Live sessions tab on the dashboard (sessions + tickets with Join / Cancel / calendar / Report) and in admin (approval queue,
+live now, End now, reports, allow a host), profile and home sections, footer link, sitemap. Tickets: 15-min seat hold under a row lock,
+bank-confirmed payment, receipts, email with .ics + Google Calendar link, reminders 24 h and 1 h, inbox messages. Refunds: buyer ≥ 24 h,
+time change, mentor cancel, minimum not reached 6 h before, no-show, short session, admin safety, suspension; partial refunds through
+disputes. Payout per session after a normal end, held by reports/disputes, withdrawn like question earnings. Video: server/live/provider.js
+(Daily.co, fake for dev/tests). Data: migration 036 (undo script). Legal drafts, help article 16, LEGAL-REVIEW 55.
+Tests: live-sessions.test.js (22), live-daily.test.js (3), e2e/live-sessions.spec.js (5). Owner: Daily.co account + DAILY_API_KEY.

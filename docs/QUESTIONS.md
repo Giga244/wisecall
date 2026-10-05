@@ -15,7 +15,13 @@ Please answer:
   contract? Never paste the secret key here or in chat: it goes into Render as FLITT_SECRET_KEY.
 - Should the manual payout stay as a fallback (the plan says yes)?
 
-## 2. Things only you can do before launch (no answer needed here, a checklist)
+## 2. Live sessions: the video service
+
+Live sessions use Daily.co for the video call (the plan's preferred choice). Nothing to decide unless you prefer Whereby; to turn it on:
+create an account at daily.co, create an API key (Developers → API keys) and set LIVE_PROVIDER=daily and DAILY_API_KEY in Render. Daily's free
+allowance covers testing; check their per-minute price for your expected sessions. Never paste the key in chat.
+
+## 3. Things only you can do before launch (no answer needed here, a checklist)
 
 - Render environment: TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY (Cloudflare → Turnstile → add the site), and check the defaults of
   PAYOUT_MIN_GEL (100), BANK_FEE_PERCENT (2), LOGIN_LOCK_* (10 wrong passwords / 15 minutes / 5 minutes wait), ATTRIBUTION_COOKIE (on).
