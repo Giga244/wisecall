@@ -139,6 +139,11 @@ Georgian law applies. Disputes go to the courts of Tbilisi. [LAWYER: arbitration
 - You see participants' first names (or "Guest N") and how many joined, never their emails. Do not record the session, ask participants
   for contact details or offer services outside Wisecall.
 - The video service is Daily.co; it processes the call for Wisecall. Wisecall does not record sessions.
+- **Series and replays.** You may sell 2 to 6 of your sessions as a series for one price below their total; each session's payout counts
+  its share of that price. You may record a Live Q&A or Workshop and sell the replay: only you are recorded (no participant can speak in a
+  recorded session), ticket holders watch it free for 30 days and others buy 30 days of access; your share of each access is 80 %,
+  payable after the usual hold. You may delete a replay at any time; access still running is then refunded and your share of it comes
+  off. Wisecall deletes replays 90 days after the session.
 - **Followers, ratings and codes.** Users may follow you; Wisecall emails your followers when you publish a session (at most once a week).
   Participants who attended may rate the session and receive a one-time code for up to 15 % off a personal question to you; when a code
   is used, your share is calculated on the price actually paid. You may send attendees a short summary with up to 5 links; the rules

@@ -174,6 +174,13 @@ These Terms are available in Georgian and English. If they differ, the [LAWYER: 
 - **Ratings and discount codes.** If you attended, you may rate the session; the rules for reviews apply. You may also receive a
   one-time code for a discount on a personal question to the same Mentor. A code is personal, works once, cannot be exchanged for money
   and expires on the date shown; if the question it was used for is refunded or never paid, the code can be used again until it expires.
+- **Series.** A Mentor may sell several sessions together for one price. The payment gives you a place in each session; each session
+  carries a share of the price (in proportion to its normal price). If a session is cancelled, or you cancel it under the rules above,
+  that session's share is refunded.
+- **Replays.** A session that will be recorded says so before you buy and before you join. Only the Mentor's video and screen are
+  recorded; written questions are not, and other participants cannot speak in a recorded session. Ticket holders may watch the replay
+  for 30 days after the session; others may buy 30 days of access. If the replay is deleted while your access is running, the access you
+  paid for is refunded in full. Replays are for personal viewing only: do not download, copy or share them.
 - **Not professional advice.** Sessions in medicine, psychology, law, finance and other regulated fields are educational talks and Q&A,
   not a consultation, diagnosis or therapy. If you are in danger or in crisis, call 112.
 - **No recording.** Wisecall does not record live sessions. Do not record, copy or share a session or its participants without their consent.

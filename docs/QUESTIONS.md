@@ -21,6 +21,18 @@ Live sessions use Daily.co for the video call (the plan's preferred choice). Not
 create an account at daily.co, create an API key (Developers → API keys) and set LIVE_PROVIDER=daily and DAILY_API_KEY in Render. Daily's free
 allowance covers testing; check their per-minute price for your expected sessions. Never paste the key in chat.
 
+## 2b. Live sessions: series refunds and replays (safest defaults taken; tell me if you want otherwise)
+
+- **Several partial refunds on one bank payment.** A series is one payment; when one of its sessions is cancelled, that session's share
+  goes back as a partial refund of that payment. BOG documents partial refunds up to the paid amount; please confirm with BOG (and TBC, if
+  used) that SEVERAL partial refunds on the same payment are allowed. If not, series must stay off in production (nothing else depends on it).
+- **Replays: what Daily records.** The recording uses Daily's "single-participant" layout (the mentor alone). To be safe whatever that layout
+  does with sound, nobody else can be given the microphone in a recorded session (raise hand is off). Please do one test recording on your
+  Daily account before announcing replays. Recording needs a Daily plan with cloud recording.
+- **How long replays are kept.** Default: watchable 30 days by ticket holders and 30 days from a pass; passes on sale until 60 days after the
+  session; the file is deleted 90 days after the session. A replay deleted by the mentor refunds passes still running.
+- **The mentor stops and restarts recording.** Daily then makes several files; the longest one becomes the replay. Default kept for now.
+
 ## 3. Things only you can do before launch (no answer needed here, a checklist)
 
 - Render environment: TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY (Cloudflare → Turnstile → add the site), and check the defaults of

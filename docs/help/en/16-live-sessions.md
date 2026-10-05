@@ -35,6 +35,15 @@ without your name), and you get a one-time code for 15 % off a personal question
 Live sessions, and your Inbox). Type it in **Discount code** when you ask. The mentor may also send a short summary with links to your
 Inbox.
 
+**Series.** A mentor can sell 2 to 6 of their sessions together for less. One payment gives you a seat in every session.
+If one session is cancelled, you get that session's share back; you can cancel a session yourself up to 24 hours before it starts, for
+its share.
+
+**Replays.** Some Live Q&As and Workshops are recorded — the session page says so before you buy, and the room before you join. Only the
+mentor's video and screen are recorded; your written questions are not in it, and nobody else can be given the microphone. If you had a
+ticket, you can watch the replay free for 30 days after the session (Dashboard → Live sessions → Watch the replay); others can buy 30 days
+of watching. If the mentor deletes the replay while your 30 days are running, you get your money back.
+
 **Safety.** Health, psychology, law and money sessions are educational talks, not a consultation or therapy. If you are in danger or in
 crisis, call 112. Report a session from its page or from the room; our team can end a session at once and refund everyone. Sessions are
 not recorded.

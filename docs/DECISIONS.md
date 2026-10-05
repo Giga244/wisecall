@@ -244,3 +244,22 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   needs a font with Georgian letters on the server (DejaVu Sans is in most Linux images).
 - Analytics: per session and in total from the existing tables (no tracking added). "Came" = paid tickets whose holder was in the room
   for at least a minute.
+
+## Live sessions, Milestone 3 (series and replays)
+- A series is ONE bank payment (live_series_orders) that holds a seat in every session; each seat is an ordinary ticket with its share
+  of the bundle price (proportional to the sessions' normal prices, the spare tetri to the largest fractions, adding up exactly). So the
+  room, reminders, ratings, disputes and each session's payout work unchanged. One receipt for the payment; refund receipts per share.
+- Buying locks every session row of the series in id order (never a deadlock between two buyers); waiting lists are respected per session.
+- A share refund is a partial refund of the series payment with its own idempotency key, recorded when the bank accepts it (the order's
+  status cannot say which share went back) and retried by the sweep otherwise. Cancelling: the same per-session rules as single tickets
+  (24 h before, or until the start after a time change); when nothing is left the payment is "refunded". A payment that arrives after the
+  hold, when a seat is gone, goes back as one full refund. Series are off in production until the bank confirms several partial refunds
+  per payment (LIVE_SERIES=on; docs/QUESTIONS.md 2b).
+- Replays: only Live Q&A and Workshop; a recorded session gives nobody but the mentor the microphone (so no participant can be in it,
+  whatever the provider's layout does); buyers are told before buying, participants before joining, and REC shows while recording. The
+  provider records the mentor alone (Daily: single-participant layout, the mentor's session id from the room's presence). After a normal
+  end the sweep attaches the finished recording; a recording of a session that did not take place is deleted.
+- Watching: the page asks the provider for a short-lived address for each view (never stored); that page alone allows the provider's
+  media origin (CSP media-src) or, with the fake provider, its frame. Ticket holders 30 days after the session; a pass 30 days from
+  payment; passes on sale until day 60; the file is deleted on day 90. Deleting (mentor or admin, logged) refunds running passes in full.
+- A pass is its own payment (live_replay_purchases, the same rules as tickets) and its mentor share its own payout (payouts.replay_purchase_id).
