@@ -95,8 +95,6 @@ main[data-loading] .app-progress, main[data-loading] .tabs, main[data-loading] .
 .tab-count[hidden] { display: none; }
 .tab.active .tab-count { background: var(--on-inverse); color: var(--inverse); }
 .block { display: block; }
-.plain-link { color: inherit; text-decoration: none; }
-.plain-link:hover, .plain-link:focus-visible { color: var(--accent-text); text-decoration: underline; }
 .booking-card { margin-bottom: 16px; }
 
 /* Progress line of a question: Paid, Waiting, Answered, Reviewed */

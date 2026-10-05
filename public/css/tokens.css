@@ -24,6 +24,8 @@
   --c-sun: #ffe7a3;
   --c-blush: #ffd3cb;
   --c-lav: #e6e1f7;
+  --c-green: #1b7f5f;          /* the small "verified" dot on a mint pill */
+  --c-mint-ink: #2e4a40;       /* small labels on mint */
   --c-muted: #4e4963;
   --c-muted-2: #6b6680;        /* only at 14px bold or larger */
   --on-pastel: #1e1a31;        /* text on coral, mint, sun, blush and lavender: always ink */
