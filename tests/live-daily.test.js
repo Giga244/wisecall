@@ -19,6 +19,11 @@ before(async () => {
       if (req.method === 'POST' && req.url === '/v1/rooms') return res.end(JSON.stringify({ id: 'x', name: JSON.parse(body).name, url: `https://wisecall.daily.co/${JSON.parse(body).name}` }));
       if (req.method === 'POST' && req.url === '/v1/meeting-tokens') return res.end(JSON.stringify({ token: 'tok-' + calls.length }));
       if (req.method === 'DELETE' && req.url === '/v1/rooms/gone') { res.statusCode = 404; return res.end(JSON.stringify({ error: 'not-found' })); }
+      // (replays: presence, start/stop recording, the recordings of a room, a short-lived address)
+      if (req.method === 'GET' && req.url === '/v1/rooms/wc-rec/presence') return res.end(JSON.stringify({ total_count: 2, data: [{ id: 'sess-buyer', userId: 'u-buyer' }, { id: 'sess-mentor', userId: 'u-mentor' }] }));
+      if (req.method === 'POST' && (req.url === '/v1/rooms/wc-rec/recordings/start' || req.url === '/v1/rooms/wc-rec/recordings/stop')) return res.end(JSON.stringify({ status: 'ok' }));
+      if (req.method === 'GET' && req.url === '/v1/recordings?room_name=wc-rec') return res.end(JSON.stringify({ data: [{ id: 'rec-short', status: 'finished', duration: 30 }, { id: 'rec-long', status: 'finished', duration: 3400 }, { id: 'rec-busy', status: 'in-progress' }] }));
+      if (req.method === 'GET' && req.url === '/v1/recordings/rec-long/access-link') return res.end(JSON.stringify({ download_link: 'https://daily-recordings.s3.amazonaws.com/rec-long.mp4?sig=x', expires: 9999999999 }));
       if (req.method === 'DELETE') return res.end(JSON.stringify({ deleted: true }));
       res.statusCode = 400;
       res.end(JSON.stringify({ error: 'invalid-request-error', info: 'bad' }));
@@ -78,4 +83,21 @@ test('ending a room deletes it (an already deleted room is fine); errors are rep
   assert.throws(() => daily.frameOrigin('http://wisecall.daily.co/x'));
   assert.equal(daily.owns('https://wisecall.daily.co/room'), true);
   assert.equal(daily.owns('http://localhost:4242/mock-live-room.html?room=x'), false);
+});
+
+test('replays: the mentor alone is recorded (single-participant, with the mentor\'s own session id); the longest finished file; a short-lived https address; deleting', async () => {
+  const room = await daily.createRoom({ name: 'wc-rec', startsAt: new Date(Date.now() + 86400000), endsAt: new Date(Date.now() + 90000000), maxSeats: 30, screenshare: true, recording: true });
+  assert.equal(calls.filter((x) => x.url === '/v1/rooms').pop().body.properties.enable_recording, 'cloud');
+  assert.equal(room.roomName, 'wc-rec');
+  await daily.startRecording({ roomName: 'wc-rec', ownerUserId: 'u-mentor' });
+  assert.deepEqual(calls.filter((x) => x.url === '/v1/rooms/wc-rec/recordings/start').pop().body, { layout: { preset: 'single-participant', session_id: 'sess-mentor' } });
+  await assert.rejects(() => daily.startRecording({ roomName: 'wc-rec', ownerUserId: 'u-nobody' }), /not in the call/);
+  await daily.stopRecording({ roomName: 'wc-rec' });
+  assert.deepEqual(await daily.findRecording({ roomName: 'wc-rec' }), { id: 'rec-long', durationS: 3400 });
+  assert.deepEqual(await daily.playbackUrl('rec-long'), { kind: 'video', url: 'https://daily-recordings.s3.amazonaws.com/rec-long.mp4?sig=x', origin: 'https://daily-recordings.s3.amazonaws.com' });
+  await daily.deleteRecording('rec-long');
+  assert.ok(calls.some((x) => x.method === 'DELETE' && x.url === '/v1/recordings/rec-long'));
+  const plain = await daily.createRoom({ name: 'wc-plain', startsAt: new Date(Date.now() + 86400000), endsAt: new Date(Date.now() + 90000000), maxSeats: 30, screenshare: false });
+  assert.equal(plain.roomName, 'wc-plain');
+  assert.equal(calls.filter((x) => x.url === '/v1/rooms').pop().body.properties.enable_recording, undefined, 'no recording unless asked');
 });
