@@ -141,7 +141,7 @@ describe('profiles', () => {
         assert.equal(r.status, 400, JSON.stringify(body));
         assert.equal(r.error, error, JSON.stringify(body));
       };
-      await bad({ bio: 'x'.repeat(501) }, 'bio_too_long');
+      await bad({ bio: 'x'.repeat(2001) }, 'bio_too_long'); // (About: up to 2,000 characters)
       await bad({ linkedinUrl: 'https://example.com/elene' }, 'invalid_linkedin_url');
       await bad({ linkedinUrl: 'http://linkedin.com/in/elene' }, 'invalid_linkedin_url');
       await bad({ websiteUrl: 'javascript:alert(1)' }, 'invalid_website_url');
@@ -172,6 +172,9 @@ describe('profiles', () => {
 
     test('the public page shows the profile, and never an email, bank or document detail', async () => {
       await c.api('/me', { method: 'PATCH', body: { bio: 'Hello there', headline: 'Student', currentWork: 'TSMU', city: 'Tbilisi', languages: ['ka'] } });
+      // (an asker's parts are "only me" until they choose: here the headline is opened to everyone)
+      assert.equal((await client(base).api('/users/elene')).profile.headline, null);
+      await c.api('/me/profile/visibility', { method: 'PUT', body: { section: 'headline', level: 'everyone' } });
       const v = await client(base).api('/users/elene');
       assert.equal(v.status, 200);
       const p = v.profile;
@@ -238,6 +241,9 @@ describe('profiles', () => {
       assert.equal((await mentor.api(`/users/${buyerMe.username}`)).private, true, 'not yet');
       const b = await bookAndPay(base, buyer, mentorMe.id, 'How do I become a cardiologist in Georgia?');
       assert.equal(b.status, 'paid');
+      // (an asker's About is theirs alone until they choose who sees it: then the mentor they asked sees it)
+      assert.equal((await mentor.api(`/users/${buyerMe.username}`)).profile.bio, null);
+      await buyer.api('/me/profile/visibility', { method: 'PUT', body: { section: 'about', level: 'signed_in' } });
       assert.equal((await mentor.api(`/users/${buyerMe.username}`)).profile.bio, 'Buyer bio');
       assert.equal((await stranger.api(`/users/${buyerMe.username}`)).private, true, 'a third person still cannot');
     });
