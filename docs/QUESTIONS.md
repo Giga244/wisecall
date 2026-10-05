@@ -33,6 +33,13 @@ allowance covers testing; check their per-minute price for your expected session
   session; the file is deleted 90 days after the session. A replay deleted by the mentor refunds passes still running.
 - **The mentor stops and restarts recording.** Daily then makes several files; the longest one becomes the replay. Default kept for now.
 
+## 2c. Rich profiles: two defaults to confirm
+
+- **Mentors’ licences and projects** start as “Only me” (the prompt names the public sections and leaves these open). Mentors can switch them
+  to “Everyone” in Settings → Profile. Say if you want them public by default.
+- **The AI review does not read profiles.** The prompt allows it, but your earlier rule lists exactly what the AI may see. It stays off
+  until you confirm; then only the sections everyone may see would be added, as untrusted text.
+
 ## 3. Things only you can do before launch (no answer needed here, a checklist)
 
 - Render environment: TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY (Cloudflare → Turnstile → add the site), and check the defaults of

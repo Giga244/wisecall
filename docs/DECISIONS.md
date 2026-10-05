@@ -263,3 +263,24 @@ Where the brief was unclear or a choice carried risk, the safest option was take
   media origin (CSP media-src) or, with the fake provider, its frame. Ticket holders 30 days after the session; a pass 30 days from
   payment; passes on sale until day 60; the file is deleted on day 90. Deleting (mentor or admin, logged) refunds running passes in full.
 - A pass is its own payment (live_replay_purchases, the same rules as tickets) and its mentor share its own payout (payouts.replay_purchase_id).
+
+## Rich profiles (docs/PROFILES-PLAN.md)
+- Two gates: "who can open my profile" (public / contacts; a bookable mentor is always public) decides who sees the name and photo; each
+  section then has its own level (everyone / signed-in people / only me), decided in one place (server/profileSections.js `sees`). The
+  owner and admins see everything. The existing fields follow the new levels too: headline + current work + city = "headline",
+  bio = "about", languages, LinkedIn + website = "links".
+- Defaults: askers "only me" for every section; mentors "everyone" for headline, about, experience, education, skills, languages and
+  links, "only me" for journey, licences and projects (the safest choice for what the prompt left open; docs/QUESTIONS.md). Nothing anyone
+  already shared disappears: migration 039 records "everyone" for the parts people had filled in before.
+- List sections are rows (profile_items: section, position, data jsonb checked per section); skills, top skills, language levels, more
+  links, levels and admin hiding are one row per person (profile_settings). Months are optional; durations count whole months (a missing
+  start month = January, end month = December); positions at one organisation are grouped when they follow each other in the person's order.
+- "Verified" is an admin's mark per item, with a note and an audit entry; editing an item removes it (compared field by field, so saving
+  it unchanged keeps it). Nothing self-reported is ever labelled as checked; the page says so once under the sections.
+- Search and the Browse cards use only what everyone may see (profile_settings.search_text, rebuilt after every change); a mentor's About
+  that is not public is left out of the card and of search. JSON-LD Person (worksFor, alumniOf, knowsAbout, knowsLanguage) from public
+  sections only; the page's meta description uses only what a visitor may see.
+- The mentor application and the profile only copy into each other on request ("Use my profile", "Fill in from my mentor application");
+  the AI review still reads only its fixed list of fields (the owner's rule), not the profile.
+- Reports: any signed-in person, one open report per person per profile. Hiding a part or the whole profile: admin only, with a reason
+  the owner gets in the Inbox and by email; logged; reversible. Project pictures go through the profile-photo pipeline (re-encoded, no EXIF).
