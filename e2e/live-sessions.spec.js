@@ -1,6 +1,7 @@
 // Live sessions in the browser, with the fake bank and the fake video provider: a mentor writes and publishes a session, the admin approves
 // it, a buyer pays at the bank, both join the room (the call is the fake video page), the buyer asks a question that another participant
-// upvotes, the mentor marks it and ends the session, the session's earnings are recorded, and the mentor withdraws them.
+// upvotes, the mentor marks it and ends the session, the session's earnings are recorded, the buyer rates it (and gets the 15 % code),
+// and the mentor withdraws the earnings.
 // Runs after full-flow.spec.js (the admin account): files run in name order.
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
@@ -104,14 +105,34 @@ test('in the room: the buyer joins with a nickname, asks; another participant up
   await shot(mentorPage, 'live-room-mentor');
 });
 
-test('the mentor ends the session; the earnings are recorded and can be withdrawn', async () => {
-  // (the mentor was there for the whole hour: heartbeats are simulated)
+test('the mentor ends the session; the earnings are recorded (pending)', async () => {
+  // (the mentor and the buyer were there for the whole hour: heartbeats are simulated)
   await S.sql(`UPDATE live_sessions SET starts_at = now() - interval '61 minutes', mentor_seconds = 3600 WHERE id = $1`, [sessionId]);
+  await S.sql(`UPDATE live_tickets SET attended_seconds = 3500 WHERE session_id = $1 AND buyer_id = (SELECT id FROM users WHERE email = 'beka-live@e2e.test')`, [sessionId]);
   await mentorPage.click('#endBtn');
   await S.confirm(mentorPage);
   await expect(mentorPage.locator('#liveStatus')).toContainText('ended');
   const [p] = await S.sql('SELECT * FROM payouts WHERE live_session_id = $1', [sessionId]);
   expect([p.amount, p.status]).toEqual([2 * 16000, 'pending']);
+});
+
+test('the buyer rates the session and gets a one-time 15 % code for a question to the mentor', async () => {
+  await buyerPage.goto('/dashboard.html?tab=live');
+  const card = buyerPage.locator('.live-ticket', { hasText: 'Your first engineering job' });
+  const form = card.locator('.lt-rate-form');
+  await expect(form).toBeVisible();
+  await form.locator('input[name="stars"][value="4"]').check();
+  await form.locator('textarea[name="comment"]').fill('Honest and practical, thank you.');
+  await form.locator('button[type="submit"]').click();
+  await expect(buyerPage.locator('.live-ticket', { hasText: 'Your first engineering job' })).toContainText('Your rating');
+  await expect(buyerPage.locator('.live-dash-codes')).toContainText('15% off a question to Lela Live');
+  await shot(buyerPage, 'live-dashboard-rated');
+  const page = await (await fetch(`${S.BASE}/live/${slug}`)).text();
+  expect(page).toContain('Honest and practical, thank you.');
+});
+
+test('the mentor withdraws the earnings once the hold has passed', async () => {
+  const [p] = await S.sql('SELECT * FROM payouts WHERE live_session_id = $1', [sessionId]);
   await S.sql(`UPDATE payouts SET payable_at = now() - interval '1 minute' WHERE id = $1`, [p.id]);
   await mentorPage.goto('/dashboard.html?tab=earnings');
   const card = mentorPage.locator('#balanceCard');
