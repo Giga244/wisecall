@@ -2029,5 +2029,19 @@
   "inbox.ev.live_host_1h": "შენი სესია „{title}“ ერთ საათში იწყება.",
   "inbox.ev.live_ended": "შენი სესია „{title}“ დასრულდა. შემოსავალი ბალანსზე შეკავების პერიოდის შემდეგ გამოჩნდება.",
   "meta.live-edit.title": "ცოცხალი სესია — Wisecall",
-  "meta.live-edit.description": "შექმენი ან შეცვალე ცოცხალი სესია Wisecall-ზე."
+  "meta.live-edit.description": "შექმენი ან შეცვალე ცოცხალი სესია Wisecall-ზე.",
+  "dash.dispute.r.not_as_described": "არ იყო ის, რაც გვერდზე ეწერა",
+  "dash.dispute.r.technical": "მენტორის ხმა ან ვიდეო არ მუშაობდა",
+  "live.dash.report": "ამ სესიაზე პრობლემის შეტყობინება",
+  "live.dash.reportReason": "რა მოხდა",
+  "live.dash.reportDetails": "დეტალები (არასავალდებულო)",
+  "live.dash.reportHint": "გადაწყვეტს ჩვენი გუნდი: სრული, ნაწილობრივი თანხის დაბრუნება ან უარი. შეტყობინება შეგიძლია {date}-მდე.",
+  "live.dash.reportSend": "შეტყობინების გაგზავნა",
+  "live.dash.reportSent": "გმადლობ. ჩვენი გუნდი გადახედავს.",
+  "live.dash.reportOpen": "პრობლემა დააფიქსირე: ჩვენი გუნდი განიხილავს.",
+  "live.dash.reportDecided": "გადაწყვეტილება:",
+  "inbox.ev.live_disputed": "მონაწილემ სესიაზე „{title}“ პრობლემა დააფიქსირა. ამ სესიის ანაზღაურება შეჩერებულია, სანამ ჩვენი გუნდი გადაწყვეტს.",
+  "inbox.ev.live_dispute_resolved": "შეტყობინებაზე („{title}“) გადაწყვეტილება მიღებულია.",
+  "settings.data.open.live_sessions_hosting": "მასპინძლობ ცოცხალ სესიას, რომელიც ჯერ არ დასრულებულა (ჯერ გააუქმე; თანხა ყველას დაუბრუნდება).",
+  "settings.data.open.live_tickets": "გაქვს ბილეთი ცოცხალ სესიაზე, რომელიც ჯერ არ ჩატარებულა (გააუქმე ან დაელოდე მის დასრულებას)."
 }

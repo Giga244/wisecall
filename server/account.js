@@ -26,7 +26,7 @@ const rowsOf = async (sql, params) => (await query(sql, params)).rows;
 async function exportData(user) {
   const id = user.id;
   const [asked, answered, ratingsGiven, ratingsReceived, messages, notifications, payouts, batches, steps, evidence, sessions, receipts, waitlist, identities, settings,
-    publicAnswers, mentorRequests] = await Promise.all([
+    publicAnswers, mentorRequests, liveHosted, liveTickets] = await Promise.all([
     rowsOf(`SELECT b.id, b.question, b.answer, b.amount, b.currency, b.status, b.created_at, b.paid_at, b.answered_at, b.refunded_at, b.refund_reason, b.refunded_amount,
                    m.name AS mentor_name FROM bookings b JOIN users m ON m.id = b.mentor_id WHERE b.seeker_id = $1 ORDER BY b.created_at`, [id]),
     rowsOf(`SELECT id, question, answer, amount, platform_fee_amount, mentor_net_amount, currency, status, created_at, paid_at, answered_at, refunded_at, refund_reason
@@ -50,7 +50,11 @@ async function exportData(user) {
                    slug, published_at, withdrawn_at, created_at
               FROM public_answers WHERE asker_id = $1 OR mentor_id = $1 ORDER BY created_at`, [id]),
     rowsOf(`SELECT field_text, niche, need, language, budget_min, budget_max, show_public, status, created_at, expires_at, notified_at
-              FROM mentor_requests WHERE user_id = $1 OR lower(email) = lower($2) ORDER BY created_at`, [id, user.email])
+              FROM mentor_requests WHERE user_id = $1 OR lower(email) = lower($2) ORDER BY created_at`, [id, user.email]),
+    // (live sessions they host, and their tickets: the other participants never appear)
+    rowsOf(`SELECT title, description, learn_points, niche, kind, language, starts_at, duration_min, price, max_seats, status, created_at FROM live_sessions WHERE mentor_id = $1 ORDER BY starts_at`, [id]),
+    rowsOf(`SELECT s.title, s.starts_at, t.status, t.price, t.paid_at, t.refunded_at, t.refunded_amount, t.join_anonymous, t.attended_seconds
+              FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id WHERE t.buyer_id = $1 AND t.status <> 'expired' ORDER BY t.created_at`, [id])
   ]);
   const iban = decrypt(user.payoutIbanEnc);
   return {
@@ -66,7 +70,8 @@ async function exportData(user) {
     payoutDetails: user.payoutName || iban ? { name: user.payoutName, ibanEndsWith: iban ? iban.slice(-4) : null } : null,
     questionsAsked: asked, questionsAnswered: answered, ratingsGiven, ratingsReceived, messagesWritten: messages, notifications,
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
-    waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests
+    waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests,
+    liveSessionsHosted: liveHosted, liveTickets
   };
 }
 
@@ -87,6 +92,13 @@ async function openItems(userId) {
   const { rows: [open] } = await query("SELECT count(*)::int AS n FROM payout_batches WHERE mentor_id = $1 AND status = 'requested'", [userId]);
   if (p.payable + p.holding > 0 || open.n > 0) out.push('money_to_pay_out');
   if (p.debt > 0) out.push('money_owed');
+  // Live sessions: one they host that has not ended, or a ticket for one that has not started (cancel them first: everybody refunded).
+  const { rows: [lv] } = await query(
+    `SELECT (SELECT count(*)::int FROM live_sessions WHERE mentor_id = $1 AND status IN ('review', 'published', 'live')) AS hosting,
+            (SELECT count(*)::int FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id
+              WHERE t.buyer_id = $1 AND t.status IN ('paid', 'refund_pending') AND s.status IN ('published', 'live')) AS tickets`, [userId]);
+  if (lv.hosting) out.push('live_sessions_hosting');
+  if (lv.tickets) out.push('live_tickets');
   return out;
 }
 

@@ -36,6 +36,11 @@ async function buy(user, sessionId, { questions, anonymous } = {}) {
     if ([...q].length < 3 || [...q].length > 300) throw new LiveError('invalid_question');
     if (textSafety.isOffensive(q)) throw new LiveError('offensive');
   }
+  // A mentor who is no longer listed (a missing step, a suspension) cannot sell new tickets. Checked BEFORE the transaction: inside it,
+  // every waiting buyer holds a database connection, so the lock holder must not need a second one.
+  const { rows: [pre] } = await query('SELECT mentor_id FROM live_sessions WHERE id = $1', [/^[0-9a-f-]{36}$/i.test(String(sessionId || '')) ? sessionId : null]);
+  if (!pre) throw new LiveError('not_on_sale');
+  if (!require('../util').isListable(await require('../models').getUserById(pre.mentor_id))) throw new LiveError('not_on_sale');
   let ticket;
   let session;
   await tx(async (client) => {
@@ -118,8 +123,10 @@ async function apply(client, t, s, status) {
   if (status.status === 'refunded' && ['paid', 'refund_pending'].includes(t.status)) {
     const { rows: [u] } = await client.query(
       `UPDATE live_tickets SET status = 'refunded', refunded_at = now(), refund_error = NULL, refund_reason = COALESCE(refund_reason, 'refunded_at_bank') WHERE id = $1 RETURNING *`, [t.id]);
-    await require('../ledger').onTicketRefunded(client, u, u.net);
-    const receipt = await receipts.issueTicket(u.id, 'refund', u.price, client);
+    // (after an earlier partial refund only the rest goes back, and only the rest of the mentor's share comes off)
+    const already = u.refunded_amount || 0;
+    await require('../ledger').onTicketRefunded(client, u, u.net - shareOf(u, already));
+    const receipt = await receipts.issueTicket(u.id, 'refund', u.price - already, client);
     after.push(() => require('./notices').ticketRefunded(u, s, receipt));
     return { t: u, after };
   }
@@ -170,7 +177,8 @@ async function refund(ticketId, reason) {
   });
   if (done) return done;
   try {
-    const r = await pay.forProvider(claimed.provider).refund({ orderId: claimed.provider_order_id, amount: claimed.price, idempotencyKey: `live-refund-${claimed.id}` });
+    const r = await pay.forProvider(claimed.provider).refund({ orderId: claimed.provider_order_id, amount: claimed.price - (claimed.refunded_amount || 0),
+      idempotencyKey: `live-refund-${claimed.id}` });
     await query('UPDATE live_tickets SET provider_refund_id = $2 WHERE id = $1', [claimed.id, r.refundId]);
   } catch (err) {
     console.error(`[live] the bank refused or failed the refund for ticket ${claimed.id}:`, err.message);
@@ -180,6 +188,43 @@ async function refund(ticketId, reason) {
     throw new LiveError('refund_failed');
   }
   try { return (await sync(claimed.id)) || claimed; } catch (e) { return claimed; }
+}
+
+// The mentor's part of `amount` tetri returned on this ticket: in proportion to their share of its price (the platform keeps the same
+// proportion of its fee), rounded to the nearest tetri.
+const shareOf = (t, amount) => Math.round((amount * t.net) / t.price);
+
+// A partial refund (an admin settling a dispute about a session that was not as described): `amount` tetri goes back, the ticket stays
+// paid. Claimed first, so two admins cannot send it twice; the ledger and the receipt change only after the bank accepted it.
+async function partialRefund(ticketId, amount, reason) {
+  let claimed = null;
+  await tx(async (client) => {
+    const t = await lockTicket(client, ticketId);
+    if (!t) throw new LiveError('not_found');
+    if (t.status !== 'paid') throw new LiveError('not_refundable');
+    if (t.refunded_amount || t.partial_refund_started_at) throw new LiveError('already_partly_refunded');
+    if (!Number.isInteger(amount) || amount < 1 || amount >= t.price) throw new LiveError('invalid_amount');
+    try { pay.forProvider(t.provider); } catch (e) { throw new LiveError('provider_unavailable'); }
+    await client.query('UPDATE live_tickets SET partial_refund_started_at = now() WHERE id = $1', [t.id]);
+    claimed = t;
+  });
+  try {
+    await pay.forProvider(claimed.provider).refund({ orderId: claimed.provider_order_id, amount, partial: true, idempotencyKey: `live-partial-refund-${claimed.id}` });
+  } catch (err) {
+    await query('UPDATE live_tickets SET partial_refund_started_at = NULL WHERE id = $1', [claimed.id]); // (nothing was returned: it can be tried again)
+    console.error(`[live] the bank refused the partial refund for ticket ${claimed.id}:`, err.message);
+    throw new LiveError('refund_failed');
+  }
+  let receipt;
+  let updated;
+  await tx(async (client) => {
+    const t = await lockTicket(client, claimed.id);
+    ({ rows: [updated] } = await client.query('UPDATE live_tickets SET refunded_amount = $2, refund_reason = $3 WHERE id = $1 RETURNING *', [t.id, amount, reason]));
+    await require('../ledger').onTicketRefunded(client, t, shareOf(t, amount));
+    receipt = await receipts.issueTicket(t.id, 'refund', amount, client);
+  });
+  receipts.email(receipt).catch((e) => console.error('[live] receipt email failed:', e.message));
+  return updated;
 }
 
 // The buyer cancels: a full refund until 24 hours before the start, or, after the mentor moved the time, until the start.
@@ -222,17 +267,23 @@ async function retryRefunds() {
 // ---- Reading -------------------------------------------------------------------------------------------------------------------------
 async function mine(userId) {
   const { rows } = await query(
-    `SELECT t.*, s.slug, s.title, s.starts_at, s.duration_min, s.status AS session_status, s.kind, s.time_changed_at, m.name AS mentor_name, m.username AS mentor_username
+    `SELECT t.*, s.slug, s.title, s.starts_at, s.duration_min, s.status AS session_status, s.kind, s.time_changed_at, s.end_kind, s.ended_at,
+            m.name AS mentor_name, m.username AS mentor_username
        FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id JOIN users m ON m.id = s.mentor_id
       WHERE t.buyer_id = $1 AND t.status IN ('paid', 'refund_pending', 'refunded') ORDER BY s.starts_at DESC LIMIT 100`, [userId]);
+  const disputes = require('../disputes');
+  const found = await disputes.forTickets(rows.map((r) => r.id));
   return rows.map((r) => {
     const start = new Date(r.starts_at).getTime();
     const moved = r.time_changed_at && r.paid_at && new Date(r.time_changed_at) > new Date(r.paid_at);
-    return { ...view(r), session: { slug: r.slug, title: r.title, startsAt: r.starts_at, durationMin: r.duration_min, status: r.session_status, kind: r.kind,
-      mentorName: r.mentor_name, mentorUsername: r.mentor_username, timeChanged: Boolean(moved) },
+    const w = disputes.windowForTicket(r, { status: r.session_status, end_kind: r.end_kind, ended_at: r.ended_at });
+    return { ...view(r), refundedAmount: r.refunded_amount || null,
+      session: { slug: r.slug, title: r.title, startsAt: r.starts_at, durationMin: r.duration_min, status: r.session_status, kind: r.kind,
+        mentorName: r.mentor_name, mentorUsername: r.mentor_username, timeChanged: Boolean(moved) },
+      dispute: found[r.id] || null, disputeUntil: w && Date.now() < +w.until && !found[r.id] ? w.until : null,
     canCancel: r.status === 'paid' && Date.now() <= (moved ? start : start - 24 * 3600000),
     canJoin: r.status === 'paid' && ['published', 'live'].includes(r.session_status) && Date.now() >= start - 10 * 60000 && Date.now() <= start + (r.duration_min + 30) * 60000 };
   });
 }
 
-module.exports = { buy, sync, apply, refund, cancelByBuyer, expireHolds, retryRefunds, findByOrder, mine, view, feeOf };
+module.exports = { buy, sync, apply, refund, partialRefund, shareOf, cancelByBuyer, expireHolds, retryRefunds, findByOrder, mine, view, feeOf };

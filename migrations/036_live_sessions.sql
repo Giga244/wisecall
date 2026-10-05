@@ -73,6 +73,8 @@ CREATE TABLE live_tickets (
   refund_reason       text,
   refund_requested_at timestamptz,
   refunded_at         timestamptz,
+  refunded_amount     integer     CHECK (refunded_amount IS NULL OR refunded_amount > 0), -- a partial refund after a dispute
+  partial_refund_started_at timestamptz,
   hold_until          timestamptz NOT NULL,
   paid_at             timestamptz,
   join_anonymous      boolean     NOT NULL DEFAULT false,

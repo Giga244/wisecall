@@ -2029,5 +2029,19 @@
   "inbox.ev.live_host_1h": "Your session \"{title}\" starts in an hour.",
   "inbox.ev.live_ended": "Your session \"{title}\" has ended. Your earnings are in your balance after the hold.",
   "meta.live-edit.title": "Live session — Wisecall",
-  "meta.live-edit.description": "Create or edit a live session on Wisecall."
+  "meta.live-edit.description": "Create or edit a live session on Wisecall.",
+  "dash.dispute.r.not_as_described": "It was not what the page described",
+  "dash.dispute.r.technical": "The mentor's sound or video did not work",
+  "live.dash.report": "Report a problem with this session",
+  "live.dash.reportReason": "What went wrong",
+  "live.dash.reportDetails": "Details (optional)",
+  "live.dash.reportHint": "Our team decides: a full, partial or no refund. You can report until {date}.",
+  "live.dash.reportSend": "Send the report",
+  "live.dash.reportSent": "Thank you. Our team will look at it.",
+  "live.dash.reportOpen": "You reported a problem: our team is looking at it.",
+  "live.dash.reportDecided": "Decided:",
+  "inbox.ev.live_disputed": "A participant reported a problem with \"{title}\". Your payout for it waits until our team decides.",
+  "inbox.ev.live_dispute_resolved": "The report about \"{title}\" was decided.",
+  "settings.data.open.live_sessions_hosting": "you host a live session that has not ended (cancel it first; everybody is refunded).",
+  "settings.data.open.live_tickets": "you have a ticket for a live session that has not happened yet (cancel it, or wait until it is over)."
 }

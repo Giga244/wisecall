@@ -592,5 +592,6 @@
   "admin.live.hostsHelp": "Mentors can host after their first answered question. Allow one earlier here (for example a well-known expert).",
   "admin.live.hostAllowed": "Allowed.",
   "admin.live.videoDown": "The video service did not answer: the room could not be made. Try again.",
-  "admin.live.notFound": "Not found (it may have changed already)."
+  "admin.live.notFound": "Not found (it may have changed already).",
+  "admin.dis.liveSession": "Live session:"
 }

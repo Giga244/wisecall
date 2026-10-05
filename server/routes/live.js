@@ -89,6 +89,17 @@ router.post('/tickets/:id/sync', requireAuth, run(async (user, req, res) => {
   res.json({ ticket: tickets.view(await tickets.sync(req.params.id)) });
 }));
 router.post('/tickets/:id/cancel', requireAuth, run(async (user, req, res) => { res.json({ ticket: await tickets.cancelByBuyer(user, req.params.id) }); }));
+// "Report a problem" after a session that ended normally: the existing dispute flow (server/disputes.js), an admin decides.
+const DISPUTE_STATUS = { not_found: 404, forbidden: 404, already_reported: 409, not_disputable: 409, window_closed: 409, invalid_reason: 400 };
+router.post('/tickets/:id/dispute', requireAuth, run(async (user, req, res) => {
+  const disputes = require('../disputes');
+  const b = req.body || {};
+  try { res.status(201).json({ dispute: await disputes.openForTicket(user, req.params.id, { reason: b.reason, details: b.details }) }); }
+  catch (e) {
+    if (!(e instanceof disputes.DisputeError)) throw e;
+    res.status(DISPUTE_STATUS[e.code] || 400).json({ error: e.code });
+  }
+}));
 router.get('/tickets/:id/calendar.ics', requireAuth, run(async (user, req, res) => {
   // (the ticket's own status, not the session's: both tables have a status)
   const { rows: [t] } = await query(`SELECT s.*, t.buyer_id, t.status AS ticket_status FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id WHERE t.id = $1`, [req.params.id]);

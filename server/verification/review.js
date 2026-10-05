@@ -144,8 +144,13 @@ async function suspend({ mentorId, reason, admin }) {
       console.error(`[verification] could not refund booking ${b.id} while suspending ${mentor.id}:`, e.message); // the refund retry job picks it up
     }
   }
+  // Their live sessions that have not ended are cancelled too: everybody who bought a ticket is refunded (server/live/sessions.js).
+  const live = await require('../db').query(`SELECT id FROM live_sessions WHERE mentor_id = $1 AND status IN ('draft', 'review', 'rejected', 'published', 'live')`, [mentor.id]);
+  for (const s of live.rows) {
+    await require('../live/sessions').cancel(s.id, 'mentor_suspended').catch((e) => console.error(`[verification] could not cancel live session ${s.id} while suspending ${mentor.id}:`, e.message));
+  }
   require('../notify').notifyMentorSuspended(mentor, text);
-  return { refunded, total: rows.length };
+  return { refunded, total: rows.length, liveCancelled: live.rows.length };
 }
 
 // Lifts a suspension. The mentor goes back to "pending" on purpose: a suspended mentor may have lost a step (a licence that ran out, a

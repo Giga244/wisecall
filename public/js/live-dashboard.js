@@ -22,7 +22,16 @@
         ${tk.status === 'paid' && ['published', 'live'].includes(s.status) ? `<a class="btn btn-outline btn-sm" href="/api/live/tickets/${encodeURIComponent(tk.id)}/calendar.ics">${esc(t('live.addCalendar'))}</a>` : ''}
         ${tk.canCancel ? `<button type="button" class="btn btn-outline btn-sm lt-cancel" data-price="${tk.price}">${esc(t('live.dash.cancelTicket'))}</button>` : ''}
         ${tk.status === 'refunded' ? `<span class="muted small">${esc(fill('live.dash.refunded', { amount: money(tk.price) }))}</span>` : ''}
+        ${tk.refundedAmount && tk.status === 'paid' ? `<span class="muted small">${esc(fill('live.dash.refunded', { amount: money(tk.refundedAmount) }))}</span>` : ''}
       </p>
+      ${tk.dispute ? `<p class="small"><strong>${esc(t(tk.dispute.status === 'open' ? 'live.dash.reportOpen' : 'live.dash.reportDecided'))}</strong>${tk.dispute.note ? ' ' + esc(tk.dispute.note) : ''}</p>` : ''}
+      ${tk.disputeUntil ? `<details class="lt-report"><summary class="small">${esc(t('live.dash.report'))}</summary>
+        <form class="lt-report-form" novalidate>
+          <label><span class="small">${esc(t('live.dash.reportReason'))}</span><select name="reason">${['not_as_described', 'technical', 'wrong_or_harmful', 'rude', 'other'].map((k) => `<option value="${k}">${esc(t('dash.dispute.r.' + k))}</option>`).join('')}</select></label>
+          <label><span class="small">${esc(t('live.dash.reportDetails'))}</span><textarea name="details" rows="3" maxlength="1500"></textarea></label>
+          <p class="hint">${esc(fill('live.dash.reportHint', { date: when(tk.disputeUntil) }))}</p>
+          <button type="submit" class="btn btn-outline btn-sm">${esc(t('live.dash.reportSend'))}</button>
+        </form></details>` : ''}
     </div>`;
   }
 
@@ -64,6 +73,15 @@
       if (!(await WisecallDialog.confirm({ message: t('live.dash.cancelTicketConfirm'), confirmText: fill('live.dash.cancelTicketButton', { amount: money(Number(b.dataset.price)) }), danger: true }))) return;
       try { await WisecallAPI.apiFetch(`/live/tickets/${encodeURIComponent(id)}/cancel`, { method: 'POST' }); WisecallNav.showToast(t('live.dash.ticketCancelled')); load(box, user); }
       catch (e) { WisecallNav.showToast(t(e.code === 'too_late_to_cancel' ? 'live.err.too_late_to_cancel' : 'toast.error')); }
+    }));
+    box.querySelectorAll('.lt-report-form').forEach((f) => f.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const id = f.closest('[data-ticket]').dataset.ticket;
+      try {
+        await WisecallAPI.apiFetch(`/live/tickets/${encodeURIComponent(id)}/dispute`, { method: 'POST', body: { reason: f.reason.value, details: f.details.value } });
+        WisecallNav.showToast(t('live.dash.reportSent'));
+        load(box, user);
+      } catch (e) { WisecallNav.showToast(t('toast.error')); }
     }));
     box.querySelectorAll('.ls-cancel').forEach((b) => b.addEventListener('click', async () => {
       const id = b.closest('[data-session]').dataset.session;

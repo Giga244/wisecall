@@ -400,3 +400,65 @@ describe('the public pages', () => {
     assert.equal((await fetch(`${base}/ka/live/${s.slug}`)).status, 200);
   });
 });
+
+describe('disputes, suspension and accounts', () => {
+  test('after a normal end a ticket holder can report a problem; the admin\'s partial or full refund comes off the session payout', async () => {
+    const s = await published({ title: 'A session people may dispute' });
+    const [a, b] = [await newBuyer(), await newBuyer()];
+    const [ta, tb] = [await buyAndPay(a, s.id), await buyAndPay(b, s.id)];
+    assert.equal((await a.api(`/live/tickets/${ta}/dispute`, { method: 'POST', body: { reason: 'not_as_described' } })).error, 'not_disputable', 'not before it ended');
+    await startIn(s.id, 5);
+    await mentor.api(`/live/${s.id}/join`, { method: 'POST', body: {} });
+    await pool.query(`UPDATE live_sessions SET mentor_seconds = 40 * 60 WHERE id = $1`, [s.id]);
+    await mentor.api(`/live/${s.id}/end`, { method: 'POST' });
+    const [p0] = await sql('SELECT * FROM payouts WHERE live_session_id = $1', [s.id]);
+    assert.equal(p0.amount, 3200);
+    assert.equal((await b.api(`/live/tickets/${ta}/dispute`, { method: 'POST', body: { reason: 'not_as_described' } })).status, 404, 'not someone else\'s ticket');
+    const d = await a.api(`/live/tickets/${ta}/dispute`, { method: 'POST', body: { reason: 'not_as_described', details: 'Half of it was an advert.' } });
+    assert.equal(d.status, 201);
+    assert.equal((await a.api(`/live/tickets/${ta}/dispute`, { method: 'POST', body: { reason: 'other' } })).error, 'already_reported');
+    const before = (await mentor.api('/me/balance')).balance.available; // (other sessions' earnings)
+    await pool.query(`UPDATE payouts SET payable_at = now() - interval '1 minute' WHERE id = $1`, [p0.id]);
+    assert.equal((await mentor.api('/me/balance')).balance.available, before, 'held while the dispute is open');
+    const list = (await admin.api('/admin/disputes?status=open')).disputes;
+    const mine = list.find((x) => x.kind === 'ticket' && x.ticketId === ta);
+    assert.equal(mine.session.title, 'A session people may dispute');
+    // a partial refund: 5 GEL back, the mentor's part is 4 GEL (80%)
+    assert.equal((await admin.api(`/admin/disputes/${mine.id}/resolve`, { method: 'POST', body: { outcome: 'partial_refund', amount: 500, note: 'Partly as described.' } })).status, 200);
+    const [ticketA] = await sql('SELECT status, refunded_amount FROM live_tickets WHERE id = $1', [ta]);
+    assert.deepEqual([ticketA.status, ticketA.refunded_amount], ['paid', 500]);
+    assert.equal((await sql('SELECT amount FROM payouts WHERE id = $1', [p0.id]))[0].amount, 2800);
+    assert.equal((await sql(`SELECT count(*)::int AS n FROM receipts WHERE ticket_id = $1 AND kind = 'refund'`, [ta]))[0].n, 1);
+    assert.equal((await mentor.api('/me/balance')).balance.available, before + 2800, 'released once decided');
+    // a full refund of the other ticket after its own dispute: its whole share comes off
+    const db = await b.api(`/live/tickets/${tb}/dispute`, { method: 'POST', body: { reason: 'technical' } });
+    const other = (await admin.api('/admin/disputes?status=open')).disputes.find((x) => x.id === db.dispute.id);
+    assert.equal((await admin.api(`/admin/disputes/${other.id}/resolve`, { method: 'POST', body: { outcome: 'full_refund', note: 'The sound did not work.' } })).status, 200);
+    await until(async () => (await sql('SELECT status FROM live_tickets WHERE id = $1', [tb]))[0].status === 'refunded', 'refunded');
+    assert.equal((await sql('SELECT amount FROM payouts WHERE id = $1', [p0.id]))[0].amount, 1200);
+  });
+
+  test('suspending a mentor cancels their sessions and refunds every ticket', async () => {
+    const host = await signupVerified(base, 'Suspended Host', 'susp@example.com');
+    await host.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Designer', niche: 'design', price: 20, sampleAnswer: SAMPLE } });
+    const hostId = await approveMentor(admin, host);
+    await addPayoutDetails(host, undefined, 'Suspended Host');
+    await admin.api(`/admin/live/hosts/${hostId}`, { method: 'POST' });
+    const s = await published({ title: 'A session that will not happen' }, host);
+    const t = await buyAndPay(await newBuyer(), s.id);
+    assert.equal((await admin.api(`/admin/mentors/${hostId}/suspend`, { method: 'POST', body: { reason: 'Repeated complaints from buyers.' } })).status, 200);
+    assert.equal((await sql('SELECT cancel_reason FROM live_sessions WHERE id = $1', [s.id]))[0].cancel_reason, 'mentor_suspended');
+    await until(async () => (await sql('SELECT status FROM live_tickets WHERE id = $1', [t]))[0].status === 'refunded', 'refunded');
+  });
+
+  test('an account with an upcoming ticket or session cannot be deleted yet; the export includes them', async () => {
+    const s = await published({ title: 'Deletion waits for this one' });
+    const b = await newBuyer();
+    await buyAndPay(b, s.id);
+    assert.ok((await b.api('/me/delete/check')).items.includes('live_tickets'));
+    assert.ok((await mentor.api('/me/delete/check')).items.includes('live_sessions_hosting'));
+    const exported = JSON.parse(await (await b.raw('/api/me/export')).text());
+    assert.equal(exported.liveTickets.find((x) => x.title === 'Deletion waits for this one').status, 'paid');
+    assert.ok(!JSON.stringify(exported.liveTickets).includes('@'), 'no other people\'s emails');
+  });
+});

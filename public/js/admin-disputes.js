@@ -27,10 +27,10 @@
         <p class="small muted">${esc(fill('admin.dis.people', { asker: `${d.asker.name} (${d.asker.email})`, mentor: `${d.mentor.name} (${d.mentor.email})` }))} · ${esc(when(d.createdAt))}</p>
         <p><strong>${esc(t('admin.dis.reason'))}</strong> ${esc(t('dash.dispute.r.' + d.reason))}</p>
         ${d.details ? `<p class="msg-body">${esc(d.details)}</p>` : ''}
-        <details><summary>${esc(t('admin.dis.qa'))}</summary>
+        ${d.kind === 'ticket' ? `<p><strong>${esc(t('admin.dis.liveSession'))}</strong> <a class="plain-link" href="/live/${encodeURIComponent(d.session.slug)}" target="_blank" rel="noopener">${esc(d.session.title)}</a></p>` : `<details><summary>${esc(t('admin.dis.qa'))}</summary>
           <h4 class="small">${esc(t('inbox.theQuestion'))}</h4><p class="msg-body">${esc(d.question)}</p>
           <h4 class="small">${esc(t('inbox.theAnswer'))}</h4><p class="msg-body">${esc(d.answer || '')}</p>
-        </details>
+        </details>`}
         <p class="small">${esc(fill('admin.dis.amounts', { price: money(d.amount), fee: money(d.fee), mentor: money(d.mentorNet) }))}</p>
         ${d.status === 'resolved' ? `<p><strong>${esc(t('admin.dis.outcome.' + d.outcome))}</strong>${d.refundAmount ? ` · ${esc(money(d.refundAmount))}` : ''} · ${esc(d.resolvedBy || '')}</p><p class="small">${esc(d.note || '')}</p>` : `
         <form class="dis-form" novalidate>
