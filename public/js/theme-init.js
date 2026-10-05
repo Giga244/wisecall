@@ -49,6 +49,11 @@
 
   apply(read(), false);
 
+  // Motion (public/js/motion.js): "motion" on <html> lets a section wait below the fold until it is scrolled to. Never with reduced
+  // motion, and set here, before the first paint, so nothing is drawn and then hidden again.
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!calm) root.classList.add('motion');
+
   // System mode follows the device live (the evening switch of a phone, for example).
   var follow = function () { if (root.getAttribute('data-theme-pref') === 'system') apply('system', true); };
   if (media) { if (media.addEventListener) media.addEventListener('change', follow); else if (media.addListener) media.addListener(follow); }
