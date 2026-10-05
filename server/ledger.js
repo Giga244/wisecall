@@ -13,8 +13,12 @@ const config = require('./config');
 // ---- The rules, as SQL on a payouts row named `p` (one definition, used everywhere money is summed) ---------------------------
 // Payable: earned, the hold has passed, and no dispute about its booking is open (a dispute holds the money until an admin decides).
 // ...and the mentor's payout details were not changed in the last PAYOUT_CHANGE_HOLD_HOURS, and it is not in a withdrawal request.
+// (a live session's payout waits the same way while one of its tickets is disputed or the session has an open report)
 const payableSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.payable_at <= now() AND ${p}.batch_id IS NULL
   AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.booking_id = ${p}.booking_id AND d.status = 'open')
+  AND (${p}.live_session_id IS NULL OR (
+    NOT EXISTS (SELECT 1 FROM disputes d JOIN live_tickets lt ON lt.id = d.ticket_id WHERE lt.session_id = ${p}.live_session_id AND d.status = 'open')
+    AND NOT EXISTS (SELECT 1 FROM live_reports lr WHERE lr.session_id = ${p}.live_session_id AND lr.status = 'open')))
   AND NOT EXISTS (SELECT 1 FROM users hu WHERE hu.id = ${p}.mentor_id AND hu.payout_hold_until > now())`;
 // On hold: earned, not payable yet, not in a request. Requested: in an open withdrawal request (server/withdrawals.js).
 const holdingSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.batch_id IS NULL AND NOT (${payableSql(p)})`;
@@ -74,6 +78,38 @@ async function onPartialRefund(client, booking, refundAmount) {
         WHERE id = $1 AND debt_settled_batch_id IS NULL`, [payout.id, share]);
   }
   return share;
+}
+
+// A live session ended normally (server/live/settle.js): ONE pending payout for the mentor, the sum of what each paid ticket leaves
+// after the fee (each ticket keeps its own price, early-bird or normal), payable after the same hold as an answer. One per session.
+async function onLiveEnded(client, session) {
+  const payableAt = new Date(Date.now() + holdDays() * 86400000);
+  await client.query(
+    `INSERT INTO payouts (live_session_id, mentor_id, amount, currency, payable_at)
+     SELECT $1, $2, sum(t.net), 'gel', $3 FROM live_tickets t WHERE t.session_id = $1 AND t.status = 'paid' HAVING sum(t.net) > 0
+     ON CONFLICT (live_session_id) DO NOTHING`, [session.id, session.mentor_id, payableAt]);
+}
+
+// A ticket of a session whose payout is already recorded was refunded (in full, or partly after a dispute): the mentor's `part` comes off
+// the payout while it is pending (a payout that reaches 0 is void), or is owed back once it was paid. Inside the refund transaction.
+async function onTicketRefunded(client, ticket, part) {
+  const { rows } = await client.query('SELECT * FROM payouts WHERE live_session_id = $1 FOR UPDATE', [ticket.session_id]);
+  const payout = rows[0];
+  if (!payout || !(part > 0)) return 0;
+  if (payout.status === 'pending') {
+    const take = Math.min(part, payout.amount);
+    await client.query(
+      `UPDATE payouts SET amount = amount - $2, refunded_share = refunded_share + $2, status = CASE WHEN amount - $2 <= 0 THEN 'void' ELSE status END WHERE id = $1`,
+      [payout.id, take]);
+    if (payout.batch_id) await require('./withdrawals').recompute(client, payout.batch_id);
+    return take;
+  }
+  if (payout.status === 'paid') {
+    await client.query(
+      `UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = LEAST(amount, COALESCE(debt_amount, 0) + $2), refunded_share = refunded_share + $2
+        WHERE id = $1 AND debt_settled_batch_id IS NULL`, [payout.id, part]);
+  }
+  return part;
 }
 
 // What one mentor is owed right now, split into the parts an admin needs to see.
@@ -136,4 +172,4 @@ async function markPaid({ mentorId, expectedAmount, reference, adminId }) {
   });
 }
 
-module.exports = { onAnswered, onRefundRequested, onPartialRefund, balanceFor, markPaid, LedgerError, payableSql, holdingSql, requestedSql, debtSql, debtAmountSql, holdDays };
+module.exports = { onAnswered, onRefundRequested, onPartialRefund, onLiveEnded, onTicketRefunded, balanceFor, markPaid, LedgerError, payableSql, holdingSql, requestedSql, debtSql, debtAmountSql, holdDays };

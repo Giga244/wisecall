@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Live session — Wisecall</title>
+<meta name="description" content="Create or edit a live session on Wisecall.">
+<link rel="canonical" href="{{PUBLIC_URL}}/live-edit.html">
+<meta name="robots" content="noindex">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Live session — Wisecall">
+<meta property="og:description" content="Create or edit a live session on Wisecall.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{PUBLIC_URL}}/live-edit.html">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Live session — Wisecall">
+<meta name="twitter:description" content="Create or edit a live session on Wisecall.">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+<main class="container live-edit" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="/dashboard.html?tab=live" data-i18n="live.edit.back">Live sessions</a></li><li><span aria-current="page" data-i18n="live.edit.title">Your live session</span></li></ol></nav>
+  <h1 data-i18n="live.edit.title">Your live session</h1>
+  <p class="pay-notice" id="lvStatus" hidden></p>
+  <p class="muted small" id="lvLockedNote" data-i18n="live.edit.locked" hidden>Tickets are sold: only the description, the points, the cover and the time can change. If you change the time, everybody who bought a ticket is told and may cancel for a full refund.</p>
+  <form id="liveForm" class="settings-card live-edit-form" novalidate>
+    <label for="lvTitle"><span data-i18n="live.edit.f.title">Title</span>
+      <input type="text" id="lvTitle" maxlength="100" required>
+      <span class="hint" data-i18n="live.edit.f.titleHint">5 to 100 characters, e.g. "Ask me about studying medicine abroad".</span></label>
+    <label for="lvDescription"><span data-i18n="live.edit.f.description">Description</span>
+      <textarea id="lvDescription" rows="7" maxlength="4000" required></textarea>
+      <span class="hint" data-i18n="live.edit.f.descriptionHint">What you'll cover, who it's for, and what people will leave with. 50 to 4,000 characters, no contact details.</span></label>
+    <fieldset class="lv-points-box"><legend data-i18n="live.edit.f.points">What people will learn (up to 5, optional)</legend>
+      <div id="lvPoints"></div>
+      <button type="button" class="btn btn-outline btn-sm" id="lvAddPoint" data-i18n="live.edit.addPoint">Add a point</button>
+    </fieldset>
+    <div class="lv-row">
+      <label for="lvNiche"><span data-i18n="live.edit.f.field">Field</span><select id="lvNiche"></select></label>
+      <label for="lvKind"><span data-i18n="live.edit.f.type">Type</span>
+        <select id="lvKind"><option value="qa" data-i18n="live.kind.qa">Live Q&amp;A</option><option value="workshop" data-i18n="live.kind.workshop">Workshop</option><option value="circle" data-i18n="live.kind.circle">Small circle</option></select></label>
+      <label for="lvLanguage"><span data-i18n="live.edit.f.language">Language</span>
+        <select id="lvLanguage"><option value="ka" data-i18n="live.lang.ka">Georgian</option><option value="en" data-i18n="live.lang.en">English</option></select></label>
+    </div>
+    <p class="hint" data-i18n="live.edit.f.typeHint">Live Q&amp;A: up to 30 people, only you speak, questions in writing. Workshop: the same, and you can share your screen. Small circle: 2 to 8 people, everyone can use camera and mic.</p>
+    <div class="lv-row">
+      <label for="lvDate"><span data-i18n="live.edit.f.date">Date</span><input type="date" id="lvDate" required></label>
+      <label for="lvTime"><span data-i18n="live.edit.f.time">Start (Tbilisi time)</span><input type="time" id="lvTime" step="300" required></label>
+      <label for="lvDuration"><span data-i18n="live.edit.f.duration">Duration</span>
+        <select id="lvDuration"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option><option value="75">75 min</option><option value="90">90 min</option><option value="120">120 min</option></select></label>
+    </div>
+    <p class="hint" data-i18n="live.edit.f.timeHint">At least 24 hours ahead. People see it in their own time too.</p>
+    <div class="lv-row">
+      <label for="lvPrice"><span data-i18n="live.edit.f.price">Price per ticket (₾)</span><input type="number" id="lvPrice" min="5" max="200" step="1" value="20" inputmode="numeric" required></label>
+      <label for="lvSeats"><span data-i18n="live.edit.f.seats">Most people</span><input type="number" id="lvSeats" min="2" max="30" step="1" value="30" inputmode="numeric" required></label>
+      <label for="lvMinSeats"><span data-i18n="live.edit.f.minSeats">Fewest people</span><input type="number" id="lvMinSeats" min="1" max="30" step="1" value="3" inputmode="numeric" required></label>
+    </div>
+    <p class="hint" data-i18n="live.edit.f.minHint">If fewer tickets are sold 6 hours before the start, the session is cancelled and everybody is refunded.</p>
+    <label class="checkbox-row" for="lvEarly"><input type="checkbox" id="lvEarly"> <span data-i18n="live.edit.f.early">An early-bird price</span></label>
+    <div class="lv-row" id="lvEarlyBox" hidden>
+      <label for="lvEarlyPrice"><span data-i18n="live.edit.f.earlyPrice">Early-bird price (₾)</span><input type="number" id="lvEarlyPrice" min="5" max="199" step="1" inputmode="numeric"></label>
+      <label for="lvEarlyUntil"><span data-i18n="live.edit.f.earlyUntil">Until (date)</span><input type="date" id="lvEarlyUntil"></label>
+      <label for="lvEarlySeats"><span data-i18n="live.edit.f.earlySeats">For the first … tickets</span><input type="number" id="lvEarlySeats" min="1" max="30" step="1" inputmode="numeric"></label>
+    </div>
+    <div class="lv-cover" id="lvCoverBox" hidden>
+      <p><strong data-i18n="live.edit.f.cover">Cover picture (optional)</strong></p>
+      <img id="lvCoverImg" alt="" width="600" height="315" hidden>
+      <label for="lvCoverFile" class="btn btn-outline btn-sm"><span data-i18n="live.edit.f.coverPick">Choose a picture</span>
+        <input type="file" id="lvCoverFile" accept="image/jpeg,image/png,image/webp" class="sr-only"></label>
+      <p class="hint" data-i18n="live.edit.f.coverHint">JPG, PNG or WebP, up to 5 MB. Shown 1200 × 630.</p>
+    </div>
+    <label class="checkbox-row" for="lvAgree" id="lvAgreeRow" hidden><input type="checkbox" id="lvAgree"> <span data-i18n="live.edit.agree">I understand this is an educational talk and Q&amp;A — not a consultation, diagnosis or therapy — and I will say so at the start.</span></label>
+    <p class="form-error" id="liveError" role="alert"></p>
+    <div class="lv-actions">
+      <button type="submit" class="btn btn-outline" data-i18n="live.edit.save">Save draft</button>
+      <button type="button" class="btn btn-outline" id="lvPreview" data-i18n="live.edit.preview">Preview</button>
+      <button type="button" class="btn btn-primary" id="lvPublish" data-i18n="live.edit.publish">Publish</button>
+    </div>
+  </form>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dialog.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/live-edit.js"></script>
+</body>
+</html>

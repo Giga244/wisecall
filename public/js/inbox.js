@@ -62,7 +62,14 @@
         const note = d.note || d.reason;
         return esc(t('inbox.ev.' + m.event)) + (note ? `<span class="ev-note">${esc(note)}</span>` : '');
       }
-      default: return esc(t('inbox.ev.' + m.event));
+      default:
+        // Live sessions: the title, and a link to the session page.
+        if (String(m.event).startsWith('live_')) {
+          const text = esc(fill('inbox.ev.' + m.event, { title: d.title || '' }));
+          const link = d.slug ? ` <a class="plain-link" href="/live/${encodeURIComponent(d.slug)}">${esc(t('live.dash.page'))}</a>` : '';
+          return text + link + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
+        }
+        return esc(t('inbox.ev.' + m.event));
     }
   }
 
@@ -322,6 +329,7 @@
     const key = 'inbox.n.' + n.kind;
     if (n.kind === 'verification_update') return fill(d.status === 'passed' ? 'inbox.ev.stepPassed' : 'inbox.ev.stepFailed', { step: t('verify.step.' + d.step) });
     if (['payout_sent', 'refunded', 'withdrawal_requested', 'withdrawal_rejected'].includes(n.kind)) return fill(key, { amount: WisecallAPI.formatAmount(d.amount || 0) });
+    if (String(n.kind).startsWith('live_')) return fill('inbox.ev.' + n.kind, { title: d.title || '' });
     return t(key);
   }
   async function loadNotifications() {

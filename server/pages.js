@@ -412,6 +412,140 @@ async function sendRequestsBoard(req, res) {
     ASK: escapeHtml(d['rq.cta']) }));
 }
 
+// Written on the server in the page's language, for search engines (JSON-LD Event) and for people without JavaScript.
+
+const liveMoney = (tetri) => `${(tetri / 100).toFixed(tetri % 100 ? 2 : 0)} ₾`;
+function liveWhen(dateish, lang) {
+  return new Intl.DateTimeFormat(lang === 'ka' ? 'ka-GE' : 'en-GB', { timeZone: 'Asia/Tbilisi', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    .format(new Date(dateish));
+}
+function liveCard(s, prefix, d, lang) {
+  const labels = [s.startingSoon ? `<span class="badge badge-pending_payment">${escapeHtml(d['live.label.soon'])}</span>` : '',
+    s.almostFull ? `<span class="badge badge-rejected">${escapeHtml(d['live.label.almostFull'])}</span>` : '',
+    s.seatsLeft === 0 ? `<span class="badge badge-muted">${escapeHtml(d['live.label.soldOut'])}</span>` : ''].join(' ');
+  return `<article class="live-card">
+    ${s.hasCover ? `<img class="live-card-cover" src="/api/live-covers/${s.id}.webp" alt="" width="600" height="315" loading="lazy">` : ''}
+    <div class="live-card-body">
+      <p class="live-card-meta small"><span class="live-kind">${escapeHtml(d['live.kind.' + s.kind])}</span> · <time datetime="${escapeHtml(new Date(s.startsAt).toISOString())}" data-local="${escapeHtml(new Date(s.startsAt).toISOString())}">${escapeHtml(liveWhen(s.startsAt, lang))}</time> · ${escapeHtml(d['live.lang.' + s.language])}</p>
+      <h2 class="live-card-title"><a class="plain-link" href="${prefix}/live/${encodeURIComponent(s.slug)}">${escapeHtml(s.title)}</a></h2>
+      <p class="muted small">${escapeHtml(s.mentor ? s.mentor.name : '')}</p>
+      <p class="live-card-foot"><strong>${escapeHtml(liveMoney(s.priceNow))}</strong>${s.earlyNow ? ` <span class="muted small"><s>${escapeHtml(liveMoney(s.price))}</s> ${escapeHtml(d['live.early'])}</span>` : ''} ${labels}</p>
+    </div>
+  </article>`;
+}
+
+async function sendLiveList(req, res) {
+  const html = readPage('live.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const q = req.query || {};
+  const f = { niche: q.field, language: q.language, kind: q.type, from: q.from, to: q.to, maxPrice: q.maxPrice };
+  const list = await require('./live/listing').upcoming(f);
+  const filtering = Object.values(f).some(Boolean);
+  const niches = require('./niches');
+  const opt = (value, label, current) => `<option value="${escapeHtml(value)}"${String(current || '') === value ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+  sendHtml(res, 200, fill(html, { ...baseVars('/live'), TITLE: escapeHtml(`${d['live.title']} — Wisecall`), DESCRIPTION: escapeHtml(d['live.intro']), OG_TYPE: 'website',
+    ROBOTS: filtering ? 'noindex, follow' : 'index, follow', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']), H1: escapeHtml(d['live.title']), INTRO: escapeHtml(d['live.intro']),
+    F_FIELD: escapeHtml(d['live.f.field']), F_LANGUAGE: escapeHtml(d['live.f.language']), F_TYPE: escapeHtml(d['live.f.type']), F_FROM: escapeHtml(d['live.f.from']),
+    F_TO: escapeHtml(d['live.f.to']), F_PRICE: escapeHtml(d['live.f.maxPrice']), F_APPLY: escapeHtml(d['live.f.apply']), F_ANY: escapeHtml(d['live.f.any']),
+    FIELD_OPTIONS: niches.active().map((n) => opt(n.key, niches.nameOf(n.key, lang), f.niche)).join(''),
+    LANGUAGE_OPTIONS: ['ka', 'en'].map((l) => opt(l, d['live.lang.' + l], f.language)).join(''),
+    TYPE_OPTIONS: ['qa', 'workshop', 'circle'].map((k) => opt(k, d['live.kind.' + k], f.kind)).join(''),
+    FROM: escapeHtml(/^\d{4}-\d{2}-\d{2}$/.test(String(f.from || '')) ? f.from : ''), TO: escapeHtml(/^\d{4}-\d{2}-\d{2}$/.test(String(f.to || '')) ? f.to : ''),
+    MAX_PRICE: escapeHtml(Number.isInteger(Number(f.maxPrice)) && Number(f.maxPrice) > 0 ? String(Number(f.maxPrice)) : ''),
+    LIST: list.length ? list.map((s) => liveCard(s, prefix, d, lang)).join('') : `<p class="muted">${escapeHtml(d[filtering ? 'live.noMatch' : 'live.none'])}</p>`,
+    HOST: escapeHtml(d['live.hostCta']) }));
+}
+
+async function sendLiveSession(req, res, slug) {
+  const sessions = require('./live/sessions');
+  const s = await sessions.rowBySlug(slug);
+  const viewer = req.userToken ? req.userToken.id : null;
+  if (!s || (!['published', 'live', 'ended', 'cancelled'].includes(s.status) && s.mentor_id !== viewer)) return notFoundHandler(req, res);
+  const html = readPage('live-session.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const mentor = await require('./models').getUserById(s.mentor_id);
+  const v = sessions.publicView(s, mentor);
+  const profile = mentor && mentor.username ? `${prefix}/u/${encodeURIComponent(mentor.username)}` : null;
+  const stats = mentor ? (await require('./models').mentorStatsFor([mentor.id]))[mentor.id] || {} : {};
+  const preview = !['published', 'live', 'ended', 'cancelled'].includes(s.status);
+  const body = `
+  <article class="live-page" data-session="${escapeHtml(s.id)}" data-slug="${escapeHtml(s.slug)}" data-status="${escapeHtml(s.status)}">
+    ${preview ? `<p class="pay-notice">${escapeHtml(d['live.previewNote'])}</p>` : ''}
+    ${s.status === 'cancelled' ? `<p class="pay-notice cancelled">${escapeHtml(d['live.cancelledNote'])}</p>` : ''}
+    ${v.hasCover ? `<img class="live-cover" src="/api/live-covers/${s.id}.webp" alt="" width="1200" height="630">` : ''}
+    <p class="live-card-meta"><span class="live-kind">${escapeHtml(d['live.kind.' + s.kind])}</span> · ${escapeHtml(d['live.lang.' + s.language])} · ${escapeHtml((d['live.duration'] || '{n} min').replace('{n}', s.duration_min))}</p>
+    <h1>${escapeHtml(s.title)}</h1>
+    ${s.regulated ? `<p class="advice-regulated">${escapeHtml(d['live.regulatedLabel'])}</p>` : ''}
+    <p class="live-when"><time datetime="${escapeHtml(new Date(s.starts_at).toISOString())}" data-local="${escapeHtml(new Date(s.starts_at).toISOString())}">${escapeHtml(liveWhen(s.starts_at, lang))}</time>
+      <span class="muted small">(${escapeHtml(d['live.tbilisiTime'])})</span> <span class="muted small live-local" hidden></span></p>
+    <div class="live-layout">
+      <div class="live-main">
+        <div class="live-description">${escapeHtml(s.description).replace(/\n/g, '<br>')}</div>
+        ${s.learn_points.length ? `<h2>${escapeHtml(d['live.learn'])}</h2><ul class="live-points">${s.learn_points.map((p) => `<li>${escapeHtml(p)}</li>`).join('')}</ul>` : ''}
+      </div>
+      <aside class="live-side settings-card">
+        <p class="live-price"><strong id="livePrice">${escapeHtml(liveMoney(v.priceNow))}</strong>${v.earlyNow ? ` <span class="muted small"><s>${escapeHtml(liveMoney(s.price))}</s> ${escapeHtml(d['live.early'])}</span>` : ''}</p>
+        <p class="muted small" id="liveSeats">${escapeHtml((d['live.seatsLeft'] || '{n} places left').replace('{n}', v.seatsLeft))}</p>
+        <div id="liveBuy"><noscript><p class="muted small">${escapeHtml(d['live.needsJs'])}</p></noscript></div>
+        <p class="live-share">${'<button type="button" class="btn btn-outline btn-sm copy-link" data-url="' + escapeHtml(`${config.PUBLIC_URL}${prefix}/live/${s.slug}`) + '"><span class="copy-label">' + escapeHtml(d['copy.link']) + '</span></button>'}
+          <a class="btn btn-outline btn-sm" rel="noopener" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${config.PUBLIC_URL}${prefix}/live/${s.slug}`)}">Facebook</a></p>
+        <p class="small"><button type="button" class="linklike" id="liveReport">${escapeHtml(d['live.report'])}</button></p>
+      </aside>
+    </div>
+    ${mentor ? `<aside class="answer-mentor settings-card live-mentor">
+      <p class="muted small">${escapeHtml(d['live.hostedBy'])}</p>
+      <p class="card-name">${profile ? `<a class="plain-link" href="${profile}">${escapeHtml(mentor.name)}</a>` : escapeHtml(mentor.name)}
+        <span class="tag tag-verified">${escapeHtml(d['expert.verified'])}</span></p>
+      <p class="muted small">${escapeHtml([mentor.roleTitle, mentor.customNiche || (mentor.niche && mentor.niche !== 'other' ? require('./niches').nameOf(mentor.niche, lang) : '')].filter(Boolean).join(' · '))}${stats.ratingAvg ? ` · ★ ${escapeHtml(String(stats.ratingAvg))}` : ''}</p>
+    </aside>` : ''}
+  </article>`;
+  const url = lang === 'ka' ? kaUrl(`/live/${s.slug}`) : `${config.PUBLIC_URL}/live/${s.slug}`;
+  const ld = jsonLd({ '@context': 'https://schema.org', '@type': 'Event', name: s.title, description: shortText(s.description, 300), url, inLanguage: s.language,
+    startDate: new Date(s.starts_at).toISOString(), endDate: sessions.endsAt(s).toISOString(),
+    eventStatus: s.status === 'cancelled' ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode', location: { '@type': 'VirtualLocation', url },
+    ...(mentor ? { organizer: { '@type': 'Person', name: mentor.name, ...(mentor.username ? { url: `${config.PUBLIC_URL}/u/${mentor.username}` } : {}) },
+      performer: { '@type': 'Person', name: mentor.name } } : {}),
+    offers: { '@type': 'Offer', price: (v.priceNow / 100).toFixed(2), priceCurrency: 'GEL', url, availability: v.seatsLeft > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+      validThrough: new Date(s.starts_at).toISOString() },
+    ...(v.hasCover ? { image: `${config.PUBLIC_URL}/api/live-covers/${s.id}.webp` } : {}) });
+  sendHtml(res, 200, addToHead(fill(html, { ...baseVars(`/live/${s.slug}`), TITLE: escapeHtml(`${s.title} — Wisecall`), DESCRIPTION: escapeHtml(shortText(s.description)),
+    ROBOTS: preview || s.status === 'cancelled' ? 'noindex' : 'index, follow', OG_TYPE: 'website', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']),
+    LIBRARY: escapeHtml(d['live.title']), CRUMB: escapeHtml(shortText(s.title, 40)), BODY: body,
+    OG_IMAGE: v.hasCover ? `${config.PUBLIC_URL}/api/live-covers/${s.id}.webp` : `${config.PUBLIC_URL}/og-image-1200x630.png` }), ld));
+}
+
+// The room: the ONLY page whose Content-Security-Policy allows the video provider's frame (and whose Permissions-Policy lets that frame use
+// the camera, the microphone and screen sharing). Who may actually join is decided by POST /api/live/:id/join.
+async function sendLiveRoom(req, res, slug) {
+  const sessions = require('./live/sessions');
+  const s = await sessions.rowBySlug(slug);
+  if (!s || !['published', 'live', 'ended'].includes(s.status) || !s.room_url) return notFoundHandler(req, res);
+  const html = readPage('live-room.html');
+  if (html === null) return notFoundHandler(req, res);
+  const lang = langOf(res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  let origin;
+  try { origin = require('./live/rooms').frameOrigin(s); } catch (e) { return notFoundHandler(req, res); }
+  const security = require('./security');
+  res.set('Content-Security-Policy', security.cspWith({ frameSrc: origin }));
+  res.set('Permissions-Policy', `camera=(self "${origin}"), microphone=(self "${origin}"), display-capture=(self "${origin}"), geolocation=(), payment=()`);
+  res.set('Cache-Control', 'no-store');
+  const host = await require('./models').getUserById(s.mentor_id);
+  const crisis = sessions.CRISIS_FIELDS.includes(s.niche) || Boolean(host && sessions.CRISIS_FIELDS.includes(host.niche));
+  sendHtml(res, 200, fill(html, { ...baseVars(`/live/${s.slug}/room`), TITLE: escapeHtml(`${s.title} — ${d['live.room.title']} — Wisecall`), DESCRIPTION: escapeHtml(shortText(s.description)),
+    ROBOTS: 'noindex, nofollow', OG_TYPE: 'website', PREFIX: prefix, SESSION_ID: escapeHtml(s.id), SLUG: escapeHtml(s.slug), KIND: escapeHtml(s.kind), H1: escapeHtml(s.title),
+    CRISIS: crisis ? `<p class="advice-regulated live-crisis" role="note">${escapeHtml(d['live.crisis'])}</p>` : '',
+    REGULATED: s.regulated ? `<p class="advice-regulated">${escapeHtml(d['live.regulatedLabel'])}</p>` : '', FRAME_ORIGIN: escapeHtml(origin) }));
+}
+
 // A page per field: /advice/<niche>. The title, description, mentor list and links to the other fields are written in here, in English,
 // for search engines and link previews; the page script then draws it in the visitor's language, with badges and ratings. Before launch
 // no mentor is listed (the page offers the waiting list), and only a field with a listed mentor may be indexed.
@@ -498,6 +632,17 @@ function pageRoutes() {
     try { await sendRequestsBoard(req, res); } catch (e) { next(e); }
   });
 
+  // Live sessions: the list, one session, and its room (the room page has its own security policy, see sendLiveRoom).
+  router.get(/^\/live\/?$/, async (req, res, next) => {
+    try { await sendLiveList(req, res); } catch (e) { next(e); }
+  });
+  router.get(/^\/live\/([a-z0-9-]{3,90})\/room\/?$/, async (req, res, next) => {
+    try { await sendLiveRoom(req, res, req.params[0]); } catch (e) { next(e); }
+  });
+  router.get(/^\/live\/([a-z0-9-]{3,90})\/?$/, require('./auth').optionalAuth, async (req, res, next) => {
+    try { await sendLiveSession(req, res, req.params[0]); } catch (e) { next(e); }
+  });
+
   // Public answers: the library, and one answer.
   router.get(/^\/answers\/?$/, async (req, res, next) => {
     try { await sendAnswers(req, res); } catch (e) { next(e); }
@@ -541,7 +686,7 @@ function pageRoutes() {
       const name = req.params[0];
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
-      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer' || name === 'requests') return notFoundHandler(req, res); // (sent only by their own routes)
+      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer' || name === 'requests' || name === 'live' || name === 'live-session' || name === 'live-room') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (name === 'faq') {
         const html = readPage('faq.html');

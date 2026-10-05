@@ -159,6 +159,16 @@ const config = {
   // Where visitors come from (server/attribution.js): the wc_src cookie with the campaign of the first visit. "off" stops setting it.
   ATTRIBUTION_COOKIE: String(env.ATTRIBUTION_COOKIE || 'on').trim().toLowerCase() !== 'off',
 
+  // Live sessions (server/live/, docs/LIVE-SESSIONS-PLAN.md): the video service (daily, or fake outside production), its key, the most
+  // people in one session, how long a seat is held while the buyer pays, and how far ahead a session must be published.
+  LIVE_PROVIDER: (env.LIVE_PROVIDER || (IS_PROD ? '' : 'fake')).trim().toLowerCase(),
+  DAILY_API_KEY: env.DAILY_API_KEY || '',
+  // Only outside production: tests point Daily at a fake server.
+  DAILY_API_URL: ((IS_PROD ? '' : (env.DAILY_API_URL || '').trim()) || 'https://api.daily.co/v1').replace(/\/+$/, ''),
+  LIVE_MAX_PARTICIPANTS: int(env.LIVE_MAX_PARTICIPANTS, 30),
+  LIVE_HOLD_MINUTES: int(env.LIVE_HOLD_MINUTES, 15),
+  LIVE_MIN_LEAD_HOURS: int(env.LIVE_MIN_LEAD_HOURS, 24),
+
   // Per-account login lockout (server/loginGuard.js): this many wrong passwords for one email within the window, and it waits this long.
   LOGIN_LOCK_FAILURES: int(env.LOGIN_LOCK_FAILURES, 10),
   LOGIN_LOCK_WINDOW_MINUTES: int(env.LOGIN_LOCK_WINDOW_MINUTES, 15),
@@ -226,6 +236,9 @@ const problems = [];
 if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresql://user:pass@localhost:5432/wisecall)');
 if (!['resend', 'postmark', 'log'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend, postmark or log');
 if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) problems.push('PLATFORM_FEE_PERCENT must be between 0 and 99');
+if (config.LIVE_PROVIDER === 'fake' && IS_PROD) problems.push('LIVE_PROVIDER=fake is for development only (use daily, or leave it empty)');
+if (config.LIVE_PROVIDER && !['daily', 'fake'].includes(config.LIVE_PROVIDER)) problems.push('LIVE_PROVIDER must be daily or fake (or empty)');
+if (config.LIVE_MAX_PARTICIPANTS < 2 || config.LIVE_MAX_PARTICIPANTS > 200) problems.push('LIVE_MAX_PARTICIPANTS must be between 2 and 200');
 if (!['manual'].includes(config.PAYOUT_METHOD)) problems.push('PAYOUT_METHOD must be "manual" (bank_api and split are not built yet)');
 if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
 if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negative');

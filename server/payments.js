@@ -151,7 +151,14 @@ async function handleCallback({ rawBody, headers }) {
   try { ({ orderId } = provider.verifyCallback({ rawBody, headers })); } // throws if not genuine
   catch (e) { throw new PaymentError('invalid_callback', e.message); }
   const { rows } = await query('SELECT id FROM bookings WHERE provider = $1 AND provider_order_id = $2', [provider.name, orderId]);
-  if (!rows[0]) return { known: false };
+  if (!rows[0]) {
+    // (or a ticket for a live session: the same bank, the same rule, server/live/tickets.js)
+    const tickets = require('./live/tickets');
+    const ticketId = await tickets.findByOrder(provider.name, orderId);
+    if (!ticketId) return { known: false };
+    await tickets.sync(ticketId);
+    return { known: true, ticketId };
+  }
   await syncBooking(rows[0].id);
   return { known: true, bookingId: rows[0].id };
 }

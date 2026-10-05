@@ -36,7 +36,8 @@ const providers = {
     configured: () => Boolean(config.RESEND_API_KEY),
     send: (m) => postJson(config.RESEND_API_URL, { Authorization: `Bearer ${config.RESEND_API_KEY}` }, {
       from: config.EMAIL_FROM, to: m.to, subject: m.subject, html: m.html, text: m.text,
-      ...(m.replyTo ? { reply_to: m.replyTo } : {})
+      ...(m.replyTo ? { reply_to: m.replyTo } : {}),
+      ...(m.attachments ? { attachments: m.attachments.map((a) => ({ filename: a.filename, content: a.content, ...(a.contentType ? { content_type: a.contentType } : {}) })) } : {})
     }, 'resend')
   },
 
@@ -44,7 +45,8 @@ const providers = {
     configured: () => Boolean(config.POSTMARK_TOKEN),
     send: (m) => postJson(config.POSTMARK_API_URL + '/email', { 'X-Postmark-Server-Token': config.POSTMARK_TOKEN }, {
       From: config.EMAIL_FROM, To: m.to, Subject: m.subject, HtmlBody: m.html, TextBody: m.text,
-      MessageStream: 'outbound', ...(m.replyTo ? { ReplyTo: m.replyTo } : {})
+      MessageStream: 'outbound', ...(m.replyTo ? { ReplyTo: m.replyTo } : {}),
+      ...(m.attachments ? { Attachments: m.attachments.map((a) => ({ Name: a.filename, Content: a.content, ContentType: a.contentType || 'application/octet-stream' })) } : {})
     }, 'postmark')
   },
 

@@ -39,7 +39,7 @@ after(() => { if (srv) srv.proc.kill(); fs.rmSync(OUTBOX, { force: true }); });
 
 describe('templates', () => {
   const { render, TEMPLATE_NAMES } = require('../server/mail/templates');
-  const sample = { last4: '4917', reference: 'TR-1', code: '123456', url: 'https://example.com/reset?token=a.b', amount: '25.00 USD', question: 'Is <b>this</b> escaped?', answer: 'An <script>alert(1)</script> answer', mentor: 'Dr <i>Who</i>', reason: 'no_answer_deadline', date: '1 Oct 2026, 10:00 UTC', note: 'Please add a LinkedIn link', name: 'Ann', email: 'ann@example.com', message: 'Hello', domain: 'clinic.example', minutes: 20, link: 'https://meet.example.com/abc-defg', niche: 'design', mentorField: 'design', unsubscribeUrl: 'https://example.com/waitlist-unsubscribe.html?token=abc', step: 'license', status: 'failed', number: 'R-000001', kind: 'payment', body: 'A follow-up <b>question</b>', threadId: '00000000-0000-0000-0000-000000000000', outcome: 'partial_refund', role: 'asker', oldLast4: '4917', newLast4: '6789', holdUntil: '1 Oct 2026, 10:00 UTC', field: 'Keeping <b>this</b> field', count: 10, window: 15, missing: [{ steps: ['id_kyc'], state: 'pending' }, { steps: ['work_email', 'portfolio'], state: 'todo' }] };
+  const sample = { last4: '4917', reference: 'TR-1', code: '123456', url: 'https://example.com/reset?token=a.b', amount: '25.00 USD', question: 'Is <b>this</b> escaped?', answer: 'An <script>alert(1)</script> answer', mentor: 'Dr <i>Who</i>', reason: 'no_answer_deadline', date: '1 Oct 2026, 10:00 UTC', note: 'Please add a LinkedIn link', name: 'Ann', email: 'ann@example.com', message: 'Hello', domain: 'clinic.example', minutes: 20, link: 'https://meet.example.com/abc-defg', niche: 'design', mentorField: 'design', unsubscribeUrl: 'https://example.com/waitlist-unsubscribe.html?token=abc', step: 'license', status: 'failed', number: 'R-000001', kind: 'payment', body: 'A follow-up <b>question</b>', threadId: '00000000-0000-0000-0000-000000000000', outcome: 'partial_refund', role: 'asker', oldLast4: '4917', newLast4: '6789', holdUntil: '1 Oct 2026, 10:00 UTC', field: 'Keeping <b>this</b> field', count: 10, window: 15, title: 'A <b>this</b> session', when: 'Tue 3 Nov, 19:00 (Tbilisi time)', calendarUrl: 'https://calendar.google.com/calendar/render?action=TEMPLATE', hours: 1, missing: [{ steps: ['id_kyc'], state: 'pending' }, { steps: ['work_email', 'portfolio'], state: 'todo' }] };
 
   test('every template renders in English and Georgian with no unfilled placeholders', () => {
     for (const name of TEMPLATE_NAMES) {
@@ -55,7 +55,7 @@ describe('templates', () => {
   });
 
   test('user-supplied text can never inject HTML', () => {
-    for (const name of ['newQuestion', 'answered', 'refundMentor', 'deadlineSoon', 'mentorRejected', 'contact', 'mentorRequestConfirm', 'mentorRequestMatched']) {
+    for (const name of ['newQuestion', 'answered', 'refundMentor', 'deadlineSoon', 'mentorRejected', 'contact', 'mentorRequestConfirm', 'mentorRequestMatched', 'liveTicket', 'liveCancelled', 'liveTimeChanged', 'liveReminder']) {
       const { html } = render(name, 'en', sample);
       assert.doesNotMatch(html, /<script>alert/i, name);
       assert.doesNotMatch(html, /<b>this<\/b>/, name);
@@ -67,7 +67,7 @@ describe('templates', () => {
   test('branded, readable in dark mode, and with a plain-text version, in both languages', () => {
     for (const name of TEMPLATE_NAMES) {
       for (const lang of ['en', 'ka']) {
-        const { html, text } = render(name, lang, { ...sample, question: 'Is this fine?', answer: 'An answer', mentor: 'Dr Who', body: 'A follow-up question', field: 'Keeping bees' }); // (no HTML in what people wrote)
+        const { html, text } = render(name, lang, { ...sample, question: 'Is this fine?', answer: 'An answer', mentor: 'Dr Who', body: 'A follow-up question', field: 'Keeping bees', title: 'A live session' }); // (no HTML in what people wrote)
         assert.match(html, /\/brand\/wisecall-logo-email\.png"/, `${name} ${lang}: the logo`);
         assert.match(html, /background:#eaf6f1/, `${name} ${lang}: the brand colours`);
         assert.match(html, /<meta name="color-scheme" content="light dark">/, `${name} ${lang}: tells mail apps it has a dark version`);

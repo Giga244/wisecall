@@ -65,6 +65,30 @@ if (!useMockBank) {
   app.use(['/mock-bank.html', '/js/mock-bank.js', '/api/mock-bank'], pages.notFoundHandler);
 }
 
+// Development only: the fake video room for live sessions (server/live/fake.js). Never exists in production.
+const useFakeVideo = config.LIVE_PROVIDER === 'fake' && !config.IS_PROD;
+if (!useFakeVideo) {
+  app.use(['/live-fake-room.html', '/js/live-fake-room.js', '/api/live-fake'], pages.notFoundHandler);
+} else {
+  // (the fake room is shown inside the room page of this same site: only it may be framed, and only by this site)
+  app.get('/live-fake-room.html', (req, res, next) => {
+    res.set('X-Frame-Options', 'SAMEORIGIN');
+    res.set('Content-Security-Policy', require('./security').cspWith({ frameAncestors: "'self'" }));
+    next();
+  });
+  app.get('/api/live-fake/check', (req, res) => {
+    const fake = require('./live/fake');
+    const t = fake.verify(req.query.t);
+    if (!t) return res.status(403).json({ ok: false, error: 'bad_token' });
+    if (t.room !== req.query.room) return res.status(403).json({ ok: false, error: 'wrong_room' });
+    if (Date.now() < t.nbf) return res.status(403).json({ ok: false, error: 'too_early' });
+    if (Date.now() > t.exp) return res.status(403).json({ ok: false, error: 'expired' });
+    const room = fake.roomState(t.room);
+    if (room && room.ended) return res.status(410).json({ ok: false, error: 'room_ended' });
+    res.json({ ok: true, room: t.room, userName: t.userName, owner: t.owner, canSend: t.canSend });
+  });
+}
+
 // State-changing API calls must come from our own pages (see security.js).
 app.use('/api', csrfGuard);
 app.use(express.json({ limit: '50kb' }));
@@ -104,6 +128,14 @@ app.put('/api/me/payout', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
 app.post('/api/me/withdrawals', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.post(/^\/api\/answers\/(offer|decline)$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.post('/api/requests', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
+// Live sessions: buying, writing, the room's questions and heartbeats.
+app.post('/api/live', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.post(/^\/api\/live\/[^/]+\/tickets$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.post(/^\/api\/live\/[^/]+\/questions$/, rateLimit({ windowMs: 10 * 60 * 1000, max: 20 }));
+app.post(/^\/api\/live\/questions\/[^/]+\/vote$/, rateLimit({ windowMs: 10 * 60 * 1000, max: 120 }));
+app.post(/^\/api\/live\/[^/]+\/(heartbeat|hand|join)$/, rateLimit({ windowMs: 10 * 60 * 1000, max: 120 }));
+app.use(/^\/api\/live\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.use(/^\/api\/live\/[^/]+\/cover$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }), express.raw({ type: ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'], limit: '5mb' }));
 // The "are you a person?" check (Cloudflare Turnstile; off without its keys), after the rate limits.
 app.post(['/api/auth/signup', '/api/auth/login', '/api/auth/forgot-password', '/api/contact', '/api/waitlist', '/api/requests'], require('./turnstile').requireHuman);
 app.post(/^\/api\/answers\/[^/]+\/helpful$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
@@ -131,6 +163,16 @@ app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/answers', require('./routes/answers'));
 app.use('/api/requests', require('./routes/requests'));
+app.use('/api/live', require('./routes/live'));
+// A live session's cover picture (public once the session is).
+app.get(/^\/api\/live-covers\/([0-9a-f-]{36})\.webp$/, require('./auth').optionalAuth, async (req, res, next) => {
+  try {
+    const c = await require('./live/covers').get(req.params[0], req.userToken ? req.userToken.id : null);
+    if (!c) return res.status(404).end();
+    res.set('Cache-Control', 'public, max-age=300');
+    res.type(c.mime).send(c.data);
+  } catch (e) { next(e); }
+});
 app.use('/api/verification', require('./routes/verification'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/inbox', require('./routes/inbox').router);

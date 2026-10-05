@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="{{CANONICAL_URL}}">
+<meta name="robots" content="{{ROBOTS}}">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="{{OG_TYPE}}">
+<meta property="og:url" content="{{CANONICAL_URL}}">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/home.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="live-room-body">
+
+<script src="/js/header.js"></script>
+
+<main class="live-room container" id="main">
+  <div id="liveRoom" data-session="{{SESSION_ID}}" data-slug="{{SLUG}}" data-kind="{{KIND}}" data-origin="{{FRAME_ORIGIN}}">
+    <header class="live-room-head">
+      <h1>{{H1}}</h1>
+      <div class="live-room-controls" id="liveControls"></div>
+    </header>
+    {{REGULATED}}
+    {{CRISIS}}
+    <p class="pay-notice" id="liveStatus" role="status" hidden></p>
+    <div class="live-room-layout">
+      <section class="live-frame" id="liveFrame" aria-label="Video"></section>
+      <aside class="live-panel settings-card">
+        <div id="livePeople" hidden></div>
+        <h2 class="small" data-i18n="live.room.questions">Questions</h2>
+        <form id="askForm" class="live-ask-form" novalidate>
+          <label for="askInput" class="sr-only" data-i18n="live.room.askLabel">Your question</label>
+          <textarea id="askInput" rows="2" maxlength="300" data-i18n-placeholder="live.room.askPlaceholder" placeholder="Ask in writing (others won't see who asked)"></textarea>
+          <p class="form-error" id="askError" role="alert"></p>
+          <button type="submit" class="btn btn-outline btn-sm" data-i18n="live.room.ask">Ask</button>
+        </form>
+        <div id="liveQuestions" aria-live="polite"></div>
+      </aside>
+    </div>
+    <p class="small live-room-foot"><a class="plain-link" href="{{PREFIX}}/live/{{SLUG}}" data-i18n="live.room.back">Session page</a></p>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dialog.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/live-room.js"></script>
+</body>
+</html>

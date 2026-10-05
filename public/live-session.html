@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="{{CANONICAL_URL}}">
+<meta name="robots" content="{{ROBOTS}}">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="{{OG_TYPE}}">
+<meta property="og:url" content="{{CANONICAL_URL}}">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/home.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+
+<main class="advice live-session-page container" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{{PREFIX}}/">{{HOME}}</a></li>
+      <li><a href="{{PREFIX}}/live">{{LIBRARY}}</a></li>
+      <li><span aria-current="page">{{CRUMB}}</span></li>
+    </ol>
+  </nav>
+  {{BODY}}
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dialog.js"></script>
+<script src="/js/copy-link.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/live-session.js"></script>
+</body>
+</html>

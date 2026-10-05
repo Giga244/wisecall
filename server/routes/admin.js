@@ -161,6 +161,59 @@ const paFail = (res, e) => {
   if (!(e instanceof require('../publicAnswers').AnswerError)) throw e;
   res.status(PA_STATUS[e.code] || 400).json({ error: e.code });
 };
+// ---- Live sessions (server/live/): the approval queue for a mentor's first sessions, what is live now, reports, ending a room ----------
+const LIVE_STATUS = { not_found: 404, reason_required: 400, not_cancellable: 409, video_unavailable: 503 };
+const liveFail = (res, e) => {
+  if (!(e instanceof require('../live/sessions').LiveError)) throw e;
+  res.status(LIVE_STATUS[e.code] || 400).json({ error: e.code });
+};
+router.get('/live', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const sessions = require('../live/sessions');
+  const { rows } = await query(
+    `SELECT s.*, ${sessions.SEATS_SQL} AS taken, u.name AS mentor_name, u.email AS mentor_email,
+            (SELECT count(*)::int FROM live_reports r WHERE r.session_id = s.id AND r.status = 'open') AS open_reports
+       FROM live_sessions s JOIN users u ON u.id = s.mentor_id
+      WHERE s.status IN ('review', 'published', 'live') OR (s.status IN ('ended', 'cancelled') AND s.updated_at > now() - interval '30 days')
+      ORDER BY (s.status = 'review') DESC, (s.status = 'live') DESC, s.starts_at LIMIT 300`);
+  const view = (s) => ({ ...sessions.ownerView(s), mentor: { id: s.mentor_id, name: s.mentor_name, email: s.mentor_email }, openReports: s.open_reports,
+    cancelReason: s.cancel_reason, endKind: s.end_kind, mentorMinutes: Math.round(s.mentor_seconds / 60) });
+  res.json({ sessions: rows.map(view), reports: await require('../live/reports').listOpen() });
+}));
+router.post('/live/:id/approve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { res.json({ session: await require('../live/sessions').approve(req.adminUser, req.params.id, { title: b.title, description: b.description, learnPoints: b.learnPoints }) }); }
+  catch (e) { liveFail(res, e); }
+}));
+router.post('/live/:id/reject', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  try { res.json({ session: await require('../live/sessions').reject(req.adminUser, req.params.id, (req.body || {}).reason) }); } catch (e) { liveFail(res, e); }
+}));
+// Ends a session at once for safety (or takes down one that is not live yet): everybody is refunded.
+router.post('/live/:id/end', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const reason = String((req.body || {}).reason || '').trim();
+  if (reason.length < 5) return res.status(400).json({ error: 'reason_required' });
+  try {
+    const s = await require('../live/sessions').cancel(req.params.id, 'admin_safety', { by: req.adminUser, note: reason });
+    res.json({ ok: true, sessionStatus: s.status });
+  } catch (e) { liveFail(res, e); }
+}));
+router.post('/live/reports/:id/resolve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  try { res.json(await require('../live/reports').resolve(req.adminUser, req.params.id, (req.body || {}).resolution)); } catch (e) { liveFail(res, e); }
+}));
+// A mentor without an answered question may host once an admin allows it (or not any more); by account id, or by email from the tab.
+router.post(['/live/hosts', '/live/hosts/:userId'], requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const allow = (req.body || {}).allow !== false;
+  const email = String((req.body || {}).email || '').trim().toLowerCase();
+  if (!req.params.userId && !email) return res.status(400).json({ error: 'missing_fields' });
+  const { rows: [u] } = await query(
+    `UPDATE users SET live_approved_at = ${allow ? 'COALESCE(live_approved_at, now())' : 'NULL'}
+      WHERE ${req.params.userId ? 'id::text = $1' : 'lower(email) = $1'} AND role IN ('mentor', 'both') RETURNING id, email`, [req.params.userId || email]);
+  if (!u) return res.status(404).json({ error: 'not_found' });
+  await query(`INSERT INTO verification_audit (mentor_id, actor_id, actor_label, action, reason) VALUES ($1, $2, $3, $4, $5)`,
+    [u.id, req.adminUser.id, req.adminUser.email, allow ? 'live_host_allowed' : 'live_host_removed', null]);
+  res.json({ ok: true, allowed: allow });
+}));
+
 router.get('/public-answers', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   res.json({ queue: await require('../publicAnswers').queue() });
 }));

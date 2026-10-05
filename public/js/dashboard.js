@@ -436,6 +436,7 @@
     }
     if (o.focus) btn.focus();
     if (activeTab === 'earnings') loadEarnings();
+    if (activeTab === 'live' && window.WisecallLiveDashboard) WisecallLiveDashboard.load(document.getElementById('liveBox'), user);
   }
   tabList.addEventListener('click', (ev) => { const btn = ev.target.closest('.tab'); if (btn) selectTab(btn.dataset.tab); });
   tabList.addEventListener('keydown', (ev) => {

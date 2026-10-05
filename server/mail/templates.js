@@ -90,6 +90,7 @@ const S = {
     receipt: {
       subject: 'Your Wisecall receipt {number}', heading: 'Your receipt',
       payment: 'Thank you for your payment for a question to {mentor}.', refund: 'We returned money for your question to {mentor}.',
+      paymentLive: 'Thank you for your ticket to the live session "{title}" with {mentor}.', refundLive: 'We returned the money for your ticket to "{title}".',
       lines: 'Receipt {number} · {date} · {amount}', button: 'Download the receipt (PDF)', after: 'You need to be signed in to open it.'
     },
     disputeOpened: {
@@ -191,6 +192,47 @@ const S = {
       intro: 'You asked for a mentor for {field}. {name} has just been listed on Wisecall.', button: 'See the profile',
       after: 'This is the only email you will get about this request.', unsubscribe: 'Remove my request:'
     },
+    liveTicket: {
+      subject: 'Your ticket: {title}', heading: 'You have a ticket',
+      intro: 'Your place at "{title}" is confirmed: {when}.',
+      after: 'The Join button on the session page turns on 10 minutes before the start. You join with your camera and microphone off. The calendar file is attached.',
+      button: 'Open the session', calendar: 'Add to Google Calendar'
+    },
+    liveTimeChanged: {
+      subject: 'New time: {title}', heading: 'The time has changed',
+      intro: 'The mentor moved "{title}" to {when}.',
+      after: 'If the new time does not suit you, you can cancel your ticket for a full refund until the session starts (Dashboard → Live sessions). The new calendar file is attached.',
+      button: 'Open the session'
+    },
+    liveCancelled: {
+      subject: 'Cancelled: {title}', heading: 'The session is cancelled',
+      intro: '"{title}" ({when}) will not take place. Your ticket is refunded in full: it can take 5-10 business days to appear on your card.',
+      reasons: { mentor: 'The mentor cancelled it.', min_not_reached: 'Not enough people booked a place.', no_show: 'The mentor did not join.',
+        admin_safety: 'Our team ended it.', provider_failed: 'The video call could not take place.', short: 'The session did not run for the time promised.',
+        mentor_suspended: 'The mentor can no longer host sessions.' }
+    },
+    liveCancelledMentor: {
+      subject: 'Your session was cancelled: {title}', heading: 'Your session was cancelled',
+      intro: '"{title}" ({when}) was cancelled and everybody who bought a ticket is being refunded.',
+      reasons: { min_not_reached: 'Fewer tickets were sold than the minimum you set, 6 hours before the start.', no_show: 'You had not joined 15 minutes after the start.',
+        admin_safety: 'Our team ended it for safety.', provider_failed: 'The video call could not take place.', short: 'You were in the session for less than half of the planned time.',
+        mentor_suspended: 'Your account can no longer host sessions.' }
+    },
+    liveApproved: {
+      subject: 'Approved: {title}', heading: 'Your session is public',
+      intro: '"{title}" was approved and is on Wisecall now. Share the link where people who need your experience will see it.',
+      button: 'Open the session'
+    },
+    liveRejected: {
+      subject: 'Not approved yet: {title}', heading: 'Your session needs changes',
+      intro: 'Our team did not approve "{title}" yet.', reasonLabel: 'What to change:',
+      after: 'Edit it in Dashboard → Live sessions and send it again.'
+    },
+    liveReminder: {
+      subject: 'Soon: {title}', heading: 'Your live session is coming up',
+      intro24: '"{title}" starts tomorrow: {when}.', intro1: '"{title}" starts in an hour: {when}.',
+      after: 'The Join button turns on 10 minutes before the start. Camera and microphone are off when you join.', button: 'Open the session'
+    },
     withdrawalRequested: {
       subject: 'We received your withdrawal request', heading: 'Withdrawal requested',
       intro: 'You asked us to send {amount} to your bank account ending in {last4}.',
@@ -281,6 +323,7 @@ const S = {
     receipt: {
       subject: 'შენი Wisecall-ის ქვითარი {number}', heading: 'შენი ქვითარი',
       payment: 'მადლობა გადახდისთვის: კითხვა {mentor}-სთვის.', refund: 'შენი კითხვისთვის ({mentor}) თანხა დაგიბრუნეთ.',
+      paymentLive: 'მადლობა ბილეთისთვის: ცოცხალი სესია „{title}“ ({mentor}).', refundLive: 'ბილეთის თანხა („{title}“) დაგიბრუნეთ.',
       lines: 'ქვითარი {number} · {date} · {amount}', button: 'ქვითრის ჩამოტვირთვა (PDF)', after: 'გასახსნელად სისტემაში უნდა იყო შესული.'
     },
     disputeOpened: {
@@ -382,6 +425,47 @@ const S = {
       intro: 'მოითხოვე მენტორი სფეროში: {field}. Wisecall-ზე ახლახან გამოჩნდა: {name}.', button: 'პროფილის ნახვა',
       after: 'ამ მოთხოვნაზე ეს ერთადერთი წერილია.', unsubscribe: 'მოთხოვნის წაშლა:'
     },
+    liveTicket: {
+      subject: 'შენი ბილეთი: {title}', heading: 'ბილეთი გაქვს',
+      intro: 'შენი ადგილი სესიაზე „{title}“ დადასტურებულია: {when}.',
+      after: 'სესიის გვერდზე ღილაკი „შესვლა“ დაწყებამდე 10 წუთით ადრე ჩაირთვება. შეხვალ გამორთული კამერითა და მიკროფონით. კალენდრის ფაილი თანდართულია.',
+      button: 'სესიის გახსნა', calendar: 'Google Calendar-ში დამატება'
+    },
+    liveTimeChanged: {
+      subject: 'ახალი დრო: {title}', heading: 'დრო შეიცვალა',
+      intro: 'მენტორმა სესია „{title}“ გადაიტანა: {when}.',
+      after: 'თუ ახალი დრო არ გაწყობს, ბილეთის გაუქმება და სრული თანხის დაბრუნება სესიის დაწყებამდე შეგიძლია (პირადი კაბინეტი → ცოცხალი სესიები). ახალი კალენდრის ფაილი თანდართულია.',
+      button: 'სესიის გახსნა'
+    },
+    liveCancelled: {
+      subject: 'გაუქმდა: {title}', heading: 'სესია გაუქმდა',
+      intro: 'სესია „{title}“ ({when}) არ ჩატარდება. ბილეთის თანხა სრულად დაგიბრუნდება: ბარათზე ასახვას შეიძლება 5-10 სამუშაო დღე დასჭირდეს.',
+      reasons: { mentor: 'მენტორმა გააუქმა.', min_not_reached: 'საკმარისმა ადამიანმა ვერ დაჯავშნა ადგილი.', no_show: 'მენტორი არ შემოვიდა.',
+        admin_safety: 'ჩვენმა გუნდმა შეწყვიტა.', provider_failed: 'ვიდეოზარი ვერ შედგა.', short: 'სესია დაპირებულ დროს არ გაგრძელდა.',
+        mentor_suspended: 'მენტორს სესიების ჩატარება აღარ შეუძლია.' }
+    },
+    liveCancelledMentor: {
+      subject: 'შენი სესია გაუქმდა: {title}', heading: 'შენი სესია გაუქმდა',
+      intro: 'სესია „{title}“ ({when}) გაუქმდა და ყველას, ვინც ბილეთი იყიდა, თანხა უბრუნდება.',
+      reasons: { min_not_reached: 'დაწყებამდე 6 საათით ადრე შენ მიერ დადგენილ მინიმუმზე ნაკლები ბილეთი იყო გაყიდული.', no_show: 'დაწყებიდან 15 წუთში არ შემოხვედი.',
+        admin_safety: 'ჩვენმა გუნდმა უსაფრთხოების მიზნით შეწყვიტა.', provider_failed: 'ვიდეოზარი ვერ შედგა.', short: 'სესიაზე დაგეგმილი დროის ნახევარზე ნაკლები იყავი.',
+        mentor_suspended: 'შენს ანგარიშს სესიების ჩატარება აღარ შეუძლია.' }
+    },
+    liveApproved: {
+      subject: 'დამტკიცდა: {title}', heading: 'შენი სესია საჯაროა',
+      intro: 'სესია „{title}“ დამტკიცდა და უკვე Wisecall-ზეა. გააზიარე ბმული იქ, სადაც შენი გამოცდილება სჭირდებათ.',
+      button: 'სესიის გახსნა'
+    },
+    liveRejected: {
+      subject: 'ჯერ არ დამტკიცებულა: {title}', heading: 'შენს სესიას ცვლილებები სჭირდება',
+      intro: 'ჩვენმა გუნდმა სესია „{title}“ ჯერ არ დაამტკიცა.', reasonLabel: 'რა უნდა შეიცვალოს:',
+      after: 'შეცვალე ის პირად კაბინეტში → ცოცხალი სესიები და ხელახლა გამოგზავნე.'
+    },
+    liveReminder: {
+      subject: 'მალე: {title}', heading: 'შენი ცოცხალი სესია ახლოვდება',
+      intro24: 'სესია „{title}“ ხვალ იწყება: {when}.', intro1: 'სესია "{title}" ერთ საათში იწყება: {when}.',
+      after: 'ღილაკი „შესვლა“ დაწყებამდე 10 წუთით ადრე ჩაირთვება. შესვლისას კამერა და მიკროფონი გამორთულია.', button: 'სესიის გახსნა'
+    },
     withdrawalRequested: {
       subject: 'თანხის გატანის მოთხოვნა მივიღეთ', heading: 'თანხის გატანა მოთხოვნილია',
       intro: 'გვთხოვე, {amount} გადაგირიცხოთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.',
@@ -457,7 +541,7 @@ const BUILDERS = {
   }),
   receipt: (s, d) => ({
     heading: s.receipt.heading,
-    blocks: [{ p: fill(d.kind === 'refund' ? s.receipt.refund : s.receipt.payment, d), raw: true }, { p: fill(s.receipt.lines, d), raw: true },
+    blocks: [{ p: fill(d.title ? (d.kind === 'refund' ? s.receipt.refundLive : s.receipt.paymentLive) : (d.kind === 'refund' ? s.receipt.refund : s.receipt.payment), d), raw: true }, { p: fill(s.receipt.lines, d), raw: true },
       { button: s.receipt.button, url: d.url }, { small: s.receipt.after }]
   }),
   disputeOpened: (s, d) => ({
@@ -563,6 +647,35 @@ const BUILDERS = {
     blocks: [{ p: fill(s.mentorRequestMatched.intro, d), raw: true }, { button: s.mentorRequestMatched.button, url: d.url }, { small: s.mentorRequestMatched.after },
       { small: s.mentorRequestMatched.unsubscribe }, { link: d.unsubscribeUrl }]
   }),
+  liveTicket: (s, d) => ({
+    heading: s.liveTicket.heading,
+    blocks: [{ p: fill(s.liveTicket.intro, d), raw: true }, { p: s.liveTicket.after }, { button: s.liveTicket.button, url: d.url },
+      { link: d.calendarUrl, label: s.liveTicket.calendar }]
+  }),
+  liveTimeChanged: (s, d) => ({
+    heading: s.liveTimeChanged.heading,
+    blocks: [{ p: fill(s.liveTimeChanged.intro, d), raw: true }, { p: s.liveTimeChanged.after }, { button: s.liveTimeChanged.button, url: d.url }]
+  }),
+  liveCancelled: (s, d) => ({
+    heading: s.liveCancelled.heading,
+    blocks: [{ p: fill(s.liveCancelled.intro, d), raw: true }, ...(s.liveCancelled.reasons[d.reason] ? [{ p: s.liveCancelled.reasons[d.reason] }] : [])]
+  }),
+  liveCancelledMentor: (s, d) => ({
+    heading: s.liveCancelledMentor.heading,
+    blocks: [{ p: fill(s.liveCancelledMentor.intro, d), raw: true }, ...(s.liveCancelledMentor.reasons[d.reason] ? [{ p: s.liveCancelledMentor.reasons[d.reason] }] : [])]
+  }),
+  liveApproved: (s, d) => ({
+    heading: s.liveApproved.heading,
+    blocks: [{ p: fill(s.liveApproved.intro, d), raw: true }, { button: s.liveApproved.button, url: d.url }]
+  }),
+  liveRejected: (s, d) => ({
+    heading: s.liveRejected.heading,
+    blocks: [{ p: fill(s.liveRejected.intro, d), raw: true }, ...(d.reason ? [{ quote: `${s.liveRejected.reasonLabel} ${d.reason}` }] : []), { p: s.liveRejected.after }]
+  }),
+  liveReminder: (s, d) => ({
+    heading: s.liveReminder.heading,
+    blocks: [{ p: fill(Number(d.hours) === 1 ? s.liveReminder.intro1 : s.liveReminder.intro24, d), raw: true }, { p: s.liveReminder.after }, { button: s.liveReminder.button, url: d.url }]
+  }),
   withdrawalRequested: (s, d) => ({
     heading: s.withdrawalRequested.heading,
     blocks: [{ p: fill(s.withdrawalRequested.intro, d), raw: true }, { p: s.withdrawalRequested.after },
@@ -592,7 +705,7 @@ function layout(lang, heading, blocks) {
     if (b.code) return `<div class="wc-quote" style="margin:6px 0 18px;padding:18px;text-align:center;background:${COLORS.quote};border-radius:14px;font-size:34px;font-weight:700;letter-spacing:8px;color:${COLORS.ink};font-family:'Courier New',monospace">${escapeHtml(b.code)}</div>`;
     if (b.quote) return `<div class="wc-quote" style="margin:0 0 18px;padding:14px 16px;background:${COLORS.quote};border-radius:14px;font-size:15px;line-height:1.55;color:${COLORS.ink};white-space:pre-wrap">${escapeHtml(b.quote)}</div>`;
     if (b.button) return `<p style="margin:8px 0 20px"><a href="${escapeHtml(b.url)}" style="display:inline-block;padding:13px 26px;background:${COLORS.accent};color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;border-radius:999px">${escapeHtml(b.button)}</a></p>`;
-    if (b.link) return `<p style="margin:0 0 16px;font-size:13px;word-break:break-all"><a href="${escapeHtml(b.link)}" style="color:${COLORS.accent}">${escapeHtml(b.link)}</a></p>`;
+    if (b.link) return `<p style="margin:0 0 16px;font-size:13px;word-break:break-all"><a href="${escapeHtml(b.link)}" style="color:${COLORS.accent}">${escapeHtml(b.label || b.link)}</a></p>`;
     if (b.small) return `<p class="wc-soft" style="margin:0 0 12px;font-size:13px;line-height:1.5;color:${COLORS.soft}">${escapeHtml(b.small)}</p>`;
     return '';
   }).join('');
@@ -615,7 +728,7 @@ ${rows}
     if (b.code) return b.code;
     if (b.quote) return `"${b.quote}"`;
     if (b.button) return `${b.button}: ${b.url}`;
-    if (b.link) return b.link;
+    if (b.link) return b.label ? `${b.label}: ${b.link}` : b.link;
     return b.small || '';
   }), '', s.tagline].join('\n');
   return { html, text };

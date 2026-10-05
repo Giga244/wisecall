@@ -602,3 +602,70 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .ov-sources { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--radius-sm); font-size: 0.9rem; }
 .ov-sources th, .ov-sources td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
 .ov-sources td:nth-child(n+3), .ov-sources th:nth-child(n+3) { text-align: right; }
+/* ---- Live sessions (pages: live.html, live-session.html, live-room.html, live-edit.html; dashboard and admin tabs) ---------------- */
+.live-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 6px 0 22px; }
+.live-filters label { margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 120px; flex: 1 1 140px; }
+.live-filters select, .live-filters input { margin-top: 0; }
+.live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.live-card { background: var(--card); border-radius: var(--radius); overflow: hidden; box-shadow: 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3); display: flex; flex-direction: column; }
+.live-card-cover { width: 100%; height: auto; aspect-ratio: 1200 / 630; object-fit: cover; display: block; }
+.live-card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.live-card-title { font-size: 1.08rem; margin: 0; }
+.live-card-meta { color: var(--ink-soft); margin: 0; }
+.live-kind { font-weight: 800; color: var(--accent-text); }
+.live-card-foot { margin: auto 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.live-host-cta { margin-top: 22px; }
+.live-cover { width: 100%; height: auto; aspect-ratio: 1200 / 630; object-fit: cover; border-radius: var(--radius); margin: 0 0 14px; }
+.live-when { font-weight: 700; }
+.live-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; margin: 14px 0 22px; }
+.live-description { line-height: 1.6; white-space: normal; }
+.live-points { padding-left: 20px; }
+.live-side { position: sticky; top: 90px; }
+.live-price { font-size: 1.5rem; margin: 0 0 4px; }
+.live-rules { padding-left: 18px; margin: 10px 0; }
+.live-rules li { margin-bottom: 4px; }
+.live-ask { margin: 8px 0 10px; }
+.live-ask summary { cursor: pointer; font-weight: 700; }
+.live-share { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.live-mentor .card-name { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 760px) { .live-layout { grid-template-columns: minmax(0, 1fr); } .live-side { position: static; } }
+/* The room */
+.live-room-head { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
+.live-room-head h1 { font-size: 1.4rem; margin: 0; }
+.live-room-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.live-room-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; margin-top: 12px; align-items: start; }
+.live-frame { background: var(--card); border-radius: var(--radius); min-height: 420px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.live-call { width: 100%; height: min(72vh, 680px); border: 0; display: block; }
+.live-prejoin { max-width: 420px; margin: 20px; }
+.live-panel { max-height: 78vh; overflow: auto; }
+.live-qlist { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.live-q { background: var(--field); border-radius: var(--radius-sm); padding: 8px 10px; }
+.live-q p { margin: 0; overflow-wrap: anywhere; }
+.live-q-answering { outline: 2px solid var(--accent2); }
+.live-q-answered { opacity: 0.7; }
+.live-q-hidden { opacity: 0.5; text-decoration: line-through; }
+.live-q-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px !important; }
+.live-q-actions { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.live-people { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.live-ask-form textarea { min-height: 56px; }
+@media (max-width: 860px) { .live-room-layout { grid-template-columns: minmax(0, 1fr); } .live-call { height: 56vh; } .live-panel { max-height: none; } }
+/* The editor */
+.live-edit-form { display: flex; flex-direction: column; gap: 4px; }
+.lv-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .lv-row { grid-template-columns: minmax(0, 1fr); } }
+.lv-points-box { border: 0; padding: 0; margin: 0 0 14px; }
+.lv-points-box legend { font-size: 0.85rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 6px; }
+.lv-point { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.lv-point input { margin-top: 0; }
+.lv-cover img { width: 100%; max-width: 480px; height: auto; border-radius: var(--radius-sm); display: block; margin: 6px 0; }
+.lv-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+/* Dashboard */
+.live-dash-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.live-ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; }
+.live-dash-tickets { margin-top: 24px; }
+/* The development-only fake video room is shown inside the room page's frame: no site header or footer in there */
+.fake-room #siteHeader, .fake-room .footer, .fake-room .nav { display: none !important; }
+.fake-room main { padding-top: 16px; }
+/* Admin: live sessions */
+.lv-review label { display: block; margin: 10px 0 0; }
+.lv-row-end { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }

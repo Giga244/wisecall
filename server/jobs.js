@@ -195,6 +195,7 @@ async function runSweep({ wait = false } = {}) {
       await verificationHousekeeping();
       await safetyHousekeeping();
       await accountHousekeeping();
+      await require('./live/settle').sweep(); // (live sessions: holds, refunds, minimum, no-shows, endings, reminders, clean-up)
       lastSweepAt = new Date();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);

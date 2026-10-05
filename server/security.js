@@ -3,21 +3,27 @@ const config = require('./config');
 
 // Scripts may only come from our own files (no inline scripts, no eval), and Cloudflare's "are you a person?" check when it is on. Styles allow inline
 // attributes. Fonts are served from this site. Nothing else can load or embed anything.
-const CSP = [
+function buildCsp({ frameSrc, frameAncestors } = {}) {
+  const frames = [...(config.TURNSTILE_ENABLED ? ['https://challenges.cloudflare.com'] : []), ...(frameSrc ? [frameSrc] : [])];
+  return [
   "default-src 'self'",
   "script-src 'self'" + (config.TURNSTILE_ENABLED ? ' https://challenges.cloudflare.com' : ''),
-  ...(config.TURNSTILE_ENABLED ? ['frame-src https://challenges.cloudflare.com'] : []),
+  ...(frames.length ? ['frame-src ' + frames.join(' ')] : []),
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
   "manifest-src 'self'",
   "img-src 'self' data:",
   "connect-src 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  "frame-ancestors " + (frameAncestors || "'none'"),
   "base-uri 'self'",
   "object-src 'none'",
   ...(config.IS_PROD ? ['upgrade-insecure-requests'] : [])
-].join('; ');
+  ].join('; ');
+}
+const CSP = buildCsp();
+// The live-session room (server/pages.js) is the only page that may frame the video provider's call.
+const cspWith = ({ frameSrc, frameAncestors }) => buildCsp({ frameSrc, frameAncestors });
 
 function securityHeaders(req, res, next) {
   res.set({
@@ -62,4 +68,4 @@ function requestLogger(req, res, next) {
   next();
 }
 
-module.exports = { securityHeaders, csrfGuard, requestLogger };
+module.exports = { securityHeaders, csrfGuard, requestLogger, cspWith, CSP };
