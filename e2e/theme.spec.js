@@ -64,7 +64,7 @@ test.describe('a choice made by hand', () => {
     await page.keyboard.press('Enter');
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
     await expect.poll(() => bodyBg(page)).toBe(DARK_BG); // after the short fade
-    expect(await barColor(page)).toBe('#15131F'); // the phone's address bar follows
+    expect(await barColor(page)).toBe('#16131F'); // the phone's address bar follows
     expect(await logo(page)).toBe('wisecall-logo-on-dark-transparent.svg');
     expect(await page.locator('.footer .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
     await expect(page.locator('#themeMenu')).toBeHidden();
@@ -85,7 +85,7 @@ test.describe('a choice made by hand', () => {
     await page.click('#themeBtn');
     await page.click('#themeMenu [data-theme-choice="light"]');
     expect(await theme(page)).toEqual({ theme: 'light', pref: 'light' });
-    expect(await barColor(page)).toBe('#F4FBF8');
+    expect(await barColor(page)).toBe('#F4F2EE');
     await page.emulateMedia({ colorScheme: 'light' });
     await page.emulateMedia({ colorScheme: 'dark' });
     expect((await theme(page)).theme, 'a hand-made choice ignores the device').toBe('light');

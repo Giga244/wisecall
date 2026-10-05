@@ -54,6 +54,6 @@ module.exports = { find };
 if (require.main === module) {
   const found = find();
   for (const f of found) console.log(`${f.file}:${f.line}  ${f.colors.join(' ')}   ${f.text}`);
-  console.log(found.length ? `\n${found.length} hard-coded colour line(s): move them into the tokens in public/css/style.css` : 'No hard-coded colours: every colour comes from a design token.');
+  console.log(found.length ? `\n${found.length} hard-coded colour line(s): move them into the tokens in public/css/tokens.css` : 'No hard-coded colours: every colour comes from a design token.');
   process.exit(found.length ? 1 : 0);
 }

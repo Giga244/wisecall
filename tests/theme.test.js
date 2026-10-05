@@ -19,19 +19,22 @@ describe('colours are tokens', () => {
     assert.deepEqual(colors.find().map((f) => `${f.file}:${f.line} ${f.colors.join(' ')}`), []);
   });
 
-  test('the dark palette redefines the tokens (deep violet surfaces, the same coral and mint), with color-scheme for native controls', () => {
-    const css = read('public/css/style.css');
+  test('the dark palette redefines the tokens (a deep ink ground and surfaces, paper text, the same coral and pastels), with color-scheme for native controls', () => {
+    const css = read('public/css/tokens.css');
     const { light, dark } = contrast.load();
     assert.match(css, /:root \{[^}]*color-scheme: light;/s);
     assert.match(css, /\[data-theme="dark"\] \{[^}]*color-scheme: dark;/s);
-    for (const [token, value] of [['--bg', '#15131f'], ['--card', '#1f1c2e'], ['--raised', '#29253b'], ['--border', '#34304a'], ['--ink', '#f3f1fa'], ['--ink-soft', '#b7b3c8'], ['--accent', '#ff7a66'], ['--navy', '#0f0d18'], ['--mint-soft', '#1e3a33'], ['--sun-soft', '#6b5a1e']]) {
+    for (const [token, value] of [['--bg', '#16131f'], ['--card', '#221e31'], ['--raised', '#2b2643'], ['--border', '#3a3452'], ['--ink', '#f4f2ee'], ['--ink-soft', '#c9c5d6'], ['--accent', '#ff6f59'], ['--navy', '#0f0d18'], ['--mint-soft', '#1e3a33'], ['--sun-soft', '#4d4119']]) {
       assert.equal(dark[token], value, `dark ${token}`);
     }
-    assert.equal(light['--bg'], '#eaf6f1');
+    assert.equal(light['--bg'], '#f4f2ee');
+    assert.equal(light['--ink'], '#1e1a31');
     assert.equal(light['--accent'], '#ff6f59');
     // the tokens that make the two themes different are really different
-    const mustDiffer = ['--bg', '--card', '--raised', '--field', '--border', '--ink', '--ink-soft', '--navy', '--inverse', '--on-inverse', '--mint-soft', '--sun-soft', '--sun-ink', '--pink-soft', '--lav-soft', '--gray-soft', '--skeleton-a', '--blob-peach', '--on-accent', '--accent-text', '--red-strong'];
+    const mustDiffer = ['--bg', '--card', '--raised', '--field', '--border', '--line', '--ink', '--ink-soft', '--navy', '--inverse', '--on-inverse', '--mint-soft', '--sun-soft', '--sun-ink', '--pink-soft', '--lav-soft', '--gray-soft', '--skeleton-a', '--accent-text', '--red-strong'];
     for (const k of mustDiffer) assert.notEqual(light[k], dark[k], `${k} is the same in both themes`);
+    // the pastel "stickers" and the coral keep their colour in both themes, and what is written on them stays ink
+    for (const k of ['--c-coral', '--c-mint', '--c-sun', '--c-blush', '--on-pastel', '--on-accent']) assert.equal(light[k], dark[k], `${k} is the same in both themes`);
   });
 
   test('every text and background pair meets WCAG AA in both themes (4.5:1 for text, 3:1 for outlines)', () => {
@@ -55,8 +58,8 @@ describe('the theme is set before the page paints', () => {
       const head = html.slice(0, html.indexOf('</head>'));
       assert.match(head, /<script src="\/js\/theme-init\.js\?v=[0-9a-f]{10}"><\/script>/, `${f}: theme-init.js is in the head, not deferred`);
       assert.match(head, /<meta name="color-scheme" content="light dark">/, f);
-      assert.match(head, /<meta name="theme-color" content="#F4FBF8" media="\(prefers-color-scheme: light\)">/, f);
-      assert.match(head, /<meta name="theme-color" content="#15131F" media="\(prefers-color-scheme: dark\)">/, f);
+      assert.match(head, /<meta name="theme-color" content="#F4F2EE" media="\(prefers-color-scheme: light\)">/, f);
+      assert.match(head, /<meta name="theme-color" content="#16131F" media="\(prefers-color-scheme: dark\)">/, f);
       assert.ok(head.indexOf('theme-init.js') < html.indexOf('<body'), `${f}: before anything is drawn`);
     }
   });
