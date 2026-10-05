@@ -29,6 +29,7 @@
   --c-muted: #4e4963;
   --c-muted-2: #6b6680;        /* only at 14px bold or larger */
   --on-pastel: #1e1a31;        /* text on coral, mint, sun, blush and lavender: always ink */
+  --sticker: #ffffff;          /* the white "sticker" among the pastels (pale lavender in the dark) */
 
   /* ---- Roles ---- */
   --ink: #1e1a31;              /* text */
@@ -150,6 +151,7 @@
   --on-inverse: #16131f;
   --accent-dark: #ff8a78;
   --mint: #1e3a33;             /* (a soft fill in the app; the pastel "sticker" is --c-mint) */
+  --sticker: #e6e1f7;
   --accent-strong-hover: #ff8a78;
   --accent-text: #ff8f7d;
   --headline-accent: #ff7a66;
@@ -185,6 +187,6 @@
   --tracking-display: 0;
   --tracking-label: 0.02em;
   --fs-hero: clamp(2.1rem, 3.9vw + 0.7rem, 3.9rem);
-  --fs-h1: clamp(1.8rem, 2.4vw + 0.8rem, 2.8rem);
+  --fs-h1: clamp(1.5rem, 2.8vw + 0.7rem, 2.8rem);
   --fs-h2: clamp(1.6rem, 2vw + 0.8rem, 2.8rem);
 }

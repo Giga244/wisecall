@@ -50,7 +50,7 @@ const PAIRS = [
   ['--line', '--bg', UI, 'the outline of a card or button on the page'], ['--line', '--card', UI, 'an outline inside a card'],
   // the redesign: ink on coral (every primary button), ink on the pastel "stickers" in both themes, the coral words of a big headline
   ['--on-pastel', '--c-coral', TEXT, 'ink text on coral'], ['--on-pastel', '--c-mint', TEXT, 'ink text on mint'], ['--on-pastel', '--c-sun', TEXT, 'ink text on sun'],
-  ['--on-pastel', '--c-blush', TEXT, 'ink text on blush'], ['--on-pastel', '--c-lav', TEXT, 'ink text on lavender'], ['--c-muted', '--c-mint', TEXT, 'muted ink on mint'],
+  ['--on-pastel', '--c-blush', TEXT, 'ink text on blush'], ['--on-pastel', '--c-lav', TEXT, 'ink text on lavender'], ['--on-pastel', '--sticker', TEXT, 'ink text on a white or lavender sticker'], ['--c-muted', '--c-mint', TEXT, 'muted ink on mint'],
   ['--headline-accent', '--bg', LARGE, 'the coral words of a big headline (24px and up)'], ['--on-navy-soft', '--navy', TEXT, 'muted text on the ink bands'], ['--on-navy', '--navy-card', TEXT, 'text on a card in an ink band'],
   ['--c-paper', '--c-ink', TEXT, 'paper on ink (the marquee, ink buttons)'],
   ['--gbtn-border', '--gbtn-bg', UI, 'the Google button outline']

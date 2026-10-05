@@ -17,7 +17,7 @@ body {
 }
 
 /* Headings, prices and big numerals are in the display face, tight and heavy */
-h1, h2, h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: var(--tracking-display); line-height: 1.08; text-wrap: balance; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: var(--tracking-display); line-height: 1.08; text-wrap: balance; overflow-wrap: break-word; }
 h3 { font-weight: 700; }
 h4 { font-family: var(--font-body); font-weight: 700; }
 .price, .num, .display { font-family: var(--font-display); font-weight: 800; letter-spacing: var(--tracking-display); font-variant-numeric: tabular-nums; }
@@ -132,6 +132,9 @@ html[lang="ka"] .nav-links .nl-faq { display: none; }
   .nav-inner { gap: 16px; }
   .nav-links { gap: 18px; }
   .nav-links a { font-size: 0.95rem; }
+  .nav-right, .nav-actions { gap: 6px; }
+  .nav-actions .btn { padding: 9px 11px; font-size: 0.9rem; }
+  .lang-btn { padding: 7px 10px; }
 }
 @media (min-width: 1024px) and (max-width: 1179px) {
   html[lang="ka"] .nl-extra { display: none; }
@@ -420,7 +423,7 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 .verify-banner a { color: var(--accent-text); font-weight: 800; text-decoration: none; margin-left: 6px; }
 
 /* Pages that fill in after they load start tall enough for the footer to begin below the fold, so it never jumps. */
-.expert-wrap, .dash, .settings { min-height: 85vh; }
+.expert-wrap, .dash, .settings { min-height: 100vh; min-height: 100svh; }
 .breadcrumb { min-height: 34px; }
 
 /* Before launch (prelaunch mode): a slim note under the header, and the home page's Browse section
@@ -842,7 +845,7 @@ html.sheet-open, html.sheet-open body { overflow: hidden; }
 @media (max-width: 1023px), (pointer: coarse) {
   .lang-btn { min-width: 44px; }
   .breadcrumb a { min-height: 44px; }
-  a.tag { min-height: 44px; }
+  a.tag, .profile-link { min-height: 44px; }
   .plain-link { display: inline-flex; align-items: center; min-height: 44px; }
 }@media (max-width: 1023px) {
   .search-input, .sort-select, .payout-pay input, .mv-decide input, .mv-reject input, .reject-note-input, .waitlist-form input, .waitlist-form select { font-size: 16px; }
@@ -907,6 +910,11 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 .faq-group summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
 .faq-group .faq-item p { margin: 8px 0 4px; line-height: 1.7; }
 .hvp-steps { padding-left: 22px; display: grid; gap: 14px; }
+/* Numbered steps: big outlined numerals (01 02 03) */
+.hvp-steps, .advice-steps { list-style: none; counter-reset: step; padding-left: 0; gap: 18px; }
+.hvp-steps > li, .advice-steps > li { counter-increment: step; position: relative; padding-left: 68px; min-height: 44px; }
+.hvp-steps > li::before, .advice-steps > li::before { content: counter(step, decimal-leading-zero); position: absolute; left: 0; top: -2px; font-family: var(--font-display); font-weight: 800; font-size: 2.5rem; line-height: 1; letter-spacing: -0.04em; color: var(--ink); }
+@supports (-webkit-text-stroke: 1px black) { .hvp-steps > li::before, .advice-steps > li::before { color: transparent; -webkit-text-stroke: 1.5px var(--ink); } }
 .hvp-steps h3 { margin: 0 0 4px; font-size: 1.05rem; }
 .hvp-steps p { margin: 0; }
 .hvp-badges, .hvp-regulated { padding-left: 20px; line-height: 1.8; }
@@ -917,7 +925,8 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 .help-article h2, .help-article h3 { margin-top: 24px; }
 .help-article blockquote { margin: 16px 0; padding: 14px 18px; border: var(--line-w) dashed var(--line); background: var(--sun-tint); border-radius: var(--r-btn); }
 .help-nav { margin-top: 32px; }
-.help-nav ul { padding-left: 20px; line-height: 2; }
+.help-nav ul { padding-left: 20px; line-height: 1.5; }
+.help-nav li a { display: inline-flex; align-items: center; min-height: 44px; }
 .status-list { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 8px; }
 .status-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--card); border: var(--line-w) solid var(--line); border-radius: var(--r-btn); flex-wrap: wrap; }
 
