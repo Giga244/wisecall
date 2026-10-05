@@ -127,9 +127,11 @@ main[data-loading] .app-progress, main[data-loading] .tabs, main[data-loading] .
 .expert-wrap { padding: 36px 24px 90px; max-width: 1120px; }
 .expert-layout {
   display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 22px 34px; align-items: start;
-  grid-template-areas: "profile ask" "about ask" "checks ask" "reviews ask" "report ask";
-  grid-template-rows: auto auto auto auto 1fr;
+  grid-template-areas: "profile ask" "about ask" "sections ask" "checks ask" "reviews ask" "report ask";
+  grid-template-rows: auto auto auto auto auto 1fr;
 }
+/* The optional profile sections (public/js/profile-sections.js): one block right after About. */
+.ps-wrap { grid-area: sections; display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 .profile-card { grid-area: profile; background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3); }
 .profile-head { display: flex; align-items: center; gap: 20px; }
 .profile-head h1 { margin: 0 0 2px; font-size: 1.9rem; line-height: 1.15; }
@@ -207,7 +209,7 @@ a.tag-niche:hover { background: var(--inverse); color: var(--on-inverse); }
 /* Tablets and phones: one column. The question box follows the profile header (tablets); phones get a bar instead. */
 @media (max-width: 899px) {
   .expert-wrap { padding: 24px 24px 70px; }
-  .expert-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "profile" "ask" "about" "checks" "reviews" "report"; grid-template-rows: none; }
+  .expert-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "profile" "ask" "about" "sections" "checks" "reviews" "report"; grid-template-rows: none; }
   .ask-side { position: static; }
   .profile-card { padding: 24px; }
   .ask-panel { padding: 22px; }
@@ -354,7 +356,7 @@ a.tag-niche:hover { background: var(--inverse); color: var(--on-inverse); }
 .profile-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: var(--accent-text); font-weight: 800; font-size: 0.9rem; text-decoration: none; overflow-wrap: anywhere; }
 .profile-link:hover { text-decoration: underline; }
 .profile-self { margin: 14px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.expert-layout.profile-plain { grid-template-columns: minmax(0, 720px); grid-template-areas: "profile" "about"; grid-template-rows: none; justify-content: center; }
+.expert-layout.profile-plain { grid-template-columns: minmax(0, 720px); grid-template-areas: "profile" "about" "sections"; grid-template-rows: none; justify-content: center; }
 
 /* Settings → Profile: the form and its live preview */
 .profile-editor { display: grid; gap: 22px; align-items: start; }

@@ -52,8 +52,10 @@ window.WisecallProfileView = (function () {
     if ((s.languages || []).length && s.languages.some((l) => l.level)) parts.push(section('psLang', t('ps.s.languages'), `<ul class="ps-list ps-langs">${s.languages.map((l) => `<li>${esc(t('lang.' + l.code))}${l.level ? ` <span class="muted small">· ${esc(t('ps.langLevel.' + l.level))}</span>` : ''}</li>`).join('')}</ul>`));
     const links = s.links ? ['github', 'behance', 'instagram', 'youtube'].filter((k) => s.links[k]) : [];
     if (links.length) parts.push(section('psLinks', t('ps.s.moreLinks'), `<p class="profile-links">${links.map((k) => linkTag(s.links[k], t('ps.link.' + k))).join(' ')}</p>`));
-    if (parts.length) parts.push(`<p class="muted small ps-self">${esc(t('ps.selfReported'))}</p>`);
-    return parts.join('');
+    if (!parts.length) return '';
+    parts.push(`<p class="muted small ps-self">${esc(t('ps.selfReported'))}</p>`);
+    // (one block, placed right after About by the page's grid)
+    return `<div class="ps-wrap">${parts.join('')}</div>`;
   }
 
   // The top skills, for the header.
