@@ -196,6 +196,40 @@ router.post('/live/:id/replay/delete', requireAuth, requireAdmin, asyncHandler(a
     res.json(out);
   } catch (e) { liveFail(res, e); }
 }));
+// ---- Profiles (server/profileSections.js): reported profiles, hiding a section or the whole profile, the verified mark per item ---------
+const PROFILE_STATUS = { not_found: 404, reason_required: 400, invalid_section: 400 };
+const profileFail = (res, e) => {
+  if (!(e instanceof require('../profileSections').ProfileError)) throw e;
+  res.status(PROFILE_STATUS[e.code] || 400).json({ error: e.code });
+};
+const ownerOf = async (id) => (/^[0-9a-f-]{36}$/i.test(String(id)) ? require('../models').getUserById(String(id)) : null);
+router.get('/profiles/reports', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ reports: await require('../profileSections').listReports() });
+}));
+router.post('/profiles/reports/:id/resolve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  try { res.json(await require('../profileSections').resolveReport(req.adminUser, req.params.id, (req.body || {}).resolution)); } catch (e) { profileFail(res, e); }
+}));
+router.post('/profiles/:userId/hide', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const owner = await ownerOf(req.params.userId);
+  if (!owner) return res.status(404).json({ error: 'not_found' });
+  const b = req.body || {};
+  try { res.json(await require('../profileSections').hide(req.adminUser, owner, { section: b.section || null, reason: b.reason })); } catch (e) { profileFail(res, e); }
+}));
+router.post('/profiles/:userId/unhide', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const owner = await ownerOf(req.params.userId);
+  if (!owner) return res.status(404).json({ error: 'not_found' });
+  try { res.json(await require('../profileSections').unhide(req.adminUser, owner, { section: (req.body || {}).section || null })); } catch (e) { profileFail(res, e); }
+}));
+router.get('/profiles/:userId/items', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!/^[0-9a-f-]{36}$/i.test(String(req.params.userId))) return res.status(404).json({ error: 'not_found' });
+  res.json({ items: await require('../profileSections').itemsForAdmin(req.params.userId) });
+}));
+router.post('/profile-items/:id/verify', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { res.json({ item: await require('../profileSections').setVerified(req.adminUser, req.params.id, b.verified === true, b.note) }); } catch (e) { profileFail(res, e); }
+}));
 // Hides a rating of a live session (rude, personal details...): it no longer counts or shows. Logged with the reason.
 router.post('/live/ratings/:id/hide', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   try { res.json(await require('../live/after').hide(req.adminUser, req.params.id, (req.body || {}).reason)); } catch (e) { liveFail(res, e); }

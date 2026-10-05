@@ -87,6 +87,12 @@ const S = {
       after: 'Changed your mind? Sign in before then and choose "Keep my account". Records of payments stay, without your details, because the law requires them.',
       button: 'Sign in'
     },
+    profileHidden: {
+      subject: 'Part of your Wisecall profile is hidden', heading: 'Part of your profile is hidden',
+      intro: 'Our team hid {part} of your profile from other people.', reasonLabel: 'Reason:',
+      after: 'You still see it yourself. Change it in Settings → Profile, or reply to us through the Help centre if you think this is a mistake.',
+      whole: 'all', section: 'one part ("{section}")', button: 'Open Settings'
+    },
     receipt: {
       subject: 'Your Wisecall receipt {number}', heading: 'Your receipt',
       payment: 'Thank you for your payment for a question to {mentor}.', refund: 'We returned money for your question to {mentor}.',
@@ -346,6 +352,12 @@ const S = {
       after: 'გადაიფიქრე? მანამდე შედი სისტემაში და აირჩიე „ანგარიშის შენარჩუნება“. გადახდების ჩანაწერები რჩება შენი მონაცემების გარეშე, რადგან ამას კანონი მოითხოვს.',
       button: 'შესვლა'
     },
+    profileHidden: {
+      subject: 'შენი Wisecall-ის პროფილის ნაწილი დამალულია', heading: 'პროფილის ნაწილი დამალულია',
+      intro: 'ჩვენმა გუნდმა შენი პროფილის {part} სხვა ადამიანებისგან დამალა.', reasonLabel: 'მიზეზი:',
+      after: 'შენ ისევ ხედავ მას. შეცვალე პარამეტრებში → პროფილი, ან მოგვწერე დახმარების ცენტრიდან, თუ ფიქრობ, რომ ეს შეცდომაა.',
+      whole: 'მთელი გვერდი', section: 'ერთი ნაწილი („{section}“)', button: 'პარამეტრების გახსნა'
+    },
     receipt: {
       subject: 'შენი Wisecall-ის ქვითარი {number}', heading: 'შენი ქვითარი',
       payment: 'მადლობა გადახდისთვის: კითხვა {mentor}-სთვის.', refund: 'შენი კითხვისთვის ({mentor}) თანხა დაგიბრუნეთ.',
@@ -590,6 +602,12 @@ const BUILDERS = {
   deletionScheduled: (s, d) => ({
     heading: s.deletionScheduled.heading,
     blocks: [{ p: fill(s.deletionScheduled.intro, d), raw: true }, { p: s.deletionScheduled.after }, { button: s.deletionScheduled.button, url: `${config.PUBLIC_URL}/login.html` }]
+  }),
+  profileHidden: (s, d) => ({
+    heading: s.profileHidden.heading,
+    blocks: [{ p: fill(s.profileHidden.intro, { part: d.section ? fill(s.profileHidden.section, d, false) : s.profileHidden.whole }), raw: true },
+      ...(d.reason ? [{ quote: `${s.profileHidden.reasonLabel} ${d.reason}` }] : []), { p: s.profileHidden.after },
+      { button: s.profileHidden.button, url: `${config.PUBLIC_URL}/settings.html?tab=profile` }]
   }),
   receipt: (s, d) => ({
     heading: s.receipt.heading,

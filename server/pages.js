@@ -140,17 +140,20 @@ async function sendProfile(res, row, asked) {
   if (u && isPublic) {
     const title = listable ? `${u.name}, ${u.roleTitle} — Wisecall` : `${u.name} — Wisecall`;
     vars.TITLE = escapeHtml(title);
+    // The profile's visible content, in the page itself, so search engines and link previews can read it (the page script then
+    // draws the full, interactive profile over it). Only what a visitor may see: About and the headline follow their visibility.
+    const profile = await require('./profiles').view(u, null);
     const text = listable
-      ? (lang === 'ka' ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price} ₾. ${u.bio || ''}` : `Ask ${u.name} (${u.roleTitle}) a question on Wisecall for ${u.price} GEL. ${u.bio || ''}`)
-      : `${u.name} — Wisecall. ${u.headline || u.bio || ''}`;
+      ? (lang === 'ka' ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price} ₾. ${profile.bio || ''}` : `Ask ${u.name} (${u.roleTitle}) a question on Wisecall for ${u.price} GEL. ${profile.bio || ''}`)
+      : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`;
     vars.DESCRIPTION = escapeHtml(shortText(text));
     if (u.photoUpdatedAt) vars.OG_IMAGE = config.PUBLIC_URL + require('./util').photoUrl(u);
-    // The profile's visible content, in the page itself, so search engines and link previews can read it (the page script then
-    // draws the full, interactive profile over it).
-    const profile = await require('./profiles').view(u, null);
     const stats = listable ? (await require('./models').mentorStatsFor([u.id]))[u.id] : null;
     vars.PROFILE_SSR = profileSsr(profile, stats, listable ? u : null, lang);
-    if (listable) extraHead = profileJsonLd(u, stats, lang);
+    // (worksFor, alumniOf, knowsAbout, knowsLanguage: only from the sections everyone may see)
+    const extra = await require('./profileSections').jsonLdFields(u);
+    if (listable) extraHead = profileJsonLd({ ...u, bio: profile.bio }, stats, lang, extra);
+    else if (Object.keys(extra).length) extraHead = personJsonLd(u, lang, extra);
   } else {
     vars.TITLE = lang === 'ka' ? 'პროფილი — Wisecall' : 'Profile — Wisecall';
     vars.DESCRIPTION = lang === 'ka' ? 'პროფილი Wisecall-ზე, სადაც ადამიანები გადამოწმებულ ექსპერტებს კითხვებს უსვამენ.' : 'A profile on Wisecall, where people ask verified experts and get real, paid answers.';
@@ -183,6 +186,14 @@ function profileSsr(p, stats, mentor, lang) {
     stats && stats.reviewCount ? `<li>${escapeHtml(ka ? `★ ${stats.ratingAvg} (${stats.reviewCount} შეფასება)` : `★ ${stats.ratingAvg} (${stats.reviewCount} reviews)`)}</li>` : ''
   ].join('');
   const role = mentor ? mentor.roleTitle : p.headline;
+  // The rich sections everyone may see, as plain text for search engines and link previews (the page script draws them properly).
+  const s = p.sections || {};
+  const when = (d) => (d ? (d.month ? `${d.month}/${d.year}` : String(d.year)) : '');
+  const parts = [
+    (s.experience || []).length ? `<h2>${ka ? 'გამოცდილება' : 'Experience'}</h2><ul>${s.experience.flatMap((g) => g.items).map((i) => `<li>${escapeHtml(i.title)} — ${escapeHtml(i.organisation)} (${escapeHtml(when(i.start))} – ${escapeHtml(i.current ? (ka ? 'დღემდე' : 'now') : when(i.end || i.start))})</li>`).join('')}</ul>` : '',
+    (s.education || []).length ? `<h2>${ka ? 'განათლება' : 'Education'}</h2><ul>${s.education.map((e) => `<li>${escapeHtml([e.school, e.degree, e.field].filter(Boolean).join(', '))}</li>`).join('')}</ul>` : '',
+    (s.skills || []).length ? `<h2>${ka ? 'უნარები' : 'Skills'}</h2><p>${escapeHtml(s.skills.join(', '))}</p>` : ''
+  ].join('');
   return `<article class="profile-card profile-ssr">
       <div class="profile-head"><div>
         <h1>${escapeHtml(p.name)}</h1>
@@ -190,11 +201,19 @@ function profileSsr(p, stats, mentor, lang) {
       </div></div>
       ${p.bio ? `<p class="profile-bio">${escapeHtml(p.bio)}</p>` : ''}
       ${facts ? `<ul class="profile-facts">${facts}</ul>` : ''}
+      ${parts}
     </article>`;
 }
 
+// Somebody who is not a mentor but chose to show some sections to everyone: a plain Person (public sections only).
+function personJsonLd(u, lang, extra) {
+  const url = lang === 'ka' ? kaUrl(`/u/${u.username}`) : `${config.PUBLIC_URL}/u/${u.username}`;
+  return jsonLd({ '@context': 'https://schema.org', '@graph': [{ '@type': 'ProfilePage', url, mainEntity: { '@id': `${url}#person` } },
+    { '@type': 'Person', '@id': `${url}#person`, name: u.name, url, ...extra }] });
+}
+
 // A listed mentor as a person who offers a service (a paid written answer); its rating only when there are real, visible reviews.
-function profileJsonLd(u, stats, lang) {
+function profileJsonLd(u, stats, lang, extra = {}) {
   const url = lang === 'ka' ? kaUrl(`/u/${u.username}`) : `${config.PUBLIC_URL}/u/${u.username}`;
   const niches = require('./niches');
   const service = {
@@ -205,7 +224,8 @@ function profileJsonLd(u, stats, lang) {
   if (stats && stats.reviewCount > 0 && stats.ratingAvg) service.aggregateRating = { '@type': 'AggregateRating', ratingValue: stats.ratingAvg, reviewCount: stats.reviewCount, bestRating: 5, worstRating: 1 };
   const person = {
     '@type': 'Person', '@id': `${url}#person`, name: u.name, jobTitle: u.roleTitle, url,
-    ...(u.photoUpdatedAt ? { image: config.PUBLIC_URL + require('./util').photoUrl(u) } : {}), ...(u.bio ? { description: shortText(u.bio, 300) } : {})
+    ...(u.photoUpdatedAt ? { image: config.PUBLIC_URL + require('./util').photoUrl(u) } : {}), ...(u.bio ? { description: shortText(u.bio, 300) } : {}),
+    ...extra
   };
   const crumbs = {
     '@type': 'BreadcrumbList', itemListElement: [

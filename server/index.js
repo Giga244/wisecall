@@ -164,6 +164,10 @@ app.use('/api/inbox/unread', rateLimit({ windowMs: 60 * 1000, max: 120 })); // (
 app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
 // A profile photo arrives as raw file bytes too (JPEG, PNG or WebP, up to 5 MB; it is re-encoded on the server).
 app.use('/api/me/photo', express.raw({ type: ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'], limit: '5mb' }));
+// Rich profile sections: saves are limited; a project's picture arrives as raw bytes like the profile photo.
+app.use(/^\/api\/me\/profile\/items\/[^/]+\/image$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }), express.raw({ type: ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'], limit: '5mb' }));
+app.use(/^\/api\/me\/profile\//, rateLimit({ windowMs: 10 * 60 * 1000, max: 120 }));
+app.use(/^\/api\/users\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.use('/api/auth/google', require('./routes/google'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/contact', require('./routes/contact'));
@@ -171,7 +175,18 @@ app.use('/api/waitlist', require('./routes/waitlist'));
 app.use('/api/me/2fa', rateLimit({ windowMs: 15 * 60 * 1000, max: 30 }));
 app.use('/api/me/2fa', require('./routes/twoFactorUser'));
 app.use('/api/me', require('./routes/me'));
+app.use('/api', require('./routes/profileSections'));
 app.use('/api', require('./routes/profiles'));
+// A project's picture (who may see the owner's projects).
+app.get(/^\/api\/profile-images\/([0-9a-f-]{36})\.webp$/, require('./auth').optionalAuth, async (req, res, next) => {
+  try {
+    const viewer = req.userToken ? await require('./models').getUserById(req.userToken.id) : null;
+    const img = await require('./profileSections').imageFor(req.params[0], viewer);
+    if (!img) return res.status(404).end();
+    res.set('Cache-Control', 'private, max-age=300');
+    res.type(img.mime).send(img.data);
+  } catch (e) { next(e); }
+});
 app.use('/api', require('./routes/ratings'));
 app.use('/api/experts', require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));

@@ -7,7 +7,7 @@ const { badgesFor } = require('./verification/badges');
 const { isListable, photoUrl } = require('./util');
 
 const LANGUAGES = ['ka', 'en', 'ru', 'tr', 'az', 'hy', 'uk', 'de', 'fr', 'es', 'it', 'ar'];
-const LIMITS = { headline: 100, currentWork: 120, city: 80, bio: 500, url: 200, languages: 6 };
+const LIMITS = { headline: 100, currentWork: 120, city: 80, bio: 2000, url: 200, languages: 6 };
 
 const isAdmin = (user) => Boolean(user && user.email && user.emailVerified && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase()));
 
@@ -89,20 +89,24 @@ async function canView(owner, viewer) {
 }
 
 // The public page's data. `viewer` decides what the owner sees of their own profile (their visibility setting).
+// Name and photo follow "who can open my profile" (canView); every other part follows its own section's visibility (server/profileSections.js).
 async function view(owner, viewer) {
   const listable = isListable(owner);
   const self = Boolean(viewer && viewer.id === owner.id);
+  const sections = await require('./profileSections').sectionsFor(owner, viewer);
+  const has = (k) => Object.prototype.hasOwnProperty.call(sections, k);
   const out = {
     id: owner.id,
     username: owner.username,
     name: owner.name,
-    headline: owner.headline,
-    currentWork: owner.currentWork,
-    city: owner.city,
-    languages: owner.languages || [],
-    bio: owner.bio,
-    linkedinUrl: owner.linkedinUrl,
-    websiteUrl: owner.websiteUrl,
+    headline: has('headline') ? owner.headline : null,
+    currentWork: has('headline') ? owner.currentWork : null,
+    city: has('headline') ? owner.city : null,
+    languages: has('languages') ? owner.languages || [] : [],
+    bio: has('about') ? owner.bio : null,
+    linkedinUrl: has('links') ? owner.linkedinUrl : null,
+    websiteUrl: has('links') ? owner.websiteUrl : null,
+    sections,
     photoUrl: photoUrl(owner),
     color: owner.color,
     memberSince: owner.createdAt,

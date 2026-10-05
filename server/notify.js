@@ -55,6 +55,9 @@ const notifyReceipt = (user, data) => safeSend('receipt', 'receipt', user, data)
 // The account will be deleted on `when` unless the person signs in and keeps it.
 const notifyDeletionScheduled = (user, when) => safeSend('deletion scheduled', 'deletionScheduled', user, { date: utcDate(when, user.language) });
 
+// An admin hid one part of a profile (or all of it), with the reason (server/profileSections.js).
+const notifyProfileHidden = (user, { section, reason }) => safeSend('profile hidden', 'profileHidden', user, { section: section || '', reason: reason || '' });
+
 const notifySupportReply = (user, data) => safeSend('support reply', 'supportReply', user, { body: data.body, threadId: data.threadId });
 
 const notifyMentorDeadlineSoon = (mentor, booking) => {
@@ -128,4 +131,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyDeletionScheduled, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

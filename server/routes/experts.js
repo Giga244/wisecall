@@ -25,11 +25,16 @@ router.get('/', asyncHandler(async (req, res) => {
   if (q && String(q).trim()) {
     params.push('%' + escapeLike(String(q).trim().slice(0, 100)) + '%');
     const p = `$${params.length}`;
-    where += ` AND (name ILIKE ${p} OR role_title ILIKE ${p} OR bio ILIKE ${p} OR custom_niche ILIKE ${p} OR array_to_string(specialty_tags, ' ') ILIKE ${p}
-                OR EXISTS (SELECT 1 FROM niches n WHERE n.key = users.niche AND (n.name_en ILIKE ${p} OR n.name_ka ILIKE ${p})))`;
+    where += ` AND (name ILIKE ${p} OR role_title ILIKE ${p}
+                OR (bio ILIKE ${p} AND NOT EXISTS (SELECT 1 FROM profile_settings ps WHERE ps.user_id = users.id AND ps.visibility->>'about' IN ('signed_in', 'only_me'))) OR custom_niche ILIKE ${p} OR array_to_string(specialty_tags, ' ') ILIKE ${p}
+                OR EXISTS (SELECT 1 FROM niches n WHERE n.key = users.niche AND (n.name_en ILIKE ${p} OR n.name_ka ILIKE ${p}))
+                OR EXISTS (SELECT 1 FROM profile_settings ps WHERE ps.user_id = users.id AND ps.hidden_at IS NULL AND ps.search_text ILIKE ${p}))`;
   }
   const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
-  res.json({ experts: await withStats(rows.map(userFromRow)) });
+  const users = rows.map(userFromRow);
+  // (headline, current position, years of experience and top skills: only what everyone may see)
+  const summaries = await require('../profileSections').publicSummaries(users);
+  res.json({ experts: (await withStats(users)).map((e) => ({ ...e, bio: summaries[e.id] && summaries[e.id].showAbout === false ? null : e.bio, profile: summaries[e.id] || null })) });
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {

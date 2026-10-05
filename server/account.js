@@ -83,7 +83,9 @@ async function exportData(user) {
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
     waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests,
     liveSessionsHosted: liveHosted, liveTickets, mentorsFollowed: following, liveRatingsGiven, discountCodes, liveWaitingLists: liveWaiting,
-    liveSeriesBought: seriesBought, replayPasses
+    liveSeriesBought: seriesBought, replayPasses,
+    profileSections: { items: (await require('./profileSections').itemsOf(id)).map((i) => ({ section: i.section, ...i.data, verified: Boolean(i.verified_at), createdAt: i.created_at })),
+      settings: await (async () => { const s = await require('./profileSections').settingsOf(id); return { skills: s.skills, topSkills: s.top_skills, languageLevels: s.language_levels, links: s.links, visibility: s.visibility }; })() }
   };
 }
 
@@ -167,7 +169,8 @@ async function anonymize(userId) {
       "UPDATE messages SET body = '' WHERE sender_id = $1 AND kind IN ('text', 'follow_up_question', 'follow_up_reply')",
       "UPDATE verification_audit SET actor_label = 'deleted user' WHERE actor_id = $1",
       'DELETE FROM mentor_follows WHERE follower_id = $1 OR mentor_id = $1', 'DELETE FROM live_waitlist WHERE user_id = $1',
-      'DELETE FROM discount_codes WHERE user_id = $1', 'UPDATE live_ratings SET comment = NULL WHERE rater_id = $1'
+      'DELETE FROM discount_codes WHERE user_id = $1', 'UPDATE live_ratings SET comment = NULL WHERE rater_id = $1',
+      'DELETE FROM profile_items WHERE user_id = $1', 'DELETE FROM profile_settings WHERE user_id = $1', "UPDATE profile_reports SET details = NULL WHERE reporter_id = $1 OR owner_id = $1"
     ]) await c.query(sql, [userId]);
     await c.query('DELETE FROM waitlist WHERE lower(email) = lower($1)', [u.email]);
     await c.query('UPDATE live_tickets SET gift_email = NULL WHERE lower(gift_email) = lower($1)', [u.email]);
