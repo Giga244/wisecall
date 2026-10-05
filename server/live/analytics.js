@@ -19,7 +19,8 @@ async function forMentor(mentorId) {
       GROUP BY s.id ORDER BY s.starts_at DESC LIMIT 200`, [mentorId]);
   const sessions = rows.map((r) => ({
     id: r.id, title: r.title, slug: r.slug, startsAt: r.starts_at, status: r.status, endKind: r.end_kind, maxSeats: r.max_seats, sold: r.sold,
-    attended: r.attended, attendanceRate: r.kept ? Math.round((r.attended / r.kept) * 100) : null,
+    // (attendance only for a session that took place)
+    attended: r.attended, attendanceRate: r.kept && r.status === 'ended' && r.end_kind === 'normal' ? Math.round((r.attended / r.kept) * 100) : null,
     gross: r.gross, fee: r.fee, net: r.gross - r.fee, rating: r.rating === null ? null : Number(r.rating), ratings: r.ratings, questions: r.questions
   }));
   const held = sessions.filter((s) => s.status === 'ended' && s.endKind === 'normal');
@@ -31,7 +32,8 @@ async function forMentor(mentorId) {
   return {
     sessions,
     totals: { sessions: sessions.length, held: held.length, sold: sum('sold'), attended: kept, attendanceRate: soldHeld ? Math.round((kept / soldHeld) * 100) : null,
-      gross: sum('gross'), fee: sum('fee'), net: sum('gross') - sum('fee'), rating: rt.avg === null ? null : Number(rt.avg), ratings: rt.n, questions: sum('questions'), followers: f.n }
+      // (money: only sessions that took place; an upcoming one is earned once it is held)
+      gross: sum('gross', held), fee: sum('fee', held), net: sum('gross', held) - sum('fee', held), rating: rt.avg === null ? null : Number(rt.avg), ratings: rt.n, questions: sum('questions'), followers: f.n }
   };
 }
 

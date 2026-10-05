@@ -23,9 +23,9 @@ window.WisecallFollow = (function () {
       });
       const n = document.createElement('span');
       n.className = 'muted small follow-count';
-      n.textContent = st.followers ? t('follow.count').replace('{n}', st.followers) : '';
+      n.textContent = st.followers ? t(st.followers === 1 ? 'follow.count.one' : 'follow.count').replace('{n}', st.followers) : '';
       const hint = document.createElement('p');
-      hint.className = 'hint';
+      hint.className = 'muted small follow-hint';
       hint.textContent = t('follow.hint');
       el.append(b, ' ', n, hint);
     };

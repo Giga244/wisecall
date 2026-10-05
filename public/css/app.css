@@ -657,7 +657,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .live-dash-tickets { margin-top: 24px; }
 .live-dash-stats, .live-dash-codes { margin-top: 24px; }
 .live-stats-table td:first-child { min-width: 180px; }
-.lt-rate, .ls-summary { margin-top: 10px; }
+.lt-rate, .ls-summary, .lt-report { margin-top: 10px; }
 .lt-rate summary, .ls-summary summary { cursor: pointer; }
 .star-pick { border: 0; padding: 0; margin: 6px 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .star-pick legend { padding: 0; margin-bottom: 4px; }
@@ -671,7 +671,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .live-comments { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .live-comments li { background: var(--field); border-radius: var(--radius-sm); padding: 8px 10px; overflow-wrap: anywhere; }
 .live-follow, .profile-follow { margin-top: 10px; }
-.live-follow .hint, .profile-follow .hint { margin: 4px 0 0; }
+.follow-hint { margin: 4px 0 0; }
 .ask-code { margin: 8px 0; }
 .ask-code summary { cursor: pointer; }
 .ask-code-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }

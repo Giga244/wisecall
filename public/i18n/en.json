@@ -2111,7 +2111,7 @@
   "live.stats.followers": "Followers",
   "live.stats.session": "Session",
   "live.stats.questions": "Questions",
-  "live.stats.hint": "\"Came\" is the share of paid tickets whose holder was in the room. Earnings are after Wisecall's fee and refunds.",
+  "live.stats.hint": "\"Came\" is the share of paid tickets whose holder was in the room. Earnings count sessions that took place, after Wisecall's fee and refunds; an upcoming session shows what is sold so far.",
   "live.codes.title": "Your discount codes",
   "live.codes.line": "{percent}% off a question to {name}",
   "live.codes.until": "Works until {date}",
@@ -2150,5 +2150,6 @@
   "inbox.ev.live_rate": "How was \"{title}\"? You can rate it in Dashboard → Live sessions.",
   "inbox.ev.live_gift_sent": "We emailed your gift for \"{title}\".",
   "inbox.ev.live_gift_claimed": "Your gift for \"{title}\" was claimed.",
-  "inbox.rateLink": "Rate it"
+  "inbox.rateLink": "Rate it",
+  "follow.count.one": "{n} follower"
 }

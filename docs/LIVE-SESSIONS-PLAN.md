@@ -145,3 +145,39 @@ a room at once (refund everyone). No recording in Milestone 1. Legal drafts (Ter
 
 LIVE_PROVIDER (daily | fake; fake only outside production), DAILY_API_KEY, LIVE_MAX_PARTICIPANTS (30), LIVE_HOLD_MINUTES (15),
 LIVE_MIN_LEAD_HOURS (24). Without a provider in production, creating sessions works but publishing says "live video is not set up yet".
+
+## 10. Milestone 3 — series and replays (built after Milestones 1–2 were green)
+
+### Series (prompt 17)
+- `live_series` (mentor, slug, title, description, bundle price, status draft | published | cancelled) and `live_sessions.series_id`.
+  A series groups 2–6 of the mentor's own sessions that are published, not started and not in another series. The bundle price is a
+  whole number of lari, below the sum of the sessions' normal prices and at least 5 ₾ per session. The sessions stay on sale on their
+  own too; their pages say "part of a series".
+- Buying a series is ONE bank payment (`live_series_orders`: held → paid → refunded, the same bank layer and rules as tickets) that holds
+  a seat in every session at once: the session rows are locked in id order (no deadlock between two buyers), every session must have a
+  free seat (waiting lists respected) and the buyer must not already hold a ticket for any of them. It creates one ticket per session
+  (`live_tickets.series_order_id`), with its share of the bundle price (split in proportion to the sessions' normal prices, rounded so
+  the shares add up exactly). On sale until the first session starts. One receipt for the payment.
+- Each child ticket then lives like any ticket (room, reminders, rating, report, the session's payout counts its net share).
+- Refunds: the buyer cancels the whole series until 24 h before its first session (all shares back). When one session is cancelled for
+  any reason (mentor, minimum, no-show, short, admin) only that session's share goes back; after a time change the buyer may cancel that
+  one session until its start. Every share refund is a PARTIAL refund of the one bank order with its own idempotency key (the bank allows
+  several partial refunds up to the amount paid — to confirm with BOG/TBC, docs/QUESTIONS.md); it is recorded when the bank accepts it
+  and retried by the sweep otherwise.
+- The mentor can cancel the whole series (every remaining session cancelled, everybody's remaining shares refunded) while it has no
+  started session; editing the text is free, the price and the sessions are locked after the first sale.
+
+### Replays (prompt 18; opt-in)
+- Only for Live Q&A and Workshop (in a Small circle everybody's camera is on). The mentor ticks "Record and sell the replay" with a replay
+  price below the ticket price (≥ 5 ₾), before the first ticket is sold. The session page (before buying) and the room (before joining)
+  say it is recorded: only the mentor's video and screen; written questions are not in it. In a recorded session nobody else can be given
+  the microphone (raise hand is off), so no participant's voice or face can be in the recording, whatever the video service's layout does.
+- Recording: the mentor presses Record in the room (a visible "REC" for everybody); the server asks the provider to record the mentor
+  alone (Daily: cloud recording, layout "single-participant" with the mentor's session id from the room's presence list) and to stop. After
+  a normal end the finished recording is attached to the session (`live_replays`); a short or cancelled session's recording is deleted.
+- Watching: ticket holders free for 30 days after the session; others buy a replay pass (`live_replay_purchases`, the same bank layer)
+  at the replay price, watching for 30 days from the purchase. The video is played from a short-lived link the provider gives the server
+  for each viewer (never a public file); the replay page alone allows the provider's media origin in its CSP.
+- The mentor's share of a pass (80 %) is a payout of its own (`payouts.replay_purchase_id`), payable after the usual hold.
+- The mentor (or an admin) can delete the replay at any time: the provider deletes the file; passes still within their 30 days are
+  refunded in full. Replays are deleted 30 days after the last pass ends, at the latest 90 days after the session.

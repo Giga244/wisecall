@@ -209,3 +209,15 @@ disputes. Payout per session after a normal end, held by reports/disputes, withd
 (Daily.co, fake for dev/tests). Data: migration 036 (undo script). Legal drafts, help article 16, LEGAL-REVIEW 55.
 Tests: live-sessions.test.js (22), live-daily.test.js (3), e2e/live-sessions.spec.js (5). Owner: Daily.co account + DAILY_API_KEY.
 Full run 2026-10-05: unit 761/761 (brand test re-run after the fix), cloud 34/34, browser 165 passed (5 skipped as before), cloud browser 30/30.
+
+## Live sessions — Milestone 2 (growth and quality)
+Waiting list when sold out (one click; the first person gets a freed seat kept for 2 hours, then the next; people waiting come before
+newcomers), Follow a mentor (profile and session page; at most one email a week per mentor; signed one-click unfollow page), after the
+session: 1-5★ rating + comment by attendees (session page SSR, profile), the mentor's summary with up to 5 http(s) links to the
+attendees' Inbox, a one-time 15 % code for a question to the same mentor (30 days; price, fee and share on the discounted amount; taken
+atomically, spent once paid, given back if unpaid/refunded), mentor numbers (tickets, came %, earnings of held sessions, questions,
+rating, followers), admin Live tab (totals, live now, upcoming, finished, cancelled, reports, latest ratings with Hide + audit) and a
+Live block in the admin overview, gift tickets (buyer pays, recipient claims with a one-time link after signing in; buyer can resend;
+the address is deleted 30 days after the session), 1080x1080 share image (server-drawn PNG). Migration 037 (+ undo). Help, Terms 14,
+Mentor Agreement 11, Privacy rows (EN + KA). Tests: live-growth.test.js (8), e2e rate step + code. Full run 2026-10-05: unit 771/771,
+cloud 34/34, browser 167 passed (5 skipped as before), cloud browser 30/30. Screenshots: D:/Temp/shots-live2 (desktop + mobile, EN + KA).

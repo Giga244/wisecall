@@ -12,7 +12,7 @@
   const TONE = { draft: 'badge-muted', review: 'badge-pending_payment', rejected: 'badge-rejected', published: 'badge-paid', live: 'badge-paid',
     ended: 'badge-answered', cancelled: 'badge-muted', paid: 'badge-paid', refund_pending: 'badge-pending_payment', refunded: 'badge-muted' };
   const badge = (status, key) => `<span class="badge ${TONE[status] || 'badge-muted'}">${esc(t(key))}</span>`;
-  const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+  const stars = (n) => `${n} ★`;
 
   function giftLine(tk) {
     if (!tk.gift) return '';
@@ -30,7 +30,7 @@
     return `<details class="lt-rate" open><summary class="small"><strong>${esc(t('live.rate.title'))}</strong></summary>
       <form class="lt-rate-form" novalidate>
         <fieldset class="star-pick"><legend class="small">${esc(t('live.rate.stars'))}</legend>
-          ${[5, 4, 3, 2, 1].map((n) => `<label class="checkbox-row"><input type="radio" name="stars" value="${n}"${n === 5 ? ' checked' : ''}> <span>${stars(n)} <span class="sr-only">${esc(fill('live.rate.starsLabel', { n }))}</span></span></label>`).join('')}
+          ${[5, 4, 3, 2, 1].map((n) => `<label class="checkbox-row"><input type="radio" name="stars" value="${n}"${n === 5 ? ' checked' : ''}> <span aria-hidden="true">${stars(n)}</span><span class="sr-only">${esc(fill('live.rate.starsLabel', { n }))}</span></label>`).join('')}
         </fieldset>
         <label><span class="small">${esc(t('live.rate.comment'))}</span><textarea name="comment" rows="2" maxlength="1000"></textarea></label>
         <p class="hint">${esc(t('live.rate.hint'))}</p>
