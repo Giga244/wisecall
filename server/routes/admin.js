@@ -151,7 +151,9 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
     money: { received: Number(m.received), fee: Number(m.fee), testPayments: m.test_payments },
     payouts: { payable: Number(p.payable), holding: Number(p.holding), debt: Number(p.debt), paidOut: Number(p.paid_out) },
     // Where people come from: per campaign source (or referring site) and campaign (server/attribution.js).
-    sources: await require('../attribution').bySource()
+    sources: await require('../attribution').bySource(),
+    // Live sessions: what is coming, live now, the last 30 days (tickets, money), open reports.
+    live: await require('../live/analytics').forAdmin()
   });
 }));
 
@@ -171,14 +173,19 @@ router.get('/live', requireAuth, requireAdmin, asyncHandler(async (req, res) => 
   res.set('Cache-Control', 'no-store');
   const sessions = require('../live/sessions');
   const { rows } = await query(
-    `SELECT s.*, ${sessions.SEATS_SQL} AS taken, u.name AS mentor_name, u.email AS mentor_email,
+    `SELECT s.*, ${sessions.TAKEN_SQL} AS taken, ${sessions.SOLD_SQL} AS sold, ${sessions.WAITING_SQL} AS waiting, u.name AS mentor_name, u.email AS mentor_email,
             (SELECT count(*)::int FROM live_reports r WHERE r.session_id = s.id AND r.status = 'open') AS open_reports
        FROM live_sessions s JOIN users u ON u.id = s.mentor_id
       WHERE s.status IN ('review', 'published', 'live') OR (s.status IN ('ended', 'cancelled') AND s.updated_at > now() - interval '30 days')
       ORDER BY (s.status = 'review') DESC, (s.status = 'live') DESC, s.starts_at LIMIT 300`);
   const view = (s) => ({ ...sessions.ownerView(s), mentor: { id: s.mentor_id, name: s.mentor_name, email: s.mentor_email }, openReports: s.open_reports,
     cancelReason: s.cancel_reason, endKind: s.end_kind, mentorMinutes: Math.round(s.mentor_seconds / 60) });
-  res.json({ sessions: rows.map(view), reports: await require('../live/reports').listOpen() });
+  res.json({ sessions: rows.map(view), reports: await require('../live/reports').listOpen(), totals: await require('../live/analytics').forAdmin(),
+    ratings: await require('../live/after').recentForAdmin() });
+}));
+// Hides a rating of a live session (rude, personal details...): it no longer counts or shows. Logged with the reason.
+router.post('/live/ratings/:id/hide', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  try { res.json(await require('../live/after').hide(req.adminUser, req.params.id, (req.body || {}).reason)); } catch (e) { liveFail(res, e); }
 }));
 router.post('/live/:id/approve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   const b = req.body || {};

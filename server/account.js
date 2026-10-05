@@ -26,7 +26,7 @@ const rowsOf = async (sql, params) => (await query(sql, params)).rows;
 async function exportData(user) {
   const id = user.id;
   const [asked, answered, ratingsGiven, ratingsReceived, messages, notifications, payouts, batches, steps, evidence, sessions, receipts, waitlist, identities, settings,
-    publicAnswers, mentorRequests, liveHosted, liveTickets] = await Promise.all([
+    publicAnswers, mentorRequests, liveHosted, liveTickets, following, liveRatingsGiven, discountCodes, liveWaiting] = await Promise.all([
     rowsOf(`SELECT b.id, b.question, b.answer, b.amount, b.currency, b.status, b.created_at, b.paid_at, b.answered_at, b.refunded_at, b.refund_reason, b.refunded_amount,
                    m.name AS mentor_name FROM bookings b JOIN users m ON m.id = b.mentor_id WHERE b.seeker_id = $1 ORDER BY b.created_at`, [id]),
     rowsOf(`SELECT id, question, answer, amount, platform_fee_amount, mentor_net_amount, currency, status, created_at, paid_at, answered_at, refunded_at, refund_reason
@@ -53,8 +53,14 @@ async function exportData(user) {
               FROM mentor_requests WHERE user_id = $1 OR lower(email) = lower($2) ORDER BY created_at`, [id, user.email]),
     // (live sessions they host, and their tickets: the other participants never appear)
     rowsOf(`SELECT title, description, learn_points, niche, kind, language, starts_at, duration_min, price, max_seats, status, created_at FROM live_sessions WHERE mentor_id = $1 ORDER BY starts_at`, [id]),
-    rowsOf(`SELECT s.title, s.starts_at, t.status, t.price, t.paid_at, t.refunded_at, t.refunded_amount, t.join_anonymous, t.attended_seconds
-              FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id WHERE t.buyer_id = $1 AND t.status <> 'expired' ORDER BY t.created_at`, [id])
+    rowsOf(`SELECT s.title, s.starts_at, t.status, t.price, t.paid_at, t.refunded_at, t.refunded_amount, t.join_anonymous, t.attended_seconds,
+                   t.buyer_id = $1 AS i_paid, t.holder_id = $1 AS i_attend, CASE WHEN t.buyer_id = $1 THEN t.gift_email END AS gift_sent_to, t.gift_claimed_at
+              FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id WHERE (t.buyer_id = $1 OR t.holder_id = $1) AND t.status <> 'expired' ORDER BY t.created_at`, [id]),
+    // (mentors followed, ratings of live sessions, discount codes, waiting lists)
+    rowsOf('SELECT m.name AS mentor_name, f.created_at, f.last_emailed_at FROM mentor_follows f JOIN users m ON m.id = f.mentor_id WHERE f.follower_id = $1 ORDER BY f.created_at', [id]),
+    rowsOf('SELECT s.title, r.stars, r.comment, r.created_at FROM live_ratings r JOIN live_sessions s ON s.id = r.session_id WHERE r.rater_id = $1 ORDER BY r.created_at', [id]),
+    rowsOf('SELECT c.code, c.percent, c.expires_at, c.booking_id, m.name AS mentor_name, c.created_at FROM discount_codes c JOIN users m ON m.id = c.mentor_id WHERE c.user_id = $1 ORDER BY c.created_at', [id]),
+    rowsOf('SELECT s.title, w.status, w.offered_at, w.offer_expires_at, w.created_at FROM live_waitlist w JOIN live_sessions s ON s.id = w.session_id WHERE w.user_id = $1 ORDER BY w.created_at', [id])
   ]);
   const iban = decrypt(user.payoutIbanEnc);
   return {
@@ -71,7 +77,7 @@ async function exportData(user) {
     questionsAsked: asked, questionsAnswered: answered, ratingsGiven, ratingsReceived, messagesWritten: messages, notifications,
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
     waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests,
-    liveSessionsHosted: liveHosted, liveTickets
+    liveSessionsHosted: liveHosted, liveTickets, mentorsFollowed: following, liveRatingsGiven, discountCodes, liveWaitingLists: liveWaiting
   };
 }
 
@@ -96,7 +102,7 @@ async function openItems(userId) {
   const { rows: [lv] } = await query(
     `SELECT (SELECT count(*)::int FROM live_sessions WHERE mentor_id = $1 AND status IN ('review', 'published', 'live')) AS hosting,
             (SELECT count(*)::int FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id
-              WHERE t.buyer_id = $1 AND t.status IN ('paid', 'refund_pending') AND s.status IN ('published', 'live')) AS tickets`, [userId]);
+              WHERE (t.buyer_id = $1 OR t.holder_id = $1) AND t.status IN ('paid', 'refund_pending') AND s.status IN ('published', 'live')) AS tickets`, [userId]);
   if (lv.hosting) out.push('live_sessions_hosting');
   if (lv.tickets) out.push('live_tickets');
   return out;
@@ -153,9 +159,12 @@ async function anonymize(userId) {
       'UPDATE kyc_sessions SET verified_name_enc = NULL, birth_date_enc = NULL WHERE user_id = $1',
       'UPDATE ratings SET review = NULL, private_note = NULL WHERE rater_id = $1',
       "UPDATE messages SET body = '' WHERE sender_id = $1 AND kind IN ('text', 'follow_up_question', 'follow_up_reply')",
-      "UPDATE verification_audit SET actor_label = 'deleted user' WHERE actor_id = $1"
+      "UPDATE verification_audit SET actor_label = 'deleted user' WHERE actor_id = $1",
+      'DELETE FROM mentor_follows WHERE follower_id = $1 OR mentor_id = $1', 'DELETE FROM live_waitlist WHERE user_id = $1',
+      'DELETE FROM discount_codes WHERE user_id = $1', 'UPDATE live_ratings SET comment = NULL WHERE rater_id = $1'
     ]) await c.query(sql, [userId]);
     await c.query('DELETE FROM waitlist WHERE lower(email) = lower($1)', [u.email]);
+    await c.query('UPDATE live_tickets SET gift_email = NULL WHERE lower(gift_email) = lower($1)', [u.email]);
   });
 }
 

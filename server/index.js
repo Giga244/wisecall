@@ -136,6 +136,15 @@ app.post(/^\/api\/live\/questions\/[^/]+\/vote$/, rateLimit({ windowMs: 10 * 60 
 app.post(/^\/api\/live\/[^/]+\/(heartbeat|hand|join)$/, rateLimit({ windowMs: 10 * 60 * 1000, max: 120 }));
 app.use(/^\/api\/live\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.use(/^\/api\/live\/[^/]+\/cover$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }), express.raw({ type: ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'], limit: '5mb' }));
+// (Milestone 2: following, the waiting list, gifts, ratings, summaries, discount codes, the share image)
+app.use(/^\/api\/live\/follows\//, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
+app.use(/^\/api\/live\/[^/]+\/waitlist$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
+app.post('/api/live/gifts/claim', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.post(/^\/api\/live\/tickets\/[^/]+\/gift\/resend$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.post(/^\/api\/live\/tickets\/[^/]+\/rating$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.post(/^\/api\/live\/[^/]+\/summary$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
+app.get('/api/live/discounts/check', rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }));
+app.get(/^\/api\/live-share\//, rateLimit({ windowMs: 10 * 60 * 1000, max: 60 }));
 // The "are you a person?" check (Cloudflare Turnstile; off without its keys), after the rate limits.
 app.post(['/api/auth/signup', '/api/auth/login', '/api/auth/forgot-password', '/api/contact', '/api/waitlist', '/api/requests'], require('./turnstile').requireHuman);
 app.post(/^\/api\/answers\/[^/]+\/helpful$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
@@ -171,6 +180,15 @@ app.get(/^\/api\/live-covers\/([0-9a-f-]{36})\.webp$/, require('./auth').optiona
     if (!c) return res.status(404).end();
     res.set('Cache-Control', 'public, max-age=300');
     res.type(c.mime).send(c.data);
+  } catch (e) { next(e); }
+});
+// A square picture to share a session on Instagram and Facebook (drawn on the server; public sessions only).
+app.get(/^\/api\/live-share\/([0-9a-f-]{36})\.png$/, async (req, res, next) => {
+  try {
+    const png = await require('./live/share').render(req.params[0]);
+    if (!png) return res.status(404).end();
+    res.set('Cache-Control', 'public, max-age=300');
+    res.type('image/png').send(png);
   } catch (e) { next(e); }
 });
 app.use('/api/verification', require('./routes/verification'));

@@ -64,7 +64,8 @@ async function openForTicket(user, ticketId, { reason, details } = {}) {
   const { rows: [t] } = await query(
     `SELECT t.*, s.status AS session_status, s.end_kind, s.ended_at, s.title, s.slug, s.mentor_id FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id WHERE t.id = $1`, [ticketId]);
   if (!t) throw new DisputeError('not_found');
-  if (t.buyer_id !== user.id) throw new DisputeError('forbidden');
+  // (whoever attended with it: the buyer, or the person who claimed a gift; any refund goes to the card that paid)
+  if ((t.holder_id || t.buyer_id) !== user.id) throw new DisputeError('forbidden');
   const w = windowForTicket(t, { status: t.session_status, end_kind: t.end_kind, ended_at: t.ended_at });
   if (!w) throw new DisputeError('not_disputable');
   if (Date.now() > +w.until) throw new DisputeError('window_closed');
@@ -108,7 +109,7 @@ async function listForAdmin({ status = 'open' } = {}) {
     `SELECT d.*, t.price, t.fee, t.net, t.status AS ticket_status, s.title, s.slug, a.name AS asker_name, a.email AS asker_email,
             m.name AS mentor_name, m.email AS mentor_email, r.email AS resolved_by_email
        FROM disputes d JOIN live_tickets t ON t.id = d.ticket_id JOIN live_sessions s ON s.id = t.session_id
-       LEFT JOIN users a ON a.id = t.buyer_id JOIN users m ON m.id = s.mentor_id LEFT JOIN users r ON r.id = d.resolved_by
+       LEFT JOIN users a ON a.id = COALESCE(t.holder_id, t.buyer_id) JOIN users m ON m.id = s.mentor_id LEFT JOIN users r ON r.id = d.resolved_by
       WHERE d.status = $1 ORDER BY d.created_at LIMIT 200`, [status]);
   const tickets = live.map((d) => ({
     ...view(d), kind: 'ticket', ticketId: d.ticket_id, session: { title: d.title, slug: d.slug }, amount: d.price, mentorNet: d.net, fee: d.fee,
@@ -169,7 +170,7 @@ async function resolveTicket(admin, found, { outcome, amount, note }) {
   }
   const d = view(rows[0]);
   const inbox = require('./inbox');
-  for (const uid of [t.buyer_id, t.mentor_id].filter(Boolean)) {
+  for (const uid of [...new Set([t.holder_id, t.buyer_id, t.mentor_id].filter(Boolean))]) {
     inbox.systemMessage(uid, 'live_dispute_resolved', { title: t.title, slug: t.slug, outcome, amount: d.refundAmount, note: d.note });
   }
   return d;

@@ -40,28 +40,41 @@ const googleLink = (s, lang) => `https://calendar.google.com/calendar/render?act
   + `&dates=${icsDate(s.starts_at)}/${icsDate(endsAt(s))}&details=${encodeURIComponent(urlOf(s, lang))}`;
 
 // ---- Tickets ---------------------------------------------------------------------------------------------------------------------------
-async function ticketPaid(t, s, receipt) {
-  const buyer = await getUserById(t.buyer_id);
-  if (!buyer) return;
-  const lang = buyer.language;
-  await safely('ticket email', () => sendTemplate('liveTicket', { to: buyer.email, lang, data: {
+// The ticket email (with the calendar file) and the Inbox message, for the person who attends.
+async function ticketFor(u, s) {
+  const lang = u.language;
+  await safely('ticket email', () => sendTemplate('liveTicket', { to: u.email, lang, data: {
     title: s.title, when: when(s.starts_at, lang), url: urlOf(s, lang), calendarUrl: googleLink(s, lang)
   }, attachments: [{ filename: 'wisecall-live.ics', content: Buffer.from(ics(s, lang)).toString('base64'), contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }] }));
+  await safely('ticket inbox', () => inbox().systemMessage(u.id, 'live_ticket', { title: s.title, slug: s.slug, startsAt: s.starts_at }));
+}
+
+// Paid: the buyer gets the receipt, and the ticket (or, for a gift, the person it is for gets the link to claim it).
+async function ticketPaid(t, s, receipt, giftToken) {
+  const buyer = await getUserById(t.buyer_id);
+  if (!buyer) return;
+  if (t.gift_email && giftToken) {
+    await giftLink(t, s, giftToken, buyer);
+    await safely('gift sent inbox', () => inbox().systemMessage(buyer.id, 'live_gift_sent', { title: s.title, slug: s.slug }));
+  } else await ticketFor(buyer, s);
   if (receipt) await safely('ticket receipt', () => require('../receipts').email(receipt));
-  await safely('ticket inbox', () => inbox().systemMessage(buyer.id, 'live_ticket', { title: s.title, slug: s.slug, startsAt: s.starts_at }));
   const mentor = await getUserById(s.mentor_id);
   if (mentor) await safely('mentor inbox', () => inbox().systemMessage(mentor.id, 'live_ticket_sold', { title: s.title, slug: s.slug, startsAt: s.starts_at }));
 }
 
 async function ticketRefunded(t, s, receipt) {
   const buyer = await getUserById(t.buyer_id);
-  if (!buyer) return;
-  if (receipt) await safely('refund receipt', () => require('../receipts').email(receipt));
-  await safely('refund inbox', () => inbox().systemMessage(buyer.id, 'live_refunded', { title: s.title, slug: s.slug, amount: t.price, reason: t.refund_reason }));
+  if (receipt && buyer) await safely('refund receipt', () => require('../receipts').email(receipt));
+  // (a claimed gift: the person who would have attended is told too; the money goes back to the buyer)
+  for (const id of [...new Set([t.buyer_id, t.holder_id].filter(Boolean))]) {
+    await safely('refund inbox', () => inbox().systemMessage(id, 'live_refunded', { title: s.title, slug: s.slug, amount: id === t.buyer_id ? t.price : null, reason: t.refund_reason }));
+  }
 }
 
-const buyersOf = async (sessionId, statuses = ['paid', 'refund_pending', 'refunded']) => (await query(
-  `SELECT DISTINCT u.* FROM live_tickets t JOIN users u ON u.id = t.buyer_id WHERE t.session_id = $1 AND t.status = ANY($2::text[])`, [sessionId, statuses])).rows;
+// Everybody with a ticket: who attends (the holder) and, with all = true, also whoever paid (a gift's buyer: refunds, a new time).
+const buyersOf = async (sessionId, statuses = ['paid', 'refund_pending', 'refunded'], { all = true } = {}) => (await query(
+  `SELECT DISTINCT u.* FROM live_tickets t JOIN users u ON u.id = t.holder_id OR ($3 AND u.id = t.buyer_id)
+     WHERE t.session_id = $1 AND t.status = ANY($2::text[]) AND u.deleted_at IS NULL`, [sessionId, statuses, all])).rows;
 
 async function timeChanged(s) {
   for (const b of await buyersOf(s.id, ['paid'])) {
@@ -92,7 +105,7 @@ async function reviewed(s, approved) {
 }
 
 async function reminder(s, hours) {
-  for (const b of await buyersOf(s.id, ['paid'])) {
+  for (const b of await buyersOf(s.id, ['paid'], { all: false })) {
     await safely('reminder email', () => sendTemplate('liveReminder', { to: b.email, lang: b.language, data: { title: s.title, when: when(s.starts_at, b.language), url: urlOf(s, b.language), hours } }));
     await safely('reminder inbox', () => inbox().systemMessage(b.id, hours === 1 ? 'live_starts_1h' : 'live_starts_24h', { title: s.title, slug: s.slug, startsAt: s.starts_at }));
   }
@@ -103,6 +116,54 @@ async function reminder(s, hours) {
 async function ended(s) {
   const mentor = await getUserById(s.mentor_id);
   if (mentor) await safely('ended inbox', () => inbox().systemMessage(mentor.id, 'live_ended', { title: s.title, slug: s.slug }));
+  // (the people who were in the room are asked to rate it; the 15 % code comes in its own message)
+  const { rows } = await query(`SELECT DISTINCT holder_id FROM live_tickets WHERE session_id = $1 AND status = 'paid' AND holder_id IS NOT NULL AND attended_seconds >= 60`, [s.id]);
+  for (const r of rows) await safely('rate inbox', () => inbox().systemMessage(r.holder_id, 'live_rate', { title: s.title, slug: s.slug }));
 }
 
-module.exports = { ticketPaid, ticketRefunded, timeChanged, cancelled, reviewed, reminder, ended, ics, googleLink, when, urlOf };
+// The waiting list: a seat is kept for this person for 2 hours.
+async function seatOffered(w, s) {
+  const u = await getUserById(w.user_id);
+  if (!u) return;
+  const lang = u.language;
+  await safely('seat offer email', () => sendTemplate('liveSeatOffered', { to: u.email, lang, data: { title: s.title, when: when(s.starts_at, lang), url: urlOf(s, lang),
+    until: when(w.offer_expires_at, lang) } }));
+  await safely('seat offer inbox', () => inbox().systemMessage(u.id, 'live_seat_offered', { title: s.title, slug: s.slug, until: w.offer_expires_at }));
+}
+
+// A mentor someone follows published a session (server/live/follows.js decides who: at most once a week per mentor).
+async function followerNewSession(u, mentor, s, unfollowUrl) {
+  await sendTemplate('liveNewSession', { to: u.email, lang: u.language, data: { name: mentor ? mentor.name : '', title: s.title, when: when(s.starts_at, u.language),
+    url: urlOf(s, u.language), unsubscribeUrl: unfollowUrl } });
+}
+
+// The 15 % code for a question with the same mentor.
+async function discountCode(c, mentor, s) {
+  const u = await getUserById(c.user_id);
+  if (!u || !mentor) return;
+  // (the code in the link fills the ask form; it works only for this person and this mentor)
+  const profile = `${config.PUBLIC_URL}${u.language === 'ka' ? '/ka' : ''}/u/${encodeURIComponent(mentor.username || '')}?code=${encodeURIComponent(c.code)}#ask`;
+  await safely('code email', () => sendTemplate('liveDiscount', { to: u.email, lang: u.language, data: { code: c.code, percent: c.percent, name: mentor.name,
+    title: s.title, url: profile, until: when(c.expires_at, u.language) } }));
+  await safely('code inbox', () => inbox().systemMessage(u.id, 'live_discount', { title: s.title, slug: s.slug, code: c.code, percent: c.percent, mentor: mentor.name,
+    username: mentor.username, until: c.expires_at }));
+}
+
+// A gift: the person it is for gets a link to claim it (they sign in or create an account first), in the buyer's language. Only the
+// buyer's first name is in it.
+async function giftLink(t, s, rawToken, buyer0) {
+  const buyer = buyer0 || await getUserById(t.buyer_id);
+  const lang = (buyer && buyer.language) || 'ka';
+  const claimUrl = `${config.PUBLIC_URL}${lang === 'ka' ? '/ka' : ''}/live-claim.html?token=${encodeURIComponent(rawToken)}`;
+  await safely('gift email', () => sendTemplate('liveGift', { to: t.gift_email, lang, data: { name: buyer ? String(buyer.name).trim().split(/\s+/)[0] : '', title: s.title,
+    when: when(s.starts_at, lang), url: claimUrl } }));
+}
+
+// The gift was claimed: its new holder gets the ticket; the buyer is told (not who: they know whom they gave it to).
+async function giftClaimed(t, s, holder) {
+  await ticketFor(holder, s);
+  await safely('gift claimed inbox', () => inbox().systemMessage(t.buyer_id, 'live_gift_claimed', { title: s.title, slug: s.slug }));
+}
+
+module.exports = { ticketPaid, ticketRefunded, timeChanged, cancelled, reviewed, reminder, ended, seatOffered, followerNewSession, discountCode, giftLink,
+  giftClaimed, ics, googleLink, when, urlOf };

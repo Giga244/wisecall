@@ -31,7 +31,10 @@ async function finish(sessionId, { by = 'time' } = {}) {
     return sessions.cancel(ended.id, ended.mentor_joined_at ? 'short' : 'no_show');
   }
   if (ended.room_name) require('./rooms').end(ended).catch(() => {});
+  await require('./waitlist').close(ended.id).catch(() => {});
   require('./notices').ended(ended, by).catch((e) => console.error('[live] end notices failed:', e.message));
+  // (everybody who was in the room: a one-time 15 % code for a question with this mentor)
+  require('./after').issueCodes(ended).catch((e) => console.error('[live] discount codes failed:', e.message));
   return ended;
 }
 
@@ -78,13 +81,19 @@ async function purgeOld() {
   const ids = rows.map((r) => r.id);
   await query('DELETE FROM live_questions WHERE session_id = ANY($1::uuid[])', [ids]);
   await query('DELETE FROM live_speakers WHERE session_id = ANY($1::uuid[])', [ids]);
+  await query('DELETE FROM live_waitlist WHERE session_id = ANY($1::uuid[])', [ids]);
+  // (the address a gift was sent to is somebody else's: not kept once the session is over)
+  await query('UPDATE live_tickets SET gift_email = NULL, gift_token_hash = NULL WHERE session_id = ANY($1::uuid[]) AND gift_email IS NOT NULL', [ids]);
   return ids.length;
 }
 
 async function sweep() {
   const tickets = require('./tickets');
+  const waitlist = require('./waitlist');
   await tickets.expireHolds();
   await tickets.retryRefunds();
+  await waitlist.expireOffers();
+  await waitlist.offerFreedSeats();
   await autoCancelUnderMinimum();
   await cancelNoShows();
   await finishDue();

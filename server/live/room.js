@@ -22,7 +22,7 @@ async function access(user, sessionId, { timeWindow = true } = {}) {
     if (Date.now() > rooms.endsAt(s).getTime() + AFTER_MS) throw new LiveError('closed');
   }
   if (s.mentor_id === user.id) return { session: s, role: 'mentor', ticket: null };
-  const { rows: [t] } = await query(`SELECT * FROM live_tickets WHERE session_id = $1 AND buyer_id = $2 AND status = 'paid'`, [s.id, user.id]);
+  const { rows: [t] } = await query(`SELECT * FROM live_tickets WHERE session_id = $1 AND holder_id = $2 AND status = 'paid'`, [s.id, user.id]);
   if (!t) throw new LiveError('no_ticket');
   return { session: s, role: 'participant', ticket: t };
 }
@@ -142,7 +142,7 @@ async function hand(user, sessionId, raise) {
 async function setSpeaker(user, sessionId, participantId, allow) {
   const a = await access(user, sessionId);
   if (a.role !== 'mentor') throw new LiveError('forbidden');
-  const { rows: [t] } = await query(`SELECT 1 FROM live_tickets WHERE session_id = $1 AND buyer_id = $2 AND status = 'paid'`, [a.session.id, participantId]);
+  const { rows: [t] } = await query(`SELECT 1 FROM live_tickets WHERE session_id = $1 AND holder_id = $2 AND status = 'paid'`, [a.session.id, participantId]);
   if (!t) throw new LiveError('not_found');
   await query(`INSERT INTO live_speakers (session_id, user_id, state) VALUES ($1, $2, $3)
                ON CONFLICT (session_id, user_id) DO UPDATE SET state = EXCLUDED.state, updated_at = now()`, [a.session.id, participantId, allow ? 'allowed' : 'lowered']);
@@ -157,10 +157,10 @@ async function state(user, sessionId, a0) {
   if (a.role === 'participant') out.hand = (await speakerState(s.id, user.id)) || 'lowered';
   if (a.role === 'mentor') {
     const { rows } = await query(
-      `SELECT t.buyer_id, t.join_anonymous, t.guest_number, u.name, t.last_seen_at > now() - interval '75 seconds' AS here, sp.state AS hand
-         FROM live_tickets t JOIN users u ON u.id = t.buyer_id LEFT JOIN live_speakers sp ON sp.session_id = t.session_id AND sp.user_id = t.buyer_id
+      `SELECT t.holder_id, t.join_anonymous, t.guest_number, u.name, t.last_seen_at > now() - interval '75 seconds' AS here, sp.state AS hand
+         FROM live_tickets t LEFT JOIN users u ON u.id = t.holder_id LEFT JOIN live_speakers sp ON sp.session_id = t.session_id AND sp.user_id = t.holder_id
         WHERE t.session_id = $1 AND t.status = 'paid' ORDER BY (sp.state = 'raised') DESC NULLS LAST, t.created_at`, [s.id]);
-    out.people = rows.map((r) => ({ id: r.buyer_id, name: r.join_anonymous ? `Guest ${r.guest_number || 1}` : firstName(r.name), here: Boolean(r.here), hand: r.hand || 'lowered' }));
+    out.people = rows.filter((r) => r.holder_id).map((r) => ({ id: r.holder_id, name: r.join_anonymous ? `Guest ${r.guest_number || 1}` : firstName(r.name), here: Boolean(r.here), hand: r.hand || 'lowered' }));
     out.count = { tickets: rows.length, here: rows.filter((r) => r.here).length };
   }
   return out;

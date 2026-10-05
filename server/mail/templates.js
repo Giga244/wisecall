@@ -233,6 +233,26 @@ const S = {
       intro24: '"{title}" starts tomorrow: {when}.', intro1: '"{title}" starts in an hour: {when}.',
       after: 'The Join button turns on 10 minutes before the start. Camera and microphone are off when you join.', button: 'Open the session'
     },
+    liveSeatOffered: {
+      subject: 'A seat came free: {title}', heading: 'A seat is kept for you',
+      intro: 'A seat came free in "{title}" ({when}). It is kept for you until {until}.',
+      after: 'If you do not buy it by then, it goes to the next person on the waiting list.', button: 'Buy my seat'
+    },
+    liveNewSession: {
+      subject: 'New live session: {name}', heading: 'A new live session',
+      intro: '{name}, whom you follow, will host "{title}": {when}.', after: 'Places are limited.', button: 'See the session',
+      unsubscribe: 'You get this because you follow this mentor (at most one email a week). Stop following with one click:'
+    },
+    liveDiscount: {
+      subject: 'Your {percent}% code for a question', heading: 'Thanks for coming',
+      intro: 'Thank you for joining "{title}". Here is a one-time code for {percent}% off a personal question to {name}. It works until {until}.',
+      after: 'Type it in the "Discount code" field when you ask your question.', button: 'Ask a question'
+    },
+    liveGift: {
+      subject: 'A gift for you: a live session on Wisecall', heading: 'A gift for you',
+      intro: '{name} gave you a seat in the live session "{title}": {when}.',
+      after: 'Open the link, sign in or create a free account, and the seat is yours. The link works once.', button: 'Claim my seat'
+    },
     withdrawalRequested: {
       subject: 'We received your withdrawal request', heading: 'Withdrawal requested',
       intro: 'You asked us to send {amount} to your bank account ending in {last4}.',
@@ -466,6 +486,26 @@ const S = {
       intro24: 'სესია „{title}“ ხვალ იწყება: {when}.', intro1: 'სესია "{title}" ერთ საათში იწყება: {when}.',
       after: 'ღილაკი „შესვლა“ დაწყებამდე 10 წუთით ადრე ჩაირთვება. შესვლისას კამერა და მიკროფონი გამორთულია.', button: 'სესიის გახსნა'
     },
+    liveSeatOffered: {
+      subject: 'ადგილი გათავისუფლდა: {title}', heading: 'ადგილი შენთვის შევინახეთ',
+      intro: 'სესიაზე „{title}“ ({when}) ადგილი გათავისუფლდა. შენთვის შენახულია ამ დრომდე: {until}.',
+      after: 'თუ მანამდე არ იყიდი, ადგილი მოლოდინის სიაში შემდეგ ადამიანს გადაეცემა.', button: 'ადგილის ყიდვა'
+    },
+    liveNewSession: {
+      subject: 'ახალი ცოცხალი სესია: {name}', heading: 'ახალი ცოცხალი სესია',
+      intro: '{name}, რომელსაც გამოწერილი გაქვს, ჩაატარებს სესიას „{title}“: {when}.', after: 'ადგილები შეზღუდულია.', button: 'სესიის ნახვა',
+      unsubscribe: 'ამ წერილს იღებ, რადგან ეს მენტორი გამოწერილი გაქვს (კვირაში მაქსიმუმ ერთი წერილი). გამოწერის გაუქმება ერთი დაჭერით:'
+    },
+    liveDiscount: {
+      subject: 'შენი {percent}%-იანი კოდი კითხვისთვის', heading: 'მადლობა, რომ შემოგვიერთდი',
+      intro: 'მადლობა, რომ სესიას „{title}“ დაესწარი. აი ერთჯერადი კოდი: {percent}% ფასდაკლება პირად კითხვაზე, მენტორთან {name}. მოქმედებს ამ დრომდე: {until}.',
+      after: 'კითხვის დასმისას ჩაწერე ის ველში „ფასდაკლების კოდი“.', button: 'კითხვის დასმა'
+    },
+    liveGift: {
+      subject: 'საჩუქარი შენთვის: ცოცხალი სესია Wisecall-ზე', heading: 'საჩუქარი შენთვის',
+      intro: '{name} გჩუქნის ადგილს ცოცხალ სესიაზე „{title}“: {when}.',
+      after: 'გახსენი ბმული, შედი ან შექმენი უფასო ანგარიში და ადგილი შენია. ბმული მხოლოდ ერთხელ მუშაობს.', button: 'ადგილის მიღება'
+    },
     withdrawalRequested: {
       subject: 'თანხის გატანის მოთხოვნა მივიღეთ', heading: 'თანხის გატანა მოთხოვნილია',
       intro: 'გვთხოვე, {amount} გადაგირიცხოთ შენს საბანკო ანგარიშზე, რომელიც მთავრდება {last4}-ით.',
@@ -675,6 +715,23 @@ const BUILDERS = {
   liveReminder: (s, d) => ({
     heading: s.liveReminder.heading,
     blocks: [{ p: fill(Number(d.hours) === 1 ? s.liveReminder.intro1 : s.liveReminder.intro24, d), raw: true }, { p: s.liveReminder.after }, { button: s.liveReminder.button, url: d.url }]
+  }),
+  liveSeatOffered: (s, d) => ({
+    heading: s.liveSeatOffered.heading,
+    blocks: [{ p: fill(s.liveSeatOffered.intro, d), raw: true }, { p: s.liveSeatOffered.after }, { button: s.liveSeatOffered.button, url: d.url }]
+  }),
+  liveNewSession: (s, d) => ({
+    heading: s.liveNewSession.heading,
+    blocks: [{ p: fill(s.liveNewSession.intro, d), raw: true }, { p: s.liveNewSession.after }, { button: s.liveNewSession.button, url: d.url },
+      ...(d.unsubscribeUrl ? [{ small: s.liveNewSession.unsubscribe }, { link: d.unsubscribeUrl }] : [])]
+  }),
+  liveDiscount: (s, d) => ({
+    heading: s.liveDiscount.heading,
+    blocks: [{ p: fill(s.liveDiscount.intro, d), raw: true }, { code: d.code }, { p: s.liveDiscount.after }, { button: s.liveDiscount.button, url: d.url }]
+  }),
+  liveGift: (s, d) => ({
+    heading: s.liveGift.heading,
+    blocks: [{ p: fill(s.liveGift.intro, d), raw: true }, { p: s.liveGift.after }, { button: s.liveGift.button, url: d.url }]
   }),
   withdrawalRequested: (s, d) => ({
     heading: s.withdrawalRequested.heading,

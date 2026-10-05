@@ -17,7 +17,7 @@ const { bookingFromRow, getUserById, getBookingById, updateBooking, claimAnswer 
 const router = express.Router();
 
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
-  const { mentorId, question } = req.body || {};
+  const { mentorId, question, discountCode } = req.body || {};
   // An emergency (someone who may harm themselves, a medical emergency, violence or abuse now) is never sent to the bank: the page
   // shows help (112 and support lines) instead, and an admin reviews it later (server/safety.js). Checked first, even before launch.
   if (typeof question === 'string') {
@@ -50,7 +50,18 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     if (config.BOOKINGS_PER_HOUR && n.hour >= config.BOOKINGS_PER_HOUR) return res.status(429).json({ error: 'too_many_bookings', max: config.BOOKINGS_PER_HOUR });
   }
 
-  const amount = Math.round(mentor.price * 100);
+  // A one-time code from a live session (15 % off a question to the same mentor; server/live/after.js): the price, the fee and the mentor's
+  // share are all worked out on what is actually paid.
+  const listPrice = Math.round(mentor.price * 100);
+  let code = null;
+  if (typeof discountCode === 'string' && discountCode.trim()) {
+    const after = require('../live/after');
+    try { code = await after.check(seeker.id, mentor.id, discountCode); } catch (e) {
+      if (!e.code) throw e;
+      return res.status(['code_used', 'code_in_use', 'code_expired'].includes(e.code) ? 409 : 400).json({ error: e.code });
+    }
+  }
+  const amount = code ? require('../live/after').discounted(listPrice, code.percent) : listPrice;
   const feeAmount = Math.round((amount * Math.round(config.PLATFORM_FEE_PERCENT * 100)) / 10000); // (integer maths, docs/AUDIT.md #18)
   const cleanQuestion = checked.text;
 
@@ -59,12 +70,18 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 
   const { rows } = await query(
     `INSERT INTO bookings (seeker_id, mentor_id, question, amount, currency, platform_fee_percent,
-                           platform_fee_amount, mentor_net_amount, status, provider, source)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9, $10) RETURNING *`,
+                           platform_fee_amount, mentor_net_amount, status, provider, source, discount_code_id, list_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9, $10, $11, $12) RETURNING *`,
     [seeker.id, mentor.id, cleanQuestion, amount, config.CURRENCY, config.PLATFORM_FEE_PERCENT,
-      feeAmount, amount - feeAmount, providerName, (() => { const src = require('../attribution').read(req); return src ? JSON.stringify(src) : null; })()]
+      feeAmount, amount - feeAmount, providerName, (() => { const src = require('../attribution').read(req); return src ? JSON.stringify(src) : null; })(),
+      code ? code.id : null, code ? listPrice : null]
   );
   const booking = bookingFromRow(rows[0]);
+  // (the question takes the code; if another question took it a moment ago, this one stops here, before the bank)
+  if (code && !(await require('../live/after').claim(code.id, booking.id))) {
+    await updateBooking(booking.id, { status: 'expired' });
+    return res.status(409).json({ error: 'code_in_use' });
+  }
 
   try {
     const order = await payments.startPayment(booking, mentor, seeker);

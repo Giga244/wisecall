@@ -111,14 +111,21 @@ const slugFor = (title, id) => {
 const SEATS_SQL = `(SELECT count(*)::int FROM live_tickets t WHERE t.session_id = s.id AND (t.status IN ('paid', 'refund_pending') OR (t.status = 'held' AND t.hold_until > now())))`;
 const EARLY_TAKEN_SQL = `(SELECT count(*)::int FROM live_tickets t WHERE t.session_id = s.id AND t.early AND (t.status IN ('paid', 'refund_pending') OR (t.status = 'held' AND t.hold_until > now())))`;
 const COVER_SQL = `EXISTS (SELECT 1 FROM live_session_covers c WHERE c.session_id = s.id)`;
+// Seats sold or being paid for (SOLD_SQL); seats kept for someone on the waiting list (server/live/waitlist.js) are not for sale either
+// (SEATS_SQL = both: what "taken" means everywhere seats are counted).
+const SOLD_SQL = SEATS_SQL;
+const KEPT_SQL = `(SELECT count(*)::int FROM live_waitlist w WHERE w.session_id = s.id AND w.status = 'offered' AND w.offer_expires_at > now())`;
+const TAKEN_SQL = `(${SOLD_SQL} + ${KEPT_SQL})`;
+const WAITING_SQL = `(SELECT count(*)::int FROM live_waitlist w WHERE w.session_id = s.id AND w.status IN ('waiting', 'offered'))`;
+const ROW_SQL = `SELECT s.*, ${TAKEN_SQL} AS taken, ${SOLD_SQL} AS sold, ${EARLY_TAKEN_SQL} AS early_taken, ${COVER_SQL} AS has_cover FROM live_sessions s`;
 async function rowById(id, client) {
   if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
   const run = client ? client.query.bind(client) : query;
-  const { rows } = await run(`SELECT s.*, ${SEATS_SQL} AS taken, ${EARLY_TAKEN_SQL} AS early_taken, ${COVER_SQL} AS has_cover FROM live_sessions s WHERE s.id = $1`, [id]);
+  const { rows } = await run(`${ROW_SQL} WHERE s.id = $1`, [id]);
   return rows[0] || null;
 }
 async function rowBySlug(slug) {
-  const { rows } = await query(`SELECT s.*, ${SEATS_SQL} AS taken, ${EARLY_TAKEN_SQL} AS early_taken, ${COVER_SQL} AS has_cover FROM live_sessions s WHERE s.slug = $1`, [String(slug || '')]);
+  const { rows } = await query(`${ROW_SQL} WHERE s.slug = $1`, [String(slug || '')]);
   return rows[0] || null;
 }
 // The price a new ticket costs now: early-bird while its date has not passed and its seats are not taken.
@@ -149,7 +156,9 @@ function publicView(s, mentor) {
 // What the mentor sees about their own session (plus the editing state).
 function ownerView(s) {
   return { ...publicView(s, null), reviewReason: s.status === 'rejected' ? s.review_reason : null, minSeats: s.min_seats,
-    sold: Number(s.taken || 0), regulatedAgreed: Boolean(s.regulated_agreed_at), createdAt: s.created_at, publishedAt: s.published_at };
+    sold: Number(s.sold === undefined ? s.taken || 0 : s.sold || 0), waiting: Number(s.waiting || 0), regulatedAgreed: Boolean(s.regulated_agreed_at),
+    createdAt: s.created_at, publishedAt: s.published_at, endKind: s.end_kind || null,
+    summary: s.summary || null, summaryLinks: s.summary_links || [], summarySentAt: s.summary_sent_at || null };
 }
 
 // ---- Writing --------------------------------------------------------------------------------------------------------------------------
@@ -236,13 +245,16 @@ async function publish(mentor, id, { agree } = {}) {
 }
 const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// The session becomes public: its room is made, and the time it went public is kept.
+// The session becomes public: its room is made, and the time it went public is kept. The mentor's followers are emailed (at most once a
+// week per mentor: server/live/follows.js).
 async function goLive(id) {
   const s = await rowById(id);
   const room = await require('./rooms').create(s);
   await query(`UPDATE live_sessions SET status = 'published', room_name = $2, room_url = $3, published_at = COALESCE(published_at, now()), updated_at = now()
                 WHERE id = $1 AND status IN ('draft', 'review', 'rejected')`, [id, room.roomName, room.roomUrl]);
-  return rowById(id);
+  const out = await rowById(id);
+  if (out.status === 'published') require('./follows').notifyFollowers(out).catch((e) => console.error('[live] follower emails failed:', e.message));
+  return out;
 }
 
 // ---- Admins -----------------------------------------------------------------------------------------------------------------------------
@@ -290,6 +302,7 @@ async function cancel(id, reason, { by, note } = {}) {
     await tickets.refund(t.id, `session_${reason}`).catch((e) => console.error(`[live] refund of ticket ${t.id} failed (the sweep retries):`, e.message));
   }
   if (s.room_name) require('./rooms').end(s).catch(() => {});
+  await require('./waitlist').close(s.id).catch(() => {});
   require('./notices').cancelled(s).catch((e) => console.error('[live] cancel notices failed:', e.message));
   return s;
 }
@@ -300,4 +313,5 @@ async function cancelByMentor(mentor, id) {
 }
 
 module.exports = { LiveError, KINDS, LIMITS, CIRCLE_MAX, REVIEW_FIRST, CRISIS_FIELDS, canHost, normalize, tbilisi, checkLead, slugFor, rowById, rowBySlug,
-  currentPrice, endsAt, publicView, ownerView, create, update, publish, goLive, approve, reject, cancel, cancelByMentor, SEATS_SQL };
+  currentPrice, endsAt, publicView, ownerView, create, update, publish, goLive, approve, reject, cancel, cancelByMentor, SEATS_SQL, SOLD_SQL,
+  TAKEN_SQL, WAITING_SQL };
