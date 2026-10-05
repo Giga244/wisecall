@@ -37,9 +37,21 @@
     let d;
     try { d = await WisecallAPI.apiFetch('/admin/live'); } catch (e) { container.innerHTML = `<p class="muted">${esc(t('toast.error'))}</p>`; return; }
     const review = d.sessions.filter((s) => s.status === 'review');
-    const active = d.sessions.filter((s) => ['published', 'live'].includes(s.status));
-    const past = d.sessions.filter((s) => ['ended', 'cancelled'].includes(s.status));
+    const liveNow = d.sessions.filter((s) => s.status === 'live');
+    const active = d.sessions.filter((s) => s.status === 'published');
+    const finished = d.sessions.filter((s) => s.status === 'ended');
+    const cancelled = d.sessions.filter((s) => s.status === 'cancelled');
+    const list = (rows) => (rows.length ? `<ul class="earn-list">${rows.map(sessionRow).join('')}</ul>` : `<p class="muted small">${esc(t('admin.live.none'))}</p>`);
+    const tt = d.totals || {};
+    const card = (key, value, warn) => `<div class="earn-card${warn ? ' warn' : ''}"><span>${esc(t(key))}</span><strong>${esc(value)}</strong></div>`;
     container.innerHTML = `
+      <div class="earn-cards">
+        ${card('admin.live.t.upcoming', String(tt.upcoming || 0))}${card('admin.live.t.review', String(tt.review || 0), tt.review > 0)}
+        ${card('admin.live.t.liveNow', String(tt.liveNow || 0))}${card('admin.live.t.ended30', String(tt.ended30 || 0))}
+        ${card('admin.live.t.cancelled30', String(tt.cancelled30 || 0))}${card('admin.live.t.tickets30', String(tt.tickets30 || 0))}
+        ${card('admin.live.t.gross30', money(tt.gross30 || 0))}${card('admin.live.t.fee30', money(tt.fee30 || 0))}
+        ${card('admin.live.t.reports', String(tt.reportsOpen || 0), tt.reportsOpen > 0)}
+      </div>
       <h2 class="reviews-title">${esc(fill('admin.live.queue', { n: review.length }))}</h2>
       ${review.length ? review.map(reviewCard).join('') : `<p class="muted small">${esc(t('admin.live.queueEmpty'))}</p>`}
       <h2 class="reviews-title">${esc(t('admin.live.reportsTitle'))}</h2>
@@ -47,10 +59,21 @@
           <span><strong>${esc(r.title)}</strong> · ${esc(t('admin.live.reason.' + r.reason))}<br><span class="muted small">${esc(r.details || '')} · ${esc(r.reporter || '')}</span></span>
           <span class="payout-pay"><input type="text" class="lr-note" maxlength="500" placeholder="${esc(t('admin.live.resolvePh'))}" aria-label="${esc(t('admin.live.resolvePh'))}">
           <button type="button" class="btn btn-outline btn-sm lr-resolve">${esc(t('admin.live.resolve'))}</button></span></li>`).join('')}</ul>` : `<p class="muted small">${esc(t('admin.live.noReports'))}</p>`}
+      <h2 class="reviews-title">${esc(t('admin.live.liveNow'))}</h2>
+      ${list(liveNow)}
       <h2 class="reviews-title">${esc(t('admin.live.upcoming'))}</h2>
-      ${active.length ? `<ul class="earn-list">${active.map(sessionRow).join('')}</ul>` : `<p class="muted small">${esc(t('admin.live.none'))}</p>`}
-      <h2 class="reviews-title">${esc(t('admin.live.past'))}</h2>
-      ${past.length ? `<ul class="earn-list">${past.map(sessionRow).join('')}</ul>` : `<p class="muted small">${esc(t('admin.live.none'))}</p>`}
+      ${list(active)}
+      <h2 class="reviews-title">${esc(t('admin.live.finished'))}</h2>
+      ${list(finished)}
+      <h2 class="reviews-title">${esc(t('admin.live.cancelledTitle'))}</h2>
+      ${list(cancelled)}
+      <h2 class="reviews-title">${esc(t('admin.live.ratingsTitle'))}</h2>
+      ${(d.ratings || []).length ? `<ul class="earn-list">${d.ratings.map((r) => `<li data-rating="${esc(r.id)}"><span>${esc(when(r.createdAt))}</span>
+          <span><span aria-hidden="true">${'★'.repeat(r.stars)}</span><span class="sr-only">${r.stars}/5</span> · <a class="plain-link" href="/live/${encodeURIComponent(r.session.slug)}" target="_blank" rel="noopener">${esc(r.session.title)}</a> · ${esc(r.mentorName)}
+            ${r.comment ? `<br><span class="small">${esc(r.comment)}</span>` : ''}${r.hidden ? `<br><span class="muted small">${esc(t('admin.live.ratingHidden'))}: ${esc(r.hideReason || '')}</span>` : ''}</span>
+          ${r.hidden ? '<span></span>' : `<span class="payout-pay"><input type="text" class="lh-reason" maxlength="500" placeholder="${esc(t('admin.live.hidePh'))}" aria-label="${esc(t('admin.live.hidePh'))}">
+            <button type="button" class="btn btn-outline btn-sm lh-hide">${esc(t('admin.live.hideRating'))}</button></span>`}</li>`).join('')}</ul>`
+        : `<p class="muted small">${esc(t('admin.live.noRatings'))}</p>`}
       <h2 class="reviews-title">${esc(t('admin.live.hostsTitle'))}</h2>
       <form class="payout-pay lv-host-form"><input type="email" class="lv-host-email" placeholder="${esc(t('admin.live.hostEmail'))}" aria-label="${esc(t('admin.live.hostEmail'))}">
         <button type="submit" class="btn btn-outline btn-sm">${esc(t('admin.live.allowHost'))}</button></form>
@@ -75,6 +98,12 @@
       const id = b.closest('li').dataset.id;
       if (!(await WisecallDialog.confirm({ message: t('admin.live.endConfirm'), confirmText: t('admin.live.end'), danger: true }))) return;
       post(`/admin/live/${id}/end`, { reason: t('admin.live.endReason') }, 'admin.live.ended');
+    }));
+    container.querySelectorAll('.lh-hide').forEach((b) => b.addEventListener('click', () => {
+      const li = b.closest('li');
+      const reason = li.querySelector('.lh-reason').value.trim();
+      if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+      post(`/admin/live/ratings/${li.dataset.rating}/hide`, { reason }, 'admin.live.ratingHiddenToast');
     }));
     container.querySelectorAll('.lr-resolve').forEach((b) => b.addEventListener('click', () => {
       const li = b.closest('li');

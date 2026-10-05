@@ -157,6 +157,7 @@
             </div>
           </div>
           ${isMentor && expert.username ? `<p class="profile-share">${WisecallCopy.button(location.origin + location.pathname)}</p>` : ''}
+          ${isMentor && !isSelf ? '<div class="profile-follow" id="profileFollow"></div>' : ''}
           ${isSelf ? `<p class="profile-self small"><a class="btn btn-outline btn-sm" href="/settings.html?tab=profile">${t('profile.edit')}</a> ${expert.visibility === 'contacts' ? `<span class="muted">${t('profile.visibleToContacts')}</span>` : ''}</p>` : ''}
           ${detailsHtml()}
           ${isMentor ? `<dl class="profile-stats">
@@ -209,6 +210,8 @@
     loadReviews();
     loadPublicAnswers();
     loadLive();
+    const follow = document.getElementById('profileFollow');
+    if (follow && window.WisecallFollow) WisecallFollow.mount(follow, expert.id, user);
     if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
   }
   const askArea = () => document.getElementById('askArea');
@@ -216,12 +219,17 @@
   // This mentor's upcoming live sessions (shown only when there are some).
   async function loadLive() {
     let d;
-    try { d = await WisecallAPI.apiFetch(`/live?mentor=${encodeURIComponent(expert.id)}&limit=6`); } catch (e) { return; }
-    if (!d.sessions || !d.sessions.length) return;
+    let r = null;
+    try {
+      [d, r] = await Promise.all([WisecallAPI.apiFetch(`/live?mentor=${encodeURIComponent(expert.id)}&limit=6`), WisecallAPI.apiFetch(`/live/ratings/${encodeURIComponent(expert.id)}`).catch(() => null)]);
+    } catch (e) { return; }
+    const has = d.sessions && d.sessions.length;
+    if (!has && !(r && r.count)) return;
     const prefix = WisecallI18n.getLang() === 'ka' ? '/ka' : '';
-    document.getElementById('profileLiveBody').innerHTML = `<ul class="earn-list">${d.sessions.map((s) => `<li><span>${escapeHtml(WisecallI18n.formatDate(s.startsAt, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</span>
+    document.getElementById('profileLiveBody').innerHTML = `${r && r.count ? `<p class="small"><strong>${escapeHtml(t('live.ratings.live').replace('{avg}', r.average).replace('{n}', r.count))}</strong></p>` : ''}
+      ${has ? `<ul class="earn-list">${d.sessions.map((s) => `<li><span>${escapeHtml(WisecallI18n.formatDate(s.startsAt, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</span>
       <span><a class="plain-link" href="${prefix}/live/${encodeURIComponent(s.slug)}">${escapeHtml(s.title)}</a><br><span class="muted small">${escapeHtml(t('live.kind.' + s.kind))}</span></span>
-      <strong>${escapeHtml(WisecallAPI.formatAmount(s.priceNow))}</strong></li>`).join('')}</ul>`;
+      <strong>${escapeHtml(WisecallAPI.formatAmount(s.priceNow))}</strong></li>`).join('')}</ul>` : ''}`;
     document.getElementById('profileLive').hidden = false;
   }
   // Answers this mentor and their askers agreed to publish (shown only when there are some).
@@ -264,6 +272,10 @@
     set(v) { try { if (v) sessionStorage.setItem(draftKey, v); else sessionStorage.removeItem(draftKey); } catch (e) { /* storage not available */ } }
   };
   let draft = stored.get();
+  // A discount code from a live session (the link in its email or the dashboard adds ?code=...).
+  const codeParam = /^WC-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(params.get('code') || '') ? params.get('code').toUpperCase() : '';
+  let appliedCode = null;
+  let codeTried = false;
   const NOTE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>';
 
   const askHeader = () => `
@@ -350,10 +362,17 @@
           <textarea id="question" rows="5" maxlength="${MAX_QUESTION}" placeholder="${escapeHtml(t('expert.questionPlaceholder'))}" aria-describedby="qMeta askError" required></textarea>
         </label>
         <div class="q-meta" id="qMeta"><span id="qHelp"></span><span id="qCount"></span></div>
+        <details class="ask-code" id="askCodeBox"${codeParam ? ' open' : ''}><summary class="small">${t('expert.code.label')}</summary>
+          <div class="ask-code-row"><label for="askCode" class="sr-only">${t('expert.code.label')}</label>
+            <input type="text" id="askCode" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${escapeHtml(appliedCode ? appliedCode.code : codeParam)}">
+            <button type="button" class="btn btn-outline btn-sm" id="askCodeApply">${t('expert.code.apply')}</button></div>
+          <p class="small" id="askCodeNote" role="status"></p>
+        </details>
         <p class="form-error" id="askError" role="alert"></p>
         <button type="submit" class="btn btn-primary btn-block" id="askBtn">${t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
       </form>
       ${askNotes()}`;
+    wireCode();
     const box = document.getElementById('question');
     box.value = draft;
     box.addEventListener('input', () => { draft = box.value; stored.set(draft); });
@@ -373,6 +392,32 @@
     if (notice && !checking) notice.focus({ preventScroll: false });
   }
 
+  // A one-time code from a live session (15 % off a question to this mentor): checked by the server, which also sets the price paid.
+  function wireCode() {
+    const input = document.getElementById('askCode');
+    const note = document.getElementById('askCodeNote');
+    const btn = document.getElementById('askBtn');
+    const show = () => {
+      btn.textContent = t('expert.pay').replace('{price}', appliedCode ? WisecallAPI.formatAmount(appliedCode.amount) : WisecallAPI.formatPrice(expert.price));
+      note.textContent = appliedCode ? t('expert.code.applied').replace('{percent}', appliedCode.percent).replace('{price}', WisecallAPI.formatAmount(appliedCode.amount)) : note.textContent;
+    };
+    const apply = async () => {
+      const code = input.value.trim().toUpperCase();
+      appliedCode = null;
+      note.textContent = '';
+      if (!code) { show(); return; }
+      try {
+        appliedCode = await WisecallAPI.apiFetch(`/live/discounts/check?code=${encodeURIComponent(code)}&mentor=${encodeURIComponent(expert.id)}`);
+      } catch (e) {
+        note.textContent = t('live.err.' + e.code) !== 'live.err.' + e.code ? t('live.err.' + e.code) : t('live.err.invalid_code');
+      }
+      show();
+    };
+    document.getElementById('askCodeApply').addEventListener('click', apply);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } });
+    if (appliedCode) show(); else if (codeParam && !codeTried) { codeTried = true; apply(); }
+  }
+
   async function onAsk(ev) {
     ev.preventDefault();
     const errorEl = document.getElementById('askError');
@@ -383,7 +428,7 @@
     submitBtn.disabled = true;
     try {
       stored.set(question); // (kept while the buyer is at the bank)
-      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question } });
+      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question, ...(appliedCode ? { discountCode: appliedCode.code } : {}) } });
       if (res.checkoutUrl) {
         window.location.href = res.checkoutUrl;
         return;
@@ -394,6 +439,7 @@
       submitBtn.disabled = false;
       if (e.code === 'emergency') { showEmergencyHelp(); return; }
       const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings' };
+      if (/^(invalid_code|code_)/.test(e.code || '')) { errorEl.textContent = t('live.err.' + e.code); appliedCode = null; return; }
       errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION)
         : (limits[e.code] ? t(limits[e.code]).replace('{n}', (e.data && e.data.max) || '') : (e.message2 || t('expert.sendError')));
     }

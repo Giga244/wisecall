@@ -655,6 +655,29 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .live-dash-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .live-ticket-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; }
 .live-dash-tickets { margin-top: 24px; }
+.live-dash-stats, .live-dash-codes { margin-top: 24px; }
+.live-stats-table td:first-child { min-width: 180px; }
+.lt-rate, .ls-summary { margin-top: 10px; }
+.lt-rate summary, .ls-summary summary { cursor: pointer; }
+.star-pick { border: 0; padding: 0; margin: 6px 0; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.star-pick legend { padding: 0; margin-bottom: 4px; }
+.ls-summary fieldset { border: 0; padding: 0; margin: 8px 0 0; }
+.ls-link-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 8px; margin-top: 6px; }
+.ls-link-row label { margin: 0; }
+.ls-link-row input { margin-top: 0; }
+@media (max-width: 520px) { .ls-link-row { grid-template-columns: minmax(0, 1fr); } }
+/* Ratings on the session page, Follow, the code field on the ask form, links in the Inbox */
+.live-ratings { margin-top: 22px; }
+.live-comments { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.live-comments li { background: var(--field); border-radius: var(--radius-sm); padding: 8px 10px; overflow-wrap: anywhere; }
+.live-follow, .profile-follow { margin-top: 10px; }
+.live-follow .hint, .profile-follow .hint { margin: 4px 0 0; }
+.ask-code { margin: 8px 0; }
+.ask-code summary { cursor: pointer; }
+.ask-code-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.ask-code-row input { margin-top: 0; text-transform: uppercase; flex: 1 1 auto; min-width: 0; }
+.ev-links { margin: 6px 0 0; padding-left: 18px; }
+.ev-links a { overflow-wrap: anywhere; }
 /* The development-only fake video room is shown inside the room page's frame: no site header or footer in there */
 .fake-room #siteHeader, .fake-room .footer, .fake-room .nav { display: none !important; }
 .fake-room main { padding-top: 16px; }

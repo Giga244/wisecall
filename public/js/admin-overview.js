@@ -43,6 +43,12 @@
         card(t('admin.ov.debt'), money(d.payouts.debt), d.payouts.debt > 0), card(t('admin.ov.paidOut'), money(d.payouts.paidOut))])
         + `<p class="muted small">${esc(t('admin.ov.moneyHelp'))}</p>`
         + (d.money.testPayments ? `<p class="muted small">${esc(t('admin.ov.testPayments').replace('{n}', n(d.money.testPayments)))}</p>` : '')),
+      d.live ? section(t('admin.ov.live'), cards([
+        card(t('admin.live.t.upcoming'), n(d.live.upcoming)), card(t('admin.live.t.review'), n(d.live.review), d.live.review > 0),
+        card(t('admin.live.t.liveNow'), n(d.live.liveNow)), card(t('admin.live.t.ended30'), n(d.live.ended30)),
+        card(t('admin.live.t.tickets30'), n(d.live.tickets30)), card(t('admin.live.t.gross30'), money(d.live.gross30)),
+        card(t('admin.live.t.fee30'), money(d.live.fee30)), card(t('admin.live.t.reports'), n(d.live.reportsOpen), d.live.reportsOpen > 0)])
+        + `<p class="muted small">${esc(t('admin.ov.live.help'))}</p>`) : '',
       section(t('admin.ov.sources'), (d.sources && d.sources.length)
         ? `<div class="table-scroll"><table class="ov-sources"><thead><tr><th scope="col">${esc(t('admin.ov.src.source'))}</th><th scope="col">${esc(t('admin.ov.src.campaign'))}</th>
             <th scope="col">${esc(t('admin.ov.src.signups'))}</th><th scope="col">${esc(t('admin.ov.src.applications'))}</th><th scope="col">${esc(t('admin.ov.src.paid'))}</th></tr></thead>

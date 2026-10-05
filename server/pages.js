@@ -474,6 +474,7 @@ async function sendLiveSession(req, res, slug) {
   const profile = mentor && mentor.username ? `${prefix}/u/${encodeURIComponent(mentor.username)}` : null;
   const stats = mentor ? (await require('./models').mentorStatsFor([mentor.id]))[mentor.id] || {} : {};
   const preview = !['published', 'live', 'ended', 'cancelled'].includes(s.status);
+  const ratings = await require('./live/after').forSession(s.id);
   const body = `
   <article class="live-page" data-session="${escapeHtml(s.id)}" data-slug="${escapeHtml(s.slug)}" data-status="${escapeHtml(s.status)}">
     ${preview ? `<p class="pay-notice">${escapeHtml(d['live.previewNote'])}</p>` : ''}
@@ -488,13 +489,18 @@ async function sendLiveSession(req, res, slug) {
       <div class="live-main">
         <div class="live-description">${escapeHtml(s.description).replace(/\n/g, '<br>')}</div>
         ${s.learn_points.length ? `<h2>${escapeHtml(d['live.learn'])}</h2><ul class="live-points">${s.learn_points.map((p) => `<li>${escapeHtml(p)}</li>`).join('')}</ul>` : ''}
+        ${ratings.count ? `<section class="live-ratings"><h2>${escapeHtml(d['live.ratings.title'])}</h2>
+          <p><strong>${escapeHtml(d['live.ratings.summary'].replace('{avg}', ratings.average).replace('{n}', ratings.count))}</strong></p>
+          ${ratings.comments.length ? `<ul class="live-comments">${ratings.comments.map((c) => `<li><span aria-hidden="true">${'★'.repeat(c.stars)}</span><span class="sr-only">${c.stars}/5</span> ${escapeHtml(c.comment)}</li>`).join('')}</ul>` : ''}
+        </section>` : ''}
       </div>
       <aside class="live-side settings-card">
         <p class="live-price"><strong id="livePrice">${escapeHtml(liveMoney(v.priceNow))}</strong>${v.earlyNow ? ` <span class="muted small"><s>${escapeHtml(liveMoney(s.price))}</s> ${escapeHtml(d['live.early'])}</span>` : ''}</p>
         <p class="muted small" id="liveSeats">${escapeHtml((d['live.seatsLeft'] || '{n} places left').replace('{n}', v.seatsLeft))}</p>
         <div id="liveBuy"><noscript><p class="muted small">${escapeHtml(d['live.needsJs'])}</p></noscript></div>
         <p class="live-share">${'<button type="button" class="btn btn-outline btn-sm copy-link" data-url="' + escapeHtml(`${config.PUBLIC_URL}${prefix}/live/${s.slug}`) + '"><span class="copy-label">' + escapeHtml(d['copy.link']) + '</span></button>'}
-          <a class="btn btn-outline btn-sm" rel="noopener" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${config.PUBLIC_URL}${prefix}/live/${s.slug}`)}">Facebook</a></p>
+          <a class="btn btn-outline btn-sm" rel="noopener" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${config.PUBLIC_URL}${prefix}/live/${s.slug}`)}">Facebook</a>
+          ${['published', 'live'].includes(s.status) ? `<a class="btn btn-outline btn-sm" href="/api/live-share/${escapeHtml(s.id)}.png" download="wisecall-live.png">${escapeHtml(d['live.shareImage'])}</a>` : ''}</p>
         <p class="small"><button type="button" class="linklike" id="liveReport">${escapeHtml(d['live.report'])}</button></p>
       </aside>
     </div>
@@ -503,6 +509,7 @@ async function sendLiveSession(req, res, slug) {
       <p class="card-name">${profile ? `<a class="plain-link" href="${profile}">${escapeHtml(mentor.name)}</a>` : escapeHtml(mentor.name)}
         <span class="tag tag-verified">${escapeHtml(d['expert.verified'])}</span></p>
       <p class="muted small">${escapeHtml([mentor.roleTitle, mentor.customNiche || (mentor.niche && mentor.niche !== 'other' ? require('./niches').nameOf(mentor.niche, lang) : '')].filter(Boolean).join(' · '))}${stats.ratingAvg ? ` · ★ ${escapeHtml(String(stats.ratingAvg))}` : ''}</p>
+      <div id="liveFollow" class="live-follow"></div>
     </aside>` : ''}
   </article>`;
   const url = lang === 'ka' ? kaUrl(`/live/${s.slug}`) : `${config.PUBLIC_URL}/live/${s.slug}`;

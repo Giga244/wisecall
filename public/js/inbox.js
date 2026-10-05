@@ -38,6 +38,8 @@
   document.getElementById('inboxTabs').addEventListener('click', (ev) => { const b = ev.target.closest('.tab'); if (b) selectTab(b.dataset.tab); });
 
   // ---- Words for events (the server sends the event and its data; the words are in the reader's language) ---------------------
+  // (live sessions: the title, and for a code its percent and mentor)
+  const liveVars = (d) => ({ title: d.title || '', percent: d.percent || '', mentor: d.mentor || '' });
   function eventText(m) {
     const d = m.data || {};
     switch (m.event) {
@@ -65,9 +67,20 @@
       default:
         // Live sessions: the title, and a link to the session page.
         if (String(m.event).startsWith('live_')) {
-          const text = esc(fill('inbox.ev.' + m.event, { title: d.title || '' }));
+          const text = esc(fill('inbox.ev.' + m.event, liveVars(d)));
           const link = d.slug ? ` <a class="plain-link" href="/live/${encodeURIComponent(d.slug)}">${esc(t('live.dash.page'))}</a>` : '';
-          return text + link + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
+          let extra = '';
+          // (the mentor's summary and links: only http(s) links reach here, checked by the server; opened in a new tab, not followed)
+          if ((m.event === 'live_summary' || m.event === 'live_summary_updated') && d.summary) {
+            const links = (Array.isArray(d.links) ? d.links : []).filter((l) => l && /^https?:\/\//i.test(String(l.url || '')));
+            extra = `<span class="ev-note">${esc(d.summary).replace(/\n/g, '<br>')}</span>`
+              + (links.length ? `<ul class="ev-links">${links.map((l) => `<li><a class="plain-link" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer nofollow ugc">${esc(l.title || l.url)}</a></li>`).join('')}</ul>` : '');
+          }
+          if (m.event === 'live_discount' && d.code) {
+            extra = `<span class="ev-note"><code>${esc(d.code)}</code>${d.username ? ` <a class="plain-link" href="/u/${encodeURIComponent(d.username)}?code=${encodeURIComponent(d.code)}#ask">${esc(t('live.codes.use'))}</a>` : ''}</span>`;
+          }
+          if (m.event === 'live_rate') extra = ` <a class="plain-link" href="/dashboard.html?tab=live">${esc(t('inbox.rateLink'))}</a>`;
+          return text + link + extra + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
         }
         return esc(t('inbox.ev.' + m.event));
     }
@@ -329,7 +342,7 @@
     const key = 'inbox.n.' + n.kind;
     if (n.kind === 'verification_update') return fill(d.status === 'passed' ? 'inbox.ev.stepPassed' : 'inbox.ev.stepFailed', { step: t('verify.step.' + d.step) });
     if (['payout_sent', 'refunded', 'withdrawal_requested', 'withdrawal_rejected'].includes(n.kind)) return fill(key, { amount: WisecallAPI.formatAmount(d.amount || 0) });
-    if (String(n.kind).startsWith('live_')) return fill('inbox.ev.' + n.kind, { title: d.title || '' });
+    if (String(n.kind).startsWith('live_')) return fill('inbox.ev.' + n.kind, liveVars(d));
     return t(key);
   }
   async function loadNotifications() {
