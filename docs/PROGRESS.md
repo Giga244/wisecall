@@ -208,3 +208,4 @@ time change, mentor cancel, minimum not reached 6 h before, no-show, short sessi
 disputes. Payout per session after a normal end, held by reports/disputes, withdrawn like question earnings. Video: server/live/provider.js
 (Daily.co, fake for dev/tests). Data: migration 036 (undo script). Legal drafts, help article 16, LEGAL-REVIEW 55.
 Tests: live-sessions.test.js (22), live-daily.test.js (3), e2e/live-sessions.spec.js (5). Owner: Daily.co account + DAILY_API_KEY.
+Full run 2026-10-05: unit 761/761 (brand test re-run after the fix), cloud 34/34, browser 165 passed (5 skipped as before), cloud browser 30/30.
