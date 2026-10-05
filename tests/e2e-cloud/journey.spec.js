@@ -28,6 +28,9 @@ test.afterAll(async () => { await Promise.all(contexts.map((c) => c.close())); }
 // The ask form: in the page on a desktop, in a bottom sheet opened from the question bar on a phone.
 async function openAskForm(page) {
   const bar = page.locator('#askOpen');
+  // (the page draws the profile after loading it: wait until either the form or the phone's question bar is on screen — on a slow
+  // machine, checking at once found neither and never opened the sheet)
+  await page.waitForFunction(() => ['askOpen', 'question'].some((id) => { const el = document.getElementById(id); return el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden'; }));
   if (await bar.isVisible().catch(() => false)) await bar.click();
   await expect(page.locator('#question')).toBeVisible();
 }

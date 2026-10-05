@@ -1,0 +1,12 @@
+# The secret scan (gitleaks, in .github/workflows/ci.yml) keeps every default rule. The test suites start throwaway servers with
+# made-up values that look like keys ("test-secret-that-is-long-enough-1234567890", "re_fake", ...), so tests/ and e2e/ are not scanned:
+# no real key ever belongs there (real keys live only in Render's environment). Everything else in the repository and its history is.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test-only made-up values in the test suites"
+paths = [
+  '''^tests/''',
+  '''^e2e/''',
+]
