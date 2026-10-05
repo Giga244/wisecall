@@ -4,8 +4,8 @@
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
 
-const DARK_BG = 'rgb(21, 19, 31)';
-const LIGHT_BG = 'rgb(234, 246, 241)';
+const DARK_BG = 'rgb(11, 16, 32)';
+const LIGHT_BG = 'rgb(246, 247, 251)';
 const theme = (page) => page.evaluate(() => ({ theme: document.documentElement.dataset.theme, pref: document.documentElement.dataset.themePref }));
 const bodyBg = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 const logo = (page) => page.locator('.nav .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0]);
@@ -64,7 +64,7 @@ test.describe('a choice made by hand', () => {
     await page.keyboard.press('Enter');
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
     await expect.poll(() => bodyBg(page)).toBe(DARK_BG); // after the short fade
-    expect(await barColor(page)).toBe('#15131F'); // the phone's address bar follows
+    expect(await barColor(page)).toBe('#0B1020'); // the phone's address bar follows
     expect(await logo(page)).toBe('wisecall-logo-on-dark-transparent.svg');
     expect(await page.locator('.footer .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
     await expect(page.locator('#themeMenu')).toBeHidden();
@@ -85,7 +85,7 @@ test.describe('a choice made by hand', () => {
     await page.click('#themeBtn');
     await page.click('#themeMenu [data-theme-choice="light"]');
     expect(await theme(page)).toEqual({ theme: 'light', pref: 'light' });
-    expect(await barColor(page)).toBe('#F4FBF8');
+    expect(await barColor(page)).toBe('#F6F7FB');
     await page.emulateMedia({ colorScheme: 'light' });
     await page.emulateMedia({ colorScheme: 'dark' });
     expect((await theme(page)).theme, 'a hand-made choice ignores the device').toBe('light');

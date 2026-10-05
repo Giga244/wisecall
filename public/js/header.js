@@ -154,4 +154,45 @@
   document.addEventListener('DOMContentLoaded', () => {
     if (window.WisecallNav && window.WisecallI18n) WisecallI18n.ready.then(() => WisecallNav.initNav());
   });
+  // Motion: cards and section headings below the first screen fade up as they scroll into view (the CSS is "Motion" in style.css).
+  // Nothing happens under "reduce motion" or without IntersectionObserver, and nothing already on screen is ever hidden. Lists that
+  // arrive later (experts, answers, bookings) are picked up as they are added. Once shown, the classes are removed again.
+  (function () {
+    if ((window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || !('IntersectionObserver' in window)) return;
+    const SEL = 'main h2, .how-step, .step, .expert-card, .example-card, .trust-card, .price-card, .perk, .faq-item, .settings-card';
+    const seen = new WeakSet();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const el = e.target;
+        io.unobserve(el);
+        el.classList.add('is-in');
+        const delay = parseInt(el.style.getPropertyValue('--reveal-delay'), 10) || 0;
+        setTimeout(() => { el.classList.remove('reveal', 'is-in'); el.style.removeProperty('--reveal-delay'); }, 650 + delay);
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.06 });
+    function scan(root) {
+      const els = (root.matches(SEL) ? [root] : []).concat(Array.from(root.querySelectorAll(SEL)));
+      let i = 0; let group = null;
+      els.forEach((el) => {
+        if (seen.has(el)) return;
+        seen.add(el);
+        const r = el.getBoundingClientRect();
+        if (r.height && r.top < window.innerHeight && r.bottom > 0) return; // already on screen: leave it as it is
+        if (el.parentElement !== group) { i = 0; group = el.parentElement; }
+        el.style.setProperty('--reveal-delay', Math.min(i++, 5) * 70 + 'ms');
+        el.classList.add('reveal');
+        io.observe(el);
+      });
+    }
+    function start() {
+      const main = document.querySelector('main');
+      if (!main) return;
+      document.documentElement.classList.add('motion');
+      scan(main);
+      new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) scan(n); })))
+        .observe(main, { childList: true, subtree: true });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  })();
 })();

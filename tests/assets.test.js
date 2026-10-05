@@ -69,7 +69,7 @@ describe('addresses carry the version of the file', () => {
     try {
       fs.writeFileSync(a, "console.log('a');");
       fs.writeFileSync(b, "import('/js/zz-assets-a.js'); // see /js/zz-assets-missing.js and /js/zz-assets-a.js?x=1 and https://example.com/js/zz-assets-a.js and public/js/zz-assets-a.js and finally /js/zz-assets-a.js.");
-      fs.writeFileSync(style, "@font-face { src: url('/fonts/nunito-latin.woff2'); } .x { background: url('/brand/wisecall-mark.svg'); }");
+      fs.writeFileSync(style, "@font-face { src: url('/fonts/inter-latin.woff2'); } .x { background: url('/brand/wisecall-mark.svg'); }");
       const first = (await visitor('/js/zz-assets-b.js')).text;
       const va = /zz-assets-a\.js\?v=([0-9a-f]{10})'/.exec(first);
       assert.ok(va, first);
@@ -86,7 +86,7 @@ describe('addresses carry the version of the file', () => {
       assert.notEqual(va2[1], va[1], 'a changed file has a new version');
       assert.notEqual(sha(second), bBefore, 'and so does the file that names it');
       const css = (await visitor('/css/zz-assets-test.css')).text;
-      assert.match(css, /url\('\/fonts\/nunito-latin\.woff2\?v=[0-9a-f]{10}'\)/);
+      assert.match(css, /url\('\/fonts\/inter-latin\.woff2\?v=[0-9a-f]{10}'\)/);
       assert.match(css, /url\('\/brand\/wisecall-mark\.svg\?v=[0-9a-f]{10}'\)/);
     } finally {
       for (const f of [a, b, style]) { try { fs.unlinkSync(f); } catch (e) { /* not there */ } }

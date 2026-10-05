@@ -76,7 +76,7 @@ for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']])
       test.skip(scheme !== 'dark');
       await pages.visitor.goto('/');
       expect(await pages.visitor.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
-      expect(await pages.visitor.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(21, 19, 31)');
+      expect(await pages.visitor.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(11, 16, 32)');
     });
 
     test('keyboard: a skip link, and every control is reachable and shows a focus ring', async () => {

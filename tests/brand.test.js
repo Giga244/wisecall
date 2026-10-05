@@ -70,9 +70,10 @@ describe('the brand files are used as they are', () => {
     assert.deepEqual(offenders, [], 'old brand references');
   });
 
-  test('the brand colours in the stylesheet are the logo\'s: coral #FF6F59, navy #25213B, mint #DDF3EA, sun #FFE7A3', () => {
+  // The 2026 refresh made indigo the colour of buttons and links (--accent); the logo keeps its coral, and the text, mint and sun are the logo's.
+  test('the brand colours in the stylesheet: the logo\'s navy #25213B, mint #DDF3EA and sun #FFE7A3, with indigo #6366F1 for actions', () => {
     const css = fs.readFileSync(path.join(PUB, 'css', 'style.css'), 'utf8');
-    for (const [token, hex] of [['--accent', '#ff6f59'], ['--ink', '#25213b'], ['--mint', '#ddf3ea'], ['--sun', '#ffe7a3']]) {
+    for (const [token, hex] of [['--accent', '#6366f1'], ['--ink', '#25213b'], ['--mint', '#ddf3ea'], ['--sun', '#ffe7a3']]) {
       assert.match(css, new RegExp(`${token}:\\s*${hex}\\b`, 'i'), `${token} should be ${hex}`);
     }
   });
@@ -87,7 +88,7 @@ describe('every page carries the icons, the manifest and the theme colour', () =
       const url = f === 'index.html' ? '/' : (f === '404.html' ? '/no-such-page-here' : `/${f}`);
       const html = await (await fetch(base + url, { headers: { Accept: 'text/html' } })).text();
       // (every address of one of our files carries ?v=<hash of the file>, see assets.test.js)
-      for (const tag of [/<link rel="icon" href="\/favicon\.ico\?v=[0-9a-f]{10}" sizes="48x48">/g, /<link rel="icon" href="\/favicon\.svg\?v=[0-9a-f]{10}" type="image\/svg\+xml">/g, /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png\?v=[0-9a-f]{10}">/g, /<link rel="manifest" href="\/site\.webmanifest\?v=[0-9a-f]{10}">/g, /<meta name="theme-color" content="#F4FBF8" media="\(prefers-color-scheme: light\)">/g, /<meta name="theme-color" content="#15131F" media="\(prefers-color-scheme: dark\)">/g, /<meta name="color-scheme" content="light dark">/g, /<script src="\/js\/theme-init\.js\?v=[0-9a-f]{10}"><\/script>/g]) {
+      for (const tag of [/<link rel="icon" href="\/favicon\.ico\?v=[0-9a-f]{10}" sizes="48x48">/g, /<link rel="icon" href="\/favicon\.svg\?v=[0-9a-f]{10}" type="image\/svg\+xml">/g, /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png\?v=[0-9a-f]{10}">/g, /<link rel="manifest" href="\/site\.webmanifest\?v=[0-9a-f]{10}">/g, /<meta name="theme-color" content="#F6F7FB" media="\(prefers-color-scheme: light\)">/g, /<meta name="theme-color" content="#0B1020" media="\(prefers-color-scheme: dark\)">/g, /<meta name="color-scheme" content="light dark">/g, /<script src="\/js\/theme-init\.js\?v=[0-9a-f]{10}"><\/script>/g]) {
         assert.equal((html.match(tag) || []).length, 1, `${f}: ${tag}`);
       }
       assert.equal((html.match(/rel="icon"/g) || []).length, 2, `${f}: exactly two icon links`);
@@ -117,7 +118,7 @@ describe('every page carries the icons, the manifest and the theme colour', () =
     assert.equal(m.short_name, 'Wisecall');
     assert.equal(m.start_url, '/');
     assert.equal(m.display, 'standalone');
-    assert.equal(m.background_color, '#F4FBF8');
+    assert.equal(m.background_color, '#F6F7FB');
     assert.equal(m.theme_color, '#25213B');
     assert.deepEqual(m.icons.map((i) => [i.src.replace(/\?v=[0-9a-f]{10}$/, ''), i.sizes, i.purpose || 'any']), [['/icon-192.png', '192x192', 'any'], ['/icon-512.png', '512x512', 'any'], ['/icon-maskable-512.png', '512x512', 'maskable']]);
     for (const i of m.icons) assert.equal((await fetch(base + i.src)).status, 200);
