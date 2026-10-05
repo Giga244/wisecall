@@ -7,12 +7,15 @@ const { escapeHtml } = require('../email');
 // Names of the niches in each language, read from the site's own dictionaries.
 const NICHE_NAMES = { en: require('../../public/i18n/en.json'), ka: require('../../public/i18n/ka.json') };
 
-const COLORS = { ink: '#25213b', soft: '#746e94', bg: '#eaf6f1', card: '#ffffff', accent: '#ff6f59', quote: '#eefaf4' };
+// (the site's "Ink & Paper" colours, public/css/tokens.css: ink text on the coral button; links in the deeper coral that reads on white)
+const COLORS = { ink: '#1e1a31', soft: '#4e4963', bg: '#f4f2ee', card: '#ffffff', accent: '#ff6f59', link: '#b5361f', quote: '#fff6dc' };
+const FONT = "Onest,'Noto Sans Georgian',Arial,Helvetica,sans-serif";
+const DISPLAY = "'Bricolage Grotesque','Noto Sans Georgian',Arial,Helvetica,sans-serif";
 // Dark mode: mail apps that follow the reader's setting (Apple Mail, iOS Mail, Outlook for Mac and Outlook.com, several Android apps)
 // switch to these colours and to the logo made for dark backgrounds; the others show the light version (the inline colours).
-const DARK = { ink: '#f3f1fb', soft: '#bdb7d9', bg: '#16141f', card: '#24203a', quote: '#2e2a47' };
+const DARK = { ink: '#f4f2ee', soft: '#c9c5d6', bg: '#16131f', card: '#221e31', quote: '#2b2643', line: '#d9d5e6', link: '#ff8f7d' };
 const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light dark}
-@media (prefers-color-scheme:dark){.wc-bg{background:${DARK.bg}!important}.wc-card{background:${DARK.card}!important}.wc-ink{color:${DARK.ink}!important}.wc-soft,.wc-soft a{color:${DARK.soft}!important}.wc-quote{background:${DARK.quote}!important;color:${DARK.ink}!important}.wc-light{display:none!important}.wc-dark{display:block!important;max-height:none!important;overflow:visible!important}}
+@media (prefers-color-scheme:dark){.wc-bg{background:${DARK.bg}!important}.wc-card{background:${DARK.card}!important;border-color:${DARK.line}!important}.wc-link{color:${DARK.link}!important}.wc-ink{color:${DARK.ink}!important}.wc-soft,.wc-soft a{color:${DARK.soft}!important}.wc-quote{background:${DARK.quote}!important;color:${DARK.ink}!important}.wc-light{display:none!important}.wc-dark{display:block!important;max-height:none!important;overflow:visible!important}}
 [data-ogsc] .wc-light{display:none!important}[data-ogsc] .wc-dark{display:block!important;max-height:none!important;overflow:visible!important}`;
 
 // Text with {placeholders}; each placeholder is escaped for HTML (or left raw for plain text).
@@ -794,22 +797,22 @@ function layout(lang, heading, blocks) {
   const rows = blocks.map((b) => {
     const text = b.raw ? b.p : (b.p !== undefined ? escapeHtml(b.p) : '');
     if (b.p !== undefined) return `<p class="wc-ink" style="margin:0 0 16px;font-size:16px;line-height:1.55;color:${COLORS.ink}">${text}</p>`;
-    if (b.code) return `<div class="wc-quote" style="margin:6px 0 18px;padding:18px;text-align:center;background:${COLORS.quote};border-radius:14px;font-size:34px;font-weight:700;letter-spacing:8px;color:${COLORS.ink};font-family:'Courier New',monospace">${escapeHtml(b.code)}</div>`;
-    if (b.quote) return `<div class="wc-quote" style="margin:0 0 18px;padding:14px 16px;background:${COLORS.quote};border-radius:14px;font-size:15px;line-height:1.55;color:${COLORS.ink};white-space:pre-wrap">${escapeHtml(b.quote)}</div>`;
-    if (b.button) return `<p style="margin:8px 0 20px"><a href="${escapeHtml(b.url)}" style="display:inline-block;padding:13px 26px;background:${COLORS.accent};color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;border-radius:999px">${escapeHtml(b.button)}</a></p>`;
-    if (b.link) return `<p style="margin:0 0 16px;font-size:13px;word-break:break-all"><a href="${escapeHtml(b.link)}" style="color:${COLORS.accent}">${escapeHtml(b.label || b.link)}</a></p>`;
+    if (b.code) return `<div class="wc-quote" style="margin:6px 0 18px;padding:18px;text-align:center;background:${COLORS.quote};border:2px dashed ${COLORS.ink};border-radius:14px;font-size:34px;font-weight:700;letter-spacing:8px;color:${COLORS.ink};font-family:'Courier New',monospace">${escapeHtml(b.code)}</div>`;
+    if (b.quote) return `<div class="wc-quote" style="margin:0 0 18px;padding:14px 16px;background:${COLORS.quote};border-radius:14px 14px 14px 4px;font-size:15px;line-height:1.55;color:${COLORS.ink};white-space:pre-wrap">${escapeHtml(b.quote)}</div>`;
+    if (b.button) return `<p style="margin:8px 0 20px"><a href="${escapeHtml(b.url)}" style="display:inline-block;padding:12px 24px;background:${COLORS.accent};color:${COLORS.ink};border:2px solid ${COLORS.ink};text-decoration:none;font-weight:700;font-size:16px;border-radius:14px;font-family:${FONT}">${escapeHtml(b.button)}</a></p>`;
+    if (b.link) return `<p style="margin:0 0 16px;font-size:13px;word-break:break-all"><a href="${escapeHtml(b.link)}" class="wc-link" style="color:${COLORS.link}">${escapeHtml(b.label || b.link)}</a></p>`;
     if (b.small) return `<p class="wc-soft" style="margin:0 0 12px;font-size:13px;line-height:1.5;color:${COLORS.soft}">${escapeHtml(b.small)}</p>`;
     return '';
   }).join('');
 
   const support = config.SUPPORT_EMAIL ? ` · <a href="mailto:${escapeHtml(config.SUPPORT_EMAIL)}" style="color:${COLORS.soft}">${escapeHtml(config.SUPPORT_EMAIL)}</a>` : '';
   const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${escapeHtml(heading)}</title><style>${DARK_CSS}</style></head>
-<body class="wc-bg" style="margin:0;padding:0;background:${COLORS.bg};font-family:Arial,Helvetica,sans-serif">
+<body class="wc-bg" style="margin:0;padding:0;background:${COLORS.bg};font-family:${FONT}">
 <table role="presentation" class="wc-bg" width="100%" cellspacing="0" cellpadding="0" style="background:${COLORS.bg};padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px">
 <tr><td style="padding:0 6px 14px"><a href="${escapeHtml(config.PUBLIC_URL)}" style="text-decoration:none"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/wisecall-logo-email.png" width="200" height="48" alt="Wisecall" class="wc-light" style="display:block;border:0;outline:none;height:auto;max-width:100%;font-size:26px;font-weight:800;color:${COLORS.ink}"><!--[if !mso]><!--><div class="wc-dark" style="display:none;max-height:0;overflow:hidden"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/wisecall-logo-email-dark.png" width="200" height="48" alt="Wisecall" style="display:block;border:0;outline:none;height:auto;max-width:100%"></div><!--<![endif]--></a></td></tr>
-<tr><td class="wc-card" style="background:${COLORS.card};border-radius:22px;padding:30px 28px">
-<h1 class="wc-ink" style="margin:0 0 18px;font-size:24px;line-height:1.25;color:${COLORS.ink}">${escapeHtml(heading)}</h1>
+<tr><td class="wc-card" style="background:${COLORS.card};border:2px solid ${COLORS.ink};border-radius:24px;padding:30px 28px">
+<h1 class="wc-ink" style="margin:0 0 18px;font-family:${DISPLAY};font-size:26px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;color:${COLORS.ink}">${escapeHtml(heading)}</h1>
 ${rows}
 </td></tr>
 <tr><td class="wc-soft" style="padding:16px 8px;text-align:center;font-size:12px;color:${COLORS.soft}">${escapeHtml(s.tagline)}${support}</td></tr>

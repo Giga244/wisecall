@@ -112,8 +112,8 @@
           ${q.source === 'checkout' ? `<span class="badge badge-muted">${esc(t('live.room.fromCheckout'))}</span>` : ''}
           ${q.state === 'answering' ? `<span class="badge badge-paid">${esc(t('live.room.answering'))}</span>` : ''}
           ${q.state === 'answered' ? `<span class="badge badge-answered">${esc(t('live.room.answered'))}</span>` : ''}
-          ${q.mine || role === 'mentor' ? `<span class="muted">▲ ${q.votes}</span>`
-            : `<button type="button" class="linklike q-vote" aria-pressed="${q.voted}">▲ ${q.votes} ${esc(t('live.room.upvote'))}</button>`}
+          ${q.mine || role === 'mentor' ? `<span class="muted q-votes">▲ <span class="q-count">${q.votes}</span></span>`
+            : `<button type="button" class="linklike q-vote" aria-pressed="${q.voted}">▲ <span class="q-count">${q.votes}</span> ${esc(t('live.room.upvote'))}</button>`}
           ${role === 'mentor' ? `<span class="live-q-actions">
             <button type="button" class="linklike q-state" data-state="answering">${esc(t('live.room.markAnswering'))}</button>
             <button type="button" class="linklike q-state" data-state="answered">${esc(t('live.room.markAnswered'))}</button>
@@ -124,7 +124,16 @@
     const li = ev.target.closest('.live-q');
     if (!li) return;
     try {
-      if (ev.target.closest('.q-vote')) drawQuestions((await WisecallAPI.apiFetch(`/live/questions/${encodeURIComponent(li.dataset.id)}/vote`, { method: 'POST' })).questions);
+      if (ev.target.closest('.q-vote')) {
+        // (the panel is drawn again: focus goes back to the same button, and a new upvote bumps its count with a "+1")
+        const qid = li.dataset.id;
+        const list = (await WisecallAPI.apiFetch(`/live/questions/${encodeURIComponent(qid)}/vote`, { method: 'POST' })).questions;
+        drawQuestions(list);
+        const row = Array.from(panel.querySelectorAll('.live-q')).find((x) => x.dataset.id === qid);
+        const mine = list.find((q) => q.id === qid);
+        if (row && row.querySelector('.q-vote')) row.querySelector('.q-vote').focus();
+        if (row && mine && mine.voted && window.WisecallMotion) WisecallMotion.bump(row.querySelector('.q-count'), '+1');
+      }
       const st = ev.target.closest('.q-state');
       if (st) drawQuestions((await WisecallAPI.apiFetch(`/live/questions/${encodeURIComponent(li.dataset.id)}/state`, { method: 'POST', body: { state: st.dataset.state } })).questions);
     } catch (e) { WisecallNav.showToast(t('toast.error')); }

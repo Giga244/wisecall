@@ -624,6 +624,10 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 /* The room */
 .live-room-head { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
 .live-room-head h1 { font-size: clamp(1.4rem, 1.4vw + 0.8rem, 2rem); margin: 0; }
+.live-room-head h1 .live-dot { margin-right: 10px; vertical-align: 0.15em; }
+.live-q .q-vote { min-height: 34px; padding: 3px 10px; border: var(--chip-w) solid var(--line); border-radius: 10px; text-decoration: none; color: var(--ink); font-weight: 700; }
+.live-q .q-vote[aria-pressed="true"] { background: var(--c-sun); color: var(--on-pastel); border-color: var(--c-ink); }
+.q-count { font-family: var(--font-display); font-weight: 800; }
 .live-room-controls { display: flex; gap: 8px; flex-wrap: wrap; }
 .live-room-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; margin-top: 12px; align-items: start; }
 .live-frame { background: var(--card); border: var(--line-w) solid var(--line); border-radius: var(--r-card-lg); min-height: 420px; display: flex; align-items: center; justify-content: center; overflow: hidden; }

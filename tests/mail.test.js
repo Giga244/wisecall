@@ -69,7 +69,7 @@ describe('templates', () => {
       for (const lang of ['en', 'ka']) {
         const { html, text } = render(name, lang, { ...sample, question: 'Is this fine?', answer: 'An answer', mentor: 'Dr Who', body: 'A follow-up question', field: 'Keeping bees', title: 'A live session' }); // (no HTML in what people wrote)
         assert.match(html, /\/brand\/wisecall-logo-email\.png"/, `${name} ${lang}: the logo`);
-        assert.match(html, /background:#eaf6f1/, `${name} ${lang}: the brand colours`);
+        assert.match(html, /background:#f4f2ee/, `${name} ${lang}: the brand colours`);
         assert.match(html, /<meta name="color-scheme" content="light dark">/, `${name} ${lang}: tells mail apps it has a dark version`);
         assert.match(html, /@media \(prefers-color-scheme:dark\)/);
         assert.match(html, /\/brand\/wisecall-logo-email-dark\.png"/, `${name} ${lang}: the logo for dark backgrounds`);
