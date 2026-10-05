@@ -221,3 +221,18 @@ Live block in the admin overview, gift tickets (buyer pays, recipient claims wit
 the address is deleted 30 days after the session), 1080x1080 share image (server-drawn PNG). Migration 037 (+ undo). Help, Terms 14,
 Mentor Agreement 11, Privacy rows (EN + KA). Tests: live-growth.test.js (8), e2e rate step + code. Full run 2026-10-05: unit 771/771,
 cloud 34/34, browser 167 passed (5 skipped as before), cloud browser 30/30. Screenshots: D:/Temp/shots-live2 (desktop + mobile, EN + KA).
+
+## Live sessions — Milestone 3 (series and replays)
+Series: a mentor groups 2-6 published sessions with a bundle price (below their total, ≥ 5 ₾ a session); one bank payment holds a seat
+in every session (rows locked in id order; waiting lists respected); each seat is a normal ticket with its proportional share (adding up
+exactly); one receipt; one email with every session and one calendar file. A cancelled session (or a buyer's own cancellation ≥ 24 h)
+refunds only that share — a partial refund of the one bank order with its own idempotency key, retried by the sweep; the payment becomes
+"refunded" when nothing is left. Series page /live/series/<slug>, series editor, dashboard and session-page links. Off in production
+until LIVE_SERIES=on (the bank must confirm several partial refunds per payment; docs/QUESTIONS.md 2b).
+Replays (opt-in, Live Q&A and Workshop): the mentor ticks "record and sell", priced below a ticket; buyers are told before buying,
+participants before joining; nobody else can speak in a recorded session; Record/Stop and a REC badge in the room; Daily cloud recording
+of the mentor alone (single-participant); after a normal end the recording becomes the replay (a short or cancelled session's is deleted);
+/live/<slug>/replay plays it from a short-lived provider address (CSP media-src for that page only); ticket holders free for 30 days,
+others buy a 30-day pass (own payment, receipt, 80 % payout); the mentor or an admin can delete it, refunding running passes; kept 90
+days. Migration 038 (+ undo). Tests: live-series-replays.test.js (13), live-daily.test.js recording (1). Full run 2026-10-05: unit
+789/789, cloud 34/34, browser 167 passed (5 skipped as before), cloud browser 30/30. Screenshots: D:/Temp/shots-live3.
