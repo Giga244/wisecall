@@ -1,0 +1,11 @@
+[
+{"visitors":25,"rps":69,"p50":7,"p95":25,"p99":79,"htmlP95":31,"errors":0,"errorRate":0,"cpuAvg":19,"rssMax":147,"dbMax":10}
+,
+{"visitors":50,"rps":138,"p50":7,"p95":68,"p99":110,"htmlP95":74,"errors":0,"errorRate":0,"cpuAvg":33,"rssMax":148,"dbMax":11}
+,
+{"visitors":75,"rps":197,"p50":14,"p95":187,"p99":447,"htmlP95":280,"errors":0,"errorRate":0,"cpuAvg":43,"rssMax":150,"dbMax":11}
+,
+{"visitors":100,"rps":214,"p50":103,"p95":682,"p99":1498,"htmlP95":1441,"errors":0,"errorRate":0,"cpuAvg":48,"rssMax":155,"dbMax":11}
+,
+{"visitors":150,"rps":213,"p50":277,"p95":2584,"p99":8201,"htmlP95":5101,"errors":0,"errorRate":0,"cpuAvg":48,"rssMax":158,"dbMax":11}
+]

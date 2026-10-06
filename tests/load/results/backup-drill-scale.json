@@ -1,0 +1,16 @@
+{
+ "file": "/home/user/wisecall/backups/wisecall-2026-10-05T23-57-48.dump",
+ "sizeKb": 23569,
+ "backupMs": 2794,
+ "createDbMs": 80,
+ "restoreMs": 4429,
+ "appStartMs": 809,
+ "appStarted": true,
+ "pages": "/=200 /ka/=200 /live=200 /answers=200 /api/experts=200 /u/rehearsal-mentor-3=200",
+ "tables": 64,
+ "rows": 399420,
+ "tablesThatDiffer": [],
+ "ibansDecrypt": "50/50",
+ "invariants": "✅ all 17 invariants hold",
+ "totalMs": 8112
+}
