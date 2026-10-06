@@ -1,0 +1,53 @@
+{
+ "bookings": 40,
+ "callbacks": 120,
+ "wallMs": 991,
+ "byKind": {
+  "genuine": {
+   "n": 100,
+   "p50": 571,
+   "p95": 889,
+   "p99": 965,
+   "max": 965,
+   "statuses": {
+    "200": 100
+   }
+  },
+  "unknown_order": {
+   "n": 10,
+   "p50": 762,
+   "p95": 893,
+   "p99": 893,
+   "max": 893,
+   "statuses": {
+    "200": 10
+   }
+  },
+  "forged": {
+   "n": 10,
+   "p50": 0,
+   "p95": 0,
+   "p99": 0,
+   "max": 0,
+   "statuses": {
+    "400": 10
+   }
+  },
+  "bank_page": {
+   "n": 40,
+   "p50": 280,
+   "p95": 802,
+   "p99": 869,
+   "max": 869,
+   "statuses": {
+    "200": 40
+   }
+  }
+ },
+ "database": {
+  "paid": 40,
+  "pending": 0,
+  "payment_receipts": 40
+ },
+ "ok": true
+}

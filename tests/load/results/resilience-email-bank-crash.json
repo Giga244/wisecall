@@ -1,0 +1,78 @@
+{
+ "email": {
+  "down": {
+   "paymentsPaid": 3,
+   "payWallMs": 80,
+   "signup": {
+    "status": 201,
+    "ms": 1049,
+    "emailSent": false
+   },
+   "forgotPassword": {
+    "status": 200,
+    "ms": 797
+   }
+  },
+  "hang": {
+   "paymentsPaid": 3,
+   "payWallMs": 39,
+   "signup": {
+    "status": 201,
+    "ms": 31132,
+    "emailSent": false
+   },
+   "forgotPassword": {
+    "status": 200,
+    "ms": 30877
+   }
+  },
+  "upstreamStats": {
+   "down": 16,
+   "hang": 22
+  }
+ },
+ "bank": {
+  "askWhileBankTimesOut": {
+   "status": 502,
+   "ms": 20030,
+   "error": "payment_error",
+   "bookingLeftAs": "expired"
+  },
+  "refundWhileBankTimesOut": {
+   "declineStatus": 200,
+   "declineMs": 40048,
+   "afterDecline": {
+    "status": "refund_pending",
+    "refund_error": "fake bank: refund timed out (rehearsal)"
+   },
+   "afterSweepBankError": {
+    "status": "refund_pending",
+    "refund_error": "fake bank: refund timed out (rehearsal)"
+   },
+   "sweepWhileErrorMs": 44,
+   "afterSweepBankUp": {
+    "status": "refunded",
+    "refund_error": null,
+    "refund_receipts": 1
+   },
+   "sweepMs": 55
+  },
+  "slowBank": {
+   "askMs": 3013,
+   "syncMs": 3009
+  }
+ },
+ "crash": {
+  "serverDied": false,
+  "bookingAfterCrash": "pending_payment",
+  "restartMs": 2080,
+  "restartOutput": "Wisecall up on :4300 (plan starter, pid 4067)",
+  "bookingAfterSweep": {
+   "status": "paid",
+   "paid": true,
+   "receipts": 1
+  },
+  "sweepMs": 203,
+  "payPageStatus": 200
+ }
+}

@@ -1,0 +1,165 @@
+browse: 200 visitors for 300s (ramp 30s, think 1000-3000 ms, 20% signed in) against http://localhost:4300
+  t=10s  201 req/s  p95 397 ms  errors 0
+  t=20s  215 req/s  p95 1990 ms  errors 0
+  t=30s  245 req/s  p95 3679 ms  errors 0
+  t=40s  216 req/s  p95 3634 ms  errors 0
+  t=50s  216 req/s  p95 2856 ms  errors 0
+  t=60s  204 req/s  p95 3832 ms  errors 0
+  t=70s  210 req/s  p95 3242 ms  errors 0
+  t=80s  222 req/s  p95 3245 ms  errors 0
+  t=90s  218 req/s  p95 2611 ms  errors 0
+  t=100s  216 req/s  p95 2951 ms  errors 0
+  t=110s  206 req/s  p95 2715 ms  errors 0
+  t=120s  204 req/s  p95 3329 ms  errors 0
+  t=130s  208 req/s  p95 3281 ms  errors 0
+  t=140s  214 req/s  p95 3165 ms  errors 0
+  t=150s  203 req/s  p95 3436 ms  errors 0
+  t=160s  217 req/s  p95 3511 ms  errors 0
+  t=170s  211 req/s  p95 2598 ms  errors 0
+  t=180s  209 req/s  p95 3491 ms  errors 0
+  t=190s  213 req/s  p95 3317 ms  errors 0
+  t=200s  228 req/s  p95 2962 ms  errors 0
+  t=210s  213 req/s  p95 2613 ms  errors 0
+  t=220s  212 req/s  p95 2685 ms  errors 0
+  t=230s  205 req/s  p95 3290 ms  errors 0
+  t=240s  216 req/s  p95 3640 ms  errors 0
+  t=250s  205 req/s  p95 2598 ms  errors 0
+  t=260s  210 req/s  p95 2501 ms  errors 0
+  t=270s  210 req/s  p95 2991 ms  errors 0
+  t=280s  200 req/s  p95 3505 ms  errors 0
+  t=290s  213 req/s  p95 3652 ms  errors 0
+  t=300s  207 req/s  p95 2987 ms  errors 0
+{
+ "base": "http://localhost:4300",
+ "vus": 200,
+ "seconds": 305,
+ "think": [
+  1000,
+  3000
+ ],
+ "rps": 211,
+ "overall": {
+  "n": 57546,
+  "p50": 414,
+  "p95": 3190,
+  "p99": 7926,
+  "max": 13008,
+  "errors5xx": 0,
+  "failed": 0,
+  "timeouts": 0,
+  "other4xx": 0
+ },
+ "html": {
+  "n": 10102,
+  "p50": 428,
+  "p95": 8038,
+  "p99": 8778,
+  "max": 13008,
+  "errors5xx": 0,
+  "failed": 0,
+  "timeouts": 0,
+  "other4xx": 0
+ },
+ "api": {
+  "n": 47156,
+  "p50": 414,
+  "p95": 2198,
+  "p99": 2691,
+  "max": 5763,
+  "errors5xx": 0,
+  "failed": 0,
+  "timeouts": 0,
+  "other4xx": 0
+ },
+ "pages": {
+  "home": {
+   "n": 15500,
+   "p50": 321,
+   "p95": 2106,
+   "p99": 2397,
+   "max": 5405,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "home-ka": {
+   "n": 8982,
+   "p50": 322,
+   "p95": 2094,
+   "p99": 2371,
+   "max": 3904,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "browse": {
+   "n": 5830,
+   "p50": 347,
+   "p95": 2103,
+   "p99": 2366,
+   "max": 3906,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "profile": {
+   "n": 18198,
+   "p50": 608,
+   "p95": 3790,
+   "p99": 4202,
+   "max": 7487,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "live": {
+   "n": 2541,
+   "p50": 78,
+   "p95": 8734,
+   "p99": 10192,
+   "max": 13008,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "live-session": {
+   "n": 2654,
+   "p50": 422,
+   "p95": 2573,
+   "p99": 2875,
+   "max": 4812,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "answers": {
+   "n": 2088,
+   "p50": 79,
+   "p95": 574,
+   "p99": 802,
+   "max": 1105,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "answer": {
+   "n": 1465,
+   "p50": 79,
+   "p95": 957,
+   "p99": 1085,
+   "max": 1466,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  }
+ },
+ "errorKinds": {}
+}

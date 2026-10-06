@@ -1,0 +1,842 @@
+{
+ "slow": [
+  {
+   "statement": "SELECT * FROM live_sessions WHERE id = $N FOR UPDATE",
+   "count": 369,
+   "maxMs": 486.823,
+   "avgMs": 78.7,
+   "firstAt": "2026-10-05 23:45:10.886",
+   "plan": "LockRows  (cost=0.14..8.17 rows=1 width=736) (actual time=0.042..0.043 rows=1 loops=1)\n  Buffers: shared hit=3\n  ->  Index Scan using live_sessions_pkey on live_sessions  (cost=0.14..8.16 rows=1 width=736) (actual time=0.021..0.022 rows=1 loops=1)\n        Index Cond: (id = '998836c3-0961-4315-a5ec-7784728709b9'::uuid)\n        Buffers: shared hit=2\nPlanning:\n  Buffers: shared hit=231\nPlanning Time: 0.485 ms\nExecution Time: 0.098 ms"
+  },
+  {
+   "statement": "SELECT * FROM bookings WHERE id = $N FOR UPDATE",
+   "count": 7,
+   "maxMs": 87.074,
+   "avgMs": 70.8,
+   "firstAt": "2026-10-05 23:43:40.468",
+   "plan": "LockRows  (cost=0.28..8.31 rows=1 width=869) (actual time=0.034..0.035 rows=1 loops=1)\n  Buffers: shared hit=5\n  ->  Index Scan using bookings_pkey on bookings  (cost=0.28..8.30 rows=1 width=869) (actual time=0.023..0.023 rows=1 loops=1)\n        Index Cond: (id = 'c3acaa3e-9e8f-433e-9668-cd793577f66c'::uuid)\n        Buffers: shared hit=3\nPlanning:\n  Buffers: shared hit=273\nPlanning Time: 0.552 ms\nExecution Time: 0.081 ms"
+  }
+ ],
+ "byTotal": [
+  {
+   "calls": 441,
+   "total_ms": 29943,
+   "mean_ms": 67.9,
+   "max_ms": 486.8,
+   "rows": 441,
+   "query": "SELECT * FROM live_sessions WHERE id = $1 FOR UPDATE"
+  },
+  {
+   "calls": 53174,
+   "total_ms": 28757,
+   "mean_ms": 0.54,
+   "max_ms": 8.6,
+   "rows": 958296,
+   "query": "SELECT mentor_id, count(*) FILTER (WHERE status = $2 AND answer_review <> $3) AS answered, -- how long buyers really waited: from payment to the moment they could read the answer avg(EXTRACT($4 FROM (COALESCE(answer_released_at, answered_at) - paid_at))) FILTER (WHERE status = $5 AND answer_review <"
+  },
+  {
+   "calls": 53174,
+   "total_ms": 28124,
+   "mean_ms": 0.53,
+   "max_ms": 6.5,
+   "rows": 958296,
+   "query": "SELECT r.ratee_id, count(*)::int AS n, round(avg(r.stars)::numeric, $2) AS avg FROM ratings r JOIN bookings b ON b.id = r.booking_id WHERE r.direction = $3 AND r.ratee_id = ANY($1::uuid[]) AND r.revealed_at IS NOT NULL AND r.hidden_at IS NULL AND b.status = $4 GROUP BY r.ratee_id"
+  },
+  {
+   "calls": 18045,
+   "total_ms": 8082,
+   "mean_ms": 0.45,
+   "max_ms": 4.5,
+   "rows": 902250,
+   "query": "SELECT * FROM users WHERE users.role IN ($1, $2) AND users.price IS NOT NULL AND users.niche IS NOT NULL AND users.role_title IS NOT NULL AND users.verification_status = $3 AND users.payout_iban_enc IS NOT NULL AND users.deletion_requested_at IS NULL AND users.deleted_at IS NULL AND NOT EXISTS (SELE"
+  },
+  {
+   "calls": 42117,
+   "total_ms": 6980,
+   "mean_ms": 0.17,
+   "max_ms": 5.9,
+   "rows": 4962887,
+   "query": "SELECT * FROM verification_steps WHERE user_id = ANY($1::uuid[])"
+  },
+  {
+   "calls": 158922,
+   "total_ms": 5321,
+   "mean_ms": 0.03,
+   "max_ms": 4.1,
+   "rows": 158922,
+   "query": "SELECT users.*, EXISTS (SELECT $2 FROM verification_steps fs WHERE fs.user_id = users.id AND (fs.status = $3 OR (fs.status = $4 AND fs.expires_at IS NOT NULL AND fs.expires_at < now())) AND (fs.step IN ($5, $6, $7, $8, $9, $10) OR (fs.step = $11 AND users.niche IN ($12, $13, $14, $15, $16, $17, $18,"
+  },
+  {
+   "calls": 21659,
+   "total_ms": 4952,
+   "mean_ms": 0.23,
+   "max_ms": 5.3,
+   "rows": 130111,
+   "query": "SELECT s.*, ((SELECT count(*)::int FROM live_tickets t WHERE t.session_id = s.id AND (t.status IN ($1, $2) OR (t.status = $3 AND t.hold_until > now()))) + (SELECT count(*)::int FROM live_waitlist w WHERE w.session_id = s.id AND w.status = $4 AND w.offer_expires_at > now())) AS taken, (SELECT count(*"
+  },
+  {
+   "calls": 8772,
+   "total_ms": 2743,
+   "mean_ms": 0.31,
+   "max_ms": 4.5,
+   "rows": 233848,
+   "query": "SELECT r.id, r.stars, r.tags, r.review, r.submitted_at, u.id AS uid, u.name, u.color, u.username, u.photo_updated_at, u.profile_visibility, rp.body AS reply, rp.created_at AS reply_at FROM ratings r JOIN bookings b ON b.id = r.booking_id JOIN users u ON u.id = r.rater_id LEFT JOIN review_replies rp "
+  },
+  {
+   "calls": 21133,
+   "total_ms": 2141,
+   "mean_ms": 0.1,
+   "max_ms": 2.5,
+   "rows": 146775,
+   "query": "SELECT pa.id, pa.slug, pa.question_public, pa.answer_public, pa.niche, pa.regulated, pa.published_at, pa.helpful_count, m.name AS mentor_name, m.username AS mentor_username, m.role_title AS mentor_title, m.custom_niche AS mentor_field, m.price AS mentor_price, m.color AS mentor_color, m.photo_update"
+  },
+  {
+   "calls": 26316,
+   "total_ms": 1223,
+   "mean_ms": 0.05,
+   "max_ms": 3.6,
+   "rows": 17544,
+   "query": "SELECT r.ratee_id, r.stars, count(*)::int AS n FROM ratings r JOIN bookings b ON b.id = r.booking_id WHERE r.direction = $1 AND r.ratee_id = ANY($2::uuid[]) AND r.revealed_at IS NOT NULL AND r.hidden_at IS NULL AND b.status = $3 GROUP BY r.ratee_id, r.stars"
+  },
+  {
+   "calls": 26316,
+   "total_ms": 1105,
+   "mean_ms": 0.04,
+   "max_ms": 4.8,
+   "rows": 0,
+   "query": "SELECT r.ratee_id, tag, count(*)::int AS n FROM ratings r JOIN bookings b ON b.id = r.booking_id, unnest(r.tags) AS tag WHERE r.direction = $1 AND r.ratee_id = ANY($2::uuid[]) AND r.revealed_at IS NOT NULL AND r.hidden_at IS NULL AND b.status = $3 GROUP BY r.ratee_id, tag"
+  },
+  {
+   "calls": 8772,
+   "total_ms": 762,
+   "mean_ms": 0.09,
+   "max_ms": 2.8,
+   "rows": 52632,
+   "query": "SELECT pa.id, pa.slug, pa.question_public, pa.answer_public, pa.niche, pa.regulated, pa.published_at, pa.helpful_count, m.name AS mentor_name, m.username AS mentor_username, m.role_title AS mentor_title, m.custom_niche AS mentor_field, m.price AS mentor_price, m.color AS mentor_color, m.photo_update"
+  },
+  {
+   "calls": 2152,
+   "total_ms": 697,
+   "mean_ms": 0.32,
+   "max_ms": 2,
+   "rows": 6456,
+   "query": "SELECT pa.id, pa.slug, pa.question_public, pa.answer_public, pa.niche, pa.regulated, pa.published_at, pa.helpful_count, m.name AS mentor_name, m.username AS mentor_username, m.role_title AS mentor_title, m.custom_niche AS mentor_field, m.price AS mentor_price, m.color AS mentor_color, m.photo_update"
+  },
+  {
+   "calls": 17544,
+   "total_ms": 678,
+   "mean_ms": 0.04,
+   "max_ms": 1.5,
+   "rows": 17544,
+   "query": "SELECT users.*, EXISTS (SELECT $2 FROM verification_steps fs WHERE fs.user_id = users.id AND (fs.status = $3 OR (fs.status = $4 AND fs.expires_at IS NOT NULL AND fs.expires_at < now())) AND (fs.step IN ($5, $6, $7, $8, $9, $10) OR (fs.step = $11 AND users.niche IN ($12, $13, $14, $15, $16, $17, $18,"
+  },
+  {
+   "calls": 24573,
+   "total_ms": 649,
+   "mean_ms": 0.03,
+   "max_ms": 4.4,
+   "rows": 0,
+   "query": "SELECT * FROM profile_items WHERE user_id = ANY($1::uuid[]) AND section = $2 ORDER BY position, created_at"
+  },
+  {
+   "calls": 504,
+   "total_ms": 608,
+   "mean_ms": 1.21,
+   "max_ms": 87.1,
+   "rows": 504,
+   "query": "SELECT * FROM bookings WHERE id = $1 FOR UPDATE"
+  },
+  {
+   "calls": 6528,
+   "total_ms": 518,
+   "mean_ms": 0.08,
+   "max_ms": 2.7,
+   "rows": 27445,
+   "query": "SELECT * FROM users WHERE users.role IN ($2, $3) AND users.price IS NOT NULL AND users.niche IS NOT NULL AND users.role_title IS NOT NULL AND users.verification_status = $4 AND users.payout_iban_enc IS NOT NULL AND users.deletion_requested_at IS NULL AND users.deleted_at IS NULL AND NOT EXISTS (SELE"
+  },
+  {
+   "calls": 6528,
+   "total_ms": 336,
+   "mean_ms": 0.05,
+   "max_ms": 1.1,
+   "rows": 27445,
+   "query": "SELECT name, username, role_title, custom_niche, price FROM users WHERE users.role IN ($2, $3) AND users.price IS NOT NULL AND users.niche IS NOT NULL AND users.role_title IS NOT NULL AND users.verification_status = $4 AND users.payout_iban_enc IS NOT NULL AND users.deletion_requested_at IS NULL AND"
+  },
+  {
+   "calls": 502,
+   "total_ms": 329,
+   "mean_ms": 0.66,
+   "max_ms": 15.1,
+   "rows": 502,
+   "query": "UPDATE threads SET last_message_at = now() WHERE id = $1"
+  },
+  {
+   "calls": 1438,
+   "total_ms": 274,
+   "mean_ms": 0.19,
+   "max_ms": 2.5,
+   "rows": 1438,
+   "query": "SELECT count(*)::int AS n FROM users WHERE users.role IN ($1, $2) AND users.price IS NOT NULL AND users.niche IS NOT NULL AND users.role_title IS NOT NULL AND users.verification_status = $3 AND users.payout_iban_enc IS NOT NULL AND users.deletion_requested_at IS NULL AND users.deleted_at IS NULL AND"
+  }
+ ],
+ "byMean": [
+  {
+   "calls": 441,
+   "mean_ms": 67.9,
+   "max_ms": 486.8,
+   "query": "SELECT * FROM live_sessions WHERE id = $1 FOR UPDATE"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 6.64,
+   "max_ms": 7.1,
+   "query": "WITH b AS (SELECT * FROM bookings WHERE paid_at IS NOT NULL), t AS (SELECT * FROM live_tickets WHERE paid_at IS NOT NULL AND series_order_id IS NULL) SELECT (SELECT COALESCE(sum(amount), $1) FROM receipts WHERE kind = $2 AND (booking_id IS NOT NULL OR ticket_id IS NOT NULL))::bigint AS payments, (SE"
+  },
+  {
+   "calls": 96,
+   "mean_ms": 1.56,
+   "max_ms": 2.6,
+   "query": "SELECT b.* FROM bookings b WHERE b.status = $6 AND b.answer_review IS DISTINCT FROM $7 AND b.answer_review IS DISTINCT FROM $8 AND b.answered_at IS NOT NULL AND COALESCE(b.answer_released_at, b.answered_at) + make_interval(days => $1) <= now() AND COALESCE(b.answer_released_at, b.answered_at) + make"
+  },
+  {
+   "calls": 504,
+   "mean_ms": 1.21,
+   "max_ms": 87.1,
+   "query": "SELECT * FROM bookings WHERE id = $1 FOR UPDATE"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 1.1,
+   "max_ms": 1.4,
+   "query": "SELECT provider_order_id, count(*)::int AS n FROM (SELECT provider_order_id FROM bookings WHERE provider_order_id IS NOT NULL UNION ALL SELECT provider_order_id FROM live_tickets WHERE provider_order_id IS NOT NULL) o GROUP BY 1 HAVING count(*) > $1"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 0.98,
+   "max_ms": 1.1,
+   "query": "SELECT b.id, b.status FROM bookings b WHERE b.paid_at IS NOT NULL AND NOT EXISTS (SELECT $1 FROM receipts r WHERE r.booking_id = b.id AND r.kind = $2)"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 0.89,
+   "max_ms": 1,
+   "query": "SELECT b.id FROM bookings b WHERE b.status = $1 AND b.answer_review IN ($2, $3) AND NOT EXISTS (SELECT $4 FROM payouts p WHERE p.booking_id = b.id)"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 0.86,
+   "max_ms": 0.9,
+   "query": "SELECT b.id, b.mentor_net_amount, p.amount, p.refunded_share FROM payouts p JOIN bookings b ON b.id = p.booking_id WHERE p.status <> $1 AND p.amount + p.refunded_share <> b.mentor_net_amount"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 0.81,
+   "max_ms": 1.1,
+   "query": "SELECT b.id, (SELECT count(*) FROM receipts r WHERE r.booking_id = b.id AND r.kind = $1)::int AS n FROM bookings b WHERE (b.status = $2 AND (SELECT count(*) FROM receipts r WHERE r.booking_id = b.id AND r.kind = $3) <> $4) OR (b.status <> $5 AND b.refunded_amount IS NULL AND EXISTS (SELECT $6 FROM r"
+  },
+  {
+   "calls": 22,
+   "mean_ms": 0.71,
+   "max_ms": 1.3,
+   "query": "SELECT u.id, u.email, u.session_version, s.id AS sid FROM users u JOIN sessions s ON s.user_id = u.id AND s.revoked_at IS NULL WHERE u.email LIKE $1 ORDER BY u.email OFFSET $2 LIMIT $3"
+  },
+  {
+   "calls": 502,
+   "mean_ms": 0.66,
+   "max_ms": 15.1,
+   "query": "UPDATE threads SET last_message_at = now() WHERE id = $1"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 0.62,
+   "max_ms": 0.7,
+   "query": "SELECT booking_id, count(*)::int AS n FROM receipts WHERE kind = $1 AND booking_id IS NOT NULL GROUP BY booking_id HAVING count(*) > $2"
+  },
+  {
+   "calls": 7,
+   "mean_ms": 0.62,
+   "max_ms": 0.8,
+   "query": "SELECT p.id, b.status FROM payouts p JOIN bookings b ON b.id = p.booking_id WHERE b.answered_at IS NULL"
+  },
+  {
+   "calls": 53174,
+   "mean_ms": 0.54,
+   "max_ms": 8.6,
+   "query": "SELECT mentor_id, count(*) FILTER (WHERE status = $2 AND answer_review <> $3) AS answered, -- how long buyers really waited: from payment to the moment they could read the answer avg(EXTRACT($4 FROM (COALESCE(answer_released_at, answered_at) - paid_at))) FILTER (WHERE status = $5 AND answer_review <"
+  },
+  {
+   "calls": 53174,
+   "mean_ms": 0.53,
+   "max_ms": 6.5,
+   "query": "SELECT r.ratee_id, count(*)::int AS n, round(avg(r.stars)::numeric, $2) AS avg FROM ratings r JOIN bookings b ON b.id = r.booking_id WHERE r.direction = $3 AND r.ratee_id = ANY($1::uuid[]) AND r.revealed_at IS NOT NULL AND r.hidden_at IS NULL AND b.status = $4 GROUP BY r.ratee_id"
+  }
+ ],
+ "byCalls": [
+  {
+   "calls": 158922,
+   "mean_ms": 0.033,
+   "query": "SELECT users.*, EXISTS (SELECT $2 FROM verification_steps fs WHERE fs.user_id = users.id AND (fs.status = $3 OR (fs.status = $4 AND fs.expires_at IS NOT NULL AND fs.expires_at < now())) AND (fs.step I"
+  },
+  {
+   "calls": 53174,
+   "mean_ms": 0.541,
+   "query": "SELECT mentor_id, count(*) FILTER (WHERE status = $2 AND answer_review <> $3) AS answered, -- how long buyers really waited: from payment to the moment they could read the answer avg(EXTRACT($4 FROM ("
+  },
+  {
+   "calls": 53174,
+   "mean_ms": 0.529,
+   "query": "SELECT r.ratee_id, count(*)::int AS n, round(avg(r.stars)::numeric, $2) AS avg FROM ratings r JOIN bookings b ON b.id = r.booking_id WHERE r.direction = $3 AND r.ratee_id = ANY($1::uuid[]) AND r.revea"
+  },
+  {
+   "calls": 42117,
+   "mean_ms": 0.166,
+   "query": "SELECT * FROM verification_steps WHERE user_id = ANY($1::uuid[])"
+  },
+  {
+   "calls": 26316,
+   "mean_ms": 0.046,
+   "query": "SELECT r.ratee_id, r.stars, count(*)::int AS n FROM ratings r JOIN bookings b ON b.id = r.booking_id WHERE r.direction = $1 AND r.ratee_id = ANY($2::uuid[]) AND r.revealed_at IS NOT NULL AND r.hidden_"
+  },
+  {
+   "calls": 26316,
+   "mean_ms": 0.004,
+   "query": "SELECT * FROM profile_settings WHERE user_id = $1"
+  },
+  {
+   "calls": 26316,
+   "mean_ms": 0.042,
+   "query": "SELECT r.ratee_id, tag, count(*)::int AS n FROM ratings r JOIN bookings b ON b.id = r.booking_id, unnest(r.tags) AS tag WHERE r.direction = $1 AND r.ratee_id = ANY($2::uuid[]) AND r.revealed_at IS NOT"
+  },
+  {
+   "calls": 26316,
+   "mean_ms": 0.009,
+   "query": "SELECT i.*, EXISTS (SELECT $2 FROM profile_item_images m WHERE m.item_id = i.id) AS has_image FROM profile_items i WHERE i.user_id = $1 ORDER BY i.section, i.position, i.created_at"
+  },
+  {
+   "calls": 24573,
+   "mean_ms": 0.003,
+   "query": "SELECT * FROM profile_settings WHERE user_id = ANY($1::uuid[])"
+  },
+  {
+   "calls": 24573,
+   "mean_ms": 0.026,
+   "query": "SELECT * FROM profile_items WHERE user_id = ANY($1::uuid[]) AND section = $2 ORDER BY position, created_at"
+  },
+  {
+   "calls": 21659,
+   "mean_ms": 0.229,
+   "query": "SELECT s.*, ((SELECT count(*)::int FROM live_tickets t WHERE t.session_id = s.id AND (t.status IN ($1, $2) OR (t.status = $3 AND t.hold_until > now()))) + (SELECT count(*)::int FROM live_waitlist w WH"
+  },
+  {
+   "calls": 21133,
+   "mean_ms": 0.101,
+   "query": "SELECT pa.id, pa.slug, pa.question_public, pa.answer_public, pa.niche, pa.regulated, pa.published_at, pa.helpful_count, m.name AS mentor_name, m.username AS mentor_username, m.role_title AS mentor_tit"
+  },
+  {
+   "calls": 18045,
+   "mean_ms": 0.448,
+   "query": "SELECT * FROM users WHERE users.role IN ($1, $2) AND users.price IS NOT NULL AND users.niche IS NOT NULL AND users.role_title IS NOT NULL AND users.verification_status = $3 AND users.payout_iban_enc I"
+  },
+  {
+   "calls": 17568,
+   "mean_ms": 0.004,
+   "query": "UPDATE ratings r SET revealed_at = now() FROM bookings b WHERE r.booking_id = b.id AND r.revealed_at IS NULL AND ($2::uuid IS NULL OR r.booking_id = $2) AND (COALESCE(b.answer_released_at, b.answered_"
+  },
+  {
+   "calls": 17544,
+   "mean_ms": 0.039,
+   "query": "SELECT users.*, EXISTS (SELECT $2 FROM verification_steps fs WHERE fs.user_id = users.id AND (fs.status = $3 OR (fs.status = $4 AND fs.expires_at IS NOT NULL AND fs.expires_at < now())) AND (fs.step I"
+  }
+ ],
+ "seqScans": [
+  {
+   "table": "bookings",
+   "seq_scan": 55386,
+   "rows_read_by_seq_scans": "111015497",
+   "idx_scan": "2258734",
+   "rows": 2153
+  },
+  {
+   "table": "ratings",
+   "seq_scan": 22691,
+   "rows_read_by_seq_scans": "30241771",
+   "idx_scan": "504914",
+   "rows": 1333
+  },
+  {
+   "table": "verification_steps",
+   "seq_scan": 53149,
+   "rows_read_by_seq_scans": "13924252",
+   "idx_scan": "2377262",
+   "rows": 262
+  },
+  {
+   "table": "users",
+   "seq_scan": 13980,
+   "rows_read_by_seq_scans": "7670257",
+   "idx_scan": "1178490",
+   "rows": 551
+  },
+  {
+   "table": "public_answers",
+   "seq_scan": 2766,
+   "rows_read_by_seq_scans": "825000",
+   "idx_scan": "40349",
+   "rows": 300
+  },
+  {
+   "table": "live_tickets",
+   "seq_scan": 6973,
+   "rows_read_by_seq_scans": "662457",
+   "idx_scan": "348270",
+   "rows": 130
+  },
+  {
+   "table": "rating_reminders",
+   "seq_scan": 117,
+   "rows_read_by_seq_scans": "142200",
+   "idx_scan": "2588",
+   "rows": 1433
+  },
+  {
+   "table": "receipts",
+   "seq_scan": 57,
+   "rows_read_by_seq_scans": "99131",
+   "idx_scan": "1138",
+   "rows": 2325
+  },
+  {
+   "table": "payouts",
+   "seq_scan": 57,
+   "rows_read_by_seq_scans": "94284",
+   "idx_scan": "19218",
+   "rows": 2018
+  },
+  {
+   "table": "sessions",
+   "seq_scan": 26,
+   "rows_read_by_seq_scans": "13222",
+   "idx_scan": "5778",
+   "rows": 551
+  },
+  {
+   "table": "live_sessions",
+   "seq_scan": 157,
+   "rows_read_by_seq_scans": "3076",
+   "idx_scan": "45204",
+   "rows": 22
+  },
+  {
+   "table": "niches",
+   "seq_scan": 9,
+   "rows_read_by_seq_scans": "288",
+   "idx_scan": "36",
+   "rows": 36
+  },
+  {
+   "table": "schema_migrations",
+   "seq_scan": 8,
+   "rows_read_by_seq_scans": "234",
+   "idx_scan": "0",
+   "rows": 39
+  },
+  {
+   "table": "notifications",
+   "seq_scan": 3,
+   "rows_read_by_seq_scans": "0",
+   "idx_scan": "0",
+   "rows": 547
+  },
+  {
+   "table": "mentor_flags",
+   "seq_scan": 3,
+   "rows_read_by_seq_scans": "0",
+   "idx_scan": "0",
+   "rows": 0
+  }
+ ],
+ "fkWithoutIndex": [
+  {
+   "table": "blocked_messages",
+   "column": "thread_id",
+   "refers_to": "threads"
+  },
+  {
+   "table": "bookings",
+   "column": "discount_code_id",
+   "refers_to": "discount_codes"
+  },
+  {
+   "table": "discount_codes",
+   "column": "booking_id",
+   "refers_to": "bookings"
+  },
+  {
+   "table": "discount_codes",
+   "column": "mentor_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "discount_codes",
+   "column": "user_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "disputes",
+   "column": "opened_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "disputes",
+   "column": "resolved_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "interview_slots",
+   "column": "created_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "interview_slots",
+   "column": "decided_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_question_votes",
+   "column": "user_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_questions",
+   "column": "author_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_questions",
+   "column": "ticket_id",
+   "refers_to": "live_tickets"
+  },
+  {
+   "table": "live_ratings",
+   "column": "hidden_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_ratings",
+   "column": "rater_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_ratings",
+   "column": "session_id",
+   "refers_to": "live_sessions"
+  },
+  {
+   "table": "live_replay_purchases",
+   "column": "buyer_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_replays",
+   "column": "deleted_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_reports",
+   "column": "reporter_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_reports",
+   "column": "resolved_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_series_orders",
+   "column": "series_id",
+   "refers_to": "live_series"
+  },
+  {
+   "table": "live_sessions",
+   "column": "reviewed_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_speakers",
+   "column": "user_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "live_waitlist",
+   "column": "user_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "mentor_evidence",
+   "column": "decided_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "mentor_evidence",
+   "column": "document_id",
+   "refers_to": "verification_documents"
+  },
+  {
+   "table": "mentor_flags",
+   "column": "resolved_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "mentor_reports",
+   "column": "booking_id",
+   "refers_to": "bookings"
+  },
+  {
+   "table": "mentor_reports",
+   "column": "reporter_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "mentor_reports",
+   "column": "resolved_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "mentor_requests",
+   "column": "notified_mentor_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "mentor_requests",
+   "column": "user_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "message_reports",
+   "column": "reporter_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "message_reports",
+   "column": "resolved_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "messages",
+   "column": "sender_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "niches",
+   "column": "created_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "notifications",
+   "column": "booking_id",
+   "refers_to": "bookings"
+  },
+  {
+   "table": "notifications",
+   "column": "thread_id",
+   "refers_to": "threads"
+  },
+  {
+   "table": "payout_batches",
+   "column": "paid_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "payout_batches",
+   "column": "rejected_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "payouts",
+   "column": "debt_settled_batch_id",
+   "refers_to": "payout_batches"
+  },
+  {
+   "table": "profile_items",
+   "column": "verified_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "profile_reports",
+   "column": "reporter_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "profile_reports",
+   "column": "resolved_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "profile_settings",
+   "column": "hidden_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "public_answers",
+   "column": "asker_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "public_answers",
+   "column": "reviewed_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "rating_audit",
+   "column": "rating_id",
+   "refers_to": "ratings"
+  },
+  {
+   "table": "ratings",
+   "column": "rater_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "review_replies",
+   "column": "mentor_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "review_reports",
+   "column": "reporter_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "review_reports",
+   "column": "resolved_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "safety_events",
+   "column": "mentor_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "safety_events",
+   "column": "reviewed_by",
+   "refers_to": "users"
+  },
+  {
+   "table": "safety_events",
+   "column": "user_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "thread_reads",
+   "column": "user_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "threads",
+   "column": "assigned_to",
+   "refers_to": "users"
+  },
+  {
+   "table": "verification_audit",
+   "column": "actor_id",
+   "refers_to": "users"
+  },
+  {
+   "table": "verification_steps",
+   "column": "decided_by",
+   "refers_to": "users"
+  }
+ ],
+ "unusedIndexes": [
+  {
+   "table": "payouts",
+   "index": "payouts_pkey",
+   "idx_scan": 0,
+   "size": "88 kB"
+  },
+  {
+   "table": "ratings",
+   "index": "ratings_pkey",
+   "idx_scan": 0,
+   "size": "80 kB"
+  },
+  {
+   "table": "users",
+   "index": "users_email_key",
+   "idx_scan": 0,
+   "size": "64 kB"
+  },
+  {
+   "table": "notifications",
+   "index": "notifications_user_idx",
+   "idx_scan": 0,
+   "size": "48 kB"
+  },
+  {
+   "table": "messages",
+   "index": "messages_thread_idx",
+   "idx_scan": 0,
+   "size": "48 kB"
+  },
+  {
+   "table": "notifications",
+   "index": "notifications_pkey",
+   "idx_scan": 0,
+   "size": "40 kB"
+  },
+  {
+   "table": "messages",
+   "index": "messages_pkey",
+   "idx_scan": 0,
+   "size": "40 kB"
+  },
+  {
+   "table": "payouts",
+   "index": "payouts_mentor_idx",
+   "idx_scan": 0,
+   "size": "40 kB"
+  },
+  {
+   "table": "notifications",
+   "index": "notifications_unread_idx",
+   "idx_scan": 0,
+   "size": "40 kB"
+  },
+  {
+   "table": "threads",
+   "index": "threads_user_idx",
+   "idx_scan": 0,
+   "size": "40 kB"
+  },
+  {
+   "table": "public_answers",
+   "index": "public_answers_pkey",
+   "idx_scan": 0,
+   "size": "32 kB"
+  },
+  {
+   "table": "public_answers",
+   "index": "public_answers_booking_id_key",
+   "idx_scan": 0,
+   "size": "32 kB"
+  },
+  {
+   "table": "verification_steps",
+   "index": "verification_steps_pkey",
+   "idx_scan": 0,
+   "size": "16 kB"
+  },
+  {
+   "table": "schema_migrations",
+   "index": "schema_migrations_pkey",
+   "idx_scan": 0,
+   "size": "16 kB"
+  },
+  {
+   "table": "live_tickets",
+   "index": "live_tickets_buyer_idx",
+   "idx_scan": 0,
+   "size": "16 kB"
+  }
+ ]
+}

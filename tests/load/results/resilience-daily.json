@@ -1,0 +1,53 @@
+{
+ "daily": {
+  "up": {
+   "mentorJoin": {
+    "status": 200,
+    "ms": 31
+   },
+   "buyerJoin": {
+    "status": 200,
+    "ms": 33
+   },
+   "sessionPage": 200
+  },
+  "down": {
+   "mentorJoin": {
+    "status": 500,
+    "ms": 8,
+    "error": "server_error"
+   },
+   "buyerJoin": {
+    "status": 500,
+    "ms": 10,
+    "error": "server_error"
+   },
+   "sessionPage": 200
+  },
+  "hang": {
+   "mentorJoin": {
+    "status": 500,
+    "ms": 10009,
+    "error": "server_error"
+   },
+   "buyerJoin": {
+    "status": 500,
+    "ms": 10009,
+    "error": "server_error"
+   },
+   "sessionPage": 200
+  },
+  "up-again": {
+   "mentorJoin": {
+    "status": 200,
+    "ms": 21
+   },
+   "buyerJoin": {
+    "status": 200,
+    "ms": 23
+   },
+   "sessionPage": 200
+  },
+  "sessionStatusAfter": "live"
+ }
+}

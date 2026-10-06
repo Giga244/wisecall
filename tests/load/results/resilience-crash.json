@@ -1,0 +1,16 @@
+{
+ "crash": {
+  "serverDied": true,
+  "bookingAfterCrash": "pending_payment",
+  "crashLogLine": "[rehearsal] crashing right after the fake bank confirmed mock-c67702a2-cc9d-4c1d-8738-dce6650d020b",
+  "restartMs": 1559,
+  "restartOutput": "Wisecall up on :4300 (plan starter, pid 4145)",
+  "bookingAfterSweep": {
+   "status": "paid",
+   "paid": true,
+   "receipts": 1
+  },
+  "sweepMs": 232,
+  "payPageStatus": 200
+ }
+}

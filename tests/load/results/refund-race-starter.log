@@ -1,0 +1,48 @@
+{
+ "k": 10,
+ "wallMs": 1386,
+ "A_answer_vs_decline": {
+  "responses": {
+   "answer 400 not_paid": 10,
+   "decline 200": 10
+  },
+  "outcomes": {
+   "refunded+refund_receipt": 10
+  },
+  "inconsistent": []
+ },
+ "B_answer_vs_deadline_sweep": {
+  "responses": {
+   "answer 200": 4,
+   "answer 409 deadline_passed": 6,
+   "sweep 200": 1
+  },
+  "outcomes": {
+   "answered+payout:pending": 4,
+   "refunded+refund_receipt": 6
+  },
+  "inconsistent": []
+ },
+ "C_decline_vs_callbacks_and_syncs": {
+  "responses": {
+   "sync 200": 30,
+   "callback 200": 30,
+   "decline 200": 10
+  },
+  "latency": {
+   "n": 70,
+   "p50": 492,
+   "p95": 910,
+   "p99": 984,
+   "max": 984,
+   "statuses": {
+    "200": 70
+   }
+  },
+  "outcomes": {
+   "refunded+refund_receipt": 10
+  },
+  "inconsistent": []
+ },
+ "ok": true
+}

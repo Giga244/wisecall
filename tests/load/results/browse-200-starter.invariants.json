@@ -1,0 +1,15 @@
+{
+ "violations": [],
+ "ledger": {
+  "payments": 10395400,
+  "refunds": 0,
+  "fees": 2079080,
+  "payouts": 8300000,
+  "held": 16320,
+  "refunding": 0,
+  "left": 8316320,
+  "right": 8316320,
+  "debtOwedBack": 0,
+  "diff": 0
+ }
+}

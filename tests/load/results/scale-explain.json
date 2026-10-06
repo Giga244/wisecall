@@ -1,0 +1,9 @@
+{
+ "mentorStatsFor: ratings (every /api/experts and profile view)": 43.854,
+ "mentorStatsFor: answered count + average wait (every /api/experts and profile view)": 30.337,
+ "mentorStatsFor for ONE mentor (a profile page)": 1.908,
+ "a mentor's dashboard (/api/bookings/mine, received)": 0.807,
+ "admin overview money line": 32.057,
+ "mentor balance (ledger.balanceFor)": 2.269,
+ "/api/experts list (listable mentors)": 0.369
+}
