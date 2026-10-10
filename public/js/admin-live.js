@@ -80,6 +80,13 @@
         <button type="submit" class="btn btn-outline btn-sm">${esc(t('admin.live.allowHost'))}</button></form>
       <p class="muted small">${esc(t('admin.live.hostsHelp'))}</p>`;
 
+    if (d.switchedOff) { // (LIVE_SESSIONS=off: what there is can be read, nothing can be changed; the server refuses it too)
+      container.querySelectorAll('.payout-pay, .lv-end, .lv-del-replay').forEach((el) => el.remove());
+      container.querySelectorAll('input, textarea').forEach((el) => { el.readOnly = true; });
+      container.insertAdjacentHTML('afterbegin', `<p class="launch-banner launch-banner-admin" role="status">${esc(t('admin.live.switchedOff'))}</p>`);
+      return;
+    }
+
     const post = async (path, body, okKey) => {
       try { await WisecallAPI.apiFetch(path, { method: 'POST', body }); WisecallNav.showToast(t(okKey || 'toast.saved')); render(container); }
       catch (e) { WisecallNav.showToast(t({ reason_required: 'admin.mv.reasonRequired', video_unavailable: 'admin.live.videoDown', not_found: 'admin.live.notFound' }[e.code] || 'toast.error')); }

@@ -169,6 +169,8 @@ const liveFail = (res, e) => {
   if (!(e instanceof require('../live/sessions').LiveError)) throw e;
   res.status(LIVE_STATUS[e.code] || 400).json({ error: e.code });
 };
+// Live sessions switched off (LIVE_SESSIONS=off): the tab stays, read-only. Every action on a session, a report, a rating or a host is refused.
+router.post(/^\/live\//, requireAuth, requireAdmin, (req, res, next) => (config.LIVE_ENABLED ? next() : res.status(409).json({ error: 'live_off' })));
 router.get('/live', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const sessions = require('../live/sessions');
@@ -182,7 +184,7 @@ router.get('/live', requireAuth, requireAdmin, asyncHandler(async (req, res) => 
   const view = (s) => ({ ...sessions.ownerView(s), mentor: { id: s.mentor_id, name: s.mentor_name, email: s.mentor_email }, openReports: s.open_reports,
     cancelReason: s.cancel_reason, endKind: s.end_kind, mentorMinutes: Math.round(s.mentor_seconds / 60) });
   res.json({ sessions: rows.map(view), reports: await require('../live/reports').listOpen(), totals: await require('../live/analytics').forAdmin(),
-    ratings: await require('../live/after').recentForAdmin() });
+    ratings: await require('../live/after').recentForAdmin(), switchedOff: !config.LIVE_ENABLED });
 }));
 // Deletes a session's replay (passes still running are refunded). Logged with the reason.
 router.post('/live/:id/replay/delete', requireAuth, requireAdmin, asyncHandler(async (req, res) => {

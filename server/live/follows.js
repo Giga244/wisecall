@@ -43,6 +43,7 @@ async function unfollowByToken(token) {
 
 // A session went public: each follower is emailed, unless this mentor already emailed them in the last 7 days.
 async function notifyFollowers(session) {
+  if (!config.LIVE_ENABLED) return 0; // (live sessions switched off: no "new session" emails)
   const { rowCount } = await query(`UPDATE live_sessions SET followers_notified_at = now() WHERE id = $1 AND followers_notified_at IS NULL`, [session.id]);
   if (!rowCount) return 0;
   const mentor = await getUserById(session.mentor_id);

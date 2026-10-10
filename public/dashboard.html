@@ -49,7 +49,9 @@
     <button type="button" class="tab" role="tab" id="tab-asked" aria-controls="panel-asked" data-tab="asked" data-i18n="dash.tab.asked">My questions</button>
     <button type="button" class="tab" role="tab" id="tab-received" aria-controls="panel-received" data-tab="received" hidden><span data-i18n="dash.tab.received">Questions for me</span> <span class="tab-count" id="receivedCount" hidden></span></button>
     <button type="button" class="tab" role="tab" id="tab-earnings" aria-controls="panel-earnings" data-tab="earnings" hidden data-i18n="dash.tab.earnings">Earnings</button>
+    <!-- live -->
     <button type="button" class="tab" role="tab" id="tab-live" aria-controls="panel-live" data-tab="live" data-i18n="dash.tab.live">Live sessions</button>
+    <!-- /live -->
   </div>
 
   <div class="tab-panel" role="tabpanel" id="panel-asked" aria-labelledby="tab-asked" data-panel="asked">
@@ -62,9 +64,11 @@
   <div class="tab-panel" role="tabpanel" id="panel-earnings" aria-labelledby="tab-earnings" data-panel="earnings" hidden>
     <div id="earnings"></div>
   </div>
+  <!-- live -->
   <div class="tab-panel" role="tabpanel" id="panel-live" aria-labelledby="tab-live" data-panel="live" hidden>
     <div id="liveBox" aria-live="polite"></div>
   </div>
+  <!-- /live -->
 </main>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -79,7 +83,7 @@
 <script src="/js/ratings.js"></script>
 <script src="/js/balance.js"></script>
 <script src="/js/public-answers.js"></script>
-<script src="/js/live-dashboard.js"></script>
+<!-- live --><script src="/js/live-dashboard.js"></script><!-- /live -->
 <script src="/js/dashboard.js"></script>
 </body>
 </html>

@@ -28,6 +28,9 @@ services:
         value: production
       - key: LAUNCH_MODE
         value: prelaunch
+      # Live sessions stay switched off at launch (no page, link or email about them); "on" turns them on, nothing else changes.
+      - key: LIVE_SESSIONS
+        value: "off"
       - key: DATABASE_URL
         fromDatabase:
           name: wisecall-db

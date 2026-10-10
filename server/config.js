@@ -159,6 +159,9 @@ const config = {
   // Where visitors come from (server/attribution.js): the wc_src cookie with the campaign of the first visit. "off" stops setting it.
   ATTRIBUTION_COOKIE: String(env.ATTRIBUTION_COOKIE || 'on').trim().toLowerCase() !== 'off',
 
+  // Live sessions on or off for everybody (server/live/switch.js). Off (the default in production): no page, link, text, email or API of
+  // live sessions exists for users, and admins see a read-only Live tab; the code and the data stay. LIVE_SESSIONS=on turns them on.
+  LIVE_SESSIONS: String(env.LIVE_SESSIONS || (IS_PROD ? 'off' : 'on')).trim().toLowerCase(),
   // Live sessions (server/live/, docs/LIVE-SESSIONS-PLAN.md): the video service (daily, or fake outside production), its key, the most
   // people in one session, how long a seat is held while the buyer pays, and how far ahead a session must be published.
   LIVE_PROVIDER: (env.LIVE_PROVIDER || (IS_PROD ? '' : 'fake')).trim().toLowerCase(),
@@ -224,6 +227,7 @@ config.AUTO_APPROVE = config.AUTO_APPROVE_SETTING === 'on';
 config.AI_REVIEW_ENABLED = Boolean(config.ANTHROPIC_API_KEY);
 config.GOOGLE_ENABLED = Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET);
 config.TURNSTILE_ENABLED = Boolean(config.TURNSTILE_SITE_KEY && config.TURNSTILE_SECRET_KEY);
+config.LIVE_ENABLED = config.LIVE_SESSIONS === 'on';
 config.GOOGLE_CALLBACK_URL = `${config.PUBLIC_URL}/api/auth/google/callback`; // must be listed in Google Cloud Console
 
 config.EMAIL_ENABLED = (() => {
@@ -239,6 +243,7 @@ const problems = [];
 if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresql://user:pass@localhost:5432/wisecall)');
 if (!['resend', 'postmark', 'log'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend, postmark or log');
 if (config.PLATFORM_FEE_PERCENT < 0 || config.PLATFORM_FEE_PERCENT >= 100) problems.push('PLATFORM_FEE_PERCENT must be between 0 and 99');
+if (!['on', 'off'].includes(config.LIVE_SESSIONS)) problems.push('LIVE_SESSIONS must be on or off');
 if (config.LIVE_PROVIDER === 'fake' && IS_PROD) problems.push('LIVE_PROVIDER=fake is for development only (use daily, or leave it empty)');
 if (config.LIVE_PROVIDER && !['daily', 'fake'].includes(config.LIVE_PROVIDER)) problems.push('LIVE_PROVIDER must be daily or fake (or empty)');
 if (config.LIVE_MAX_PARTICIPANTS < 2 || config.LIVE_MAX_PARTICIPANTS > 200) problems.push('LIVE_MAX_PARTICIPANTS must be between 2 and 200');

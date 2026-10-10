@@ -17,6 +17,7 @@ app.disable('x-powered-by');
 app.use(securityHeaders);
 app.use(require('compression')()); // the pages, scripts, styles and JSON are text: about a quarter of the size on the wire
 app.use(requestLogger);
+app.use(require('./live/switch').gate); // (live sessions switched off: their pages and API do not exist, see server/live/switch.js)
 
 // Health check for the hosting platform: also proves the database is reachable.
 app.get('/healthz', async (req, res) => {
@@ -244,6 +245,8 @@ app.get('/api/config', async (req, res) => {
     // The seller's legal details for the footer (each only when set), and whether card logos belong there (only once payments are open).
     legal: { name: config.LEGAL_NAME || null, id: config.LEGAL_ID || null, address: config.LEGAL_ADDRESS || null },
     paymentsLive: config.PAYMENTS_ENABLED && config.LAUNCH_MODE !== 'prelaunch',
+    // Live sessions on or off (LIVE_SESSIONS): off hides every link, section and text about them.
+    liveSessions: config.LIVE_ENABLED,
     founder: config.FOUNDER.name ? config.FOUNDER : null,
     answerDeadlineDays: config.ANSWER_DEADLINE_DAYS,
     unpaidAttemptDays: config.UNPAID_ATTEMPT_DAYS,
@@ -311,6 +314,7 @@ async function start() {
     console.log(config.LAUNCH_MODE === 'prelaunch'
       ? `Launch mode: PRELAUNCH (${how}). Nobody can pay yet; visitors join the waiting list and mentors can apply and be verified. It opens when the first mentor is listed, or set LAUNCH_MODE=live.`
       : `Launch mode: live (${how}).`);
+    console.log(config.LIVE_ENABLED ? 'Live sessions: on (LIVE_SESSIONS=on).' : 'Live sessions: OFF (LIVE_SESSIONS): users see no page, link or email about them; admins see a read-only Live tab. LIVE_SESSIONS=on turns them on.');
     console.log(config.GOOGLE_ENABLED
       ? `Google sign-in: on (add ${config.GOOGLE_CALLBACK_URL} as an authorised redirect URI in Google Cloud Console).`
       : 'Google sign-in: off (set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to show "Continue with Google").');

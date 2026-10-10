@@ -29,6 +29,8 @@
   const devMode = () => Boolean(loadedConfig.devMode);
   // False while the site runs without its ID-check provider (before launch): the ID-check step then says "ID checks open soon".
   const idChecksOpen = () => loadedConfig.idChecksOpen !== false;
+  // Live sessions switched on (LIVE_SESSIONS=on). Until the server says so, nothing about them is shown.
+  const liveSessions = () => loadedConfig.liveSessions === true;
 
   // Texts may contain {answerDays}, {feePct}, {sharePct}, {priceMin} and {priceMax}; they are filled in
   // from the server's settings so the page never disagrees with what the server really does.
@@ -173,5 +175,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, ready, niches, nicheName, fieldName, formatDate, path };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, nicheName, fieldName, formatDate, path };
 })();

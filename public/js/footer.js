@@ -34,7 +34,7 @@
             <li><a href="/how-we-verify.html" data-i18n="hv.title">How we verify mentors</a></li>
             <li><a href="/help.html" data-i18n="help.title">Help centre</a></li>
             <li><a href="/answers" data-i18n="answers.title">Real answers</a></li>
-            <li><a href="/live" data-i18n="live.title">Live sessions</a></li>
+            <li id="footerLive" hidden><a href="/live" data-i18n="live.title">Live sessions</a></li>
           </ul>
         </nav>
         <nav class="footer-col" aria-labelledby="footLegal">
@@ -85,6 +85,7 @@
     if (parts.length) { const el = f.querySelector('#footerLegal'); el.textContent = parts.join(' · '); el.hidden = false; }
     // Card logos only once real payments are open.
     f.querySelector('#footerPay').hidden = !cfg.paymentsLive;
+    f.querySelector('#footerLive').hidden = !cfg.liveSessions; // (only while live sessions are switched on)
     if (cfg.contactEmail) {
       const link = f.querySelector('#footerContactLink');
       link.href = 'mailto:' + cfg.contactEmail;

@@ -38,8 +38,8 @@ function warnings() {
   } else if (!config.TURNSTILE_ENABLED && config.IS_PROD) {
     list.push('TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are not set: sign-up, login and the public forms have no "are you a person?" check (only rate limits). Add both from Cloudflare (Turnstile).');
   }
-  // Live sessions need a video service; without one, mentors can write sessions but not publish them.
-  if (config.IS_PROD && !(config.LIVE_PROVIDER === 'daily' && config.DAILY_API_KEY)) {
+  // Live sessions need a video service; without one, mentors can write sessions but not publish them. (Switched off: nothing to warn about.)
+  if (config.LIVE_ENABLED && config.IS_PROD && !(config.LIVE_PROVIDER === 'daily' && config.DAILY_API_KEY)) {
     list.push('LIVE VIDEO IS OFF: set LIVE_PROVIDER=daily and DAILY_API_KEY (from the Daily.co dashboard) so mentors can publish live sessions.');
   }
   // Before launch the site can run without the bank and the ID-check provider: say plainly what is closed, and why it does not open by itself.

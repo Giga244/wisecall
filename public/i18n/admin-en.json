@@ -575,6 +575,7 @@
   "admin.live.upcoming": "Upcoming and live now",
   "admin.live.past": "Last 30 days",
   "admin.live.none": "None.",
+  "admin.live.switchedOff": "Live sessions are switched off (LIVE_SESSIONS=off): users see no page, link or email about them, and nothing here can be changed. Set LIVE_SESSIONS=on to turn them on.",
   "admin.live.end": "End now",
   "admin.live.endConfirm": "End this session at once? Everybody is refunded in full, and it is in the audit log.",
   "admin.live.endReason": "Ended by an admin for safety.",

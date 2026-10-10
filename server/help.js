@@ -73,8 +73,10 @@ function load() {
 // so an edited article shows at once while writing it).
 function articles(lang) {
   if (!cache || process.env.NODE_ENV !== 'production') cache = load();
-  return cache[lang === 'ka' ? 'ka' : 'en'];
+  const list = cache[lang === 'ka' ? 'ka' : 'en'];
+  return require('./config').LIVE_ENABLED ? list : list.filter((a) => !LIVE_ONLY.has(a.slug)); // (live sessions switched off: not a word about them)
 }
+const LIVE_ONLY = new Set(['live-sessions']);
 const article = (lang, slug) => articles(lang).find((a) => a.slug === slug) || null;
 
 module.exports = { articles, article, render };

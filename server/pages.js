@@ -25,6 +25,7 @@ function readPage(file) {
   if (html !== null) {
     html = html.replace('</head>', () => fs.readFileSync(HEAD_TAGS, 'utf8') + '</head>');
     html = assets.rewrite(html); // every stylesheet, script, logo, icon and font address gets ?v=<hash of the file> (see assets.js)
+    html = require('./live/switch').stripLive(html); // (the live-sessions parts, only while they are switched on)
   }
   if (config.IS_PROD) cache.set(file, html);
   return html;
@@ -906,7 +907,7 @@ function seoRoutes() {
       // Published answers (only those: a withdrawn one is gone).
       const answers = config.LAUNCH_MODE === 'prelaunch' ? [] : await require('./publicAnswers').sitemapSlugs();
       // Live sessions people can still join (the list and each session).
-      const live = (await query(`SELECT s.slug, s.updated_at FROM live_sessions s WHERE s.status IN ('published', 'live') AND s.starts_at > now() - interval '2 hours'
+      const live = !config.LIVE_ENABLED ? [] : (await query(`SELECT s.slug, s.updated_at FROM live_sessions s WHERE s.status IN ('published', 'live') AND s.starts_at > now() - interval '2 hours'
                                      AND EXISTS (SELECT 1 FROM users u WHERE u.id = s.mentor_id AND ${listableSql('u')}) ORDER BY s.starts_at LIMIT 1000`)).rows;
       // Each page in both languages, each naming the other (and Georgian as the default).
       const both = (p, extra) => {

@@ -50,6 +50,7 @@
   const expert = { ...answer.profile, ...(answer.profile.mentor || {}) };
   const isMentor = Boolean(answer.profile.isMentor);
   const isSelf = Boolean(user && user.id === expert.id);
+  const liveOn = WisecallI18n.liveSessions(); // (live sessions switched on: their section and the Follow button)
   // ---- Phones: the question box is a bottom sheet, opened from a bar fixed to the bottom of the screen ----------
   // One element holds the box (askArea); it sits in the side panel on tablets and desktops and in the sheet on phones.
   const phone = window.matchMedia('(max-width: 639px)');
@@ -158,7 +159,7 @@
             </div>
           </div>
           ${isMentor && expert.username ? `<p class="profile-share">${WisecallCopy.button(location.origin + location.pathname)}</p>` : ''}
-          ${isMentor && !isSelf ? '<div class="profile-follow" id="profileFollow"></div>' : ''}
+          ${isMentor && !isSelf && liveOn ? '<div class="profile-follow" id="profileFollow"></div>' : ''}
           ${isSelf ? `<p class="profile-self small"><a class="btn btn-outline btn-sm" href="/settings.html?tab=profile">${t('profile.edit')}</a> ${expert.visibility === 'contacts' ? `<span class="muted">${t('profile.visibleToContacts')}</span>` : ''}</p>` : ''}
           ${detailsHtml()}
           ${isMentor ? `<dl class="profile-stats">
@@ -179,7 +180,7 @@
 
         ${isMentor && (expert.badges || []).length ? `<section class="profile-section profile-checks" aria-labelledby="checksTitle"><h2 id="checksTitle">${t('expert.checks')}</h2>${WisecallBadges.full(expert.badges)}<p class="muted small" style="margin:10px 0 0">${t('expert.checksNote')} <a href="/how-we-verify.html">${t('hv.title')}</a></p></section>` : ''}
 
-        ${isMentor ? `<section class="profile-section profile-live" aria-labelledby="liveTitle" id="profileLive" hidden>
+        ${isMentor && liveOn ? `<section class="profile-section profile-live" aria-labelledby="liveTitle" id="profileLive" hidden>
           <h2 id="liveTitle">${t('live.title')}</h2>
           <div id="profileLiveBody"></div>
         </section>` : ''}
@@ -243,6 +244,7 @@
   // ---- Reviews ------------------------------------------------------------------------------------------------
   // This mentor's upcoming live sessions (shown only when there are some).
   async function loadLive() {
+    if (!liveOn) return; // (live sessions switched off)
     let d;
     let r = null;
     try {
