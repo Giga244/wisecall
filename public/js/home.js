@@ -20,7 +20,36 @@
       (all.length > STRIP_FIRST ? `<li><button type="button" class="niche-chip niche-more" aria-expanded="${stripOpen}">${esc(stripOpen ? t('home.fields.less') : t('home.fields.more').replace('{n}', all.length))}</button></li>` : '');
     const more = list.querySelector('.niche-more');
     if (more) more.addEventListener('click', () => { stripOpen = !stripOpen; drawStrip(); list.querySelector('.niche-more').focus(); });
+    drawHero();
   }
+
+  // The hero: the first few fields as chips, and the band of field names that scrolls by (the list twice, so the loop has no seam;
+  // the band is decoration, hidden from screen readers: the same fields are links in the strip and in Browse experts).
+  const HERO_CHIPS = 5;
+  function drawHero() {
+    const all = WisecallI18n.niches();
+    const chips = document.getElementById('heroChips');
+    if (chips) chips.innerHTML = all.slice(0, HERO_CHIPS).map((n) => `<li><a class="chip" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${esc(t('niche.' + n.key))}</a></li>`).join('');
+    const track = document.getElementById('marqueeTrack');
+    if (track && all.length) {
+      const one = `<span class="marquee-set">${all.map((n) => `<span>${esc(t('niche.' + n.key))}</span><span class="marquee-star">✳</span>`).join('')}</span>`;
+      track.innerHTML = one + one;
+    }
+  }
+
+  // The hero's search: the words go into Browse experts' own search, and the page scrolls there (before launch, to the waiting list).
+  function initHeroSearch() {
+    const form = document.getElementById('heroSearch');
+    if (!form) return;
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const q = form.q.value.trim();
+      const box = document.getElementById('searchInput');
+      if (box && q && WisecallI18n.launchMode() !== 'prelaunch') { box.value = q; box.dispatchEvent(new Event('input', { bubbles: true })); }
+      document.getElementById('experts').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+  }
+  initHeroSearch();
 
   // ---- FAQ accordion: buttons with aria-expanded, arrow keys move between questions --------------------------
   function toggleFaq(btn, open) {
@@ -47,8 +76,8 @@
   // A soft illustration for the empty list: two speech bubbles and a spark. Decorative only.
   const EMPTY_ART = `
     <svg class="empty-art" viewBox="0 0 220 150" aria-hidden="true">
-      <circle cx="46" cy="118" r="22" style="fill:var(--blob-sun)"/>
-      <circle cx="188" cy="30" r="14" style="fill:var(--blob-mint)"/>
+      <circle cx="46" cy="118" r="22" style="fill:var(--c-sun)"/>
+      <circle cx="188" cy="30" r="14" style="fill:var(--c-mint)"/>
       <rect x="18" y="20" width="120" height="70" rx="22" style="fill:var(--accent)"/>
       <path d="M44 88 Q40 108 26 116 Q56 114 66 90 Z" style="fill:var(--accent)"/>
       <circle cx="54" cy="55" r="7" style="fill:var(--on-accent)"/><circle cx="78" cy="55" r="7" style="fill:var(--on-accent)"/><circle cx="102" cy="55" r="7" style="fill:var(--on-accent)"/>
@@ -142,7 +171,7 @@
           <p class="live-card-meta small"><span class="live-kind">${esc(t('live.kind.' + s.kind))}</span> · ${esc(when(s.startsAt))}</p>
           <h3 class="live-card-title"><a class="plain-link" href="${prefix}/live/${encodeURIComponent(s.slug)}">${esc(s.title)}</a></h3>
           <p class="muted small">${esc(s.mentor ? s.mentor.name : '')}</p>
-          <p class="live-card-foot"><strong>${esc(WisecallAPI.formatAmount(s.priceNow))}</strong></p>
+          <p class="live-card-foot"><strong class="price">${esc(WisecallAPI.formatAmount(s.priceNow))}</strong></p>
         </div>
       </article>`).join('');
     box.hidden = false;

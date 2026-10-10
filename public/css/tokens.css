@@ -1,0 +1,192 @@
+/* Wisecall design tokens: "Ink & Paper". Loaded first by every page (before style.css, app.css, home.css), which only use these
+   variables: no colour, font, radius or shadow is written anywhere else (npm run check:colors, check:contrast).
+   Colours: ink, paper, white, coral (fills and accents only: text on coral is always ink), coral-text (a large headline accent only),
+   mint, sun, blush, and a muted ink for secondary text; the values are below. Type: Bricolage Grotesque for headings,
+   prices and numerals, Onest for everything else; Georgian text uses Noto Sans Georgian in both roles (:lang(ka) below).
+   Signature: 2px ink outlines, generous radii, an offset shadow under primary actions, pill chips, dashed "stamps". No gradients, no blur. */
+
+/* ---- Fonts: served from this site (font-src 'self'), latin subsets of variable fonts, shown at once in a fallback (swap) ----------- */
+@font-face { font-family: 'Bricolage Grotesque'; font-style: normal; font-weight: 200 800; font-display: swap; src: url('/fonts/bricolage-grotesque-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Onest'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/fonts/onest-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Noto Sans Georgian'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/fonts/noto-sans-georgian.woff2') format('woff2'); unicode-range: U+0589, U+10A0-10FF, U+1C90-1CBA, U+1CBD-1CBF, U+205A, U+2D00-2D2F, U+2E31; }
+/* (the lari sign and the other currency signs come from Noto's small latin-ext file, so prices never fall back to a system font) */
+@font-face { font-family: 'Noto Sans Georgian'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/fonts/noto-sans-georgian-latin-ext.woff2') format('woff2'); unicode-range: U+20A0-20C0; }
+
+:root {
+  color-scheme: light;
+  /* ---- The palette (the same in both themes: decoration, pastel "stickers", the coral) ---- */
+  --c-ink: #1e1a31;
+  --c-paper: #f4f2ee;
+  --c-white: #ffffff;
+  --c-coral: #ff6f59;
+  --c-coral-text: #e04a33;     /* a large headline accent only (3:1 is enough from 24px) */
+  --c-mint: #ddf3ea;
+  --c-sun: #ffe7a3;
+  --c-blush: #ffd3cb;
+  --c-lav: #e6e1f7;
+  --c-green: #1b7f5f;          /* the small "verified" dot on a mint pill */
+  --c-mint-ink: #2e4a40;       /* small labels on mint */
+  --c-muted: #4e4963;
+  --c-muted-2: #6b6680;        /* only at 14px bold or larger */
+  --on-pastel: #1e1a31;        /* text on coral, mint, sun, blush and lavender: always ink */
+  --sticker: #ffffff;          /* the white "sticker" among the pastels (pale lavender in the dark) */
+
+  /* ---- Roles ---- */
+  --ink: #1e1a31;              /* text */
+  --ink-soft: #4e4963;         /* muted text */
+  --bg: #f4f2ee;               /* the page: paper */
+  --card: #ffffff;             /* cards and panels */
+  --raised: #ffffff;           /* menus, sheets, popovers */
+  --field: #ffffff;            /* the inside of form fields */
+  --line: #1e1a31;             /* the signature 2px outline of cards, buttons and fields */
+  --border: #d8d3c8;           /* quiet dividers inside a card */
+  --field-border: #1e1a31;     /* the outline of a form field (3:1 against the surface, WCAG 1.4.11) */
+  --border-strong: #1e1a31;    /* emphasised outlines */
+  --navy: #1e1a31;             /* the ink bands (Live sessions, the waitlist panel) */
+  --on-navy: #f4f2ee;
+  --on-navy-soft: #c9c5d6;
+  --navy-card: #2b2643;        /* a card on an ink band */
+  --inverse: #1e1a31;          /* small "reversed" pieces: the active chip or tab, tooltips, toasts */
+  --on-inverse: #f4f2ee;
+  --white: #ffffff;            /* white that stays white in both themes (avatar initials) */
+  --accent: #ff6f59;           /* coral (fills and decoration) */
+  --accent-dark: #e04a33;
+  --mint: #ddf3ea;
+  --sun: #ffe7a3;
+  --blush: #ffd3cb;
+  --on-sun: #1e1a31;
+  --accent-strong: #ff6f59;    /* the primary button: a coral fill with ink text */
+  --accent-strong-hover: #ff8471;
+  --on-accent: #1e1a31;
+  --accent-text: #b5361f;      /* coral text and links at body size */
+  --headline-accent: #e04a33;  /* the coral words of a big headline */
+  --focus: #d43f28;            /* the focus ring: coral, 3:1 against paper and white */
+  --accent2: #3db88e;
+  --accent2-strong: #1b7f5f;   /* green fills that carry --on-accent2 text */
+  --on-accent2: #ffffff;
+  --accent2-text: #1f6f56;     /* green text */
+  --accent2-light: #6fd4b0;
+  --live: #ff6f59;             /* the pulsing "live" dot */
+  --gold: #f4a93b;
+  --gold-text: #8f5400;        /* star ratings */
+  --red: #d1567e;
+  --red-strong: #a12f52;       /* error text */
+  --danger-bg: #a12f52;  --on-danger: #ffffff;  /* a button for an action that cannot be undone */
+  --print-ink: #000000;  --print-paper: #ffffff;  /* what is printed on paper (both themes) */
+  /* Soft fills for badges, banners and icon tiles, each with the text colour that goes on it */
+  --mint-soft: #ddf3ea;  --mint-line: #9fd6c0;  --mint-banner-ink: #17563f;
+  --sun-soft: #ffe7a3;   --sun-tint: #fff6dc;   --sun-ink: #6b430a;
+  --pink-soft: #ffd3cb;  --pink-ink: #7f1f3d;
+  --lav-soft: #e6e1f7;   --gray-soft: #e9e5dc;
+  --coral-soft: #ffd3cb; --coral-tint: #fff4f1;
+  --skeleton-a: #e9e5dc; --skeleton-b: #f7f5f1;
+  --connector: #1e1a31;  --dot: #b9b3c6;        --grip: #c9c4d4;
+  --pw-2: #d9822b;       --pw-3: #b39a1a;
+  --header-bg: #f4f2ee;
+  --scrim: rgba(30, 26, 49, 0.55);
+  --shadow-rgb: 30, 26, 49;
+  --accent-rgb: 255, 111, 89;
+  --accent2-rgb: 61, 184, 142;
+  --on-accent-rgb: 30, 26, 49;
+  --on-navy-rgb: 244, 242, 238;
+  /* Google's sign-in button (Google's own light and dark button colours) */
+  --gbtn-bg: #ffffff; --gbtn-border: #747775; --gbtn-ink: #1f1f1f; --gbtn-hover: #f0f0f0; --gbtn-active: #e6e6e6; --gbtn-shadow: rgba(60, 64, 67, 0.3);
+
+  /* ---- Type ---- */
+  --font-display: 'Bricolage Grotesque', 'Noto Sans Georgian', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Onest', 'Noto Sans Georgian', ui-sans-serif, system-ui, sans-serif;
+  --tracking-display: -0.02em;
+  --tracking-label: 0.08em;
+  --fs-hero: clamp(2.6rem, 5.6vw + 0.6rem, 5.4rem);
+  --fs-h1: clamp(2.1rem, 3.2vw + 0.9rem, 3.4rem);
+  --fs-h2: clamp(1.9rem, 2.8vw + 0.8rem, 3.6rem);
+  --fs-h3: 1.35rem;
+
+  /* ---- Space: 4 8 12 16 24 32 48 72 110 ---- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 72px; --s-9: 110px;
+  --container: 1280px;
+  --gutter: 32px;
+
+  /* ---- Shape ---- */
+  --line-w: 2px;
+  --chip-w: 1.5px;
+  --r-btn: 14px;
+  --r-field: 14px;
+  --r-card: 24px;
+  --r-card-lg: 28px;
+  --r-panel: 38px;
+  --r-pill: 999px;
+  --radius: 24px;              /* (the names the older rules use) */
+  --radius-sm: 14px;
+  --offset-shadow: 0 8px 0 -2px var(--line);
+  --offset-shadow-sm: 0 5px 0 -1px var(--line);
+  --offset-shadow-hover: 0 11px 0 -3px var(--line);
+  --lift-shadow: 0 18px 40px -18px rgba(var(--shadow-rgb), 0.45);
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --rise: 0.9s;
+  font-size: 16px;
+}
+@media (max-width: 639px) { :root { --gutter: 18px; } }
+
+/* Dark: a deep ink ground and surfaces, paper text, the same accents. Outlines turn light so they still draw the shapes. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f4f2ee;
+  --ink-soft: #c9c5d6;
+  --bg: #16131f;
+  --card: #221e31;
+  --raised: #2b2643;
+  --field: #1a1726;
+  --line: #d9d5e6;
+  --border: #3a3452;
+  --field-border: #a39dba;
+  --border-strong: #d9d5e6;
+  --navy: #0f0d18;
+  --on-navy: #f4f2ee;
+  --on-navy-soft: #c9c5d6;
+  --navy-card: #221e31;
+  --inverse: #f4f2ee;
+  --on-inverse: #16131f;
+  --accent-dark: #ff8a78;
+  --mint: #1e3a33;             /* (a soft fill in the app; the pastel "sticker" is --c-mint) */
+  --sticker: #e6e1f7;
+  --accent-strong-hover: #ff8a78;
+  --accent-text: #ff8f7d;
+  --headline-accent: #ff7a66;
+  --focus: #ff6f59;
+  --accent2-strong: #3db88e;
+  --on-accent2: #0f0d18;
+  --accent2-text: #7fd9b8;
+  --gold: #f4b95a;
+  --gold-text: #f8c56b;
+  --red: #e0698f;
+  --red-strong: #ff93b0;
+  --danger-bg: #ff93b0;  --on-danger: #2a1320;
+  --mint-soft: #1e3a33;  --mint-line: #2c5a4d;  --mint-banner-ink: #a6e6cb;
+  --sun-soft: #4d4119;   --sun-tint: #2d2818;   --sun-ink: #ffe7a3;
+  --pink-soft: #4a2436;  --pink-ink: #ffb3c7;
+  --lav-soft: #38334f;   --gray-soft: #2b2840;
+  --coral-soft: #3f2530; --coral-tint: #2b2029;
+  --skeleton-a: #29253b; --skeleton-b: #34304a;
+  --connector: #d9d5e6;  --dot: #4b4666;        --grip: #4b4666;
+  --pw-2: #e0913f;       --pw-3: #c9b02a;
+  --header-bg: #16131f;
+  --scrim: rgba(0, 0, 0, 0.62);
+  --shadow-rgb: 0, 0, 0;
+  --on-navy-rgb: 244, 242, 238;
+  --gbtn-bg: #131314; --gbtn-border: #8e918f; --gbtn-ink: #e3e3e3; --gbtn-hover: #1f1f20; --gbtn-active: #2a2a2b; --gbtn-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* Georgian: Noto Sans Georgian for headings and text (Latin letters and numbers keep the brand fonts), no negative tracking, no capitals
+   (CSS would turn Georgian "uppercase" into Mtavruli), and slightly smaller display sizes for the longer words. */
+:lang(ka) {
+  --font-display: 'Noto Sans Georgian', 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Noto Sans Georgian', 'Onest', ui-sans-serif, system-ui, sans-serif;
+  --tracking-display: 0;
+  --tracking-label: 0.02em;
+  --fs-hero: clamp(2.1rem, 3.9vw + 0.7rem, 3.9rem);
+  --fs-h1: clamp(1.5rem, 2.8vw + 0.7rem, 2.8rem);
+  --fs-h2: clamp(1.6rem, 2vw + 0.8rem, 2.8rem);
+}

@@ -7,7 +7,7 @@
   var KEY = 'wisecall_theme';
   var root = document.documentElement;
   var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  var BAR = { light: '#F4FBF8', dark: '#15131F' }; // the colour of the browser's address bar on a phone
+  var BAR = { light: '#F4F2EE', dark: '#16131F' }; // the colour of the browser's address bar on a phone
   var account = null; // the signed-in person, once the header knows who they are
 
   function read() {
@@ -48,6 +48,11 @@
   }
 
   apply(read(), false);
+
+  // Motion (public/js/motion.js): "motion" on <html> lets a section wait below the fold until it is scrolled to. Never with reduced
+  // motion, and set here, before the first paint, so nothing is drawn and then hidden again.
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!calm) root.classList.add('motion');
 
   // System mode follows the device live (the evening switch of a phone, for example).
   var follow = function () { if (root.getAttribute('data-theme-pref') === 'system') apply('system', true); };

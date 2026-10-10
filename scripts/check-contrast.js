@@ -1,10 +1,11 @@
-// Checks that the colour tokens of public/css/style.css (light and dark) are readable: every text colour against the surfaces it is
-// drawn on (WCAG AA: 4.5:1), and the outlines of form fields, the focus ring and emphasised borders (3:1). Run: npm run check:contrast
+// Checks that the colour tokens of public/css/tokens.css (light and dark) are readable: every text colour against the surfaces it is
+// drawn on (WCAG AA: 4.5:1; 3:1 for the big coral headline words, which are only ever 24px or larger), and the outlines of form fields,
+// cards, the focus ring and emphasised borders (3:1). Run: npm run check:contrast
 // It reads the :root block for the light theme and [data-theme="dark"] for the dark one (which overrides the light values).
 const fs = require('fs');
 const path = require('path');
 
-const CSS = path.join(__dirname, '..', 'public', 'css', 'style.css');
+const CSS = path.join(__dirname, '..', 'public', 'css', 'tokens.css');
 
 function tokens(text, selector) {
   const start = text.indexOf(selector + ' {');
@@ -29,13 +30,12 @@ const lum = (hex) => {
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 
 // [foreground token, background token, minimum ratio, what it is]
-const TEXT = 4.5, UI = 3;
+const TEXT = 4.5, UI = 3, LARGE = 3;
 const PAIRS = [
   ['--ink', '--bg', TEXT, 'text on the page'], ['--ink', '--card', TEXT, 'text on a card'], ['--ink', '--raised', TEXT, 'text in a menu or sheet'], ['--ink', '--field', TEXT, 'text typed in a field'],
   ['--ink-soft', '--bg', TEXT, 'muted text on the page'], ['--ink-soft', '--card', TEXT, 'muted text on a card'], ['--ink-soft', '--raised', TEXT, 'muted text in a menu'], ['--ink-soft', '--gray-soft', TEXT, 'muted text on a grey badge'],
   ['--ink', '--lav-soft', TEXT, 'tags and answered badges'], ['--ink', '--sun-tint', TEXT, 'the tips box'], ['--ink', '--coral-tint', TEXT, 'the rating prompt'], ['--ink', '--gray-soft', TEXT, 'hovered menu rows'],
   ['--accent-text', '--bg', TEXT, 'coral links on the page'], ['--accent-text', '--card', TEXT, 'coral links on a card'], ['--accent-text', '--raised', TEXT, 'coral links in a menu'],
-  ['--accent-text', '--on-accent', TEXT, 'the coral text on the white/dark button of the coral band'],
   ['--on-accent', '--accent-strong', TEXT, 'button text'], ['--on-accent', '--accent-strong-hover', TEXT, 'button text when hovered'],
   ['--accent2-text', '--card', TEXT, 'green text on a card'], ['--accent2-text', '--bg', TEXT, 'green text on the page'], ['--accent2-text', '--mint-soft', TEXT, 'green text on a mint badge'],
   ['--on-accent2', '--accent2-strong', TEXT, 'the check mark on green'],
@@ -46,7 +46,13 @@ const PAIRS = [
   ['--gbtn-ink', '--gbtn-bg', TEXT, 'Google button text'],
   // outlines of things you have to find and use
   ['--field-border', '--field', UI, 'the outline of a form field, from the inside'], ['--field-border', '--card', UI, 'the outline of a form field, from the card around it'], ['--field-border', '--bg', UI, 'the outline of a form field on the page'],
-  ['--accent-strong', '--bg', UI, 'the focus ring on the page'], ['--accent-strong', '--card', UI, 'the focus ring on a card'], ['--border-strong', '--card', UI, 'emphasised outlines'],
+  ['--focus', '--bg', UI, 'the focus ring on the page'], ['--focus', '--card', UI, 'the focus ring on a card'], ['--focus', '--raised', UI, 'the focus ring in a menu'], ['--border-strong', '--card', UI, 'emphasised outlines'],
+  ['--line', '--bg', UI, 'the outline of a card or button on the page'], ['--line', '--card', UI, 'an outline inside a card'],
+  // the redesign: ink on coral (every primary button), ink on the pastel "stickers" in both themes, the coral words of a big headline
+  ['--on-pastel', '--c-coral', TEXT, 'ink text on coral'], ['--on-pastel', '--c-mint', TEXT, 'ink text on mint'], ['--on-pastel', '--c-sun', TEXT, 'ink text on sun'],
+  ['--on-pastel', '--c-blush', TEXT, 'ink text on blush'], ['--on-pastel', '--c-lav', TEXT, 'ink text on lavender'], ['--on-pastel', '--sticker', TEXT, 'ink text on a white or lavender sticker'], ['--c-muted', '--c-mint', TEXT, 'muted ink on mint'],
+  ['--headline-accent', '--bg', LARGE, 'the coral words of a big headline (24px and up)'], ['--on-navy-soft', '--navy', TEXT, 'muted text on the ink bands'], ['--on-navy', '--navy-card', TEXT, 'text on a card in an ink band'],
+  ['--c-paper', '--c-ink', TEXT, 'paper on ink (the marquee, ink buttons)'],
   ['--gbtn-border', '--gbtn-bg', UI, 'the Google button outline']
 ];
 

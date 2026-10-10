@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // npm run lighthouse -- [--base http://localhost:4242] [--login email:password] [--pages home,expert,signup,dashboard,settings]
-//   (other pages: login, contact, faq, verify, help, ka = the Georgian home) [--details] [--dark] [--shots folder]
+//   (other pages: browse = a field's mentors, login, contact, faq, verify, help, ka = the Georgian home) [--details] [--dark] [--shots folder]
 // Runs Lighthouse (mobile and desktop) on the main pages of a RUNNING site and prints the four scores per page. Pages
 // that need an account (dashboard, settings) are audited signed in as --login. Set CHROME_PATH to use a browser other
 // than the one Chrome finds by itself. The exit code is 1 when any score is below 90.
@@ -30,6 +30,7 @@ async function signedInCookie() {
   const pages = {
     home: '/',
     expert: experts.experts && experts.experts[0] ? `/u/${experts.experts[0].username}` : null,
+    browse: experts.experts && experts.experts[0] && experts.experts[0].niche ? `/advice/${experts.experts[0].niche}` : null, // (Browse experts for one field)
     signup: '/signup.html',
     login: '/login.html',
     contact: '/contact.html',

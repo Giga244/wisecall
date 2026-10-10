@@ -65,7 +65,10 @@ async function listedMentor(admin, m) {
     const a = await admin(`/admin/mentors/${me.id}/approve`, { method: 'POST' });
     if (a.status !== 200) throw new Error(`approve ${m.email}: ${a.text}`);
   }
-  await c('/me/payout', { method: 'PUT', body: { name: m.payoutName, iban: 'GE29NB0000000101904917' } });
+  // (where the money goes is protected like the password: the current one is asked for)
+  const pay = await c('/me/payout', { method: 'PUT', body: { name: m.payoutName, iban: 'GE29NB0000000101904917', currentPassword: PASSWORD } });
+  if (pay.status !== 200) throw new Error(`payout ${m.email}: ${pay.text}`);
+  await c('/me', { method: 'PATCH', body: { profileVisibility: 'public' } });
   return { c, id: me.id, username: me.username };
 }
 
