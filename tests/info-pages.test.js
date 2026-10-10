@@ -55,6 +55,27 @@ describe('the "How we verify mentors" page', () => {
   });
 });
 
+describe('every page arrives in its language (nothing is swapped after the first paint)', () => {
+  const ka = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'i18n', 'ka.json'), 'utf8'));
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  test('the Georgian home: its texts and placeholder in Georgian, the Georgian font preloaded', async () => {
+    const h = await html('/ka/');
+    assert.match(h, new RegExp(`<span data-i18n="hero.title1">${esc(ka['hero.title1'])}</span>`));
+    assert.match(h, new RegExp(`data-i18n-placeholder="home.search.placeholder" placeholder="${esc(ka['home.search.placeholder'])}"`));
+    assert.match(h, /<link rel="preload" href="\/fonts\/noto-sans-georgian\.woff2\?v=[0-9a-f]+" as="font" type="font\/woff2" crossorigin>/);
+    assert.doesNotMatch(await html('/'), /noto-sans-georgian/);
+  });
+
+  test('numbers from the settings are filled in; a text with a date or a name keeps the page\'s own words', async () => {
+    const note = esc(ka['hero.note']).replace('\\{answerDays\\}', '\\d+');
+    assert.match(await html('/ka/'), new RegExp(`data-i18n="hero.note">${note}</span>`));
+    const h = await html('/ka/how-we-verify.html');
+    assert.doesNotMatch(h, /\{[A-Za-z]+\}/);
+    assert.match(h, /<span data-i18n="badge.id.tip">[^<{]+<\/span>/);
+  });
+});
+
 describe('settings the pages read', () => {
   test('the legal details, card logos only when payments are live, and the founder (a picture from elsewhere is refused)', async () => {
     const cfg = await client(base).api('/config');

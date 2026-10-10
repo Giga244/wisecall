@@ -50,9 +50,56 @@ function languagePrefix(req, res, next) {
   next();
 }
 
+// The page's own texts in its language, written here as public/js/i18n.js would write them in the browser (data-i18n holds plain text
+// only: the script sets textContent), so a Georgian page is Georgian from its first frame and nothing moves when the script runs. The
+// script still runs and writes the same words. Before launch, data-i18n-prelaunch names the text instead; numbers that come from the
+// settings ({answerDays}, {feePct}, ...) are filled in the same way; a text that cannot be filled here is left for the script.
+const I18N_VAR = /\{(answerDays|holdDays|disputeDays|feePct|sharePct|priceMin|priceMax|questionMin|questionMax|answerMin|answerMax|unpaidDays|payoutMin)\}/g;
+function i18nVars() {
+  const limits = require('./content').LIMITS;
+  return {
+    answerDays: config.ANSWER_DEADLINE_DAYS, holdDays: require('./ledger').holdDays(), disputeDays: config.DISPUTE_DAYS, feePct: config.PLATFORM_FEE_PERCENT,
+    sharePct: 100 - config.PLATFORM_FEE_PERCENT, priceMin: config.PRICE_MIN, priceMax: config.PRICE_MAX, payoutMin: config.PAYOUT_MIN_GEL,
+    questionMin: limits.questionMin, questionMax: limits.questionMax, answerMin: limits.answerMin, answerMax: limits.answerMax, unpaidDays: config.UNPAID_ATTEMPT_DAYS
+  };
+}
+function translateBody(html, lang) {
+  const d = { ...dict(lang) };
+  for (const n of require('./niches').forClient()) d['niche.' + n.key] = lang === 'ka' ? n.ka : n.en;
+  const vars = i18nVars();
+  const pre = config.LAUNCH_MODE === 'prelaunch';
+  const text = (key) => {
+    if (typeof d[key] !== 'string') return null;
+    const out = d[key].replace(I18N_VAR, (m, k) => (vars[k] === undefined || vars[k] === null ? m : String(vars[k])));
+    return /\{[A-Za-z0-9_]+\}/.test(out) ? null : out; // (a {date}, {name} or number this server cannot fill: the page's own text stays)
+  };
+  const body = html.indexOf('<body');
+  if (body < 0) return html;
+  let rest = html.slice(body);
+  // the texts of elements
+  rest = rest.replace(/<([a-z][a-z0-9]*)\b([^<>]*?)\sdata-i18n="([\w.-]+)"([^<>]*)>([^<]*)<\/\1>/g, (m, tag, a, key, b, old) => {
+    const pk = pre ? /\sdata-i18n-prelaunch="([\w.-]+)"/.exec(a + ' ' + b) : null;
+    const value = text((pk && pk[1]) || key);
+    return value === null ? m : `<${tag}${a} data-i18n="${key}"${b}>${escapeHtml(value)}</${tag}>`;
+  });
+  // placeholders, accessible names, titles and alternative text
+  rest = rest.replace(/<[a-z][a-z0-9]*\b[^<>]*\sdata-i18n-(?:placeholder|aria|title|alt)="[^"]*"[^<>]*>/g, (tag) => {
+    for (const [attr, target] of [['data-i18n-placeholder', 'placeholder'], ['data-i18n-aria', 'aria-label'], ['data-i18n-title', 'title'], ['data-i18n-alt', 'alt']]) {
+      const k = new RegExp(`\\s${attr}="([\\w.-]+)"`).exec(tag);
+      const value = k && text(k[1]);
+      if (value === null || !k) continue;
+      const has = new RegExp(`\\s${target}="[^"]*"`);
+      tag = has.test(tag) ? tag.replace(has, () => ` ${target}="${escapeHtml(value)}"`) : tag.replace(/\s*(\/?)>$/, (mm, slash) => ` ${target}="${escapeHtml(value)}"${slash}>`);
+    }
+    return tag;
+  });
+  return html.slice(0, body) + rest;
+}
+
 // The head of a page in its language, with its alternates. Pages without a canonical address (error pages) only get <html lang>.
 function localize(html, lang) {
   html = html.replace(/<html lang="[a-z-]+"/, () => `<html lang="${lang}"`);
+  html = translateBody(html, lang);
   const canon = /<link rel="canonical" href="([^"]*)">/.exec(html);
   if (!canon) return html;
   const enUrl = canon[1];
@@ -80,6 +127,8 @@ function localize(html, lang) {
     `<meta property="og:locale" content="${lang === 'ka' ? 'ka_GE' : 'en_US'}">`,
     `<meta property="og:locale:alternate" content="${lang === 'ka' ? 'en_US' : 'ka_GE'}">`
   ];
+  // (a Georgian page draws its words in Noto Sans Georgian: fetched at once, like the latin fonts every page preloads)
+  if (lang === 'ka') tags.push(assets.rewrite('<link rel="preload" href="/fonts/noto-sans-georgian.woff2" as="font" type="font/woff2" crossorigin>'));
   return html.replace('</head>', () => tags.join('\n') + '\n</head>');
 }
 
