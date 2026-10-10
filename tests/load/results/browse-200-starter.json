@@ -1,0 +1,134 @@
+{
+ "base": "http://localhost:4300",
+ "vus": 200,
+ "seconds": 305,
+ "think": [
+  1000,
+  3000
+ ],
+ "rps": 211,
+ "overall": {
+  "n": 57546,
+  "p50": 414,
+  "p95": 3190,
+  "p99": 7926,
+  "max": 13008,
+  "errors5xx": 0,
+  "failed": 0,
+  "timeouts": 0,
+  "other4xx": 0
+ },
+ "html": {
+  "n": 10102,
+  "p50": 428,
+  "p95": 8038,
+  "p99": 8778,
+  "max": 13008,
+  "errors5xx": 0,
+  "failed": 0,
+  "timeouts": 0,
+  "other4xx": 0
+ },
+ "api": {
+  "n": 47156,
+  "p50": 414,
+  "p95": 2198,
+  "p99": 2691,
+  "max": 5763,
+  "errors5xx": 0,
+  "failed": 0,
+  "timeouts": 0,
+  "other4xx": 0
+ },
+ "pages": {
+  "home": {
+   "n": 15500,
+   "p50": 321,
+   "p95": 2106,
+   "p99": 2397,
+   "max": 5405,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "home-ka": {
+   "n": 8982,
+   "p50": 322,
+   "p95": 2094,
+   "p99": 2371,
+   "max": 3904,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "browse": {
+   "n": 5830,
+   "p50": 347,
+   "p95": 2103,
+   "p99": 2366,
+   "max": 3906,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "profile": {
+   "n": 18198,
+   "p50": 608,
+   "p95": 3790,
+   "p99": 4202,
+   "max": 7487,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "live": {
+   "n": 2541,
+   "p50": 78,
+   "p95": 8734,
+   "p99": 10192,
+   "max": 13008,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "live-session": {
+   "n": 2654,
+   "p50": 422,
+   "p95": 2573,
+   "p99": 2875,
+   "max": 4812,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "answers": {
+   "n": 2088,
+   "p50": 79,
+   "p95": 574,
+   "p99": 802,
+   "max": 1105,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  },
+  "answer": {
+   "n": 1465,
+   "p50": 79,
+   "p95": 957,
+   "p99": 1085,
+   "max": 1466,
+   "errors5xx": 0,
+   "failed": 0,
+   "timeouts": 0,
+   "other4xx": 0
+  }
+ },
+ "errorKinds": {}
+}

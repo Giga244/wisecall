@@ -1,0 +1,41 @@
+{
+ "summary": {
+  "seconds": 2,
+  "cpuAvg": 49,
+  "cpuMax": 49,
+  "rssStart": 103,
+  "rssMax": 111,
+  "rssEnd": 111,
+  "dbTotalMax": 11,
+  "dbActiveMax": 0,
+  "dbLockWaitMax": 0,
+  "throttledPeriods": 9,
+  "errors": 0
+ },
+ "samples": [
+  {
+   "t": 1791243798435,
+   "cpu": 48,
+   "rss": 103,
+   "db": {
+    "active": 0,
+    "idle": 11,
+    "lock_wait": 0,
+    "total": 11
+   },
+   "throttled": 8964
+  },
+  {
+   "t": 1791243799436,
+   "cpu": 49,
+   "rss": 111,
+   "db": {
+    "active": 0,
+    "idle": 11,
+    "lock_wait": 0,
+    "total": 11
+   },
+   "throttled": 8973
+  }
+ ]
+}

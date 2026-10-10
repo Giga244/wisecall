@@ -1,0 +1,32 @@
+{
+ "postgres": {
+  "downMs": 7334,
+  "during": {
+   "n": 268,
+   "p50": 4,
+   "p95": 30,
+   "p99": 90,
+   "max": 151,
+   "statuses": {
+    "200": 134,
+    "500": 113,
+    "503": 21
+   }
+  },
+  "failedDuring": 134,
+  "recoveredMsAfterFix": 117,
+  "after": {
+   "n": 200,
+   "p50": 6,
+   "p95": 38,
+   "p99": 129,
+   "max": 179,
+   "statuses": {
+    "200": 200
+   }
+  },
+  "failedAfter": 0,
+  "serverSurvived": true,
+  "paymentRightAfter": "paid"
+ }
+}

@@ -1,0 +1,1 @@
+{"seconds":4,"cpuAvg":24,"cpuMax":46,"rssStart":119,"rssMax":121,"rssEnd":121,"dbTotalMax":11,"dbActiveMax":0,"dbLockWaitMax":0,"throttledPeriods":10,"errors":0}

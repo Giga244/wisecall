@@ -1,0 +1,39 @@
+{
+ "session": "rehearsal-live-999",
+ "seatsLeft": 30,
+ "buyers": 31,
+ "holdsGranted": 30,
+ "refusals": {
+  "409 sold_out": 1
+ },
+ "buyStep": {
+  "wallMs": 457,
+  "n": 31,
+  "p50": 356,
+  "p95": 397,
+  "p99": 398,
+  "max": 398,
+  "statuses": {
+   "201": 30,
+   "409": 1
+  }
+ },
+ "payStep": {
+  "n": 30,
+  "p50": 43,
+  "p95": 59,
+  "p99": 60,
+  "max": 60,
+  "statuses": {
+   "200": 30
+  }
+ },
+ "paidAfterSync": 30,
+ "tickets": {
+  "paid": 30,
+  "held": 0,
+  "expired": 0,
+  "total": 30
+ },
+ "oversold": false
+}

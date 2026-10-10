@@ -1,0 +1,48 @@
+{
+ "per5": [
+  {
+   "fromMinute": 0,
+   "rssAvg": 137,
+   "rssMax": 140,
+   "cpuAvg": 35,
+   "dbMax": 11
+  },
+  {
+   "fromMinute": 5,
+   "rssAvg": 141,
+   "rssMax": 141,
+   "cpuAvg": 35,
+   "dbMax": 11
+  },
+  {
+   "fromMinute": 10,
+   "rssAvg": 141,
+   "rssMax": 142,
+   "cpuAvg": 36,
+   "dbMax": 11
+  },
+  {
+   "fromMinute": 15,
+   "rssAvg": 142,
+   "rssMax": 142,
+   "cpuAvg": 36,
+   "dbMax": 11
+  },
+  {
+   "fromMinute": 20,
+   "rssAvg": 143,
+   "rssMax": 143,
+   "cpuAvg": 37,
+   "dbMax": 11
+  },
+  {
+   "fromMinute": 25,
+   "rssAvg": 143,
+   "rssMax": 144,
+   "cpuAvg": 39,
+   "dbMax": 11
+  }
+ ],
+ "rssSlopeMbPerMinAfter5": 0.13,
+ "samples": 1797
+}

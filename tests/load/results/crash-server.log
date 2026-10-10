@@ -1,0 +1,20 @@
+[rehearsal] production caching on; fake bank, ID check and video on; bank mode file: /tmp/wisecall-bank-mode
+Wisecall running at http://localhost:4300
+Payments: MOCK bank (development only). Set PAYMENT_PROVIDER=bog or tbc with your bank keys for real payments.
+ID check: MOCK (development only).
+Launch mode: live (set by LAUNCH_MODE).
+Google sign-in: off (set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to show "Continue with Google").
+Mentor review: AI off (set ANTHROPIC_API_KEY to add AI summaries for the admin); automatic approval off (a person approves every mentor).
+[WARNING] TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are not set: sign-up, login and the public forms have no "are you a person?" check (only rate limits). Add both from Cloudflare (Turnstile).
+
+[WARNING] Development mode. Do not use this configuration for a live site:
+  - MOCK BANK is active: nobody pays anything real. Set PAYMENT_PROVIDER=bog or tbc for real payments.
+  - MOCK ID CHECK is active: no ID is really checked. Set KYC_PROVIDER=didit for real checks.
+  - ADMIN 2FA IS OFF (ADMIN_2FA=off): admin accounts can act with just a password. This is only for automated tests; it is refused in production.
+  - PUBLIC_URL is http://localhost:4300: emailed links and bank callbacks point at this computer.
+
+[admin] rehearsal.admin@example.test fast-forwarded booking 8c19b3bd-d184-448d-bac0-954912edabf8 by 1 day(s): answered -> answered
+[req] POST /bookings/8c19b3bd-d184-448d-bac0-954912edabf8/fast-forward 200 200ms
+[req] POST / 201 36ms
+[rehearsal] crashing right after the fake bank confirmed mock-c67702a2-cc9d-4c1d-8738-dce6650d020b
+[req] POST /orders/mock-c67702a2-cc9d-4c1d-8738-dce6650d020b/complete 200 2ms

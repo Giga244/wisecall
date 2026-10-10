@@ -1,0 +1,65 @@
+{
+ "summary": {
+  "seconds": 4,
+  "cpuAvg": 50,
+  "cpuMax": 51,
+  "rssStart": 139,
+  "rssMax": 144,
+  "rssEnd": 144,
+  "dbTotalMax": 11,
+  "dbActiveMax": 10,
+  "dbLockWaitMax": 9,
+  "throttledPeriods": 29,
+  "errors": 0
+ },
+ "samples": [
+  {
+   "t": 1791243909211,
+   "cpu": 49,
+   "rss": 139,
+   "db": {
+    "active": 8,
+    "idle": 3,
+    "lock_wait": 8,
+    "total": 11
+   },
+   "throttled": 9163
+  },
+  {
+   "t": 1791243910212,
+   "cpu": 51,
+   "rss": 141,
+   "db": {
+    "active": 10,
+    "idle": 1,
+    "lock_wait": 9,
+    "total": 11
+   },
+   "throttled": 9173
+  },
+  {
+   "t": 1791243911212,
+   "cpu": 51,
+   "rss": 144,
+   "db": {
+    "active": 0,
+    "idle": 11,
+    "lock_wait": 0,
+    "total": 11
+   },
+   "throttled": 9182
+  },
+  {
+   "t": 1791243912214,
+   "cpu": 49,
+   "rss": 144,
+   "db": {
+    "active": 8,
+    "idle": 3,
+    "lock_wait": 8,
+    "total": 11
+   },
+   "throttled": 9192
+  }
+ ]
+}
