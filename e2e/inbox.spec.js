@@ -102,3 +102,30 @@ test('Georgian, and a phone-width layout: one pane at a time with a way back', a
   await buyerPage.locator('.nav-lang .lang-btn[data-lang="en"]').click();
   await buyerPage.setViewportSize({ width: 1280, height: 800 });
 });
+
+test('a system message about a live session shows its real sentence in the list (title included, escaped once), EN and KA', async () => {
+  // (as server/live/notices.js writes a confirmed ticket: one event in the buyer's system thread)
+  const [ina] = await S.sql('SELECT id FROM users WHERE email = $1', ['ina@e2e.test']);
+  await S.sql(`INSERT INTO threads (kind, user_id, subject) VALUES ('system', $1, 'Wisecall') ON CONFLICT (user_id) WHERE kind = 'system' DO NOTHING`, [ina.id]);
+  const [sys] = await S.sql(`SELECT id FROM threads WHERE kind = 'system' AND user_id = $1`, [ina.id]);
+  const addEvent = async (title) => {
+    await S.sql(`INSERT INTO messages (thread_id, sender_role, kind, event, data) VALUES ($1, 'system', 'event', 'live_ticket', $2)`, [sys.id, JSON.stringify({ title, slug: 'first-backend-job' })]);
+    await S.sql('UPDATE threads SET last_message_at = now() WHERE id = $1', [sys.id]);
+  };
+  const preview = buyerPage.locator(`[data-thread="${sys.id}"] .thread-preview`);
+
+  await addEvent('Your first backend job: ask me anything');
+  await buyerPage.goto(`/inbox.html?thread=${sys.id}`);
+  await expect(preview).toHaveText('Your ticket to "Your first backend job: ask me anything" is confirmed.');
+  await expect(buyerPage.locator('.msg-event p').last()).toContainText('Your ticket to "Your first backend job: ask me anything" is confirmed.');
+  await buyerPage.locator('.nav-lang .lang-btn[data-lang="ka"]').click();
+  await expect(preview).toHaveText('შენი ბილეთი სესიაზე „Your first backend job: ask me anything“ დადასტურდა.');
+  await buyerPage.locator('.nav-lang .lang-btn[data-lang="en"]').click();
+  await expect(preview).toHaveText('Your ticket to "Your first backend job: ask me anything" is confirmed.');
+
+  // Characters HTML cares about show as written: not as entities, and never as markup.
+  await addEvent('Q&A <live> "logs"');
+  await buyerPage.reload();
+  await expect(preview).toHaveText('Your ticket to "Q&A <live> "logs"" is confirmed.');
+  await expect(buyerPage.locator(`[data-thread="${sys.id}"] .thread-preview live`)).toHaveCount(0);
+});

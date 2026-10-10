@@ -40,34 +40,38 @@
   // ---- Words for events (the server sends the event and its data; the words are in the reader's language) ---------------------
   // (live sessions: the title, and for a code its percent and mentor)
   const liveVars = (d) => ({ title: d.title || '', percent: d.percent || '', mentor: d.mentor || '' });
-  function eventText(m) {
+  // The event's sentence as plain text (not escaped yet): alone it is the preview in the list; the open thread adds notes and links.
+  function eventLine(m) {
     const d = m.data || {};
     switch (m.event) {
+      case 'verification_update': return fill(d.status === 'passed' ? 'inbox.ev.stepPassed' : 'inbox.ev.stepFailed', { step: t('verify.step.' + d.step) });
+      case 'payout_sent': return fill('inbox.ev.payout_sent', { amount: WisecallAPI.formatAmount(d.amount || 0), reference: d.reference || '—' });
+      case 'withdrawal_requested': case 'withdrawal_rejected': case 'refunded': return fill('inbox.ev.' + m.event, { amount: WisecallAPI.formatAmount(d.amount || 0) });
+      case 'dispute_resolved': return fill('inbox.ev.dispute.' + d.outcome, { amount: d.amount ? WisecallAPI.formatAmount(d.amount) : '' });
+      default: return String(m.event).startsWith('live_') ? fill('inbox.ev.' + m.event, liveVars(d)) : t('inbox.ev.' + m.event);
+    }
+  }
+  function eventText(m) {
+    const d = m.data || {};
+    const line = esc(eventLine(m));
+    switch (m.event) {
       case 'verification_update': {
-        const step = t('verify.step.' + d.step);
-        let s = fill(d.status === 'passed' ? 'inbox.ev.stepPassed' : 'inbox.ev.stepFailed', { step: esc(step) });
+        let s = line;
         const reason = d.reasonKey && t('inbox.reason.' + d.reasonKey) !== 'inbox.reason.' + d.reasonKey ? t('inbox.reason.' + d.reasonKey) : d.reason;
         if (d.status !== 'passed' && reason) s += `<span class="ev-note">${esc(reason)}</span>`;
         if (d.delisted) s += `<span class="ev-note">${esc(t('inbox.ev.delisted'))}</span>`;
         return s;
       }
-      case 'payout_sent': return esc(fill('inbox.ev.payout_sent', { amount: WisecallAPI.formatAmount(d.amount || 0), reference: d.reference || '—' }));
-      case 'withdrawal_requested': return esc(fill('inbox.ev.withdrawal_requested', { amount: WisecallAPI.formatAmount(d.amount || 0) }));
-      case 'withdrawal_rejected': return esc(fill('inbox.ev.withdrawal_rejected', { amount: WisecallAPI.formatAmount(d.amount || 0) })) + (d.reason ? `<span class="ev-note">${esc(d.reason)}</span>` : '');
-      case 'refunded': return esc(fill('inbox.ev.refunded', { amount: WisecallAPI.formatAmount(d.amount || 0) }));
-      case 'dispute_resolved': {
-        const s = esc(fill('inbox.ev.dispute.' + d.outcome, { amount: d.amount ? WisecallAPI.formatAmount(d.amount) : '' }));
-        return s + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
-      }
-      case 'declined': return esc(t('inbox.ev.declined')) + (d.reason ? `<span class="ev-note">${esc(t('inbox.declineReason.' + d.reason))}</span>` : '');
+      case 'withdrawal_rejected': return line + (d.reason ? `<span class="ev-note">${esc(d.reason)}</span>` : '');
+      case 'dispute_resolved': return line + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
+      case 'declined': return line + (d.reason ? `<span class="ev-note">${esc(t('inbox.declineReason.' + d.reason))}</span>` : '');
       case 'rejected': case 'suspended': case 'interview_requested': case 'approved': {
         const note = d.note || d.reason;
-        return esc(t('inbox.ev.' + m.event)) + (note ? `<span class="ev-note">${esc(note)}</span>` : '');
+        return line + (note ? `<span class="ev-note">${esc(note)}</span>` : '');
       }
       default:
         // Live sessions: the title, and a link to the session page.
         if (String(m.event).startsWith('live_')) {
-          const text = esc(fill('inbox.ev.' + m.event, liveVars(d)));
           const where = { live_replay_paid: ['/replay', 'live.replay.watch'] }[m.event] || ['', 'live.dash.page'];
           const base = String(m.event).startsWith('live_series') ? '/live/series/' : '/live/';
           const link = d.slug ? ` <a class="plain-link" href="${base}${encodeURIComponent(d.slug)}${where[0]}">${esc(t(where[1]))}</a>` : '';
@@ -82,9 +86,9 @@
             extra = `<span class="ev-note"><code>${esc(d.code)}</code>${d.username ? ` <a class="plain-link" href="/u/${encodeURIComponent(d.username)}?code=${encodeURIComponent(d.code)}#ask">${esc(t('live.codes.use'))}</a>` : ''}</span>`;
           }
           if (m.event === 'live_rate') extra = ` <a class="plain-link" href="/dashboard.html?tab=live">${esc(t('inbox.rateLink'))}</a>`;
-          return text + link + extra + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
+          return line + link + extra + (d.note ? `<span class="ev-note">${esc(d.note)}</span>` : '');
         }
-        return esc(t('inbox.ev.' + m.event));
+        return line;
     }
   }
 
@@ -94,9 +98,10 @@
     if (th.kind === 'support') return th.subject ? th.subject : t('inbox.support.title');
     return t('inbox.system.title');
   }
+  // (plain text: drawList escapes it)
   function previewOf(th) {
     if (th.kind === 'booking') return th.question || '';
-    if (th.last && th.last.kind === 'event') return eventText({ event: th.last.event, data: {} }).replace(/<[^>]+>/g, ' ');
+    if (th.last && th.last.kind === 'event') return eventLine(th.last);
     return th.last && th.last.body ? th.last.body : '';
   }
   function kindLabel(th) {
