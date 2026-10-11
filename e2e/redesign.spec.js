@@ -66,7 +66,7 @@ test('Georgian text fits: no button, chip, tab, badge, card or heading runs out 
       await settle(page, url('ka', p));
       const over = await page.evaluate(() => {
         const out = [];
-        for (const el of document.querySelectorAll('.btn, .chip, .tab, .badge, .tag, .lang-btn, .niche-chip, .trust-badge, .meta-chip, .hero-pill, .stage-sticker, .expert-card, .live-card, .settings-card, .booking-card, .faq-q, .price-card, .trust-card, .verify-card, .how-step, h1, h2, h3')) {
+        for (const el of document.querySelectorAll('.btn, .chip, .tab, .badge, .tag, .lang-btn, .niche-chip, .field-tile, .trust-badge, .meta-chip, .hero-pill, .stage-sticker, .expert-card, .live-card, .settings-card, .booking-card, .faq-q, .price-card, .trust-card, .verify-card, .how-step, h1, h2, h3')) {
           const s = getComputedStyle(el), b = el.getBoundingClientRect();
           if (s.display === 'none' || s.visibility === 'hidden' || !b.width || el.closest('.sr-only, .niche-strip, .example-grid, .tabs, .marquee, .profile-checks, .file-btn')) continue;
           if (el.scrollWidth > el.clientWidth + 1 && s.overflowX === 'visible') out.push(`${el.className || el.tagName} "${el.textContent.trim().slice(0, 30)}" ${el.scrollWidth}>${el.clientWidth}`);

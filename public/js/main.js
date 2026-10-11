@@ -68,14 +68,18 @@
     const field = activeNiche === 'all' ? null : t('niche.' + activeNiche);
     const title = kind === 'all' ? t('experts.emptyAll.title') : t('experts.emptyNiche.title').replace('{field}', field);
     const body = kind === 'all' ? t('experts.emptyAll.body') : t('experts.emptyNiche.body');
+    return waitCard(`<h3 class="wl-title">${escapeHtml(title)}</h3><p class="wl-sub">${escapeHtml(body)}</p>`, activeNiche === 'all' ? 'any' : activeNiche);
+  }
+
+  // One card: the illustration and a short text (on the left from a tablet up), the waiting-list form (on the right), and under the card
+  // a plain link for mentors. Used before launch ("Wisecall opens soon") and after it when nobody is listed (in a field).
+  function waitCard(text, field, extraClass = '') {
     return `
-      <div class="empty-state empty-rich">
-        ${WisecallHome.emptyArt}
-        <h3>${escapeHtml(title)}</h3>
-        <p>${escapeHtml(body)}</p>
-        <a class="btn btn-primary" href="${becomeHref}">${t('wait.mentorCta')}</a>
-        <div class="empty-wait">${WisecallWaitlist.html(activeNiche === 'all' ? 'any' : activeNiche)}</div>
-      </div>`;
+      <div class="wl-card${extraClass}">
+        <div class="wl-intro">${WisecallHome.emptyArt}<div class="wl-text">${text}</div></div>
+        <div class="wl-form">${WisecallWaitlist.html(field)}</div>
+      </div>
+      <p class="wl-mentor"><a class="arrow-link" href="${becomeHref}">${t('wait.mentorCta')}</a></p>`;
   }
 
   // Before launch nobody can ask a question, so Browse shows the waiting list instead of the experts.
@@ -84,17 +88,11 @@
   function launchingSoon() {
     const field = activeNiche === 'all' ? 'any' : activeNiche;
     const form = grid.querySelector('.waitlist-form');
-    // Choosing a field in the strip only changes the field; what the visitor has typed stays.
-    if (form && prelaunchLang === WisecallI18n.getLang()) { form.niche.value = field; return; }
+    // Choosing a field in the tiles only changes the field; what the visitor has typed (or the "you're on the list" note) stays.
+    if (prelaunchLang === WisecallI18n.getLang() && (form || grid.querySelector('.waitlist-done'))) { if (form) form.niche.value = field; return; }
     prelaunchLang = WisecallI18n.getLang();
-    grid.innerHTML = `
-      <div class="empty-state empty-rich prelaunch-panel">
-        ${WisecallHome.emptyArt}
-        <h3>${escapeHtml(t('experts.prelaunch.panelTitle'))}</h3>
-        <p>${escapeHtml(t('experts.prelaunch.body'))}</p>
-        <div class="empty-wait">${WisecallWaitlist.html(field)}</div>
-        <a class="btn btn-outline" href="${becomeHref}">${t('wait.mentorCta')}</a>
-      </div>`;
+    // (one title: the section's "Wisecall opens soon"; in the card a short line, and from a tablet up one more sentence)
+    grid.innerHTML = waitCard(`<p class="wl-lead">${escapeHtml(t('experts.prelaunch.panelTitle'))}</p><p class="wl-sub">${escapeHtml(t('experts.prelaunch.body'))}</p>`, field, ' prelaunch-panel');
     WisecallWaitlist.wire(grid);
   }
 

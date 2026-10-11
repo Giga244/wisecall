@@ -125,6 +125,9 @@ test('a lost phone: a recovery code works once', async ({ page }) => {
   await page.click('#tfForm button[type="submit"]');
   await page.waitForURL(/\/admin\.html$/);
   await expect(page.locator('#adminTabs')).toBeVisible();
+  // (the tabs are in the page from the start: let the page finish asking who is signed in, or it would answer the cleared cookies below
+  // by sending the browser to the login page itself, with a redirect back to the admin page)
+  await page.waitForLoadState('networkidle');
 
   // the same code again, in a new session
   await page.context().clearCookies();

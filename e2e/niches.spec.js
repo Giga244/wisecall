@@ -1,4 +1,4 @@
-// Niches (fields) in the browser: the home strip with "Show all", Browse's chips for the fields that have mentors, a field's page
+// Niches (fields) in the browser: the home page's field tiles with "See all", Browse's chips for the fields that have mentors, a field's page
 // (/advice/<niche>) in English and Georgian, "Your field" and "Other" in the Experience form, the field on cards, in search and as the
 // "Other" filter, and the admin's Niches tab.
 // Runs after full-flow.spec.js, whose Law mentor (Ana Lomidze) is listed.
@@ -6,12 +6,14 @@ const { test, expect } = require('@playwright/test');
 const S = require('./support');
 const { client } = require('../tests/helpers');
 
-test('the home strip shows the first fields and the rest behind "Show all"', async ({ page }) => {
+test('the home page shows two full rows of fields and the rest behind "See all"', async ({ page }) => {
   await page.goto('/');
   const strip = page.locator('#nicheStrip');
-  await expect(strip.locator('a.niche-chip')).toHaveCount(12);
-  await strip.locator('.niche-more').click();
-  await expect(strip.locator('a.niche-chip')).toHaveCount(36);
+  await expect(strip.locator('a.field-tile:visible')).toHaveCount(10); // (5 columns at 1280px)
+  await expect(page.locator('#fieldsMore')).toHaveText('See all 36 fields');
+  await page.locator('#fieldsMore').click();
+  await expect(strip.locator('a.field-tile:visible')).toHaveCount(36);
+  await expect(page.locator('#fieldsMore')).toHaveText('Show fewer');
   await expect(strip).toContainText('Wine & agriculture');
   if (process.env.E2E_SHOTS) await strip.screenshot({ path: `${process.env.E2E_SHOTS}/home-strip.png` });
 });

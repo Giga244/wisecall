@@ -50,7 +50,7 @@
     if (experts) {
       if (experts.length) grid.innerHTML = experts.map(card).join('');
       else {
-        grid.innerHTML = `<div class="empty-wait"><p>${esc(fill(prelaunch ? 'adv.prelaunch' : 'adv.empty'))}</p>${WisecallWaitlist.html(key)}</div>`;
+        grid.innerHTML = `<div class="wl-card wl-card-plain"><div class="wl-intro"><div class="wl-text"><p class="wl-lead">${esc(fill(prelaunch ? 'adv.prelaunch' : 'adv.empty'))}</p></div></div><div class="wl-form">${WisecallWaitlist.html(key)}</div></div>`;
         WisecallWaitlist.wire(grid);
       }
     }

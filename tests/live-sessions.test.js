@@ -111,7 +111,9 @@ describe('who can host, and creating a session', () => {
     await bad({ earlyPrice: 15 }, 'early_needs_limit');
     await bad({ durationMin: 150 }, 'invalid_duration');
     await bad({ date: 'tomorrow' }, 'invalid_time');
-    const soon = await mentor.api('/live', { method: 'POST', body: draft({ date: day(0.25), time: new Date(Date.now() + 4 * 3600000 + 3 * 3600000).toISOString().slice(11, 16) }) });
+    // (3 hours ahead: the date and the time from the same moment, in Tbilisi time, so it holds at any hour of the day)
+    const soonAt = new Date(Date.now() + 3 * 3600000 + 4 * 3600000).toISOString();
+    const soon = await mentor.api('/live', { method: 'POST', body: draft({ date: soonAt.slice(0, 10), time: soonAt.slice(11, 16) }) });
     assert.equal(soon.status, 201, 'a draft can be saved for any time ahead');
     assert.equal((await mentor.api(`/live/${soon.session.id}/publish`, { method: 'POST', body: { agree: true } })).error, 'too_soon');
   });

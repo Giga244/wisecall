@@ -1,27 +1,100 @@
-// Pieces of the home page that are not the expert list: the field strip, the FAQ accordion and the
+// Pieces of the home page that are not the expert list: the field tiles, the FAQ accordion and the
 // empty-list art (main.js shows it when there is nobody to list yet; the waiting-list form is in waitlist.js).
 (function () {
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // The strip of fields under the hero. Each is a link to Browse experts filtered by that field. The niches come from the server (an
-  // admin can add more); the first STRIP_FIRST show, the rest behind "Show all".
-  const STRIP_FIRST = 12;
+  // The fields under the hero: a grid of tiles, each a link to Browse experts filtered by that field (the niches come from the server; an
+  // admin can add more). Every tile is drawn; the stylesheet shows only full rows until "See all" is pressed: 6 on phones (2 columns),
+  // 9 on tablets (3), 8 on small laptops (4) and 10 on desktops (5). Opening and closing animate the grid's height (not with reduced motion).
+  // A name never breaks inside a word: a tile whose longest word is wider than one column (a long Georgian word such as
+  // სტუმარმასპინძლობა), or whose name would need more than three lines, takes two columns, and the grid fills the gap with the next
+  // tile. Measured after drawing, on resize, once the fonts have loaded and when the grid opens.
   let stripOpen = false;
   const iconOf = (key) => { const n = WisecallI18n.niches().find((x) => x.key === key); return n ? n.icon : 'spark'; };
   const icon = (key, size) => WisecallNicheIcons.svg(iconOf(key), size);
+  const ROWS = [['(min-width: 1280px)', 10], ['(min-width: 1024px)', 8], ['(min-width: 640px)', 9]];
+  const firstShown = () => { for (const [q, n] of ROWS) if (window.matchMedia(q).matches) return n; return 6; };
+  const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   function drawStrip() {
     const list = document.getElementById('nicheStrip');
     if (!list) return;
     const all = WisecallI18n.niches();
-    const shown = stripOpen ? all : all.slice(0, STRIP_FIRST);
-    list.innerHTML = shown.map((n) => `
-      <li><a class="niche-chip" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${icon(n.key)}<span>${esc(t('niche.' + n.key))}</span></a></li>`).join('') +
-      (all.length > STRIP_FIRST ? `<li><button type="button" class="niche-chip niche-more" aria-expanded="${stripOpen}">${esc(stripOpen ? t('home.fields.less') : t('home.fields.more').replace('{n}', all.length))}</button></li>` : '');
-    const more = list.querySelector('.niche-more');
-    if (more) more.addEventListener('click', () => { stripOpen = !stripOpen; drawStrip(); list.querySelector('.niche-more').focus(); });
+    list.classList.toggle('is-open', stripOpen);
+    list.innerHTML = all.map((n) => `
+      <li><a class="field-tile" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${icon(n.key, 22)}<span>${esc(t('niche.' + n.key))}</span></a></li>`).join('');
+    const more = document.getElementById('fieldsMore');
+    if (more) {
+      more.hidden = all.length <= firstShown();
+      more.textContent = stripOpen ? t('home.fields.less') : t('home.fields.more').replace('{n}', all.length);
+      more.setAttribute('aria-expanded', String(stripOpen));
+      more.classList.toggle('btn-arrow', !stripOpen);
+    }
+    fitTiles();
     drawHero();
   }
+  function fitTiles() {
+    const list = document.getElementById('nicheStrip');
+    if (!list) return;
+    const items = [...list.children];
+    items.forEach((li) => li.classList.remove('is-wide'));
+    const wide = items.filter((li) => {
+      const node = li.querySelector('.field-tile span');
+      const text = node && node.firstChild;
+      if (!text || !li.offsetWidth) return false; // (hidden until "See all")
+      const lines = (range) => new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
+      const whole = document.createRange();
+      whole.selectNodeContents(text);
+      if (lines(whole) > 3) return true;
+      let at = 0;
+      return text.textContent.split(' ').some((word) => {
+        const range = document.createRange();
+        range.setStart(text, at);
+        range.setEnd(text, at + word.length);
+        at += word.length + 1;
+        return lines(range) > 1;
+      });
+    });
+    wide.forEach((li) => li.classList.add('is-wide'));
+  }
+  function toggleStrip() {
+    const list = document.getElementById('nicheStrip');
+    const more = document.getElementById('fieldsMore');
+    const from = list.offsetHeight;
+    stripOpen = !stripOpen;
+    more.textContent = stripOpen ? t('home.fields.less') : t('home.fields.more').replace('{n}', WisecallI18n.niches().length);
+    more.setAttribute('aria-expanded', String(stripOpen));
+    more.classList.toggle('btn-arrow', !stripOpen);
+    // (closing: the tiles stay until the grid has shrunk; opening: they appear, and the grid grows to show them)
+    if (stripOpen) { list.classList.add('is-open'); fitTiles(); }
+    const to = stripOpen ? list.offsetHeight : (() => { list.classList.remove('is-open'); const h = list.offsetHeight; list.classList.add('is-open'); return h; })();
+    const done = () => {
+      list.classList.toggle('is-open', stripOpen);
+      list.style.height = '';
+      list.style.overflow = '';
+      list.style.transition = '';
+      if (!stripOpen && more.getBoundingClientRect().top < 0) more.scrollIntoView({ block: 'center' });
+    };
+    if (reduceMotion() || from === to) { done(); return; }
+    list.style.overflow = 'hidden';
+    list.style.height = `${from}px`;
+    list.getBoundingClientRect(); // (the starting height, before the transition)
+    list.style.transition = 'height 0.35s var(--ease-out)';
+    list.style.height = `${to}px`;
+    let finished = false;
+    const finish = () => { if (!finished) { finished = true; done(); } };
+    list.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, 600);
+  }
+  document.addEventListener('click', (ev) => { if (ev.target.closest('#fieldsMore')) toggleStrip(); });
+  let fitting = false;
+  window.addEventListener('resize', () => {
+    const more = document.getElementById('fieldsMore');
+    if (more) more.hidden = WisecallI18n.niches().length <= firstShown();
+    if (!fitting) { fitting = true; requestAnimationFrame(() => { fitting = false; fitTiles(); }); }
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTiles);
 
   // The hero: the first few fields as chips, and the band of field names that scrolls by (the list twice, so the loop has no seam;
   // the band is decoration, hidden from screen readers: the same fields are links in the strip and in Browse experts).

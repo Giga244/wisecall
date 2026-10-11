@@ -1,0 +1,24 @@
+phone375-en-light: sideways 0px, next section 84px below the fields
+phone390-ka-light: sideways 0px, next section 84px below the fields
+phone390-en-dark: sideways 0px, next section 84px below the fields
+phone375-ka-dark: sideways 0px, next section 84px below the fields
+tablet768-en-light: sideways 0px, next section 118px below the fields
+tablet768-ka-dark: sideways 0px, next section 118px below the fields
+laptop1024-ka-light: sideways 0px, next section 118px below the fields
+laptop1024-en-dark: sideways 0px, next section 118px below the fields
+desktop1440-en-light: sideways 0px, next section 118px below the fields
+desktop1440-ka-dark: sideways 0px, next section 118px below the fields
+wide1920-en-dark: sideways 0px, next section 118px below the fields
+wide1920-ka-light: sideways 0px, next section 118px below the fields
+phone375-en-light: card 809px before sign-up, 541px after
+phone390-ka-light: card 866px before sign-up, 584px after
+phone390-en-dark: card 809px before sign-up, 541px after
+phone375-ka-dark: card 891px before sign-up, 609px after
+tablet768-en-light: card 591px before sign-up, 465px after
+tablet768-ka-dark: card 611px before sign-up, 490px after
+laptop1024-ka-light: card 611px before sign-up, 490px after
+laptop1024-en-dark: card 591px before sign-up, 465px after
+desktop1440-en-light: card 591px before sign-up, 465px after
+desktop1440-ka-dark: card 611px before sign-up, 490px after
+wide1920-en-dark: card 591px before sign-up, 465px after
+wide1920-ka-light: card 611px before sign-up, 490px after
