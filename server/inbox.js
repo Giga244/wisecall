@@ -100,6 +100,11 @@ function roleIn(thread, userId) {
 }
 
 // ---- Reading -------------------------------------------------------------------------------------------------------------------
+// In the list, a last event shows as its sentence (public/js/inbox.js eventLine), which needs a few of its values: a session's title,
+// an amount, a step. Only those are sent; notes, reasons, codes and links stay in the opened thread (which already shows them all).
+const PREVIEW_FIELDS = ['title', 'percent', 'mentor', 'amount', 'reference', 'outcome', 'step', 'status'];
+const previewData = (d) => Object.fromEntries(PREVIEW_FIELDS.filter((k) => d && d[k] !== undefined && d[k] !== null).map((k) => [k, d[k]]));
+
 async function listThreads(userId) {
   const { rows } = await query(
     `WITH mine AS (
@@ -109,13 +114,13 @@ async function listThreads(userId) {
      SELECT m.id, m.kind, m.status, m.subject, m.booking_id, m.last_message_at,
             b.seeker_id, b.mentor_id, left(b.question, 140) AS question, b.status AS booking_status,
             ou.id AS other_id, ou.name AS other_name, ou.username AS other_username, ou.color AS other_color, ou.photo_updated_at AS other_photo_at,
-            lm.kind AS last_kind, lm.event AS last_event, left(lm.body, 140) AS last_body, lm.sender_role AS last_role,
+            lm.kind AS last_kind, lm.event AS last_event, left(lm.body, 140) AS last_body, lm.sender_role AS last_role, lm.data AS last_data,
             EXISTS (SELECT 1 FROM messages x WHERE x.thread_id = m.id AND x.kind <> 'internal_note' AND x.sender_id IS DISTINCT FROM $1
                       AND x.created_at > COALESCE((SELECT r.last_read_at FROM thread_reads r WHERE r.thread_id = m.id AND r.user_id = $1), '-infinity'::timestamptz)) AS unread
        FROM mine m
        LEFT JOIN bookings b ON b.id = m.booking_id
        LEFT JOIN users ou ON ou.id = CASE WHEN b.seeker_id = $1 THEN b.mentor_id ELSE b.seeker_id END
-       LEFT JOIN LATERAL (SELECT kind, event, body, sender_role FROM messages x WHERE x.thread_id = m.id AND x.kind <> 'internal_note'
+       LEFT JOIN LATERAL (SELECT kind, event, body, sender_role, data FROM messages x WHERE x.thread_id = m.id AND x.kind <> 'internal_note'
                           ORDER BY x.created_at DESC LIMIT 1) lm ON true
       ORDER BY m.last_message_at DESC LIMIT 200`, [userId]);
   const { photoUrl } = require('./util');
@@ -124,7 +129,10 @@ async function listThreads(userId) {
     role: r.kind === 'booking' ? (r.seeker_id === userId ? 'asker' : 'mentor') : 'user',
     question: r.question, bookingStatus: r.booking_status,
     other: r.other_id ? { name: r.other_name, username: r.other_username, color: r.other_color, photoUrl: photoUrl({ id: r.other_id, photoUpdatedAt: r.other_photo_at }) } : null,
-    last: r.last_kind ? { kind: r.last_kind, event: r.last_event, body: r.last_kind === 'event' ? null : r.last_body, role: r.last_role } : null
+    last: r.last_kind ? {
+      kind: r.last_kind, event: r.last_event, body: r.last_kind === 'event' ? null : r.last_body, role: r.last_role,
+      data: r.last_kind === 'event' ? previewData(r.last_data) : {}
+    } : null
   }));
 }
 

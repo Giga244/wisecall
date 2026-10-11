@@ -182,6 +182,26 @@ describe('system messages, notifications and email settings', () => {
     assert.equal((await send(mentor, sys.id, 'Thanks a lot for approving me!')).error, 'read_only');
   });
 
+  test('the list sends what a system event\'s preview needs (a session title), and only that: codes and links stay in the thread', async () => {
+    // (written as server/live/notices.js writes them: inbox.systemMessage -> one event in the person's system thread)
+    const me = (await asker.api('/me')).user;
+    await pool.query(`INSERT INTO threads (kind, user_id, subject) VALUES ('system', $1, 'Wisecall') ON CONFLICT (user_id) WHERE kind = 'system' DO NOTHING`, [me.id]);
+    const sysId = (await pool.query(`SELECT id FROM threads WHERE kind = 'system' AND user_id = $1`, [me.id])).rows[0].id;
+    const addEvent = async (event, data) => {
+      await pool.query(`INSERT INTO messages (thread_id, sender_role, kind, event, data) VALUES ($1, 'system', 'event', $2, $3)`, [sysId, event, JSON.stringify(data)]);
+      await pool.query('UPDATE threads SET last_message_at = now() WHERE id = $1', [sysId]);
+    };
+    const lastOf = async () => (await asker.api('/inbox')).threads.find((th) => th.id === sysId).last;
+
+    await addEvent('live_ticket', { title: 'Your first backend job: ask me anything', slug: 'first-backend-job', startsAt: new Date().toISOString() });
+    assert.deepEqual(await lastOf(), { kind: 'event', event: 'live_ticket', body: null, role: 'system', data: { title: 'Your first backend job: ask me anything' } });
+
+    await addEvent('live_discount', { title: 'Logs & "metrics"', slug: 'logs', code: 'THANKS-7QX', percent: 15, mentor: 'Mika Mentor', username: 'mika' });
+    assert.deepEqual((await lastOf()).data, { title: 'Logs & "metrics"', percent: 15, mentor: 'Mika Mentor' });
+    const t = await asker.api(`/inbox/threads/${sysId}`);
+    assert.equal(t.messages.at(-1).data.code, 'THANKS-7QX', 'the opened thread still has the code');
+  });
+
   test('notifications can be marked read', async () => {
     await asker.api('/inbox/notifications/read', { method: 'POST', body: {} });
     assert.equal((await asker.api('/inbox/unread')).count, 0);
