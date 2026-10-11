@@ -1,6 +1,6 @@
 // Cache busting: every stylesheet, script, logo, icon and font is asked for with ?v=<hash of the file>, HTML is never kept, versioned files
 // are kept for a year, and a file that changes gets a new address (so the old coral favicon can never be shown again).
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');

@@ -8,7 +8,7 @@
 //
 // The server must use the same DATABASE_URL as this script (live sessions are added here, and moved so the room is open), run with
 // ADMIN_2FA=off and LIVE_PROVIDER=fake, and never be the production database. Motion is captured settled (reduced motion).
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');

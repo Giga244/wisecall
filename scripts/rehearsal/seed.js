@@ -10,7 +10,7 @@
 //   - --sessions published live sessions 2–10 days ahead (30 seats), plus one more called "last seats" (30 seats, none sold) for the
 //     seat race, and a history: ~2,000 answered questions with payouts and ratings, 300 published public answers
 // The bank is the FAKE bank (provider "mock"): nothing real is ever charged.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 

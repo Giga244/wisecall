@@ -1,6 +1,6 @@
 // Reinstating a suspended mentor puts them back in review ON PURPOSE (a step may have run out while they were away). The panel says so, and
 // when every step is still valid one click reinstates and approves again.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

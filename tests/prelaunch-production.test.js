@@ -1,7 +1,7 @@
 // Going online before the bank and the ID-check provider are set up: in production with LAUNCH_MODE=prelaunch (or empty) the server starts
 // without any bank or Didit keys, nothing can be booked or paid, mentors can apply and wait ("ID checks open soon"), and visitors can join the
 // waiting list. With LAUNCH_MODE=live the strict rules stay: no start without the real keys. The fake bank and ID check never exist in production.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

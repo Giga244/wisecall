@@ -1,6 +1,6 @@
 // Sign in with Google, against a fake Google that speaks the real protocol (see tests/fakeGoogle.js). The real server code and the
 // real openid-client library run; only Google itself is fake.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');

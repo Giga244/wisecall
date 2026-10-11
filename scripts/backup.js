@@ -8,7 +8,7 @@
 // pg_dump / pg_restore must be installed (PostgreSQL client tools); PG_BIN can name their folder. The database password goes to them in
 // PGPASSWORD, never on the command line (where any user of the machine could read it, docs/REVIEW-2.md #14), and the dump is readable by
 // its owner only. Encrypt it before it leaves the machine (e.g. age) and keep dumps no longer than the privacy policy says.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');

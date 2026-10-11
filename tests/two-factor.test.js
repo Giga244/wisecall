@@ -1,6 +1,6 @@
 // Two-step verification for admins (an authenticator app + recovery codes): nothing of the admin panel works, for a password alone, until the
 // second step has been passed in this session.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

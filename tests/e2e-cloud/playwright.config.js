@@ -6,7 +6,7 @@
 // browser is not installed, set CHROMIUM_PATH (in the cloud container: /opt/pw-browsers/chromium-1194/chrome-linux/chrome).
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+require('dotenv').config({ quiet: true, path: path.join(__dirname, '..', '..', '.env') });
 const { defineConfig, devices } = require('@playwright/test');
 
 const FALLBACK = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';

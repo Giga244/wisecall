@@ -1,6 +1,6 @@
 // The dark theme: every colour is a token, every pair of tokens is readable, the theme is set before the page paints, the choice is kept
 // on the account, and every text is in English and Georgian.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

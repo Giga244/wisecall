@@ -1,5 +1,5 @@
 // What a question and an answer must look like, and that an answer is written ONCE: never replaced, held for a check or not.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

@@ -1,6 +1,6 @@
 // The development-only "fast-forward" tool: moves one booking's clock forward and runs the housekeeping, so the 7-day automatic refund, the
 // release of a held answer, the reveal of ratings and the moment earnings become payable can be tried without waiting. It does not exist in production.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

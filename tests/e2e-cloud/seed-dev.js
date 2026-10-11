@@ -8,7 +8,7 @@
 // API reply, as in development), and DATABASE_URL must be the same database the server uses. Verification steps are written straight into
 // the database, like tests/helpers.js approveMentor does, because the real ID check and review have their own tests.
 // Every name and address here is invented (example.test).
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { Pool } = require('pg');
 
 const arg = (name, def) => { const i = process.argv.indexOf('--' + name); return i < 0 ? def : process.argv[i + 1]; };

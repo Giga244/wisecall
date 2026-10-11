@@ -1,6 +1,6 @@
 // End-to-end tests (npm run test:e2e). A real Wisecall server runs against the TEST database (wiped) with the
 // fake bank, the fake ID check and a mail log; Playwright drives it in a real Chromium, like a person would.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({

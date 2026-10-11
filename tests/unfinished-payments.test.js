@@ -1,5 +1,5 @@
 // Attempts to ask a question that were never paid: hidden from the buyer's list (the page), never shown to the mentor, and deleted after 7 days.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

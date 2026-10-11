@@ -1,7 +1,7 @@
 // Unit tests for verification rules v2 that need no server: the link checker's address rules (SSRF), the decision and risk rules,
 // the checks on the AI's answer, what is removed before anything is sent, and the prompt-injection check.
 process.env.WISECALL_NO_EXIT = '1';
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || 'postgresql://localhost/unused';
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');

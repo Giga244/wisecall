@@ -2,7 +2,7 @@
 // Samples the server process every second while a load test runs: CPU (% of ONE core, so 50 = all of a Starter plan's 0.5 CPU),
 // resident memory, and the app's database connections (active / idle / waiting on a lock).
 //   node scripts/rehearsal/monitor.js <pid> <out.json>      (stop it with SIGINT/SIGTERM: it writes the summary and exits)
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const { Pool } = require('pg');
 

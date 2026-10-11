@@ -1,5 +1,5 @@
 // Coming back from the bank: a cancelled payment and a failed one are different pages, nothing is charged for either, and the question is not lost.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

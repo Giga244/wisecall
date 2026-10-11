@@ -3,7 +3,7 @@
 // first year. Each query is the app's own (server/models.js mentorStatsFor, server/live/listing.js, server/routes/bookings.js /mine,
 // server/routes/admin.js overview), with real ids.
 //   DATABASE_URL=.../wisecall_restore_scale node scripts/rehearsal/scale-explain.js
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { Client } = require('pg');
 (async () => {
   const c = new Client({ connectionString: process.env.DATABASE_URL });

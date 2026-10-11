@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const { expect } = require('@playwright/test');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { client, approveMentor, addPayoutDetails, SAMPLE, GOOD_IBAN, longQuestion } = require('../tests/helpers');
 
 const BASE = 'http://localhost:4620';

@@ -1,5 +1,5 @@
 // Public profiles: usernames, photos, the details on a profile, who may see it, and what is never shown.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const sharp = require('sharp');

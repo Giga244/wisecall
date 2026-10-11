@@ -1,5 +1,5 @@
 // The brand files (brand/wisecall-logo-pack) are used exactly as delivered, in the places the brand brief lists.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

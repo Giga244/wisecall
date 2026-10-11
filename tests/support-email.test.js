@@ -1,5 +1,5 @@
 // A site with no public contact address says so at startup (and `npm run check:launch` says so too, see check-launch.test.js).
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

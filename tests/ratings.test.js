@@ -1,5 +1,5 @@
 // Two-way ratings: the rules, the double-blind reveal, what is public, replies, reports, admin hiding, flags and reminders.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

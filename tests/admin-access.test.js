@@ -1,6 +1,6 @@
 // Nothing of the admin panel reaches anybody but an admin: the page, its scripts, its texts and every /api/admin route are checked on the
 // server before anything is sent, and the public files never mention the panel's settings.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');

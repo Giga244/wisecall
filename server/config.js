@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const env = process.env;
 const IS_PROD = env.NODE_ENV === 'production';

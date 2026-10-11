@@ -6,7 +6,7 @@
 //   payMock(base, order)  presses "pay" on the fake bank's page for an order (the server then gets the fake bank's signed callback)
 //   mockCallback(base, orderId)  sends the fake bank's signed callback directly (duplicates, storms)
 //   pct(list, p)          percentile
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');

@@ -1,6 +1,6 @@
 // Shared helpers for the end-to-end tests: start the real server against the TEST database
 // and talk to it over HTTP with a tiny cookie-keeping client.
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { spawn } = require('child_process');
 const path = require('path');
 const { Pool } = require('pg');
