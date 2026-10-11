@@ -7,7 +7,7 @@ const path = require('path');
 const contrast = require('../scripts/check-contrast');
 
 const ROOT = path.join(__dirname, '..');
-const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n'); // (the same on a Windows checkout)
 const css = () => ['public/css/tokens.css', 'public/css/style.css', 'public/css/app.css', 'public/css/home.css'].map((f) => [f, read(f)]);
 
 describe('the palette and type', () => {
