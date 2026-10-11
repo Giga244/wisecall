@@ -36,6 +36,27 @@ files); to include them, add `tests/cloud-2/*.test.js` to the `test` script in `
 | 13 | ⚪ | Rate limits | Opening a dispute has no limit of its own | (read) |
 | 14 | ⚪ | Backups | The database password is on the `pg_dump` command line; dumps are not encrypted | (read) |
 
+## Status (October 2026): all fixed
+
+Every finding is fixed on `main`; `tests/cloud-2/` runs with `npm test` and in CI, with no `todo` left.
+
+| # | Fix |
+|---|---|
+| 1 | `server/auth.js` refuses any token with a `purpose` or an audience and requires a session id (tokens without one only count if signed before sessions existed, 2026-09-28). The "second step" cookie is signed with its own key and audience and names the person as `uid` (`server/routes/auth.js`). |
+| 2 | A full refund after a partial one sends only what is left, as a partial return (`server/payments.js` `refundBooking`). |
+| 3 | A partial refund remembers its amount (`partial_refund_amount`, migration 040) until the bank confirms it. On a lost answer the bank is asked what it returned first: recorded if it went back; released only if the bank refused outright or dedupes requests (`idempotentRefunds`: BOG yes, TBC no); otherwise kept "sent, answer unknown" (the decision stands, the payout waits) until the sweep (`settleUnconfirmedRefunds`) records it or, 15 minutes of "nothing returned" later, opens the dispute again. The same for live tickets and series shares (a retried share is checked against the series payment's returned total first). |
+| 4 | A mentor heartbeat counts only while the video service lists the mentor in the call (`isPresent`, Daily's presence list). A session that ends normally with paid tickets but nobody seen gets an automatic open report, which holds the payout for an admin. |
+| 5 | `DELETE /api/me` and `POST /api/me/password`: 10 an hour per address, and 10 wrong passwords an hour per account (`server/reauthGuard.js`). |
+| 6 | Deleting an account empties its dispute and report details and its live questions; the data export now includes them. |
+| 7 | Daily and the mentor know a participant by their ticket id, never the account id; the speaker controls take the ticket id. |
+| 8 | Waiting-list seats are counted and offered under the session's row lock. |
+| 9 | Unsubscribe and unfollow signatures are compared as bytes; every id in the live API is checked to be a uuid ("not found", never a database error). |
+| 10 | The Sentry route tag replaces `/users/<username>` too. |
+| 11 | Turning two-step verification on ends every other session; turning it off ends them too and emails the owner (EN + KA). |
+| 12 | A ticket refunded while its session is live takes its holder out of the call (Daily's eject: check its request body against Daily's docs before turning live sessions on). Tokens still last until the end + 30 minutes: shorter ones would cut people out of a running call. |
+| 13 | Opening a dispute: 10 an hour per address (questions and tickets). |
+| 14 | `scripts/backup.js` passes the password in `PGPASSWORD`, writes the dump readable by its owner only and says to encrypt it and keep it no longer than the privacy policy promises. Encrypting is left to whoever moves the file (e.g. `age`). |
+
 ---
 
 ## Findings

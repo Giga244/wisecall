@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const { query } = require('./db');
 const config = require('./config');
 const { sendTemplate } = require('./mail');
-const { getUserById, listableSql } = require('./models');
+const { getUserById, listableSql, userColumnsSql, userFromRow } = require('./models');
 const { isListable } = require('./util');
 const niches = require('./niches');
 const customNiche = require('./customNiche');
@@ -84,8 +84,9 @@ async function remove(t) {
 // A request that already has a matching listed mentor is answered at once.
 function afterCreated(r) {
   (async () => {
-    const { rows } = await query(`SELECT id FROM users WHERE ${listableSql()} ORDER BY created_at DESC LIMIT 500`);
-    for (const m of rows) { const sent = await notifyFor(await getUserById(m.id), r.id); if (sent) break; }
+    // (every candidate in one query, then in memory: docs/TODO-REHEARSAL.md R-10)
+    const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE ${listableSql()} ORDER BY created_at DESC LIMIT 500`);
+    for (const m of rows) { const sent = await notifyFor(userFromRow(m), r.id); if (sent) break; }
   })().catch((e) => console.error('[requests] matching failed:', e.message));
 }
 

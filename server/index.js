@@ -14,6 +14,11 @@ const app = express();
 if (config.IS_PROD) app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
+// Shutting down (a deploy, docs/TODO-REHEARSAL.md R-2): every answer asks the browser to close its connection, so open keep-alive
+// connections end after their current request, and the health check says "not ready" so no new traffic is sent here.
+let draining = false;
+app.use((req, res, next) => { if (draining) res.set('Connection', 'close'); next(); });
+
 app.use(securityHeaders);
 app.use(require('compression')()); // the pages, scripts, styles and JSON are text: about a quarter of the size on the wire
 app.use(requestLogger);
@@ -21,6 +26,7 @@ app.use(require('./live/switch').gate); // (live sessions switched off: their pa
 
 // Health check for the hosting platform: also proves the database is reachable.
 app.get('/healthz', async (req, res) => {
+  if (draining) return res.status(503).json({ ok: false, draining: true });
   try {
     await db.query('SELECT 1');
     res.json({ ok: true });
@@ -155,6 +161,12 @@ app.get(/^\/api\/live-share\//, rateLimit({ windowMs: 10 * 60 * 1000, max: 60 })
 app.post(['/api/auth/signup', '/api/auth/login', '/api/auth/forgot-password', '/api/contact', '/api/waitlist', '/api/requests'], require('./turnstile').requireHuman);
 app.post(/^\/api\/answers\/[^/]+\/helpful$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.use('/api/me/delete', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+// The password asked before deleting the account or changing the password: per address here, per account in server/reauthGuard.js
+// (docs/REVIEW-2.md #5). Opening a dispute has a limit of its own too (#13).
+app.delete('/api/me', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.post('/api/me/password', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.use(/^\/api\/bookings\/[^/]+\/dispute$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 })); // (every booking counted together)
+app.use(/^\/api\/live\/tickets\/[^/]+\/dispute$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 // The Inbox: sending (a follow-up, a support message), starting support conversations, reporting, unsubscribing.
 app.use(/^\/api\/inbox\/threads\/[^/]+\/messages$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use('/api/inbox/support', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
@@ -189,11 +201,12 @@ app.get(/^\/api\/profile-images\/([0-9a-f-]{36})\.webp$/, require('./auth').opti
   } catch (e) { next(e); }
 });
 app.use('/api', require('./routes/ratings'));
-app.use('/api/experts', require('./routes/experts'));
+const { publicCache } = require('./publicCache'); // (the public lists, for visitors who are not signed in: R-5)
+app.use('/api/experts', publicCache(), require('./routes/experts'));
 app.use('/api/bookings', require('./routes/bookings'));
-app.use('/api/answers', require('./routes/answers'));
+app.use('/api/answers', publicCache(), require('./routes/answers'));
 app.use('/api/requests', require('./routes/requests'));
-app.use('/api/live', require('./routes/live'));
+app.use('/api/live', publicCache(), require('./routes/live'));
 // A live session's cover picture (public once the session is).
 app.get(/^\/api\/live-covers\/([0-9a-f-]{36})\.webp$/, require('./auth').optionalAuth, async (req, res, next) => {
   try {
@@ -225,7 +238,7 @@ app.use('/api/admin', require('./routes/adminNiches').router);
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
 if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 
-app.get('/api/config', async (req, res) => {
+app.get('/api/config', publicCache(), async (req, res) => {
   await launch.ensureFresh(5000);
   res.json({
     currency: config.CURRENCY,
@@ -283,6 +296,12 @@ app.use(pages.notFoundHandler);
 // Any error thrown in a route ends up here instead of crashing or hanging the request.
 app.use((err, req, res, next) => {
   if (err.type === 'entity.too.large' && !res.headersSent) return res.status(413).json({ error: 'file_too_large' });
+  // The database was too busy (no free connection within 5 s, a lock or a statement over its limit, server/db.js): "try again", not a crash.
+  const busy = ['55P03', '57014'].includes(err.code) || /timeout exceeded when trying to connect/i.test(String(err.message));
+  if (busy && !res.headersSent) {
+    console.warn(`[busy] ${req.method} ${req.path}: ${err.message}`);
+    return res.status(503).set('Retry-After', '5').json({ error: 'busy_try_again' });
+  }
   console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
   const errorReport = require('./errorReport');
   errorReport.report(err, { method: req.method, route: errorReport.routeOf(req), status: err.status || 500 }); // (off without SENTRY_DSN; nothing personal)
@@ -326,7 +345,16 @@ async function start() {
   const stopJobs = startJobs();
   // Verification rules v2: finish carrying over what mentors did under the first rules (once; safe to repeat).
   setTimeout(() => require('./verification/carryOver').run().catch((e) => console.error('[carry-over] failed:', e.message)), 2000).unref();
-  const shutdown = () => { stopJobs(); server.close(() => db.close().then(() => process.exit(0))); };
+  // A graceful stop: no new connections, idle ones closed now, busy ones after their request ("Connection: close"); whatever is still open
+  // after 20 seconds is closed, so the process always exits inside the host's shutdown window (Render waits 30 s by default).
+  const shutdown = () => {
+    if (draining) return;
+    draining = true;
+    stopJobs();
+    server.close(() => db.close().then(() => process.exit(0), () => process.exit(0)));
+    server.closeIdleConnections();
+    setTimeout(() => { server.closeAllConnections(); process.exit(0); }, Number(process.env.SHUTDOWN_GRACE_MS) || 20000).unref();
+  };
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
 }

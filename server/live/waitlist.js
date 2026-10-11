@@ -2,7 +2,7 @@
 // that ran out), the first person waiting gets an email and the seat is kept for them for 2 hours (or until the start, if sooner); while
 // it is kept, the seat counts as taken for everybody else (sessions.SEATS_SQL). If they do not buy in time, the next person gets it.
 // People still waiting also come before newcomers: a newcomer can buy only a seat nobody on the list is waiting for (aheadOf).
-const { query } = require('../db');
+const { query, tx } = require('../db');
 const { LiveError } = require('./sessions');
 
 const OFFER_HOURS = 2;
@@ -79,20 +79,27 @@ async function offerFreedSeats(sessionId) {
         AND EXISTS (SELECT 1 FROM live_waitlist w WHERE w.session_id = s.id AND w.status = 'waiting')`, [sessionId || null]);
   let offered = 0;
   for (const { id } of rows) {
-    const s = await sessions.rowById(id);
-    let free = s.max_seats - Number(s.taken);
-    while (free > 0) {
-      const until = new Date(Math.min(Date.now() + OFFER_HOURS * 3600000, new Date(s.starts_at).getTime()));
-      // (one at a time, oldest first; SKIP LOCKED: the sweep and a cancellation never offer the same place twice)
-      const { rows: [w] } = await query(
-        `UPDATE live_waitlist SET status = 'offered', offered_at = now(), offer_expires_at = $2
-          WHERE id = (SELECT id FROM live_waitlist WHERE session_id = $1 AND status = 'waiting' ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
-          RETURNING *`, [s.id, until]);
-      if (!w) break;
-      free -= 1;
-      offered += 1;
-      require('./notices').seatOffered(w, s).catch((e) => console.error('[live] seat offer email failed:', e.message));
-    }
+    // The free seats are counted and offered under the session's lock (as buying does), so two runs at once (the sweep and a
+    // cancellation) can never offer the same seat to two people (docs/REVIEW-2.md #8). The emails go out after the commit.
+    const sent = [];
+    let s = null;
+    await tx(async (client) => {
+      ({ rows: [s] } = await client.query(`SELECT s.*, ${sessions.TAKEN_SQL} AS taken FROM live_sessions s WHERE s.id = $1 FOR UPDATE`, [id]));
+      if (!s) return;
+      let free = s.max_seats - Number(s.taken);
+      while (free > 0) {
+        const until = new Date(Math.min(Date.now() + OFFER_HOURS * 3600000, new Date(s.starts_at).getTime()));
+        const { rows: [w] } = await client.query(
+          `UPDATE live_waitlist SET status = 'offered', offered_at = now(), offer_expires_at = $2
+            WHERE id = (SELECT id FROM live_waitlist WHERE session_id = $1 AND status = 'waiting' ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
+            RETURNING *`, [s.id, until]);
+        if (!w) break;
+        free -= 1;
+        sent.push(w);
+      }
+    });
+    offered += sent.length;
+    for (const w of sent) require('./notices').seatOffered(w, s).catch((e) => console.error('[live] seat offer email failed:', e.message));
   }
   return offered;
 }

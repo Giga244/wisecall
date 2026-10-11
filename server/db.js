@@ -4,7 +4,14 @@ const { Pool } = require('pg');
 const config = require('./config');
 
 // For hosted Postgres that needs TLS, put ?sslmode=require on DATABASE_URL.
-const pool = new Pool({ connectionString: config.DATABASE_URL, max: 10 });
+// The pool (docs/TODO-REHEARSAL.md R-6): DB_POOL_MAX connections (15; keep it times the number of instances below the database plan's
+// limit), a request waits at most 5 s for one, and no statement, lock wait or open transaction can hold a connection without end. A
+// request that hits one of these limits gets "busy, try again" (server/index.js), never a hang.
+const pool = new Pool({
+  connectionString: config.DATABASE_URL, max: Number(process.env.DB_POOL_MAX) || 15,
+  connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000,
+  options: '-c statement_timeout=15000 -c lock_timeout=10000 -c idle_in_transaction_session_timeout=60000'
+});
 pool.on('error', (e) => console.error('[db] idle client error:', e.message));
 
 const query = (text, params) => pool.query(text, params);
@@ -44,6 +51,7 @@ async function migrate() {
   const client = await pool.connect();
   try {
     await client.query('SELECT pg_advisory_lock(7272001)');
+    await client.query('SET statement_timeout = 0; SET lock_timeout = 0'); // (a migration may take longer than a request; RESET below)
     await client.query('CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
     const dir = path.join(__dirname, '..', 'migrations');
     const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
@@ -63,7 +71,7 @@ async function migrate() {
       }
     }
   } finally {
-    try { await client.query('SELECT pg_advisory_unlock(7272001)'); } catch (e) { /* ignore */ }
+    try { await client.query('SELECT pg_advisory_unlock(7272001)'); await client.query('RESET statement_timeout; RESET lock_timeout'); } catch (e) { /* ignore */ }
     client.release();
   }
 }

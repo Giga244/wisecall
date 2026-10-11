@@ -105,6 +105,7 @@ async function getPaymentStatus(orderId) {
     // request_amount is what the order asked for; transfer_amount drops to 0 after a refund.
     amount: units ? fromDecimal(units.request_amount) : null,
     currency: units && units.currency_code ? String(units.currency_code).toLowerCase() : null,
+    returned: units && units.refund_amount !== undefined && units.refund_amount !== null ? fromDecimal(units.refund_amount) : null,
     raw: key
   };
 }
@@ -145,4 +146,5 @@ async function ping() {
   return 'the bank issued an access token';
 }
 
-module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, ping };
+// (the same Idempotency-Key returns the same result: a refund asked for twice is made once)
+module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, ping, idempotentRefunds: true };

@@ -1,7 +1,7 @@
 // REVIEW-2: deleting an account. After the grace period nobody can sign in to it, the money records stay (pointing at an anonymous
 // account), and the text the person wrote is gone, also in their reports and disputes (REVIEW-2 #6). The password asked for before
 // deleting cannot be guessed at full speed (REVIEW-2 #5).
-// Tests marked { todo: 'REVIEW-2 #n' } show a problem that exists today: they are expected to fail until the finding is fixed.
+// The findings these tests showed are fixed (docs/REVIEW-2.md, "Status"): every test here must pass.
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { pool, sql, until, marketplace, client, signupVerified, answered } = require('./_shared');
@@ -52,7 +52,7 @@ describe('deleting an account', () => {
     assert.equal((await sql(`SELECT body FROM messages WHERE sender_id = $1 AND kind = 'follow_up_question'`, [dinaId]))[0].body, '');
   });
 
-  test('the words the person wrote in reports and disputes are gone too', { todo: 'REVIEW-2 #6' }, async () => {
+  test('the words the person wrote in reports and disputes are gone too', async () => {
     await until(async () => (await sql('SELECT deleted_at FROM users WHERE id = $1', [dinaId]))[0].deleted_at, 'deleted', 20000);
     const left = [
       ...(await sql('SELECT details AS text FROM disputes WHERE opened_by = $1', [dinaId])),
@@ -63,7 +63,7 @@ describe('deleting an account', () => {
 });
 
 describe('the password asked for before deleting', () => {
-  test('cannot be guessed at full speed', { todo: 'REVIEW-2 #5' }, async () => {
+  test('cannot be guessed at full speed', async () => {
     const rita = await signupVerified(ctx.base, 'Rita Guess', 'rita@example.com');
     const statuses = [];
     for (let i = 0; i < 25; i++) statuses.push((await rita.api('/me', { method: 'DELETE', body: { password: `guess-number-${i}` } })).status);

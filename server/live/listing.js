@@ -1,8 +1,7 @@
 // The public list of upcoming live sessions (/live and GET /api/live), with its filters: field, language, type, date, price.
 const { query } = require('../db');
 const sessions = require('./sessions');
-const { getUserById } = require('../models');
-const { listableSql } = require('../models');
+const { getUsersByIds, listableSql } = require('../models');
 
 // filters: { niche, language, kind, from: 'YYYY-MM-DD', to: 'YYYY-MM-DD', maxPrice (lari), mentor: userId, limit }
 async function upcoming(f = {}) {
@@ -23,8 +22,7 @@ async function upcoming(f = {}) {
             (SELECT count(*)::int FROM live_tickets t WHERE t.session_id = s.id AND t.early AND (t.status IN ('paid', 'refund_pending') OR (t.status = 'held' AND t.hold_until > now()))) AS early_taken,
             EXISTS (SELECT 1 FROM live_session_covers c WHERE c.session_id = s.id) AS has_cover
        FROM live_sessions s WHERE ${where.join(' AND ')} ORDER BY s.starts_at LIMIT ${limit}`, args);
-  const mentors = new Map();
-  for (const r of rows) if (!mentors.has(r.mentor_id)) mentors.set(r.mentor_id, await getUserById(r.mentor_id));
+  const mentors = await getUsersByIds(rows.map((r) => r.mentor_id)); // (one query for all of them)
   return rows.map((r) => sessions.publicView(r, mentors.get(r.mentor_id)));
 }
 

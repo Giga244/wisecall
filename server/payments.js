@@ -188,6 +188,7 @@ async function refundBooking(bookingId, reason) {
     if (booking.status === 'refunded') { alreadyDone = booking; return; }
     if (booking.status === 'refund_pending' && !booking.refundError) { alreadyDone = booking; return; }
     if (!['paid', 'answered', 'refund_pending'].includes(booking.status)) throw new PaymentError('not_refundable');
+    if (booking.partialRefundAmount) throw new PaymentError('refund_unconfirmed'); // (a partial refund's answer from the bank is not known yet)
     try { pay.forProvider(booking.provider); } catch (e) { throw new PaymentError('provider_unavailable', e.message); }
     if (!booking.providerOrderId) throw new PaymentError('missing_order');
 
@@ -202,8 +203,10 @@ async function refundBooking(bookingId, reason) {
   if (alreadyDone) return alreadyDone;
 
   try {
+    // After a partial refund (a dispute) only what is left goes back, as a partial return of that much (docs/REVIEW-2.md #2).
+    const left = claimed.amount - (claimed.refundedAmount || 0);
     const r = await pay.forProvider(claimed.provider).refund({
-      orderId: claimed.providerOrderId, amount: claimed.amount, idempotencyKey: `refund-${claimed.id}`
+      orderId: claimed.providerOrderId, amount: left, partial: left < claimed.amount, idempotencyKey: `refund-${claimed.id}`
     });
     await updateBooking(claimed.id, { providerRefundId: r.refundId });
   } catch (err) {
@@ -220,40 +223,98 @@ async function refundBooking(bookingId, reason) {
 
 // A partial refund (an admin settling a dispute): `amount` tetri goes back to the asker and the booking stays answered. The mentor's
 // part is in proportion to their share of the price (server/ledger.js onPartialRefund). The request is claimed first
-// (partial_refund_started_at), so two admins cannot send it twice; the ledger changes only after the bank accepted it.
-// Returns the booking. Throws PaymentError.
+// (partial_refund_started_at, and the amount in partial_refund_amount), so two admins cannot send it twice; the ledger changes only after
+// the bank accepted it. When the bank's answer is lost, the bank is asked what it returned before anything else (docs/REVIEW-2.md #3):
+// the refund is recorded if the money went back; the claim is released if nothing went back and asking again is safe (the bank refused
+// outright, or it dedupes a repeated request); otherwise it stays "sent, answer unknown" (refund_unconfirmed) and the sweep checks again
+// (settleUnconfirmedRefunds). Nothing is ever sent to the bank twice without that check. Returns the booking. Throws PaymentError.
 async function partialRefund(bookingId, amount, reason) {
   let claimed = null;
   await tx(async (client) => {
     const b = await lockBooking(client, bookingId);
     if (!b) throw new PaymentError('not_found');
     if (b.status !== 'answered') throw new PaymentError('not_refundable');
+    if (b.partialRefundAmount) throw new PaymentError('refund_unconfirmed');
     if (b.refundedAmount || b.partialRefundStartedAt) throw new PaymentError('already_partly_refunded');
     if (!Number.isInteger(amount) || amount < 1 || amount >= b.amount) throw new PaymentError('invalid_amount');
     try { pay.forProvider(b.provider); } catch (e) { throw new PaymentError('provider_unavailable', e.message); }
     if (!b.providerOrderId) throw new PaymentError('missing_order');
-    await client.query('UPDATE bookings SET partial_refund_started_at = now() WHERE id = $1', [b.id]);
+    await client.query('UPDATE bookings SET partial_refund_started_at = now(), partial_refund_amount = $2 WHERE id = $1', [b.id, amount]);
     claimed = b;
   });
+  const bank = pay.forProvider(claimed.provider);
   try {
-    await pay.forProvider(claimed.provider).refund({ orderId: claimed.providerOrderId, amount, partial: true, idempotencyKey: `partial-refund-${claimed.id}` });
+    await bank.refund({ orderId: claimed.providerOrderId, amount, partial: true, idempotencyKey: `partial-refund-${claimed.id}` });
   } catch (err) {
-    await query('UPDATE bookings SET partial_refund_started_at = NULL WHERE id = $1', [claimed.id]); // (nothing was returned: it can be tried again)
-    console.error(`[payments] the bank refused the partial refund for booking ${claimed.id}:`, err.message);
-    throw new PaymentError('refund_failed', err.message);
+    console.error(`[payments] the partial refund for booking ${claimed.id} failed, or its answer was lost:`, err.message);
+    const seen = await partialRefundAtBank(claimed, amount);
+    if (seen === 'returned') return recordPartialRefund(claimed.id, amount, reason);
+    if (seen === 'not_returned' && (refusedByBank(err) || bank.idempotentRefunds)) {
+      await query('UPDATE bookings SET partial_refund_started_at = NULL, partial_refund_amount = NULL WHERE id = $1', [claimed.id]); // (nothing went back: it can be tried again)
+      throw new PaymentError('refund_failed', err.message);
+    }
+    throw new PaymentError('refund_unconfirmed', err.message);
   }
+  return recordPartialRefund(claimed.id, amount, reason);
+}
+
+// The bank said no (a 4xx answer other than "too many" or "timeout"), or a bank without HTTP said so: nothing was returned, for certain.
+const refusedByBank = (err) => Boolean(err && err.status >= 400 && err.status < 500 && ![408, 429].includes(err.status));
+
+// What the bank shows for a partial refund of `amount` on top of what this booking had already returned: 'returned', 'not_returned' or
+// 'unknown' (the bank cannot be reached, or says something in between).
+async function partialRefundAtBank(b, amount) {
+  let s;
+  try { s = await pay.forProvider(b.provider).getPaymentStatus(b.providerOrderId); } catch (e) { return 'unknown'; }
+  const before = b.refundedAmount || 0;
+  if (typeof s.returned === 'number') {
+    if (s.returned >= before + amount) return 'returned';
+    return s.returned <= before && s.status === 'paid' ? 'not_returned' : 'unknown';
+  }
+  if (s.status === 'refunded_partially' || s.status === 'refunded') return before ? 'unknown' : 'returned';
+  return s.status === 'paid' ? 'not_returned' : 'unknown';
+}
+
+// The bank returned a partial refund: the booking, the ledger and a refund receipt (once).
+async function recordPartialRefund(bookingId, amount, reason) {
   let updated;
-  let receipt;
+  let receipt = null;
   await tx(async (client) => {
-    const b = await lockBooking(client, claimed.id);
+    const b = await lockBooking(client, bookingId);
+    if (b.refundedAmount) { updated = b; return; } // (already recorded)
     updated = await updateBooking(b.id, { refundedAmount: amount, refundReason: reason }, client);
+    await client.query('UPDATE bookings SET partial_refund_amount = NULL WHERE id = $1', [b.id]);
     await ledger.onPartialRefund(client, b, amount);
     receipt = await receipts.issue(b.id, 'refund', amount, client);
   });
-  receipts.email(receipt).catch((e) => console.error('[payments] receipt email failed:', e.message));
+  if (receipt) receipts.email(receipt).catch((e) => console.error('[payments] receipt email failed:', e.message));
   return updated;
 }
 
+// The sweep: partial refunds whose answer from the bank was lost. Recorded as soon as the bank shows the money went back (the dispute's
+// decision is then announced); released after 15 minutes if the bank still shows nothing returned (the dispute opens again for the admin).
+async function settleUnconfirmedRefunds() {
+  const { rows } = await query(`SELECT id FROM bookings WHERE partial_refund_amount IS NOT NULL AND partial_refund_started_at < now() - interval '1 minute'
+    ORDER BY partial_refund_started_at LIMIT 50`);
+  let n = 0;
+  for (const { id } of rows) {
+    try {
+      const b = await getBookingById(id);
+      const seen = await partialRefundAtBank(b, b.partialRefundAmount);
+      if (seen === 'returned') {
+        await recordPartialRefund(b.id, b.partialRefundAmount, 'dispute');
+        await require('./disputes').refundConfirmed(b.id);
+        n += 1;
+      } else if (seen === 'not_returned' && Date.now() - new Date(b.partialRefundStartedAt).getTime() > 15 * 60000) {
+        const { rowCount } = await query('UPDATE bookings SET partial_refund_started_at = NULL, partial_refund_amount = NULL WHERE id = $1 AND partial_refund_amount IS NOT NULL', [b.id]);
+        if (rowCount) await require('./disputes').refundNotMade(b.id);
+        n += 1;
+      }
+    } catch (e) { console.error(`[payments] could not settle the partial refund of booking ${id}:`, e.message); }
+  }
+  return n;
+}
+
 module.exports = {
-  PaymentError, partialRefund, deadlineFromNow, startPayment, syncBooking, handleCallback, refundBooking, expirePending, applyBankStatus
+  PaymentError, partialRefund, settleUnconfirmedRefunds, deadlineFromNow, startPayment, syncBooking, handleCallback, refundBooking, expirePending, applyBankStatus
 };

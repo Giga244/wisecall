@@ -36,7 +36,14 @@ async function token(s, { userId, userName, owner, canSend, lang }) {
   const start = new Date(s.starts_at).getTime();
   const notBefore = new Date(Math.max(Date.now() - 60000, start - 10 * 60000));
   const expires = new Date(Math.min(endsAt(s).getTime() + 30 * 60000, Date.now() + 3 * 3600000));
-  return p.token({ roomName: s.room_name, roomUrl: s.room_url, userId, userName, owner, canSend, notBefore, expires, lang });
+  // (the video service failing or not answering is "video_unavailable": a 503 with a "try again in a minute", docs/TODO-REHEARSAL.md R-8)
+  try {
+    return await p.token({ roomName: s.room_name, roomUrl: s.room_url, userId, userName, owner, canSend, notBefore, expires, lang });
+  } catch (e) {
+    console.error('[live] the video service did not give a token:', e.message);
+    const { LiveError } = require('./sessions');
+    throw new LiveError('video_unavailable');
+  }
 }
 
 const frameOrigin = (s) => video.forRoomUrl(s.room_url).frameOrigin(s.room_url);

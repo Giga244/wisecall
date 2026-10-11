@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "test": "node --test --test-concurrency=1 tests/*.test.js tests/cloud/*.test.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.js tests/cloud/*.test.js tests/cloud-2/*.test.js",
     "migrate": "node scripts/migrate.js",
     "check:launch": "node scripts/check-launch.js",
     "admin:reset-2fa": "node scripts/reset-admin-2fa.js",

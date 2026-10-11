@@ -37,8 +37,9 @@ async function join(user, sessionId, { anonymous } = {}) {
   const a = await access(user, sessionId);
   const s = a.session;
   if (a.role === 'mentor') {
-    await query(`UPDATE live_sessions SET status = 'live', mentor_joined_at = COALESCE(mentor_joined_at, now()), updated_at = now() WHERE id = $1 AND status IN ('published', 'live')`, [s.id]);
+    // (the token first: if the video service fails, the session is not marked live while nobody can enter; R-8)
     const t = await rooms.token(s, { userId: user.id, userName: firstName(user.name), owner: true, canSend: ['audio', 'video', 'screenVideo', 'screenAudio'], lang: user.language });
+    await query(`UPDATE live_sessions SET status = 'live', mentor_joined_at = COALESCE(mentor_joined_at, now()), updated_at = now() WHERE id = $1 AND status IN ('published', 'live')`, [s.id]);
     return { role: 'mentor', joinUrl: t.joinUrl, frameOrigin: rooms.frameOrigin(s), displayName: firstName(user.name), kind: s.kind, replay: Boolean(s.replay_enabled) };
   }
   if (anonymous !== undefined) await query('UPDATE live_tickets SET join_anonymous = $2 WHERE id = $1', [a.ticket.id, anonymous === true]);
@@ -46,7 +47,8 @@ async function join(user, sessionId, { anonymous } = {}) {
   const displayName = anon ? `Guest ${a.ticket.guest_number || 1}` : firstName(user.name);
   // (a recorded session: nobody but the mentor can be heard or seen, so nobody else can be in the replay)
   const allowed = !s.replay_enabled && (s.kind === 'circle' || (await speakerState(s.id, user.id)) === 'allowed');
-  const t = await rooms.token(s, { userId: user.id, userName: displayName, owner: false, canSend: allowed ? ['audio', 'video'] : [], lang: user.language });
+  // (the video service and everyone in the call know a participant by their ticket, never by their account: docs/REVIEW-2.md #7)
+  const t = await rooms.token(s, { userId: a.ticket.id, userName: displayName, owner: false, canSend: allowed ? ['audio', 'video'] : [], lang: user.language });
   return { role: 'participant', joinUrl: t.joinUrl, frameOrigin: rooms.frameOrigin(s), displayName, kind: s.kind, canSpeak: allowed, replay: Boolean(s.replay_enabled) };
 }
 
@@ -58,6 +60,16 @@ async function heartbeat(user, sessionId) {
   const end = rooms.endsAt(s).getTime();
   const now = Date.now();
   if (a.role === 'mentor') {
+    // Only time the video service saw the mentor in the call counts (docs/REVIEW-2.md #4): a heartbeat while the call shows nobody adds
+    // nothing and starts the count again. (If the service cannot be asked, the heartbeat counts: its outage is not the mentor's fault.)
+    let present = true;
+    if (s.room_name) {
+      try { present = await require('./provider').forRoomUrl(s.room_url).isPresent({ roomName: s.room_name, userId: user.id }); } catch (e) { present = true; }
+    }
+    if (!present) {
+      await query('UPDATE live_sessions SET mentor_last_seen_at = NULL WHERE id = $1', [s.id]);
+      return state(user, sessionId, a);
+    }
     await query(
       `UPDATE live_sessions SET mentor_seconds = mentor_seconds + CASE
           WHEN mentor_last_seen_at IS NULL OR $2::timestamptz < $3::timestamptz THEN 0
@@ -140,15 +152,16 @@ async function hand(user, sessionId, raise) {
   [a.session.id, user.id, raise ? 'raised' : 'lowered']);
   return state(user, sessionId, a);
 }
-// The mentor allows (or stops) a participant speaking. The participant's page then fetches a new token.
-async function setSpeaker(user, sessionId, participantId, allow) {
+// The mentor allows (or stops) a participant speaking: the participant is named by their ticket (the mentor never learns account ids).
+// The participant's page then fetches a new token.
+async function setSpeaker(user, sessionId, ticketId, allow) {
   const a = await access(user, sessionId);
   if (a.role !== 'mentor') throw new LiveError('forbidden');
   if (allow && a.session.replay_enabled) throw new LiveError('recorded_session');
-  const { rows: [t] } = await query(`SELECT 1 FROM live_tickets WHERE session_id = $1 AND holder_id = $2 AND status = 'paid'`, [a.session.id, participantId]);
+  const { rows: [t] } = await query(`SELECT holder_id FROM live_tickets WHERE id = $2 AND session_id = $1 AND status = 'paid' AND holder_id IS NOT NULL`, [a.session.id, ticketId]);
   if (!t) throw new LiveError('not_found');
   await query(`INSERT INTO live_speakers (session_id, user_id, state) VALUES ($1, $2, $3)
-               ON CONFLICT (session_id, user_id) DO UPDATE SET state = EXCLUDED.state, updated_at = now()`, [a.session.id, participantId, allow ? 'allowed' : 'lowered']);
+               ON CONFLICT (session_id, user_id) DO UPDATE SET state = EXCLUDED.state, updated_at = now()`, [a.session.id, t.holder_id, allow ? 'allowed' : 'lowered']);
   return state(user, sessionId, a);
 }
 
@@ -161,10 +174,10 @@ async function state(user, sessionId, a0) {
   if (a.role === 'participant') out.hand = (await speakerState(s.id, user.id)) || 'lowered';
   if (a.role === 'mentor') {
     const { rows } = await query(
-      `SELECT t.holder_id, t.join_anonymous, t.guest_number, u.name, t.last_seen_at > now() - interval '75 seconds' AS here, sp.state AS hand
+      `SELECT t.id, t.holder_id, t.join_anonymous, t.guest_number, u.name, t.last_seen_at > now() - interval '75 seconds' AS here, sp.state AS hand
          FROM live_tickets t LEFT JOIN users u ON u.id = t.holder_id LEFT JOIN live_speakers sp ON sp.session_id = t.session_id AND sp.user_id = t.holder_id
         WHERE t.session_id = $1 AND t.status = 'paid' ORDER BY (sp.state = 'raised') DESC NULLS LAST, t.created_at`, [s.id]);
-    out.people = rows.filter((r) => r.holder_id).map((r) => ({ id: r.holder_id, name: r.join_anonymous ? `Guest ${r.guest_number || 1}` : firstName(r.name), here: Boolean(r.here), hand: r.hand || 'lowered' }));
+    out.people = rows.filter((r) => r.holder_id).map((r) => ({ id: r.id, name: r.join_anonymous ? `Guest ${r.guest_number || 1}` : firstName(r.name), here: Boolean(r.here), hand: r.hand || 'lowered' }));
     out.count = { tickets: rows.length, here: rows.filter((r) => r.here).length };
   }
   return out;

@@ -5,9 +5,13 @@
 //   verifyCallback({ rawBody, headers })
 //       -> { orderId }                      proves a callback is genuine (or throws); never trust its content
 //   getPaymentStatus(orderId)
-//       -> { status, amount, currency }     status: pending | paid | failed | expired | refund_pending | refunded | refunded_partially
-//   refund({ orderId, amount, idempotencyKey })
+//       -> { status, amount, currency, returned }
+//                                           status: pending | paid | failed | expired | refund_pending | refunded | refunded_partially
+//                                           returned: tetri the bank has returned on this order so far (null when it does not say)
+//   refund({ orderId, amount, partial, idempotencyKey })
 //       -> { refundId }                     asks the bank to return the money (confirmed later via getPaymentStatus)
+//   idempotentRefunds                       true when the bank answers a repeated idempotencyKey with the first result (asking
+//                                           again can never return the money twice); false: never ask again without a status check
 //
 // To add another bank, write a module with those four functions plus `name` and `isConfigured`,
 // and register it below.

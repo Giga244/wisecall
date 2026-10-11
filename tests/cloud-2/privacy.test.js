@@ -1,7 +1,7 @@
 // REVIEW-2: what leaves the server. Sentry gets route patterns without usernames (REVIEW-2 #10) and messages without personal data;
 // Plausible gets the path without its query, and nothing from a visitor who asked not to be tracked; Daily.co (and through it the other
 // people in the call) does not learn the account behind an anonymous "Guest" (REVIEW-2 #7).
-// Tests marked { todo: 'REVIEW-2 #n' } show a problem that exists today: they are expected to fail until the finding is fixed.
+// The findings these tests showed are fixed (docs/REVIEW-2.md, "Status"): every test here must pass.
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('http');
@@ -41,7 +41,7 @@ describe('Sentry', () => {
     assert.ok(!routeOf({ originalUrl: '/api/x/someone@example.com' }).includes('example'));
   });
 
-  test('…including the profile API, which has the username in its address', { todo: 'REVIEW-2 #10' }, () => {
+  test('…including the profile API, which has the username in its address', () => {
     const { routeOf } = require('../../server/errorReport');
     for (const p of ['/api/users/maia-p', '/api/users/maia-p/report']) assert.ok(!routeOf({ originalUrl: p }).includes('maia-p'), `${p} -> ${routeOf({ originalUrl: p })}`);
   });
@@ -97,7 +97,7 @@ describe('Daily.co', () => {
     assert.equal(t.is_owner, false);
   });
 
-  test('an anonymous guest is not identified by their account id (to Daily, the other people in the call, or the mentor)', { todo: 'REVIEW-2 #7' }, async () => {
+  test('an anonymous guest is not identified by their account id (to Daily, the other people in the call, or the mentor)', async () => {
     const [s] = await sql(`SELECT id FROM live_sessions WHERE status IN ('published', 'live') ORDER BY created_at DESC LIMIT 1`);
     const seekerId = (await ctx.seeker.api('/me')).user.id;
     seen.length = 0;

@@ -106,7 +106,7 @@ function forViewer(booking, viewerId) {
 
 // What the asker or the mentor is SENT about a booking, at the edge of the API (the server has used the rest by then): forViewer, without the
 // moderation's and the bank's internals, and a mentor does not get the asker's account id. (Admins have their own views.)
-const NOT_SENT = ['reminderSentAt', 'answerFlaggedAt', 'answerHeldUntil', 'partialRefundStartedAt', 'refundRequestedAt', 'answerReview'];
+const NOT_SENT = ['reminderSentAt', 'answerFlaggedAt', 'answerHeldUntil', 'partialRefundStartedAt', 'partialRefundAmount', 'refundRequestedAt', 'answerReview'];
 function trimForClient(b, viewerId) {
   const out = { ...b };
   for (const k of NOT_SENT) delete out[k];

@@ -101,6 +101,7 @@ function bookingFromRow(r) {
     declineReason: r.decline_reason,
     refundedAmount: r.refunded_amount,
     partialRefundStartedAt: r.partial_refund_started_at,
+    partialRefundAmount: r.partial_refund_amount, // (sent to the bank, its answer not known yet: docs/REVIEW-2.md #3)
     createdAt: r.created_at
   };
 }
@@ -171,6 +172,14 @@ async function getUserById(id, client) {
   return userFromRow(rows[0]);
 }
 
+// Several accounts in one query (the same columns as getUserById): a Map of id -> user. (docs/TODO-REHEARSAL.md R-3: no query per row.)
+async function getUsersByIds(ids) {
+  const list = [...new Set((ids || []).filter(isUuid))];
+  if (!list.length) return new Map();
+  const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE id = ANY($1::uuid[])`, [list]);
+  return new Map(rows.map((r) => { const u = userFromRow(r); return [u.id, u]; }));
+}
+
 async function getUserByEmail(email) {
   const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE lower(email) = lower($1)`, [email]);
   return userFromRow(rows[0]);
@@ -210,7 +219,7 @@ async function claimAnswer(id, answer, hold) {
   const { rows } = await query(
     `UPDATE bookings SET answer = $2, status = 'answered', answered_at = now(),
             answer_review = COALESCE($3, answer_review), answer_held_until = COALESCE($4, answer_held_until)
-      WHERE id = $1 AND status = 'paid' AND answered_at IS NULL AND (answer_deadline IS NULL OR answer_deadline > now()) RETURNING *`,
+      WHERE id = $1 AND status = 'paid' AND answered_at IS NULL AND declined_at IS NULL AND (answer_deadline IS NULL OR answer_deadline > now()) RETURNING *`,
     [id, answer, hold ? hold.answerReview : null, hold ? hold.answerHeldUntil : null]
   );
   return bookingFromRow(rows[0]);
@@ -227,19 +236,41 @@ function listableSql(u = 'users') {
 }
 
 // { [mentorId]: { ratingAvg, reviewCount, answeredCount } } for the given mentor ids.
+// Mentor statistics are read on every home, Browse and profile view: each mentor's are kept for MENTOR_STATS_CACHE_SECONDS (60 in
+// production, 0 elsewhere) so a busy page does not recompute them over every booking each time (docs/TODO-REHEARSAL.md R-4). Ratings are
+// revealed by the sweep anyway, so a minute's delay is invisible.
+const STATS_TTL_MS = (process.env.MENTOR_STATS_CACHE_SECONDS !== undefined && process.env.MENTOR_STATS_CACHE_SECONDS !== ''
+  ? Number(process.env.MENTOR_STATS_CACHE_SECONDS) : (process.env.NODE_ENV === 'production' ? 60 : 0)) * 1000;
+const statsCache = new Map(); // mentor id -> { at, value }
 async function mentorStatsFor(ids) {
+  const out = {};
+  const missing = [];
+  const now = Date.now();
+  for (const id of ids) {
+    const hit = STATS_TTL_MS > 0 ? statsCache.get(id) : null;
+    if (hit && now - hit.at < STATS_TTL_MS) out[id] = hit.value; else missing.push(id);
+  }
+  if (!missing.length) return out;
+  const fresh = await computeMentorStats(missing);
+  if (STATS_TTL_MS > 0) {
+    if (statsCache.size > 5000) statsCache.clear();
+    for (const id of missing) statsCache.set(id, { at: now, value: fresh[id] });
+  }
+  return Object.assign(out, fresh);
+}
+async function computeMentorStats(ids) {
   const out = {};
   ids.forEach((id) => { out[id] = { ratingAvg: null, reviewCount: 0, answeredCount: 0, avgAnswerSeconds: null }; });
   if (!ids.length) return out;
   // The rating numbers come from the ratings table: only ratings that were revealed (see server/ratings.js), not hidden by an
   // admin, and given for a booking that stayed answered.
-  const ratings = await query(
+  // (the two at once: docs/TODO-REHEARSAL.md R-4)
+  const [ratings, { rows }] = await Promise.all([query(
     `SELECT r.ratee_id, count(*)::int AS n, round(avg(r.stars)::numeric, 1) AS avg
        FROM ratings r JOIN bookings b ON b.id = r.booking_id
       WHERE r.direction = 'asker_to_mentor' AND r.ratee_id = ANY($1::uuid[]) AND r.revealed_at IS NOT NULL AND r.hidden_at IS NULL AND b.status = 'answered'
       GROUP BY r.ratee_id`, [ids]
-  );
-  const { rows } = await query(
+  ), query(
     `SELECT mentor_id,
             count(*) FILTER (WHERE status = 'answered' AND answer_review <> 'held') AS answered,
             -- how long buyers really waited: from payment to the moment they could read the answer
@@ -247,7 +278,7 @@ async function mentorStatsFor(ids) {
               FILTER (WHERE status = 'answered' AND answer_review <> 'held' AND paid_at IS NOT NULL AND answered_at IS NOT NULL) AS avg_seconds
        FROM bookings WHERE mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`,
     [ids]
-  );
+  )]);
   rows.forEach((r) => {
     out[r.mentor_id] = {
       ratingAvg: null,
@@ -265,6 +296,6 @@ async function mentorStatsFor(ids) {
 }
 
 module.exports = {
-  userFromRow, bookingFromRow, getUserById, getUserByEmail, updateUser, insertUser,
+  userFromRow, bookingFromRow, getUserById, getUsersByIds, getUserByEmail, updateUser, insertUser,
   getBookingById, updateBooking, claimAnswer, listableSql, failedRequiredStepSql, userColumnsSql, mentorStatsFor
 };

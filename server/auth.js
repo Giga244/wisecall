@@ -54,8 +54,13 @@ function reissue(res, payload, extra) {
 // Is this token's session still valid? Cached for a few seconds per process; a revocation here clears the cache at once.
 const CACHE_MS = 10000;
 const checked = new Map();
+// Only a real sign-in token is a session (docs/REVIEW-2.md #1): one with a purpose or an audience (the "second step" cookie, the Google
+// sign-in state) never is, and every token since sessions exist names its session row (sid). A token without one can only be from before
+// they existed (signed before SESSIONS_SINCE); those run out by themselves within COOKIE_DAYS.
+const SESSIONS_SINCE = Date.parse('2026-09-28T00:00:00Z') / 1000;
 async function sessionValid(payload) {
-  if (!payload || !isUuid(payload.id)) return false;
+  if (!payload || !isUuid(payload.id) || payload.purpose !== undefined || payload.aud !== undefined) return false;
+  if (!isUuid(payload.sid) && !(Number(payload.iat) < SESSIONS_SINCE)) return false;
   const sid = isUuid(payload.sid) ? payload.sid : null;
   const key = `${payload.id}:${sid || '-'}:${payload.sv || 0}`;
   const hit = checked.get(key);

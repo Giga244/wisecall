@@ -284,6 +284,13 @@ const S = {
       hold: 'For your safety, payouts wait until {holdUntil}.',
       notYou: 'If you did not do this, change your password now and write to us: someone may be using your account.', button: 'Open payout settings'
     },
+    twoFactorOff: {
+      subject: 'Two-step verification was turned off on your Wisecall account', heading: 'Two-step verification was turned off',
+      intro: 'Two-step verification was turned off for your Wisecall account on {device}, {when}. Signing in now needs only your password.',
+      others: 'For your safety, every other device was signed out.',
+      notYou: 'If you did not do this, change your password now, turn two-step verification on again and write to us: someone may be using your account.',
+      button: 'Open security settings'
+    },
     contact: { subject: 'New message from the Wisecall contact form', heading: 'New contact message' }
   },
 
@@ -549,6 +556,13 @@ const S = {
       hold: 'შენი უსაფრთხოებისთვის ანაზღაურება {holdUntil}-მდე შეჩერებულია.',
       notYou: 'თუ ეს შენ არ გაგიკეთებია, ახლავე შეცვალე პაროლი და მოგვწერე: შესაძლოა, შენს ანგარიშს სხვა იყენებს.', button: 'ანაზღაურების პარამეტრები'
     },
+    twoFactorOff: {
+      subject: 'შენს Wisecall-ის ანგარიშზე ორსაფეხურიანი შემოწმება გამოირთო', heading: 'ორსაფეხურიანი შემოწმება გამოირთო',
+      intro: 'შენს Wisecall-ის ანგარიშზე ორსაფეხურიანი შემოწმება გამოირთო მოწყობილობიდან {device}, {when}. ახლა შესასვლელად მხოლოდ პაროლია საჭირო.',
+      others: 'შენი უსაფრთხოებისთვის ყველა სხვა მოწყობილობიდან გამოგიყვანეთ.',
+      notYou: 'თუ ეს შენ არ გაგიკეთებია, ახლავე შეცვალე პაროლი, ხელახლა ჩართე ორსაფეხურიანი შემოწმება და მოგვწერე: შესაძლოა, შენს ანგარიშს სხვა იყენებს.',
+      button: 'უსაფრთხოების პარამეტრები'
+    },
     contact: { subject: 'ახალი შეტყობინება Wisecall-ის საკონტაქტო ფორმიდან', heading: 'ახალი შეტყობინება' }
   }
 };
@@ -785,6 +799,11 @@ const BUILDERS = {
     heading: s.payoutChanged.heading,
     blocks: [{ p: fill(s.payoutChanged.intro, d), raw: true }, ...(d.holdUntil ? [{ p: fill(s.payoutChanged.hold, d), raw: true }] : []), { p: s.payoutChanged.notYou },
       { button: s.payoutChanged.button, url: `${config.PUBLIC_URL}/settings.html?tab=payouts` }]
+  }),
+  twoFactorOff: (s, d) => ({
+    heading: s.twoFactorOff.heading,
+    blocks: [{ p: fill(s.twoFactorOff.intro, d), raw: true }, { p: s.twoFactorOff.others }, { p: s.twoFactorOff.notYou },
+      { button: s.twoFactorOff.button, url: `${config.PUBLIC_URL}/settings.html?tab=account` }]
   }),
   contact: (s, d) => ({
     heading: s.contact.heading,

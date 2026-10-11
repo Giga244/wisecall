@@ -14,6 +14,7 @@ const PRESENT_SHARE = 0.5;
 async function finish(sessionId, { by = 'time' } = {}) {
   let ended = null;
   let short = false;
+  let heldForReview = false;
   await tx(async (client) => {
     const { rows: [s] } = await client.query('SELECT * FROM live_sessions WHERE id = $1 FOR UPDATE', [sessionId]);
     if (!s || !['published', 'live'].includes(s.status)) return;
@@ -23,6 +24,13 @@ async function finish(sessionId, { by = 'time' } = {}) {
     const { rows: [u] } = await client.query(
       `UPDATE live_sessions SET status = 'ended', end_kind = 'normal', ended_at = now(), updated_at = now() WHERE id = $1 RETURNING *`, [s.id]);
     await require('../ledger').onLiveEnded(client, u);
+    // Paid tickets but nobody seen in the call: the payout waits for an admin (an open report holds it, server/ledger.js; docs/REVIEW-2.md #4).
+    const { rows: [seen] } = await client.query(`SELECT count(*)::int AS paid, count(*) FILTER (WHERE attended_seconds > 0)::int AS attended FROM live_tickets WHERE session_id = $1 AND status = 'paid'`, [s.id]);
+    if (seen.paid > 0 && seen.attended === 0) {
+      await client.query(`INSERT INTO live_reports (session_id, reporter_id, reason, details) VALUES ($1, NULL, 'other', $2)`,
+        [s.id, 'Automatic check: the session ended normally, but no participant was seen in the call. The payout waits until an admin looks.']);
+      heldForReview = true;
+    }
     ended = u;
   });
   if (!ended) return null;
@@ -30,6 +38,7 @@ async function finish(sessionId, { by = 'time' } = {}) {
     // (not held as promised: everybody gets their money back)
     return sessions.cancel(ended.id, ended.mentor_joined_at ? 'short' : 'no_show');
   }
+  if (heldForReview) require('../notify').notifyAdmins('A live session ended with nobody in it', `<p>"${require('../email').escapeHtml(ended.title)}" ended normally, but no participant was seen in the call. Its payout is held by an open report in Admin → Live.</p>`);
   await stopRecording(ended);
   if (ended.room_name) require('./rooms').end(ended).catch(() => {});
   await require('./waitlist').close(ended.id).catch(() => {});

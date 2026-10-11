@@ -7,18 +7,19 @@ const fs = require('fs');
 const config = require('./config');
 
 // One attempt. A failure is marked retryable when it is temporary, so sendEmail() can try once more.
-async function postJson(url, headers, body, label) {
+async function postJson(url, headers, body, label, timeoutMs = 15000) {
   let res;
   try {
     res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...headers },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(timeoutMs)
     });
   } catch (e) {
     const err = new Error(`email_send_failed: ${label} network error: ${e.message}`);
     err.retryable = true;
+    err.network = true; // (no answer at all, or a timeout)
     throw err;
   }
   if (!res.ok) {
@@ -34,20 +35,20 @@ async function postJson(url, headers, body, label) {
 const providers = {
   resend: {
     configured: () => Boolean(config.RESEND_API_KEY),
-    send: (m) => postJson(config.RESEND_API_URL, { Authorization: `Bearer ${config.RESEND_API_KEY}` }, {
+    send: (m, o = {}) => postJson(config.RESEND_API_URL, { Authorization: `Bearer ${config.RESEND_API_KEY}` }, {
       from: config.EMAIL_FROM, to: m.to, subject: m.subject, html: m.html, text: m.text,
       ...(m.replyTo ? { reply_to: m.replyTo } : {}),
       ...(m.attachments ? { attachments: m.attachments.map((a) => ({ filename: a.filename, content: a.content, ...(a.contentType ? { content_type: a.contentType } : {}) })) } : {})
-    }, 'resend')
+    }, 'resend', o.timeoutMs)
   },
 
   postmark: {
     configured: () => Boolean(config.POSTMARK_TOKEN),
-    send: (m) => postJson(config.POSTMARK_API_URL + '/email', { 'X-Postmark-Server-Token': config.POSTMARK_TOKEN }, {
+    send: (m, o = {}) => postJson(config.POSTMARK_API_URL + '/email', { 'X-Postmark-Server-Token': config.POSTMARK_TOKEN }, {
       From: config.EMAIL_FROM, To: m.to, Subject: m.subject, HtmlBody: m.html, TextBody: m.text,
       MessageStream: 'outbound', ...(m.replyTo ? { ReplyTo: m.replyTo } : {}),
       ...(m.attachments ? { Attachments: m.attachments.map((a) => ({ Name: a.filename, Content: a.content, ContentType: a.contentType || 'application/octet-stream' })) } : {})
-    }, 'postmark')
+    }, 'postmark', o.timeoutMs)
   },
 
   log: {
@@ -94,15 +95,19 @@ function provider() {
 
 // Throws on failure (callers decide whether that matters). Returns { sent: false } when no
 // provider is configured, which is normal in local development.
-async function sendEmail(message) {
+// `quick`: a person is waiting for this one (a sign-up code, a reset link): 5 seconds, and a second try only after a fast answer (a 5xx
+// or 429), never after a timeout, so a hanging email service never makes a page wait half a minute (docs/TODO-REHEARSAL.md R-7).
+// Background emails keep 15 seconds and one retry.
+async function sendEmail(message, { quick = false } = {}) {
   const p = provider();
   if (!p || !p.configured()) return { sent: false, reason: 'not_configured' };
   const clean = { ...message, subject: String(message.subject).replace(/[\r\n]+/g, ' ') };
   if (config.SUPPORT_EMAIL && !clean.replyTo) clean.replyTo = config.SUPPORT_EMAIL;
+  const opts = quick ? { timeoutMs: 5000 } : {};
   try {
-    return await p.send(clean);
+    return await p.send(clean, opts);
   } catch (err) {
-    if (!err.retryable) throw err;
+    if (!err.retryable || (quick && err.network)) throw err;
     await new Promise((r) => setTimeout(r, 700));
     return p.send(clean); // one retry after a temporary failure
   }

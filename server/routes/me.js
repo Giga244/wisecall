@@ -243,6 +243,15 @@ router.post('/withdrawals', requireAuth, asyncHandler(async (req, res) => {
   }
 }));
 
+// The password typed to confirm an action can only be guessed slowly: per account here, per address in server/index.js (REVIEW-2 #5).
+const reauthGuard = require('../reauthGuard');
+function tooManyWrong(res, userId) {
+  const wait = reauthGuard.blocked(userId);
+  if (!wait) return false;
+  res.set('Retry-After', String(wait)).status(429).json({ error: 'too_many_requests' });
+  return true;
+}
+
 router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
   const user = await getUserById(req.userToken.id);
@@ -251,7 +260,9 @@ router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   const hasPassword = Boolean(user.passwordHash);
   if (typeof newPassword !== 'string' || !newPassword || (hasPassword && (typeof currentPassword !== 'string' || !currentPassword))) return res.status(400).json({ error: 'missing_fields' });
   if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
-  if (hasPassword && !(await bcrypt.compare(String(currentPassword), user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
+  if (hasPassword && tooManyWrong(res, user.id)) return;
+  if (hasPassword && !(await bcrypt.compare(String(currentPassword), user.passwordHash))) { reauthGuard.fail(user.id); return res.status(400).json({ error: 'wrong_password' }); }
+  reauthGuard.succeed(user.id);
   if (await require('../hibp').breachCount(newPassword)) return res.status(400).json({ error: 'password_breached' });
 
   await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
@@ -278,11 +289,16 @@ const accountFail = (res, e) => {
 router.delete('/', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
+  if (tooManyWrong(res, user.id)) return;
   try {
     const out = await require('../account').requestDeletion(user, { password: (req.body || {}).password, sessionId: req.userToken.sid });
+    reauthGuard.succeed(user.id);
     auth.clearAuthCookie(res);
     res.json(out);
-  } catch (e) { accountFail(res, e); }
+  } catch (e) {
+    if (e && e.code === 'wrong_password') reauthGuard.fail(user.id);
+    accountFail(res, e);
+  }
 }));
 router.post('/delete/cancel', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);

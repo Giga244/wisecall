@@ -81,6 +81,21 @@ async function endRoom(roomName) {
 //   GET  /recordings?room_name=           -> {data: [{id, status, duration, start_ts}]}
 //   GET  /recordings/:id/access-link      -> {download_link, expires}   (a short-lived address, made for each viewer)
 //   DELETE /recordings/:id
+// Is this person in the call right now? (the mentor's presence decides the payout: docs/REVIEW-2.md #4)
+async function isPresent({ roomName, userId }) {
+  const presence = await call('GET', `/rooms/${encodeURIComponent(roomName)}/presence`);
+  return (presence.data || []).some((p) => String(p.userId) === String(userId).slice(0, 36));
+}
+
+// Takes this person out of the call now (a ticket refunded while the session runs: docs/REVIEW-2.md #12). Their call sessions are found in
+// the presence list by the id their token carries. [VERIFY the eject body against Daily's REST docs before turning live sessions on.]
+async function eject({ roomName, userId }) {
+  const presence = await call('GET', `/rooms/${encodeURIComponent(roomName)}/presence`);
+  const ids = (presence.data || []).filter((p) => String(p.userId) === String(userId).slice(0, 36)).map((p) => p.id);
+  if (ids.length) await call('POST', `/rooms/${encodeURIComponent(roomName)}/eject`, { ids });
+  return ids.length;
+}
+
 async function startRecording({ roomName, ownerUserId }) {
   const presence = await call('GET', `/rooms/${encodeURIComponent(roomName)}/presence`);
   const me = (presence.data || []).find((p) => String(p.userId) === String(ownerUserId).slice(0, 36));
@@ -114,4 +129,4 @@ function frameOrigin(roomUrl) {
   return u.origin;
 }
 
-module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin, startRecording, stopRecording, findRecording, playbackUrl, deleteRecording };
+module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin, isPresent, eject, startRecording, stopRecording, findRecording, playbackUrl, deleteRecording };

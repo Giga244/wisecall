@@ -76,6 +76,7 @@ function routeOf(req) {
     .replace(/^\/ka(?=\/)/, '')
     .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id')
     .replace(/\/u\/[^/]+/, '/u/:username')
+    .replace(/\/users\/[^/]+/, '/users/:username') // (the profile API: /api/users/<username>, its report; docs/REVIEW-2.md #10)
     .split('/').map((seg) => (/@|%40/.test(seg) ? ':x' : seg.replace(/\d{4,}/g, ':n'))).join('/')
     .slice(0, 200);
 }

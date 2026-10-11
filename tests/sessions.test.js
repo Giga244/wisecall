@@ -66,12 +66,16 @@ describe('sessions', () => {
     assert.equal((await me.api('/me/password', { method: 'POST', body: { currentPassword: 'another-pass-67890', newPassword: PW } })).status, 200);
   });
 
-  test('a login cookie from before sessions existed keeps working until the password changes', async () => {
+  test('a login cookie from before sessions existed keeps working until the password changes; one without a session made later never works', async () => {
     const jwt = require('jsonwebtoken');
     const me = (await (await signupVerified(base, 'Old Cookie', 'old@example.com', PW)).api('/me')).user;
     const old = client(base);
-    old.setCookie('wisecall_token', jwt.sign({ id: me.id, email: me.email }, 'test-secret-that-is-long-enough-1234567890'));
+    const before = Date.parse('2026-09-20T10:00:00Z') / 1000; // (sessions exist since 2026-09-28: docs/REVIEW-2.md #1)
+    old.setCookie('wisecall_token', jwt.sign({ id: me.id, email: me.email, iat: before }, 'test-secret-that-is-long-enough-1234567890'));
     assert.equal(await signedIn(old), true);
+    const recent = client(base);
+    recent.setCookie('wisecall_token', jwt.sign({ id: me.id, email: me.email }, 'test-secret-that-is-long-enough-1234567890'));
+    assert.equal(await signedIn(recent), false);
     const f = await client(base).api('/auth/forgot-password', { method: 'POST', body: { email: 'old@example.com' } });
     const token = new URL(f.resetUrl).searchParams.get('token');
     assert.equal((await client(base).api('/auth/reset-password', { method: 'POST', body: { token, newPassword: 'reset-pass-24680' } })).status, 200);

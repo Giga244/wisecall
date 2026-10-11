@@ -15,6 +15,8 @@ const { LiveError } = sessions;
 
 const router = express.Router();
 const UUID = /^[0-9a-f-]{36}$/i;
+// Every id in these addresses is a uuid: anything else is "not found" (never a database error, docs/REVIEW-2.md #9).
+for (const name of ['id', 'qid', 'mentorId', 'userId']) router.param(name, (req, res, next, value) => (UUID.test(value) ? next() : next('route')));
 const STATUS = {
   not_found: 404, forbidden: 403, not_authenticated: 401, no_ticket: 403, cannot_host: 403, email_not_verified: 403, own_session: 403,
   sold_out: 409, already_have_ticket: 409, payment_in_progress: 409, not_on_sale: 409, started: 409, not_editable: 409, locked_after_sales: 409,

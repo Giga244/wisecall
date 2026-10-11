@@ -140,15 +140,38 @@ async function resolve(admin, disputeId, { outcome, amount, note } = {}) {
     if (outcome === 'full_refund') await payments.refundBooking(booking.id, 'dispute');
     if (outcome === 'partial_refund') await payments.partialRefund(booking.id, amount, 'dispute');
   } catch (e) {
+    // The bank's answer to the partial refund was lost: the decision stands, the refund waits for the bank's confirmation (the sweep
+    // asks again), and the people are told once it is confirmed (refundConfirmed), or the dispute opens again (refundNotMade).
+    if (e.code === 'refund_unconfirmed' && outcome === 'partial_refund') {
+      require('./notify').notifyAdmins('A partial refund waits for the bank', `<p>The bank's answer to the partial refund for booking ${booking.id} was lost. Nothing will be sent again: the refund is recorded as soon as the bank shows it, or the dispute opens again if it shows nothing returned within 15 minutes.</p>`);
+      return { ...view(rows[0]), refundPending: true };
+    }
     await query(`UPDATE disputes SET status = 'open', outcome = NULL, refund_amount = NULL, resolution_note = NULL, resolved_by = NULL, resolved_at = NULL WHERE id = $1`, [found.id]);
     throw new DisputeError(e.code === 'refund_failed' ? 'refund_failed' : (e.code || 'refund_failed'), { detail: e.message });
   }
-  const d = view(rows[0]);
-  const fresh = await getBookingById(booking.id);
+  return announce(view(rows[0]), booking.id);
+}
+
+// The asker and the mentor are told the decision (the Inbox and an email).
+async function announce(d, bookingId) {
+  const fresh = await getBookingById(bookingId);
   require('./inbox').onDisputeResolved(fresh, d);
   const [asker, mentor] = await Promise.all([getUserById(fresh.seekerId), getUserById(fresh.mentorId)]);
   require('./notify').notifyDisputeResolved(asker, mentor, fresh, d);
   return d;
+}
+
+// The sweep (server/payments.js settleUnconfirmedRefunds): the bank now shows the partial refund was made, so the decision is announced;
+// or it shows nothing was returned, so the decision is undone and the admin decides again.
+async function refundConfirmed(bookingId) {
+  const { rows: [d] } = await query(`SELECT * FROM disputes WHERE booking_id = $1 AND status = 'resolved' AND outcome = 'partial_refund' ORDER BY resolved_at DESC LIMIT 1`, [bookingId]);
+  if (d) await announce(view(d), bookingId);
+}
+async function refundNotMade(bookingId) {
+  const { rows: [d] } = await query(
+    `UPDATE disputes SET status = 'open', outcome = NULL, refund_amount = NULL, resolution_note = NULL, resolved_by = NULL, resolved_at = NULL
+      WHERE id = (SELECT id FROM disputes WHERE booking_id = $1 AND status = 'resolved' AND outcome = 'partial_refund' ORDER BY resolved_at DESC LIMIT 1) RETURNING id`, [bookingId]);
+  if (d) require('./notify').notifyAdmins('A partial refund was not made', `<p>The bank shows nothing returned for the partial refund of booking ${bookingId}. The dispute is open again: decide it again.</p>`);
 }
 
 // A live-session ticket's dispute: the same decision, through the ticket's own refunds (server/live/tickets.js).
@@ -165,10 +188,18 @@ async function resolveTicket(admin, found, { outcome, amount, note }) {
     if (outcome === 'full_refund') await tickets.refund(t.id, 'dispute');
     if (outcome === 'partial_refund') await tickets.partialRefund(t.id, amount, 'dispute');
   } catch (e) {
+    if (e.code === 'refund_unconfirmed' && outcome === 'partial_refund') { // (as for a question: the sweep settles it, ticketRefundSettled)
+      require('./notify').notifyAdmins('A partial refund waits for the bank', `<p>The bank's answer to the partial refund for live ticket ${t.id} was lost. Nothing will be sent again until the bank shows what it returned.</p>`);
+      return { ...view(rows[0]), refundPending: true };
+    }
     await query(`UPDATE disputes SET status = 'open', outcome = NULL, refund_amount = NULL, resolution_note = NULL, resolved_by = NULL, resolved_at = NULL WHERE id = $1`, [found.id]);
     throw new DisputeError('refund_failed', { detail: e.message });
   }
-  const d = view(rows[0]);
+  return announceTicket(view(rows[0]), t, outcome);
+}
+
+// The holder, the buyer and the mentor are told a ticket dispute's decision.
+function announceTicket(d, t, outcome) {
   const inbox = require('./inbox');
   for (const uid of [...new Set([t.holder_id, t.buyer_id, t.mentor_id].filter(Boolean))]) {
     inbox.systemMessage(uid, 'live_dispute_resolved', { title: t.title, slug: t.slug, outcome, amount: d.refundAmount, note: d.note });
@@ -176,4 +207,18 @@ async function resolveTicket(admin, found, { outcome, amount, note }) {
   return d;
 }
 
-module.exports = { REASONS, TICKET_REASONS, OUTCOMES, DisputeError, windowFor, windowForTicket, open, openForTicket, forBookings, forTickets, listForAdmin, resolve };
+// The sweep (server/live/tickets.js settleUnconfirmedPartials): the bank showed the ticket's partial refund was made (announce the
+// decision), or that nothing went back (the dispute opens again for the admin).
+async function ticketRefundSettled(ticketId, made) {
+  const { rows: [d] } = await query(`SELECT * FROM disputes WHERE ticket_id = $1 AND status = 'resolved' AND outcome = 'partial_refund' ORDER BY resolved_at DESC LIMIT 1`, [ticketId]);
+  if (!d) return;
+  if (made) {
+    const { rows: [t] } = await query(`SELECT t.*, s.title, s.slug, s.mentor_id FROM live_tickets t JOIN live_sessions s ON s.id = t.session_id WHERE t.id = $1`, [ticketId]);
+    announceTicket(view(d), t, 'partial_refund');
+    return;
+  }
+  await query(`UPDATE disputes SET status = 'open', outcome = NULL, refund_amount = NULL, resolution_note = NULL, resolved_by = NULL, resolved_at = NULL WHERE id = $1`, [d.id]);
+  require('./notify').notifyAdmins('A partial refund was not made', `<p>The bank shows nothing returned for the partial refund of live ticket ${ticketId}. The dispute is open again: decide it again.</p>`);
+}
+
+module.exports = { REASONS, TICKET_REASONS, OUTCOMES, DisputeError, windowFor, windowForTicket, open, openForTicket, forBookings, forTickets, listForAdmin, resolve, refundConfirmed, refundNotMade, ticketRefundSettled };

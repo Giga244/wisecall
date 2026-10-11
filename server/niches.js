@@ -29,6 +29,7 @@ async function load() {
   const { rows } = await query('SELECT * FROM niches ORDER BY sort, key');
   list = rows.map(fromRow);
   byKey = new Map(list.map((n) => [n.key, n]));
+  require('./publicCache').clear(); // (the public lists name the fields: send the new ones at once)
   return list;
 }
 

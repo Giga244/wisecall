@@ -485,9 +485,12 @@ async function sendRequestsBoard(req, res) {
 // Written on the server in the page's language, for search engines (JSON-LD Event) and for people without JavaScript.
 
 const liveMoney = (tetri) => `${(tetri / 100).toFixed(tetri % 100 ? 2 : 0)} ₾`;
+// (one formatter per language, made once: building one costs about 0.2 ms, docs/TODO-REHEARSAL.md R-12)
+const LIVE_WHEN = {};
 function liveWhen(dateish, lang) {
-  return new Intl.DateTimeFormat(lang === 'ka' ? 'ka-GE' : 'en-GB', { timeZone: 'Asia/Tbilisi', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-    .format(new Date(dateish));
+  const key = lang === 'ka' ? 'ka' : 'en';
+  LIVE_WHEN[key] = LIVE_WHEN[key] || new Intl.DateTimeFormat(key === 'ka' ? 'ka-GE' : 'en-GB', { timeZone: 'Asia/Tbilisi', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return LIVE_WHEN[key].format(new Date(dateish));
 }
 function liveCard(s, prefix, d, lang) {
   const labels = [s.startingSoon ? `<span class="badge badge-pending_payment">${escapeHtml(d['live.label.soon'])}</span>` : '',

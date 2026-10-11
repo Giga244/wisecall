@@ -4,6 +4,7 @@
 //   createRoom({ name, startsAt, endsAt, maxSeats, screenshare })   -> { roomName, roomUrl }   a private room
 //   token({ roomName, roomUrl, userId, userName, owner, canSend, notBefore, expires, lang })  -> { token, joinUrl }
 //   endRoom(roomName)        ends the call for everybody now (the room is deleted)
+//   isPresent({ roomName, userId })  whether that person is in the call right now (the service's own presence list)
 //   isConfigured()           whether its keys are set
 //   frameOrigin(roomUrl)     the origin the call page is embedded from (the room page's CSP allows only this)
 //

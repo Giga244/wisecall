@@ -6,6 +6,23 @@ app: this branch adds files only. Evidence and numbers: [`LAUNCH-REHEARSAL.md`](
 
 No 🔴 was found: under every load and race test the money and seat invariants held (`scripts/rehearsal/invariants.js`).
 
+## Status (October 2026)
+
+| | Done |
+|---|---|
+| R-1 | `claimAnswer` also needs `declined_at IS NULL`; the answer route says `409 declined` (EN + KA on the dashboard). Test: `tests/launch-fixes.test.js`. |
+| R-2 | Shutting down: `Connection: close` on every answer, `/healthz` 503, idle connections closed at once, all of them after `SHUTDOWN_GRACE_MS` (20 s). |
+| R-3 | `/live` reads every mentor in one query (`models.getUsersByIds`). |
+| R-4 | Mentor statistics: the two queries run together, and each mentor's are kept `MENTOR_STATS_CACHE_SECONDS` (60 in production, 0 elsewhere). |
+| R-5 | `/api/config`, `/api/experts`, `/api/live`, `/api/answers`: kept `PUBLIC_CACHE_SECONDS` (30 in production) for visitors who are not signed in, sent with `Cache-Control: public`; cleared when the fields change. |
+| R-6 | Pool: `DB_POOL_MAX` (15), 5 s to get a connection, statement 15 s, lock wait 10 s, idle transaction 60 s (migrations lift the limits); a request that hits one gets `503 busy_try_again`. |
+| R-7 | The sign-up code and the reset link: 5 s and no retry. |
+| R-8 | The video service failing is `503 video_unavailable` (the room page already says "try again"); the mentor's join marks the session live only after the token was made. |
+| R-9 | `npm run backup:check` compares every table of the database. |
+| R-10 | "Find me a mentor" reads every candidate in one query. |
+| R-11 | Not done, on purpose: one process is enough until the CPU is (scale up to Standard first). The rate limits, the session cache and the `/sync` throttle are per process. |
+| R-12 | The date formatters are made once; the indexes are in migration 040; `NODE_OPTIONS=--max-old-space-size=384` in `render.yaml`. The callback lookups and the admin overview stay as they are (fine at this size). |
+
 ---
 
 ## 🟠 R-1 · An answer can be accepted after the same question was declined

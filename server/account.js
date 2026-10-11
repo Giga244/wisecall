@@ -26,7 +26,7 @@ const rowsOf = async (sql, params) => (await query(sql, params)).rows;
 async function exportData(user) {
   const id = user.id;
   const [asked, answered, ratingsGiven, ratingsReceived, messages, notifications, payouts, batches, steps, evidence, sessions, receipts, waitlist, identities, settings,
-    publicAnswers, mentorRequests, liveHosted, liveTickets, following, liveRatingsGiven, discountCodes, liveWaiting, seriesBought, replayPasses] = await Promise.all([
+    publicAnswers, mentorRequests, liveHosted, liveTickets, following, liveRatingsGiven, discountCodes, liveWaiting, seriesBought, replayPasses, reportsWritten] = await Promise.all([
     rowsOf(`SELECT b.id, b.question, b.answer, b.amount, b.currency, b.status, b.created_at, b.paid_at, b.answered_at, b.refunded_at, b.refund_reason, b.refunded_amount,
                    m.name AS mentor_name FROM bookings b JOIN users m ON m.id = b.mentor_id WHERE b.seeker_id = $1 ORDER BY b.created_at`, [id]),
     rowsOf(`SELECT id, question, answer, amount, platform_fee_amount, mentor_net_amount, currency, status, created_at, paid_at, answered_at, refunded_at, refund_reason
@@ -65,7 +65,13 @@ async function exportData(user) {
     rowsOf(`SELECT ls.title, o.status, o.price, o.paid_at, o.created_at FROM live_series_orders o JOIN live_series ls ON ls.id = o.series_id
              WHERE o.buyer_id = $1 AND o.status <> 'expired' ORDER BY o.created_at`, [id]),
     rowsOf(`SELECT s.title, p.status, p.price, p.paid_at, p.access_until, p.refunded_at FROM live_replay_purchases p JOIN live_sessions s ON s.id = p.session_id
-             WHERE p.buyer_id = $1 AND p.status <> 'expired' ORDER BY p.created_at`, [id])
+             WHERE p.buyer_id = $1 AND p.status <> 'expired' ORDER BY p.created_at`, [id]),
+    // (what they wrote in reports, disputes and live question panels: docs/REVIEW-2.md #6)
+    rowsOf(`SELECT 'dispute' AS kind, reason, details AS text, status, created_at FROM disputes WHERE opened_by = $1
+            UNION ALL SELECT 'message_report', reason, details, status, created_at FROM message_reports WHERE reporter_id = $1
+            UNION ALL SELECT 'live_report', reason, details, status, created_at FROM live_reports WHERE reporter_id = $1
+            UNION ALL SELECT 'live_question', NULL, body, NULL, created_at FROM live_questions WHERE author_id = $1
+            ORDER BY created_at`, [id])
   ]);
   const iban = decrypt(user.payoutIbanEnc);
   return {
@@ -83,7 +89,7 @@ async function exportData(user) {
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
     waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests,
     liveSessionsHosted: liveHosted, liveTickets, mentorsFollowed: following, liveRatingsGiven, discountCodes, liveWaitingLists: liveWaiting,
-    liveSeriesBought: seriesBought, replayPasses,
+    liveSeriesBought: seriesBought, replayPasses, reportsAndQuestionsWritten: reportsWritten,
     profileSections: { items: (await require('./profileSections').itemsOf(id)).map((i) => ({ section: i.section, ...i.data, verified: Boolean(i.verified_at), createdAt: i.created_at })),
       settings: await (async () => { const s = await require('./profileSections').settingsOf(id); return { skills: s.skills, topSkills: s.top_skills, languageLevels: s.language_levels, links: s.links, visibility: s.visibility }; })() }
   };
@@ -170,7 +176,10 @@ async function anonymize(userId) {
       "UPDATE verification_audit SET actor_label = 'deleted user' WHERE actor_id = $1",
       'DELETE FROM mentor_follows WHERE follower_id = $1 OR mentor_id = $1', 'DELETE FROM live_waitlist WHERE user_id = $1',
       'DELETE FROM discount_codes WHERE user_id = $1', 'UPDATE live_ratings SET comment = NULL WHERE rater_id = $1',
-      'DELETE FROM profile_items WHERE user_id = $1', 'DELETE FROM profile_settings WHERE user_id = $1', "UPDATE profile_reports SET details = NULL WHERE reporter_id = $1 OR owner_id = $1"
+      'DELETE FROM profile_items WHERE user_id = $1', 'DELETE FROM profile_settings WHERE user_id = $1', "UPDATE profile_reports SET details = NULL WHERE reporter_id = $1 OR owner_id = $1",
+      // (the words they wrote in disputes, reports and a live session's question panel: docs/REVIEW-2.md #6)
+      'UPDATE disputes SET details = NULL WHERE opened_by = $1', 'UPDATE message_reports SET details = NULL WHERE reporter_id = $1',
+      'UPDATE live_reports SET details = NULL WHERE reporter_id = $1', "UPDATE live_questions SET body = '[deleted]' WHERE author_id = $1"
     ]) await c.query(sql, [userId]);
     await c.query('DELETE FROM waitlist WHERE lower(email) = lower($1)', [u.email]);
     await c.query('UPDATE live_tickets SET gift_email = NULL WHERE lower(gift_email) = lower($1)', [u.email]);

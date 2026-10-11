@@ -70,7 +70,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
   let emailSent = false;
   if (config.EMAIL_ENABLED) {
     try {
-      await sendTemplate('verify', { to: normalizedEmail, lang: user.language, data: { code: verifyCode } });
+      await sendTemplate('verify', { to: normalizedEmail, lang: user.language, data: { code: verifyCode }, quick: true });
       emailSent = true;
     } catch (e) {
       // Fall through to the dev-mode fallback below (local development only).
@@ -119,22 +119,26 @@ router.post('/login', asyncHandler(async (req, res) => {
 }));
 
 // ---- The second step at sign-in (for an account that turned two-step verification on) -----------------------------------------
-// Between the password (or Google) and the code, a short-lived signed cookie remembers who is signing in; it is not a session.
+// Between the password (or Google) and the code, a short-lived signed cookie remembers who is signing in; it is not a session. It is
+// signed with its own key and audience and names the person as `uid` (not `id`), so it can never be read as a sign-in cookie, even
+// when copied into one (docs/REVIEW-2.md #1; server/auth.js refuses any token with a purpose or an audience as well).
 const PENDING_COOKIE = 'wisecall_2fa';
 const PENDING_MINUTES = 10;
+const PENDING_KEY = () => `${config.SESSION_SECRET}:second-step`;
+const PENDING_AUDIENCE = 'wisecall-2fa';
 async function needsSecondStep(user) {
   return !isAdminUser(user) && (await twoFactor.stateFor(user.id)).enabled;
 }
 function askForSecondStep(res, user) {
-  res.cookie(PENDING_COOKIE, jwt.sign({ id: user.id, purpose: 'second_step' }, config.SESSION_SECRET, { expiresIn: `${PENDING_MINUTES}m` }), {
+  res.cookie(PENDING_COOKIE, jwt.sign({ uid: user.id, purpose: 'second_step' }, PENDING_KEY(), { expiresIn: `${PENDING_MINUTES}m`, audience: PENDING_AUDIENCE }), {
     httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: PENDING_MINUTES * 60000
   });
 }
 router.post('/login/second-step', asyncHandler(async (req, res) => {
   let pending = null;
-  try { pending = jwt.verify(req.cookies[PENDING_COOKIE] || '', config.SESSION_SECRET); } catch (e) { /* expired or missing */ }
-  if (!pending || pending.purpose !== 'second_step') return res.status(401).json({ error: 'sign_in_again' });
-  const user = await getUserById(pending.id);
+  try { pending = jwt.verify(req.cookies[PENDING_COOKIE] || '', PENDING_KEY(), { audience: PENDING_AUDIENCE }); } catch (e) { /* expired, missing or not ours */ }
+  if (!pending || pending.purpose !== 'second_step' || typeof pending.uid !== 'string') return res.status(401).json({ error: 'sign_in_again' });
+  const user = await getUserById(pending.uid);
   if (!user) return res.status(401).json({ error: 'sign_in_again' });
   const { code, recoveryCode } = req.body || {};
   if ((code !== undefined && !isStr(code)) || (recoveryCode !== undefined && !isStr(recoveryCode)) || (code === undefined && recoveryCode === undefined)) return res.status(400).json({ error: 'invalid_code' });
@@ -180,7 +184,7 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
   let emailSent = false;
   if (user && config.EMAIL_ENABLED) {
     try {
-      await sendTemplate('reset', { to: user.email, lang: user.language, data: { url: resetUrl } });
+      await sendTemplate('reset', { to: user.email, lang: user.language, data: { url: resetUrl }, quick: true });
       emailSent = true;
     } catch (e) {
       console.error('[email] password reset send failed:', e.message);
@@ -255,7 +259,7 @@ router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) =
   let emailSent = false;
   if (config.EMAIL_ENABLED) {
     try {
-      await sendTemplate('verify', { to: user.email, lang: user.language, data: { code: verifyCode } });
+      await sendTemplate('verify', { to: user.email, lang: user.language, data: { code: verifyCode }, quick: true });
       emailSent = true;
     } catch (e) {
       console.error('[email] resend verification send failed:', e.message);

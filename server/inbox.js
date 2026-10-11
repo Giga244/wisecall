@@ -419,7 +419,10 @@ async function unsubscribe(token) {
   let payload;
   try { payload = Buffer.from(p || '', 'base64url').toString('utf8'); } catch (e) { throw new InboxError('invalid_token'); }
   const [userId, category] = payload.split('.');
-  const good = sig && sign(payload).length === sig.length && crypto.timingSafeEqual(Buffer.from(sign(payload)), Buffer.from(sig));
+  // (compared as bytes: a signature in another script has more bytes than characters, docs/REVIEW-2.md #9)
+  const want = Buffer.from(sign(payload));
+  const got = Buffer.from(String(sig || ''));
+  const good = got.length === want.length && crypto.timingSafeEqual(want, got);
   if (!good || !isUuid(userId) || !OPTIONAL_EMAILS.includes(category)) throw new InboxError('invalid_token');
   const { rows } = await query('SELECT email_off FROM notification_settings WHERE user_id = $1', [userId]);
   const off = new Set(rows[0] ? rows[0].email_off : []);

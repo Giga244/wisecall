@@ -64,10 +64,13 @@ async function deleteRecording(recordingId) {
 }
 const recordingState = (recordingId) => recordings.get(recordingId) || null;
 
+// (the fake room has no real call: whoever has the page open is "in" it)
+const isPresent = async () => true;
+const eject = async () => 0;
 const owns = (roomUrl) => String(roomUrl || '').startsWith(`${config.PUBLIC_URL}/mock-live-room.html`);
 const frameOrigin = () => new URL(config.PUBLIC_URL).origin;
 // (for the fake room page and the tests)
 const roomState = (roomName) => rooms.get(roomName) || null;
 
-module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin, verify, roomState, startRecording, stopRecording, findRecording, playbackUrl,
+module.exports = { name, isConfigured, createRoom, token, endRoom, owns, frameOrigin, isPresent, eject, verify, roomState, startRecording, stopRecording, findRecording, playbackUrl,
   deleteRecording, recordingState };

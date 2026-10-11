@@ -8,8 +8,10 @@ const inbox = () => require('../inbox');
 const urlOf = (s, lang) => `${config.PUBLIC_URL}${lang === 'ka' ? '/ka' : ''}/live/${s.slug}`;
 const endsAt = (s) => new Date(new Date(s.starts_at).getTime() + s.duration_min * 60000);
 // "Tuesday 3 November 2026, 19:30 (Tbilisi time)"
+const WHEN = {}; // (one formatter per language, made once: R-12)
 function when(d, lang) {
-  const f = new Intl.DateTimeFormat(lang === 'ka' ? 'ka-GE' : 'en-GB', { timeZone: 'Asia/Tbilisi', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const key = lang === 'ka' ? 'ka' : 'en';
+  const f = WHEN[key] = WHEN[key] || new Intl.DateTimeFormat(key === 'ka' ? 'ka-GE' : 'en-GB', { timeZone: 'Asia/Tbilisi', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   return `${f.format(new Date(d))} (${lang === 'ka' ? 'თბილისის დროით' : 'Tbilisi time'})`;
 }
 const safely = (label, fn) => Promise.resolve().then(fn).catch((e) => console.error(`[live] ${label} failed:`, e.message));

@@ -2,7 +2,7 @@
 // time comes only from heartbeats the mentor's own browser sends: a script that never opens the call earns it just the same, even while
 // the video service sees nobody in the room (REVIEW-2 #4). A real server with LIVE_PROVIDER=daily, talking to a fake Daily API whose
 // presence list is empty.
-// Tests marked { todo: 'REVIEW-2 #n' } show a problem that exists today: they are expected to fail until the finding is fixed.
+// The findings these tests showed are fixed (docs/REVIEW-2.md, "Status"): every test here must pass.
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('http');
@@ -30,7 +30,7 @@ before(async () => {
 });
 after(async () => { if (ctx) ctx.srv.proc.kill(); fake.close(); await pool.end(); });
 
-test('heartbeats count as presence only when the video service sees the mentor in the call', { todo: 'REVIEW-2 #4' }, async () => {
+test('heartbeats count as presence only when the video service sees the mentor in the call', async () => {
   const s = await published(ctx);
   await buyAndPay(ctx, ctx.seeker, s.id);
   await pool.query(`UPDATE live_sessions SET starts_at = now() - interval '1 minute' WHERE id = $1`, [s.id]);

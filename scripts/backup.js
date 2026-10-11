@@ -5,14 +5,15 @@
 //   npm run backup:check -- <file.dump>     -> restores the file into a new, empty scratch database and compares the row counts of the
 //                                              main tables with the database it came from (DATABASE_URL, or BACKUP_SOURCE_URL); then
 //                                              drops the scratch database. Nothing in the source database is changed.
-// pg_dump / pg_restore must be installed (PostgreSQL client tools); PG_BIN can name their folder.
+// pg_dump / pg_restore must be installed (PostgreSQL client tools); PG_BIN can name their folder. The database password goes to them in
+// PGPASSWORD, never on the command line (where any user of the machine could read it, docs/REVIEW-2.md #14), and the dump is readable by
+// its owner only. Encrypt it before it leaves the machine (e.g. age) and keep dumps no longer than the privacy policy says.
 require('dotenv').config();
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { Client } = require('pg');
 
-const TABLES = ['users', 'bookings', 'payouts', 'payout_batches', 'receipts', 'ratings', 'verification_steps', 'verification_audit', 'threads', 'messages', 'waitlist'];
 
 function tool(name) {
   const candidates = [process.env.PG_BIN, 'C:/Program Files/PostgreSQL/17/bin', 'C:/Program Files/PostgreSQL/16/bin', '/usr/bin', '/usr/local/bin', '/opt/homebrew/bin'].filter(Boolean);
@@ -22,20 +23,35 @@ function tool(name) {
   }
   return name; // (on the PATH)
 }
-function run(cmd, args) {
-  const r = spawnSync(tool(cmd), args, { stdio: ['ignore', 'inherit', 'inherit'] });
+// A connection address without its password, and the password for PGPASSWORD.
+function split(url) {
+  const u = new URL(url);
+  const password = decodeURIComponent(u.password || '');
+  u.password = '';
+  return { url: u.toString(), env: password ? { PGPASSWORD: password } : {} };
+}
+function run(cmd, args, env = {}) {
+  const r = spawnSync(tool(cmd), args, { stdio: ['ignore', 'inherit', 'inherit'], env: { ...process.env, ...env } });
   if (r.error) throw new Error(`${cmd} could not start (${r.error.message}). Install the PostgreSQL client tools or set PG_BIN.`);
   if (r.status !== 0) throw new Error(`${cmd} failed with exit code ${r.status}`);
 }
 const redact = (url) => String(url).replace(/\/\/([^:@/]+):[^@/]*@/, '//$1:***@');
 
-async function counts(url) {
+// Every table of the database (docs/TODO-REHEARSAL.md R-9: not a fixed list, which missed most of them).
+async function tablesOf(url) {
+  const c = new Client({ connectionString: url });
+  await c.connect();
+  try {
+    return (await c.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY 1`)).rows.map((r) => r.table_name);
+  } finally { await c.end(); }
+}
+async function counts(url, tables) {
   const c = new Client({ connectionString: url });
   await c.connect();
   try {
     const out = {};
-    for (const t of TABLES) {
-      try { out[t] = (await c.query(`SELECT count(*)::int AS n FROM ${t}`)).rows[0].n; } catch (e) { out[t] = null; }
+    for (const t of tables) {
+      try { out[t] = (await c.query(`SELECT count(*)::int AS n FROM "${t.replace(/"/g, '')}"`)).rows[0].n; } catch (e) { out[t] = null; }
     }
     return out;
   } finally { await c.end(); }
@@ -47,8 +63,10 @@ async function backup(url) {
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, `wisecall-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.dump`);
   console.log(`Backing up ${redact(url)} ...`);
-  run('pg_dump', ['--format=custom', '--no-owner', '--file', file, '--dbname', url]);
-  console.log(`Saved ${file} (${Math.round(fs.statSync(file).size / 1024)} KB). Keep it somewhere safe, with the DATA_ENCRYPTION_KEY in use when it was made.`);
+  const db = split(url);
+  run('pg_dump', ['--format=custom', '--no-owner', '--file', file, '--dbname', db.url], db.env);
+  fs.chmodSync(file, 0o600); // (readable by its owner only)
+  console.log(`Saved ${file} (${Math.round(fs.statSync(file).size / 1024)} KB). Encrypt it before it leaves this machine, keep it somewhere safe with the DATA_ENCRYPTION_KEY in use when it was made, and delete it when the privacy policy's retention is over (deleted accounts stay in old dumps).`);
   return file;
 }
 
@@ -65,13 +83,15 @@ async function check(file, sourceUrl) {
   try {
     await a.query(`CREATE DATABASE ${scratch}`);
     console.log(`Restoring ${path.basename(file)} into the scratch database ${scratch} ...`);
-    run('pg_restore', ['--no-owner', '--exit-on-error', '--dbname', target.toString(), file]);
-    const [src, dst] = await Promise.all([counts(sourceUrl), counts(target.toString())]);
+    const db = split(target.toString());
+    run('pg_restore', ['--no-owner', '--exit-on-error', '--dbname', db.url, file], db.env);
+    const tables = await tablesOf(sourceUrl);
+    const [src, dst] = await Promise.all([counts(sourceUrl, tables), counts(target.toString(), tables)]);
     let same = true;
-    for (const t of TABLES) {
+    for (const t of tables) {
       const ok = src[t] === dst[t];
       if (!ok) same = false;
-      console.log(`${ok ? 'ok  ' : 'DIFF'} ${t.padEnd(20)} source ${String(src[t]).padStart(6)}  restored ${String(dst[t]).padStart(6)}`);
+      console.log(`${ok ? 'ok  ' : 'DIFF'} ${t.padEnd(28)} source ${String(src[t]).padStart(6)}  restored ${String(dst[t]).padStart(6)}`);
     }
     console.log(same ? 'The backup restores completely.' : 'The counts differ: rows were added or removed after the backup was made, or the restore is incomplete.');
     return same;

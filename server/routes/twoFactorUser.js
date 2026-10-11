@@ -5,7 +5,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const QRCode = require('qrcode');
 const config = require('../config');
-const { requireAuth, reissue } = require('../auth');
+const { requireAuth, endAllSessions, startSession, deviceLabel } = require('../auth');
 const { isAdminUser } = require('../adminAuth');
 const { asyncHandler } = require('../util');
 const { getUserById } = require('../models');
@@ -53,7 +53,10 @@ router.post('/enable', requireAuth, asyncHandler(async (req, res) => {
   if (typeof code !== 'string') return res.status(400).json({ error: 'invalid_code' });
   try {
     const { recoveryCodes } = await twoFactor.confirmSetup(user, code);
-    reissue(res, req.userToken, { mfaAt: Math.floor(Date.now() / 1000) });
+    // A device that only passed the password must now pass the new step too: every other session ends, this one starts afresh
+    // (docs/REVIEW-2.md #11).
+    await endAllSessions(user.id);
+    await startSession(req, res, user, { mfaAt: Math.floor(Date.now() / 1000) });
     res.set('Cache-Control', 'no-store');
     res.json({ ok: true, recoveryCodes });
   } catch (e) { fail(res, e); }
@@ -71,6 +74,10 @@ router.post('/disable', requireAuth, asyncHandler(async (req, res) => {
     try { await twoFactor.verifyLogin(user, { code: String(code || '') }); } catch (e) { return fail(res, e); }
   }
   await twoFactor.reset(user.id);
+  // The owner is told (with the device), and every other device is signed out (docs/REVIEW-2.md #11).
+  await endAllSessions(user.id);
+  await startSession(req, res, user);
+  require('../notify').notifyTwoFactorOff(user, { device: deviceLabel(req.get('user-agent')), at: new Date() });
   res.json({ ok: true });
 }));
 

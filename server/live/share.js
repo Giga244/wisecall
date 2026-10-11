@@ -26,14 +26,18 @@ function wrap(text, width, lines) {
   return out.slice(0, lines);
 }
 
+// (one formatter per language, made once: R-12)
+const WHEN = {};
+const whenFormat = (lang) => (WHEN[lang === 'ka' ? 'ka' : 'en'] = WHEN[lang === 'ka' ? 'ka' : 'en']
+  || new Intl.DateTimeFormat(lang === 'ka' ? 'ka-GE' : 'en-GB', { timeZone: 'Asia/Tbilisi', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }));
+
 async function render(sessionId) {
   const { rows: [s] } = await query(
     `SELECT s.*, (SELECT count(*)::int FROM live_tickets t WHERE t.session_id = s.id AND t.early AND t.status IN ('held', 'paid', 'refund_pending')) AS early_taken, u.name AS mentor_name, u.role_title, p.data AS photo FROM live_sessions s JOIN users u ON u.id = s.mentor_id
        LEFT JOIN user_photos p ON p.user_id = u.id WHERE s.id = $1 AND s.status IN ('published', 'live', 'ended')`, [/^[0-9a-f-]{36}$/i.test(String(sessionId || '')) ? sessionId : null]);
   if (!s) return null;
   const lang = s.language;
-  const when = new Intl.DateTimeFormat(lang === 'ka' ? 'ka-GE' : 'en-GB', { timeZone: 'Asia/Tbilisi', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
-    .format(new Date(s.starts_at));
+  const when = whenFormat(lang).format(new Date(s.starts_at));
   const now = require('./sessions').currentPrice(s).price;
   const price = `${(now / 100).toFixed(now % 100 ? 2 : 0)} ₾`;
   const label = { qa: lang === 'ka' ? 'ცოცხალი კითხვა-პასუხი' : 'LIVE Q&A', workshop: lang === 'ka' ? 'ვორქშოპი' : 'WORKSHOP', circle: lang === 'ka' ? 'მცირე წრე' : 'SMALL CIRCLE' }[s.kind];

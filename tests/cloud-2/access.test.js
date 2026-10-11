@@ -3,7 +3,7 @@
 // are bought at the same moment; every new kind of write needs the site's own CSRF header; text is shown as text on the pages built
 // by the server (and in their JSON-LD); the Content-Security-Policy is relaxed only on the live room page; malformed links and ids are
 // refused rather than crashing (REVIEW-2 #9). Mock bank, fake video provider.
-// Tests marked { todo: 'REVIEW-2 #n' } show a problem that exists today: they are expected to fail until the finding is fixed.
+// The findings these tests showed are fixed (docs/REVIEW-2.md, "Status"): every test here must pass.
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { pool, sql, marketplace, client, signupVerified, answered, published, buyAndPay, bankPays, openRoom, forged, day } = require('./_shared');
@@ -194,14 +194,14 @@ describe('pages built on the server', () => {
 });
 
 describe('malformed input is refused, not an error', () => {
-  test('an unsubscribe or unfollow link with a non-ASCII signature', { todo: 'REVIEW-2 #9' }, async () => {
+  test('an unsubscribe or unfollow link with a non-ASCII signature', async () => {
     const payload = Buffer.from(`${'0'.repeat(8)}-0000-0000-0000-${'0'.repeat(12)}.reminders`).toString('base64url');
     const u = await client(ctx.base).api('/inbox/unsubscribe', { method: 'POST', body: { token: `${payload}.${'é'.repeat(32)}` } });
     const f = await client(ctx.base).api('/live/follows/unfollow', { method: 'POST', body: { token: `a.b.${'é'.repeat(43)}` } });
     assert.deepEqual([u.status, f.status], [400, 404], `unsubscribe: ${u.status}, unfollow: ${f.status}`);
   });
 
-  test('a ticket id that is not an id', { todo: 'REVIEW-2 #9' }, async () => {
+  test('a ticket id that is not an id', async () => {
     assert.equal((await ctx.seeker.api('/live/tickets/not-an-id/sync', { method: 'POST' })).status, 404);
     assert.equal((await ctx.seeker.raw('/api/live/tickets/not-an-id/calendar.ics')).status, 404);
   });

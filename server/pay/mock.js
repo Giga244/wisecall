@@ -21,7 +21,7 @@ async function createPayment({ bookingId, amount, callbackUrl, successUrl, failU
 async function getPaymentStatus(orderId) {
   const o = orders.get(orderId);
   if (!o) return { status: 'failed', amount: null, currency: 'gel', raw: 'unknown_order' };
-  return { status: o.status, amount: o.amount, currency: 'gel', raw: o.status };
+  return { status: o.status, amount: o.amount, currency: 'gel', returned: o.refunded || 0, raw: o.status };
 }
 
 // `partial`: return only `amount` (a dispute settled with a partial refund, or one session's share of a series); the order then says
@@ -74,4 +74,4 @@ async function complete(orderId, outcome) {
   return outcome === 'success' ? o.successUrl : (outcome === 'cancel' && o.cancelUrl ? o.cancelUrl : o.failUrl);
 }
 
-module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, getOrder, complete };
+module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, getOrder, complete, idempotentRefunds: true };

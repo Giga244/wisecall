@@ -74,11 +74,14 @@ async function getPaymentStatus(orderId) {
     status: STATUS_MAP[key] || 'pending',
     amount: d.amount === undefined || d.amount === null ? null : fromDecimal(d.amount),
     currency: d.currency ? String(d.currency).toLowerCase() : null,
+    returned: d.returnedAmount === undefined || d.returnedAmount === null ? null : fromDecimal(d.returnedAmount),
     raw: key
   };
 }
 
-// TBC returns the money with a "cancel" request for an amount. Later status lookups show "Returned".
+// TBC returns the money with a "cancel" request for an amount. Later status lookups show "Returned" (and returnedAmount). TBC has no
+// idempotency key: a cancel that is sent twice returns the money twice, so a lost answer is settled by a status check, never by asking again.
+const idempotentRefunds = false;
 async function refund({ orderId, amount }) {
   await call('POST', `/v1/tpay/payments/${encodeURIComponent(orderId)}/cancel`, { amount: toDecimal(amount) });
   return { refundId: orderId };
@@ -98,4 +101,4 @@ async function ping() {
   return 'the bank issued an access token';
 }
 
-module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, ping };
+module.exports = { name, isConfigured, createPayment, getPaymentStatus, refund, verifyCallback, ping, idempotentRefunds };

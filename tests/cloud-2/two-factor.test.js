@@ -1,6 +1,6 @@
 // REVIEW-2: two-step verification for every account. The short-lived "second step" cookie, given out after the password, must never
 // work as a session (REVIEW-2 #1); five wrong codes lock the step; turning the step on signs out the other devices (REVIEW-2 #11).
-// Tests marked { todo: 'REVIEW-2 #n' } show a problem that exists today: they are expected to fail until the finding is fixed.
+// The findings these tests showed are fixed (docs/REVIEW-2.md, "Status"): every test here must pass.
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { resetDatabase, startServer, signupVerified, client } = require('../helpers');
@@ -38,7 +38,7 @@ async function passwordOnly(email) {
 }
 
 describe('the second step cannot be skipped', () => {
-  test('the "second step" cookie, copied into the sign-in cookie, does not sign anybody in', { todo: 'REVIEW-2 #1' }, async () => {
+  test('the "second step" cookie, copied into the sign-in cookie, does not sign anybody in', async () => {
     await withTwoFactor('Tara Twostep', 'tara@example.com');
     const pending = await passwordOnly('tara@example.com');
     const attacker = client(base);
@@ -76,7 +76,7 @@ describe('the second step cannot be skipped', () => {
 });
 
 describe('turning the step on and off', () => {
-  test('turning it on signs out the other devices that only passed the password', { todo: 'REVIEW-2 #11' }, async () => {
+  test('turning it on signs out the other devices that only passed the password', async () => {
     const c = await signupVerified(base, 'Nika Devices', 'nika@example.com', PASSWORD);
     const other = client(base);
     assert.equal((await other.api('/auth/login', { method: 'POST', body: { email: 'nika@example.com', password: PASSWORD } })).status, 200);

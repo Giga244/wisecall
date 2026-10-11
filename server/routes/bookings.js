@@ -166,6 +166,7 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   const mentorNow = await getUserById(existing.mentorId);
   if (!mentorNow || mentorNow.verificationStatus === 'suspended') return res.status(403).json({ error: 'suspended' });
   if (existing.status === 'answered' || existing.answeredAt) return res.status(409).json({ error: 'already_answered' });
+  if (existing.declinedAt) return res.status(409).json({ error: 'declined' }); // (the mentor declined it: its refund is on its way; R-1)
   if (existing.status !== 'paid') return res.status(400).json({ error: 'not_paid' });
   // After the deadline the buyer is owed their money back (the sweep refunds it), so a late answer is refused (docs/AUDIT.md #7).
   if (existing.answerDeadline && new Date(existing.answerDeadline) <= new Date()) return res.status(409).json({ error: 'deadline_passed' });
@@ -179,6 +180,8 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   if (!booking) { // somebody (the same mentor, twice) answered a moment before, the question was refunded meanwhile, or the deadline passed
     const now = await getBookingById(existing.id);
     if (now && (now.status === 'answered' || now.answeredAt)) return res.status(409).json({ error: 'already_answered' });
+    // (declined a moment before, in another tab: the decline wins, the refund is on its way; docs/TODO-REHEARSAL.md R-1)
+    if (now && now.declinedAt) return res.status(409).json({ error: 'declined' });
     if (now && now.status === 'paid' && now.answerDeadline && new Date(now.answerDeadline) <= new Date()) return res.status(409).json({ error: 'deadline_passed' });
     return res.status(400).json({ error: 'not_paid' });
   }

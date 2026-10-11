@@ -294,9 +294,12 @@ describe('the room', () => {
     const buyerId = (await buyer.api('/me')).user.id;
     assert.equal((await buyer.api(`/live/${s.id}/speakers/${buyerId}`, { method: 'POST', body: { allow: true } })).error, 'forbidden');
     const st = await mentor.api(`/live/${s.id}/state`);
-    assert.equal(st.people.find((p) => p.id === buyerId).hand, 'raised');
+    const raised = st.people.find((p) => p.hand === 'raised');
+    assert.ok(raised);
     assert.ok(!JSON.stringify(st.people).includes('@'), 'the mentor never sees emails');
-    assert.equal((await mentor.api(`/live/${s.id}/speakers/${buyerId}`, { method: 'POST', body: { allow: true } })).status, 200);
+    assert.ok(!JSON.stringify(st.people).includes(buyerId), 'nor account ids: a participant is their ticket (docs/REVIEW-2.md #7)');
+    assert.equal((await mentor.api(`/live/${s.id}/speakers/${buyerId}`, { method: 'POST', body: { allow: true } })).status, 404);
+    assert.equal((await mentor.api(`/live/${s.id}/speakers/${raised.id}`, { method: 'POST', body: { allow: true } })).status, 200);
     const j = await buyer.api(`/live/${s.id}/join`, { method: 'POST', body: {} });
     assert.equal(j.canSpeak, true);
     const u = new URL(j.joinUrl);
@@ -337,12 +340,30 @@ describe('the room', () => {
 });
 
 describe('money after the session', () => {
+  test('a normal end with paid tickets but nobody seen in the call: the payout waits for an admin (docs/REVIEW-2.md #4)', async () => {
+    const s = await published({ title: 'A session nobody was seen in', durationMin: 60 });
+    await buyAndPay(await newBuyer(), s.id);
+    await startIn(s.id, 5);
+    await mentor.api(`/live/${s.id}/join`, { method: 'POST', body: {} });
+    await pool.query(`UPDATE live_sessions SET starts_at = now() - interval '61 minutes', mentor_seconds = 35 * 60 WHERE id = $1`, [s.id]);
+    assert.equal((await mentor.api(`/live/${s.id}/end`, { method: 'POST' })).status, 200);
+    const [r] = await sql(`SELECT status, reporter_id, details FROM live_reports WHERE session_id = $1`, [s.id]);
+    assert.ok(r && r.status === 'open' && r.reporter_id === null, 'an automatic report is open');
+    assert.match(r.details, /no participant was seen/);
+    const [p] = await sql('SELECT id FROM payouts WHERE live_session_id = $1', [s.id]);
+    await pool.query(`UPDATE payouts SET payable_at = now() - interval '1 minute' WHERE id = $1`, [p.id]);
+    assert.equal((await mentor.api('/me/balance')).balance.available, 0, 'held until an admin looks');
+    await pool.query(`UPDATE live_reports SET status = 'resolved' WHERE session_id = $1`, [s.id]); // (so the next tests start clean)
+    await pool.query(`UPDATE payouts SET status = 'void' WHERE id = $1`, [p.id]).catch(() => {});
+  });
+
   test('a normal end (the mentor there for half the time or more): one payout = the tickets\' shares, payable after the hold', async () => {
     const s = await published({ title: 'A session that really happens', durationMin: 60 });
     const ids = [await buyAndPay(await newBuyer(), s.id), await buyAndPay(await newBuyer(), s.id)];
     await startIn(s.id, 5);
     assert.equal((await mentor.api(`/live/${s.id}/join`, { method: 'POST', body: {} })).role, 'mentor');
     await pool.query(`UPDATE live_sessions SET starts_at = now() - interval '61 minutes', mentor_seconds = 35 * 60 WHERE id = $1`, [s.id]);
+    await pool.query(`UPDATE live_tickets SET attended_seconds = 30 * 60 WHERE session_id = $1 AND status = 'paid'`, [s.id]); // (people were in the call)
     assert.equal((await mentor.api(`/live/${s.id}/end`, { method: 'POST' })).status, 200);
     const [p] = await sql('SELECT * FROM payouts WHERE live_session_id = $1', [s.id]);
     assert.equal(p.amount, 3200, 'two tickets × 16 ₾');
@@ -410,6 +431,7 @@ describe('disputes, suspension and accounts', () => {
     await startIn(s.id, 5);
     await mentor.api(`/live/${s.id}/join`, { method: 'POST', body: {} });
     await pool.query(`UPDATE live_sessions SET mentor_seconds = 40 * 60 WHERE id = $1`, [s.id]);
+    await pool.query(`UPDATE live_tickets SET attended_seconds = 30 * 60 WHERE session_id = $1 AND status = 'paid'`, [s.id]); // (people were in the call)
     await mentor.api(`/live/${s.id}/end`, { method: 'POST' });
     const [p0] = await sql('SELECT * FROM payouts WHERE live_session_id = $1', [s.id]);
     assert.equal(p0.amount, 3200);

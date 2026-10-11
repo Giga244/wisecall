@@ -35,8 +35,9 @@ const countFor = async (mentorId) => (await query('SELECT count(*)::int AS n FRO
 async function unfollowByToken(token) {
   const [followerId, mentorId, mac] = String(token || '').split('.');
   if (!followerId || !mentorId || !mac) throw new LiveError('not_found');
-  const want = sign(followerId, mentorId);
-  if (mac.length !== want.length || !crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(want))) throw new LiveError('not_found');
+  const want = Buffer.from(sign(followerId, mentorId));
+  const got = Buffer.from(mac); // (compared as bytes: docs/REVIEW-2.md #9)
+  if (got.length !== want.length || !crypto.timingSafeEqual(got, want)) throw new LiveError('not_found');
   await query('DELETE FROM mentor_follows WHERE follower_id = $1 AND mentor_id = $2', [followerId, mentorId]);
   return { ok: true };
 }

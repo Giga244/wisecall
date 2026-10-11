@@ -257,7 +257,11 @@ describe('recovery codes', () => {
 });
 
 describe('how long a verified session lasts', () => {
-  const cookieFor = (claims) => ({ cookie: `wisecall_token=${jwt.sign({ id: adminId, email: EMAIL, ...claims }, SECRET, { expiresIn: '30d' })}` });
+  // (the admin's real session, signed again with other claims: only a token that names a live session is ever a session)
+  const sessionOf = (c) => { const { sid, sv } = jwt.decode(c.getCookie('wisecall_token')); return { sid, sv }; };
+  let session = {};
+  before(async () => { session = sessionOf(await passwordLogin()); });
+  const cookieFor = (claims) => ({ cookie: `wisecall_token=${jwt.sign({ id: adminId, email: EMAIL, ...session, ...claims }, SECRET, { expiresIn: '30d' })}` });
   const call = async (headers) => (await fetch(`${base}/api/admin/mentors`, { headers: { 'X-Requested-With': 'wisecall', ...headers } })).status;
 
   test('12 hours: a session verified just now works, one verified 13 hours ago asks for the code, and a time in the future is not believed', async () => {
@@ -272,7 +276,8 @@ describe('how long a verified session lasts', () => {
 
   test('a cookie made for someone who is not an admin does not become one by carrying the claim', async () => {
     const plainId = (await plain.api('/me')).user.id;
-    const forged = { cookie: `wisecall_token=${jwt.sign({ id: plainId, email: 'plain@example.com', mfaAt: Math.floor(Date.now() / 1000) }, SECRET, { expiresIn: '1d' })}` };
+    const own = sessionOf(await passwordLogin('plain@example.com')); // (their own real session)
+    const forged = { cookie: `wisecall_token=${jwt.sign({ id: plainId, email: 'plain@example.com', ...own, mfaAt: Math.floor(Date.now() / 1000) }, SECRET, { expiresIn: '1d' })}` };
     assert.equal(await call(forged), 403);
     assert.equal((await fetch(`${base}/admin.html`, { headers: forged, redirect: 'manual' })).status, 403);
   });

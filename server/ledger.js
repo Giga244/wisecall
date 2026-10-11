@@ -16,6 +16,7 @@ const config = require('./config');
 // (a live session's payout waits the same way while one of its tickets is disputed or the session has an open report)
 const payableSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.payable_at <= now() AND ${p}.batch_id IS NULL
   AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.booking_id = ${p}.booking_id AND d.status = 'open')
+  AND NOT EXISTS (SELECT 1 FROM bookings pb WHERE pb.id = ${p}.booking_id AND pb.partial_refund_amount IS NOT NULL)
   AND (${p}.live_session_id IS NULL OR (
     NOT EXISTS (SELECT 1 FROM disputes d JOIN live_tickets lt ON lt.id = d.ticket_id WHERE lt.session_id = ${p}.live_session_id AND d.status = 'open')
     AND NOT EXISTS (SELECT 1 FROM live_reports lr WHERE lr.session_id = ${p}.live_session_id AND lr.status = 'open')))

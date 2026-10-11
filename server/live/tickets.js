@@ -211,6 +211,7 @@ async function bankOrderOf(t, client) {
 async function refund(ticketId, reason) {
   let claimed = null;
   let done = null;
+  let retry = false;
   await tx(async (client) => {
     const t = await lockTicket(client, ticketId);
     if (!t) throw new LiveError('not_found');
@@ -221,27 +222,49 @@ async function refund(ticketId, reason) {
     }
     if (t.status === 'refunded' || t.status === 'expired' || (t.status === 'refund_pending' && !t.refund_error && !t.series_order_id)) { done = t; return; }
     try { pay.forProvider(t.provider); } catch (e) { throw new LiveError('provider_unavailable'); }
+    retry = t.status === 'refund_pending';
     const { rows: [u] } = await client.query(
       `UPDATE live_tickets SET status = 'refund_pending', refund_requested_at = COALESCE(refund_requested_at, now()), refund_reason = COALESCE(refund_reason, $2),
          refund_error = NULL WHERE id = $1 RETURNING *`, [t.id, reason]);
     claimed = u;
   });
   if (done) return done;
+  ejectFromCall(claimed).catch((e) => console.error('[live] taking a refunded ticket out of the call failed:', e.message));
   const bank = await bankOrderOf(claimed);
   const amount = claimed.price - (claimed.refunded_amount || 0);
+  const provider = pay.forProvider(bank.provider);
+  // A share of a series payment asked for again (the earlier answer was lost, docs/REVIEW-2.md #3): the bank is asked what it returned
+  // first. A bank that does not dedupe requests (TBC) is only asked again once it shows nothing returned 15 minutes after the first try.
+  if (bank.shared && retry) {
+    const seen = await returnedAtBank(claimed, amount);
+    if (seen === 'returned') return shareRefunded(claimed.id, amount);
+    const quiet = Date.now() - new Date(claimed.refund_requested_at).getTime() > 15 * 60000;
+    if (!provider.idempotentRefunds && !(seen === 'not_returned' && quiet)) throw new LiveError('refund_unconfirmed');
+  }
   try {
-    const r = await pay.forProvider(bank.provider).refund({ orderId: bank.orderId, amount, partial: bank.shared, idempotencyKey: `live-refund-${claimed.id}` });
+    const r = await provider.refund({ orderId: bank.orderId, amount, partial: bank.shared, idempotencyKey: `live-refund-${claimed.id}` });
     await query('UPDATE live_tickets SET provider_refund_id = $2 WHERE id = $1', [claimed.id, r.refundId]);
   } catch (err) {
     console.error(`[live] the bank refused or failed the refund for ticket ${claimed.id}:`, err.message);
     await query('UPDATE live_tickets SET refund_error = $2 WHERE id = $1', [claimed.id, String(err.message).slice(0, 300)]);
-    if (bank.shared) throw new LiveError('refund_failed');
+    if (bank.shared) {
+      if ((await returnedAtBank(claimed, amount)) === 'returned') return shareRefunded(claimed.id, amount);
+      throw new LiveError('refund_failed');
+    }
     const now = await sync(claimed.id).catch(() => null);
     if (now && now.status === 'refunded') return now;
     throw new LiveError('refund_failed');
   }
   if (bank.shared) return shareRefunded(claimed.id, amount);
   try { return (await sync(claimed.id)) || claimed; } catch (e) { return claimed; }
+}
+
+// A ticket refunded while its session is live: its holder is taken out of the call (their room token would otherwise still work until the
+// end; docs/REVIEW-2.md #12).
+async function ejectFromCall(t) {
+  const { rows: [s] } = await query(`SELECT room_name, room_url, status FROM live_sessions WHERE id = $1`, [t.session_id]);
+  if (!s || s.status !== 'live' || !s.room_name) return;
+  await require('./provider').forRoomUrl(s.room_url).eject({ roomName: s.room_name, userId: t.id });
 }
 
 // The bank accepted the refund of a series ticket's share: the ticket is refunded, the mentor's part comes off, a refund receipt, and the
@@ -270,37 +293,93 @@ async function shareRefunded(ticketId, amount) {
 const shareOf = (t, amount) => Math.round((amount * t.net) / t.price);
 
 // A partial refund (an admin settling a dispute about a session that was not as described): `amount` tetri goes back, the ticket stays
-// paid. Claimed first, so two admins cannot send it twice; the ledger and the receipt change only after the bank accepted it.
+// paid. Claimed first (with the amount), so two admins cannot send it twice; the ledger and the receipt change only after the bank accepted
+// it. A lost answer is settled the way a question's is (server/payments.js partialRefund, docs/REVIEW-2.md #3): the bank is asked what it
+// returned; recorded, released (the bank refused, or dedupes requests), or kept as "sent, answer unknown" until the sweep checks again.
 async function partialRefund(ticketId, amount, reason) {
   let claimed = null;
   await tx(async (client) => {
     const t = await lockTicket(client, ticketId);
     if (!t) throw new LiveError('not_found');
     if (t.status !== 'paid') throw new LiveError('not_refundable');
+    if (t.partial_refund_amount) throw new LiveError('refund_unconfirmed');
     if (t.refunded_amount || t.partial_refund_started_at) throw new LiveError('already_partly_refunded');
     if (!Number.isInteger(amount) || amount < 1 || amount >= t.price) throw new LiveError('invalid_amount');
     try { pay.forProvider(t.provider); } catch (e) { throw new LiveError('provider_unavailable'); }
-    await client.query('UPDATE live_tickets SET partial_refund_started_at = now() WHERE id = $1', [t.id]);
+    await client.query('UPDATE live_tickets SET partial_refund_started_at = now(), partial_refund_amount = $2 WHERE id = $1', [t.id, amount]);
     claimed = t;
   });
+  const bank = await bankOrderOf(claimed);
+  const provider = pay.forProvider(bank.provider);
   try {
-    const bank = await bankOrderOf(claimed);
-    await pay.forProvider(bank.provider).refund({ orderId: bank.orderId, amount, partial: true, idempotencyKey: `live-partial-refund-${claimed.id}` });
+    await provider.refund({ orderId: bank.orderId, amount, partial: true, idempotencyKey: `live-partial-refund-${claimed.id}` });
   } catch (err) {
-    await query('UPDATE live_tickets SET partial_refund_started_at = NULL WHERE id = $1', [claimed.id]); // (nothing was returned: it can be tried again)
-    console.error(`[live] the bank refused the partial refund for ticket ${claimed.id}:`, err.message);
-    throw new LiveError('refund_failed');
+    console.error(`[live] the partial refund for ticket ${claimed.id} failed, or its answer was lost:`, err.message);
+    const seen = await returnedAtBank(claimed, amount);
+    if (seen === 'returned') return recordPartial(claimed.id, amount, reason);
+    const refused = err && err.status >= 400 && err.status < 500 && ![408, 429].includes(err.status);
+    if (seen === 'not_returned' && (refused || provider.idempotentRefunds)) {
+      await query('UPDATE live_tickets SET partial_refund_started_at = NULL, partial_refund_amount = NULL WHERE id = $1', [claimed.id]); // (nothing went back)
+      throw new LiveError('refund_failed');
+    }
+    throw new LiveError('refund_unconfirmed');
   }
-  let receipt;
+  return recordPartial(claimed.id, amount, reason);
+}
+
+// The bank returned a partial refund on a ticket: the ticket, the ledger and a refund receipt (once).
+async function recordPartial(ticketId, amount, reason) {
+  let receipt = null;
   let updated;
   await tx(async (client) => {
-    const t = await lockTicket(client, claimed.id);
-    ({ rows: [updated] } = await client.query('UPDATE live_tickets SET refunded_amount = $2, refund_reason = $3 WHERE id = $1 RETURNING *', [t.id, amount, reason]));
+    const t = await lockTicket(client, ticketId);
+    if (t.refunded_amount) { updated = t; return; } // (already recorded)
+    ({ rows: [updated] } = await client.query('UPDATE live_tickets SET refunded_amount = $2, refund_reason = $3, partial_refund_amount = NULL WHERE id = $1 RETURNING *', [t.id, amount, reason]));
     await require('../ledger').onTicketRefunded(client, t, shareOf(t, amount));
     receipt = await receipts.issueTicket(t.id, 'refund', amount, client);
   });
-  receipts.email(receipt).catch((e) => console.error('[live] receipt email failed:', e.message));
+  if (receipt) receipts.email(receipt).catch((e) => console.error('[live] receipt email failed:', e.message));
   return updated;
+}
+
+// What this site has recorded as returned on a ticket's bank order: the ticket's own, or the whole series payment it is a share of.
+async function recordedReturned(t) {
+  if (!t.series_order_id) return t.status === 'refunded' ? t.price : (t.refunded_amount || 0);
+  const { rows: [r] } = await query(`SELECT COALESCE(SUM(CASE WHEN status = 'refunded' THEN price ELSE COALESCE(refunded_amount, 0) END), 0)::int AS n
+    FROM live_tickets WHERE series_order_id = $1`, [t.series_order_id]);
+  return r.n;
+}
+
+// What the bank shows for `amount` more returned on this ticket's order, on top of what is recorded: 'returned', 'not_returned' or 'unknown'.
+async function returnedAtBank(t, amount) {
+  const bank = await bankOrderOf(t);
+  let s;
+  try { s = await pay.forProvider(bank.provider).getPaymentStatus(bank.orderId); } catch (e) { return 'unknown'; }
+  const before = await recordedReturned(t);
+  if (typeof s.returned === 'number') {
+    if (s.returned >= before + amount) return 'returned';
+    return s.returned <= before ? 'not_returned' : 'unknown';
+  }
+  if (!bank.shared && !before && ['refunded_partially', 'refunded'].includes(s.status)) return 'returned';
+  return !bank.shared && s.status === 'paid' ? 'not_returned' : 'unknown';
+}
+
+// The sweep: ticket partial refunds whose answer from the bank was lost (recorded, or released after 15 minutes of "nothing returned").
+async function settleUnconfirmedPartials() {
+  const { rows } = await query(`SELECT * FROM live_tickets WHERE partial_refund_amount IS NOT NULL AND partial_refund_started_at < now() - interval '1 minute'
+    ORDER BY partial_refund_started_at LIMIT 50`);
+  for (const t of rows) {
+    try {
+      const seen = await returnedAtBank(t, t.partial_refund_amount);
+      if (seen === 'returned') {
+        await recordPartial(t.id, t.partial_refund_amount, 'dispute');
+        await require('../disputes').ticketRefundSettled(t.id, true);
+      } else if (seen === 'not_returned' && Date.now() - new Date(t.partial_refund_started_at).getTime() > 15 * 60000) {
+        const { rowCount } = await query('UPDATE live_tickets SET partial_refund_started_at = NULL, partial_refund_amount = NULL WHERE id = $1 AND partial_refund_amount IS NOT NULL', [t.id]);
+        if (rowCount) await require('../disputes').ticketRefundSettled(t.id, false);
+      }
+    } catch (e) { console.error(`[live] could not settle the partial refund of ticket ${t.id}:`, e.message); }
+  }
 }
 
 // Who may cancel a ticket: the person who attends it (the buyer, or whoever claimed a gift); the buyer while a gift is unclaimed. The
@@ -384,6 +463,7 @@ async function retryRefunds() {
     if (t.refund_error || t.series_order_id) await refund(id, t.refund_reason).catch(() => {});
     else await sync(id).catch(() => {});
   }
+  await settleUnconfirmedPartials();
 }
 
 // ---- Reading -------------------------------------------------------------------------------------------------------------------------
@@ -422,5 +502,5 @@ async function mine(userId) {
   });
 }
 
-module.exports = { buy, sync, apply, refund, shareRefunded, bankOrderOf, partialRefund, shareOf, cancelByBuyer, claimGift, resendGift, expireHolds, retryRefunds, findByOrder, mine, view,
+module.exports = { buy, sync, apply, refund, shareRefunded, bankOrderOf, partialRefund, settleUnconfirmedPartials, returnedAtBank, shareOf, cancelByBuyer, claimGift, resendGift, expireHolds, retryRefunds, findByOrder, mine, view,
   feeOf, hashToken };

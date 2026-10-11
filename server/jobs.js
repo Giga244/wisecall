@@ -185,6 +185,7 @@ async function runSweep({ wait = false } = {}) {
       await sendReminders();
       await retryRefunds();
       await confirmRefunds();
+      await require('./payments').settleUnconfirmedRefunds(); // (partial refunds whose answer from the bank was lost: docs/REVIEW-2.md #3)
       await reconcilePending();
       await purgeUnpaid();
       await purgeDocuments();
