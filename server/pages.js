@@ -784,8 +784,10 @@ function pageRoutes() {
 
   router.get(['/', '/index.html'], async (req, res, next) => {
     try {
-      const html = readPage('index.html');
+      let html = readPage('index.html');
       if (html === null) return next();
+      // (before launch the last call to action is left out: the waiting-list card already asks for the email)
+      if (config.LAUNCH_MODE === 'prelaunch') html = html.replace(/<!-- after launch -->[\s\S]*?<!-- \/after launch -->\r?\n?/g, '');
       sendHtml(res, 200, addToHead(fill(html, baseVars('/')), homeJsonLd(langOf(res))));
     } catch (e) { next(e); }
   });

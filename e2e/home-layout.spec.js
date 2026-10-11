@@ -26,13 +26,44 @@ test('the home page is short: one rhythm between the sections, and at most half 
     const m = await page.evaluate(() => ({
       height: document.documentElement.scrollHeight,
       hero: parseFloat(getComputedStyle(document.querySelector('.hero')).paddingBottom),
-      tops: ['.experts', '.how', '.faq', '.cta-band'].map((s) => parseFloat(getComputedStyle(document.querySelector(s)).paddingTop)),
-      ctaBottom: parseFloat(getComputedStyle(document.querySelector('.cta-band')).paddingBottom),
+      tops: ['.experts', '.how', '.faq'].map((s) => parseFloat(getComputedStyle(document.querySelector(s)).paddingTop)),
+      // (before launch there is no last call to action: the questions end the page, with the same space under them)
+      lastWord: document.querySelectorAll('.cta-band').length,
+      faqBottom: parseFloat(getComputedStyle(document.querySelector('.faq')).paddingBottom),
       sideways: document.documentElement.scrollWidth - window.innerWidth
     }));
-    expect([m.hero, ...m.tops, m.ctaBottom], `${width}px: the space between the sections`).toEqual(Array(6).fill(rhythm));
+    expect([m.hero, ...m.tops, m.faqBottom], `${width}px: the space between the sections`).toEqual(Array(5).fill(rhythm));
+    expect(m.lastWord, 'no "Be first in line" before launch: the waiting-list card already asks').toBe(0);
     if (maxHeight) expect(m.height, `${width}px: the page height`).toBeLessThanOrEqual(maxHeight);
     expect(m.sideways).toBeLessThanOrEqual(0);
+    await ctx.close();
+  }
+});
+
+test('"Wisecall opens soon" starts on the same left edge as the fields and "How it works" (every width, English and Georgian)', async ({ browser }) => {
+  for (const width of [375, 768, 1024, 1180, 1440, 1920]) {
+    for (const lang of ['en', 'ka']) {
+      const { ctx, page } = await open(browser, width, lang);
+      const lefts = await page.evaluate(() => ['#stripTitle', '#expertsTitle', '#experts .wl-card', '#experts .wl-mentor a', '#howTitle', '#faqTitle']
+        .map((s) => Math.round(document.querySelector(s).getBoundingClientRect().left)));
+      expect(new Set(lefts).size, `${width}px ${lang}: ${lefts.join(', ')}`).toBe(1);
+      await ctx.close();
+    }
+  }
+});
+
+test('the footer on a phone: the link groups two by two (English and Georgian)', async ({ browser }) => {
+  for (const [width, lang] of [[375, 'en'], [375, 'ka'], [390, 'ka']]) {
+    const { ctx, page } = await open(browser, width, lang);
+    const cols = await page.evaluate(() => [...document.querySelectorAll('footer .footer-col')].map((c) => {
+      const r = c.getBoundingClientRect();
+      return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right) };
+    }));
+    expect(cols.length).toBe(3);
+    expect(cols[0].top, `${width}px ${lang}: Product and Company side by side`).toBe(cols[1].top);
+    expect(cols[1].left).toBeGreaterThan(cols[0].right);
+    expect(cols[2].left, 'Legal under Product').toBe(cols[0].left);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
     await ctx.close();
   }
 });

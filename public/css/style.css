@@ -323,7 +323,7 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 /* "Find me a mentor": the optional budget, from / to side by side */
 .rq-budget { border: 0; padding: 0; margin: 0 0 4px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; min-width: 0; }
 .rq-budget legend { grid-column: 1 / -1; padding: 0; font-size: 0.85rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 6px; }
-.rq-cta { text-align: center; margin: 18px 0 0; font-weight: 700; }
+.rq-cta { margin: 18px 0 0; font-weight: 700; }
 .rq-merge select { padding: 8px 12px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--field); color: var(--ink); font-family: var(--font-body); margin-left: 6px; }
 .rq-merge label { display: flex; align-items: center; margin: 0; }
 
@@ -441,7 +441,7 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
    one short line above the form; from a tablet up two columns (the picture and the text on the left, the form on the right), never wider
    than 960px. Under it, a plain link for mentors. */
 .wl-card {
-  grid-column: 1 / -1; width: 100%; max-width: 560px; margin: 0 auto; background: var(--card); border: var(--line-w) solid var(--line);
+  grid-column: 1 / -1; width: 100%; max-width: 560px; margin: 0; background: var(--card); border: var(--line-w) solid var(--line);
   border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 20px; text-align: left;
 }
 /* (on a phone the picture and the title share a row and the sentence runs under both, full width) */
@@ -454,7 +454,7 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 .wl-title { margin: 0; font-size: 1.15rem; line-height: 1.3; }
 .wl-sub { margin: 6px 0 0; font-size: 0.95rem; line-height: 1.5; color: var(--ink-soft); }
 .prelaunch-panel .wl-sub { display: none; } /* (on a phone one short line; from a tablet up the sentence too) */
-.wl-mentor { grid-column: 1 / -1; margin: 16px 0 0; text-align: center; line-height: 1.6; text-wrap: balance; }
+.wl-mentor { grid-column: 1 / -1; margin: 16px 0 0; line-height: 1.6; }
 /* (inline, so a long line wraps with the arrow after its last word; the padding makes the tap area 44px tall) */
 .arrow-link {
   display: inline; padding: 12px 0; font-weight: 700; color: var(--ink); text-decoration: underline;
@@ -471,10 +471,6 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
   .wl-title { font-size: 1.4rem; }
   .wl-intro .wl-sub { font-size: 1rem; margin-top: 10px; }
   .prelaunch-panel .wl-sub { display: block; }
-}
-@media (min-width: 768px) {
-  /* (before launch the section's title starts where the centred card starts) */
-  [data-launch="prelaunch"] #expertsTitle { max-width: 960px; margin-left: auto; margin-right: auto; }
 }
 @media (min-width: 1024px) {
   /* (the email and the field side by side, each wide enough for "Any field" in Georgian) */
@@ -827,8 +823,10 @@ html.menu-open, html.menu-open body { overflow: hidden; }
 }
 @media (max-width: 639px) {
   .footer { padding-top: 40px; }
-  .footer-top { grid-template-columns: 1fr; gap: 26px; }
-  .footer-col a { min-height: 44px; }
+  .footer-top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 20px; } /* (the link groups two by two) */
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-col ul { gap: 6px; }
+  .footer-col a { min-height: 44px; padding: 4px 0; line-height: 1.3; } /* (a name on two lines reads as one link) */
   .footer-bottom { flex-direction: column; align-items: flex-start; gap: 14px; }
 }
 @media (pointer: coarse) { .footer-col a { min-height: 44px; } }

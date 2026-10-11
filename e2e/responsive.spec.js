@@ -274,6 +274,29 @@ test('the expert profile on a phone: a bar with the price and Ask, opening the q
   await tablet.ctx.close();
 });
 
+test('the last call to action: its speech bubble never covers the words or the buttons (hidden below 1100px)', async ({ browser }) => {
+  for (const width of [390, 768, 1024, 1099, 1100, 1180, 1280, 1440, 1920]) {
+    for (const lang of ['en', 'ka']) {
+      const { ctx, page } = await newPage(browser, width, { lang });
+      await page.goto(lang === 'ka' ? '/ka/' : '/');
+      await page.waitForLoadState('networkidle');
+      const r = await page.evaluate(() => {
+        const bubble = document.querySelector('.cta-bubble');
+        if (getComputedStyle(bubble).display === 'none') return { shown: false, hits: [] };
+        const b = bubble.querySelector('path').getBoundingClientRect(); // (the drawn bubble, not its empty box)
+        const hits = [...document.querySelectorAll('.cta-inner h2, .cta-inner p, .cta-inner .btn')].filter((el) => {
+          const e = el.getBoundingClientRect();
+          return Math.min(e.right, b.right) - Math.max(e.left, b.left) > 0 && Math.min(e.bottom, b.bottom) - Math.max(e.top, b.top) > 0;
+        }).map((el) => el.textContent.trim());
+        return { shown: true, hits };
+      });
+      expect(r.shown, `${width}px ${lang}: the bubble is shown`).toBe(width >= 1100);
+      expect(r.hits, `${width}px ${lang}: what the bubble covers`).toEqual([]);
+      await ctx.close();
+    }
+  }
+});
+
 test('card groups fill their rows: no lone card on a tablet', async ({ browser }) => {
   const { ctx, page } = await newPage(browser, 768);
   await page.goto('/');

@@ -1,0 +1,38 @@
+phone375-en-light cta: no bubble
+phone375-en-light prelaunch end: 1 last-word panel(s); space under the questions 413px
+phone390-ka-light cta: no bubble
+phone390-ka-light prelaunch end: 1 last-word panel(s); space under the questions 492px
+phone390-en-dark cta: no bubble
+phone390-en-dark prelaunch end: 1 last-word panel(s); space under the questions 413px
+phone375-ka-dark cta: no bubble
+phone375-ka-dark prelaunch end: 1 last-word panel(s); space under the questions 492px
+tablet768-en-light cta: no bubble
+tablet768-en-light prelaunch end: 1 last-word panel(s); space under the questions 386px
+tablet768-en-light left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+tablet768-ka-dark cta: no bubble
+tablet768-ka-dark prelaunch end: 1 last-word panel(s); space under the questions 386px
+tablet768-ka-dark left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+laptop1024-ka-light cta: bubble clear of the text and buttons
+laptop1024-ka-light prelaunch end: 1 last-word panel(s); space under the questions 449px
+laptop1024-ka-light left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+laptop1024-en-dark cta: bubble clear of the text and buttons
+laptop1024-en-dark prelaunch end: 1 last-word panel(s); space under the questions 449px
+laptop1024-en-dark left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+laptop1180-en-light cta: bubble covers Apply as a mentor
+laptop1180-en-light prelaunch end: 1 last-word panel(s); space under the questions 373px
+laptop1180-en-light left edges: #stripTitle 32, #expertsTitle 110, #experts .wl-card 110, #howTitle 32
+desktop1280-ka-light cta: bubble clear of the text and buttons
+desktop1280-ka-light prelaunch end: 1 last-word panel(s); space under the questions 456px
+desktop1280-ka-light left edges: #stripTitle 32, #expertsTitle 160, #experts .wl-card 160, #howTitle 32
+desktop1440-en-light cta: bubble covers Apply as a mentor
+desktop1440-en-light prelaunch end: 1 last-word panel(s); space under the questions 380px
+desktop1440-en-light left edges: #stripTitle 112, #expertsTitle 240, #experts .wl-card 240, #howTitle 112
+desktop1440-ka-dark cta: bubble clear of the text and buttons
+desktop1440-ka-dark prelaunch end: 1 last-word panel(s); space under the questions 460px
+desktop1440-ka-dark left edges: #stripTitle 112, #expertsTitle 240, #experts .wl-card 240, #howTitle 112
+wide1920-en-dark cta: bubble covers Apply as a mentor
+wide1920-en-dark prelaunch end: 1 last-word panel(s); space under the questions 380px
+wide1920-en-dark left edges: #stripTitle 352, #expertsTitle 480, #experts .wl-card 480, #howTitle 352
+wide1920-ka-light cta: bubble clear of the text and buttons
+wide1920-ka-light prelaunch end: 1 last-word panel(s); space under the questions 461px
+wide1920-ka-light left edges: #stripTitle 352, #expertsTitle 480, #experts .wl-card 480, #howTitle 352

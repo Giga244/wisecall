@@ -1,0 +1,38 @@
+phone375-en-light cta: no bubble
+phone375-en-light prelaunch end: 0 last-word panel(s); space under the questions 48px
+phone390-ka-light cta: no bubble
+phone390-ka-light prelaunch end: 0 last-word panel(s); space under the questions 48px
+phone390-en-dark cta: no bubble
+phone390-en-dark prelaunch end: 0 last-word panel(s); space under the questions 48px
+phone375-ka-dark cta: no bubble
+phone375-ka-dark prelaunch end: 0 last-word panel(s); space under the questions 48px
+tablet768-en-light cta: no bubble
+tablet768-en-light prelaunch end: 0 last-word panel(s); space under the questions 64px
+tablet768-en-light left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+tablet768-ka-dark cta: no bubble
+tablet768-ka-dark prelaunch end: 0 last-word panel(s); space under the questions 64px
+tablet768-ka-dark left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+laptop1024-ka-light cta: no bubble
+laptop1024-ka-light prelaunch end: 0 last-word panel(s); space under the questions 80px
+laptop1024-ka-light left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+laptop1024-en-dark cta: no bubble
+laptop1024-en-dark prelaunch end: 0 last-word panel(s); space under the questions 80px
+laptop1024-en-dark left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+laptop1180-en-light cta: bubble clear of the text and buttons
+laptop1180-en-light prelaunch end: 0 last-word panel(s); space under the questions 80px
+laptop1180-en-light left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+desktop1280-ka-light cta: bubble clear of the text and buttons
+desktop1280-ka-light prelaunch end: 0 last-word panel(s); space under the questions 80px
+desktop1280-ka-light left edges: #stripTitle 32, #expertsTitle 32, #experts .wl-card 32, #howTitle 32
+desktop1440-en-light cta: bubble clear of the text and buttons
+desktop1440-en-light prelaunch end: 0 last-word panel(s); space under the questions 80px
+desktop1440-en-light left edges: #stripTitle 112, #expertsTitle 112, #experts .wl-card 112, #howTitle 112
+desktop1440-ka-dark cta: bubble clear of the text and buttons
+desktop1440-ka-dark prelaunch end: 0 last-word panel(s); space under the questions 80px
+desktop1440-ka-dark left edges: #stripTitle 112, #expertsTitle 112, #experts .wl-card 112, #howTitle 112
+wide1920-en-dark cta: bubble clear of the text and buttons
+wide1920-en-dark prelaunch end: 0 last-word panel(s); space under the questions 80px
+wide1920-en-dark left edges: #stripTitle 352, #expertsTitle 352, #experts .wl-card 352, #howTitle 352
+wide1920-ka-light cta: bubble clear of the text and buttons
+wide1920-ka-light prelaunch end: 0 last-word panel(s); space under the questions 80px
+wide1920-ka-light left edges: #stripTitle 352, #expertsTitle 352, #experts .wl-card 352, #howTitle 352
