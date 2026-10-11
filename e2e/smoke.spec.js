@@ -43,7 +43,7 @@ for (const lang of ['en', 'ka']) {
     }
 
     test('public pages', async () => {
-      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/waitlist-unsubscribe.html', '/no-such-page']) {
+      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/become-a-mentor.html', '/terms.html', '/privacy.html', '/waitlist-unsubscribe.html', '/no-such-page']) {
         await visit('visitor', url);
       }
       await expect(pages.visitor.locator('html')).toHaveAttribute('lang', lang);

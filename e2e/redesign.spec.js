@@ -4,7 +4,7 @@
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
 
-const PUBLIC = ['/', '/live', '/signup.html', '/login.html', '/help.html', '/faq.html', '/about.html', '/how-we-verify.html', '/terms.html', '/contact.html', '/no-such-page'];
+const PUBLIC = ['/', '/live', '/signup.html', '/login.html', '/help.html', '/faq.html', '/about.html', '/how-we-verify.html', '/become-a-mentor.html', '/terms.html', '/contact.html', '/no-such-page'];
 const SIGNED_IN = ['/dashboard.html', '/inbox.html', '/settings.html', '/settings.html?tab=account'];
 let mentorUsername;
 
@@ -66,9 +66,9 @@ test('Georgian text fits: no button, chip, tab, badge, card or heading runs out 
       await settle(page, url('ka', p));
       const over = await page.evaluate(() => {
         const out = [];
-        for (const el of document.querySelectorAll('.btn, .chip, .tab, .badge, .tag, .lang-btn, .niche-chip, .field-tile, .trust-badge, .meta-chip, .hero-pill, .stage-sticker, .expert-card, .live-card, .settings-card, .booking-card, .faq-q, .price-card, .trust-card, .verify-card, .how-step, h1, h2, h3')) {
+        for (const el of document.querySelectorAll('.btn, .chip, .tab, .badge, .tag, .lang-btn, .niche-chip, .field-tile, .trust-badge, .meta-chip, .hero-pill, .stage-sticker, .expert-card, .live-card, .settings-card, .booking-card, .faq-q, .how-step, .perk, .example-card, h1, h2, h3')) {
           const s = getComputedStyle(el), b = el.getBoundingClientRect();
-          if (s.display === 'none' || s.visibility === 'hidden' || !b.width || el.closest('.sr-only, .niche-strip, .example-grid, .tabs, .marquee, .profile-checks, .file-btn')) continue;
+          if (s.display === 'none' || s.visibility === 'hidden' || !b.width || el.closest('.sr-only, .niche-strip, .tabs, .profile-checks, .file-btn')) continue;
           if (el.scrollWidth > el.clientWidth + 1 && s.overflowX === 'visible') out.push(`${el.className || el.tagName} "${el.textContent.trim().slice(0, 30)}" ${el.scrollWidth}>${el.clientWidth}`);
           else if (b.right > window.innerWidth + 1) out.push(`${el.className || el.tagName} "${el.textContent.trim().slice(0, 30)}" ends at ${Math.round(b.right)}`);
         }
@@ -94,7 +94,7 @@ test('the keyboard focus is a 2px coral outline with an offset (light and dark)'
   }
 });
 
-test('with reduced motion nothing moves; with motion the hero rises, the conversation loops, the band scrolls and sections reveal once', async ({ browser }) => {
+test('with reduced motion nothing moves; with motion the hero rises, the conversation loops and sections reveal once', async ({ browser }) => {
   const calm = await open(browser, { width: 1280, motion: 'reduce' });
   await settle(calm.page, '/');
   await calm.page.waitForTimeout(500);
@@ -107,8 +107,8 @@ test('with reduced motion nothing moves; with motion the hero rises, the convers
   await settle(lively.page, '/');
   expect(await lively.page.evaluate(() => document.documentElement.classList.contains('motion'))).toBe(true);
   const names = await lively.page.evaluate(() => [...new Set(document.getAnimations().map((a) => a.animationName))]);
-  for (const n of ['q-in', 'a-in', 'typing', 'marquee', 'float']) expect(names, n).toContain(n);
-  const grid = lively.page.locator('.trust-grid');
+  for (const n of ['q-in', 'a-in', 'typing', 'float']) expect(names, n).toContain(n);
+  const grid = lively.page.locator('.how-row');
   await expect(grid).not.toHaveClass(/is-in/);
   await grid.scrollIntoViewIfNeeded();
   await expect(grid).toHaveClass(/is-in/);

@@ -94,7 +94,7 @@ describe('the signature, without the generic look', () => {
     }
   });
 
-  test('2px outlines, 14px buttons, 22-28px cards, 36-40px panels, the offset shadow on the primary action, 1.5px pill chips, dashed stamps', () => {
+  test('2px outlines, 14px buttons, 22-28px cards, 36-40px panels, the offset shadow on the primary action, 1.5px pill chips, dashed rules', () => {
     const t = read('public/css/tokens.css'), s = read('public/css/style.css'), h = read('public/css/home.css');
     assert.match(t, /--line-w: 2px;/);
     assert.match(t, /--chip-w: 1\.5px;/);
@@ -102,8 +102,9 @@ describe('the signature, without the generic look', () => {
     assert.match(t, /--offset-shadow: 0 8px 0 -2px var\(--line\);/);
     assert.match(s, /\.btn-primary \{ background: var\(--accent-strong\); color: var\(--on-accent\); border-color: var\(--line\); box-shadow: var\(--offset-shadow\); \}/);
     assert.match(s, /\.chip \{\n  border: var\(--chip-w\) solid var\(--line\);[^}]*border-radius: var\(--r-pill\)/);
-    assert.match(h, /\.trust-card \{[^}]*border: var\(--line-w\) dashed var\(--line\)/);
-    assert.match(h, /\.mentors-panel \{[^}]*border-radius: 40px/s);
+    assert.match(s, /\.ex-who \{[^}]*border-top: var\(--chip-w\) dashed var\(--line\)/);
+    assert.match(s, /\.mentors-panel \{[^}]*border-radius: 40px/s); // (the mentors' page)
+    assert.match(h, /\.cta-inner \{[^}]*border-radius: 40px/s);
     assert.match(s, /:focus-visible \{ outline: 2px solid var\(--focus\); outline-offset: 3px; \}/);
   });
 
@@ -128,14 +129,13 @@ describe('motion is off with reduced motion', () => {
 
   test('every waiting or looping animation of the home page is gated by html.motion, and reduced motion stops the rest', () => {
     const h = read('public/css/home.css'), s = read('public/css/style.css');
-    for (const sel of ['.bubble-q', '.bubble-typing', '.bubble-a', '.stage-meta', '.stage-sticker', '.marquee-track', '.squiggle path']) {
+    for (const sel of ['.bubble-q', '.bubble-typing', '.bubble-a', '.stage-meta', '.stage-sticker', '.squiggle path']) {
       const rule = h.split('\n').find((l) => l.startsWith(`html.motion ${sel} {`) && /animation:/.test(l));
       assert.ok(rule, `${sel} animates only with html.motion`);
     }
     assert.match(s, /html\.motion \[data-reveal\]:not\(\.is-in\) \{ opacity: 0; transform: translateY\(28px\); animation: reveal-safety 0\.01s 3s forwards; \}/);
     assert.match(s, /@media \(prefers-reduced-motion: reduce\) \{\n  \* \{ animation-duration: 0\.01ms !important;/);
-    assert.match(s, /\.marquee:hover \.marquee-track|\.rise \{ animation: rise var\(--rise\) var\(--ease-out\) backwards; \}/);
-    assert.match(h, /\.marquee:hover \.marquee-track \{ animation-play-state: paused; \}/);
+    assert.match(s, /\.rise \{ animation: rise var\(--rise\) var\(--ease-out\) backwards; \}/);
     // (only transform and opacity move: the keyframes never animate a size or a position that would shift the layout)
     for (const [f, text] of css()) {
       for (const kf of text.match(/@keyframes [\w-]+ \{[^@]*?\}\s*\}/g) || []) {

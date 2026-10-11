@@ -15,12 +15,12 @@
   };
   const here = window.location.pathname.replace(/^\/ka(?=\/|$)/, '') || '/'; // (the Georgian address /ka/... is the same page)
   const onHome = here === '/' || here === '/index.html';
-  const link = (hash) => (onHome ? '' : '/index.html') + hash; // on the home page the links just scroll
+  const link = (l) => l.href || (onHome ? '' : '/index.html') + l.hash; // on the home page the links just scroll (the mentors' page is its own)
 
   const LINKS = [
     { hash: '#how', key: 'nav.how', text: 'How it works', extra: true },
     { hash: '#experts', key: 'nav.browse', text: 'Browse experts' },
-    { hash: '#for-mentors', key: 'footer.forMentors', text: 'For mentors', extra: true },
+    { href: '/become-a-mentor.html', key: 'footer.forMentors', text: 'For mentors', extra: true },
     { hash: '#faq', key: 'footer.faq', text: 'FAQ', extra: true, faq: true }
   ];
   const langSwitch = (cls) => `
@@ -56,7 +56,7 @@
       <div class="container nav-inner">
         <a href="/index.html" class="logo">${WisecallBrand.logoHtml()}</a>
         <nav class="nav-links" aria-label="Main">
-          ${LINKS.map((l) => `<a href="${link(l.hash)}"${l.extra ? ` class="nl-extra${l.faq ? ' nl-faq' : ''}"` : ''} data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
+          ${LINKS.map((l) => `<a href="${link(l)}"${l.extra ? ` class="nl-extra${l.faq ? ' nl-faq' : ''}"` : ''} data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
         </nav>
         <div class="nav-right">
           ${langSwitch('nav-lang')}
@@ -84,7 +84,7 @@
           <button type="button" class="mm-close" data-mm-close aria-label="Close menu" data-i18n-aria="nav.menuClose">${ICON_CLOSE}</button>
         </div>
         <nav class="mm-links" aria-label="Main">
-          ${LINKS.map((l) => `<a href="${link(l.hash)}" data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
+          ${LINKS.map((l) => `<a href="${link(l)}" data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
         </nav>
         <div class="mm-lang">${langSwitch('mm-lang-toggle')}</div>
         ${themeSeg}

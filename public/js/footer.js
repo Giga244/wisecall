@@ -21,8 +21,8 @@
           <ul>
             <li><a href="/index.html#experts" data-i18n="nav.browse">Browse experts</a></li>
             <li><a href="/index.html#how" data-i18n="nav.how">How it works</a></li>
-            <li><a href="/index.html#pricing" data-i18n="footer.pricing">Pricing</a></li>
-            <li><a href="/index.html#for-mentors" data-i18n="footer.forMentors">For mentors</a></li>
+            <li><a href="/faq.html#faq-payments" data-i18n="footer.pricing">Pricing</a></li>
+            <li><a href="/become-a-mentor.html" data-i18n="footer.forMentors">For mentors</a></li>
           </ul>
         </nav>
         <nav class="footer-col" aria-labelledby="footCompany">

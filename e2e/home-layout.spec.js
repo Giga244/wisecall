@@ -1,7 +1,7 @@
-// The home page's fields and waiting-list card at every size (phones, a tablet, a small laptop, desktops), in English and Georgian:
-// full rows of field tiles until "See all", no name broken inside a word, one title for the "Wisecall opens soon" card, its size and
-// columns, a sign-up that does not move the page, and a "Back to top" button that never covers anything. Runs its own server before
-// launch (live sessions off).
+// The home page at every size (phones, a tablet, a small laptop, desktops), in English and Georgian: short (one rhythm between the
+// sections, half its old height, the links to what moved away), full rows of field tiles until "See all", no name broken inside a word,
+// one title for the "Wisecall opens soon" card, its size and columns, a sign-up that does not move the page, and a "Back to top" button
+// that never covers anything. Runs its own server before launch (live sessions off).
 const { test, expect } = require('@playwright/test');
 const { startServer } = require('../tests/helpers');
 
@@ -18,6 +18,44 @@ async function open(browser, width, lang = 'en', height = 900) {
   await expect(page.locator('#nicheStrip .field-tile').first()).toBeVisible();
   return { ctx, page };
 }
+
+test('the home page is short: one rhythm between the sections, and at most half its old height (390 and 1440px)', async ({ browser }) => {
+  // (before: 12849px at 390 and 8220px at 1440, English, before launch; docs/redesign/home-simple/before/heights.txt)
+  for (const [width, rhythm, maxHeight] of [[390, 48, 6425], [768, 64, null], [1440, 80, 4110]]) {
+    const { ctx, page } = await open(browser, width);
+    const m = await page.evaluate(() => ({
+      height: document.documentElement.scrollHeight,
+      hero: parseFloat(getComputedStyle(document.querySelector('.hero')).paddingBottom),
+      tops: ['.experts', '.how', '.faq', '.cta-band'].map((s) => parseFloat(getComputedStyle(document.querySelector(s)).paddingTop)),
+      ctaBottom: parseFloat(getComputedStyle(document.querySelector('.cta-band')).paddingBottom),
+      sideways: document.documentElement.scrollWidth - window.innerWidth
+    }));
+    expect([m.hero, ...m.tops, m.ctaBottom], `${width}px: the space between the sections`).toEqual(Array(6).fill(rhythm));
+    if (maxHeight) expect(m.height, `${width}px: the page height`).toBeLessThanOrEqual(maxHeight);
+    expect(m.sideways).toBeLessThanOrEqual(0);
+    await ctx.close();
+  }
+});
+
+test('what left the home page is one click away: how we verify, all questions, the mentors\' page', async ({ browser }) => {
+  const { ctx, page } = await open(browser, 1440);
+  await page.locator('#how .how-verify a').click();
+  await expect(page).toHaveURL(/\/how-we-verify\.html$/);
+  await expect(page.locator('h1')).toHaveText('How we verify mentors');
+  await page.goto(`${srv.base}/`);
+  await page.locator('#faq .faq-more a').click();
+  await expect(page).toHaveURL(/\/faq\.html$/);
+  await expect(page.locator('#faq-examples')).toHaveText('What an answer looks like');
+  for (const link of ['#experts .wl-mentor a', '.nav-links a[href="/become-a-mentor.html"]', '.hero-become']) {
+    await page.goto(`${srv.base}/`);
+    await page.locator(link).click();
+    await expect(page, link).toHaveURL(/\/become-a-mentor\.html$/);
+    await expect(page.locator('h1')).toHaveText('Share what you know, get paid for it');
+  }
+  // (its button: sign up first, then Settings)
+  await expect(page.locator('.become-link')).toHaveAttribute('href', '/signup.html?redirect=/settings.html');
+  await ctx.close();
+});
 
 // The visible tiles: how many, in how many columns, how tall, and every name that breaks inside a word or runs out of its tile.
 const tiles = (page) => page.evaluate(() => {

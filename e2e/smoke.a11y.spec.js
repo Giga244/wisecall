@@ -42,7 +42,7 @@ for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']])
     }
 
     test('axe finds no WCAG A/AA problem on any public page', async () => {
-      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/faq.html', '/how-we-verify.html', '/terms.html', '/privacy.html', '/no-such-page']) {
+      for (const url of ['/', `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/faq.html', '/how-we-verify.html', '/become-a-mentor.html', '/terms.html', '/privacy.html', '/no-such-page']) {
         await audit('visitor', url);
       }
     });

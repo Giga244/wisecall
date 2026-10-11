@@ -296,8 +296,10 @@ function withSettings(text) {
   return String(text || '').replace(/\{(\w+)\}/g, (m, k) => (v[k] !== undefined ? String(v[k]) : m));
 }
 
-// /faq.html: every question and answer, grouped, written in by the server in the page's language (also as FAQPage data).
-const FAQ_GROUPS = [['asking', [1, 7, 11, 10, 15]], ['payments', [2, 3, 4, 6]], ['mentors', [5, 8, 9]], ['account', [13, 14]]];
+// /faq.html: every question and answer, grouped, written in by the server in the page's language (also as FAQPage data), and under
+// them three example questions and answers written by the team ("What an answer looks like", which used to be on the home page).
+const FAQ_GROUPS = [['asking', [1, 7, 11, 10, 15]], ['payments', [2, 3, 4, 6]], ['mentors', [5, 16, 8, 9]], ['account', [13, 14]]];
+const FAQ_EXAMPLES = [[1, 'tech'], [2, 'business'], [3, 'teaching']];
 function faqVars(lang) {
   const d = dict(lang);
   const items = [];
@@ -309,7 +311,19 @@ function faqVars(lang) {
       items.push({ q, a });
       return `<details class="faq-item" id="q${n}"><summary data-i18n="faq.${n}.q">${escapeHtml(q)}</summary><p data-i18n="faq.${n}.a">${escapeHtml(a)}</p></details>`;
     }).join('\n    ')}
-  </section>`).join('');
+  </section>`).join('') + `
+  <section class="faq-group faq-examples" aria-labelledby="faq-examples">
+    <h2 id="faq-examples" data-i18n="ex.title">${escapeHtml(d['ex.title'])}</h2>
+    <p data-i18n="ex.sub">${escapeHtml(d['ex.sub'])}</p>
+    <div class="example-grid">${FAQ_EXAMPLES.map(([n, niche]) => `
+      <article class="example-card">
+        <header><span class="ex-niche" data-i18n="niche.${niche}">${escapeHtml(d[`niche.${niche}`] || niche)}</span><span class="ex-tag" data-i18n="ex.label">${escapeHtml(d['ex.label'])}</span></header>
+        <h3 class="ex-q" data-i18n="ex.${n}.q">${escapeHtml(d[`ex.${n}.q`])}</h3>
+        <p class="ex-a" data-i18n="ex.${n}.a">${escapeHtml(d[`ex.${n}.a`])}</p>
+        <p class="ex-who" data-i18n="ex.${n}.who">${escapeHtml(d[`ex.${n}.who`])}</p>
+      </article>`).join('')}
+    </div>
+  </section>`;
   const ld = jsonLd({ '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: lang,
     mainEntity: items.map((i) => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })) });
   return { vars: { FAQ_TITLE: escapeHtml(d['faq.page.title']), FAQ_INTRO: escapeHtml(d['faq.page.intro']), FAQ_ITEMS: html }, head: ld };
@@ -897,7 +911,7 @@ function seoRoutes() {
 
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
-      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/find-a-mentor.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
+      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/become-a-mentor.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/find-a-mentor.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
         .filter(([p]) => p === '/' || fs.existsSync(path.join(PUBLIC, p)))
         // (a help article in both languages)
         .concat(require('./help').articles('en').filter((a) => require('./help').article('ka', a.slug)).map((a) => [`/help/${a.slug}`, 0.4]));

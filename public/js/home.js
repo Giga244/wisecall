@@ -1,5 +1,5 @@
-// Pieces of the home page that are not the expert list: the field tiles, the FAQ accordion and the
-// empty-list art (main.js shows it when there is nobody to list yet; the waiting-list form is in waitlist.js).
+// Pieces of the home page that are not the expert list: the hero's chips and search, the field tiles, the FAQ accordion, the live
+// sessions band and the empty-list art (main.js shows it when there is nobody to list yet; the waiting-list form is in waitlist.js).
 (function () {
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -96,18 +96,12 @@
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTiles);
 
-  // The hero: the first few fields as chips, and the band of field names that scrolls by (the list twice, so the loop has no seam;
-  // the band is decoration, hidden from screen readers: the same fields are links in the strip and in Browse experts).
+  // The hero: the first few fields as chips.
   const HERO_CHIPS = 5;
   function drawHero() {
     const all = WisecallI18n.niches();
     const chips = document.getElementById('heroChips');
     if (chips) chips.innerHTML = all.slice(0, HERO_CHIPS).map((n) => `<li><a class="chip" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${esc(t('niche.' + n.key))}</a></li>`).join('');
-    const track = document.getElementById('marqueeTrack');
-    if (track && all.length) {
-      const one = `<span class="marquee-set">${all.map((n) => `<span>${esc(t('niche.' + n.key))}</span><span class="marquee-star">✳</span>`).join('')}</span>`;
-      track.innerHTML = one + one;
-    }
   }
 
   // The hero's search: the words go into Browse experts' own search, and the page scrolls there (before launch, to the waiting list).
@@ -159,75 +153,8 @@
       <path d="M122 98l12 12 26-28" fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent2)"/>
     </svg>`;
 
-  // ---- Example answers: on phones a row you swipe, with dots (from 640px it is a plain grid) -----------------------
-  function initExamples() {
-    const grid = document.querySelector('.example-grid');
-    if (!grid || grid.dataset.ready) return;
-    grid.dataset.ready = '1';
-    const cards = Array.from(grid.querySelectorAll('.example-card'));
-    const phone = window.matchMedia('(max-width: 639px)');
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const dots = document.createElement('div');
-    dots.className = 'ex-dots';
-    grid.after(dots);
-
-    const label = (i) => t('ex.dot').replace('{n}', i + 1).replace('{total}', cards.length);
-    function drawDots(active) {
-      dots.innerHTML = cards.map((_, i) => `<button type="button" data-i="${i}" aria-label="${esc(label(i))}"${i === active ? ' aria-current="true"' : ''}></button>`).join('');
-    }
-    function activeIndex() {
-      const mid = grid.getBoundingClientRect().left + grid.clientWidth / 2;
-      let best = 0, bestGap = Infinity;
-      cards.forEach((c, i) => { const r = c.getBoundingClientRect(); const gap = Math.abs(r.left + r.width / 2 - mid); if (gap < bestGap) { best = i; bestGap = gap; } });
-      return best;
-    }
-    // A scrollable area must be reachable with the keyboard, so it is one stop while it scrolls (phones only).
-    function mode() {
-      if (phone.matches) {
-        grid.setAttribute('tabindex', '0'); grid.setAttribute('role', 'group'); grid.setAttribute('aria-roledescription', 'carousel'); grid.setAttribute('aria-label', t('ex.title'));
-      } else {
-        ['tabindex', 'role', 'aria-roledescription', 'aria-label'].forEach((a) => grid.removeAttribute(a));
-      }
-    }
-    let ticking = false;
-    grid.addEventListener('scroll', () => {
-      if (ticking || !phone.matches) return;
-      ticking = true;
-      requestAnimationFrame(() => { ticking = false; const i = activeIndex(); dots.querySelectorAll('button').forEach((b, k) => (k === i ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current'))); });
-    }, { passive: true });
-    dots.addEventListener('click', (ev) => {
-      const b = ev.target.closest('button[data-i]');
-      if (b) cards[Number(b.dataset.i)].scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', inline: 'center', block: 'nearest' });
-    });
-    phone.addEventListener('change', mode);
-    document.addEventListener('wisecall:lang-changed', () => { drawDots(activeIndex()); mode(); });
-    drawDots(0);
-    mode();
-  }
-
   initFaq();
   // The strip's labels need the dictionary, so main.js draws it after the language is loaded.
-  // "Real answers": once three answers are published, they take the place of the three examples (same cards, real content).
-  async function loadRealAnswers() {
-    const grid = document.querySelector('.example-grid');
-    if (!grid) return;
-    let d;
-    try { d = await fetch('/api/answers?limit=3').then((r) => (r.ok ? r.json() : { answers: [] })); } catch (e) { return; }
-    if (!d.answers || d.answers.length < 3) return;
-    const prefix = WisecallI18n.getLang() === 'ka' ? '/ka' : '';
-    const cut = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
-    grid.innerHTML = d.answers.map((a) => `
-      <article class="example-card">
-        <header><span class="ex-niche">${esc(a.niche ? t('niche.' + a.niche) : '')}</span><span class="ex-tag">${esc(t('pa.home.label'))}</span></header>
-        <h3 class="ex-q"><a class="plain-link" href="${prefix}/answers/${encodeURIComponent(a.slug)}">${esc(cut(a.question, 160))}</a></h3>
-        <p class="ex-a">${esc(cut(a.answer, 260))}</p>
-        <p class="ex-who">${esc(a.mentor.name)}</p>
-      </article>`).join('');
-    const title = document.getElementById('exTitle');
-    if (title) title.textContent = t('pa.home.title');
-    const sub = title && title.nextElementSibling;
-    if (sub) sub.innerHTML = `${esc(t('pa.home.sub'))} <a class="plain-link" href="${prefix}/answers">${esc(t('pa.home.more'))}</a>`;
-  }
   // The next three live sessions, when there are any (the section stays hidden otherwise).
   async function loadLive() {
     const box = document.getElementById('liveHome');
@@ -249,7 +176,7 @@
       </article>`).join('');
     box.hidden = false;
   }
-  document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(loadRealAnswers).then(initExamples).then(loadLive));
+  document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(loadLive));
   document.addEventListener('wisecall:lang-changed', drawStrip);
 
   window.WisecallHome = { icon, drawStrip, emptyArt: EMPTY_ART };

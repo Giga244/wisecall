@@ -1,0 +1,14 @@
+home before launch, phone375-en-light: 13150px tall, sideways 0px
+home before launch, phone390-ka-light: 14695px tall, sideways 0px
+home before launch, phone390-en-dark: 12849px tall, sideways 0px
+home before launch, phone375-ka-dark: 15026px tall, sideways 0px
+home before launch, tablet768-en-light: 10704px tall, sideways 0px
+home before launch, tablet768-ka-dark: 11719px tall, sideways 0px
+home before launch, laptop1024-ka-light: 9732px tall, sideways 0px
+home before launch, laptop1024-en-dark: 8694px tall, sideways 0px
+home before launch, desktop1440-en-light: 8220px tall, sideways 0px
+home before launch, desktop1440-ka-dark: 8890px tall, sideways 0px
+home before launch, wide1920-en-dark: 8251px tall, sideways 0px
+home before launch, wide1920-ka-light: 8912px tall, sideways 0px
+home after launch (mentors listed), phone390-en-dark: 13980px tall
+home after launch (mentors listed), desktop1440-en-light: 8461px tall

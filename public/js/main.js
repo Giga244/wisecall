@@ -2,10 +2,9 @@
 // is listed yet. (The other sections are static markup; see home.js for the strip, FAQ and waiting list.)
 (async function () {
   await WisecallI18n.initI18n();
-  const currentUser = await WisecallNav.initNav();
-  // Logged-in visitors go straight to Settings; logged-out ones sign up first and land there afterwards.
-  const becomeHref = currentUser ? '/settings.html' : '/signup.html?redirect=/settings.html';
-  document.querySelectorAll('.become-link').forEach(a => { a.href = becomeHref; });
+  await WisecallNav.initNav();
+  // "Apply as a mentor" opens the mentors' page (what they get, how to apply; its button signs up or opens Settings).
+  const becomeHref = '/become-a-mentor.html';
   WisecallHome.drawStrip();
 
   const grid = document.getElementById('expertGrid');
@@ -236,9 +235,4 @@
       grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
     }
   }
-
-  const legend = document.getElementById('badgeLegend');
-  const drawLegend = () => { if (legend) legend.innerHTML = WisecallBadges.legend(); };
-  drawLegend();
-  document.addEventListener('wisecall:lang-changed', drawLegend);
 })();

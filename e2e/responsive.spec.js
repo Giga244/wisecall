@@ -33,7 +33,7 @@ const sideways = (page) => page.evaluate(() => ({ page: document.documentElement
 
 // ---- Nothing sticks out -------------------------------------------------------------------------------------
 const PAGES = [
-  ['visitor', null, ['/', () => `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/terms.html', '/privacy.html', '/no-such-page']],
+  ['visitor', null, ['/', () => `/u/${mentorUsername}`, '/signup.html', '/login.html', '/forgot-password.html', '/contact.html', '/about.html', '/become-a-mentor.html', '/faq.html', '/terms.html', '/privacy.html', '/no-such-page']],
   ['seeker', 'sam@e2e.test', ['/dashboard.html', '/settings.html?tab=profile', '/settings.html?tab=account']],
   ['mentor', 'ana@e2e.test', ['/dashboard.html', '/settings.html?tab=mentor', '/settings.html?tab=verification', '/settings.html?tab=payouts']],
   ['admin', 'e2e-admin@example.com', ['/admin.html']]
@@ -274,29 +274,6 @@ test('the expert profile on a phone: a bar with the price and Ask, opening the q
   await tablet.ctx.close();
 });
 
-test('the example answers swipe on a phone, with dots that follow', async ({ browser }) => {
-  const { ctx, page } = await newPage(browser, 390);
-  await page.goto('/');
-  await page.waitForLoadState('networkidle');
-  const grid = page.locator('.example-grid');
-  await grid.scrollIntoViewIfNeeded();
-  const dots = page.locator('.ex-dots button');
-  await expect(dots).toHaveCount(3);
-  await expect(dots.nth(0)).toHaveAttribute('aria-current', 'true');
-  await dots.nth(2).click();
-  await expect(dots.nth(2)).toHaveAttribute('aria-current', 'true', { timeout: 5000 });
-  expect((await dots.first().boundingBox()).height).toBeGreaterThanOrEqual(44);
-  expect(await grid.getAttribute('tabindex'), 'the scrolling row can be reached with the keyboard').toBe('0');
-  await ctx.close();
-
-  const tablet = await newPage(browser, 768);
-  await tablet.page.goto('/');
-  await tablet.page.waitForLoadState('networkidle');
-  await expect(tablet.page.locator('.ex-dots')).toBeHidden();
-  expect(await tablet.page.locator('.example-grid').getAttribute('tabindex')).toBeNull();
-  await tablet.ctx.close();
-});
-
 test('card groups fill their rows: no lone card on a tablet', async ({ browser }) => {
   const { ctx, page } = await newPage(browser, 768);
   await page.goto('/');
@@ -307,10 +284,11 @@ test('card groups fill their rows: no lone card on a tablet', async ({ browser }
     items.forEach((el) => { const top = Math.round(el.getBoundingClientRect().top / 10); byRow.set(top, (byRow.get(top) || []).concat(el.getBoundingClientRect().width)); });
     return Array.from(byRow.values()).map((r) => r.length);
   }, sel);
-  expect(await rows('.trust-card'), 'Why trust: 2 + 2').toEqual([2, 2]);
-  expect(await rows('.verify-card'), 'How we verify: 3 + 2').toEqual([3, 2]);
-  expect(await rows('.example-card'), 'Examples: 1 + 2').toEqual([1, 2]);
   expect(await rows('.how-step'), 'How it works: stacked').toEqual([1, 1, 1]);
+  await page.goto('/become-a-mentor.html');
+  await page.waitForLoadState('networkidle');
+  expect(await rows('.perk'), "the mentors' page: three perks in a row").toEqual([3]);
+  expect(await rows('.mentor-steps > li'), 'and the three steps').toEqual([3]);
   await ctx.close();
 });
 

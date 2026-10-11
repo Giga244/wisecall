@@ -954,6 +954,51 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 .faq-group .faq-item { border-bottom: 1px solid var(--border); padding: 12px 0; }
 .faq-group summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
 .faq-group .faq-item p { margin: 8px 0 4px; line-height: 1.7; }
+/* "What an answer looks like" on the FAQ page: three example questions and answers (written by the team), as speech bubbles */
+.example-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.example-card { min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; background: var(--card); border: var(--line-w) solid var(--line); border-radius: 26px 26px 26px 6px; }
+.example-card:nth-child(2) { border-radius: 26px 26px 6px 26px; }
+.example-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ex-niche { font-weight: 600; font-size: 0.82rem; padding: 4px 12px; border-radius: var(--r-pill); background: var(--c-mint); color: var(--on-pastel); border: var(--chip-w) solid var(--c-ink); }
+.ex-tag { font-weight: 700; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: var(--r-pill); background: var(--inverse); color: var(--on-inverse); }
+:lang(ka) .ex-tag { text-transform: none; }
+.example-card .ex-q { font-size: 1.2rem; line-height: 1.25; margin: 0; }
+.ex-a { margin: 0; color: var(--ink-soft); font-size: 1rem; line-height: 1.6; }
+.ex-who { margin: 0; padding-top: 12px; border-top: var(--chip-w) dashed var(--line); font-weight: 700; font-size: 0.9rem; }
+
+/* The mentors' page (/become-a-mentor.html): the coral panel, with the logo's speech bubble */
+.become-page { padding-top: 24px; padding-bottom: 80px; }
+.mentors-panel {
+  position: relative; overflow: hidden; padding: 64px 56px; border-radius: 40px;
+  background: var(--c-coral); color: var(--on-pastel); border: var(--line-w) solid var(--c-ink);
+}
+.mentors-bubble { position: absolute; right: -30px; top: -50px; width: 300px; height: 300px; fill: var(--c-ink); opacity: 0.16; pointer-events: none; transform: rotate(8deg); }
+.mentors-panel > *:not(.mentors-bubble) { position: relative; }
+.mentors-panel h1, .mentors-panel h2 { color: var(--on-pastel); }
+.mentors-panel h1 { margin: 0; font-size: clamp(2.3rem, 3.8vw + 0.6rem, 4.4rem); line-height: 0.98; }
+:lang(ka) .mentors-panel h1 { font-size: clamp(1.9rem, 2.6vw + 0.6rem, 3.2rem); line-height: 1.1; }
+.mentors-head { max-width: 760px; margin-bottom: 34px; }
+.mentors-head p { margin: 20px 0 0; font-size: 1.2rem; line-height: 1.55; max-width: 600px; }
+.perk-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 40px; }
+.perk { min-width: 0; padding: 22px; background: var(--sticker); color: var(--on-pastel); border: var(--line-w) solid var(--c-ink); border-radius: var(--r-card); }
+.perk h2 { margin: 0 0 6px; font-size: 1.35rem; }
+.perk p { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--c-muted); }
+.mentors-how { font-size: 1.5rem; margin: 0 0 16px; }
+.mentor-steps { list-style: none; margin: 0 0 34px; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.mentor-steps li { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+.ms-num { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: var(--c-ink); color: var(--c-paper); font-family: var(--font-display); font-weight: 800; }
+.mentor-steps strong { display: block; margin-bottom: 4px; font-size: 1.05rem; }
+.mentor-steps p { margin: 0; font-size: 0.97rem; line-height: 1.5; }
+.mentors-panel .btn-ink { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+.mentors-panel :focus-visible { outline-color: var(--c-ink); }
+@media (max-width: 1023px) { .mentors-panel { padding: 52px 36px; } }
+@media (max-width: 699px) { .perk-grid, .mentor-steps { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 639px) {
+  .become-page { padding-top: 16px; padding-bottom: 56px; }
+  .mentors-panel { padding: 36px 22px; border-radius: 28px; }
+  .mentors-bubble { width: 180px; height: 180px; right: -50px; top: -50px; }
+  .mentors-panel .btn { width: 100%; }
+}
 .hvp-steps { padding-left: 22px; display: grid; gap: 14px; }
 /* Numbered steps: big outlined numerals (01 02 03) */
 .hvp-steps, .advice-steps { list-style: none; counter-reset: step; padding-left: 0; gap: 18px; }

@@ -84,10 +84,12 @@ describe('trust badges', () => {
 });
 
 describe('the public pages explain verification', () => {
-  test('the home page has the "How we verify mentors" section and About and Privacy describe it (EN and KA)', async () => {
+  test('the home page links to "How we verify mentors", which has every check, and About and Privacy describe it (EN and KA)', async () => {
     const home = await fetch(`${base}/`).then((r) => r.text());
-    assert.match(home, /id="verify"/);
-    assert.match(home, /data-i18n="hv\.title"/);
+    assert.match(home, /<a class="arrow-link" href="\/how-we-verify\.html" data-i18n="how\.verify\.link">/);
+    const page = await fetch(`${base}/how-we-verify.html`).then((r) => r.text());
+    for (const n of [1, 2, 3, 4, 5]) assert.match(page, new RegExp(`<p data-i18n="hv\\.${n}\\.body">[^<{]{40,}</p>`), `check ${n}`);
+    assert.match(page, /data-i18n="hv\.privacy">[^<{]{20,}</);
     for (const lang of ['en', 'ka']) {
       const dict = await fetch(`${base}/i18n/${lang}.json`).then((r) => r.json());
       const privacy = dict['legal.privacy.sections'].map((s) => `${s.h} ${s.p.join(' ')}`).join(' ');
