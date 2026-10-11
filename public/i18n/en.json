@@ -1678,6 +1678,8 @@
   "bal.status.requested": "Requested",
   "bal.status.paid": "Sent",
   "bal.status.rejected": "Not sent",
+  "bal.status.sending": "Being sent",
+  "bal.status.failed": "Not sent (the bank)",
   "bal.ref": "Reference: {ref}",
   "bal.reason": "Reason: {reason}",
   "bal.blocker.suspended": "Withdrawals are paused while your account is suspended.",

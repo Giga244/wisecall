@@ -20,6 +20,7 @@ const skip = (label, detail) => ({ status: 'skip', label, detail });
 const isEmail = (v) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(v);
 
 // Environment settings: no network involved.
+const PAY_NAMES = { bog: 'Bank of Georgia', tbc: 'TBC Bank', flitt: 'Flitt' };
 function settings(config, env) {
   const out = [];
   const prod = env.NODE_ENV === 'production';
@@ -74,12 +75,17 @@ function providers(config) {
 
   const pay = config.PAYMENT_PROVIDER;
   if (pay === 'mock') out.push(fail('Payments use a real bank', 'PAYMENT_PROVIDER=mock is the fake bank for development'));
-  else if (pay === 'bog' || pay === 'tbc') {
-    const need = pay === 'bog' ? ['BOG_CLIENT_ID', 'BOG_CLIENT_SECRET'] : ['TBC_API_KEY', 'TBC_CLIENT_ID', 'TBC_CLIENT_SECRET'];
+  else if (pay === 'bog' || pay === 'tbc' || pay === 'flitt') {
+    const need = { bog: ['BOG_CLIENT_ID', 'BOG_CLIENT_SECRET'], tbc: ['TBC_API_KEY', 'TBC_CLIENT_ID', 'TBC_CLIENT_SECRET'], flitt: ['FLITT_MERCHANT_ID', 'FLITT_SECRET_KEY'] }[pay];
     const gap = missing(need);
     ready.pay = gap.length === 0;
-    out.push(gap.length ? problem(`Payment keys for ${pay.toUpperCase()} are set`, `missing: ${gap.join(', ')}. ${later('bookings and payments')}`) : ok(`Payments use ${pay === 'bog' ? 'Bank of Georgia' : 'TBC Bank'}, and its keys are set`));
-  } else out.push(problem('Payments use a real bank', `PAYMENT_PROVIDER is not set (bog or tbc). ${later('bookings and payments')}`));
+    out.push(gap.length ? problem(`Payment keys for ${pay.toUpperCase()} are set`, `missing: ${gap.join(', ')}. ${later('bookings and payments')}`) : ok(`Payments use ${PAY_NAMES[pay]}, and its keys are set`));
+  } else out.push(problem('Payments use a real bank', `PAYMENT_PROVIDER is not set (flitt, bog or tbc). ${later('bookings and payments')}`));
+  // Payouts through Flitt need the payout key too; by hand (manual) need nothing.
+  if (config.PAYOUT_METHOD === 'flitt_iban') {
+    const gap = missing(['FLITT_MERCHANT_ID', 'FLITT_PAYOUT_SECRET_KEY']);
+    out.push(gap.length ? fail('Payouts through Flitt are set up', `missing: ${gap.join(', ')} (or PAYOUT_METHOD=manual)`) : ok(`Payouts go through Flitt's IBAN withdrawal, at most ${config.PAYOUT_DAILY_LIMIT_GEL} GEL a day, each with an admin's code`));
+  } else out.push(ok('Payouts are sent by hand (PAYOUT_METHOD=manual): an admin transfers and records the reference'));
 
   const kyc = config.KYC_PROVIDER;
   if (kyc === 'mock') out.push(fail('ID checks use Didit', 'KYC_PROVIDER=mock is the fake ID check for development'));
@@ -181,7 +187,7 @@ async function runChecks(config, env, { deep = false } = {}) {
   const modeLine = launchModeCheck(config, await countListed(config));
   if (modeLine) live.push(modeLine);
 
-  const payName = config.PAYMENT_PROVIDER === 'tbc' ? 'TBC Bank' : 'Bank of Georgia';
+  const payName = PAY_NAMES[config.PAYMENT_PROVIDER] || 'The bank';
 
   const early = config.LAUNCH_MODE_SETTING !== 'live';
   if (!ready.pay) live.push(skip(`${payName} answers and accepts your keys`, early ? 'no bank keys yet (fine in prelaunch)' : 'fix the payment settings first'));

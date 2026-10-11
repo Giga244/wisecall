@@ -72,8 +72,11 @@ test('a mentor applies: price, Experience form with evidence, submit, then the (
   await form.locator('button[type="submit"]').click();
   await expect.poll(async () => (await S.sql('SELECT niche FROM users WHERE id = $1', [mentorId]))[0].niche).toBe('tech');
 
+  // (saving the Experience form draws the evidence form again: wait for that, or a choice made before it is lost)
+  await page.waitForLoadState('networkidle');
   const ev = exp.locator('form[data-form="evidence"]');
   await ev.locator('[name="kind"]').selectOption('website');
+  await expect(ev.locator('[name="kind"]')).toHaveValue('website');
   await ev.locator('[name="url"]').fill(`${S.fakeWeb()}/p/${people.mentor.name.toLowerCase().replace(/ /g, '-')}`);
   await ev.locator('button[type="submit"]').click();
   await expect(exp.locator('.ap-evidence li')).toHaveCount(1);

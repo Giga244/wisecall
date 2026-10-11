@@ -3,7 +3,12 @@
 Open questions that block a piece of work, or that only you can answer. Add your answer under each one (or tell Claude in chat), and the
 work it blocks can start.
 
-## 1. Payments: is Flitt the chosen provider? (blocks PART 10)
+## 1. Payments: is Flitt the chosen provider? — ANSWERED: yes (docs/LAUNCH-PLAN.md)
+
+**Built** (October 2026): PART 10 — Flitt payments, refunds and IBAN payouts with an admin's 2FA code (docs/BANK-GOLIVE.md §0). The manual
+payout stays as the fallback (`PAYOUT_METHOD=manual`). Still to ask Flitt: the fee per IBAN withdrawal, that IBAN withdrawal is on for the
+account, and the [VERIFY] points in docs/BANK-GOLIVE.md §0. The original question:
+
 
 The master prompt's PART 10 adds Flitt (TBC's payment company) for card payments **and** one-click payouts to mentors' IBANs. It is to be
 built only once Flitt is confirmed, so it was **skipped** for now. Today the site supports Bank of Georgia (BOG) and TBC (tpay) for

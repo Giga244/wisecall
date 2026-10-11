@@ -169,7 +169,7 @@ describe('production + LAUNCH_MODE=live keeps the strict rules', () => {
 describe('the fake providers are never allowed in production, launched or not', () => {
   test('prelaunch or automatic with the fake bank or the fake ID check refuses to start', () => {
     for (const mode of ['prelaunch', '']) {
-      for (const [change, expected] of [[{ PAYMENT_PROVIDER: 'mock' }, /PAYMENT_PROVIDER=mock is a fake bank/], [{ KYC_PROVIDER: 'mock' }, /KYC_PROVIDER=mock is a fake ID check/], [{ PAYMENT_PROVIDER: 'paypal' }, /PAYMENT_PROVIDER must be bog, tbc or mock/]]) {
+      for (const [change, expected] of [[{ PAYMENT_PROVIDER: 'mock' }, /PAYMENT_PROVIDER=mock is a fake bank/], [{ KYC_PROVIDER: 'mock' }, /KYC_PROVIDER=mock is a fake ID check/], [{ PAYMENT_PROVIDER: 'paypal' }, /PAYMENT_PROVIDER must be flitt, bog, tbc or mock/]]) {
         const r = startFails({ LAUNCH_MODE: mode, ...change });
         assert.equal(r.status, 1, `${mode || 'auto'} ${JSON.stringify(change)}`);
         assert.match(r.stderr, expected);

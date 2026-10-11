@@ -18,6 +18,7 @@
 const config = require('../config');
 
 const providers = {
+  flitt: require('./flitt'),
   bog: require('./bog'),
   tbc: require('./tbc'),
   mock: require('./mock')

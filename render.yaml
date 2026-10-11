@@ -4,8 +4,8 @@
 #
 # This starts the site in PRELAUNCH: it runs without any bank or ID-check (Didit) keys. Mentors can sign up and apply, visitors can
 # join the waiting list, nobody can book or pay, and the ID-check step says "ID checks open soon". On launch day add, under
-# Environment: PAYMENT_PROVIDER (bog or tbc) with its keys (BOG_CLIENT_ID + BOG_CLIENT_SECRET, or TBC_API_KEY + TBC_CLIENT_ID +
-# TBC_CLIENT_SECRET), KYC_PROVIDER=didit with DIDIT_API_KEY, DIDIT_WORKFLOW_ID and DIDIT_WEBHOOK_SECRET, then change LAUNCH_MODE to
+# Environment: PAYMENT_PROVIDER=flitt with FLITT_MERCHANT_ID + FLITT_SECRET_KEY (or bog / tbc with their keys; docs/BANK-GOLIVE.md),
+# for payouts through Flitt PAYOUT_METHOD=flitt_iban + FLITT_PAYOUT_SECRET_KEY, KYC_PROVIDER=didit with DIDIT_API_KEY, DIDIT_WORKFLOW_ID and DIDIT_WEBHOOK_SECRET, then change LAUNCH_MODE to
 # live. With LAUNCH_MODE=live the server refuses to start without them (DEPLOY.md, "Going online first").
 databases:
   - name: wisecall-db
@@ -62,6 +62,15 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+      # Flitt (docs/BANK-GOLIVE.md section 0): asked for here, set PAYMENT_PROVIDER=flitt on launch day.
+      - key: FLITT_MERCHANT_ID
+        sync: false
+      - key: FLITT_SECRET_KEY
+        sync: false
+      - key: FLITT_PAYOUT_SECRET_KEY
+        sync: false
+      - key: BANK_FEE_PERCENT
+        value: "2"
       - key: EMAIL_PROVIDER
         value: resend
       - key: RESEND_API_KEY

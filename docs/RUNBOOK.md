@@ -124,6 +124,15 @@ to support, or a card chargeback.
    reload and check.
 5. Keep enough money in the account to cover refunds and upcoming payouts: buyers' money that is not yet paid out is not yours.
 
+**With Flitt payouts (`PAYOUT_METHOD=flitt_iban`)** the steps above are replaced by one button per request (docs/BANK-GOLIVE.md §0):
+1. Open the request, check the holder name against the name on the ID (the server checks it too), type the **current code from your
+   authenticator app** and press **Send payout**. Each payout needs a new code.
+2. The request shows **Being sent** until Flitt confirms it (usually at once; the sweep checks every few minutes, or press **Check now**),
+   then **Paid** with Flitt's reference. **Failed** shows Flitt's reason; the money is the mentor's to request again (fix the IBAN first).
+3. More than `PAYOUT_DAILY_LIMIT_GEL` in one day is refused: send the rest tomorrow, or raise the limit deliberately.
+4. If Flitt is down, nothing is lost: a request being sent is checked again and is never paid twice (its Flitt order id is fixed).
+   To pay by hand meanwhile, set `PAYOUT_METHOD=manual` (only for requests that were never sent).
+
 ---
 
 ## 6. Deploying and rolling back (Render)

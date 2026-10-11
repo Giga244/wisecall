@@ -186,6 +186,7 @@ async function runSweep({ wait = false } = {}) {
       await retryRefunds();
       await confirmRefunds();
       await require('./payments').settleUnconfirmedRefunds(); // (partial refunds whose answer from the bank was lost: docs/REVIEW-2.md #3)
+      await require('./withdrawals').syncSending(); // (payouts sent through the bank whose callback has not come: PAYOUT_METHOD=flitt_iban)
       await reconcilePending();
       await purgeUnpaid();
       await purgeDocuments();

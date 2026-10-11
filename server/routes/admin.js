@@ -300,10 +300,11 @@ router.post('/requests/merge', requireAuth, requireAdmin, asyncHandler(async (re
 }));
 
 // ---- Withdrawals (server/withdrawals.js) ---------------------------------------------------------------------------------------------
-const WD_STATUS = { not_found: 404, not_open: 409, amount_changed: 409, reference_required: 400, reason_required: 400 };
+const WD_STATUS = { not_found: 404, not_open: 409, amount_changed: 409, reference_required: 400, reason_required: 400, invalid_code: 403, code_locked: 429, two_factor_required: 403,
+  daily_limit: 409, name_mismatch: 409, no_payout_details: 409, manual_method: 409, suspended: 409, open_flags: 409 };
 const wdFail = (res, e) => {
   if (!(e instanceof require('../withdrawals').WithdrawalError)) throw e;
-  res.status(WD_STATUS[e.code] || 400).json({ error: e.code, ...(e.amount !== undefined ? { amount: e.amount } : {}) });
+  res.status(WD_STATUS[e.code] || 400).json({ error: e.code, ...(e.amount !== undefined ? { amount: e.amount } : {}), ...(e.left !== undefined ? { left: e.left } : {}) });
 };
 const isId = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s));
 // The queue (with the full IBANs: every view is logged), the money overview and the recent decisions.
@@ -311,7 +312,20 @@ router.get('/withdrawals', requireAuth, requireAdmin, asyncHandler(async (req, r
   const w = require('../withdrawals');
   const [overview, queue, recent] = await Promise.all([w.overview(), w.queue(req.adminUser), w.recent()]);
   res.set('Cache-Control', 'no-store');
-  res.json({ currency: config.CURRENCY, minimum: w.minimum(), overview, queue, recent });
+  const method = require('../payoutMethods').current();
+  res.json({ currency: config.CURRENCY, minimum: w.minimum(), overview, queue, recent, method: method.name, automatic: method.automatic, dailyLimit: config.PAYOUT_DAILY_LIMIT_GEL * 100 });
+}));
+// Sends a request through the bank (PAYOUT_METHOD=flitt_iban): a current code from the admin's authenticator app every time.
+router.post('/withdrawals/:id/send', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!isId(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try { res.json({ request: await require('../withdrawals').sendPayout({ batchId: req.params.id, admin: req.adminUser, code: (req.body || {}).code }) }); }
+  catch (e) { wdFail(res, e); }
+}));
+// Asks the bank again about a request being sent.
+router.post('/withdrawals/:id/sync', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!isId(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try { res.json({ request: await require('../withdrawals').syncPayout(req.params.id) }); }
+  catch (e) { wdFail(res, e); }
 }));
 router.post('/withdrawals/:id/pay', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   if (!isId(req.params.id)) return res.status(404).json({ error: 'not_found' });

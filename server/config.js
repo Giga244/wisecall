@@ -38,7 +38,7 @@ const config = {
   PRICE_MIN: 5,
   PRICE_MAX: 2000,
 
-  // Which bank takes the money: bog | tbc | mock. "mock" is a fake bank for local development
+  // Which bank takes the money: flitt | bog | tbc | mock. "mock" is a fake bank for local development
   // only and is refused in production.
   PAYMENT_PROVIDER: (env.PAYMENT_PROVIDER || (IS_PROD ? '' : 'mock')).toLowerCase(),
   PAYMENT_TTL_MINUTES: int(env.PAYMENT_TTL_MINUTES, 30),
@@ -50,6 +50,15 @@ const config = {
   BOG_AUTH_URL: env.BOG_AUTH_URL || 'https://oauth2.bog.ge/auth/realms/bog/protocol/openid-connect/token',
   // Leave empty to use the public key BOG publishes for callback signatures.
   BOG_CALLBACK_PUBLIC_KEY: (env.BOG_CALLBACK_PUBLIC_KEY || '').replace(/\\n/g, '\n'),
+
+  // Flitt (flitt.com, TBC's payment company: server/pay/flitt.js): the merchant id and the secret key for payments, and the separate payout
+  // key for IBAN withdrawals (PAYOUT_METHOD=flitt_iban). Callbacks are believed only from FLITT_CALLBACK_IPS (Flitt's two servers).
+  FLITT_MERCHANT_ID: String(env.FLITT_MERCHANT_ID || '').trim(),
+  FLITT_SECRET_KEY: env.FLITT_SECRET_KEY || '',
+  FLITT_PAYOUT_SECRET_KEY: env.FLITT_PAYOUT_SECRET_KEY || '',
+  // (only outside production: the tests point Flitt at a fake server)
+  FLITT_API_URL: ((IS_PROD ? '' : (env.FLITT_API_URL || '').trim()) || 'https://pay.flitt.com').replace(/\/+$/, ''),
+  FLITT_CALLBACK_IPS: String(env.FLITT_CALLBACK_IPS === undefined ? '54.154.216.60,3.75.125.89' : env.FLITT_CALLBACK_IPS).split(',').map((s) => s.trim()).filter(Boolean),
 
   // TBC Bank (tpay / E-Commerce API)
   TBC_API_KEY: env.TBC_API_KEY || '',
@@ -65,10 +74,12 @@ const config = {
   PAYOUT_CHANGE_HOLD_HOURS: Math.max(0, int(env.PAYOUT_CHANGE_HOLD_HOURS, 72)),
   REAUTH_MINUTES: Math.max(1, int(env.REAUTH_MINUTES, 10)),
   // Withdrawals: the smallest amount a mentor can take out (lari; any amount when the account is closing), the estimated bank fee for
-  // the admin's money overview (percent of what was received), and how payouts reach the bank ('manual' for now: server/payoutMethods).
+  // the admin's money overview (percent of what was received; Flitt's is 2 %), and how payouts reach the bank: 'manual' (an admin
+  // transfers by hand) or 'flitt_iban' (an admin presses "Send payout" with a code, at most PAYOUT_DAILY_LIMIT_GEL a day; server/payoutMethods).
   PAYOUT_MIN_GEL: Math.max(0, int(env.PAYOUT_MIN_GEL, 100)),
   BANK_FEE_PERCENT: Math.max(0, int(env.BANK_FEE_PERCENT, 2)),
-  PAYOUT_METHOD: env.PAYOUT_METHOD || 'manual',
+  PAYOUT_METHOD: String(env.PAYOUT_METHOD || 'manual').trim().toLowerCase(),
+  PAYOUT_DAILY_LIMIT_GEL: Math.max(1, int(env.PAYOUT_DAILY_LIMIT_GEL, 3000)),
   BOOKINGS_PER_HOUR: Math.max(0, int(env.BOOKINGS_PER_HOUR, 10)),
   MAX_OPEN_UNPAID_BOOKINGS: Math.max(0, int(env.MAX_OPEN_UNPAID_BOOKINGS, 3)),
   TBC_MAX_EXPIRATION_MINUTES: Math.max(1, int(env.TBC_MAX_EXPIRATION_MINUTES, 12)),
@@ -203,6 +214,7 @@ config.PAYMENTS_ENABLED = (() => {
   if (p === 'mock') return !IS_PROD;
   if (p === 'bog') return Boolean(config.BOG_CLIENT_ID && config.BOG_CLIENT_SECRET);
   if (p === 'tbc') return Boolean(config.TBC_API_KEY && config.TBC_CLIENT_ID && config.TBC_CLIENT_SECRET);
+  if (p === 'flitt') return Boolean(config.FLITT_MERCHANT_ID && config.FLITT_SECRET_KEY);
   return false;
 })();
 config.ID_CHECKS_ENABLED = (() => {
@@ -247,7 +259,9 @@ if (!['on', 'off'].includes(config.LIVE_SESSIONS)) problems.push('LIVE_SESSIONS 
 if (config.LIVE_PROVIDER === 'fake' && IS_PROD) problems.push('LIVE_PROVIDER=fake is for development only (use daily, or leave it empty)');
 if (config.LIVE_PROVIDER && !['daily', 'fake'].includes(config.LIVE_PROVIDER)) problems.push('LIVE_PROVIDER must be daily or fake (or empty)');
 if (config.LIVE_MAX_PARTICIPANTS < 2 || config.LIVE_MAX_PARTICIPANTS > 200) problems.push('LIVE_MAX_PARTICIPANTS must be between 2 and 200');
-if (!['manual'].includes(config.PAYOUT_METHOD)) problems.push('PAYOUT_METHOD must be "manual" (bank_api and split are not built yet)');
+if (!['manual', 'flitt_iban'].includes(config.PAYOUT_METHOD)) problems.push('PAYOUT_METHOD must be manual or flitt_iban');
+if (config.PAYOUT_METHOD === 'flitt_iban' && !(config.FLITT_MERCHANT_ID && config.FLITT_PAYOUT_SECRET_KEY)) problems.push('PAYOUT_METHOD=flitt_iban needs FLITT_MERCHANT_ID and FLITT_PAYOUT_SECRET_KEY (or use PAYOUT_METHOD=manual)');
+if (config.FLITT_MERCHANT_ID && !/^\d{1,12}$/.test(config.FLITT_MERCHANT_ID)) problems.push('FLITT_MERCHANT_ID is a number (the merchant id from the Flitt portal)');
 if (config.ANSWER_DEADLINE_DAYS < 1) problems.push('ANSWER_DEADLINE_DAYS must be at least 1');
 if (config.PAYOUT_HOLD_DAYS < 0) problems.push('PAYOUT_HOLD_DAYS cannot be negative');
 if (config.UNPAID_ATTEMPT_DAYS < 1) problems.push('UNPAID_ATTEMPT_DAYS must be at least 1');
@@ -255,7 +269,7 @@ if (!['required', 'off'].includes(config.ADMIN_2FA)) problems.push('ADMIN_2FA mu
 if (config.ADMIN_2FA_SESSION_HOURS < 1 || config.ADMIN_2FA_SESSION_HOURS > 72) problems.push('ADMIN_2FA_SESSION_HOURS must be between 1 and 72');
 if (IS_PROD && config.ADMIN_2FA === 'off') problems.push('ADMIN_2FA=off is not allowed in production: admin accounts must use two-step verification');
 if (config.PAYMENT_TTL_MINUTES < 5 || config.PAYMENT_TTL_MINUTES > 1440) problems.push('PAYMENT_TTL_MINUTES must be between 5 and 1440');
-if (config.PAYMENT_PROVIDER && !['bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be bog, tbc or mock');
+if (config.PAYMENT_PROVIDER && !['flitt', 'bog', 'tbc', 'mock'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER must be flitt, bog, tbc or mock');
 if (config.KYC_PROVIDER && !['didit', 'mock'].includes(config.KYC_PROVIDER)) problems.push('KYC_PROVIDER must be didit or mock');
 if (Boolean(config.GOOGLE_CLIENT_ID) !== Boolean(config.GOOGLE_CLIENT_SECRET)) problems.push('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must both be set (Google sign-in) or both be empty (no Google button)');
 if (!['prelaunch', 'live', 'auto'].includes(config.LAUNCH_MODE_SETTING)) problems.push('LAUNCH_MODE must be prelaunch or live (or empty: prelaunch until a mentor is listed)');
@@ -297,7 +311,11 @@ if (IS_PROD) {
       if (!config.DIDIT_WEBHOOK_SECRET) problems.push('DIDIT_WEBHOOK_SECRET is required when KYC_PROVIDER=didit (webhooks are refused without it)' + opening);
     }
 
-    if (config.PAYMENT_PROVIDER !== 'mock' && !['bog', 'tbc'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER is required in production: bog or tbc' + opening);
+    if (config.PAYMENT_PROVIDER !== 'mock' && !['flitt', 'bog', 'tbc'].includes(config.PAYMENT_PROVIDER)) problems.push('PAYMENT_PROVIDER is required in production: flitt, bog or tbc' + opening);
+    if (config.PAYMENT_PROVIDER === 'flitt') {
+      if (!config.FLITT_MERCHANT_ID) problems.push('FLITT_MERCHANT_ID is required when PAYMENT_PROVIDER=flitt' + opening);
+      if (!config.FLITT_SECRET_KEY) problems.push('FLITT_SECRET_KEY is required when PAYMENT_PROVIDER=flitt' + opening);
+    }
     if (config.PAYMENT_PROVIDER === 'bog') {
       if (!config.BOG_CLIENT_ID) problems.push('BOG_CLIENT_ID is required when PAYMENT_PROVIDER=bog' + opening);
       if (!config.BOG_CLIENT_SECRET) problems.push('BOG_CLIENT_SECRET is required when PAYMENT_PROVIDER=bog' + opening);

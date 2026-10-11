@@ -1,4 +1,4 @@
-# Bank go-live checklist (Bank of Georgia and TBC Bank)
+# Bank go-live checklist (Flitt; Bank of Georgia and TBC Bank)
 
 What each bank needs from Wisecall, how to test before real money, and how our integration (`server/pay/bog.js`, `server/pay/tbc.js`)
 compares with the banks' published e-commerce APIs. Mismatches and open questions are copied to `docs/TODO-FROM-CLOUD.md`.
@@ -9,7 +9,61 @@ compares with the banks' published e-commerce APIs. Mismatches and open question
 > 1.0.1), and our own code and fake bank (`tests/fakeBank.js`). Everything marked **[CONFIRM WITH BANK]** must be checked against the
 > bank's current documentation or your bank manager before go-live. Links are at the end.
 
-Pick **one** bank for launch (`PAYMENT_PROVIDER=bog` or `tbc`); the other can be added later — each booking remembers its own provider.
+The owner chose **Flitt** (section 0). Bank of Georgia and TBC (sections 1 and 2) stay in the code and can be chosen instead; each booking remembers its own provider.
+
+---
+
+## 0. Flitt (the chosen provider) — payments and IBAN payouts
+
+Flitt (flitt.com, TBC's payment company) is the provider Wisecall launches with: `PAYMENT_PROVIDER=flitt`. Built from
+https://docs.flitt.com (protocol 1.0.1) in `server/pay/flitt.js`, tested against a fake Flitt that checks every signature
+(`tests/fakeFlitt.js`, `tests/flitt.test.js`). The BOG and TBC code stays and can still be chosen; each booking remembers its own provider.
+
+### What you need from Flitt
+
+- The **merchant id** (a number) and the **payment secret key** from the Flitt merchant portal → Render: `FLITT_MERCHANT_ID`,
+  `FLITT_SECRET_KEY`. Never in git or chat.
+- For payouts to mentors: the **payout (credit) secret key** → `FLITT_PAYOUT_SECRET_KEY`, and IBAN withdrawal (`/api/ibancredit`)
+  switched on for your account. Ask Flitt for its fee per withdrawal.
+- Flitt's fee on payments: 2 % → `BANK_FEE_PERCENT=2` (the default; it only feeds the admin's money overview).
+
+### How it works
+
+| Step | Flitt | Wisecall |
+|---|---|---|
+| Pay | `POST /api/checkout/url` (amount in tetri, GEL, lifetime = `PAYMENT_TTL_MINUTES`) | the buyer goes to Flitt's page; a new order id per attempt |
+| Back | Flitt posts the browser to `response_url` | `/api/payments/flitt/return` sends it on to the page it came from (this site only) |
+| Callback | `POST` JSON to `server_callback_url` from 54.154.216.60 / 3.75.125.89, signed | refused unless from `FLITT_CALLBACK_IPS` and signed with the payment key (constant-time); then the order's status is **always** read with `POST /api/status/order_id` before anything is marked paid |
+| Refund | `POST /api/reverse/order_id` with `amount` and `reverse_id` | full or partial; `reverse_id` is derived from the booking and the kind of refund, so a retry never returns money twice; a lost answer is settled by a status check (`reversal_amount`) |
+| Payout | `POST /api/ibancredit` (GEL only, signed with the payout key) | `PAYOUT_METHOD=flitt_iban`, see below |
+
+Signature (requests and callbacks): SHA-1, lowercase hex, of the secret key and every non-empty parameter except `signature` and
+`response_signature_string`, in the alphabetical order of their names, joined with `|`.
+
+### Payouts to mentors (`PAYOUT_METHOD=flitt_iban`)
+
+In Admin → Payouts each open withdrawal request has **Send payout** (instead of "Mark as paid"):
+- every payout needs a **current code from the admin's authenticator app** (the same code is never accepted twice);
+- only to the mentor's saved IBAN, and only when its holder's name **matches the name on their verified ID**;
+- at most `PAYOUT_DAILY_LIMIT_GEL` (default 3000) a day, Tbilisi time;
+- the request becomes **Being sent** with its own Flitt order id (`payout-<request id>`): sending it again can never pay twice. It becomes
+  **Paid** once Flitt's status says so (after its callback to `/api/payments/flitt/payout-callback`, or the sweep's check every few
+  minutes, or **Check now**), or **Failed** with Flitt's reason, and then the money is available to the mentor again.
+- `PAYOUT_METHOD=manual` switches back to transfers by hand at any time (a request being sent is still followed up).
+
+### Testing with Flitt before real money
+
+Flitt's public test merchant (docs: Testing): merchant id `1549901`, payment key `test`, payout key `testcredit`. Test cards:
+`4444555511116666` approved (no 3-D Secure), `4444111155556666` declined; test IBANs `GE00TB0000000000000001` approved,
+`...0002` declined, `...0003` processing. Point a staging copy (never production) at them, then:
+1. Pay one question with the approving card; check it turns paid only after the status request (`npm run check:launch` pings Flitt).
+2. Refund it partly from a dispute, then fully: Flitt's portal shows two reversals, together the price.
+3. With `PAYOUT_METHOD=flitt_iban`, request a withdrawal as the test mentor and send it with a code.
+
+**[VERIFY with Flitt]** (not in the public docs): that a payout's status can be read with the order status request signed with the
+payout key (the code does so); whether the return to `response_url` is a POST (handled either way); whether callbacks come from the two
+addresses only (if Render's proxy changes the address seen, set `FLITT_CALLBACK_IPS=` empty: the signature and the status request still
+protect every payment).
 
 ---
 
@@ -87,11 +141,11 @@ Pick **one** bank for launch (`PAYMENT_PROVIDER=bog` or `tbc`); the other can be
 
 ---
 
-## 3. Go-live steps (either bank)
+## 3. Go-live steps (any provider)
 
 1. Merchant contract signed; the business category allows paid consultations; ask about chargeback handling and settlement days.
 2. Sandbox test passed (above), including one refund end-to-end.
-3. Production keys into Render → Environment (never into git or chat): `PAYMENT_PROVIDER` + the bank's keys.
+3. Production keys into Render → Environment (never into git or chat): `PAYMENT_PROVIDER` + the bank's keys (Flitt: `FLITT_MERCHANT_ID`, `FLITT_SECRET_KEY`, and for payouts `FLITT_PAYOUT_SECRET_KEY` with `PAYOUT_METHOD=flitt_iban`).
 4. Callback URL registered with the bank: `https://wisecallge.ge/api/payments/callback`.
 5. Keep `LAUNCH_MODE=prelaunch`, restart, run `npm run check:launch` → the bank issues a token.
 6. Follow `docs/RUNBOOK.md` §11 (launch day): `LAUNCH_MODE=live`, one real small payment and one real refund.

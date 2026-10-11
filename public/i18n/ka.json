@@ -1678,6 +1678,8 @@
   "bal.status.requested": "მოთხოვნილი",
   "bal.status.paid": "გადარიცხულია",
   "bal.status.rejected": "არ გადაირიცხა",
+  "bal.status.sending": "იგზავნება",
+  "bal.status.failed": "არ გაიგზავნა (ბანკი)",
   "bal.ref": "რეფერენსი: {ref}",
   "bal.reason": "მიზეზი: {reason}",
   "bal.blocker.suspended": "სანამ ანგარიში შეჩერებულია, თანხის გატანაც შეჩერებულია.",

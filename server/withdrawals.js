@@ -62,7 +62,8 @@ async function holdsOf(mentorId) {
 
 const batchView = (r) => ({
   id: r.id, amount: r.amount, status: r.status, method: r.method, requestedAt: r.requested_at, paidAt: r.paid_at, reference: r.reference,
-  rejectedAt: r.rejected_at, reason: r.reject_reason, debtDeducted: r.debt_deducted, ibanLast4: r.iban_last4
+  rejectedAt: r.rejected_at || r.failed_at || null, reason: r.reject_reason || r.failure_reason || null, debtDeducted: r.debt_deducted, ibanLast4: r.iban_last4,
+  sendStartedAt: r.send_started_at || null
 });
 
 async function historyOf(mentorId) {
@@ -79,7 +80,7 @@ async function blockersFor(user, balance) {
   const { rows } = await query(`SELECT kind FROM mentor_flags WHERE mentor_id = $1 AND status = 'open'`, [user.id]);
   if (rows.some((r) => r.kind === 'payout_name_mismatch' || r.kind === 'name_mismatch')) out.push('name_mismatch');
   else if (rows.length) out.push('open_flags');
-  const { rows: open } = await query(`SELECT 1 FROM payout_batches WHERE mentor_id = $1 AND status = 'requested'`, [user.id]);
+  const { rows: open } = await query(`SELECT 1 FROM payout_batches WHERE mentor_id = $1 AND status IN ('requested', 'sending')`, [user.id]);
   if (open.length) out.push('request_open');
   if (balance.available <= 0) out.push('nothing_available');
   else if (!isClosing(user) && balance.available < minimum()) out.push('below_minimum');
@@ -126,7 +127,7 @@ async function request({ mentorId, password, sessionId }) {
     result = await tx(async (client) => {
       // Every payout row of this mentor is locked: a second request, an admin's payment or a refund waits for this one.
       await client.query('SELECT id FROM payouts WHERE mentor_id = $1 FOR UPDATE', [user.id]);
-      const { rows: open } = await client.query(`SELECT * FROM payout_batches WHERE mentor_id = $1 AND status = 'requested' FOR UPDATE`, [user.id]);
+      const { rows: open } = await client.query(`SELECT * FROM payout_batches WHERE mentor_id = $1 AND status IN ('requested', 'sending') FOR UPDATE`, [user.id]);
       if (open[0]) return { request: batchView(open[0]), existing: true };
       const { rows: avail } = await client.query(`SELECT id, amount FROM payouts p WHERE p.mentor_id = $1 AND ${ledger.payableSql('p')}`, [user.id]);
       const { rows: debts } = await client.query(`SELECT id, ${ledger.debtAmountSql('p')} AS owed FROM payouts p WHERE p.mentor_id = $1 AND ${ledger.debtSql('p')}`, [user.id]);
@@ -155,7 +156,7 @@ async function request({ mentorId, password, sessionId }) {
   } catch (e) {
     // (the unique index on open requests: a request that raced this one won; return it)
     if (e && e.code === '23505') {
-      const { rows } = await query(`SELECT * FROM payout_batches WHERE mentor_id = $1 AND status = 'requested'`, [user.id]);
+      const { rows } = await query(`SELECT * FROM payout_batches WHERE mentor_id = $1 AND status IN ('requested', 'sending')`, [user.id]);
       if (rows[0]) return { request: batchView(rows[0]), existing: true };
     }
     throw e;
@@ -211,6 +212,124 @@ async function reject({ batchId, reason, admin, client: outer }) {
   return outer ? work(outer) : tx(work);
 }
 
+// ---- Sending a payout through the bank (PAYOUT_METHOD=flitt_iban) ---------------------------------------------------------------------
+// An admin presses "Send payout" and types a current code from their authenticator app (every payout, docs/BANK-GOLIVE.md). Only an open
+// request; only to the mentor's saved IBAN, and only when its holder's name matches the name on their verified ID; never past
+// PAYOUT_DAILY_LIMIT_GEL in a day (Tbilisi time). The request becomes 'sending' with its own bank order id (payout-<request id>): sending it
+// again can never pay twice. It becomes 'paid' once the bank's status says so (after its callback, or the sweep's check), or 'failed' with
+// the bank's reason, and then the money is available to the mentor again.
+async function sendPayout({ batchId, admin, code }) {
+  const method = payoutMethods.current();
+  if (!method.automatic) throw new WithdrawalError('manual_method');
+  try {
+    await require('./twoFactor').verifyLogin(admin, { code: String(code || '') });
+  } catch (e) {
+    if (e && e.code === 'locked') throw new WithdrawalError('code_locked');
+    if (e && e.code === 'not_enabled') throw new WithdrawalError('two_factor_required');
+    throw new WithdrawalError('invalid_code');
+  }
+  let batch = null;
+  let mentor = null;
+  let iban = null;
+  await tx(async (client) => {
+    const b = await lockOpen(client, batchId);
+    mentor = await getUserById(b.mentor_id);
+    if (!mentor) throw new WithdrawalError('not_found');
+    const hard = (await blockersFor(mentor, await balanceOf(mentor.id, client))).filter((x) => ['suspended', 'no_payout_details', 'name_mismatch', 'open_flags'].includes(x));
+    if (hard.length) throw new WithdrawalError(hard[0]);
+    iban = decrypt(mentor.payoutIbanEnc);
+    if (!iban || !mentor.payoutName) throw new WithdrawalError('no_payout_details');
+    // (the account holder must be the person on the verified ID)
+    const idName = await require('./verification/kyc').verifiedNameFor(mentor.id);
+    if (!idName || !require('./verification/names').compareNames(idName, mentor.payoutName).match) throw new WithdrawalError('name_mismatch');
+    const { rows: [today] } = await client.query(
+      `SELECT COALESCE(sum(amount), 0)::bigint AS n FROM payout_batches
+        WHERE method = $1 AND status IN ('sending', 'paid') AND send_started_at >= (date_trunc('day', now() AT TIME ZONE 'Asia/Tbilisi') AT TIME ZONE 'Asia/Tbilisi')`, [method.name]);
+    const limit = config.PAYOUT_DAILY_LIMIT_GEL * 100;
+    if (Number(today.n) + b.amount > limit) throw new WithdrawalError('daily_limit', { left: Math.max(0, limit - Number(today.n)) });
+    ({ rows: [batch] } = await client.query(
+      `UPDATE payout_batches SET status = 'sending', send_started_at = now(), sent_by = $2, method = $3, provider_order_id = COALESCE(provider_order_id, $4)
+        WHERE id = $1 RETURNING *`, [b.id, admin.id, method.name, `payout-${b.id}`]));
+    await audit(client, b.mentor_id, { id: admin.id, label: admin.email }, 'withdrawal_sending', `${money(b.amount)} to the IBAN ending ${iban.slice(-4)}`);
+  });
+  try {
+    await method.send(batch, { iban, name: mentor.payoutName });
+  } catch (e) {
+    // (no answer, or a refusal: the bank's status decides; the same order id means it can never be paid twice)
+    console.error(`[withdrawals] sending payout ${batch.id} failed or its answer was lost:`, e.message);
+    if (e.status === 422) return finishFailed(batch.id, String(e.message).slice(0, 300));
+  }
+  return syncPayout(batch.id);
+}
+
+// Asks the bank what happened to a payout being sent, and records it. Safe to call any number of times (the callback, the sweep, the
+// admin's "Check" button). An order the bank never received (no answer reached it) is sent again after 5 minutes, with the same id.
+async function syncPayout(batchId) {
+  const { rows: [b] } = await query('SELECT * FROM payout_batches WHERE id = $1', [batchId]);
+  if (!b) throw new WithdrawalError('not_found');
+  if (b.status !== 'sending') return batchView(b);
+  const method = payoutMethods.byName(b.method);
+  let s;
+  try {
+    s = await method.status(b);
+  } catch (e) {
+    const unknownOrder = e.status === 422 && /not found|1018/i.test(`${e.message}`);
+    if (unknownOrder && Date.now() - new Date(b.send_started_at).getTime() > 5 * 60000) {
+      const mentor = await getUserById(b.mentor_id);
+      const iban = mentor ? decrypt(mentor.payoutIbanEnc) : null;
+      if (mentor && iban) await method.send(b, { iban, name: mentor.payoutName }).catch((err) => console.error('[withdrawals] sending again failed:', err.message));
+    }
+    return batchView(b);
+  }
+  if (s.status === 'paid') return finishPaid(b.id, s.reference);
+  if (s.status === 'failed') return finishFailed(b.id, s.reason || s.raw || 'declined by the bank');
+  return batchView(b);
+}
+
+async function finishPaid(batchId, reference) {
+  return tx(async (client) => {
+    const { rows: [b] } = await client.query('SELECT * FROM payout_batches WHERE id = $1 FOR UPDATE', [batchId]);
+    if (!b || b.status !== 'sending') return b && batchView(b);
+    const { rows: [paid] } = await client.query(
+      `UPDATE payout_batches SET status = 'paid', paid_at = now(), reference = $2, paid_by = sent_by WHERE id = $1 RETURNING *`, [b.id, `flitt:${reference || b.provider_order_id}`]);
+    await client.query(`UPDATE payouts SET status = 'paid' WHERE batch_id = $1 AND status = 'pending'`, [b.id]);
+    await audit(client, b.mentor_id, { id: null, label: 'bank' }, 'withdrawal_paid', `${money(b.amount)}, bank reference ${paid.reference}`);
+    afterCommit(client, async () => {
+      const mentor = await getUserById(b.mentor_id);
+      if (mentor) require('./notify').notifyPayoutPaid(mentor, paid);
+    });
+    return batchView(paid);
+  });
+}
+
+async function finishFailed(batchId, reason) {
+  return tx(async (client) => {
+    const { rows: [b] } = await client.query('SELECT * FROM payout_batches WHERE id = $1 FOR UPDATE', [batchId]);
+    if (!b || b.status !== 'sending') return b && batchView(b);
+    const why = String(reason || 'declined by the bank').slice(0, 300);
+    const { rows: [done] } = await client.query(
+      `UPDATE payout_batches SET status = 'failed', failed_at = now(), failure_reason = $2 WHERE id = $1 RETURNING *`, [b.id, why]);
+    // (the money is available again, and any debt is owed again)
+    await client.query(`UPDATE payouts SET batch_id = NULL WHERE batch_id = $1 AND status = 'pending'`, [b.id]);
+    await client.query('UPDATE payouts SET debt_settled_batch_id = NULL WHERE debt_settled_batch_id = $1', [b.id]);
+    await audit(client, b.mentor_id, { id: null, label: 'bank' }, 'withdrawal_failed', `${money(b.amount)}: ${why}`);
+    afterCommit(client, async () => {
+      const mentor = await getUserById(b.mentor_id);
+      const notify = require('./notify');
+      if (mentor) notify.notifyWithdrawal(mentor, 'rejected', { ...done, reject_reason: why });
+      notify.notifyAdmins('A payout failed', `<p>The bank did not send ${money(b.amount)} (request ${b.id}): ${escapeHtml(why)}. The money is available to the mentor again.</p>`);
+    });
+    return batchView(done);
+  });
+}
+
+// The sweep: payouts still being sent (a callback that never came).
+async function syncSending() {
+  const { rows } = await query(`SELECT id FROM payout_batches WHERE status = 'sending' AND send_started_at < now() - interval '1 minute' ORDER BY send_started_at LIMIT 20`);
+  for (const { id } of rows) await syncPayout(id).catch((e) => console.error(`[withdrawals] checking payout ${id} failed:`, e.message));
+  return rows.length;
+}
+
 // Called by the ledger (inside a refund's transaction) when a payout in a request was voided or reduced: the request's amount is
 // computed again; when nothing is left to pay, the request is closed and the mentor told.
 async function recompute(client, batchId) {
@@ -234,7 +353,7 @@ async function recompute(client, batchId) {
 async function queue(admin) {
   const { rows } = await query(
     `SELECT pb.*, u.name, u.email, u.payout_name, u.payout_iban_enc FROM payout_batches pb JOIN users u ON u.id = pb.mentor_id
-      WHERE pb.status = 'requested' ORDER BY pb.requested_at`);
+      WHERE pb.status IN ('requested', 'sending') ORDER BY pb.requested_at`);
   const kyc = require('./verification/kyc');
   const out = [];
   for (const r of rows) {
@@ -248,8 +367,8 @@ async function queue(admin) {
 
 async function recent() {
   const { rows } = await query(
-    `SELECT pb.*, u.name FROM payout_batches pb JOIN users u ON u.id = pb.mentor_id WHERE pb.status <> 'requested'
-      ORDER BY COALESCE(pb.paid_at, pb.rejected_at) DESC NULLS LAST LIMIT 100`);
+    `SELECT pb.*, u.name FROM payout_batches pb JOIN users u ON u.id = pb.mentor_id WHERE pb.status NOT IN ('requested', 'sending')
+      ORDER BY COALESCE(pb.paid_at, pb.rejected_at, pb.failed_at) DESC NULLS LAST LIMIT 100`);
   return rows.map((r) => ({ ...batchView(r), name: r.name }));
 }
 
@@ -301,4 +420,5 @@ async function audit(client, mentorId, actor, action, reason) {
     [mentorId, actor.id || null, actor.label, action, reason]);
 }
 
-module.exports = { WithdrawalError, balanceOf, summary, request, markPaid, reject, recompute, queue, recent, overview, exportCsv, markExportedPaid, minimum };
+module.exports = { WithdrawalError, balanceOf, summary, request, markPaid, reject, recompute, queue, recent, overview, exportCsv, markExportedPaid, minimum,
+  sendPayout, syncPayout, syncSending };

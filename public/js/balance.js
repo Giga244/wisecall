@@ -7,7 +7,7 @@
   const money = (tetri) => WisecallAPI.formatAmount(tetri);
   const day = (d) => WisecallI18n.formatDate(d, { day: 'numeric', month: 'long', year: 'numeric' });
   const fill = (key, vars) => Object.entries(vars).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
-  const STATUS = { requested: 'pending_payment', paid: 'answered', rejected: 'rejected' };
+  const STATUS = { requested: 'pending_payment', sending: 'pending_payment', paid: 'answered', rejected: 'rejected', failed: 'rejected' };
 
   function cards(b) {
     const card = (label, value, cls) => `<div class="earn-card${cls ? ' ' + cls : ''}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`;
