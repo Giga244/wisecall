@@ -186,7 +186,7 @@ A "Need help? Contact us" link to /contact.html (which opens a support conversat
 under the question box on a mentor's profile, and under every result after the bank (paid, still checking, failed, cancelled); no
 floating widget. EN+KA. Checked in a browser, including after cancelling at the fake bank.
 
-## PART 10 — Flitt (skipped)
+## PART 10 — Flitt (built in October 2026: see "Launch plan, Step 1" below)
 Not built: the master prompt says to build it only if docs/QUESTIONS.md or the owner confirms Flitt as the provider, and neither does.
 docs/QUESTIONS.md now asks (is Flitt chosen, is there a merchant account, is the IBAN-credit payout in the contract, keep manual payouts as
 a fallback?) and lists what only the owner can do before launch. Payments stay BOG/TBC; payouts stay manual (Admin → Withdrawals).
@@ -255,3 +255,23 @@ browser 30/30. Screenshots: D:/Temp/shots-profiles. Owner decisions in docs/QUES
 ## CI
 The first push ran CI: unit and browser tests passed; the phone journey waited too little for the profile on the slower runner (fixed) and
 the secret scan flagged the test suites' made-up keys (.gitleaks.toml now skips tests/ and e2e/ only).
+
+## Launch plan, Step 1 (docs/LAUNCH-PLAN.md) — October 2026
+Paid questions first; live sessions stay in the code, switched off.
+
+1. **Live sessions switched off** (`LIVE_SESSIONS`, off in production, on in development and tests; server/live/switch.js). Off: every
+   live page and API is "not found" (EN and KA), the server takes the live blocks out of the home page and dashboard, the footer link,
+   profile section and Follow button are hidden, help article 16, the sitemap entries and follower emails are gone, admins keep a
+   read-only Live tab. Turning them on is `LIVE_SESSIONS=on` only. Tests: live-switch (both states), e2e/live-switch.spec.js.
+2. **Security and launch fixes**: every finding of docs/REVIEW-2.md (2FA bypass first) and the rehearsal's list docs/TODO-REHEARSAL.md
+   (R-11 deliberately left: scale up first); both files have a Status section. Migration 040 (refund safety columns, FK indexes).
+   tests/cloud-2 is part of `npm test` and CI. The review and rehearsal PRs (#12, #13) are on main (closed with a note: rebased).
+3. **Flitt** (master prompt PART 10): payments, refunds and IBAN payouts with an admin's 2FA code and a daily limit
+   (server/pay/flitt.js, PAYOUT_METHOD=flitt_iban, migration 041). BOG and TBC unchanged. docs/BANK-GOLIVE.md §0, RUNBOOK payout day.
+4. **Dependencies**: pg 8.23.1, bcryptjs 3.0.3 (old hashes verify; new ones are $2b$), dotenv 18 (quiet everywhere), pdfkit 0.20.2
+   (Node ≥ 20), @anthropic-ai/sdk 0.131, GitHub Actions checkout/setup-node/upload-artifact v7 (Dependabot #4–#11), and PR #15 (inbox
+   previews of system events).
+5. **docs/LAUNCH-CHECKLIST.md**: every environment variable and step to go live, in order.
+
+Full runs on main (2026-10-11, after each step): unit and cloud 908/908 (tests/cloud-2 included), browser 178 passed (5 skipped as
+before), cloud browser 30/30. Each step was pushed on its own; CI runs on every push.

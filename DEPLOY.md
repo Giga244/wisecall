@@ -300,6 +300,8 @@ Changing provider later? Set `EMAIL_PROVIDER=postmark` and `POSTMARK_TOKEN`. No 
 
 ## 11. Launch checklist
 
+The complete, ordered list (every environment variable, the steps only you can do, launch day) is **docs/LAUNCH-CHECKLIST.md**.
+
 - [ ] `npm run check:launch` shows only ✅ (warnings ⚠️ are worth reading)
 - [ ] `https://yourdomain.com/healthz` shows `{"ok":true}`
 - [ ] Sign up with a new email: the code arrives by email (not on screen)
