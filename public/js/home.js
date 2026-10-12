@@ -21,6 +21,8 @@
     const list = document.getElementById('nicheStrip');
     if (!list) return;
     const all = WisecallI18n.niches();
+    const placeholder = document.getElementById('fieldsMoreSkeleton');
+    if (placeholder) placeholder.remove(); // (the button's skeleton: the button itself comes now)
     list.classList.toggle('is-open', stripOpen);
     list.innerHTML = all.map((n) => `
       <li><a class="field-tile" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${icon(n.key, 22)}<span>${esc(t('niche.' + n.key))}</span></a></li>`).join('');

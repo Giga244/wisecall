@@ -56,9 +56,21 @@
           <h2 id="inboxListTitle" class="sr-only" data-i18n="inbox.conversations">Conversations</h2>
           <button type="button" class="btn btn-outline btn-sm" id="newSupport" data-i18n="inbox.support.new">Write to support</button>
         </div>
-        <ul class="thread-list" id="threadList" aria-live="polite"></ul>
+        <!-- (while they are on their way: the conversations and a conversation's messages as skeletons; one "Loading…" for screen readers) -->
+        <ul class="thread-list" id="threadList" aria-live="polite" aria-busy="true">
+          <li class="sr-only" role="status" data-i18n="experts.loading">Loading…</li>
+          <li class="skeleton-thread" aria-hidden="true"><span class="skeleton skeleton-avatar sm"></span><span class="skeleton-stack"><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w90"></span></span></li>
+          <li class="skeleton-thread" aria-hidden="true"><span class="skeleton skeleton-avatar sm"></span><span class="skeleton-stack"><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w90"></span></span></li>
+          <li class="skeleton-thread" aria-hidden="true"><span class="skeleton skeleton-avatar sm"></span><span class="skeleton-stack"><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w90"></span></span></li>
+          <li class="skeleton-thread" aria-hidden="true"><span class="skeleton skeleton-avatar sm"></span><span class="skeleton-stack"><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w90"></span></span></li>
+        </ul>
       </section>
-      <section class="inbox-thread" id="threadView" aria-live="polite"></section>
+      <section class="inbox-thread" id="threadView" aria-live="polite">
+        <div class="skeleton-thread-view" aria-hidden="true">
+          <div class="thread-head"><span class="skeleton skeleton-avatar sm"></span><span class="skeleton-stack"><span class="skeleton skeleton-name w40"></span><span class="skeleton skeleton-line w60"></span></span></div>
+          <div class="thread-body"><span class="skeleton skeleton-bubble"></span><span class="skeleton skeleton-bubble mine"></span><span class="skeleton skeleton-line w40"></span></div>
+        </div>
+      </section>
     </div>
   </div>
   <div class="tab-panel" role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" data-panel="notifications" hidden>

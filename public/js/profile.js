@@ -35,6 +35,7 @@
       // away from /api/). Keep it, and offer to load the rest again.
       if (page.querySelector('.profile-ssr')) {
         page.setAttribute('aria-busy', 'false');
+        page.querySelectorAll('[data-skeleton]').forEach((el) => el.remove()); // (what was on its way is not coming)
         page.insertAdjacentHTML('beforeend', `<p class="muted profile-retry">${t('profile.loadError')} <button type="button" class="linklike" data-retry>${t('common.retry')}</button></p>`);
         page.querySelector('[data-retry]').addEventListener('click', () => location.reload());
         return;

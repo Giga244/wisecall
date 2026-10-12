@@ -54,6 +54,13 @@ describe('a mentor profile without scripts', () => {
     const h = await html(`/u/${username}`);
     assert.match(h, /<h1>Tamar Lomidze<\/h1>/);
     assert.match(h, /Marketing lead/);
+    // (in the page's final layout; the photo, badges, stats and the box for a question as skeletons, hidden from screen readers, with
+    // one "Loading…" for them)
+    assert.match(h, /<article class="profile-card profile-ssr">/);
+    for (const part of h.match(/<[a-z]+ [^>]*data-skeleton[^>]*>/g)) {
+      if (!/role="status"/.test(part)) assert.match(part, /aria-hidden="true"/, part);
+    }
+    assert.equal((h.match(/role="status" data-i18n="experts\.loading" data-skeleton>Loading…</g) || []).length, 1);
     assert.match(h, /I help small shops &lt;b&gt;grow&lt;\/b&gt; online\. &quot;Quotes&quot; &amp; ampersands\./);
     assert.match(h, /25 GEL per question/);
     const ld = /<script type="application\/ld\+json">([^<]*)<\/script>/.exec(h);
@@ -71,7 +78,7 @@ describe('a mentor profile without scripts', () => {
     const h = await html(`/ka/u/${username}`);
     assert.match(h, /<html lang="ka"/);
     assert.match(h, /name="description" content="დაუსვი კითხვა: Tamar Lomidze \(Marketing lead\), 25 ₾\./);
-    assert.match(h, /ფასი: 25 ₾ ერთ კითხვაზე/);
+    assert.match(h, /<span class="muted small">ფასი<\/span><strong>25 ₾ ერთ კითხვაზე<\/strong>/); // (a label over the value, as the page script shows it)
     assert.match(h, new RegExp(`<link rel="canonical" href="${base}/ka/u/${username}">`));
   });
 });

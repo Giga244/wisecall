@@ -25,7 +25,11 @@
   const fmtDate = (d) => WisecallI18n.formatDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
   const HOUR = 3600000;
 
-  const skeleton = () => `<div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span></div>`.repeat(2);
+  // (while something loads: the question cards' skeleton the page arrives with, or for the earnings two plain cards; each with one
+  // "Loading…" for screen readers)
+  const loadingHtml = document.getElementById('askedList').innerHTML;
+  const loadingText = () => `<p class="sr-only" role="status">${escapeHtml(t('experts.loading'))}</p>`;
+  const skeleton = () => loadingText() + '<div class="skeleton-card" aria-hidden="true"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span></div>'.repeat(2);
   const ART = `<svg class="empty-art" viewBox="0 0 220 150" aria-hidden="true"><circle cx="46" cy="118" r="22" style="fill:var(--c-sun)"/><circle cx="188" cy="30" r="14" style="fill:var(--c-mint)"/><rect x="18" y="20" width="120" height="70" rx="22" style="fill:var(--accent)"/><path d="M44 88 Q40 108 26 116 Q56 114 66 90 Z" style="fill:var(--accent)"/><circle cx="54" cy="55" r="7" style="fill:var(--on-accent)"/><circle cx="78" cy="55" r="7" style="fill:var(--on-accent)"/><circle cx="102" cy="55" r="7" style="fill:var(--on-accent)"/><rect x="96" y="66" width="106" height="62" rx="20" stroke-width="4" style="fill:var(--card);stroke:var(--ink)"/><path d="M122 98l12 12 26-28" fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent2)"/></svg>`;
 
   function emptyState(titleKey, bodyKey, action) {
@@ -393,7 +397,7 @@
       };
       // (the Balance card: available, on hold, requested, paid out, owed back, "Withdraw" and the withdrawals: public/js/balance.js)
       earningsBox.innerHTML = `
-        <div class="settings-card bal-card" id="balanceCard"><p class="muted">${t('experts.loading')}</p></div>
+        <div class="settings-card bal-card" id="balanceCard">${loadingText()}<div aria-hidden="true"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-btn"></span></div></div>
         <p class="muted small">${t('dash.earnings.note').replace('{days}', e.holdDays)}</p>
         ${e.items.length ? `
           <h2 class="earn-h">${t('dash.earnings.items')}</h2>
@@ -457,12 +461,16 @@
       startTicker();
     } catch (e) {
       askedList.innerHTML = `<p class="muted">${t('toast.error')}</p>`;
+      if (isMentor) receivedList.innerHTML = `<p class="muted">${t('toast.error')}</p>`;
     }
+    askedList.setAttribute('aria-busy', 'false');
+    receivedList.setAttribute('aria-busy', 'false');
   }
 
-  askedList.innerHTML = skeleton();
+  askedList.innerHTML = loadingHtml;
   if (isMentor) {
-    receivedList.innerHTML = skeleton();
+    receivedList.setAttribute('aria-busy', 'true');
+    receivedList.innerHTML = loadingHtml;
     document.getElementById('tab-received').hidden = false;
     document.getElementById('tab-earnings').hidden = false;
   }

@@ -40,6 +40,18 @@ test('the home page is short: one rhythm between the sections, and at most half 
   }
 });
 
+test('before launch the page arrives marked as such, with the waiting-list card as its skeleton (no mentor cards); then the card', async ({ browser }) => {
+  const html = await (await fetch(`${srv.base}/`)).text();
+  expect(html).toMatch(/<html lang="en" data-launch="prelaunch">/); // (Browse's search and filters are hidden from the first frame)
+  expect(html).toContain('class="wl-card prelaunch-panel skeleton-wl"');
+  expect(html).not.toContain('skeleton-expert');
+  const { ctx, page } = await open(browser, 390);
+  await expect(page.locator('#expertGrid .wl-card:not(.skeleton-wl)')).toBeVisible();
+  await expect(page.locator('#expertGrid .skeleton, #expertGrid [role="status"]')).toHaveCount(0);
+  await expect(page.locator('#expertGrid')).toHaveAttribute('aria-busy', 'false');
+  await ctx.close();
+});
+
 test('"Wisecall opens soon" starts on the same left edge as the fields and "How it works" (every width, English and Georgian)', async ({ browser }) => {
   for (const width of [375, 768, 1024, 1180, 1440, 1920]) {
     for (const lang of ['en', 'ka']) {

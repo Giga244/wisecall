@@ -99,7 +99,7 @@ function translateBody(html, lang) {
 
 // The head of a page in its language, with its alternates. Pages without a canonical address (error pages) only get <html lang>.
 function localize(html, lang) {
-  html = html.replace(/<html lang="[a-z-]+"/, () => `<html lang="${lang}"`);
+  html = html.replace(/<html lang="[a-z-]+"/, () => `<html lang="${lang}"${config.LAUNCH_MODE === 'prelaunch' ? ' data-launch="prelaunch"' : ''}`);
   html = translateBody(html, lang);
   const canon = /<link rel="canonical" href="([^"]*)">/.exec(html);
   if (!canon) return html;
@@ -215,25 +215,34 @@ async function sendProfile(res, row, asked) {
 }
 
 // What stands in the profile area until the page script has drawn the profile (a private or unknown profile shows only this).
+// While the page script loads a profile: the box where a question is asked (the right column), as a skeleton.
+const ASK_SKELETON = `<div class="skeleton-card ask-skeleton"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-price"></span><span class="skeleton skeleton-block"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-btn"></span><span class="skeleton skeleton-btn"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line w60"></span></div>`;
+const LOADING_STATUS = '<p class="sr-only" role="status" data-i18n="experts.loading" data-skeleton>Loading…</p>';
+// A profile the server does not write (nobody listed by that name yet, or not public): the whole layout as a skeleton.
 const SKELETON = `<div class="expert-layout" aria-hidden="true">
       <div class="profile-card">
         <div class="profile-head">
           <span class="skeleton skeleton-avatar"></span>
-          <div style="flex:1"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line w60"></span></div>
+          <div class="skeleton-stack"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line w60"></span><div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div></div>
         </div>
-        <span class="skeleton skeleton-line w80" style="margin-top:24px"></span>
+        <span class="skeleton skeleton-line w80" style="margin-top:24px"></span><span class="skeleton skeleton-line w60"></span>
       </div>
-      <div class="ask-side"><div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w60"></span></div></div>
-    </div>`;
+      <div class="ask-side">${ASK_SKELETON}</div>
+      <div class="profile-section profile-about"><span class="skeleton skeleton-name w40"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w90"></span><span class="skeleton skeleton-line w60"></span></div>
+    </div>
+    ${LOADING_STATUS}`;
 
 // A public profile as plain HTML (only what the public profile shows; every value escaped).
 function profileSsr(p, stats, mentor, lang) {
   const ka = lang === 'ka';
+  const d = dict(lang);
+  // (each fact as the page script shows it: a small label over the value)
+  const fact = (key, value) => `<li><span class="muted small">${escapeHtml(d[key] || '')}</span><strong>${escapeHtml(value)}</strong></li>`;
   const facts = [
-    p.city ? `<li>${escapeHtml(p.city)}</li>` : '',
-    (p.languages || []).length ? `<li>${escapeHtml(p.languages.join(', '))}</li>` : '',
-    mentor ? `<li>${escapeHtml(ka ? `ფასი: ${mentor.price} ₾ ერთ კითხვაზე` : `${mentor.price} GEL per question`)}</li>` : '',
-    stats && stats.reviewCount ? `<li>${escapeHtml(ka ? `★ ${stats.ratingAvg} (${stats.reviewCount} შეფასება)` : `★ ${stats.ratingAvg} (${stats.reviewCount} reviews)`)}</li>` : ''
+    p.city ? fact('profile.city', p.city) : '',
+    (p.languages || []).length ? fact('profile.languages', p.languages.map((l) => d['lang.' + l] || l).join(', ')) : '',
+    mentor ? fact('expert.stat.price', ka ? `${mentor.price} ₾ ერთ კითხვაზე` : `${mentor.price} GEL per question`) : '',
+    stats && stats.reviewCount ? fact('expert.stat.rating', ka ? `★ ${stats.ratingAvg} (${stats.reviewCount} შეფასება)` : `★ ${stats.ratingAvg} (${stats.reviewCount} reviews)`) : ''
   ].join('');
   const role = mentor ? mentor.roleTitle : p.headline;
   // The rich sections everyone may see, as plain text for search engines and link previews (the page script draws them properly).
@@ -244,15 +253,27 @@ function profileSsr(p, stats, mentor, lang) {
     (s.education || []).length ? `<h2>${ka ? 'განათლება' : 'Education'}</h2><ul>${s.education.map((e) => `<li>${escapeHtml([e.school, e.degree, e.field].filter(Boolean).join(', '))}</li>`).join('')}</ul>` : '',
     (s.skills || []).length ? `<h2>${ka ? 'უნარები' : 'Skills'}</h2><p>${escapeHtml(s.skills.join(', '))}</p>` : ''
   ].join('');
-  return `<article class="profile-card profile-ssr">
-      <div class="profile-head"><div>
-        <h1>${escapeHtml(p.name)}</h1>
-        ${role ? `<p class="profile-headline">${escapeHtml(role)}</p>` : ''}
-      </div></div>
-      ${p.bio ? `<p class="profile-bio">${escapeHtml(p.bio)}</p>` : ''}
-      ${facts ? `<ul class="profile-facts">${facts}</ul>` : ''}
-      ${parts}
-    </article>`;
+  // (in the page's final layout, so nothing moves when the page script draws it: the photo, the badges and the box for a question
+  // stand in as skeletons until then; data-skeleton marks them, so the script can take them away if the profile cannot be loaded)
+  return `<div class="expert-layout${mentor ? '' : ' profile-plain'}">
+      <article class="profile-card profile-ssr">
+        <div class="profile-head">
+          <span class="skeleton skeleton-avatar" aria-hidden="true" data-skeleton></span>
+          <div>
+            <h1>${escapeHtml(p.name)}</h1>
+            ${role ? `<p class="profile-title">${escapeHtml(role)}</p>` : ''}
+            ${mentor && p.headline ? `<p class="profile-headline">${escapeHtml(p.headline)}</p>` : ''}
+            ${mentor ? '<div class="profile-tags" aria-hidden="true" data-skeleton><span class="skeleton skeleton-pill sm"></span><span class="skeleton skeleton-pill lg"></span><span class="skeleton skeleton-pill"></span></div>' : ''}
+          </div>
+        </div>
+        ${mentor ? '<p class="profile-share" aria-hidden="true" data-skeleton><span class="skeleton skeleton-share"></span></p>' : ''}
+        ${facts ? `<ul class="profile-facts">${facts}</ul>` : ''}
+        ${mentor ? `<div class="profile-stats" aria-hidden="true" data-skeleton>${'<div><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-name w40"></span></div>'.repeat(4)}</div>` : ''}
+      </article>
+      ${mentor ? `<div class="ask-side" aria-hidden="true" data-skeleton>${ASK_SKELETON}</div>` : ''}
+      ${p.bio || parts ? `<section class="profile-section profile-about">${p.bio ? `<p class="profile-bio">${escapeHtml(p.bio)}</p>` : ''}${parts}</section>` : ''}
+      ${LOADING_STATUS}
+    </div>`;
 }
 
 // Somebody who is not a mentor but chose to show some sections to everyone: a plain Person (public sections only).
@@ -786,8 +807,10 @@ function pageRoutes() {
     try {
       let html = readPage('index.html');
       if (html === null) return next();
-      // (before launch the last call to action is left out: the waiting-list card already asks for the email)
-      if (config.LAUNCH_MODE === 'prelaunch') html = html.replace(/<!-- after launch -->[\s\S]*?<!-- \/after launch -->\r?\n?/g, '');
+      // (before launch the last call to action and the experts' skeleton are left out: the waiting-list card already asks for the
+      // email, and it is what Browse shows; after launch, the waiting-list card's skeleton)
+      const gone = config.LAUNCH_MODE === 'prelaunch' ? 'after launch' : 'before launch';
+      html = html.replace(new RegExp(`[ \\t]*<!-- ${gone} -->[\\s\\S]*?<!-- /${gone} -->\\r?\\n?`, 'g'), '');
       sendHtml(res, 200, addToHead(fill(html, baseVars('/')), homeJsonLd(langOf(res))));
     } catch (e) { next(e); }
   });

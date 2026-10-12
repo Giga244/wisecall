@@ -17,6 +17,9 @@
   const layout = document.getElementById('inboxLayout');
   const listEl = document.getElementById('threadList');
   const view = document.getElementById('threadView');
+  // (a conversation's skeleton, as the page arrives with it, and its own "Loading…": shown while a conversation loads. On the first
+  // load the list's "Loading…" speaks for both.)
+  const threadLoading = `<p class="sr-only" role="status">${esc(t('experts.loading'))}</p>${view.innerHTML}`;
   const notifList = document.getElementById('notifList');
   const notifCount = document.getElementById('notifCount');
   const tabs = Array.from(document.querySelectorAll('#inboxTabs .tab'));
@@ -109,6 +112,7 @@
     return t(th.kind === 'support' ? 'inbox.kind.support' : 'inbox.kind.system');
   }
   function drawList() {
+    listEl.setAttribute('aria-busy', 'false');
     if (!threads.length) {
       listEl.innerHTML = `<li class="inbox-empty"><p class="muted">${esc(t('inbox.empty'))}</p></li>`;
       return;
@@ -319,9 +323,13 @@
   });
 
   async function openThread(id, opts) {
+    // (while another conversation loads: its messages as a skeleton, on a phone in place of the list)
+    const wasOpen = layout.classList.contains('has-thread');
+    if (id !== current) { view.innerHTML = threadLoading; layout.classList.add('has-thread'); }
     try {
       data = await WisecallAPI.apiFetch(`/inbox/threads/${encodeURIComponent(id)}`);
     } catch (e) {
+      if (!wasOpen) layout.classList.remove('has-thread');
       view.innerHTML = `<p class="muted">${esc(t(e.code === 'not_found' ? 'inbox.notFound' : 'toast.error'))}</p>`;
       return;
     }
@@ -378,7 +386,7 @@
   // ---- Start, and keep it fresh (every 25 seconds while visible; never while the person is typing) -----------------------------
   const params = new URLSearchParams(location.search);
   selectTab(params.get('tab') === 'notifications' ? 'notifications' : 'messages', false);
-  try { await loadThreads(); } catch (e) { listEl.innerHTML = `<li><p class="muted">${esc(t('toast.error'))}</p></li>`; }
+  try { await loadThreads(); } catch (e) { listEl.setAttribute('aria-busy', 'false'); listEl.innerHTML = `<li><p class="muted">${esc(t('toast.error'))}</p></li>`; }
   let start = params.get('thread');
   if (!start && params.get('booking')) {
     try { start = (await WisecallAPI.apiFetch(`/inbox/booking/${encodeURIComponent(params.get('booking'))}`)).threadId; } catch (e) { /* not theirs, or not paid yet */ }

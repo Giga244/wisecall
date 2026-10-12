@@ -8,6 +8,7 @@
   WisecallHome.drawStrip();
 
   const grid = document.getElementById('expertGrid');
+  const loadingHtml = grid.innerHTML; // (the skeleton the page arrives with: shown again whenever the list is not there yet)
   const filters = document.getElementById('filters');
   const searchInput = document.getElementById('searchInput');
   const sortSelect = document.getElementById('sortSelect');
@@ -108,8 +109,9 @@
 
   let loaded = false;
   function render() {
+    grid.setAttribute('aria-busy', String(!prelaunch && !loaded));
     if (prelaunch) { launchingSoon(); return; }
-    if (!loaded) { grid.innerHTML = `<p class="muted">${t('experts.loading')}</p>`; summary(); return; }
+    if (!loaded) { grid.innerHTML = loadingHtml; summary(); return; }
     let list = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
     if (searchTerm) {
       const needle = searchTerm.toLowerCase();
@@ -232,6 +234,7 @@
       loaded = true;
       setNiche(activeNiche, { push: false }); // (the chips now know which fields have mentors)
     } catch (e) {
+      grid.setAttribute('aria-busy', 'false');
       grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
     }
   }

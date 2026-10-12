@@ -255,6 +255,91 @@ html[lang="ka"] .nav-links .nl-faq { display: none; }
 .price span { font-family: var(--font-body); font-weight: 500; color: var(--ink-soft); font-size: 0.78rem; letter-spacing: 0; }
 .expert-card .btn { margin-top: 4px; }
 
+/* Loading skeletons ----------------------------------------------------------------------------------------------------------------
+   Soft paper-grey blocks in the shape of what is on its way: the same boxes, sizes and corners as the real thing (Browse's cards, a
+   profile, the dashboard's questions, the inbox, the answers library), so nothing moves when it arrives. They are hidden from screen
+   readers (aria-hidden); one visually hidden "Loading…" status speaks for them. While motion is allowed a soft band of light passes
+   over each block (transform only); with reduced motion they stand still. */
+.skeleton { display: block; position: relative; overflow: hidden; border-radius: 8px; background: var(--skeleton-a); }
+html.motion .skeleton::after {
+  content: ""; position: absolute; inset: 0; background: var(--skeleton-b); transform: translateX(-100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent, var(--c-ink) 50%, transparent);
+  mask-image: linear-gradient(90deg, transparent, var(--c-ink) 50%, transparent);
+  animation: skeleton-shine 1.8s ease-in-out infinite;
+}
+@keyframes skeleton-shine { to { transform: translateX(100%); } }
+.skeleton-line { height: 12px; margin: 9px 0; }
+.skeleton-line.w90 { width: 90%; } .skeleton-line.w80 { width: 80%; } .skeleton-line.w70 { width: 70%; } .skeleton-line.w60 { width: 60%; } .skeleton-line.w40 { width: 40%; }
+.skeleton-title { height: 26px; width: 55%; margin: 4px 0 12px; border-radius: 10px; }
+.skeleton-name { height: 20px; width: 70%; margin: 2px 0 8px; }
+.skeleton-name.w40 { width: 40%; } .skeleton-name.w60 { width: 60%; } .skeleton-name.w80 { width: 80%; }
+.skeleton-avatar { width: 76px; height: 76px; border-radius: 50%; flex: 0 0 auto; }
+.skeleton-avatar.md { width: 64px; height: 64px; }
+.skeleton-avatar.sm { width: 40px; height: 40px; }
+.skeleton-pill { display: inline-block; width: 86px; height: 26px; border-radius: var(--r-pill); }
+.skeleton-price { flex: 0 0 auto; width: 72px; height: 24px; }
+.skeleton-btn { height: 40px; border-radius: var(--r-btn); }
+.skeleton-input { height: 52px; border-radius: var(--r-field); }
+.skeleton-label { height: 14px; width: 40%; margin: 3px 0 10px; }
+.skeleton-stack { flex: 1; min-width: 0; }
+.skeleton-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.skeleton-card { background: var(--card); border-radius: var(--radius); padding: 24px; border: var(--line-w) solid var(--line); margin-bottom: 20px; }
+.skeleton-card .skeleton-btn + .skeleton-btn { margin-top: 10px; }
+
+/* Browse experts: the card, its pastel band a quiet grey (6 cards on phones and tablets, 8 on a desktop) */
+.expert-card.skeleton-expert { pointer-events: none; }
+.expert-card.skeleton-expert:hover { transform: none; box-shadow: none; }
+.expert-grid .expert-card.skeleton-expert .card-top { background: var(--skeleton-b); border-bottom-color: var(--border); }
+.skeleton-expert .card-bottom { min-height: 46px; }
+.skeleton-line.strong { height: 14px; }
+/* (narrower cards and Georgian words wrap onto more lines: so does the skeleton) */
+.skeleton-expert .sk-more, .skeleton-expert .sk-ka { display: none; }
+@media (max-width: 1279px) { .skeleton-expert .sk-more { display: block; } }
+:lang(ka) .skeleton-expert .sk-ka { display: block; }
+@media (max-width: 1023px) { .skeleton-expert:nth-of-type(n+7) { display: none; } }
+/* the field tiles and their "See all" button, until the fields arrive (the tiles' own rules show only full rows) */
+.skeleton-tile > .skeleton { flex: 1; min-height: 56px; border-radius: 16px; }
+.skeleton-more { width: 100%; height: 48px; margin-top: 16px; border-radius: var(--r-pill); }
+@media (min-width: 1024px) {
+  .skeleton-tile > .skeleton { min-height: 64px; }
+  .skeleton-more { width: 320px; margin: 20px auto 0; }
+}
+/* before launch: the waiting-list card */
+.skeleton-wl .waitlist-hint .skeleton-line { margin: 4px 0; } /* (the privacy note's small lines) */
+.skeleton-wl .sk-ka, .skeleton-wl .sk-tablet { display: none; }
+:lang(ka) .skeleton-wl .sk-ka { display: block; }
+@media (min-width: 1024px) { .skeleton-wl .sk-phone { display: none; } }
+@media (min-width: 768px) and (max-width: 1023px) { .skeleton-wl .sk-tablet { display: block; } }
+/* the hero's popular fields */
+.skeleton-chip { width: 86px; height: 40px; border-radius: var(--r-pill); }
+@media (max-width: 1023px), (pointer: coarse) { .skeleton-chip { height: 44px; } }
+.skeleton-art { width: 94px; height: 64px; border-radius: 18px; }
+.skeleton-wl .waitlist-hint { display: grid; justify-items: center; }
+@media (min-width: 768px) { .skeleton-art { width: 141px; height: 96px; } }
+
+/* the profile (the server writes the name and the words; these stand in for what the page script adds) */
+.profile-tags .skeleton-pill { height: 30px; } .skeleton-pill.sm { width: 60px; } .skeleton-pill.lg { width: 140px; }
+.skeleton-share { width: 126px; height: 44px; border-radius: var(--r-btn); }
+.ask-skeleton { margin: 0; padding: 28px; border-radius: var(--r-card-lg); }
+.ask-skeleton .skeleton-price { width: 110px; height: 34px; margin: 6px 0 16px; }
+.ask-skeleton .skeleton-block { height: 76px; border-radius: 14px; margin-bottom: 16px; }
+
+/* the dashboard: a question */
+.skeleton-booking .timeline li { gap: 8px; }
+.skeleton-booking .skeleton-dot { width: 24px; height: 24px; border-radius: 50%; position: relative; z-index: 1; }
+.skeleton-booking .timeline .skeleton-line { width: 64px; height: 10px; margin: 0; }
+
+/* the inbox: a conversation in the list, and a conversation's messages */
+.skeleton-thread { display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 72px; }
+.skeleton-thread .skeleton-line { margin: 5px 0; }
+.skeleton-thread-view .thread-head { min-height: 56px; }
+.skeleton-bubble { height: 88px; width: min(420px, 82%); border-radius: 20px 20px 20px 6px; }
+.skeleton-bubble.mine { justify-self: end; width: min(380px, 74%); border-radius: 20px 20px 6px 20px; }
+.skeleton-thread-view .thread-body { display: grid; gap: 12px; padding: 14px 2px; }
+
+/* the answers library: an answer */
+.skeleton-answer .skeleton-name { margin-bottom: 12px; }
+
 /* "Become a mentor" (Settings): an ink band */
 .become { background: var(--navy); padding: 60px 0; color: var(--on-navy); position: relative; overflow: hidden; border-radius: var(--r-card-lg); }
 .become-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; position: relative; z-index: 1; }

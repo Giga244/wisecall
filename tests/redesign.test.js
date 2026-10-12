@@ -117,6 +117,47 @@ describe('the signature, without the generic look', () => {
   });
 });
 
+describe('loading skeletons', () => {
+  const count = (text, re) => (text.match(re) || []).length;
+  test('paper-grey blocks; the shimmer only with motion allowed, moved by transform and shaped by a mask (no gradient fill)', () => {
+    const s = read('public/css/style.css');
+    assert.match(s, /\.skeleton \{ display: block; position: relative; overflow: hidden; border-radius: 8px; background: var\(--skeleton-a\); \}/);
+    assert.match(s, /html\.motion \.skeleton::after \{[^}]*background: var\(--skeleton-b\); transform: translateX\(-100%\);[^}]*mask-image: linear-gradient[^}]*animation: skeleton-shine/s);
+    assert.match(s, /@keyframes skeleton-shine \{ to \{ transform: translateX\(100%\); \} \}/);
+    assert.doesNotMatch(read('public/css/app.css'), /\.skeleton\b/, 'one set of skeleton rules, in style.css (every page has it)');
+  });
+
+  test('each loading place: the skeleton hidden from screen readers and one "Loading…" status', () => {
+    const home = read('public/index.html');
+    const grid = /<div class="expert-grid" id="expertGrid" aria-live="polite" aria-busy="true">([\s\S]*?)\n {4}<\/div>\n/.exec(home)[1];
+    assert.equal(count(grid, /role="status"/g), 1);
+    assert.equal(count(grid, /<div class="expert-card skeleton-expert" aria-hidden="true">/g), 8, '8 cards (6 below 1024px)');
+    assert.match(grid, /<!-- after launch -->[\s\S]*skeleton-expert[\s\S]*<!-- \/after launch -->/);
+    assert.match(grid, /<!-- before launch -->\s*<div class="wl-card prelaunch-panel skeleton-wl" aria-hidden="true">[\s\S]*<!-- \/before launch -->/);
+    assert.equal(count(home, /<li class="skeleton-tile" aria-hidden="true">/g), 10);
+    const dash = read('public/dashboard.html');
+    assert.match(dash, /<div id="askedList" aria-live="polite" aria-busy="true">\s*<p class="sr-only" role="status" data-i18n="experts\.loading">Loading…<\/p>/);
+    assert.equal(count(dash, /<div class="booking-card skeleton-booking" aria-hidden="true">/g), 2);
+    const inbox = read('public/inbox.html');
+    assert.equal(count(/<main[\s\S]*<\/main>/.exec(inbox)[0], /role="status"/g), 1, 'the conversation list speaks for the whole page');
+    assert.equal(count(inbox, /<li class="skeleton-thread" aria-hidden="true">/g), 4);
+    assert.match(inbox, /<div class="skeleton-thread-view" aria-hidden="true">/);
+  });
+
+  test('the scripts show the skeleton again while something loads, and the usual message when it fails', () => {
+    const main = read('public/js/main.js');
+    assert.match(main, /const loadingHtml = grid\.innerHTML;/);
+    assert.match(main, /if \(!loaded\) \{ grid\.innerHTML = loadingHtml;/);
+    assert.match(main, /grid\.setAttribute\('aria-busy', 'false'\);\n\s*grid\.innerHTML = `<p class="muted">\$\{t\('experts\.loadError'\)\}<\/p>`;/);
+    const dash = read('public/js/dashboard.js');
+    assert.match(dash, /if \(isMentor\) receivedList\.innerHTML = `<p class="muted">\$\{t\('toast\.error'\)\}<\/p>`;/);
+    const inbox = read('public/js/inbox.js');
+    assert.match(inbox, /if \(id !== current\) \{ view\.innerHTML = threadLoading; layout\.classList\.add\('has-thread'\); \}/);
+    assert.match(read('public/js/profile.js'), /page\.querySelectorAll\('\[data-skeleton\]'\)\.forEach\(\(el\) => el\.remove\(\)\);/);
+    assert.match(read('public/js/answers.js'), /search\.addEventListener\('submit', \(\) => \{\n\s*list\.setAttribute\('aria-busy', 'true'\);/);
+  });
+});
+
 describe('motion is off with reduced motion', () => {
   test('"motion" is set on <html> only without prefers-reduced-motion, before the first paint; motion.js is on every page (deferred)', () => {
     const init = read('public/js/theme-init.js');

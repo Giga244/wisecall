@@ -44,7 +44,7 @@
         <input type="search" id="heroQ" name="q" data-i18n-placeholder="home.search.placeholder" placeholder="e.g. Is a coding bootcamp worth it?" autocomplete="off" enterkeyhint="search">
         <button type="submit" class="btn btn-ink btn-arrow" data-i18n="home.search.button" data-i18n-prelaunch="hero.prelaunch.cta">Find my person</button>
       </form>
-      <ul class="hero-chips rise rise-4" id="heroChips" aria-label="Popular fields" data-i18n-aria="home.chips.label"></ul>
+      <ul class="hero-chips rise rise-4" id="heroChips" aria-label="Popular fields" data-i18n-aria="home.chips.label"><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li></ul>
       <div class="hero-foot rise rise-4">
         <p class="hero-note">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
@@ -81,7 +81,20 @@
 <section class="strip" aria-labelledby="stripTitle">
   <div class="container" data-reveal>
     <h2 id="stripTitle" class="strip-title" data-i18n="strip.title">Find someone in your field</h2>
-    <ul class="field-grid" id="nicheStrip"></ul>
+    <!-- (until the fields arrive: tiles and the "See all" button as skeletons, in the same full rows) -->
+    <ul class="field-grid" id="nicheStrip">
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
+    </ul>
+    <span class="skeleton skeleton-more" id="fieldsMoreSkeleton" aria-hidden="true"></span>
     <button type="button" class="btn btn-outline field-more" id="fieldsMore" aria-controls="nicheStrip" aria-expanded="false" hidden></button>
   </div>
 </section>
@@ -115,7 +128,87 @@
         <button type="button" class="chip active" data-niche="all" data-i18n="niche.all">All</button>
       </div>
     </div>
-    <div class="expert-grid" id="expertGrid" aria-live="polite"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
+    <!-- (while the list is on its way: its skeleton, and one "Loading…" for screen readers; the server keeps the one for the mode) -->
+    <div class="expert-grid" id="expertGrid" aria-live="polite" aria-busy="true">
+      <p class="sr-only" role="status" data-i18n="experts.loading">Loading…</p>
+      <!-- after launch -->
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <div class="expert-card skeleton-expert" aria-hidden="true">
+        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
+        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
+        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
+        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
+        <span class="skeleton skeleton-btn"></span>
+      </div>
+      <!-- /after launch -->
+      <!-- before launch -->
+      <div class="wl-card prelaunch-panel skeleton-wl" aria-hidden="true">
+        <div class="wl-intro"><span class="skeleton skeleton-art"></span><div class="wl-text"><span class="skeleton skeleton-title"></span><span class="wl-sub"><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w80 sk-ka"></span><span class="skeleton skeleton-line sk-tablet"></span><span class="skeleton skeleton-line sk-tablet"></span><span class="skeleton skeleton-line w70 sk-tablet"></span></span></div></div>
+        <div class="wl-form"><div class="waitlist-form">
+          <div class="waitlist-row"><div><span class="skeleton skeleton-label"></span><span class="skeleton skeleton-input"></span></div><div><span class="skeleton skeleton-label"></span><span class="skeleton skeleton-input"></span></div></div>
+          <span class="skeleton skeleton-input"></span>
+          <div class="waitlist-hint"><span class="skeleton skeleton-line w90"></span><span class="skeleton skeleton-line w90 sk-phone"></span><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w80 sk-ka"></span><span class="skeleton skeleton-line w60 sk-ka"></span></div>
+        </div></div>
+      </div>
+      <p class="wl-mentor" aria-hidden="true"><span class="skeleton skeleton-line w40"></span></p>
+      <!-- /before launch -->
+    </div>
     <p class="rq-cta"><a href="/find-a-mentor.html" data-i18n="rq.cta">Can't find the right person? Tell us who you need.</a></p>
   </div>
 </section>

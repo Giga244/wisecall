@@ -55,7 +55,20 @@
   </div>
 
   <div class="tab-panel" role="tabpanel" id="panel-asked" aria-labelledby="tab-asked" data-panel="asked">
-    <div id="askedList" aria-live="polite"></div>
+    <!-- (while the questions are on their way: two as skeletons, and one "Loading…" for screen readers) -->
+    <div id="askedList" aria-live="polite" aria-busy="true">
+      <p class="sr-only" role="status" data-i18n="experts.loading">Loading…</p>
+      <div class="booking-card skeleton-booking" aria-hidden="true">
+        <div class="booking-top"><span class="skeleton skeleton-avatar sm"></span><div class="skeleton-stack"><span class="skeleton skeleton-name w60"></span><span class="skeleton skeleton-pill"></span></div><span class="skeleton skeleton-price"></span></div>
+        <ol class="timeline"><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li></ol>
+        <span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w90"></span><span class="skeleton skeleton-line w40"></span>
+      </div>
+      <div class="booking-card skeleton-booking" aria-hidden="true">
+        <div class="booking-top"><span class="skeleton skeleton-avatar sm"></span><div class="skeleton-stack"><span class="skeleton skeleton-name w60"></span><span class="skeleton skeleton-pill"></span></div><span class="skeleton skeleton-price"></span></div>
+        <ol class="timeline"><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li><li><span class="skeleton skeleton-dot"></span><span class="skeleton skeleton-line"></span></li></ol>
+        <span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w90"></span><span class="skeleton skeleton-line w40"></span>
+      </div>
+    </div>
   </div>
   <div class="tab-panel" role="tabpanel" id="panel-received" aria-labelledby="tab-received" data-panel="received" hidden>
     <div id="shareCard" hidden></div>
