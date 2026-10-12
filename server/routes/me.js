@@ -1,7 +1,7 @@
 const express = require('express');
 const auth = require('../auth');
 const bcrypt = require('bcryptjs');
-const { requireAuth, optionalAuth } = require('../auth');
+const { requireAuth, optionalAuth, HINT_COOKIE } = require('../auth');
 const { meProfile, asyncHandler, isListable } = require('../util');
 const { parseProfileUpdates, setPhoto, removePhoto } = require('../profiles');
 const { processPhoto, ImageError } = require('../images');
@@ -21,8 +21,9 @@ const config = require('../config');
 const router = express.Router();
 
 router.get('/', optionalAuth, asyncHandler(async (req, res) => {
-  if (!req.userToken) return res.json({ user: null });
-  const user = await getUserById(req.userToken.id);
+  const user = req.userToken ? await getUserById(req.userToken.id) : null;
+  // (signed out, or the session ran out: the header's "signed in" hint goes too, see server/auth.js)
+  if (!user && req.cookies && req.cookies[HINT_COOKIE]) res.clearCookie(HINT_COOKIE);
   res.json({ user: user ? meProfile(user) : null });
 }));
 

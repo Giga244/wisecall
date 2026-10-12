@@ -478,21 +478,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .advice-steps { padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
 @media (max-width: 560px) { .advice-head { flex-direction: column; gap: 10px; } }
 
-/* ---- Inbox (/inbox.html) and the unread badge in the header ------------------------------------------------------------- */
-.nav-inbox {
-  position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px;
-  color: var(--ink); background: transparent; border: var(--line-w) solid var(--line); text-decoration: none; transition: background-color 0.2s ease, color 0.2s ease;
-}
-.nav-inbox:hover, .nav-inbox:focus-visible { background: var(--inverse); color: var(--on-inverse); }
-.nav-badge {
-  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
-  background: var(--accent-strong); color: var(--on-accent); border: var(--chip-w) solid var(--c-ink); font-size: 0.72rem; font-weight: 700; line-height: 1;
-}
-.nav-badge[hidden] { display: none; }
-.nav-inbox .nav-badge { position: absolute; top: -6px; right: -6px; }
-.nav-toggle { position: relative; }
-.nav-badge-dot { position: absolute; top: 4px; right: 4px; min-width: 10px; width: 10px; height: 10px; padding: 0; border: 2px solid var(--card); }
-.mm-inbox { gap: 10px; }
+/* ---- Inbox (/inbox.html) --------------------------------------------------------------------------------------------------- */
 
 .inbox-layout { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 20px; align-items: start; }
 .inbox-list, .inbox-thread { background: var(--card); border: var(--line-w) solid var(--line); border-radius: var(--r-card-lg); min-width: 0; }

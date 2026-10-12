@@ -144,10 +144,30 @@ html.motion.page-fade #main { animation: page-fade 0.2s var(--ease-out); }
 .nav-links a:hover::after, .nav-links a:focus-visible::after { transform: scaleX(1); }
 .nav-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 .nav-actions { display: flex; gap: 10px; align-items: center; white-space: nowrap; }
+/* The header's inbox button and its unread badge (every page has the header, so these live here, not in app.css: the badge sits on the
+   button's corner and never widens it) ------------------------------------------------------------- */
+.nav-inbox {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px;
+  color: var(--ink); background: transparent; border: var(--line-w) solid var(--line); text-decoration: none; transition: background-color 0.2s ease, color 0.2s ease;
+}
+.nav-inbox:hover, .nav-inbox:focus-visible { background: var(--inverse); color: var(--on-inverse); }
+.nav-badge {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: var(--accent-strong); color: var(--on-accent); border: var(--chip-w) solid var(--c-ink); font-size: 0.72rem; font-weight: 700; line-height: 1;
+}
+.nav-badge[hidden] { display: none; }
+.nav-inbox .nav-badge { position: absolute; top: -6px; right: -6px; }
+.nav-toggle { position: relative; }
+.nav-badge-dot { position: absolute; top: 4px; right: 4px; min-width: 10px; width: 10px; height: 10px; padding: 0; border: 2px solid var(--card); }
+.mm-inbox { gap: 10px; }
 /* Room in the header: a signed-in person has Dashboard, Settings (and Admin) and Log out to fit, so only "Browse experts" stays of the
    marketing links. Georgian words are longer: there the FAQ link always leaves the header (it is in the footer), and under 1180px so do
    "How it works" and "For mentors". */
 .nav.is-authed .nl-extra { display: none; }
+/* (the header is drawn signed in or out from its first frame, public/js/header.js; it changes after the sign-in check only when that
+   check disagrees, and then its links and buttons fade in instead of jumping) */
+@keyframes auth-swap { from { opacity: 0; } }
+html.motion .nav.auth-swap .nav-links, html.motion .nav.auth-swap .nav-right { animation: auth-swap 0.2s ease-out; }
 html[lang="ka"] .nav-links .nl-faq { display: none; }
 @media (min-width: 1024px) and (max-width: 1279px) {
   .nav-inner { gap: 16px; }

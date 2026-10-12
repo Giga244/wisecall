@@ -89,12 +89,25 @@
   const both = (...ids) => ids.map((id) => document.getElementById(id)).filter(Boolean);
   const show = (el) => { el.style.display = el.classList.contains('mm-actions') ? 'grid' : 'flex'; };
 
+  // The header's "signed in" hint (a readable cookie next to the login cookie, see server/auth.js and header.js): kept in step with what
+  // the server says, so the next page is drawn right from its first frame (a session from before the hint existed gets one now).
+  const HINT = /(?:^|;\s*)wc_authed=([^;]*)/;
+  function setHint(value) {
+    try {
+      if ((HINT.exec(document.cookie) || [])[1] === (value || undefined)) return;
+      document.cookie = value
+        ? `wc_authed=${value}; path=/; max-age=${30 * 86400}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`
+        : 'wc_authed=; path=/; max-age=0; samesite=lax';
+    } catch (e) { /* no cookies here: the header is then checked on every page, as before */ }
+  }
+
   async function setUpNav() {
     initMenu();
     initAutoHide();
     const header = document.getElementById('siteHeader');
     const loggedOut = both('navLoggedOut', 'mmLoggedOut');
     const loggedIn = both('navLoggedIn', 'mmLoggedIn');
+    const drawnSignedIn = Boolean(header && header.classList.contains('is-authed')); // (what the hint said)
     let user = null;
     try {
       const data = await WisecallAPI.apiFetch('/me');
@@ -103,6 +116,15 @@
     // The theme chosen on the account (on another device, say) wins over what this device remembers; and from now on a choice made
     // here is saved on the account too.
     if (window.WisecallTheme) WisecallTheme.adopt(user);
+    setHint(user ? (user.isAdmin ? 'admin' : '1') : null);
+    // The hint and the server agree: nothing on the header moves. They disagree (a session that ran out, a sign-in from before the
+    // hint): the header turns into the right one with a short fade instead of a jump.
+    if (header && Boolean(user) !== drawnSignedIn) {
+      header.classList.remove('auth-swap');
+      void header.offsetWidth;
+      header.classList.add('auth-swap');
+    }
+    if (!user || !user.isAdmin) document.querySelectorAll('.admin-link').forEach((a) => a.remove()); // (a hint that said "admin")
 
     if (user) {
       loggedOut.forEach((el) => { el.style.display = 'none'; });
@@ -146,6 +168,7 @@
     } else {
       loggedOut.forEach(show);
       loggedIn.forEach((el) => { el.style.display = 'none'; });
+      if (header) header.classList.remove('is-authed');
     }
     showLaunchBanner(user);
     return user;
