@@ -206,12 +206,12 @@ test('switching the language keeps you on the same page (and it sticks after a r
 test('the dark theme can be chosen and stays after a reload', async () => {
   const page = pages.buyer;
   await page.goto('/');
+  // (one click: the header's button on a desktop, the menu panel's on a phone)
   if (isPhone()) {
     const menu = await openMenuIfPhone(page);
-    await menu.locator('[data-theme-choice="dark"]').first().click();
+    await menu.locator('#mmThemeBtn').click();
   } else {
     await page.click('#themeBtn');
-    await page.locator('#themeMenu [data-theme-choice="dark"]').click();
   }
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.reload();

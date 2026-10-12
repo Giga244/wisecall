@@ -30,22 +30,10 @@
     </div>`;
   const SUN = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
   const MOON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>';
-  const THEMES = [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']];
-  // The theme button (a menu of System / Light / Dark) in the header, and the same three choices in the menu panel on phones.
-  const themeMenu = `
-    <div class="theme-switch">
-      <button type="button" class="theme-btn" id="themeBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="themeMenu" aria-label="Theme" data-i18n-aria="theme.button"></button>
-      <div class="theme-menu" id="themeMenu" role="menu" aria-label="Theme" data-i18n-aria="theme.button" hidden>
-        ${THEMES.map(([k, label]) => `<button type="button" class="theme-item" role="menuitemradio" aria-checked="false" data-theme-choice="${k}" data-i18n="theme.${k}">${label}</button>`).join('\n        ')}
-      </div>
-    </div>`;
-  const themeSeg = `
-    <div class="mm-theme" role="group" aria-labelledby="mmThemeLabel">
-      <span class="mm-label" id="mmThemeLabel" data-i18n="theme.label">Theme</span>
-      <div class="theme-seg" role="radiogroup" aria-labelledby="mmThemeLabel">
-        ${THEMES.map(([k, label]) => `<button type="button" class="theme-seg-btn" role="radio" aria-checked="false" data-theme-choice="${k}" data-i18n="theme.${k}">${label}</button>`).join('\n        ')}
-      </div>
-    </div>`;
+  // The theme: one button that switches between light and dark with one click. It shows where a click goes (a moon on a light page,
+  // a sun on a dark one) and says it ("Switch to dark mode"). In the header on a desktop, in the menu panel (with its words) on a phone.
+  const themeToggle = '<div class="theme-switch"><button type="button" class="theme-btn" id="themeBtn" data-theme-toggle aria-label="Switch to dark mode"></button></div>';
+  const themeRow = '<button type="button" class="mm-theme-btn" id="mmThemeBtn" data-theme-toggle><span class="mm-theme-icon" aria-hidden="true"></span><span class="mm-theme-text">Switch to dark mode</span></button>';
   const ICON_MENU = '<svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
   const ICON_INBOX = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13l2.5 8v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/></svg>';
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -60,7 +48,7 @@
         </nav>
         <div class="nav-right">
           ${langSwitch('nav-lang')}
-          ${themeMenu}
+          ${themeToggle}
           <div class="nav-actions" id="navLoggedOut">
             <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">Log in</a>
             <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">Sign up</a>
@@ -87,7 +75,7 @@
           ${LINKS.map((l) => `<a href="${link(l)}" data-i18n="${l.key}">${l.text}</a>`).join('\n          ')}
         </nav>
         <div class="mm-lang">${langSwitch('mm-lang-toggle')}</div>
-        ${themeSeg}
+        ${themeRow}
         <div class="mm-actions" id="mmLoggedOut">
           <a href="/signup.html" class="btn btn-primary btn-lg btn-block" data-i18n="nav.signup">Sign up</a>
           <a href="/login.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.login">Log in</a>
@@ -105,53 +93,41 @@
   me.insertAdjacentHTML('beforebegin', html);
   me.remove();
 
-  // ---- The theme choice ------------------------------------------------------------------------------------------
-  const themeBtn = document.getElementById('themeBtn');
-  const themeMenuEl = document.getElementById('themeMenu');
-  const choices = () => Array.from(document.querySelectorAll('[data-theme-choice]'));
-  function drawTheme() {
+  // ---- The theme toggle ------------------------------------------------------------------------------------------
+  const THEME_WORDS = { 'theme.toDark': 'Switch to dark mode', 'theme.toLight': 'Switch to light mode' };
+  const word = (key) => {
+    const t = window.WisecallI18n ? WisecallI18n.t(key) : key;
+    return t && t !== key ? t : THEME_WORDS[key];
+  };
+  function drawTheme(animate) {
     if (!window.WisecallTheme) return;
-    themeBtn.innerHTML = WisecallTheme.resolved() === 'dark' ? MOON : SUN;
-    choices().forEach((b) => { b.setAttribute('aria-checked', String(b.dataset.themeChoice === WisecallTheme.get())); });
+    const dark = WisecallTheme.resolved() === 'dark';
+    const label = word(dark ? 'theme.toLight' : 'theme.toDark');
+    const icon = dark ? SUN : MOON; // (where a click goes)
+    document.querySelectorAll('[data-theme-toggle]').forEach((b) => {
+      b.setAttribute('aria-label', label);
+      const iconBox = b.querySelector('.mm-theme-icon') || b;
+      iconBox.innerHTML = icon;
+      const text = b.querySelector('.mm-theme-text');
+      if (text) text.textContent = label;
+      // (the new icon turns in: a short rotate and fade, only when motion is allowed, see style.css)
+      if (animate) { b.classList.remove('is-switching'); void b.offsetWidth; b.classList.add('is-switching'); }
+    });
   }
-  function closeThemeMenu(returnFocus) {
-    if (themeMenuEl.hidden) return;
-    themeMenuEl.hidden = true;
-    themeBtn.setAttribute('aria-expanded', 'false');
-    if (returnFocus) themeBtn.focus();
-  }
-  function openThemeMenu() {
-    themeMenuEl.hidden = false;
-    themeBtn.setAttribute('aria-expanded', 'true');
-    const current = themeMenuEl.querySelector('[aria-checked="true"]') || themeMenuEl.querySelector('.theme-item');
-    current.focus();
-  }
-  themeBtn.addEventListener('click', () => (themeMenuEl.hidden ? openThemeMenu() : closeThemeMenu(true)));
-  themeBtn.addEventListener('keydown', (ev) => { if (ev.key === 'ArrowDown') { ev.preventDefault(); if (themeMenuEl.hidden) openThemeMenu(); } });
-  themeMenuEl.addEventListener('keydown', (ev) => {
-    const items = Array.from(themeMenuEl.querySelectorAll('.theme-item'));
-    const i = items.indexOf(document.activeElement);
-    if (ev.key === 'Escape') { ev.preventDefault(); closeThemeMenu(true); }
-    else if (ev.key === 'Tab') closeThemeMenu(false);
-    else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(ev.key)) {
-      ev.preventDefault();
-      items[{ ArrowDown: (i + 1) % items.length, ArrowUp: (i - 1 + items.length) % items.length, Home: 0, End: items.length - 1 }[ev.key]].focus();
-    }
-  });
   document.addEventListener('click', (ev) => {
-    const choice = ev.target.closest('[data-theme-choice]');
-    if (choice) { if (window.WisecallTheme) WisecallTheme.set(choice.dataset.themeChoice); closeThemeMenu(choice.closest('#themeMenu') !== null); return; }
-    if (!ev.target.closest('.theme-switch')) closeThemeMenu(false);
+    if (ev.target.closest('[data-theme-toggle]') && window.WisecallTheme) WisecallTheme.toggle();
   });
-  drawTheme();
-  document.addEventListener('wisecall:theme-changed', () => {
-    drawTheme();
+  drawTheme(false);
+  document.addEventListener('wisecall:lang-changed', () => drawTheme(false));
+  document.addEventListener('wisecall:theme-changed', (ev) => {
+    drawTheme(Boolean(ev.detail && ev.detail.changed));
     // the logo made for dark backgrounds on dark pages, the navy + coral one on light pages
     document.querySelectorAll('.logo').forEach((a) => { a.innerHTML = WisecallBrand.logoHtml(a.closest('.footer') ? { full: true } : undefined); });
   });
   // Every page shows the right buttons for a signed-in or signed-out visitor, even when the page's own
   // script does not need to know who the user is (nav.js only runs its set-up once).
   document.addEventListener('DOMContentLoaded', () => {
+    if (window.WisecallI18n) WisecallI18n.ready.then(() => drawTheme(false)); // (the button's words, once the page's language is loaded)
     if (window.WisecallNav && window.WisecallI18n) WisecallI18n.ready.then(() => WisecallNav.initNav());
   });
 })();

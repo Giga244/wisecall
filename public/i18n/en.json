@@ -1167,6 +1167,8 @@
   "theme.system": "System",
   "theme.light": "Light",
   "theme.dark": "Dark",
+  "theme.toDark": "Switch to dark mode",
+  "theme.toLight": "Switch to light mode",
   "settings.appearance.title": "Appearance",
   "settings.appearance.body": "Choose how Wisecall looks. “System” follows your device and changes with it.",
   "dash.answer.check": "Check your answer",

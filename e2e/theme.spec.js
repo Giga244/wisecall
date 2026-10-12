@@ -38,72 +38,69 @@ test.describe('System follows the device', () => {
 });
 
 test.describe('a choice made by hand', () => {
-  test('the header menu: three choices, keyboard friendly, and the choice survives a reload (over the device setting)', async ({ browser }) => {
+  test('the header button: one click switches light <-> dark, says where it goes, works from the keyboard, and the choice stays', async ({ browser }) => {
     const ctx = await browser.newContext({ colorScheme: 'light', viewport: { width: 1280, height: 800 } });
     const page = await ctx.newPage();
     await page.goto('/');
     const button = page.locator('#themeBtn');
-    await expect(button).toHaveAccessibleName('Theme');
-    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    // a first visit follows the device; the button offers the other one (a moon on a light page)
+    expect(await theme(page)).toEqual({ theme: 'light', pref: 'system' });
+    await expect(button).toHaveAccessibleName('Switch to dark mode');
+    await expect(button).not.toHaveAttribute('aria-haspopup', /.*/);
+    const size = await button.boundingBox();
+    expect(Math.min(size.width, size.height), 'a 44px target').toBeGreaterThanOrEqual(44);
     await button.click();
-    await expect(button).toHaveAttribute('aria-expanded', 'true');
-    const items = page.locator('#themeMenu [role="menuitemradio"]');
-    await expect(items).toHaveText(['System', 'Light', 'Dark']);
-    await expect(items.nth(0)).toHaveAttribute('aria-checked', 'true'); // System is the default
-    await expect(items.nth(0)).toBeFocused();
-    // the keyboard: arrows, Enter; Escape closes and gives focus back to the button
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await expect(items.nth(2)).toBeFocused();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#themeMenu')).toBeHidden();
-    await expect(button).toBeFocused();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
+    await expect(button).toHaveAccessibleName('Switch to light mode'); // (and a sun)
     await expect.poll(() => bodyBg(page)).toBe(DARK_BG); // after the short fade
     expect(await barColor(page)).toBe('#16131F'); // the phone's address bar follows
     expect(await logo(page)).toBe('wisecall-logo-on-dark-transparent.svg');
     expect(await page.locator('.footer .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
-    await expect(page.locator('#themeMenu')).toBeHidden();
     expect(await page.evaluate(() => localStorage.getItem('wisecall_theme'))).toBe('dark');
-
+    // the keyboard: the focused button switches with Enter and with Space, and shows the focus ring
+    await button.focus();
+    await page.keyboard.press('Tab'); // (and back, with the keyboard: the focus ring is for keyboard focus)
+    await page.keyboard.press('Shift+Tab');
+    await expect(button).toBeFocused();
+    expect(await button.evaluate((b) => getComputedStyle(b).outlineStyle)).not.toBe('none');
+    await page.keyboard.press('Enter');
+    expect(await theme(page)).toEqual({ theme: 'light', pref: 'light' });
+    await page.keyboard.press(' ');
+    expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
+    // the choice stays: a reload, another page, a later visit; and it wins over the device
     await page.reload();
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
     await page.goto('/about.html');
     expect((await theme(page)).theme).toBe('dark');
-
-    // back to System: the device (light) rules again and the manual address-bar tag is gone
+    await page.emulateMedia({ colorScheme: 'light' });
+    expect((await theme(page)).theme, 'a choice made by hand ignores the device').toBe('dark');
     await page.click('#themeBtn');
-    await page.click('#themeMenu [data-theme-choice="system"]');
-    expect(await theme(page)).toEqual({ theme: 'light', pref: 'system' });
-    expect(await barColor(page)).toBeNull();
-    // Light on a dark device
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await page.click('#themeBtn');
-    await page.click('#themeMenu [data-theme-choice="light"]');
     expect(await theme(page)).toEqual({ theme: 'light', pref: 'light' });
     expect(await barColor(page)).toBe('#F4F2EE');
-    await page.emulateMedia({ colorScheme: 'light' });
-    await page.emulateMedia({ colorScheme: 'dark' });
-    expect((await theme(page)).theme, 'a hand-made choice ignores the device').toBe('light');
     await ctx.close();
+
+    // in Georgian, the button's words are Georgian
+    const ka = await browser.newContext({ colorScheme: 'dark', viewport: { width: 1280, height: 800 } });
+    const kp = await ka.newPage();
+    await kp.goto('/ka/');
+    await expect(kp.locator('#themeBtn')).toHaveAccessibleName('ღია რეჟიმზე გადართვა');
+    await kp.click('#themeBtn');
+    await expect(kp.locator('#themeBtn')).toHaveAccessibleName('მუქ რეჟიმზე გადართვა');
+    await ka.close();
   });
 
-  test('on a phone the same three choices are in the menu panel (the header button is hidden)', async ({ browser }) => {
+  test('on a phone the same one-click toggle is in the menu panel, with its words (the header button is hidden)', async ({ browser }) => {
     const ctx = await browser.newContext({ colorScheme: 'light', viewport: { width: 390, height: 800 } });
     const page = await ctx.newPage();
     await page.goto('/');
     await expect(page.locator('#themeBtn')).toBeHidden();
     await page.click('#navToggle');
-    const seg = page.locator('#mobileMenu .theme-seg [role="radio"]');
-    await expect(seg).toHaveText(['System', 'Light', 'Dark']);
-    await expect(page.locator('#mobileMenu [role="radiogroup"]')).toHaveAccessibleName('Theme');
-    await seg.nth(2).click();
+    const toggle = page.locator('#mobileMenu #mmThemeBtn');
+    await expect(toggle).toHaveText('Switch to dark mode');
+    expect((await toggle.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    await toggle.click();
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
-    await expect(seg.nth(2)).toHaveAttribute('aria-checked', 'true');
+    await expect(toggle).toHaveText('Switch to light mode');
     expect(await page.locator('#mmTitle img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
     await ctx.close();
   });
@@ -283,7 +280,7 @@ test.describe('the pieces that appear on top of a page, in dark', () => {
   const lum = (c) => { const v = c.map((x) => { const s = x / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
   const readable = ({ bg, ink }) => { const [a, b] = [lum(bg), lum(ink)].sort((x, y) => y - x); return (a + 0.05) / (b + 0.05); };
 
-  test('filters sheet, phone menu, theme menu, toast, focus ring, form errors, skeleton, payment and ID-check pages', async ({ browser }) => {
+  test('filters sheet, phone menu, theme button, toast, focus ring, form errors, skeleton, payment and ID-check pages', async ({ browser }) => {
     // phone: the filters sheet and the menu panel
     const phone = await browser.newContext({ colorScheme: 'dark', viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
     const p = await phone.newPage();
@@ -301,15 +298,12 @@ test.describe('the pieces that appear on top of a page, in dark', () => {
     await shot(p, 'mobile-menu-390');
     await phone.close();
 
-    // desktop: the theme menu, a toast, keyboard focus, form errors, the loading skeleton
+    // desktop: the theme button, a toast, keyboard focus, form errors, the loading skeleton
     const ctx = await browser.newContext({ colorScheme: 'dark', viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
     const page = await ctx.newPage();
     await page.goto('/login.html');
-    await page.click('#themeBtn');
-    await expect(page.locator('#themeMenu')).toBeVisible();
-    expect((await surface(page, '#themeMenu')).bg.every((v) => v < 90), 'the theme menu is a dark surface').toBe(true);
-    await shot(page, 'theme-menu-1280');
-    await page.keyboard.press('Escape');
+    await expect(page.locator('#themeBtn')).toHaveAccessibleName('Switch to light mode');
+    await shot(page, 'theme-button-1280');
     await page.locator('#loginForm button[type="submit"]').click(); // empty form: the errors
     await page.waitForTimeout(300);
     await shot(page, 'form-errors-1280');

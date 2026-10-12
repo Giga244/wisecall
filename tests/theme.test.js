@@ -43,9 +43,9 @@ describe('colours are tokens', () => {
     assert.ok(rows.length >= 80);
   });
 
-  test('the theme fade is short, only touches colours, and is switched off for reduced motion', () => {
+  test('the theme fade is short (0.2s), only touches colours, and is switched off for reduced motion', () => {
     const css = read('public/css/style.css');
-    assert.match(css, /html\.theme-switching[^{]*\{\s*transition: background-color 0\.25s ease, color 0\.25s ease, border-color 0\.25s ease, fill 0\.25s ease, stroke 0\.25s ease !important;/);
+    assert.match(css, /html\.theme-switching[^{]*\{\s*transition: background-color 0\.2s ease, color 0\.2s ease, border-color 0\.2s ease, fill 0\.2s ease, stroke 0\.2s ease !important;/);
     assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\* \{ animation-duration: 0\.01ms !important;[^}]*transition-duration: 0\.01ms !important;/);
   });
 });
@@ -76,15 +76,18 @@ describe('the theme is set before the page paints', () => {
     assert.doesNotMatch(csp, /unsafe-inline.*script|script-src[^;]*unsafe/);
   });
 
-  test('the header has an accessible theme menu (a button with a name that opens a menu of three radio items), and the phone menu has the same choices', () => {
+  test('the header has a one-click theme toggle (light <-> dark, no third state) that says where it goes, and the phone menu has the same', () => {
     const header = read('public/js/header.js');
-    assert.match(header, /id="themeBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="themeMenu" aria-label="Theme" data-i18n-aria="theme\.button"/);
-    assert.match(header, /role="menu"/);
-    assert.match(header, /role="menuitemradio" aria-checked="false" data-theme-choice=/);
-    assert.match(header, /role="radiogroup"/);
-    assert.match(header, /role="radio" aria-checked="false" data-theme-choice=/);
-    assert.match(header, /Escape/);
-    assert.match(header, /ArrowDown/);
+    assert.match(header, /<button type="button" class="theme-btn" id="themeBtn" data-theme-toggle aria-label="Switch to dark mode"><\/button>/);
+    assert.match(header, /<button type="button" class="mm-theme-btn" id="mmThemeBtn" data-theme-toggle>/);
+    assert.match(header, /const icon = dark \? SUN : MOON; \/\/ \(where a click goes\)/);
+    assert.match(header, /word\(dark \? 'theme\.toLight' : 'theme\.toDark'\)/);
+    assert.match(header, /if \(ev\.target\.closest\('\[data-theme-toggle\]'\) && window\.WisecallTheme\) WisecallTheme\.toggle\(\);/);
+    assert.doesNotMatch(header, /data-theme-choice|role="menu"|aria-haspopup/, 'no System / Light / Dark menu in the header any more');
+    assert.match(read('public/js/theme-init.js'), /toggle: function \(\) \{ this\.set\(this\.resolved\(\) === 'dark' \? 'light' : 'dark'\); \}/);
+    const css = read('public/css/style.css');
+    assert.match(css, /@keyframes theme-icon-in \{ from \{ opacity: 0; transform: rotate\(-90deg\) scale\(0\.6\); \} to \{ opacity: 1; transform: none; \} \}/);
+    assert.match(css, /html\.motion \.is-switching svg \{ animation: theme-icon-in 0\.2s var\(--ease-out\); \}/);
   });
 
   test('the logo made for dark backgrounds is used on dark pages, the navy and coral one on light pages', () => {
@@ -128,7 +131,7 @@ describe('the choice is kept on the account', () => {
 describe('texts', () => {
   test('the theme texts are in English and Georgian', () => {
     const en = JSON.parse(read('public/i18n/en.json')), ka = JSON.parse(read('public/i18n/ka.json'));
-    for (const k of ['theme.button', 'theme.label', 'theme.system', 'theme.light', 'theme.dark', 'settings.appearance.title', 'settings.appearance.body']) {
+    for (const k of ['theme.label', 'theme.system', 'theme.light', 'theme.dark', 'theme.toDark', 'theme.toLight', 'settings.appearance.title', 'settings.appearance.body']) {
       assert.ok(en[k] && ka[k], k);
       assert.notEqual(en[k], ka[k], `${k} is not translated`);
     }

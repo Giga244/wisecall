@@ -1,6 +1,7 @@
-// The colour theme: System (default, follows the device), Light or Dark. This file is loaded in the <head>, before the page paints,
-// so the right theme is on the page from the first frame (no flash). It is an external script because the content-security policy
-// does not allow inline ones. It also is the small API the header, the menu and Settings use: WisecallTheme.get / resolved / set / adopt.
+// The colour theme: System (the default until somebody chooses: it follows the device), Light or Dark. This file is loaded in the
+// <head>, before the page paints, so the right theme is on the page from the first frame (no flash). It is an external script because
+// the content-security policy does not allow inline ones. It also is the small API the header's one-click button (WisecallTheme.toggle:
+// light <-> dark) and Settings (System, Light or Dark) use: WisecallTheme.get / resolved / set / toggle / adopt.
 //   data-theme       on <html>: "light" or "dark", what is really shown
 //   data-theme-pref  on <html>: "system", "light" or "dark", what the person chose
 (function () {
@@ -35,11 +36,11 @@
   function apply(pref, animate) {
     var theme = resolve(pref);
     var was = root.getAttribute('data-theme');
-    // A short colour fade when somebody switches (never on the first paint, never with reduced motion: see style.css).
+    // A short colour fade (0.2s) when somebody switches (never on the first paint, never with reduced motion: see style.css).
     if (animate && was && was !== theme) {
       root.classList.add('theme-switching');
       clearTimeout(timer);
-      timer = setTimeout(function () { root.classList.remove('theme-switching'); }, 350);
+      timer = setTimeout(function () { root.classList.remove('theme-switching'); }, 260);
     }
     root.setAttribute('data-theme', theme);
     root.setAttribute('data-theme-pref', pref);
@@ -75,6 +76,8 @@
       apply(pref, true);
       save(pref);
     },
+    // The header's button: one click to the other one (light <-> dark), remembered like any choice.
+    toggle: function () { this.set(this.resolved() === 'dark' ? 'light' : 'dark'); },
     // The header found out who is signed in: what their account says wins over this device's memory.
     adopt: function (user) {
       account = user || null;

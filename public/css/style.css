@@ -985,36 +985,28 @@ html.sheet-open, html.sheet-open body { overflow: hidden; }
 @media (max-width: 639px) {
   .expert-wrap, .dash, .settings { min-height: 100vh; min-height: 100svh; }
 }@media (max-width: 1023px) { .breadcrumb { min-height: 44px; } }
-/* Theme choice: the header button with its menu (desktop), the three-way switch in the menu panel (phones) ---------------------- */
+/* The theme toggle: a 44px button in the header (desktop), a full-width row with its words in the menu panel (phones). The icon shows
+   where a click goes (a moon on a light page, a sun on a dark one) and turns in when it changes. */
 .theme-switch { position: relative; }
 .theme-btn {
   display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border-radius: 12px;
   background: transparent; border: var(--line-w) solid var(--line); color: var(--ink); cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease;
 }
 .theme-btn:hover { background: var(--inverse); color: var(--on-inverse); }
-.theme-menu {
-  position: absolute; right: 0; top: calc(100% + 10px); z-index: 60; min-width: 168px; padding: 6px;
-  background: var(--raised); border: var(--line-w) solid var(--line); border-radius: var(--r-btn); box-shadow: var(--offset-shadow-sm);
+.theme-btn svg, .mm-theme-icon svg { display: block; }
+.mm-theme-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; margin: 6px 0 8px; padding: 0 16px; border-radius: var(--r-btn);
+  background: transparent; border: var(--line-w) solid var(--line); color: var(--ink); font: 700 1rem var(--font-body); text-align: left; cursor: pointer;
 }
-.theme-menu[hidden] { display: none; }
-.theme-item {
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 12px; border: none; border-radius: 10px;
-  background: transparent; color: var(--ink); font: 600 0.95rem var(--font-body); text-align: left; cursor: pointer;
-}
-.theme-item::before { content: ''; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--field-border); flex: 0 0 auto; }
-.theme-item[aria-checked="true"]::before { border-color: var(--accent-strong); background: var(--accent-strong); }
-.theme-item:hover { background: var(--gray-soft); }
-.theme-item:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
-.mm-theme { margin: 6px 0 8px; display: grid; gap: 8px; }
-.mm-label { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-soft); }
-.theme-seg { display: inline-flex; width: max-content; max-width: 100%; padding: 3px; gap: 2px; border-radius: var(--r-pill); background: transparent; border: var(--chip-w) solid var(--line); }
-.theme-seg-btn { min-height: 44px; padding: 0 20px; border: none; border-radius: 999px; background: transparent; color: var(--ink-soft); font: 600 0.95rem var(--font-body); cursor: pointer; }
-.theme-seg-btn[aria-checked="true"] { background: var(--inverse); color: var(--on-inverse); }
+.mm-theme-btn:hover { background: var(--gray-soft); }
+.mm-theme-icon { display: inline-flex; flex: 0 0 auto; }
+@keyframes theme-icon-in { from { opacity: 0; transform: rotate(-90deg) scale(0.6); } to { opacity: 1; transform: none; } }
+html.motion .is-switching svg { animation: theme-icon-in 0.2s var(--ease-out); }
 @media (max-width: 1023px) { .theme-switch { display: none; } }
 
-/* A short colour fade when the theme is switched by hand (added by public/js/theme-init.js for a third of a second; never on load) */
+/* A short colour fade when the theme is switched by hand (added by public/js/theme-init.js for a quarter of a second; never on load) */
 html.theme-switching, html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after {
-  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, fill 0.25s ease, stroke 0.25s ease !important;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, fill 0.2s ease, stroke 0.2s ease !important;
 }
 
 /* Dark theme details */

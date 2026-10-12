@@ -1167,6 +1167,8 @@
   "theme.system": "სისტემის",
   "theme.light": "ღია",
   "theme.dark": "მუქი",
+  "theme.toDark": "მუქ რეჟიმზე გადართვა",
+  "theme.toLight": "ღია რეჟიმზე გადართვა",
   "settings.appearance.title": "გარეგნობა",
   "settings.appearance.body": "აირჩიე, როგორ გამოიყურებოდეს Wisecall. „სისტემის“ თემა შენს მოწყობილობას მიჰყვება და მასთან ერთად იცვლება.",
   "dash.answer.check": "შეამოწმე პასუხი",
