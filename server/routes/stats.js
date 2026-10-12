@@ -13,4 +13,10 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json({ mentorCount: Number(m.mentors), nicheCount: Number(m.niches), answeredCount: Number(a.answered) });
 }));
 
+// A page the browser had fetched ahead was opened (public/js/motion.js): count the visit now (server/analytics.js).
+router.post('/pageview', (req, res) => {
+  require('../analytics').pageviewOf(req, req.body && req.body.path);
+  res.status(204).end();
+});
+
 module.exports = router;

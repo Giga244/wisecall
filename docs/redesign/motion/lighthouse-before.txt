@@ -1,0 +1,4 @@
+Lighthouse before the motion work (live demo server, mobile / desktop):
+home    95 / 100   (accessibility, best practices, SEO: 100)
+expert  94 / 100
+signup  97 / 100

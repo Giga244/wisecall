@@ -39,6 +39,17 @@
     setTimeout(function () { if (plus.parentNode) plus.parentNode.removeChild(plus); }, 900);
   }
 
+  // Pages fetched or prepared ahead (the speculation rules: on hover, or for the most common next pages) are not counted by the
+  // server when they are fetched (server/analytics.js); the page says so itself once somebody really opens it.
+  function countIfAhead() {
+    var nav = window.performance && performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+    var ahead = nav && (nav.deliveryType === 'navigational-prefetch' || nav.activationStart > 0);
+    if (!ahead || !window.fetch) return;
+    fetch('/api/stats/pageview', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: JSON.stringify({ path: location.pathname }) }).catch(function () { /* not counted, then */ });
+  }
+  if (document.prerendering) document.addEventListener('prerenderingchange', countIfAhead, { once: true });
+  else countIfAhead();
+
   window.WisecallMotion = { observe: observe, reveal: reveal, bump: bump, calm: function () { return calm; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { observe(); });
   else observe();

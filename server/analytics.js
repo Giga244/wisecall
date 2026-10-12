@@ -2,7 +2,8 @@
 // Policy stays strict), nothing personal. The server itself tells Plausible about a page view or an event; Plausible counts unique
 // visitors from a daily-changing hash of the address and browser it is given, and does not keep the address. Off while PLAUSIBLE_DOMAIN
 // is empty. A visitor whose browser asks not to be tracked (Do Not Track or Global Privacy Control) is not counted.
-//   pageview                           every public page that is sent (not the admin pages)
+//   pageview                           every public page that is sent (not the admin pages), or that the browser had fetched ahead
+//                                      and then opened (counted then, not when it was fetched)
 //   signup, mentor_application_started, mentor_application_submitted, waitlist_join, question_paid
 // Only the page's path is sent, never its query (a reset link carries a token), and events carry no personal data at all.
 const config = require('./config');
@@ -28,14 +29,25 @@ function send(name, { path = '/', req = null, props } = {}) {
     .finally(() => clearTimeout(timer));
 }
 
+// A page fetched ahead by the browser (speculation rules: on hover, or prepared for a likely next click) is not a visit yet; the page
+// counts itself when somebody really opens it (pageviewOf below, called by public/js/motion.js).
+const ahead = (req) => /prefetch|prerender/i.test((req && (req.get('sec-purpose') || req.get('purpose'))) || '');
+
 // A page was sent to a browser.
 function pageview(req) {
   const p = req.originalUrl ? req.originalUrl.split('?')[0] : req.path;
-  if (/^\/(ka\/)?admin/.test(p)) return Promise.resolve(false);
+  if (/^\/(ka\/)?admin/.test(p) || ahead(req)) return Promise.resolve(false);
+  return send('pageview', { path: p, req });
+}
+
+// A page that was fetched ahead was opened: its path as the page reports it (only a plain path of this site).
+function pageviewOf(req, path) {
+  const p = String(path || '');
+  if (!/^\/[\w\-./]{0,200}$/.test(p) || p.includes('..') || /^\/(ka\/)?(admin|api)/.test(p)) return Promise.resolve(false);
   return send('pageview', { path: p, req });
 }
 
 // Something happened. `req` (when there is one) is only used to count the visitor; `props` must never hold personal data.
 const event = (name, req, props) => send(name, { path: req ? (req.originalUrl || '/').split('?')[0] : '/', req, props });
 
-module.exports = { enabled, pageview, event };
+module.exports = { enabled, pageview, pageviewOf, ahead, event };

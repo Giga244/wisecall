@@ -194,6 +194,10 @@ html:not(.motion) .bubble-typing { visibility: hidden; }
 }
 .faq-q[aria-expanded="true"]::after { transform: translateY(-30%) rotate(225deg); }
 .faq-a { padding: 0 22px 20px; }
+@keyframes faq-open { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes faq-close { to { opacity: 0; transform: translateY(-6px); } }
+html.motion .faq-a:not([hidden]) { animation: faq-open 0.2s var(--ease-out); }
+html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
 .faq-a p { margin: 0; color: var(--ink-soft); font-size: 1rem; line-height: 1.6; }
 .faq-more { margin: 18px 0 0; }
 

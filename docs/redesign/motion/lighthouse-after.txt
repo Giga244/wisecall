@@ -1,0 +1,5 @@
+Lighthouse after the motion work (same live demo server, same machine, mobile / desktop):
+home    95 / 100   (before 95 / 100)
+expert  98 / 100   (before 94 / 100)
+signup  98 / 100   (before 97 / 100)
+Accessibility, best practices and SEO: 100 before and after.

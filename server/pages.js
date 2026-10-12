@@ -150,7 +150,8 @@ function shortText(s, max = 155) {
 // carry a version in their address and are kept for a year.
 function sendHtml(res, status, html) {
   if (!res.get('Cache-Control')) res.set('Cache-Control', 'no-cache');
-  if (status === 200 && res.req) require('./analytics').pageview(res.req); // (off unless PLAUSIBLE_DOMAIN is set)
+  res.set('Speculation-Rules', require('./speculation').HEADER); // (which links the browser may fetch ahead: server/speculation.js)
+  if (status === 200 && res.req) require('./analytics').pageview(res.req); // (off unless PLAUSIBLE_DOMAIN is set; not for a page fetched ahead)
   res.status(status).type('html').send(localize(html, langOf(res)));
 }
 
@@ -922,6 +923,11 @@ function pageRoutes() {
 // robots.txt and sitemap.xml are generated so they always carry the right domain.
 function seoRoutes() {
   const router = express.Router();
+
+  // The speculation rules the pages point to (server/speculation.js).
+  router.get('/speculation-rules.json', (req, res) => {
+    res.type('application/speculationrules+json').set('Cache-Control', 'public, max-age=3600').send(JSON.stringify(require('./speculation').RULES));
+  });
 
   router.get('/robots.txt', (req, res) => {
     res.type('text/plain').send([

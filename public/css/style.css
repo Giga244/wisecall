@@ -89,6 +89,27 @@ html.motion [data-reveal-stagger].is-in > :nth-child(n+5) { animation-delay: 0.3
 html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
+/* Moving between pages: no hard cut. Where the browser has cross-document view transitions, the header (logo, links, language switch)
+   and the footer stay where they are, the page's content fades out quickly (0.12s) and the next one fades in, rising 10px (0.22s).
+   Elsewhere the content only fades in lightly as a page opens (html.page-fade, set by theme-init.js before the first paint; it never
+   starts from blank). With reduced motion: an instant switch, nothing moves. */
+@view-transition { navigation: auto; }
+#siteHeader { view-transition-name: site-header; }
+.footer { view-transition-name: site-footer; }
+::view-transition-group(site-header), ::view-transition-group(site-footer),
+::view-transition-new(site-header), ::view-transition-new(site-footer) { animation: none; }
+::view-transition-old(site-header), ::view-transition-old(site-footer) { display: none; }
+::view-transition-old(root) { animation: page-out 0.12s ease-in both; }
+::view-transition-new(root) { animation: page-in 0.22s var(--ease-out) both; }
+@keyframes page-out { to { opacity: 0; } }
+@keyframes page-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes page-fade { from { opacity: 0.35; } }
+html.motion.page-fade #main { animation: page-fade 0.2s var(--ease-out); }
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
 /* Breadcrumbs ------------------------------------------------------------------------------------- */
 .breadcrumb { margin: 0 0 18px; }
 .breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; font-size: 0.85rem; font-weight: 700; }
@@ -173,7 +194,14 @@ html[lang="ka"] .nav-links .nl-faq { display: none; }
 .btn-ink:hover { box-shadow: var(--offset-shadow-sm); }
 .btn-danger { background: var(--danger-bg); color: var(--on-danger); border-color: var(--danger-bg); }
 .btn-danger:hover { filter: brightness(1.06); }
-/* The confirmation dialog (public/js/dialog.js) */
+/* The confirmation dialog (public/js/dialog.js): it fades and rises in, and out (0.2s), where the browser can animate a dialog */
+html.motion .wc-dialog, html.motion .wc-dialog::backdrop { transition: opacity 0.2s ease, transform 0.2s var(--ease-out), overlay 0.2s allow-discrete, display 0.2s allow-discrete; }
+html.motion .wc-dialog:not([open]) { opacity: 0; transform: translateY(8px) scale(0.98); }
+html.motion .wc-dialog:not([open])::backdrop { opacity: 0; }
+@starting-style {
+  html.motion .wc-dialog[open] { opacity: 0; transform: translateY(8px) scale(0.98); }
+  html.motion .wc-dialog[open]::backdrop { opacity: 0; }
+}
 .wc-dialog { border: var(--line-w) solid var(--line); border-radius: var(--r-card); padding: 0; max-width: min(440px, calc(100vw - 32px)); background: var(--card); color: var(--ink);
   box-shadow: var(--offset-shadow); }
 .wc-dialog::backdrop { background: var(--scrim); }
@@ -1028,6 +1056,10 @@ input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
 .faq-group { margin-top: 28px; }
 .faq-group .faq-item { border-bottom: 1px solid var(--border); padding: 12px 0; }
 .faq-group summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+/* (an answer opens and closes in 0.2s where the browser can animate <details>; elsewhere it simply appears) */
+html.motion details.faq-item { interpolate-size: allow-keywords; }
+html.motion details.faq-item::details-content { height: 0; opacity: 0; overflow: clip; transition: height 0.2s var(--ease-out), opacity 0.2s ease, content-visibility 0.2s allow-discrete; }
+html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; }
 .faq-group .faq-item p { margin: 8px 0 4px; line-height: 1.7; }
 /* "What an answer looks like" on the FAQ page: three example questions and answers (written by the team), as speech bubbles */
 .example-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 16px; }

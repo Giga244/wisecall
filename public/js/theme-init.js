@@ -54,6 +54,8 @@
   // motion, and set here, before the first paint, so nothing is drawn and then hidden again.
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!calm) root.classList.add('motion');
+  // A browser without cross-document view transitions: the page's content fades in lightly as it opens instead (style.css).
+  if (!calm && !('CSSViewTransitionRule' in window)) root.classList.add('page-fade');
 
   // System mode follows the device live (the evening switch of a phone, for example).
   var follow = function () { if (root.getAttribute('data-theme-pref') === 'system') apply('system', true); };

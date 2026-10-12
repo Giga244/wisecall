@@ -121,11 +121,19 @@
   initHeroSearch();
 
   // ---- FAQ accordion: buttons with aria-expanded, arrow keys move between questions --------------------------
+  // (an answer fades in as it opens, and fades out before it closes; at once with reduced motion)
   function toggleFaq(btn, open) {
     const next = open === undefined ? btn.getAttribute('aria-expanded') !== 'true' : open;
+    const panel = document.getElementById(btn.getAttribute('aria-controls'));
     btn.setAttribute('aria-expanded', String(next));
-    document.getElementById(btn.getAttribute('aria-controls')).hidden = !next;
     btn.closest('.faq-item').classList.toggle('open', next);
+    panel.classList.remove('is-closing');
+    if (next || panel.hidden || !document.documentElement.classList.contains('motion')) { panel.hidden = !next; return; }
+    panel.classList.add('is-closing');
+    setTimeout(() => {
+      panel.classList.remove('is-closing');
+      if (btn.getAttribute('aria-expanded') !== 'true') panel.hidden = true;
+    }, 160);
   }
   function initFaq() {
     const list = document.getElementById('faqList');

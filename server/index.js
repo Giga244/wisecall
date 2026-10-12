@@ -173,6 +173,7 @@ app.use('/api/inbox/support', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
 app.use(/^\/api\/inbox\/messages\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.use('/api/inbox/unsubscribe', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.use('/api/inbox/unread', rateLimit({ windowMs: 60 * 1000, max: 120 })); // (every open tab asks every 30 seconds)
+app.post('/api/stats/pageview', rateLimit({ windowMs: 60 * 1000, max: 60 })); // (a page fetched ahead, then opened)
 // Uploaded verification documents arrive as raw file bytes (PDF or JPEG, up to 10 MB).
 app.use('/api/verification/documents', express.raw({ type: ['application/pdf', 'image/jpeg', 'application/octet-stream'], limit: '10mb' }));
 // A profile photo arrives as raw file bytes too (JPEG, PNG or WebP, up to 5 MB; it is re-encoded on the server).
