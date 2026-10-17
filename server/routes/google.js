@@ -24,7 +24,16 @@ const { sendTemplate } = require('../mail');
 const router = express.Router();
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
-const safeRedirect = (v) => (typeof v === 'string' && v.length < 300 && /^\/(?![\/\\])/.test(v) ? v : null);
+// A path on this site only (the same rule as public/js/api.js safeRedirect, docs/security-audit C7): one "/" first, no control character or
+// blank anywhere (a browser drops them, so "/\t/evil.com" would be "//evil.com"), and read as a URL it is still this site.
+const safeRedirect = (v) => {
+  if (typeof v !== 'string' || v.length >= 300 || !/^\/(?![\/\\])/.test(v) || /[\u0000- \u007f-\u009f\s]/.test(v)) return null;
+  try {
+    const site = new URL(config.PUBLIC_URL).origin;
+    const u = new URL(v, site);
+    return u.origin === site ? u.pathname + u.search + u.hash : null;
+  } catch (e) { return null; }
+};
 const withRedirect = (path, redirect) => (redirect ? `${path}${path.includes('?') ? '&' : '?'}redirect=${encodeURIComponent(redirect)}` : path);
 const PAGE = { login: '/login.html', signup: '/signup.html', link: '/settings.html?tab=account' };
 
@@ -115,7 +124,7 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
       authRoutes.askForSecondStep(res, user);
       return res.redirect(302, `/login.html?step=code&redirect=${encodeURIComponent(to)}`);
     }
-    await startSession(req, res, user);
+    await startSession(req, res, user, null, 'sign_in');
     await require('../verification/signals').record(req, res, user.id, 'login');
     res.redirect(302, to);
   };
@@ -167,3 +176,5 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
+
+module.exports.safeRedirect = safeRedirect; // (for tests/security-audit-1.test.js)

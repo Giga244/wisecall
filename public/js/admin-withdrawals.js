@@ -99,7 +99,7 @@
           const r = await WisecallAPI.apiFetch(`/admin/withdrawals/${id}/send`, { method: 'POST', body: { code } });
           await after(t(r.request && r.request.status === 'paid' ? 'admin.wd.paid' : (r.request && r.request.status === 'failed' ? 'admin.wd.status.failed' : 'admin.wd.sent')));
         } catch (e) {
-          WisecallNav.showToast(e.code === 'daily_limit' ? fill('admin.wd.err.daily_limit', { left: money(e.left || 0) }) : t(['invalid_code', 'code_locked', 'name_mismatch', 'no_payout_details', 'manual_method', 'two_factor_required'].includes(e.code) ? 'admin.wd.err.' + e.code : 'toast.error'));
+          WisecallNav.showToast(e.code === 'daily_limit' ? fill('admin.wd.err.daily_limit', { left: money(e.left || 0) }) : t(['invalid_code', 'code_locked', 'name_mismatch', 'no_payout_details', 'manual_method', 'two_factor_required', 'payout_hold'].includes(e.code) ? 'admin.wd.err.' + e.code : 'toast.error'));
           send.disabled = false;
         }
       });
@@ -119,7 +119,7 @@
         if (!(await WisecallDialog.confirm({ message: fill('admin.wd.confirmPaid', { amount: money(amount), name: card.dataset.name }), confirmText: fill('admin.wd.payButton', { amount: money(amount) }) }))) return;
         ev.target.disabled = true;
         try { await WisecallAPI.apiFetch(`/admin/withdrawals/${id}/pay`, { method: 'POST', body: { reference, amount } }); await after(t('admin.wd.paid')); }
-        catch (e) { WisecallNav.showToast(t(e.code === 'amount_changed' ? 'admin.wd.changed' : 'toast.error')); ev.target.disabled = false; }
+        catch (e) { WisecallNav.showToast(t(e.code === 'amount_changed' ? 'admin.wd.changed' : e.code === 'payout_hold' ? 'admin.wd.err.payout_hold' : 'toast.error')); ev.target.disabled = false; }
       });
       const reject = card.querySelector('.wd-reject');
       if (reject) reject.addEventListener('click', async (ev) => {

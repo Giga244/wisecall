@@ -128,8 +128,8 @@ async function checkReauth(user, password, sessionId) {
     if (typeof password !== 'string' || !(await bcrypt.compare(password, user.passwordHash))) throw new AccountError('wrong_password');
     return;
   }
-  const { rows } = await query('SELECT created_at FROM sessions WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL', [sessionId || null, user.id]).catch(() => ({ rows: [] }));
-  if (!rows[0] || Date.now() - new Date(rows[0].created_at).getTime() > FRESH_LOGIN_MINUTES * 60000) throw new AccountError('reauth_required');
+  // (a real sign-in on this device: server/auth.js signedInRecently)
+  if (!(await auth.signedInRecently(user.id, sessionId, FRESH_LOGIN_MINUTES).catch(() => false))) throw new AccountError('reauth_required');
 }
 
 async function requestDeletion(user, { password, sessionId }) {

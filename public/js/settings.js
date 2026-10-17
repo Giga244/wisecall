@@ -268,20 +268,26 @@
   document.getElementById('passwordForm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const errorEl = document.getElementById('passwordError');
+    const codeField = document.getElementById('passwordCodeField');
     errorEl.textContent = '';
     try {
       await WisecallAPI.apiFetch('/me/password', {
         method: 'POST',
         body: {
           currentPassword: document.getElementById('currentPassword').value,
-          newPassword: document.getElementById('newPassword').value
+          newPassword: document.getElementById('newPassword').value,
+          ...(codeField.hidden ? {} : { code: document.getElementById('passwordCode').value })
         }
       });
       ev.target.reset();
+      codeField.hidden = true;
       document.dispatchEvent(new CustomEvent('wisecall:password-set'));
       WisecallNav.showToast(t('toast.passwordUpdated'));
     } catch (e) {
-      errorEl.textContent = t({ wrong_password: 'settings.password.wrong', password_breached: 'auth.error.breached' }[e.code] || 'settings.password.error');
+      // (a first password on an account made with Google: a sign-in in the last minutes, and the code when two-step verification is on)
+      if (e.code === 'code_required') { codeField.hidden = false; document.getElementById('passwordCode').focus(); }
+      errorEl.textContent = t({ wrong_password: 'settings.password.wrong', password_breached: 'auth.error.breached', reauth_required: 'settings.data.googleReauth',
+        code_required: 'auth.twoStep.help', invalid_code: 'auth.twoStep.wrong', locked: 'auth.twoStep.locked' }[e.code] || 'settings.password.error');
     }
   });
 

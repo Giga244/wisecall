@@ -194,7 +194,7 @@ app.use('/api', require('./routes/profiles'));
 // A project's picture (who may see the owner's projects).
 app.get(/^\/api\/profile-images\/([0-9a-f-]{36})\.webp$/, require('./auth').optionalAuth, async (req, res, next) => {
   try {
-    const viewer = req.userToken ? await require('./models').getUserById(req.userToken.id) : null;
+    const viewer = await require('./adminAuth').viewerFrom(req); // (an admin sees hidden pictures only after the second step)
     const img = await require('./profileSections').imageFor(req.params[0], viewer);
     if (!img) return res.status(404).end();
     res.set('Cache-Control', 'private, max-age=300');
@@ -280,11 +280,11 @@ app.get('/api/config', publicCache(), async (req, res) => {
   });
 });
 
-// The admin scripts and their dictionaries are for admins only: everybody else gets a plain 403 for them, so no admin text or
-// setting is ever sent to a visitor or an ordinary account (the admin page itself is checked in server/pages.js).
-app.use(require('./adminAuth').adminOnlyFile);
-
 app.use(pages.languagePrefix); // (/ka/<page> is the Georgian version of <page>)
+// The admin scripts and their dictionaries are for admins only: everybody else gets a plain 403 for them, so no admin text or
+// setting is ever sent to a visitor or an ordinary account (the admin page itself is checked in server/pages.js). Checked after the /ka
+// prefix is taken off, so /ka/js/admin.js is the same file and gets the same answer (docs/security-audit C3).
+app.use(require('./adminAuth').adminOnlyFile);
 app.use(pages.seoRoutes());
 app.use(pages.pageRoutes());
 app.use(pages.blockRawHtml);

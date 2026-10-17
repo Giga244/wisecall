@@ -165,9 +165,8 @@ router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
   if (user.passwordHash) {
     if (typeof currentPassword !== 'string' || !currentPassword) return res.status(400).json({ error: 'password_required' });
     if (!(await bcrypt.compare(currentPassword, user.passwordHash))) return res.status(400).json({ error: 'wrong_password' });
-  } else {
-    const { rows } = await require('../db').query('SELECT created_at FROM sessions WHERE id = $1 AND user_id = $2', [req.userToken.sid || null, user.id]);
-    if (!rows[0] || Date.now() - new Date(rows[0].created_at).getTime() > config.REAUTH_MINUTES * 60000) return res.status(403).json({ error: 'reauth_required', minutes: config.REAUTH_MINUTES });
+  } else if (!(await auth.signedInRecently(user.id, req.userToken.sid, config.REAUTH_MINUTES))) {
+    return res.status(403).json({ error: 'reauth_required', minutes: config.REAUTH_MINUTES });
   }
 
   const cleanName = name.trim().replace(/\s+/g, ' ');
@@ -190,6 +189,9 @@ router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
   if (changed) {
     require('../notify').notifyPayoutChanged(updated, { oldLast4: before.slice(-4), newLast4: normalized.slice(-4), holdUntil });
     await verification.audit(user.id, verification.mentorActor(user), 'payout_changed', { reason: `account ending ${before.slice(-4)} -> ${normalized.slice(-4)}${holdUntil ? `; payouts held until ${holdUntil.toISOString()}` : ''}` });
+    // A withdrawal asked for before the change is closed (its money waits for the hold like the rest), so a stolen account cannot ask
+    // for the money first and then change where it goes (docs/security-audit M1). The mentor is told.
+    await require('../withdrawals').rejectOpenRequest(updated);
   }
   // The account holder's name is compared with the name on the ID.
   await names.recompute(user.id);
@@ -204,7 +206,7 @@ router.get('/earnings', requireAuth, asyncHandler(async (req, res) => {
   const [balance, items, batches] = await Promise.all([
     ledger.balanceFor(user.id),
     query(
-      `SELECT p.booking_id, p.amount, p.status, p.payable_at, p.debt_flagged_at, p.debt_settled_batch_id, pb.paid_at, pb.reference, b.question
+      `SELECT p.booking_id, p.amount, p.status, p.payable_at, p.debt_flagged_at, (p.debt_settled_amount >= COALESCE(p.debt_amount, p.amount)) AS debt_settled, pb.paid_at, pb.reference, b.question
          FROM payouts p JOIN bookings b ON b.id = p.booking_id LEFT JOIN payout_batches pb ON pb.id = p.batch_id
         WHERE p.mentor_id = $1 ORDER BY p.created_at DESC LIMIT 200`, [user.id]),
     query(`SELECT id, amount, reference, paid_at FROM payout_batches WHERE mentor_id = $1 AND status = 'paid' ORDER BY paid_at DESC LIMIT 100`, [user.id])
@@ -215,7 +217,7 @@ router.get('/earnings', requireAuth, asyncHandler(async (req, res) => {
     balance,
     items: items.rows.map((r) => ({
       bookingId: r.booking_id, amount: r.amount, status: r.status, payableAt: r.payable_at, paidAt: r.paid_at, reference: r.reference,
-      question: String(r.question).slice(0, 90), owedBack: Boolean(r.debt_flagged_at), owedBackSettled: Boolean(r.debt_settled_batch_id)
+      question: String(r.question).slice(0, 90), owedBack: Boolean(r.debt_flagged_at), owedBackSettled: Boolean(r.debt_flagged_at && r.debt_settled)
     })),
     batches: batches.rows.map((r) => ({ id: r.id, amount: r.amount, reference: r.reference, paidAt: r.paid_at }))
   });
@@ -254,22 +256,43 @@ function tooManyWrong(res, userId) {
 }
 
 router.post('/password', requireAuth, asyncHandler(async (req, res) => {
-  const { currentPassword, newPassword } = req.body || {};
+  const { currentPassword, newPassword, code } = req.body || {};
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
-  // Someone who signed in with Google and never had a password can set one without a "current" password.
+  // Someone who signed in with Google and never had a password sets one without a "current" password, but only right after a real sign-in
+  // on this device, and with two-step verification on, with a current code from the app too: a stolen session must not be able to add a
+  // password, which would then unlock the payout details, turning two-step verification off and deleting the account (docs/security-audit C1).
   const hasPassword = Boolean(user.passwordHash);
   if (typeof newPassword !== 'string' || !newPassword || (hasPassword && (typeof currentPassword !== 'string' || !currentPassword))) return res.status(400).json({ error: 'missing_fields' });
   if (String(newPassword).length < 8 || String(newPassword).length > 200) return res.status(400).json({ error: 'weak_password' });
-  if (hasPassword && tooManyWrong(res, user.id)) return;
-  if (hasPassword && !(await bcrypt.compare(String(currentPassword), user.passwordHash))) { reauthGuard.fail(user.id); return res.status(400).json({ error: 'wrong_password' }); }
-  reauthGuard.succeed(user.id);
+  if (hasPassword) {
+    if (tooManyWrong(res, user.id)) return;
+    if (!(await bcrypt.compare(String(currentPassword), user.passwordHash))) { reauthGuard.fail(user.id); return res.status(400).json({ error: 'wrong_password' }); }
+    reauthGuard.succeed(user.id);
+  } else if (!(await auth.signedInRecently(user.id, req.userToken.sid, config.REAUTH_MINUTES))) {
+    return res.status(403).json({ error: 'reauth_required', minutes: config.REAUTH_MINUTES });
+  }
   if (await require('../hibp').breachCount(newPassword)) return res.status(400).json({ error: 'password_breached' });
+  if (!hasPassword) {
+    const twoFactor = require('../twoFactor');
+    if ((await twoFactor.stateFor(user.id)).enabled) {
+      if (typeof code !== 'string' || !code.trim()) return res.status(400).json({ error: 'code_required' });
+      try {
+        await twoFactor.verifyLogin(user, { code: code.trim() });
+      } catch (e) {
+        if (!(e instanceof twoFactor.TwoFactorError)) throw e;
+        if (e.retryAfter) res.set('Retry-After', String(e.retryAfter));
+        return res.status(e.code === 'locked' ? 429 : 400).json({ error: e.code === 'locked' ? 'locked' : 'invalid_code' });
+      }
+    }
+  }
 
   await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
-  // Every other device is signed out (docs/AUDIT.md #3); this one gets a fresh session.
+  // Every other device is signed out (docs/AUDIT.md #3); this one gets a new session, which is not a new sign-in (it keeps this one's time).
   await auth.endAllSessions(user.id);
-  await auth.startSession(req, res, user);
+  await auth.startSession(req, res, user, null, { from: req.userToken });
+  // A first password is a security notice: the owner is told, with the device (an account made with Google never had one).
+  if (!hasPassword) require('../notify').notifyPasswordSet(user, { device: auth.deviceLabel(req.get('user-agent')), at: new Date() });
   res.json({ ok: true });
 }));
 
@@ -324,7 +347,7 @@ router.post('/sessions/logout-others', requireAuth, asyncHandler(async (req, res
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
   await auth.endAllSessions(user.id);
-  const sid = await auth.startSession(req, res, user);
+  const sid = await auth.startSession(req, res, user, null, { from: req.userToken }); // (not a new sign-in: it keeps this one's time)
   res.json({ sessions: await auth.listSessions(user.id, sid) });
 }));
 

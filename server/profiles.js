@@ -84,7 +84,7 @@ async function haveContact(aId, bId) {
 async function canView(owner, viewer) {
   if (owner.profileVisibility === 'public' || isListable(owner)) return true;
   if (!viewer) return false;
-  if (viewer.id === owner.id || isAdmin(viewer)) return true;
+  if (viewer.id === owner.id || require('./adminAuth').isVerifiedAdminViewer(viewer)) return true; // (an admin: after the second step)
   return haveContact(owner.id, viewer.id);
 }
 

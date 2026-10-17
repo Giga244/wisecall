@@ -347,4 +347,25 @@ describe('TBC Bank (tpay)', () => {
     await callback({ PaymentId: id });
     assert.equal((await view(r.booking.id)).status, 'refunded');
   });
+
+  // docs/security-audit M2: TBC does not dedupe refunds, so a refund the bank is still processing is never marked failed (which would send
+  // it again); only one the bank shows still paid with nothing returned is.
+  test('a refund TBC is still processing is never sent again; one it shows still paid with nothing returned is', async () => {
+    const r = await create('Refund me once via TBC');
+    const id = r.booking.providerOrderId;
+    fake.tbcSet(id, 'Succeeded');
+    await callback({ PaymentId: id });
+    assert.equal((await admin.api(`/admin/bookings/${r.booking.id}/refund`, { method: 'POST' })).booking.status, 'refund_pending');
+    const cancels = () => fake.state.calls.filter((c) => c.path === `/v1/tpay/payments/${id}/cancel`).length;
+    assert.equal(cancels(), 1);
+    // (asked long ago, and the bank still says "processing": the sweep runs every second)
+    await pool.query(`UPDATE bookings SET refund_requested_at = now() - interval '10 minutes' WHERE id = $1`, [r.booking.id]);
+    await wait(3500);
+    assert.equal((await row(r.booking.id)).refund_error, null, 'not marked failed');
+    assert.equal(cancels(), 1, 'never sent twice');
+    // The bank shows the payment still paid and nothing returned: then it is safe to ask again.
+    fake.tbcSet(id, 'Succeeded', { returned: 0 });
+    for (let i = 0; i < 40 && cancels() < 2; i++) await wait(250);
+    assert.equal(cancels(), 2, 'sent again');
+  });
 });

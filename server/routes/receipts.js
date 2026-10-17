@@ -2,7 +2,7 @@
 // language; otherwise the account's.
 const express = require('express');
 const { requireAuth } = require('../auth');
-const { isAdminUser } = require('../adminAuth');
+const { isVerifiedAdmin } = require('../adminAuth');
 const { asyncHandler } = require('../util');
 const { getUserById } = require('../models');
 const receipts = require('../receipts');
@@ -13,7 +13,8 @@ const langOf = (req, user) => (['ka', 'en'].includes(req.query.lang) ? req.query
 router.get('/receipts/:id.pdf', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(401).json({ error: 'not_authenticated' });
-  const r = await receipts.loadFor(user, req.params.id, { admin: isAdminUser(user) });
+  // (any receipt for an admin, but only after the second step in this session: docs/security-audit C2)
+  const r = await receipts.loadFor(user, req.params.id, { admin: isVerifiedAdmin(user, req.userToken) });
   if (!r) return res.status(404).json({ error: 'not_found' });
   const body = await receipts.receiptPdf(r, langOf(req, user));
   res.set('Cache-Control', 'private, no-store');

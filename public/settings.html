@@ -235,6 +235,11 @@
         </div>
         <div class="pw-strength" id="pwStrength" data-for="newPassword" aria-live="polite"></div>
       </div>
+      <!-- (an account made with Google and two-step verification on: the first password also needs a code; shown when the server asks) -->
+      <div class="field" id="passwordCodeField" hidden>
+        <label for="passwordCode" data-i18n="settings.twoStep.codeLabel">Code from the app</label>
+        <input type="text" id="passwordCode" inputmode="numeric" autocomplete="one-time-code" autocapitalize="none" maxlength="12">
+      </div>
       <p class="form-error" id="passwordError" role="alert"></p>
       <button type="submit" class="btn btn-primary" data-i18n="settings.password.save">Update password</button>
     </form>

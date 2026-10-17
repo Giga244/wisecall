@@ -201,11 +201,67 @@ describe('payouts (PAYOUT_METHOD=flitt_iban)', () => {
     await payoutTo('0000000000000001', 'Somebody Else');
     const id = await requestedPayout('Should I take a course before applying for my first developer job?');
     assert.equal((await admin.api(`/admin/withdrawals/${id}/send`, { method: 'POST', body: { code: await freshCode() } })).error, 'name_mismatch');
+    // (correcting the details closes that request: it was asked for with the old ones; a new one is asked for with the new ones)
     await payoutTo('0000000000000001');
+    assert.equal((await sql('SELECT status FROM payout_batches WHERE id = $1', [id]))[0].status, 'rejected');
+    const again = await requestedPayout('Should I learn a second programming language this year or go deeper?');
     // (100 GEL a day in this test; 25 GEL questions: 20 GEL a payout after the fee, several sent today already)
-    await pool.query(`UPDATE payout_batches SET amount = 9000 WHERE id = $1`, [id]);
-    const r = await admin.api(`/admin/withdrawals/${id}/send`, { method: 'POST', body: { code: await freshCode() } });
+    await pool.query(`UPDATE payout_batches SET amount = 9000 WHERE id = $1`, [again]);
+    const r = await admin.api(`/admin/withdrawals/${again}/send`, { method: 'POST', body: { code: await freshCode() } });
     assert.equal(r.status, 409, r.text);
     assert.equal(r.error, 'daily_limit');
+    await admin.api(`/admin/withdrawals/${again}/reject`, { method: 'POST', body: { reason: 'Over the daily limit in this test.' } });
+  });
+
+  // docs/security-audit M1: the IBAN saved with the request, never one changed after it; nothing while a payout-details hold runs.
+  test('a request is sent to the IBAN saved with it, never to one changed after; nothing is sent during a payout-details hold', async () => {
+    await pool.query(`UPDATE payout_batches SET send_started_at = now() - interval '2 days' WHERE status IN ('sending', 'paid')`); // (today's limit)
+    const id = await requestedPayout('How do I tell my team lead that the deadline cannot be met?');
+    // (the details change in the database behind the request, as a taken-over account could before: the request keeps its own)
+    await pool.query(`UPDATE users SET payout_iban_enc = $2 WHERE id = $1`, [mentorId, encrypt(iban('0000000000000002'))]);
+    await pool.query(`UPDATE users SET payout_hold_until = now() + interval '1 hour' WHERE id = $1`, [mentorId]);
+    const held = await admin.api(`/admin/withdrawals/${id}/send`, { method: 'POST', body: { code: await freshCode() } });
+    assert.equal(held.status, 409, held.text);
+    assert.equal(held.error, 'payout_hold');
+    await pool.query(`UPDATE users SET payout_hold_until = NULL WHERE id = $1`, [mentorId]);
+    const r = await admin.api(`/admin/withdrawals/${id}/send`, { method: 'POST', body: { code: await freshCode() } });
+    assert.equal(r.status, 200, r.text);
+    assert.equal(r.request.status, 'paid');
+    assert.equal(fake.state.payouts.get(`payout-${id}`).iban, iban('0000000000000001'), 'the IBAN saved with the request');
+    await payoutTo('0000000000000001');
+  });
+
+  // docs/security-audit M3: a refund while the payout is at the bank is owed back once it is paid; when the bank refuses the payout, the
+  // refunded payout is simply not available again.
+  test('a refund while the payout is being sent becomes a debt once it is paid, or is dropped when the bank refuses it', async () => {
+    await pool.query(`UPDATE payout_batches SET send_started_at = now() - interval '2 days' WHERE status IN ('sending', 'paid')`);
+    const refundOne = async () => {
+      const [p] = await sql(`SELECT p.booking_id, p.amount FROM payouts p JOIN payout_batches pb ON pb.id = p.batch_id WHERE pb.status = 'sending' AND p.mentor_id = $1 LIMIT 1`, [mentorId]);
+      assert.equal((await admin.api(`/admin/bookings/${p.booking_id}/refund`, { method: 'POST' })).status, 200);
+      return p;
+    };
+    // Refused: dropped, never available again.
+    await payoutTo('0000000000000003'); // (Flitt: "processing")
+    let id = await requestedPayout('Should I ask for a raise before or after my yearly review?');
+    assert.equal((await admin.api(`/admin/withdrawals/${id}/send`, { method: 'POST', body: { code: await freshCode() } })).request.status, 'sending');
+    let p = await refundOne();
+    let [row] = await sql('SELECT status, debt_flagged_at FROM payouts WHERE booking_id = $1', [p.booking_id]);
+    assert.equal(row.status, 'pending', 'not voided while the money is on its way');
+    assert.ok(row.debt_flagged_at);
+    fake.setPayout(`payout-${id}`, 'declined');
+    assert.equal((await admin.api(`/admin/withdrawals/${id}/sync`, { method: 'POST' })).request.status, 'failed');
+    [row] = await sql('SELECT status, debt_flagged_at FROM payouts WHERE booking_id = $1', [p.booking_id]);
+    assert.equal(row.status, 'void');
+    assert.equal(row.debt_flagged_at, null);
+    assert.equal((await mentor.api('/me/balance')).balance.owedBack, 0);
+    // Paid: owed back.
+    await payoutTo('0000000000000003');
+    id = await requestedPayout('Which certificate matters more for a junior network engineer?');
+    assert.equal((await admin.api(`/admin/withdrawals/${id}/send`, { method: 'POST', body: { code: await freshCode() } })).request.status, 'sending');
+    p = await refundOne();
+    fake.setPayout(`payout-${id}`, 'approved');
+    assert.equal((await admin.api(`/admin/withdrawals/${id}/sync`, { method: 'POST' })).request.status, 'paid');
+    assert.equal((await mentor.api('/me/balance')).balance.owedBack, p.amount, 'the mentor owes their share back');
+    await payoutTo('0000000000000001');
   });
 });

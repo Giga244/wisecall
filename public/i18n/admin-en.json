@@ -514,6 +514,7 @@
   "admin.wd.err.no_payout_details": "The mentor's payout details are missing.",
   "admin.wd.err.manual_method": "Payouts are sent by hand (PAYOUT_METHOD=manual).",
   "admin.wd.err.two_factor_required": "Set up two-step verification for your admin account first: every payout needs a code from it.",
+  "admin.wd.err.payout_hold": "The mentor changed their payout details recently: nothing is paid until the hold ends.",
   "admin.wd.direct": "Pay without a request",
   "admin.wd.directHelp": "For a closed or removed account that cannot ask any more. Mentors who can ask are paid through their request.",
   "admin.wd.requestOpen": "This mentor has an open request: pay it above.",

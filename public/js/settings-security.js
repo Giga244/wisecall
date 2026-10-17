@@ -75,12 +75,12 @@
     box.innerHTML = `<h2>${esc(t('settings.twoStep.title'))}</h2>${body}`;
     const q = (id) => box.querySelector(id);
     if (q('#tfStart')) q('#tfStart').addEventListener('click', async () => {
-      try { setup = await WisecallAPI.apiFetch('/me/2fa/setup', { method: 'POST' }); drawTwoStep(); } catch (e) { WisecallNav.showToast(t('toast.error')); }
+      try { setup = await WisecallAPI.apiFetch('/me/2fa/setup', { method: 'POST' }); drawTwoStep(); } catch (e) { WisecallNav.showToast(t(e.code === 'email_not_verified' ? 'settings.twoStep.verifyEmail' : 'toast.error')); }
     });
     if (q('#tfOn')) q('#tfOn').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       try { codes = (await WisecallAPI.apiFetch('/me/2fa/enable', { method: 'POST', body: { code: q('#tfCode').value.trim() } })).recoveryCodes; setup = null; tf.enabled = true; tf.recoveryLeft = codes.length; drawTwoStep(); }
-      catch (e) { q('#tfError').textContent = t(e.code === 'invalid_code' ? 'auth.twoStep.wrong' : 'toast.error'); }
+      catch (e) { q('#tfError').textContent = t({ invalid_code: 'auth.twoStep.wrong', email_not_verified: 'settings.twoStep.verifyEmail' }[e.code] || 'toast.error'); }
     });
     if (q('#tfCodesDone')) q('#tfCodesDone').addEventListener('click', () => { codes = null; drawTwoStep(); });
     if (q('#tfOff')) q('#tfOff').addEventListener('submit', async (ev) => {

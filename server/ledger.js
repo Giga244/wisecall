@@ -24,9 +24,12 @@ const payableSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.payable_
 // On hold: earned, not payable yet, not in a request. Requested: in an open withdrawal request (server/withdrawals.js).
 const holdingSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.batch_id IS NULL AND NOT (${payableSql(p)})`;
 const requestedSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.batch_id IS NOT NULL`;
-// Owed back: paid, then (partly) refunded, and not settled yet. debt_amount is the part owed after a partial refund.
-const debtSql = (p = 'payouts') => `${p}.status = 'paid' AND ${p}.debt_flagged_at IS NOT NULL AND ${p}.debt_settled_batch_id IS NULL`;
-const debtAmountSql = (p = 'payouts') => `COALESCE(${p}.debt_amount, ${p}.amount)`;
+// Owed back: paid, then (partly) refunded, and not all of it settled yet. debt_amount is the whole debt (null: the whole amount);
+// debt_settled_amount the part already taken off withdrawals (docs/security-audit M4): what is owed is the difference, so a full refund
+// after a settled partial one still owes the rest.
+const debtSql = (p = 'payouts') => `${p}.status = 'paid' AND ${p}.debt_flagged_at IS NOT NULL AND COALESCE(${p}.debt_amount, ${p}.amount) > ${p}.debt_settled_amount`;
+const owedSql = (p = 'payouts') => `(COALESCE(${p}.debt_amount, ${p}.amount) - ${p}.debt_settled_amount)`;
+const debtAmountSql = owedSql; // (what is still owed: every sum of debts reads this)
 // Earnings stay on hold for the refund window and the dispute window, whichever is longer.
 const holdDays = () => Math.max(config.PAYOUT_HOLD_DAYS, config.DISPUTE_DAYS);
 
@@ -45,19 +48,30 @@ async function onAnswered(booking, from) {
   );
 }
 
+// Is this payout in a withdrawal that is being sent through the bank, or was paid? Its money is leaving (or left): a refund is then owed
+// back like one after a payout, never taken off the payout itself (docs/security-audit M3). The request is locked: one being sent waits.
+async function leaving(client, payout) {
+  if (!payout.batch_id) return false;
+  const { rows: [b] } = await client.query('SELECT status FROM payout_batches WHERE id = $1 FOR UPDATE', [payout.batch_id]);
+  return Boolean(b) && (b.status === 'sending' || b.status === 'paid');
+}
+// What a payout's debt was before this refund (none; or debt_amount, or the whole amount when that is null).
+const DEBT_BEFORE = 'COALESCE(debt_amount, CASE WHEN debt_flagged_at IS NULL THEN 0 ELSE amount END)';
+
 // Called (inside the refund transaction) when a booking's refund is requested or confirmed.
 async function onRefundRequested(client, booking) {
   const { rows } = await client.query('SELECT * FROM payouts WHERE booking_id = $1 FOR UPDATE', [booking.id]);
   const payout = rows[0];
   if (!payout) return;
-  if (payout.status === 'pending') {
+  if (payout.status === 'pending' && !(await leaving(client, payout))) {
     await client.query(`UPDATE payouts SET status = 'void' WHERE id = $1`, [payout.id]);
     // (in a withdrawal request: the request's amount is computed again, or it is closed when nothing is left)
     if (payout.batch_id) await require('./withdrawals').recompute(client, payout.batch_id);
-  } else if (payout.status === 'paid' && (!payout.debt_flagged_at || payout.debt_amount !== null)) {
-    // (the whole payout is owed back now, even if a part of it already was after a partial refund)
+  } else if ((payout.status === 'paid' || payout.status === 'pending') && (!payout.debt_flagged_at || payout.debt_amount !== null)) {
+    // (the whole payout is owed back now, even if a part of it already was after a partial refund: what was settled of that comes off,
+    // debt_settled_amount. A payout being sent becomes "paid" with this debt on it, or, when the bank refuses it, is voided.)
     await client.query('UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = NULL WHERE id = $1', [payout.id]);
-    console.warn(`[ledger] booking ${booking.id} was refunded after its payout was paid: ${payout.amount} tetri is now owed back by mentor ${payout.mentor_id}.`);
+    console.warn(`[ledger] booking ${booking.id} was refunded after its payout was ${payout.status === 'paid' ? 'paid' : 'sent'}: ${payout.amount - (payout.debt_settled_amount || 0)} tetri is now owed back by mentor ${payout.mentor_id}.`);
   }
 }
 
@@ -69,14 +83,15 @@ async function onPartialRefund(client, booking, refundAmount) {
   const { rows } = await client.query('SELECT * FROM payouts WHERE booking_id = $1 FOR UPDATE', [booking.id]);
   const payout = rows[0];
   if (!payout || share <= 0) return share;
-  if (payout.status === 'pending') {
+  if (payout.status === 'pending' && !(await leaving(client, payout))) {
     const take = Math.min(share, payout.amount);
     await client.query('UPDATE payouts SET amount = amount - $2, refunded_share = refunded_share + $2 WHERE id = $1', [payout.id, take]);
     if (payout.batch_id) await require('./withdrawals').recompute(client, payout.batch_id);
-  } else if (payout.status === 'paid') {
+  } else if (payout.status === 'paid' || payout.status === 'pending') {
+    // (owed back, on top of any debt it already had, settled or not)
     await client.query(
-      `UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = LEAST(amount, COALESCE(debt_amount, 0) + $2), refunded_share = refunded_share + $2
-        WHERE id = $1 AND debt_settled_batch_id IS NULL`, [payout.id, share]);
+      `UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = LEAST(amount, ${DEBT_BEFORE} + $2), refunded_share = refunded_share + $2
+        WHERE id = $1`, [payout.id, share]);
   }
   return share;
 }
@@ -113,7 +128,7 @@ async function onReplayRefunded(client, purchase) {
 
 async function takeBack(client, payout, part) {
   if (!payout || !(part > 0)) return 0;
-  if (payout.status === 'pending') {
+  if (payout.status === 'pending' && !(await leaving(client, payout))) {
     const take = Math.min(part, payout.amount);
     await client.query(
       `UPDATE payouts SET amount = amount - $2, refunded_share = refunded_share + $2, status = CASE WHEN amount - $2 <= 0 THEN 'void' ELSE status END WHERE id = $1`,
@@ -121,10 +136,10 @@ async function takeBack(client, payout, part) {
     if (payout.batch_id) await require('./withdrawals').recompute(client, payout.batch_id);
     return take;
   }
-  if (payout.status === 'paid') {
+  if (payout.status === 'paid' || payout.status === 'pending') {
     await client.query(
-      `UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = LEAST(amount, COALESCE(debt_amount, 0) + $2), refunded_share = refunded_share + $2
-        WHERE id = $1 AND debt_settled_batch_id IS NULL`, [payout.id, part]);
+      `UPDATE payouts SET debt_flagged_at = COALESCE(debt_flagged_at, now()), debt_amount = LEAST(amount, ${DEBT_BEFORE} + $2), refunded_share = refunded_share + $2
+        WHERE id = $1`, [payout.id, part]);
   }
   return part;
 }
@@ -163,6 +178,9 @@ async function markPaid({ mentorId, expectedAmount, reference, adminId }) {
     // (a mentor who asked for their money is paid through their request: server/withdrawals.js)
     const { rows: open } = await client.query(`SELECT 1 FROM payout_batches WHERE mentor_id = $1 AND status = 'requested'`, [mentorId]);
     if (open.length) throw new LedgerError('request_open');
+    // (payout details changed in the last PAYOUT_CHANGE_HOLD_HOURS: nothing is paid until the hold ends)
+    const { rows: [held] } = await client.query('SELECT payout_hold_until > now() AS held FROM users WHERE id = $1', [mentorId]);
+    if (held && held.held) throw new LedgerError('payout_hold');
     const balance = await balanceFor(mentorId, client);
     if (balance.payable === 0 && balance.debt === 0) throw new LedgerError('nothing_to_pay');
     if (balance.net < 0) throw new LedgerError('debt_exceeds_earnings');
@@ -180,13 +198,14 @@ async function markPaid({ mentorId, expectedAmount, reference, adminId }) {
       `UPDATE payouts SET status = 'paid', batch_id = $2 WHERE mentor_id = $1 AND ${payableSql()}`,
       [mentorId, batch.id]
     );
+    // (the debts this transfer took off: settled, each by what was still owed)
     await client.query(
-      `UPDATE payouts SET debt_settled_batch_id = $2
-        WHERE mentor_id = $1 AND status = 'paid' AND debt_flagged_at IS NOT NULL AND debt_settled_batch_id IS NULL AND batch_id <> $2`,
+      `UPDATE payouts SET debt_batch_amount = ${owedSql()}, debt_settled_amount = COALESCE(debt_amount, amount), debt_settled_batch_id = $2
+        WHERE mentor_id = $1 AND ${debtSql()} AND batch_id <> $2`,
       [mentorId, batch.id]
     );
     return batch;
   });
 }
 
-module.exports = { onAnswered, onRefundRequested, onPartialRefund, onLiveEnded, onTicketRefunded, onReplayPaid, onReplayRefunded, balanceFor, markPaid, LedgerError, payableSql, holdingSql, requestedSql, debtSql, debtAmountSql, holdDays };
+module.exports = { onAnswered, onRefundRequested, onPartialRefund, onLiveEnded, onTicketRefunded, onReplayPaid, onReplayRefunded, balanceFor, markPaid, LedgerError, payableSql, holdingSql, requestedSql, debtSql, debtAmountSql, owedSql, holdDays };

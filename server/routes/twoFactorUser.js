@@ -32,9 +32,12 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
   res.json({ enabled: state.enabled, recoveryLeft: state.recoveryLeft, admin: isAdminUser(user), recommended: user.role === 'mentor' || user.role === 'both' });
 }));
 
+// Only on an account whose email is confirmed: somebody who signed up with another person's address (unconfirmed) must not be able to lock
+// its real owner out with a code only they have (docs/security-audit C4).
 router.post('/setup', requireAuth, asyncHandler(async (req, res) => {
   const user = await me(req, res);
   if (!user) return;
+  if (!user.emailVerified) return res.status(403).json({ error: 'email_not_verified' });
   try {
     const { secret, otpauthUrl } = await twoFactor.beginSetup(user);
     res.set('Cache-Control', 'no-store');
@@ -49,6 +52,7 @@ router.post('/setup', requireAuth, asyncHandler(async (req, res) => {
 router.post('/enable', requireAuth, asyncHandler(async (req, res) => {
   const user = await me(req, res);
   if (!user) return;
+  if (!user.emailVerified) return res.status(403).json({ error: 'email_not_verified' });
   const { code } = req.body || {};
   if (typeof code !== 'string') return res.status(400).json({ error: 'invalid_code' });
   try {
@@ -56,7 +60,7 @@ router.post('/enable', requireAuth, asyncHandler(async (req, res) => {
     // A device that only passed the password must now pass the new step too: every other session ends, this one starts afresh
     // (docs/REVIEW-2.md #11).
     await endAllSessions(user.id);
-    await startSession(req, res, user, { mfaAt: Math.floor(Date.now() / 1000) });
+    await startSession(req, res, user, { mfaAt: Math.floor(Date.now() / 1000) }, { from: req.userToken });
     res.set('Cache-Control', 'no-store');
     res.json({ ok: true, recoveryCodes });
   } catch (e) { fail(res, e); }
@@ -76,7 +80,7 @@ router.post('/disable', requireAuth, asyncHandler(async (req, res) => {
   await twoFactor.reset(user.id);
   // The owner is told (with the device), and every other device is signed out (docs/REVIEW-2.md #11).
   await endAllSessions(user.id);
-  await startSession(req, res, user);
+  await startSession(req, res, user, null, { from: req.userToken });
   require('../notify').notifyTwoFactorOff(user, { device: deviceLabel(req.get('user-agent')), at: new Date() });
   res.json({ ok: true });
 }));

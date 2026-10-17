@@ -7,6 +7,8 @@
 // A mismatch is NEVER approved by the computer: it is flagged for an admin.
 const { LIMITS } = require('./rules');
 const config = require('../config');
+// (names the mentor typed go into admin emails: always escaped, docs/security-audit C6)
+const { escapeHtml } = require('../email');
 
 // Georgian (Mkhedruli) to Latin, following the national romanization system.
 const GEORGIAN = {
@@ -126,7 +128,7 @@ async function recomputePayout(user, idName) {
   const opened = await flags.openFlag(user.id, 'payout_name_mismatch', { mismatches: [{ source: 'iban', name: user.payoutName, score: r.score }] });
   if (opened) {
     require('../notify').notifyAdmins('A payout account name does not match the ID',
-      `<p>${user.name} (${user.email}): the payout account holder "${user.payoutName}" does not match the name on the ID (${Math.round(r.score * 100)}%).</p><p>Payouts to this mentor are held until an admin checks it.</p>`);
+      `<p>${escapeHtml(user.name)} (${escapeHtml(user.email)}): the payout account holder "${escapeHtml(user.payoutName)}" does not match the name on the ID (${Math.round(r.score * 100)}%).</p><p>Payouts to this mentor are held until an admin checks it.</p>`);
   }
   return opened;
 }
@@ -175,7 +177,7 @@ async function recompute(userId) {
   if (user.verificationStatus === 'verified') await steps.delist(user.id, 'name_match', { reasonKey: 'name_mismatch', actor: steps.SYSTEM });
   if (newFlag) {
     require('../notify').notifyAdmins('A mentor name does not match their ID',
-      `<p>${user.name} (${user.email}): ${evidence.results.join('; ')}.</p><p>It was not approved (or rejected) automatically: the mentor can correct their profile name, or you can check it in the admin panel.</p>`);
+      `<p>${escapeHtml(user.name)} (${escapeHtml(user.email)}): ${evidence.results.map(escapeHtml).join('; ')}.</p><p>It was not approved (or rejected) automatically: the mentor can correct their profile name, or you can check it in the admin panel.</p>`);
   }
   if (before === 'passed') await require('./analysis').afterIdentityChange(user.id);
   return { match: false, mismatches };

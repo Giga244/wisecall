@@ -275,6 +275,16 @@ async function partialRefundAtBank(b, amount) {
   return s.status === 'paid' ? 'not_returned' : 'unknown';
 }
 
+// A full refund the bank has not confirmed yet: may it be sent again? With a bank that dedupes refunds (idempotentRefunds), yes. With one
+// that does not (TBC), only when the bank shows the payment still paid with nothing more returned: while it says the refund is in progress,
+// or cannot be reached, asking again could return the money twice (docs/security-audit M2).
+async function safeToResendRefund(b) {
+  let bank;
+  try { bank = pay.forProvider(b.provider); } catch (e) { return false; }
+  if (bank.idempotentRefunds) return true;
+  return (await partialRefundAtBank(b, b.amount - (b.refundedAmount || 0))) === 'not_returned';
+}
+
 // The bank returned a partial refund: the booking, the ledger and a refund receipt (once).
 async function recordPartialRefund(bookingId, amount, reason) {
   let updated;
@@ -316,5 +326,5 @@ async function settleUnconfirmedRefunds() {
 }
 
 module.exports = {
-  PaymentError, partialRefund, settleUnconfirmedRefunds, deadlineFromNow, startPayment, syncBooking, handleCallback, refundBooking, expirePending, applyBankStatus
+  PaymentError, partialRefund, settleUnconfirmedRefunds, safeToResendRefund, deadlineFromNow, startPayment, syncBooking, handleCallback, refundBooking, expirePending, applyBankStatus
 };

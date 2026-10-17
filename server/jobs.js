@@ -60,6 +60,9 @@ async function confirmRefunds() {
     try {
       const b = await payments.syncBooking(id);
       if (b && b.status === 'refund_pending') {
+        // (marked failed, and so sent again, only when that cannot return the money twice: a bank without idempotent refunds must show the
+        // payment still paid with nothing returned, not a refund in progress)
+        if (!(await payments.safeToResendRefund(b))) continue;
         await query(`UPDATE bookings SET refund_error = 'the bank still shows the payment as paid'
                       WHERE id = $1 AND status = 'refund_pending' AND refund_error IS NULL AND refund_requested_at < now() - interval '5 minutes'`, [id]);
       }

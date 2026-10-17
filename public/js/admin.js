@@ -198,7 +198,7 @@
           await WisecallAPI.apiFetch(`/admin/payouts/${card.dataset.mentor}/pay`, { method: 'POST', body: { amount: net, reference } });
           WisecallNav.showToast(t('admin.po.recorded'));
         } catch (e) {
-          WisecallNav.showToast(e.code === 'amount_changed' ? t('admin.po.changed') : (e.code === 'nothing_to_pay' ? t('admin.po.nothing') : (e.code === 'request_open' ? t('admin.wd.requestOpen') : t('toast.error'))));
+          WisecallNav.showToast(e.code === 'amount_changed' ? t('admin.po.changed') : (e.code === 'nothing_to_pay' ? t('admin.po.nothing') : (e.code === 'request_open' ? t('admin.wd.requestOpen') : (e.code === 'payout_hold' ? t('admin.wd.err.payout_hold') : t('toast.error')))));
         }
         load();
       });

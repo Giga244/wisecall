@@ -77,10 +77,10 @@ test('a change emails the mentor and holds their payouts for 72 hours; the admin
 
 test('an account without a password must have signed in within the last 10 minutes', async () => {
   await pool.query(`UPDATE users SET password_hash = NULL WHERE id = $1`, [mentorId]);
-  await pool.query(`UPDATE sessions SET created_at = now() - interval '11 minutes' WHERE user_id = $1`, [mentorId]);
+  await pool.query(`UPDATE sessions SET auth_at = now() - interval '11 minutes' WHERE user_id = $1`, [mentorId]);
   const old = await save({ iban: GOOD_IBAN });
   assert.equal(old.status, 403);
   assert.equal(old.error, 'reauth_required');
-  await pool.query(`UPDATE sessions SET created_at = now() WHERE user_id = $1`, [mentorId]);
+  await pool.query(`UPDATE sessions SET auth_at = now() WHERE user_id = $1`, [mentorId]);
   assert.equal((await save({ iban: GOOD_IBAN })).status, 200);
 });

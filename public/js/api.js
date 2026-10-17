@@ -41,9 +41,15 @@
     return data;
   }
 
-  // Only ever redirect to a path on this site (never to another domain), e.g. after login.
+  // Only ever redirect to a path on this site (never to another domain), e.g. after login: one "/" first (never "//" or "/\", which
+  // browsers read as another site), no control character or blank anywhere (browsers drop a tab or a new line, so "/\t/evil.com" would
+  // become "//evil.com"), and, read the way the browser will read it, still this site (docs/security-audit C7).
   function safeRedirect(value, fallback) {
-    return typeof value === 'string' && /^\/(?![\/\\])/.test(value) ? value : fallback;
+    if (typeof value !== 'string' || !/^\/(?![\/\\])/.test(value) || /[\u0000- \u007f-\u009f\s]/.test(value)) return fallback;
+    try {
+      const u = new URL(value, window.location.origin);
+      return u.origin === window.location.origin ? u.pathname + u.search + u.hash : fallback;
+    } catch (e) { return fallback; }
   }
 
   // Money is Georgian lari. The server stores amounts as whole tetri (1/100 lari).

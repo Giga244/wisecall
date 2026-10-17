@@ -142,7 +142,8 @@ function sees(owner, settings, section, viewer) {
   if (hidden && !(viewer && (viewer.id === owner.id || isAdminUser(viewer)))) return false;
   return seesLevel(levelOf(owner, settings, section), owner, viewer);
 }
-const isAdminUser = (u) => require('./adminAuth').isAdminUser(u);
+// (an admin who passed the second step in this session: their login cookie travels with the viewer, adminAuth.viewerFrom)
+const isAdminUser = (u) => require('./adminAuth').isVerifiedAdminViewer(u);
 
 async function settingsOf(userId, client) {
   const run = client ? client.query.bind(client) : query;

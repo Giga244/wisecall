@@ -107,8 +107,9 @@ async function checkIdentity(user, { password, sessionId }) {
     if (!(await bcrypt.compare(password, user.passwordHash))) throw new WithdrawalError('wrong_password');
     return;
   }
-  const { rows } = await query('SELECT created_at FROM sessions WHERE id = $1 AND user_id = $2', [sessionId || null, user.id]);
-  if (!rows[0] || Date.now() - new Date(rows[0].created_at).getTime() > config.REAUTH_MINUTES * 60000) {
+  // (a real sign-in on this device in the last few minutes, server/auth.js: a new session for a new password or "sign out other devices"
+  // does not count)
+  if (!(await require('./auth').signedInRecently(user.id, sessionId, config.REAUTH_MINUTES))) {
     throw new WithdrawalError('reauth_required', { minutes: config.REAUTH_MINUTES });
   }
 }
@@ -130,7 +131,7 @@ async function request({ mentorId, password, sessionId }) {
       const { rows: open } = await client.query(`SELECT * FROM payout_batches WHERE mentor_id = $1 AND status IN ('requested', 'sending') FOR UPDATE`, [user.id]);
       if (open[0]) return { request: batchView(open[0]), existing: true };
       const { rows: avail } = await client.query(`SELECT id, amount FROM payouts p WHERE p.mentor_id = $1 AND ${ledger.payableSql('p')}`, [user.id]);
-      const { rows: debts } = await client.query(`SELECT id, ${ledger.debtAmountSql('p')} AS owed FROM payouts p WHERE p.mentor_id = $1 AND ${ledger.debtSql('p')}`, [user.id]);
+      const { rows: debts } = await client.query(`SELECT id, ${ledger.owedSql('p')} AS owed FROM payouts p WHERE p.mentor_id = $1 AND ${ledger.debtSql('p')}`, [user.id]);
       const available = avail.reduce((s, r) => s + r.amount, 0);
       const debt = debts.reduce((s, r) => s + r.owed, 0);
       if (available <= 0) throw new WithdrawalError('nothing_available');
@@ -138,12 +139,16 @@ async function request({ mentorId, password, sessionId }) {
       const amount = available - debt;
       if (amount <= 0) throw new WithdrawalError('debt_exceeds_available');
       const method = payoutMethods.current();
+      // (the request is paid to the details saved now, and only to them: changing them later never redirects it, docs/security-audit M1)
       const { rows: [batch] } = await client.query(
-        `INSERT INTO payout_batches (mentor_id, amount, currency, reference, iban_last4, paid_at, status, requested_at, method, debt_deducted)
-         VALUES ($1, $2, $3, NULL, $4, NULL, 'requested', now(), $5, $6) RETURNING *`,
-        [user.id, amount, config.CURRENCY, user.payoutIbanLast4 || null, method.name, debt]);
+        `INSERT INTO payout_batches (mentor_id, amount, currency, reference, iban_last4, paid_at, status, requested_at, method, debt_deducted, payout_iban_enc, payout_name)
+         VALUES ($1, $2, $3, NULL, $4, NULL, 'requested', now(), $5, $6, $7, $8) RETURNING *`,
+        [user.id, amount, config.CURRENCY, user.payoutIbanLast4 || null, method.name, debt, user.payoutIbanEnc, user.payoutName || null]);
       await client.query('UPDATE payouts SET batch_id = $2 WHERE id = ANY($1::uuid[])', [avail.map((r) => r.id), batch.id]);
-      if (debts.length) await client.query('UPDATE payouts SET debt_settled_batch_id = $2 WHERE id = ANY($1::uuid[])', [debts.map((r) => r.id), batch.id]);
+      // (each debt's part taken off this request is remembered, so a rejected or failed request gives back exactly that)
+      for (const d of debts) {
+        await client.query(`UPDATE payouts SET debt_settled_amount = debt_settled_amount + $2, debt_batch_amount = $2, debt_settled_batch_id = $3 WHERE id = $1`, [d.id, d.owed, batch.id]);
+      }
       await audit(client, user.id, { id: user.id, label: user.email }, 'withdrawal_requested', `${money(amount)}${debt ? ` (${money(debt)} owed back deducted)` : ''}`);
       afterCommit(client, async () => {
         const notify = require('./notify');
@@ -172,12 +177,33 @@ async function lockOpen(client, batchId) {
   return rows[0];
 }
 
+// The mentor's payout details changed in the last PAYOUT_CHANGE_HOLD_HOURS: nothing is paid or sent to them until that hold ends.
+async function refuseIfHeld(client, mentorId) {
+  const { rows: [u] } = await client.query('SELECT payout_hold_until > now() AS held FROM users WHERE id = $1', [mentorId]);
+  if (u && u.held) throw new WithdrawalError('payout_hold');
+}
+
+// Where a request is paid: the details saved with it when it was asked for. (A request from before they were saved with it: the account's
+// details, but only when they have not changed since it was asked for.)
+async function destinationOf(b) {
+  if (b.payout_iban_enc) return { iban: decrypt(b.payout_iban_enc), name: b.payout_name || null };
+  const mentor = await getUserById(b.mentor_id);
+  if (!mentor || !mentor.payoutIbanEnc || (mentor.payoutUpdatedAt && b.requested_at && new Date(mentor.payoutUpdatedAt) > new Date(b.requested_at))) return { iban: null, name: null };
+  return { iban: decrypt(mentor.payoutIbanEnc), name: mentor.payoutName || null };
+}
+
+// A request that is not paid (rejected, or failed at the bank): the debts it took off are owed again, exactly the part it took.
+const giveBackDebts = (client, batchId) => client.query(
+  `UPDATE payouts SET debt_settled_amount = GREATEST(debt_settled_amount - COALESCE(debt_batch_amount, 0), 0), debt_batch_amount = NULL, debt_settled_batch_id = NULL
+    WHERE debt_settled_batch_id = $1`, [batchId]);
+
 // The transfer was made. `amount` is what the admin saw (and sent): if the request changed since (a refund), nothing is recorded.
 async function markPaid({ batchId, reference, amount, admin }) {
   const ref = String(reference || '').trim();
   if (ref.length < 2 || ref.length > 100) throw new WithdrawalError('reference_required');
   return tx(async (client) => {
     const b = await lockOpen(client, batchId);
+    await refuseIfHeld(client, b.mentor_id);
     if (amount !== undefined && Number(amount) !== b.amount) throw new WithdrawalError('amount_changed', { amount: b.amount });
     const { rows: [paid] } = await client.query(
       `UPDATE payout_batches SET status = 'paid', paid_at = now(), reference = $2, paid_by = $3 WHERE id = $1 RETURNING *`, [b.id, ref, admin.id]);
@@ -201,7 +227,7 @@ async function reject({ batchId, reason, admin, client: outer }) {
       `UPDATE payout_batches SET status = 'rejected', rejected_at = now(), rejected_by = $2, reject_reason = $3 WHERE id = $1 RETURNING *`,
       [b.id, admin ? admin.id : null, why]);
     await client.query(`UPDATE payouts SET batch_id = NULL WHERE batch_id = $1 AND status = 'pending'`, [b.id]);
-    await client.query('UPDATE payouts SET debt_settled_batch_id = NULL WHERE debt_settled_batch_id = $1', [b.id]);
+    await giveBackDebts(client, b.id);
     await audit(client, b.mentor_id, admin ? { id: admin.id, label: admin.email } : { id: null, label: 'system' }, 'withdrawal_rejected', `${money(b.amount)}: ${why}`);
     afterCommit(client, async () => {
       const mentor = await getUserById(b.mentor_id);
@@ -210,6 +236,24 @@ async function reject({ batchId, reason, admin, client: outer }) {
     return batchView(done);
   };
   return outer ? work(outer) : tx(work);
+}
+
+// The mentor changed their payout details: a request not sent yet is closed (its money is available again once the hold ends) and the
+// mentor is told why, in their language (docs/security-audit M1). A request being sent is already at the bank, with the details it was
+// asked with.
+const DETAILS_CHANGED = {
+  en: 'Your payout details changed after you asked for this withdrawal, so it was not sent. Ask again once the hold ends.',
+  ka: 'ანაზღაურების მონაცემები ამ მოთხოვნის შემდეგ შეიცვალა, ამიტომ თანხა არ გადაირიცხა. მოითხოვე თავიდან, როცა შეჩერება დასრულდება.'
+};
+async function rejectOpenRequest(mentor) {
+  const { rows: [open] } = await query(`SELECT id FROM payout_batches WHERE mentor_id = $1 AND status = 'requested'`, [mentor.id]);
+  if (!open) return null;
+  try {
+    return await reject({ batchId: open.id, reason: DETAILS_CHANGED[mentor.language === 'ka' ? 'ka' : 'en'], admin: null });
+  } catch (e) {
+    if (e instanceof WithdrawalError && e.code === 'not_open') return null; // (an admin decided it a moment ago)
+    throw e;
+  }
 }
 
 // ---- Sending a payout through the bank (PAYOUT_METHOD=flitt_iban) ---------------------------------------------------------------------
@@ -231,17 +275,20 @@ async function sendPayout({ batchId, admin, code }) {
   let batch = null;
   let mentor = null;
   let iban = null;
+  let name = null;
   await tx(async (client) => {
     const b = await lockOpen(client, batchId);
     mentor = await getUserById(b.mentor_id);
     if (!mentor) throw new WithdrawalError('not_found');
     const hard = (await blockersFor(mentor, await balanceOf(mentor.id, client))).filter((x) => ['suspended', 'no_payout_details', 'name_mismatch', 'open_flags'].includes(x));
     if (hard.length) throw new WithdrawalError(hard[0]);
-    iban = decrypt(mentor.payoutIbanEnc);
-    if (!iban || !mentor.payoutName) throw new WithdrawalError('no_payout_details');
+    await refuseIfHeld(client, mentor.id);
+    // (to the details saved with the request, never to ones changed after it was asked for)
+    ({ iban, name } = await destinationOf(b));
+    if (!iban || !name) throw new WithdrawalError('no_payout_details');
     // (the account holder must be the person on the verified ID)
     const idName = await require('./verification/kyc').verifiedNameFor(mentor.id);
-    if (!idName || !require('./verification/names').compareNames(idName, mentor.payoutName).match) throw new WithdrawalError('name_mismatch');
+    if (!idName || !require('./verification/names').compareNames(idName, name).match) throw new WithdrawalError('name_mismatch');
     const { rows: [today] } = await client.query(
       `SELECT COALESCE(sum(amount), 0)::bigint AS n FROM payout_batches
         WHERE method = $1 AND status IN ('sending', 'paid') AND send_started_at >= (date_trunc('day', now() AT TIME ZONE 'Asia/Tbilisi') AT TIME ZONE 'Asia/Tbilisi')`, [method.name]);
@@ -253,7 +300,7 @@ async function sendPayout({ batchId, admin, code }) {
     await audit(client, b.mentor_id, { id: admin.id, label: admin.email }, 'withdrawal_sending', `${money(b.amount)} to the IBAN ending ${iban.slice(-4)}`);
   });
   try {
-    await method.send(batch, { iban, name: mentor.payoutName });
+    await method.send(batch, { iban, name });
   } catch (e) {
     // (no answer, or a refusal: the bank's status decides; the same order id means it can never be paid twice)
     console.error(`[withdrawals] sending payout ${batch.id} failed or its answer was lost:`, e.message);
@@ -275,9 +322,8 @@ async function syncPayout(batchId) {
   } catch (e) {
     const unknownOrder = e.status === 422 && /not found|1018/i.test(`${e.message}`);
     if (unknownOrder && Date.now() - new Date(b.send_started_at).getTime() > 5 * 60000) {
-      const mentor = await getUserById(b.mentor_id);
-      const iban = mentor ? decrypt(mentor.payoutIbanEnc) : null;
-      if (mentor && iban) await method.send(b, { iban, name: mentor.payoutName }).catch((err) => console.error('[withdrawals] sending again failed:', err.message));
+      const to = await destinationOf(b); // (the same details as the first time)
+      if (to.iban && to.name) await method.send(b, to).catch((err) => console.error('[withdrawals] sending again failed:', err.message));
     }
     return batchView(b);
   }
@@ -309,9 +355,15 @@ async function finishFailed(batchId, reason) {
     const why = String(reason || 'declined by the bank').slice(0, 300);
     const { rows: [done] } = await client.query(
       `UPDATE payout_batches SET status = 'failed', failed_at = now(), failure_reason = $2 WHERE id = $1 RETURNING *`, [b.id, why]);
-    // (the money is available again, and any debt is owed again)
+    // (a refund that came while it was being sent was recorded as a debt, server/ledger.js: the money did not leave, so it comes off the
+    // payout itself; then the money is available again, and any debt is owed again)
+    await client.query(
+      `UPDATE payouts SET status = CASE WHEN COALESCE(debt_amount, amount) >= amount THEN 'void' ELSE status END,
+              amount = CASE WHEN COALESCE(debt_amount, amount) >= amount THEN amount ELSE amount - debt_amount END,
+              debt_flagged_at = NULL, debt_amount = NULL
+        WHERE batch_id = $1 AND status = 'pending' AND debt_flagged_at IS NOT NULL`, [b.id]);
     await client.query(`UPDATE payouts SET batch_id = NULL WHERE batch_id = $1 AND status = 'pending'`, [b.id]);
-    await client.query('UPDATE payouts SET debt_settled_batch_id = NULL WHERE debt_settled_batch_id = $1', [b.id]);
+    await giveBackDebts(client, b.id);
     await audit(client, b.mentor_id, { id: null, label: 'bank' }, 'withdrawal_failed', `${money(b.amount)}: ${why}`);
     afterCommit(client, async () => {
       const mentor = await getUserById(b.mentor_id);
@@ -338,7 +390,7 @@ async function recompute(client, batchId) {
   await client.query(`UPDATE payouts SET batch_id = NULL WHERE batch_id = $1 AND status = 'void'`, [batchId]);
   const { rows: [s] } = await client.query(
     `SELECT COALESCE(sum(amount) FILTER (WHERE batch_id = $1 AND status = 'pending'), 0)::int AS gross,
-            COALESCE(sum(${ledger.debtAmountSql('payouts')}) FILTER (WHERE debt_settled_batch_id = $1), 0)::int AS debt
+            COALESCE(sum(debt_batch_amount) FILTER (WHERE debt_settled_batch_id = $1), 0)::int AS debt
        FROM payouts WHERE batch_id = $1 OR debt_settled_batch_id = $1`, [batchId]);
   const amount = s.gross - s.debt;
   if (amount <= 0) {
@@ -349,16 +401,16 @@ async function recompute(client, batchId) {
 }
 
 // The open requests, with what the transfer needs: the account holder, the verified name, the FULL IBAN (decrypted only here; each
-// view is written to the mentor's audit log).
+// view is written to the mentor's audit log). The holder and IBAN are the ones saved with the request (destinationOf).
 async function queue(admin) {
   const { rows } = await query(
-    `SELECT pb.*, u.name, u.email, u.payout_name, u.payout_iban_enc FROM payout_batches pb JOIN users u ON u.id = pb.mentor_id
+    `SELECT pb.*, u.name, u.email FROM payout_batches pb JOIN users u ON u.id = pb.mentor_id
       WHERE pb.status IN ('requested', 'sending') ORDER BY pb.requested_at`);
   const kyc = require('./verification/kyc');
   const out = [];
   for (const r of rows) {
-    const iban = decrypt(r.payout_iban_enc);
-    out.push({ ...batchView(r), mentorId: r.mentor_id, name: r.name, email: r.email, payoutName: r.payout_name, verifiedName: await kyc.verifiedNameFor(r.mentor_id),
+    const { iban, name: payoutName } = await destinationOf(r);
+    out.push({ ...batchView(r), mentorId: r.mentor_id, name: r.name, email: r.email, payoutName, verifiedName: await kyc.verifiedNameFor(r.mentor_id),
       iban: iban ? pretty(iban) : null, exportedAt: r.exported_at, exportedAmount: r.exported_amount });
     await audit(null, r.mentor_id, { id: admin.id, label: admin.email }, 'iban_viewed', 'withdrawals queue');
   }
@@ -420,5 +472,5 @@ async function audit(client, mentorId, actor, action, reason) {
     [mentorId, actor.id || null, actor.label, action, reason]);
 }
 
-module.exports = { WithdrawalError, balanceOf, summary, request, markPaid, reject, recompute, queue, recent, overview, exportCsv, markExportedPaid, minimum,
+module.exports = { WithdrawalError, balanceOf, summary, request, markPaid, reject, rejectOpenRequest, recompute, queue, recent, overview, exportCsv, markExportedPaid, minimum,
   sendPayout, syncPayout, syncSending };

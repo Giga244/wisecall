@@ -301,7 +301,7 @@ router.post('/requests/merge', requireAuth, requireAdmin, asyncHandler(async (re
 
 // ---- Withdrawals (server/withdrawals.js) ---------------------------------------------------------------------------------------------
 const WD_STATUS = { not_found: 404, not_open: 409, amount_changed: 409, reference_required: 400, reason_required: 400, invalid_code: 403, code_locked: 429, two_factor_required: 403,
-  daily_limit: 409, name_mismatch: 409, no_payout_details: 409, manual_method: 409, suspended: 409, open_flags: 409 };
+  daily_limit: 409, name_mismatch: 409, no_payout_details: 409, manual_method: 409, suspended: 409, open_flags: 409, payout_hold: 409 };
 const wdFail = (res, e) => {
   if (!(e instanceof require('../withdrawals').WithdrawalError)) throw e;
   res.status(WD_STATUS[e.code] || 400).json({ error: e.code, ...(e.amount !== undefined ? { amount: e.amount } : {}), ...(e.left !== undefined ? { left: e.left } : {}) });

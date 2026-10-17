@@ -7,6 +7,19 @@ const twoFactor = require('./twoFactor');
 // An admin is an account whose email is in ADMIN_EMAILS. The address must also be verified: otherwise anybody could sign up with an
 // admin's address before the admin does.
 const isAdminUser = (user) => Boolean(user && user.emailVerified && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase()));
+// An admin who may use an admin's powers in this session (reading what others may not see): the same rule as requireAdmin below, an admin
+// who also passed the second step in this session (the login cookie's mfaAt), or the second step is not required (docs/security-audit C2).
+const isVerifiedAdmin = (user, tokenPayload) => isAdminUser(user) && (!config.ADMIN_2FA_REQUIRED || twoFactor.isFresh(tokenPayload && tokenPayload.mfaAt));
+
+// The person asking, as a viewer of somebody else's profile: their account (null for a visitor), with the login cookie it came with, so an
+// admin's powers can be checked (isVerifiedAdmin). The cookie's contents are not enumerable: never sent anywhere with the account.
+async function viewerFrom(req) {
+  if (!req.userToken) return null;
+  const user = await getUserById(req.userToken.id);
+  if (user) Object.defineProperty(user, 'token', { value: req.userToken, enumerable: false });
+  return user;
+}
+const isVerifiedAdminViewer = (viewer) => Boolean(viewer) && isVerifiedAdmin(viewer, viewer.token);
 
 // Who is asking, from the login cookie alone (pages and files are not API calls, so there is no requireAuth before them).
 // -> { user, admin, verified }: user is null when nobody is signed in (or the session is invalid or expired); verified means the admin has
@@ -16,7 +29,7 @@ async function whoIsAsking(req) {
   if (!payload) return { user: null, admin: false, verified: false };
   const user = await getUserById(payload.id);
   const admin = isAdminUser(user);
-  return { user: user || null, admin, verified: admin && (!config.ADMIN_2FA_REQUIRED || twoFactor.isFresh(payload.mfaAt)) };
+  return { user: user || null, admin, verified: admin && isVerifiedAdmin(user, payload) };
 }
 
 // Lets through only admins, whether or not they have passed the second step: for the two-step verification routes themselves.
@@ -51,11 +64,11 @@ function tidyPath(urlPath) {
 }
 function isAdminFile(urlPath) {
   const p = tidyPath(urlPath);
-  return p === null || /^\/(js\/admin|i18n\/admin)/.test(p); // (an unreadable path is not let through)
+  return p === null || /^\/(ka\/)?(js\/admin|i18n\/admin)/.test(p); // (an unreadable path is not let through; /ka/... is the same file)
 }
 // The two-step verification page needs its own script and its own small dictionary (admin2fa-en.json) before the admin has passed the
 // second step; nothing else of the panel does.
-const isTwoFactorAsset = (urlPath) => { const p = tidyPath(urlPath); return p === '/js/admin-2fa.js' || (p !== null && /^\/i18n\/admin2fa-[a-z]{2}\.json$/.test(p)); };
+const isTwoFactorAsset = (urlPath) => { const p = tidyPath(urlPath); return p !== null && /^\/(ka\/)?(js\/admin-2fa\.js|i18n\/admin2fa-[a-z]{2}\.json)$/.test(p); };
 
 // Those files are for admins only (and, once the second step is required, for admins who passed it): their texts (and the settings they
 // mention) are never sent to anybody else.
@@ -66,4 +79,4 @@ const adminOnlyFile = asyncHandler(async (req, res, next) => {
   res.status(403).set('Cache-Control', 'no-store').type('text/plain').send('Forbidden');
 });
 
-module.exports = { requireAdmin, requireAdminUser, isAdminUser, whoIsAsking, adminOnlyFile, isAdminFile, tidyPath };
+module.exports = { requireAdmin, requireAdminUser, isAdminUser, isVerifiedAdmin, isVerifiedAdminViewer, viewerFrom, whoIsAsking, adminOnlyFile, isAdminFile, tidyPath };

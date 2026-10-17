@@ -291,6 +291,13 @@ const S = {
       notYou: 'If you did not do this, change your password now, turn two-step verification on again and write to us: someone may be using your account.',
       button: 'Open security settings'
     },
+    passwordSet: {
+      subject: 'A password was added to your Wisecall account', heading: 'A password was added to your account',
+      intro: 'A password was added to your Wisecall account on {device}, {when}. You can now sign in with it as well as with Google.',
+      others: 'For your safety, every other device was signed out.',
+      notYou: 'If you did not do this, sign in with Google now, choose a new password with "Forgot password" and write to us: someone may be using your account.',
+      button: 'Open security settings'
+    },
     contact: { subject: 'New message from the Wisecall contact form', heading: 'New contact message' }
   },
 
@@ -563,6 +570,13 @@ const S = {
       notYou: 'თუ ეს შენ არ გაგიკეთებია, ახლავე შეცვალე პაროლი, ხელახლა ჩართე ორსაფეხურიანი შემოწმება და მოგვწერე: შესაძლოა, შენს ანგარიშს სხვა იყენებს.',
       button: 'უსაფრთხოების პარამეტრები'
     },
+    passwordSet: {
+      subject: 'შენს Wisecall-ის ანგარიშს პაროლი დაემატა', heading: 'შენს ანგარიშს პაროლი დაემატა',
+      intro: 'შენს Wisecall-ის ანგარიშს პაროლი დაემატა მოწყობილობიდან {device}, {when}. ახლა მისით შესვლაც შეგიძლია და Google-ითაც.',
+      others: 'შენი უსაფრთხოებისთვის ყველა სხვა მოწყობილობიდან გამოგიყვანეთ.',
+      notYou: 'თუ ეს შენ არ გაგიკეთებია, ახლავე შედი Google-ით, „დაგავიწყდა პაროლი?“-ით აირჩიე ახალი პაროლი და მოგვწერე: შესაძლოა, შენს ანგარიშს სხვა იყენებს.',
+      button: 'უსაფრთხოების პარამეტრები'
+    },
     contact: { subject: 'ახალი შეტყობინება Wisecall-ის საკონტაქტო ფორმიდან', heading: 'ახალი შეტყობინება' }
   }
 };
@@ -804,6 +818,11 @@ const BUILDERS = {
     heading: s.twoFactorOff.heading,
     blocks: [{ p: fill(s.twoFactorOff.intro, d), raw: true }, { p: s.twoFactorOff.others }, { p: s.twoFactorOff.notYou },
       { button: s.twoFactorOff.button, url: `${config.PUBLIC_URL}/settings.html?tab=account` }]
+  }),
+  passwordSet: (s, d) => ({
+    heading: s.passwordSet.heading,
+    blocks: [{ p: fill(s.passwordSet.intro, d), raw: true }, { p: s.passwordSet.others }, { p: s.passwordSet.notYou },
+      { button: s.passwordSet.button, url: `${config.PUBLIC_URL}/settings.html?tab=account` }]
   }),
   contact: (s, d) => ({
     heading: s.contact.heading,

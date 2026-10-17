@@ -78,7 +78,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
     }
   }
 
-  await startSession(req, res, user);
+  await startSession(req, res, user, null, 'sign_in');
   await require('../verification/signals').record(req, res, user.id, 'signup');
   require('../analytics').event('signup', req, { method: 'email' });
   const source = require('../attribution').read(req);
@@ -113,7 +113,7 @@ router.post('/login', asyncHandler(async (req, res) => {
   // Two-step verification turned on (optional for everyone; admins have their own required step after signing in): the code comes
   // next, and only then is there a session.
   if (await needsSecondStep(user)) { askForSecondStep(res, user); return res.json({ twoFactorRequired: true }); }
-  await startSession(req, res, user);
+  await startSession(req, res, user, null, 'sign_in');
   await require('../verification/signals').record(req, res, user.id, 'login');
   res.json({ user: meProfile(user) });
 }));
@@ -150,7 +150,7 @@ router.post('/login/second-step', asyncHandler(async (req, res) => {
     return res.status(e.code === 'locked' ? 429 : 400).json({ error: e.code });
   }
   res.clearCookie(PENDING_COOKIE);
-  await startSession(req, res, user, { mfaAt: Math.floor(Date.now() / 1000) });
+  await startSession(req, res, user, { mfaAt: Math.floor(Date.now() / 1000) }, 'sign_in');
   await require('../verification/signals').record(req, res, user.id, 'login');
   res.json({ user: meProfile(user) });
 }));
@@ -216,6 +216,9 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
     resetTokenHash: null,
     resetTokenExpiresAt: null
   });
+  // The link reached this address, so whoever reset the password owns it. An account whose address was never confirmed may have been made by
+  // somebody else with it, who then turned two-step verification on: that goes, so the real owner can get in (docs/security-audit C4).
+  if (!user.emailVerified) await twoFactor.reset(user.id);
   // Whoever else was signed in (a stolen cookie, a forgotten device) is signed out now (docs/AUDIT.md #3).
   await endAllSessions(user.id);
   await require('../loginGuard').clear(user.email); // (a new password ends a lockout at once)

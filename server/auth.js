@@ -41,13 +41,28 @@ function deviceLabel(ua) {
 const db = () => require('./db');
 const isUuid = (v) => /^[0-9a-f-]{36}$/i.test(String(v || ''));
 
-// A new signed-in session for this device: a session row, and the login cookie that names it.
-async function startSession(req, res, user, extra) {
+// A new signed-in session for this device: a session row, and the login cookie that names it. `how` says when it last really signed in
+// (sessions.auth_at, what a "recent sign-in" check reads): 'sign_in' for a real sign-in (a password, Google, the code of two-step
+// verification): now. { from: req.userToken } for a session that replaces this device's current one (a new password, "sign out other
+// devices", two-step verification turned on or off): the time of that session's sign-in, never a new one (docs/security-audit C1).
+// Nothing: none (a recent sign-in is asked for again).
+async function startSession(req, res, user, extra, how) {
+  const signIn = how === 'sign_in';
+  const fromSid = !signIn && how && how.from && isUuid(how.from.sid) ? how.from.sid : null;
   const { rows } = await db().query(
-    `WITH s AS (INSERT INTO sessions (user_id, device_label) VALUES ($1, $2) RETURNING id)
-     SELECT s.id, u.session_version FROM s, users u WHERE u.id = $1`, [user.id, deviceLabel(req.get && req.get('user-agent'))]);
+    `WITH s AS (INSERT INTO sessions (user_id, device_label, auth_at)
+                VALUES ($1, $2, CASE WHEN $3::boolean THEN now() ELSE (SELECT auth_at FROM sessions WHERE id = $4::uuid AND user_id = $1) END) RETURNING id)
+     SELECT s.id, u.session_version FROM s, users u WHERE u.id = $1`, [user.id, deviceLabel(req.get && req.get('user-agent')), signIn, fromSid]);
   setAuthCookie(res, signToken(user, { sid: rows[0].id, sv: rows[0].session_version, ...(extra || {}) }), hintFor(user));
   return rows[0].id;
+}
+
+// Did this session really sign in (auth_at) within the last `minutes`? What stands in for the password on an account that has none.
+async function signedInRecently(userId, sid, minutes) {
+  if (!isUuid(sid)) return false;
+  const { rows } = await db().query(
+    'SELECT 1 FROM sessions WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL AND auth_at > now() - make_interval(mins => $3)', [sid, userId, minutes]);
+  return rows.length > 0;
 }
 
 // The same session with more claims (an admin who just passed the second step).
@@ -142,5 +157,5 @@ function optionalAuth(req, res, next) {
 
 module.exports = {
   signToken, setAuthCookie, clearAuthCookie, requireAuth, optionalAuth, COOKIE_NAME, HINT_COOKIE,
-  startSession, reissue, endSession, endAllSessions, listSessions, revokeSession, tokenFrom, deviceLabel
+  startSession, signedInRecently, reissue, endSession, endAllSessions, listSessions, revokeSession, tokenFrom, deviceLabel
 };

@@ -6,6 +6,7 @@ const { query } = require('../db');
 const { getUserById } = require('../models');
 const usernames = require('../usernames');
 const profiles = require('../profiles');
+const { viewerFrom } = require('../adminAuth');
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.get('/users/:username', optionalAuth, asyncHandler(async (req, res) => {
   if (found.redirectTo) return res.json({ redirectTo: found.redirectTo });
   const { userFromRow } = require('../models');
   const owner = userFromRow(found.row);
-  const viewer = req.userToken ? await getUserById(req.userToken.id) : null;
+  const viewer = await viewerFrom(req);
   if (!(await profiles.canView(owner, viewer))) return res.json({ private: true, username: owner.username });
   res.json({ profile: await profiles.view(owner, viewer) });
 }));
@@ -25,7 +26,7 @@ router.get('/users/:username', optionalAuth, asyncHandler(async (req, res) => {
 router.get('/photo/:userId', optionalAuth, asyncHandler(async (req, res) => {
   const owner = await getUserById(req.params.userId);
   if (!owner || !owner.photoUpdatedAt) return res.status(404).end();
-  const viewer = req.userToken ? await getUserById(req.userToken.id) : null;
+  const viewer = await viewerFrom(req);
   if (!(await profiles.canView(owner, viewer))) return res.status(404).end();
   const { rows } = await query('SELECT mime, data, updated_at FROM user_photos WHERE user_id = $1', [owner.id]);
   if (!rows[0]) return res.status(404).end();
