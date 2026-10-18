@@ -10,3 +10,6 @@ e2e/.tmp/
 e2e/results/
 e2e/report/
 backups/
+
+# A data profile of a real database (scripts/profile-db.js): counts only, but never committed
+docs/data-profile/
