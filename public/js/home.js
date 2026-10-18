@@ -106,6 +106,30 @@
     if (chips) chips.innerHTML = all.slice(0, HERO_CHIPS).map((n) => `<li><a class="chip" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${esc(t('niche.' + n.key))}</a></li>`).join('');
   }
 
+  // ---- The hero's example: a question and its answer --------------------------------------------------------------------------
+  // Six of them are in the page (in its language, public/index.html), all in the same place, none shown until one is chosen here: a
+  // random one on each page load, then the next each time the conversation plays again (every 12 seconds, when the question's
+  // animation starts over), so never the same one twice in a row. With reduced motion nothing plays, so it stays the one chosen for
+  // this page load. While the tab is hidden the loop waits, and so does the next example. The card is decoration (aria-hidden): a
+  // screen reader hears its label once, never the rotation.
+  const firstExample = (count, random = Math.random) => Math.min(count - 1, Math.floor(random() * count));
+  const nextExample = (i, count) => (i + 1) % count;
+  function initExamples() {
+    const stage = document.querySelector('.hero-stage .stage');
+    const examples = stage ? [...stage.querySelectorAll('.stage-example')] : [];
+    if (!examples.length) return;
+    let current = -1;
+    const show = (i) => { current = i; examples.forEach((ex, k) => ex.classList.toggle('is-active', k === i)); };
+    show(firstExample(examples.length));
+    stage.addEventListener('animationiteration', (ev) => {
+      if (ev.animationName === 'q-in' && ev.target.closest('.stage-example') === examples[current]) show(nextExample(current, examples.length));
+    });
+    const paused = () => stage.classList.toggle('is-paused', document.visibilityState === 'hidden');
+    document.addEventListener('visibilitychange', paused);
+    paused();
+  }
+  initExamples();
+
   // The hero's search: the words go into Browse experts' own search, and the page scrolls there (before launch, to the waiting list).
   function initHeroSearch() {
     const form = document.getElementById('heroSearch');
@@ -189,5 +213,5 @@
   document.addEventListener('DOMContentLoaded', () => WisecallI18n.ready.then(loadLive));
   document.addEventListener('wisecall:lang-changed', drawStrip);
 
-  window.WisecallHome = { icon, drawStrip, emptyArt: EMPTY_ART };
+  window.WisecallHome = { icon, drawStrip, emptyArt: EMPTY_ART, examples: { first: firstExample, next: nextExample } };
 })();

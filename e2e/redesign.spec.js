@@ -100,7 +100,7 @@ test('with reduced motion nothing moves; with motion the hero rises, the convers
   await calm.page.waitForTimeout(500);
   expect(await calm.page.evaluate(() => document.documentElement.classList.contains('motion'))).toBe(false);
   expect(await calm.page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length)).toBe(0);
-  await expect(calm.page.locator('.bubble-a')).toHaveCSS('opacity', '1'); // (the whole conversation is shown, still)
+  await expect(calm.page.locator('.stage-example.is-active .bubble-a')).toHaveCSS('opacity', '1'); // (the whole conversation is shown, still)
   await calm.ctx.close();
 
   const lively = await open(browser, { width: 1280, motion: 'no-preference' });

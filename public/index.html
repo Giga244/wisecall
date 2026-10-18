@@ -54,20 +54,91 @@
       </div>
     </div>
 
-    <!-- The conversation: a question, typing dots, the answer (it plays again every 12 seconds; still with reduced motion) -->
+    <!-- The conversation: a question, typing dots, the answer (it plays again every 12 seconds with the next example; still, one example, with reduced motion) -->
     <div class="hero-stage rise rise-2" role="img" data-i18n-aria="mock.aria" aria-label="An example of a question and an answer on Wisecall">
       <div class="stage-shadow" aria-hidden="true"></div>
       <div class="stage" aria-hidden="true">
         <div class="stage-head"><span data-i18n="home.stage.title">How an answer looks</span><span class="stage-tag" data-i18n="mock.example">Example</span></div>
-        <div class="bubble bubble-q">
-          <p class="bubble-who" data-i18n="mock.q.label">A question</p>
-          <p data-i18n="mock.q.text">I'm a marketing manager who wants to move into product design. Should I start with a course, or build projects first?</p>
-        </div>
-        <div class="stage-reply">
-          <div class="bubble-typing"><span></span><span></span><span></span></div>
-          <div class="bubble bubble-a">
-            <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.a.role">Product designer</span></p>
-            <p data-i18n="mock.a.text">Build first. Pick one real problem, design a small fix for it, and write down your thinking. Two solid case studies beat any certificate. A course helps once you know which gaps you have.</p>
+        <!-- Six examples in the same place (the card is as tall as the longest): home.js shows one, chosen before any is shown, and the next
+             each time the conversation plays again -->
+        <div class="stage-examples">
+          <div class="stage-example">
+            <div class="bubble bubble-q">
+              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
+              <p data-i18n="mock.examples.1.q">I'm a marketing manager who wants to move into product design. Should I start with a course, or build projects first?</p>
+            </div>
+            <div class="stage-reply">
+              <div class="bubble-typing"><span></span><span></span><span></span></div>
+              <div class="bubble bubble-a">
+                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.1.role">Product designer</span></p>
+                <p data-i18n="mock.examples.1.a">Build first. Pick one real problem, design a small fix for it, and write down your thinking. Two solid case studies beat any certificate. A course helps once you know which gaps you have.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-example">
+            <div class="bubble bubble-q">
+              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
+              <p data-i18n="mock.examples.2.q">I want to do a master's in Germany but my IELTS is 6.0. Should I retake it or apply anyway?</p>
+            </div>
+            <div class="stage-reply">
+              <div class="bubble-typing"><span></span><span></span><span></span></div>
+              <div class="bubble bubble-a">
+                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.2.role">Studied in Munich</span></p>
+                <p data-i18n="mock.examples.2.a">Check each program's minimum first: many accept 6.0 or 6.5, and some technical programs take English B2 without IELTS. If your dream program needs 6.5, retake it; one focused month on writing usually adds half a band.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-example">
+            <div class="bubble bubble-q">
+              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
+              <p data-i18n="mock.examples.3.q">I got my first offer as a junior developer in Tbilisi. Is 1,800 ₾ fair, and can I ask for more?</p>
+            </div>
+            <div class="stage-reply">
+              <div class="bubble-typing"><span></span><span></span><span></span></div>
+              <div class="bubble bubble-a">
+                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.3.role">Tech lead, 9 years</span></p>
+                <p data-i18n="mock.examples.3.a">For a junior role that is the lower-middle range. Ask politely for 10–15% more and give one reason, like a project you built. The worst answer is 'no', and offers are almost never withdrawn for asking once.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-example">
+            <div class="bubble bubble-q">
+              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
+              <p data-i18n="mock.examples.4.q">I'm a 5th-year medical student. How do I choose between cardiology and family medicine?</p>
+            </div>
+            <div class="stage-reply">
+              <div class="bubble-typing"><span></span><span></span><span></span></div>
+              <div class="bubble bubble-a">
+                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.4.role">Cardiologist</span></p>
+                <p data-i18n="mock.examples.4.a">Spend one week in each before deciding: the daily rhythm matters more than the subject. Cardiology means long training and night shifts; family medicine means more continuity with patients and a calmer schedule.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-example">
+            <div class="bubble bubble-q">
+              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
+              <p data-i18n="mock.examples.5.q">I want to open a small coffee stand. What should I test before spending my savings?</p>
+            </div>
+            <div class="stage-reply">
+              <div class="bubble-typing"><span></span><span></span><span></span></div>
+              <div class="bubble bubble-a">
+                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.5.role">Café owner, Tbilisi</span></p>
+                <p data-i18n="mock.examples.5.a">Count people walking past your spot at the hours you'd open, on three different days. Then sell coffee from a table for one weekend before you sign a lease. Real sales will tell you more than any plan.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-example">
+            <div class="bubble bubble-q">
+              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
+              <p data-i18n="mock.examples.6.q">I'm a freelance designer. How do I price a logo for a small local business?</p>
+            </div>
+            <div class="stage-reply">
+              <div class="bubble-typing"><span></span><span></span><span></span></div>
+              <div class="bubble bubble-a">
+                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.6.role">Brand designer</span></p>
+                <p data-i18n="mock.examples.6.a">Price the result, not your hours: offer a basic package and a fuller one with a mini brand guide. Most small clients pick the middle option, so always offer three.</p>
+              </div>
+            </div>
           </div>
         </div>
         <div class="stage-meta"><span class="meta-chip" data-i18n="hero.note">Pay per question · Answer within 7 days or full refund</span></div>

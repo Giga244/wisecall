@@ -46,12 +46,19 @@ a.chip { display: inline-flex; align-items: center; min-height: 40px; text-decor
 .hero-stage { position: relative; min-height: 520px; min-width: 0; }
 .stage-shadow { position: absolute; inset: 20px 0 0 40px; background: var(--line); border-radius: var(--r-panel); transform: rotate(2.5deg); }
 .stage {
-  position: relative; display: flex; flex-direction: column; gap: 18px; min-height: 480px; padding: 34px 30px;
+  --stage-gap: 18px;
+  position: relative; display: flex; flex-direction: column; gap: var(--stage-gap); min-height: 480px; padding: 34px 30px;
   background: var(--c-mint); color: var(--on-pastel); border: var(--line-w) solid var(--c-ink); border-radius: var(--r-panel);
 }
 .stage-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-mint-ink); }
 :lang(ka) .stage-head { text-transform: none; letter-spacing: 0.02em; }
 .stage-tag { border: var(--chip-w) solid var(--c-mint-ink); border-radius: var(--r-pill); padding: 3px 10px; }
+/* the six examples (home.js) share one place: the hidden ones keep their room, so the card is as tall as the longest example and nothing
+   moves when the next one comes; only the one shown is visible and animates */
+.stage-examples { display: grid; min-width: 0; }
+.stage-example { grid-area: 1 / 1; display: flex; flex-direction: column; gap: var(--stage-gap); min-width: 0; }
+.stage-example:not(.is-active) { visibility: hidden; }
+.stage-example:not(.is-active) :is(.bubble-q, .bubble-typing, .bubble-typing span, .bubble-a) { animation: none; }
 .bubble { max-width: 88%; padding: 16px 18px; border: var(--line-w) solid var(--c-ink); color: var(--on-pastel); }
 .bubble p { margin: 0; font-size: 1.02rem; line-height: 1.45; }
 .bubble .bubble-who { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-weight: 700; font-size: 0.82rem; color: var(--c-muted); }
@@ -86,6 +93,8 @@ html.motion .bubble-a { animation: a-in 12s ease-in-out infinite both; }
 html.motion .stage-meta { animation: meta-in 12s ease-in-out infinite both; }
 html.motion .stage-sticker { animation: float 6s ease-in-out infinite; }
 html:not(.motion) .bubble-typing { visibility: hidden; }
+/* (a hidden tab: the loop, and so the next example, waits) */
+html.motion .stage.is-paused, html.motion .stage.is-paused * { animation-play-state: paused; }
 
 /* 2. Fields: pastel tiles in full rows (2 columns on phones, 3 on tablets, 4 on small laptops, 5 on desktops), the rest behind "See all".
    Only full rows show while it is closed: 6 / 9 / 8 / 10 tiles (public/js/home.js counts the same). A name never breaks inside a word:
@@ -244,7 +253,7 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
   .hero-search .btn { width: 100%; }
   .hero-stage { margin-top: 8px; }
   .stage-shadow { inset: 14px 0 0 18px; border-radius: 28px; }
-  .stage { min-height: 0; padding: 40px 18px 22px; gap: 14px; border-radius: 28px; }
+  .stage { min-height: 0; padding: 40px 18px 22px; --stage-gap: 14px; border-radius: 28px; }
   .bubble p { font-size: 0.96rem; }
   .stage-sticker { right: -4px; top: -18px; font-size: 0.85rem; padding: 8px 12px; }
   .live-home { padding: 56px 0; }
