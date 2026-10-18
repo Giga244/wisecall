@@ -46,7 +46,8 @@ async function balanceOf(mentorId, client) {
 // When each part of the money on hold becomes available (a date per day), and what holds the rest (a dispute, a payout-details hold).
 async function holdsOf(mentorId) {
   const { rows } = await query(
-    `SELECT p.amount, GREATEST(p.payable_at, COALESCE(u.payout_hold_until, p.payable_at)) AS until,
+    `SELECT p.amount, GREATEST(p.payable_at, COALESCE(u.payout_hold_until, p.payable_at),
+              COALESCE((SELECT ft.follow_up_due_at FROM threads ft WHERE ft.booking_id = p.booking_id AND ft.follow_up_replied_at IS NULL AND ft.follow_up_due_at > now()), p.payable_at)) AS until,
             EXISTS (SELECT 1 FROM disputes d WHERE d.booking_id = p.booking_id AND d.status = 'open') AS disputed
        FROM payouts p JOIN users u ON u.id = p.mentor_id WHERE p.mentor_id = $1 AND ${ledger.holdingSql('p')}
       ORDER BY until`, [mentorId]);
@@ -383,8 +384,8 @@ async function syncSending() {
 }
 
 // Called by the ledger (inside a refund's transaction) when a payout in a request was voided or reduced: the request's amount is
-// computed again; when nothing is left to pay, the request is closed and the mentor told.
-async function recompute(client, batchId) {
+// computed again; when nothing is left to pay, the request is closed (with `reason`) and the mentor told.
+async function recompute(client, batchId, reason = 'A refund left nothing to pay in this request.') {
   const { rows: [b] } = await client.query('SELECT * FROM payout_batches WHERE id = $1 FOR UPDATE', [batchId]);
   if (!b || b.status !== 'requested') return;
   await client.query(`UPDATE payouts SET batch_id = NULL WHERE batch_id = $1 AND status = 'void'`, [batchId]);
@@ -394,10 +395,23 @@ async function recompute(client, batchId) {
        FROM payouts WHERE batch_id = $1 OR debt_settled_batch_id = $1`, [batchId]);
   const amount = s.gross - s.debt;
   if (amount <= 0) {
-    await reject({ batchId, reason: 'A refund left nothing to pay in this request.', admin: null, client });
+    await reject({ batchId, reason, admin: null, client });
     return;
   }
   await client.query('UPDATE payout_batches SET amount = $2, debt_deducted = $3 WHERE id = $1', [batchId, amount, s.debt]);
+}
+
+// A payout that has to wait again (a follow-up question its mentor must reply to first, server/inbox.js) leaves a request that was not
+// sent yet: the request's amount is computed again, or it is closed with `reason` when nothing is left. A request being sent, or paid, is
+// not touched (the money is on its way). Inside the caller's transaction.
+async function takeOutOfRequest(client, bookingId, reason) {
+  const { rows: [p] } = await client.query(`SELECT id, batch_id FROM payouts WHERE booking_id = $1 AND status = 'pending' AND batch_id IS NOT NULL FOR UPDATE`, [bookingId]);
+  if (!p) return false;
+  const { rows: [b] } = await client.query('SELECT status FROM payout_batches WHERE id = $1 FOR UPDATE', [p.batch_id]);
+  if (!b || b.status !== 'requested') return false;
+  await client.query('UPDATE payouts SET batch_id = NULL WHERE id = $1', [p.id]);
+  await recompute(client, p.batch_id, reason);
+  return true;
 }
 
 // The open requests, with what the transfer needs: the account holder, the verified name, the FULL IBAN (decrypted only here; each
@@ -472,5 +486,5 @@ async function audit(client, mentorId, actor, action, reason) {
     [mentorId, actor.id || null, actor.label, action, reason]);
 }
 
-module.exports = { WithdrawalError, balanceOf, summary, request, markPaid, reject, rejectOpenRequest, recompute, queue, recent, overview, exportCsv, markExportedPaid, minimum,
+module.exports = { WithdrawalError, balanceOf, summary, request, markPaid, reject, rejectOpenRequest, recompute, takeOutOfRequest, queue, recent, overview, exportCsv, markExportedPaid, minimum,
   sendPayout, syncPayout, syncSending };

@@ -102,6 +102,8 @@ reason, and the Mentor can apply again. A Mentor is listed only after approval *
 6.3. We can take a Mentor off the Platform, and refund their open questions, if a verification step later fails, a report is upheld,
 a licence expires, or they break these Terms.
 
+6.4. Mentors reply to the free follow-up question within 3 days.
+
 ## 7. Rules for everyone
 
 You must not: use the Platform for anything illegal; harass, threaten or deceive anyone; post someone else's personal data; send

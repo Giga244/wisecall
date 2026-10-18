@@ -117,9 +117,10 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
   // Reported problems with answers, and until when the asker can still report one.
   const disputes = require('../disputes');
   const found = await disputes.forBookings([...asked, ...received].map((b) => b.id));
+  const ignored = await disputes.ignoredFollowUps(asked.map((b) => b.id)); // (a follow-up the mentor did not reply to: reportable for longer)
   const withDispute = (b, role) => {
-    const w = role === 'asker' ? disputes.windowFor(b) : null;
-    return { ...b, dispute: found[b.id] || null, disputeUntil: w && Date.now() < +w.until && !found[b.id] ? w.until : null };
+    const o = role === 'asker' && !found[b.id] ? disputes.optionsFor(b, ignored[b.id]) : null;
+    return { ...b, dispute: found[b.id] || null, disputeUntil: o ? o.until : null, disputeReasons: o ? o.reasons : null };
   };
   // Public answers: the offer after a 4–5★ rating, and where each one stands (server/publicAnswers.js).
   const publicAnswers = await require('../publicAnswers').forBookings([...asked, ...received], me);
@@ -191,6 +192,9 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
     await ledger.onAnswered(booking);
     const [seeker, mentor] = await Promise.all([getUserById(booking.seekerId), getUserById(booking.mentorId)]);
     if (seeker && mentor) notify.notifySeekerAnswered(seeker, mentor, booking);
+  } else {
+    // (the admins hear of it at once, with a link to the review queue, so it is checked within the hold)
+    probation.tellAdmins(mentorNow, booking).catch((e) => console.error('[probation] admin notice failed:', e.message));
   }
   res.json({ booking: probation.toClient(booking, req.userToken.id) });
 }));

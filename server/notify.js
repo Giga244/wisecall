@@ -43,6 +43,10 @@ const notifyRefund = (seeker, mentor, booking, reason) => Promise.all([
 const notifyFollowUp = (to, data) =>
   safeSend('follow-up notify', data.kind === 'follow_up_question' ? 'followUpQuestion' : 'followUpReply', to, { name: data.from, body: data.body, threadId: data.threadId });
 
+// The mentor has not replied to the follow-up question after 2 days (server/inbox.js followUpSweep): always sent (it is part of the order).
+const notifyFollowUpReminder = (mentor, { from, dueAt, threadId }) =>
+  safeSend('follow-up reminder', 'followUpReminder', mentor, { name: from || '', when: utcDate(dueAt, mentor.language), threadId });
+
 // A dispute: the mentor hears that the asker reported a problem (the payout is held); both hear the decision.
 const notifyDisputeOpened = (mentor, booking) => safeSend('dispute opened', 'disputeOpened', mentor, { question: booking.question });
 const notifyDisputeResolved = (asker, mentor, booking, d) => Promise.all([asker, mentor].map((u) => safeSend('dispute resolved', 'disputeResolved', u, {
@@ -136,4 +140,4 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+module.exports = { notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifyFollowUpReminder, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

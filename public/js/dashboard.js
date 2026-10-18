@@ -194,12 +194,14 @@
       return `<div class="dispute-note"><p>${escapeHtml(text)}</p>${d.status === 'resolved' && d.note ? `<p class="small muted">${escapeHtml(t('dash.dispute.why'))} ${escapeHtml(d.note)}</p>` : ''}</div>`;
     }
     if (role !== 'asker' || !b.disputeUntil) return '';
-    const reasons = ['not_an_answer', 'wrong_or_harmful', 'off_topic', 'rude', 'other'];
+    // (the server says which reasons are open: after a follow-up the mentor did not reply to in time, that one can be reported for longer)
+    const reasons = b.disputeReasons || ['not_an_answer', 'wrong_or_harmful', 'off_topic', 'rude', 'other'];
+    const onlyFollowUp = reasons.length === 1 && reasons[0] === 'mentor_ignored_follow_up';
     return `
       <details class="decline-box dispute-box">
         <summary>${t('dash.dispute.open')}</summary>
         <form class="dispute-form" data-id="${b.id}" novalidate>
-          <p class="small muted">${escapeHtml(t('dash.dispute.help').replace('{date}', WisecallI18n.formatDate(b.disputeUntil, { dateStyle: 'medium' })))}</p>
+          <p class="small muted">${escapeHtml(t(onlyFollowUp ? 'dash.dispute.helpFollowUp' : 'dash.dispute.help').replace('{date}', WisecallI18n.formatDate(b.disputeUntil, { dateStyle: 'medium' })))}</p>
           <label class="field-label small" for="dispute-reason-${b.id}">${t('dash.dispute.reason')}</label>
           <select id="dispute-reason-${b.id}">${reasons.map((r) => `<option value="${r}">${t('dash.dispute.r.' + r)}</option>`).join('')}</select>
           <label class="field-label small" for="dispute-details-${b.id}">${t('dash.dispute.details')}</label>
@@ -261,7 +263,18 @@
       : emptyState('dash.received.notListed.title', 'dash.received.notListed.body', `<a class="btn btn-primary" href="/settings.html?tab=verification">${t('dash.received.notListed.cta')}</a>`);
   }
 
+  // A short reminder above the answer box (not something to tick: nothing is required), with a link to the guide. Open for a mentor's first
+  // 5 answers, folded after that.
+  const greatAnswerHref = () => `${WisecallI18n.getLang() === 'ka' ? '/ka' : ''}/help/write-a-great-answer`;
+  const checklistHtml = (open) => `
+    <details class="answer-checklist"${open ? ' open' : ''}>
+      <summary>${t('dash.answer.checklist.title')}</summary>
+      <ul>${['exact', 'concrete', 'limits', 'contact'].map((k) => `<li>${t('dash.answer.checklist.' + k)}</li>`).join('')}</ul>
+      <a class="plain-link small" href="${greatAnswerHref()}">${t('help.greatAnswer')}</a>
+    </details>`;
+
   function renderReceived(list) {
+    const answeredSoFar = list.filter((b) => b.answeredAt).length;
     const waiting = list.filter((b) => b.status === 'paid').length;
     const count = document.getElementById('receivedCount');
     count.hidden = waiting === 0;
@@ -289,6 +302,7 @@
           : (b.status === 'paid' ? `
             <form class="answer-form" data-id="${b.id}" novalidate>
               <div class="answer-edit">
+                ${checklistHtml(answeredSoFar < 5)}
                 <label class="sr-only" for="answer-${b.id}">${t('dash.answer.placeholder')}</label>
                 <textarea id="answer-${b.id}" rows="7" maxlength="${answerMax}" placeholder="${escapeHtml(t('dash.answer.placeholder'))}" aria-describedby="answer-meta-${b.id} answer-error-${b.id}" required></textarea>
                 <div class="q-meta" id="answer-meta-${b.id}"><span class="a-help"></span><span class="a-count"></span></div>

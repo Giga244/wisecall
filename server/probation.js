@@ -23,6 +23,18 @@ async function shouldHold(mentorId) {
 // never a moment when the answer is saved but the buyer could already read it.
 const holdPatch = () => ({ answerReview: 'held', answerHeldUntil: new Date(Date.now() + rules.LIMITS.probationHoldHours * HOUR) });
 
+// A new answer was held: the admins are emailed with a link to the review queue, so they can read it before it is released by itself
+// after LIMITS.probationHoldHours. Only the mentor's name and email go in it (escaped), never the question or the answer.
+async function tellAdmins(mentor, booking) {
+  const { rows: [n] } = await query('SELECT count(*)::int AS n FROM bookings WHERE mentor_id = $1 AND answered_at IS NOT NULL', [booking.mentorId]);
+  const esc = require('./email').escapeHtml;
+  const url = `${require('./config').PUBLIC_URL}/admin.html?tab=queue`;
+  const hours = rules.LIMITS.probationHoldHours;
+  await notify.notifyAdmins('An answer is waiting for review',
+    `<p>${esc(mentor ? mentor.name : '?')} (${esc(mentor ? mentor.email : '?')}) sent answer ${n.n} of their first ${rules.LIMITS.probationAnswers}. The asker sees it only after
+     a check, or automatically in ${hours} hours unless it is flagged.</p><p><a href="${esc(url)}">Open the review queue</a> (${esc(url)})</p>`);
+}
+
 // Makes a held answer visible. `actor` is an admin, or steps.SYSTEM for the automatic release.
 // Safe to call twice: only the first call does anything.
 async function release(bookingId, actor, how) {
@@ -115,4 +127,4 @@ function trimForClient(b, viewerId) {
 }
 const toClient = (booking, viewerId) => trimForClient(forViewer(booking, viewerId), viewerId);
 
-module.exports = { shouldHold, holdPatch, release, flag, reject, releaseDue, queue, forViewer, toClient, trimForClient };
+module.exports = { shouldHold, holdPatch, tellAdmins, release, flag, reject, releaseDue, queue, forViewer, toClient, trimForClient };

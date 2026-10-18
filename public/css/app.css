@@ -557,6 +557,11 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .emergency-help { background: var(--sun-tint); border: var(--line-w) dashed var(--line); border-radius: var(--r-card); padding: 18px 20px; margin-bottom: 14px; }
 .emergency-help h3 { margin: 0 0 8px; font-size: 1.05rem; }
 .emergency-help ul { margin: 8px 0; padding-left: 20px; }
+/* The four-point reminder above a mentor's answer box (open for their first 5 answers, folded after), and the guide's link above the list */
+.answer-checklist { margin: 0 0 12px; padding: 4px 14px 10px; border: var(--line-w) solid var(--line); border-radius: var(--radius-sm); background: var(--card); }
+.answer-checklist summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.answer-checklist ul { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 2px; }
+.great-answer-link { margin: 0 0 12px; }
 .decline-box { margin-top: 12px; }
 .decline-box summary { cursor: pointer; color: var(--ink-soft); font-weight: 700; min-height: 44px; display: flex; align-items: center; }
 .decline-form { display: grid; gap: 8px; margin-top: 6px; }

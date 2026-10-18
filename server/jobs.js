@@ -116,6 +116,12 @@ async function releaseHeldAnswers() {
   if (n) console.log(`[jobs] released ${n} held answer(s) after the check window`);
 }
 
+// Follow-up questions waiting for the mentor's reply: a reminder after 2 days; after 3, the asker may report it and the admins are told.
+async function followUpDeadlines() {
+  const r = await require('./inbox').followUpSweep();
+  if (r.reminded || r.missed) console.log(`[jobs] follow-ups: ${r.reminded} reminder(s), ${r.missed} reply deadline(s) missed`);
+}
+
 // Licenses about to expire (a reminder for the admin) and licenses that expired (the mentor is taken off the site).
 async function checkLicenses() {
   const r = await require('./verification/monitoring').licenseSweep();
@@ -194,6 +200,7 @@ async function runSweep({ wait = false } = {}) {
       await purgeUnpaid();
       await purgeDocuments();
       await releaseHeldAnswers();
+      await followUpDeadlines();
       await checkLicenses();
       await notifyWaitingList();
       await ratingsHousekeeping();

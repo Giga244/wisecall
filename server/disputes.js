@@ -7,7 +7,11 @@ const config = require('./config');
 const textSafety = require('./textSafety');
 const { getBookingById, getUserById } = require('./models');
 
-const REASONS = ['not_an_answer', 'wrong_or_harmful', 'off_topic', 'rude', 'other'];
+const ANSWER_REASONS = ['not_an_answer', 'wrong_or_harmful', 'off_topic', 'rude', 'other'];
+// The mentor did not reply to the free follow-up question by its deadline (server/inbox.js): reported for LIMITS.followUpDisputeDays from
+// then, even after the answer's own DISPUTE_DAYS have ended.
+const IGNORED_FOLLOW_UP = 'mentor_ignored_follow_up';
+const REASONS = [...ANSWER_REASONS, IGNORED_FOLLOW_UP];
 const OUTCOMES = ['full_refund', 'partial_refund', 'rejected'];
 const DETAILS_MAX = 1500;
 
@@ -23,6 +27,25 @@ function windowFor(booking) {
   return { from, until: new Date(from.getTime() + config.DISPUTE_DAYS * 86400000) };
 }
 
+// { [bookingId]: until } for the bookings whose follow-up the mentor did not reply to in time, while that can still be reported.
+async function ignoredFollowUps(ids) {
+  if (!ids.length) return {};
+  const days = require('./inbox').LIMITS.followUpDisputeDays;
+  const { rows } = await query(
+    `SELECT booking_id, follow_up_missed_at + make_interval(days => $2) AS until FROM threads
+      WHERE booking_id = ANY($1::uuid[]) AND follow_up_missed_at IS NOT NULL AND follow_up_missed_at + make_interval(days => $2) > now()`, [ids, days]);
+  return Object.fromEntries(rows.map((r) => [r.booking_id, r.until]));
+}
+// What the asker may still report about a booking: { until, reasons } (null when nothing), for the dashboard.
+function optionsFor(booking, ignoredUntil) {
+  const w = windowFor(booking);
+  const answerOpen = Boolean(w) && Date.now() < +w.until;
+  const followUpOpen = Boolean(w) && Boolean(ignoredUntil);
+  if (!answerOpen && !followUpOpen) return null;
+  const untils = [answerOpen ? w.until : null, followUpOpen ? new Date(ignoredUntil) : null].filter(Boolean);
+  return { until: new Date(Math.max(...untils.map(Number))), reasons: [...(answerOpen ? ANSWER_REASONS : []), ...(followUpOpen ? [IGNORED_FOLLOW_UP] : [])] };
+}
+
 const view = (d) => d && ({
   id: d.id, reason: d.reason, details: d.details, status: d.status, outcome: d.outcome, refundAmount: d.refund_amount,
   note: d.resolution_note, createdAt: d.created_at, resolvedAt: d.resolved_at
@@ -35,7 +58,10 @@ async function open(user, bookingId, { reason, details } = {}) {
   if (booking.seekerId !== user.id) throw new DisputeError('forbidden');
   const w = windowFor(booking);
   if (!w) throw new DisputeError('not_disputable');
-  if (Date.now() > +w.until) throw new DisputeError('window_closed');
+  if (reason === IGNORED_FOLLOW_UP) {
+    // (only when the mentor really missed the follow-up's deadline, and for followUpDisputeDays after it)
+    if (!(await ignoredFollowUps([booking.id]))[booking.id]) throw new DisputeError('window_closed');
+  } else if (Date.now() > +w.until) throw new DisputeError('window_closed');
   const text = typeof details === 'string' ? textSafety.cleanText(details).slice(0, DETAILS_MAX) : '';
   const { rows } = await query(
     `INSERT INTO disputes (booking_id, opened_by, reason, details) VALUES ($1, $2, $3, $4) ON CONFLICT (booking_id) DO NOTHING RETURNING *`,
@@ -221,4 +247,4 @@ async function ticketRefundSettled(ticketId, made) {
   require('./notify').notifyAdmins('A partial refund was not made', `<p>The bank shows nothing returned for the partial refund of live ticket ${ticketId}. The dispute is open again: decide it again.</p>`);
 }
 
-module.exports = { REASONS, TICKET_REASONS, OUTCOMES, DisputeError, windowFor, windowForTicket, open, openForTicket, forBookings, forTickets, listForAdmin, resolve, refundConfirmed, refundNotMade, ticketRefundSettled };
+module.exports = { REASONS, ANSWER_REASONS, TICKET_REASONS, OUTCOMES, DisputeError, windowFor, windowForTicket, ignoredFollowUps, optionsFor, open, openForTicket, forBookings, forTickets, listForAdmin, resolve, refundConfirmed, refundNotMade, ticketRefundSettled };

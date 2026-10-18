@@ -14,13 +14,15 @@ const config = require('./config');
 // Payable: earned, the hold has passed, and no dispute about its booking is open (a dispute holds the money until an admin decides).
 // ...and the mentor's payout details were not changed in the last PAYOUT_CHANGE_HOLD_HOURS, and it is not in a withdrawal request.
 // (a live session's payout waits the same way while one of its tickets is disputed or the session has an open report)
+// ...and no follow-up question is waiting for the mentor's reply: until the reply, or its deadline (server/inbox.js FOLLOW_UP_REPLY_DAYS).
 const payableSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.payable_at <= now() AND ${p}.batch_id IS NULL
   AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.booking_id = ${p}.booking_id AND d.status = 'open')
   AND NOT EXISTS (SELECT 1 FROM bookings pb WHERE pb.id = ${p}.booking_id AND pb.partial_refund_amount IS NOT NULL)
   AND (${p}.live_session_id IS NULL OR (
     NOT EXISTS (SELECT 1 FROM disputes d JOIN live_tickets lt ON lt.id = d.ticket_id WHERE lt.session_id = ${p}.live_session_id AND d.status = 'open')
     AND NOT EXISTS (SELECT 1 FROM live_reports lr WHERE lr.session_id = ${p}.live_session_id AND lr.status = 'open')))
-  AND NOT EXISTS (SELECT 1 FROM users hu WHERE hu.id = ${p}.mentor_id AND hu.payout_hold_until > now())`;
+  AND NOT EXISTS (SELECT 1 FROM users hu WHERE hu.id = ${p}.mentor_id AND hu.payout_hold_until > now())
+  AND NOT EXISTS (SELECT 1 FROM threads ft WHERE ft.booking_id = ${p}.booking_id AND ft.follow_up_due_at > now() AND ft.follow_up_replied_at IS NULL)`;
 // On hold: earned, not payable yet, not in a request. Requested: in an open withdrawal request (server/withdrawals.js).
 const holdingSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.batch_id IS NULL AND NOT (${payableSql(p)})`;
 const requestedSql = (p = 'payouts') => `${p}.status = 'pending' AND ${p}.batch_id IS NOT NULL`;

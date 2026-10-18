@@ -4,6 +4,8 @@
 - Answer within **7 days** of payment. Otherwise the buyer is refunded automatically and you earn nothing for that question.
 - You answer **once**. It must be at least **150 characters** of real writing, and you can't edit it after sending. Take your time and check it first.
 - Your **first 5 answers** are read by our team before the buyer sees them (up to 24 hours).
+- If the buyer sends their one free follow-up question, reply within **3 days**.
+- What makes an answer useful, with an example: [How to write a great answer](/help/write-a-great-answer).
 
 **Honesty**
 - Everything in your application must be true and your own: title, experience, evidence.

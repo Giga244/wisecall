@@ -13,8 +13,12 @@ const { query, tx } = require('./db');
 const config = require('./config');
 const textSafety = require('./textSafety');
 
+// The mentor replies to the free follow-up within FOLLOW_UP_REPLY_DAYS (a reminder after followUpReminderDays); until the reply, or the
+// deadline, that booking's payout waits (server/ledger.js payableSql). A deadline missed lets the asker report it for followUpDisputeDays.
+const FOLLOW_UP_REPLY_DAYS = 3;
 const LIMITS = {
   followUpMin: 10, followUpMax: 1000, replyMax: 2000, followUpDays: 7,
+  followUpReplyDays: FOLLOW_UP_REPLY_DAYS, followUpReminderDays: 2, followUpDisputeDays: 7,
   supportSubjectMax: 120, supportMin: 2, supportMax: 3000, openSupportMax: 5,
   reportDetailsMax: 500
 };
@@ -22,6 +26,11 @@ const LIMITS = {
 // decisions, payouts, support replies, security) is transactional and always sent.
 const OPTIONAL_EMAILS = ['rating_reminders', 'tips'];
 const REPORT_REASONS = ['contact_details', 'abuse', 'spam', 'scam', 'other'];
+// Why a withdrawal request lost a payout, or was closed, when a follow-up question came in for it (the mentor reads it in their language).
+const FOLLOW_UP_WAITS = {
+  en: 'A follow-up question is waiting for your reply, so the payout for that question waits too. Ask again once you have replied.',
+  ka: 'დამატებითი კითხვა შენს პასუხს ელოდება, ამიტომ იმ კითხვის ანაზღაურებაც შეჩერებულია. მოითხოვე თავიდან, როცა უპასუხებ.'
+};
 
 class InboxError extends Error {
   constructor(code, extra = {}) { super(code); this.code = code; Object.assign(this, extra); }
@@ -150,8 +159,12 @@ function followUpState(thread, booking, messages, role) {
   const since = booking.answerReleasedAt || booking.answeredAt;
   const askUntil = since ? new Date(new Date(since).getTime() + LIMITS.followUpDays * 86400000) : null;
   const closed = thread.status === 'closed' || Boolean(r);
+  // (the mentor's reply deadline, while it is waiting; once it passed, until when the asker can report it)
+  const replyBy = q && !r && thread.follow_up_due_at ? thread.follow_up_due_at : null;
+  const missed = Boolean(q && !r && thread.follow_up_missed_at);
   return {
-    asked: Boolean(q), replied: Boolean(r), closed, askUntil,
+    asked: Boolean(q), replied: Boolean(r), closed, askUntil, replyBy, missed,
+    reportUntil: missed ? new Date(new Date(thread.follow_up_missed_at).getTime() + LIMITS.followUpDisputeDays * 86400000) : null,
     canAsk: role === 'asker' && visible && !q && !closed && askUntil && Date.now() < +askUntil,
     canReply: role === 'mentor' && Boolean(q) && !r && !closed && booking.status === 'answered',
     limits: { min: LIMITS.followUpMin, max: role === 'mentor' ? LIMITS.replyMax : LIMITS.followUpMax }
@@ -233,12 +246,19 @@ async function postMessage(user, threadId, text) {
   if (textSafety.isOffensive(body)) throw new InboxError('offensive');
 
   const kind = role === 'asker' ? 'follow_up_question' : 'follow_up_reply';
+  const mentor = await getUserById(booking.mentorId);
   let message;
   try {
     message = await tx(async (client) => {
       const m = await addMessage(thread.id, { senderId: user.id, role, kind, body }, client);
+      if (kind === 'follow_up_question') {
+        // The mentor replies within FOLLOW_UP_REPLY_DAYS; until then this booking's payout waits (server/ledger.js payableSql), and one
+        // already in a withdrawal request that was not sent yet comes out of it, so the wait cannot be gone round.
+        await client.query('UPDATE threads SET follow_up_due_at = now() + make_interval(days => $2) WHERE id = $1', [thread.id, LIMITS.followUpReplyDays]);
+        await require('./withdrawals').takeOutOfRequest(client, booking.id, FOLLOW_UP_WAITS[mentor && mentor.language === 'ka' ? 'ka' : 'en']);
+      }
       if (kind === 'follow_up_reply') {
-        await client.query(`UPDATE threads SET status = 'closed' WHERE id = $1`, [thread.id]);
+        await client.query(`UPDATE threads SET status = 'closed', follow_up_replied_at = now() WHERE id = $1`, [thread.id]);
         await addMessage(thread.id, { role: 'system', kind: 'event', event: 'follow_up_closed' }, client);
       }
       await notifyUser(role === 'asker' ? booking.mentorId : booking.seekerId, kind, { threadId: thread.id, bookingId: booking.id }, client);
@@ -440,8 +460,49 @@ async function unsubscribe(token) {
 }
 const unsubscribeUrl = (userId, category) => `${config.PUBLIC_URL}/unsubscribe.html?t=${encodeURIComponent(unsubscribeToken(userId, category))}`;
 
+// ---- The follow-up reply deadline (the sweep, server/jobs.js) ---------------------------------------------------------------------
+// A reminder to the mentor followUpReminderDays after the follow-up question if they have not replied; when the deadline passes without
+// a reply, the asker is told in the thread (and may report it, server/disputes.js "mentor_ignored_follow_up") and the admins by email.
+// Each step is claimed in one statement, so two sweeps never send it twice. Only for an answered booking (a refunded one has nothing left).
+const WAITING = `follow_up_due_at IS NOT NULL AND follow_up_replied_at IS NULL AND follow_up_missed_at IS NULL
+  AND EXISTS (SELECT 1 FROM bookings fb WHERE fb.id = threads.booking_id AND fb.status = 'answered')`;
+async function followUpSweep() {
+  const { getBookingById, getUserById } = require('./models');
+  const notify = require('./notify');
+  const { rows: remind } = await query(
+    `UPDATE threads SET follow_up_reminded_at = now()
+      WHERE ${WAITING} AND follow_up_reminded_at IS NULL AND follow_up_due_at > now() AND follow_up_due_at <= now() + make_interval(days => $1)
+      RETURNING id, booking_id, follow_up_due_at`, [LIMITS.followUpReplyDays - LIMITS.followUpReminderDays]);
+  for (const t of remind) {
+    await safely('follow-up reminder', async () => {
+      const booking = await getBookingById(t.booking_id);
+      const [mentor, asker] = await Promise.all([getUserById(booking.mentorId), getUserById(booking.seekerId)]);
+      if (mentor) await notify.notifyFollowUpReminder(mentor, { from: asker ? asker.name : '', dueAt: t.follow_up_due_at, threadId: t.id });
+    });
+  }
+  const { rows: missed } = await query(
+    `UPDATE threads SET follow_up_missed_at = now() WHERE ${WAITING} AND follow_up_due_at <= now() RETURNING id, booking_id, follow_up_missed_at`);
+  for (const t of missed) {
+    await safely('missed follow-up', async () => {
+      const booking = await getBookingById(t.booking_id);
+      await addMessage(t.id, { role: 'system', kind: 'event', event: 'follow_up_missed' });
+      await notifyUser(booking.seekerId, 'follow_up_missed', { threadId: t.id, bookingId: booking.id });
+      const [mentor, asker] = await Promise.all([getUserById(booking.mentorId), getUserById(booking.seekerId)]);
+      const { rows: [q] } = await query(`SELECT body FROM messages WHERE thread_id = $1 AND kind = 'follow_up_question'`, [t.id]);
+      const esc = require('./email').escapeHtml;
+      const until = new Date(new Date(t.follow_up_missed_at).getTime() + LIMITS.followUpDisputeDays * 86400000);
+      await notify.notifyAdmins('A mentor did not reply to a follow-up question',
+        `<p>${esc(mentor ? mentor.name : '?')} (${esc(mentor ? mentor.email : '?')}) did not reply within ${LIMITS.followUpReplyDays} days to the follow-up question
+         that ${esc(asker ? asker.name : 'the asker')} sent about booking ${esc(booking.id)}:</p><blockquote>${esc(q ? q.body.slice(0, 600) : '')}</blockquote>
+         <p>The asker can report it until ${esc(until.toISOString().slice(0, 10))} (reason "mentor_ignored_follow_up"). The payout for the question is no
+         longer held for the reply.</p><p>${esc(config.PUBLIC_URL)}/admin.html?tab=bookings</p>`);
+    });
+  }
+  return { reminded: remind.length, missed: missed.length };
+}
+
 module.exports = {
-  LIMITS, OPTIONAL_EMAILS, REPORT_REASONS, InboxError,
+  LIMITS, FOLLOW_UP_REPLY_DAYS, OPTIONAL_EMAILS, REPORT_REASONS, InboxError, followUpSweep,
   bookingThreadId, systemThreadId, addMessage, notifyUser,
   onPaid, onAnswered, onRefunded, onDeclined, onDisputeOpened, onDisputeResolved, onRatingRevealed, systemMessage,
   listThreads, threadFor, threadIdForBooking, markThreadRead, postMessage, startSupport,

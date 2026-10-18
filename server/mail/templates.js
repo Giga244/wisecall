@@ -115,7 +115,12 @@ const S = {
     followUpQuestion: {
       subject: '{name} asked a follow-up question', heading: 'A follow-up question',
       intro: '{name} asked one follow-up question about your answer:',
-      after: 'You can reply once, in your Inbox. After your reply the conversation closes.', button: 'Reply in your Inbox'
+      after: 'Please reply within 3 days, in your Inbox: until you do, your payout for this question waits. You can reply once; after your reply the conversation closes.', button: 'Reply in your Inbox'
+    },
+    followUpReminder: {
+      subject: 'Please reply to the follow-up question', heading: 'A follow-up question is waiting for you',
+      intro: '{name} asked a follow-up question about your answer and is still waiting. Please reply by {when}.',
+      after: 'Until you reply, your payout for this question waits. If no reply comes in time, the asker can report it to our team.', button: 'Reply in your Inbox'
     },
     followUpReply: {
       subject: '{name} replied to your follow-up question', heading: 'A reply to your follow-up', intro: '{name} replied:',
@@ -394,7 +399,12 @@ const S = {
     followUpQuestion: {
       subject: '{name}-მ დამატებითი კითხვა დაგისვა', heading: 'დამატებითი კითხვა',
       intro: '{name}-მ შენს პასუხზე ერთი დამატებითი კითხვა დაგისვა:',
-      after: 'შეგიძლია ერთხელ უპასუხო შემოსულებში. შენი პასუხის შემდეგ საუბარი დაიხურება.', button: 'უპასუხე შემოსულებში'
+      after: 'გთხოვ, უპასუხე 3 დღეში, შემოსულებში: მანამდე ამ კითხვის ანაზღაურება შეჩერებულია. შეგიძლია ერთხელ უპასუხო; შენი პასუხის შემდეგ საუბარი დაიხურება.', button: 'უპასუხე შემოსულებში'
+    },
+    followUpReminder: {
+      subject: 'გთხოვ, უპასუხე დამატებით კითხვას', heading: 'დამატებითი კითხვა შენს პასუხს ელოდება',
+      intro: '{name}-მ შენს პასუხზე დამატებითი კითხვა დაგისვა და ჯერ კიდევ პასუხს ელოდება. გთხოვ, უპასუხე {when}-მდე.',
+      after: 'სანამ არ უპასუხებ, ამ კითხვის ანაზღაურება შეჩერებულია. თუ დროულად არ უპასუხებ, კითხვის ავტორს ამის შესახებ ჩვენი გუნდისთვის შეტყობინება შეეძლება.', button: 'უპასუხე შემოსულებში'
     },
     followUpReply: {
       subject: '{name}-მ უპასუხა შენს დამატებით კითხვას', heading: 'პასუხი დამატებით კითხვაზე', intro: '{name}-ის პასუხი:',
@@ -661,6 +671,10 @@ const BUILDERS = {
   followUpQuestion: (s, d) => ({
     heading: s.followUpQuestion.heading,
     blocks: [{ p: fill(s.followUpQuestion.intro, d), raw: true }, { quote: d.body }, { p: s.followUpQuestion.after }, { button: s.followUpQuestion.button, url: `${config.PUBLIC_URL}/inbox.html?thread=${d.threadId}` }]
+  }),
+  followUpReminder: (s, d) => ({
+    heading: s.followUpReminder.heading,
+    blocks: [{ p: fill(s.followUpReminder.intro, d), raw: true }, { p: s.followUpReminder.after }, { button: s.followUpReminder.button, url: `${config.PUBLIC_URL}/inbox.html?thread=${d.threadId}` }]
   }),
   followUpReply: (s, d) => ({
     heading: s.followUpReply.heading,

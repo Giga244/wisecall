@@ -46,7 +46,9 @@ test('the asker opens the conversation from the dashboard; a phone number is ref
   await buyerPage.locator('[data-composer="ask"] button[type="submit"]').click();
   await expect(buyerPage.locator('.msg-mine .msg-body')).toHaveText('Thanks! Would you send the logs to a hosted service from day one, or wait?');
   await expect(buyerPage.locator('[data-composer]')).toHaveCount(0);
-  await expect(buyerPage.locator('.thread-foot')).toContainText('The mentor can reply once');
+  // (with the mentor's reply deadline: 3 days)
+  const by = new Date(Date.now() + 3 * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  await expect(buyerPage.locator('.thread-foot')).toContainText(`The mentor will reply by ${by}`);
 });
 
 test('the mentor sees the unread badge, replies once, and the conversation closes for both', async () => {

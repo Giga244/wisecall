@@ -233,6 +233,8 @@
   });
 
   document.addEventListener('wisecall:lang-changed', () => { drawFilters(); load(); });
-  drawFilters();
-  load();
+  // (an admin email can link straight to a tab: /admin.html?tab=queue)
+  const wanted = tabs.querySelector(`.chip[data-tab="${CSS.escape(new URLSearchParams(location.search).get('tab') || '')}"]`);
+  if (wanted && wanted.dataset.tab !== tab) wanted.click();
+  else { drawFilters(); load(); }
 })();

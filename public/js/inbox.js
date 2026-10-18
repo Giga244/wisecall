@@ -163,7 +163,9 @@
     const fu = data.followUp;
     const max = kind === 'support' ? limits.supportMax : fu.limits.max;
     const min = kind === 'support' ? limits.supportMin : fu.limits.min;
-    const note = kind === 'ask' ? fill('inbox.fu.askNote', { date: esc(day(fu.askUntil)) }) : (kind === 'reply' ? esc(t('inbox.fu.replyNote')) : esc(t('inbox.support.note')));
+    // (the mentor's reply has a deadline: until then the payout for this question waits)
+    const replyNote = fu && fu.replyBy ? `${esc(fill('inbox.fu.replyByMentor', { date: day(fu.replyBy) }))} ${esc(t('inbox.fu.replyNote'))}` : esc(t('inbox.fu.replyNote'));
+    const note = kind === 'ask' ? fill('inbox.fu.askNote', { date: esc(day(fu.askUntil)) }) : (kind === 'reply' ? replyNote : esc(t('inbox.support.note')));
     const label = kind === 'ask' ? t('inbox.fu.askLabel') : (kind === 'reply' ? t('inbox.fu.replyLabelField') : t('inbox.support.replyLabel'));
     return `
       <form class="inbox-composer" data-composer="${kind}" novalidate>
@@ -204,6 +206,8 @@
       if (fu.canAsk) foot = composer('ask');
       else if (fu.canReply) foot = composer('reply');
       else if (fu.closed) foot = `<p class="thread-closed">${esc(t('inbox.fu.closed'))}</p>`;
+      else if (th.role === 'asker' && fu.asked && fu.missed) foot = `<p class="muted small">${esc(fill('inbox.fu.missed', { date: day(fu.reportUntil) }))}</p>`;
+      else if (th.role === 'asker' && fu.asked && fu.replyBy) foot = `<p class="muted small">${esc(fill('inbox.fu.replyBy', { date: day(fu.replyBy) }))}</p>`;
       else if (th.role === 'asker' && fu.asked) foot = `<p class="muted small">${esc(t('inbox.fu.waitingReply'))}</p>`;
       else if (th.role === 'asker' && data.booking.answer && fu.askUntil && new Date(fu.askUntil) < new Date()) foot = `<p class="muted small">${esc(t('inbox.fu.expired'))}</p>`;
       else if (th.role === 'mentor' && !fu.asked && data.booking.answer) foot = `<p class="muted small">${esc(t('inbox.fu.mentorWait'))}</p>`;
