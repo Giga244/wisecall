@@ -49,6 +49,11 @@ test('a mentor signs up, sets a price, and fills in the Experience form for the 
   await mentorPage.click('#mentorForm button[type="submit"]');
   await expect.poll(async () => (await S.sql('SELECT price FROM users WHERE email = $1', [mentor.email]))[0].price).toBe(30);
   ({ id: mentorId, username: mentorUsername } = (await S.sql('SELECT id, username FROM users WHERE email = $1', [mentor.email]))[0]);
+  // (the headline, "What I do", on the Profile tab: an application is not sent without it)
+  await mentorPage.click('#tab-profile');
+  await mentorPage.fill('#headline', 'Lawyer for small businesses');
+  await mentorPage.click('#profileForm button[type="submit"]');
+  await expect.poll(async () => (await S.sql('SELECT headline FROM users WHERE email = $1', [mentor.email]))[0].headline).toBe('Lawyer for small businesses');
 
   // Step 2, Experience: one form, a piece of evidence, and (a regulated field) the licence.
   await mentorPage.goto('/settings.html?tab=verification');

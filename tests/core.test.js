@@ -92,8 +92,9 @@ describe('mentor application and approval', () => {
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
     const empty = await m.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.error, 'incomplete');
-    assert.deepEqual(empty.missing, ['title', 'field', 'niche', 'tags', 'years', 'story', 'sample', 'evidence']);
+    assert.deepEqual(empty.missing, ['title', 'field', 'niche', 'tags', 'years', 'story', 'sample', 'evidence', 'headline']);
     assert.equal((await m.api('/me')).user.verificationStatus, 'none', 'nothing is submitted');
+    assert.equal((await m.api('/me', { method: 'PATCH', body: { headline: 'Cardiologist in a public hospital in Tbilisi' } })).status, 200);
 
     const form = { roleTitle: 'Cardiologist', customNiche: 'Heart health', niche: 'medicine', specialtyTags: ['heart health', 'blood pressure'], yearsExperience: 14,
       story: 'I trained in Tbilisi and Vienna and have worked as a cardiologist in a public hospital for fourteen years, running the outpatient clinic for patients after heart surgery.',
@@ -315,7 +316,7 @@ describe('legal pages', () => {
 describe('admin: mentor decisions and refunds', () => {
   test('rejecting needs a reason, and the mentor is told what it was', async () => {
     const m = await signupVerified(base, 'Reject Me', 'reject-me@example.com');
-    await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 10 } });
+    await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 10, headline: 'Sales coach for small teams' } });
     await m.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Coach', customNiche: 'Sales coaching', niche: 'business', specialtyTags: ['sales'], yearsExperience: 6, story: 'I have coached small sales teams in Tbilisi for six years, first inside a telecom company and then on my own with shops and cafés.', sampleAnswer: longAnswer(SAMPLE) } });
     await m.api('/verification/evidence', { method: 'POST', body: { kind: 'website', url: 'https://reject-me.invalid/' } });
     const app = await m.api('/verification/submit', { method: 'POST' });

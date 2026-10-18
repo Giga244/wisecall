@@ -38,7 +38,8 @@ describe('visitor statistics', () => {
     assert.equal(pv.headers['user-agent'], 'Test browser');
     assert.ok(pv.headers['x-forwarded-for']);
     const res = await fetch(`${base}/about.html`);
-    assert.equal(res.headers.get('set-cookie'), null, 'no cookie is set for statistics');
+    // (the page view sets no cookie; wc_src, where the visitor came from, is server/attribution.js and has its own tests)
+    assert.deepEqual(res.headers.getSetCookie().filter((c) => !c.startsWith('wc_src=')), [], 'no cookie is set for statistics');
   });
 
   test('Do Not Track and Global Privacy Control are respected; admin pages are never counted', async () => {

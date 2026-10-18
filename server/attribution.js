@@ -1,13 +1,17 @@
-// Where visitors come from (PART 9). On the first visit to a page with utm_* parameters, or from another website, a first-party cookie
-// (wc_src, 30 days) keeps utm_source / utm_medium / utm_campaign / utm_content and the referring site's DOMAIN only: no address, no
-// path, nothing about the person, no third party. The first visit counts (a later campaign does not replace it). It is copied onto the
-// account at sign-up, onto each question when it is started (the first paid one is what the admin overview counts) and onto a mentor
-// application. A browser that asks not to be tracked (Do Not Track or Global Privacy Control) gets no cookie.
+// Where visitors come from (PART 9). On the first visit to a page a first-party cookie (wc_src, 30 days) keeps ONLY utm_source /
+// utm_medium / utm_campaign, the referring site's DOMAIN and the path of the page they landed on: no full address, nothing about the
+// person, no third party. It is copied onto the account at sign-up (email or Google), onto each question when it is started (the first paid
+// one is what the admin overview counts) and onto a mentor application.
+//   - A Facebook or Instagram visit counts as one without utm_* tags: an fbclid in the address (the ad's click id: the value is never kept)
+//     or a referrer from facebook.com / instagram.com (m., l. and the rest): source "facebook" or "instagram".
+//   - A visit with none of these is "direct", so an account says "direct" when the person came straight in and nothing (null) only when
+//     it is unknown (a browser that asks not to be tracked, Do Not Track or Global Privacy Control, gets no cookie; cookies cleared).
+//   - The first source counts and a later one does not replace it, except a first visit that was "direct": the next real source does.
 const config = require('./config');
 
 const COOKIE = 'wc_src';
 const MAX_AGE_MS = 30 * 86400 * 1000;
-const FIELDS = ['source', 'medium', 'campaign', 'content'];
+const FIELDS = ['source', 'medium', 'campaign'];
 // (letters, digits, spaces and . _ - + : only, 60 characters: a campaign name, never an address or an email)
 const clip = (v) => {
   const s = String(v === undefined || v === null ? '' : v).normalize('NFC').replace(/[^\p{L}\p{N} ._+:-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 60);
@@ -24,29 +28,39 @@ const ownHosts = () => {
 };
 const optedOut = (req) => req.get('dnt') === '1' || req.get('sec-gpc') === '1';
 const isPage = (p) => p === '/' || /\.html$/.test(p) || !/\.[a-z0-9]+$/i.test(p);
+// Facebook and Instagram, from the referring domain (facebook.com, m.facebook.com, l.facebook.com, instagram.com, l.instagram.com, ...).
+const socialOf = (ref) => (!ref ? null : /(^|\.)facebook\.com$/.test(ref) ? 'facebook' : /(^|\.)instagram\.com$/.test(ref) ? 'instagram' : null);
+// The page they landed on: its path only (the Georgian /ka/... included), never the query.
+const landingOf = (p) => (typeof p === 'string' && /^\/[A-Za-z0-9._~/-]{0,99}$/.test(p) ? p : null);
 
-// The campaign and the referring domain of this request, or null when there is neither.
+// Where this visit comes from: { source?, medium?, campaign?, referrer?, landing }. Always something: "direct" when there is nothing else.
 function fromRequest(req) {
   const q = req.query || {};
   const out = {};
   for (const f of FIELDS) { const v = clip(q['utm_' + f]); if (v) out[f] = v; }
   let ref = null;
   try { ref = domain(new URL(req.get('referer') || '').hostname); } catch (e) { ref = null; }
-  if (ref && !ownHosts().has(ref) && ref !== domain(req.hostname)) out.referrer = ref;
-  if (!Object.keys(out).length) return null;
-  out.at = new Date().toISOString().slice(0, 10);
+  if (ref && (ownHosts().has(ref) || ref === domain(req.hostname))) ref = null; // (a page of this site is not a source)
+  if (ref) out.referrer = ref;
+  // (Facebook and Instagram without tags: the fbclid only says it was them, its value is never kept)
+  if (!out.source) out.source = socialOf(ref) || (q.fbclid ? 'facebook' : undefined);
+  if (!out.source && !out.referrer && !out.medium && !out.campaign) out.source = 'direct';
+  if (!out.source) delete out.source;
+  const landing = landingOf(req.path);
+  if (landing) out.landing = landing;
   return out;
 }
 
-// Middleware for page requests: sets the cookie once.
+// Middleware for page requests: sets the cookie on the first visit (and replaces a "direct" one when a real source comes later).
 function capture(req, res, next) {
-  if (!config.ATTRIBUTION_COOKIE || req.method !== 'GET' || req.path.startsWith('/api/') || !isPage(req.path) || (req.cookies && req.cookies[COOKIE]) || optedOut(req)) return next();
+  if (!config.ATTRIBUTION_COOKIE || req.method !== 'GET' || req.path.startsWith('/api/') || !isPage(req.path) || optedOut(req)) return next();
+  const had = req.cookies && req.cookies[COOKIE] ? read(req) : null;
+  if (had && had.source !== 'direct') return next();
   const src = fromRequest(req);
-  if (src) {
-    res.cookie(COOKIE, Buffer.from(JSON.stringify(src)).toString('base64url'), {
-      maxAge: MAX_AGE_MS, httpOnly: true, sameSite: 'lax', secure: config.IS_PROD, path: '/'
-    });
-  }
+  if (had && src.source === 'direct') return next();
+  res.cookie(COOKIE, Buffer.from(JSON.stringify(src)).toString('base64url'), {
+    maxAge: MAX_AGE_MS, httpOnly: true, sameSite: 'lax', secure: config.IS_PROD, path: '/'
+  });
   next();
 }
 
@@ -62,8 +76,19 @@ function read(req) {
   const ref = domain(v.referrer);
   if (ref) out.referrer = ref;
   if (!Object.keys(out).length) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(String(v.at || ''))) out.at = v.at;
+  const landing = landingOf(v.landing);
+  if (landing) out.landing = landing;
   return out;
+}
+
+// Sign-ups per source, counts only (the admin overview): the campaign source, else the referring site, "direct", or "unknown" (no cookie).
+async function signupsBySource() {
+  const { query } = require('./db');
+  const { rows } = await query(
+    `SELECT COALESCE(signup_source->>'source', CASE WHEN signup_source ? 'referrer' THEN 'site: ' || (signup_source->>'referrer') END, 'unknown') AS source,
+            count(*)::int AS signups
+       FROM users WHERE deleted_at IS NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 30`);
+  return rows;
 }
 
 // Per source and campaign: sign-ups, mentor applications and first paid questions (for the admin overview).
@@ -86,4 +111,4 @@ async function bySource() {
   return rows;
 }
 
-module.exports = { COOKIE, capture, read, fromRequest, bySource, clip };
+module.exports = { COOKIE, capture, read, fromRequest, bySource, signupsBySource, clip };

@@ -26,7 +26,8 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
   const { status, queue } = req.query;
   const params = [];
   let where = `role IN ('mentor', 'both')`;
-  if (queue === 'needs_human') where += ` AND verification_status = 'pending'`;
+  // (submitted only: a draft, or an application opened again with "Edit my application", is not ready for a person to review)
+  if (queue === 'needs_human') where += ` AND verification_status = 'pending' AND application_submitted_at IS NOT NULL`;
   else if (status === 'failed_step') {
     where += ` AND ((verification_status = 'verified' AND ${failedRequiredStepSql()})
                 OR EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = users.id AND f.kind = 'required_step_failed' AND f.status = 'open'))`;
@@ -56,7 +57,9 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
       const submitted = m.verificationStatus === 'pending' && Boolean(m.applicationSubmittedAt);
       return {
         ...meProfile(m), ...stats[m.id],
-        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted, failedRequired: Boolean(m.hasFailedRequiredStep) },
+        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted, failedRequired: Boolean(m.hasFailedRequiredStep),
+          // ("Profile incomplete: missing story, headline": never approve an empty profile)
+          profileGaps: require('../verification/experience').profileGaps(m) },
         analysis: a ? {
           status: a.status, risk: a.risk, outcome: a.outcome, createdAt: a.createdAt, forCurrentSubmission: Boolean(m.applicationSubmittedAt) && String(a.submittedAt) === String(m.applicationSubmittedAt),
           recommendation: a.ai ? a.ai.recommendation : null, summary: a.ai ? a.ai.admin_summary : null, aiError: a.aiError, costUsd: a.usage.costUsd,
@@ -65,10 +68,9 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
       };
   });
   if (queue === 'needs_human') {
-    // Submitted applications first, riskiest first, then the oldest submission; drafts (not submitted yet) last.
-    const rank = (m) => (m.verification.submitted ? 0 : 1);
+    // Riskiest first, then the oldest submission.
     const risk = (m) => (m.analysis && m.analysis.risk ? RISK_ORDER[m.analysis.risk] : 3);
-    list.sort((x, y) => rank(x) - rank(y) || risk(x) - risk(y) || new Date(x.applicationSubmittedAt || x.createdAt) - new Date(y.applicationSubmittedAt || y.createdAt));
+    list.sort((x, y) => risk(x) - risk(y) || new Date(x.applicationSubmittedAt || x.createdAt) - new Date(y.applicationSubmittedAt || y.createdAt));
   }
   res.json({ mentors: list });
 }));
@@ -152,6 +154,8 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
     payouts: { payable: Number(p.payable), holding: Number(p.holding), debt: Number(p.debt), paidOut: Number(p.paid_out) },
     // Where people come from: per campaign source (or referring site) and campaign (server/attribution.js).
     sources: await require('../attribution').bySource(),
+    // ...and every sign-up by its source, counts only ("direct", or "unknown" when nothing was recorded).
+    signupsBySource: await require('../attribution').signupsBySource(),
     // Live sessions: what is coming, live now, the last 30 days (tickets, money), open reports.
     live: await require('../live/analytics').forAdmin()
   });

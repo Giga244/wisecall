@@ -300,6 +300,7 @@
         </p>
         ${m.analysis && m.analysis.summary ? `<p class="mv-ai-summary small">${riskBadge(m.analysis.risk)} <span class="badge badge-paid">${t('admin.ai.summaryLabel')}</span> ${esc(m.analysis.summary)}</p>` : (m.analysis && m.analysis.risk ? `<p class="small">${riskBadge(m.analysis.risk)} ${m.analysis.aiError ? esc(aiErrorText(m.analysis.aiError)) : ''}</p>` : '')}
         ${m.verificationStatus === 'pending' && !v.submitted ? `<p><span class="badge badge-pending_payment">${t('admin.ai.draft')}</span></p>` : ''}
+        ${m.verificationStatus !== 'none' && v.profileGaps && v.profileGaps.length ? `<p class="mv-incomplete" role="note"><span class="badge badge-rejected">${esc(t('admin.mv.incomplete').replace('{missing}', v.profileGaps.map((g) => t('admin.mv.gap.' + g)).join(', ')))}</span></p>` : ''}
         ${m.verificationNote ? `<p class="muted small">${t('admin.lastNote')}: ${esc(m.verificationNote)}</p>` : ''}
         <div class="review-actions" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
           <span class="badge badge-${m.verificationStatus === 'rejected' ? 'rejected' : (m.verificationStatus === 'verified' ? 'answered' : 'pending_payment')}">${t('settings.verify.' + (m.verificationStatus || 'none'))}</span>

@@ -66,7 +66,7 @@ describe('production + LAUNCH_MODE=prelaunch, with no bank and no Didit keys', (
 
   test('a mentor can sign up (code by email), fill in the application, and waits: the ID check is closed, the other steps work', async () => {
     mentor = await signupByEmail(resend, pre.base, 'Nino Mentor', 'nino@example.com');
-    const r = await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
+    const r = await mentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25, headline: 'Product designer' } });
     assert.equal(r.status, 200, r.text);
     mentorId = (await mentor.api('/me')).user.id;
     const start = await mentor.api('/verification/kyc/start', { method: 'POST', body: {} });

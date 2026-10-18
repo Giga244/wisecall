@@ -52,7 +52,7 @@ describe('a new Medicine mentor (regulated)', () => {
   let doc, id;
   test('signs up, applies with the licence and a copy of it, and is not visible anywhere yet', async () => {
     doc = await signupVerified(base, 'Levan Kiknadze', 'levan@example.com');
-    assert.equal((await doc.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 40 } })).status, 200);
+    assert.equal((await doc.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 40, headline: 'Cardiologist, 14 years' } })).status, 200);
     id = (await doc.api('/me')).user.id;
     await apply(doc, {
       roleTitle: 'Cardiologist', customNiche: 'Heart health', niche: 'medicine', specialtyTags: ['heart health'], yearsExperience: 14,
@@ -133,7 +133,7 @@ describe('a new Design mentor (standard)', () => {
   let des, id;
   test('needs identity, the Experience form and one piece of evidence of any kind; no licence and no interview', async () => {
     des = await signupVerified(base, 'Nino Beridze', 'nino@example.com');
-    assert.equal((await des.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 20 } })).status, 200);
+    assert.equal((await des.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 20, headline: 'Product designer' } })).status, 200);
     id = (await des.api('/me')).user.id;
     await apply(des, {
       roleTitle: 'Product designer', customNiche: 'Mobile app design', niche: 'design', specialtyTags: ['mobile apps', 'onboarding'], yearsExperience: 8,

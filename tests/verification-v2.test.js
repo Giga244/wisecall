@@ -46,7 +46,7 @@ async function newMentor(name, email, { price = 30, jar } = {}) {
     const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: PASSWORD } });
     await c.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } });
   } else c = await signupVerified(base, name, email);
-  await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price } });
+  await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price, headline: `${name}, mentor` } });
   return { c, id: (await c.api('/me')).user.id };
 }
 

@@ -268,7 +268,8 @@
     return `
       <div class="ap-missing" role="note">
         <p><strong>${t('ap.missingHead')}</strong></p>
-        <ul>${missing.map((m) => `<li>${m === 'price' ? `${t('ap.missing.price')} <button type="button" class="linklike" data-goto="mentor">${t('ap.missing.priceLink')}</button>` : t('ap.missing.' + m)}</li>`).join('')}</ul>
+        <ul>${missing.map((m) => `<li>${m === 'price' ? `${t('ap.missing.price')} <button type="button" class="linklike" data-goto="mentor">${t('ap.missing.priceLink')}</button>`
+          : m === 'headline' ? `${t('ap.missing.headline')} <button type="button" class="linklike" data-goto="profile">${t('ap.missing.headlineLink')}</button>` : t('ap.missing.' + m)}</li>`).join('')}</ul>
       </div>`;
   }
 

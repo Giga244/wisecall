@@ -54,6 +54,11 @@
             <th scope="col">${esc(t('admin.ov.src.signups'))}</th><th scope="col">${esc(t('admin.ov.src.applications'))}</th><th scope="col">${esc(t('admin.ov.src.paid'))}</th></tr></thead>
             <tbody>${d.sources.map((s) => `<tr><td>${esc(s.source)}</td><td>${esc(s.campaign || '-')}</td><td>${n(s.signups)}</td><td>${n(s.applications)}</td><td>${n(s.paid)}</td></tr>`).join('')}</tbody></table></div>
             <p class="muted small">${esc(t('admin.ov.src.help'))}</p>`
+        : `<p class="muted small">${esc(t('admin.ov.src.none'))}</p>`),
+      section(t('admin.ov.bySource'), (d.signupsBySource && d.signupsBySource.length)
+        ? `<div class="table-scroll"><table class="ov-sources"><thead><tr><th scope="col">${esc(t('admin.ov.src.source'))}</th><th scope="col">${esc(t('admin.ov.src.signups'))}</th></tr></thead>
+            <tbody>${d.signupsBySource.map((s) => `<tr><td>${esc(s.source === 'unknown' ? t('admin.ov.bySource.unknown') : s.source === 'direct' ? t('admin.ov.bySource.direct') : s.source)}</td><td>${n(s.signups)}</td></tr>`).join('')}</tbody></table></div>
+            <p class="muted small">${esc(t('admin.ov.bySource.help'))}</p>`
         : `<p class="muted small">${esc(t('admin.ov.src.none'))}</p>`)
     ].join('');
   }

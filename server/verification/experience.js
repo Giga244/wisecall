@@ -206,8 +206,22 @@ function missingFor(user, evidence, stepMap) {
     if (!has('license')) missing.push('license');
     if (rules.requiredFor(user.niche).includes('license_document') && !has('license_document')) missing.push('license_document');
   }
+  // (outside the Experience form: the headline on the Profile tab and the price on the Mentor tab; an application is never sent without
+  // them, docs/CLAUDE-CODE-SIGNUP-CHECKS.md #2)
+  if (!user.headline || !String(user.headline).trim()) missing.push('headline');
   if (!user.price) missing.push('price');
   return missing;
+}
+
+// What the admin review queue labels "Profile incomplete": the story, headline, field or price an application should never lack (one sent
+// before these were all required, or one written straight into the database).
+function profileGaps(user) {
+  const gaps = [];
+  if (!user.story || size(user.story) < LIMITS.storyMin) gaps.push('story');
+  if (!user.headline || !String(user.headline).trim()) gaps.push('headline');
+  if (!user.customNiche || !(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) gaps.push('field');
+  if (!user.price) gaps.push('price');
+  return gaps;
 }
 
 // ---- Submitting and editing -------------------------------------------------------------------------------------------------------------------
@@ -309,5 +323,5 @@ async function setFieldByAdmin({ mentorId, admin, text, niche, notRegulated }) {
 
 module.exports = {
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
-  missingFor, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin
+  missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin
 };

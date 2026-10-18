@@ -58,6 +58,11 @@ test('a mentor applies: price, Experience form with evidence, submit, then the (
   await page.click('#mentorForm button[type="submit"]');
   await expect.poll(async () => (await S.sql('SELECT price FROM users WHERE email = $1', [people.mentor.email]))[0].price).toBe(35);
   ({ id: mentorId, username: mentorUsername } = (await S.sql('SELECT id, username FROM users WHERE email = $1', [people.mentor.email]))[0]);
+  // (the headline, "What I do", on the Profile tab: an application is not sent without it)
+  await page.click('#tab-profile');
+  await page.fill('#headline', 'Product designer');
+  await page.click('#profileForm button[type="submit"]');
+  await expect.poll(async () => (await S.sql('SELECT headline FROM users WHERE email = $1', [people.mentor.email]))[0].headline).toBe('Product designer');
 
   await page.goto('/settings.html?tab=verification');
   const exp = page.locator('#ap-experience');

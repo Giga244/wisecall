@@ -1309,6 +1309,8 @@
   "ap.missing.license_document": "A copy of your licence, certificate or diploma",
   "ap.missing.price": "Your price per question",
   "ap.missing.priceLink": "Set it in the Mentor tab",
+  "ap.missing.headline": "Your headline (\"What I do\")",
+  "ap.missing.headlineLink": "Add it in the Profile tab",
   "ap.submit": "Submit for review",
   "ap.submitted": "Submitted. We'll email you when it's decided.",
   "ap.submit.ai": "When you submit, we check your links automatically and your application is reviewed with the help of an AI model (Claude, by Anthropic). It sees your title, niche, tags, years, story, sample answer and what your links show: never your ID, date of birth, email, phone number or bank details. A person makes every rejection, and every decision in regulated fields.",

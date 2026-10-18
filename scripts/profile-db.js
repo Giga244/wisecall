@@ -104,6 +104,29 @@ async function main() {
         usersOut.push('\n**Verified mentors** (price in whole lari)\n', table(['verified mentors', 'price min', 'median', 'max', 'no price', 'no story', 'no photo'],
           [[n(v.total), lari(v.min), lari(v.median), lari(v.max), n(v.no_price), n(v.no_story), n(v.no_photo)]]));
       }
+      // Mentors waiting in 'pending': sent for review or a draft, what their profile lacks, and how they got there (the latest event of
+      // the verification audit), counts only (docs/CLAUDE-CODE-SIGNUP-CHECKS.md #2).
+      if (['application_submitted_at', 'story', 'headline', 'price', 'verification_status'].every((c) => has('users', c))) {
+        const field = has('users', 'custom_niche') ? "NULLIF(btrim(custom_niche), '') IS NULL OR niche IS NULL" : 'niche IS NULL';
+        const how = has('verification_audit') ? `(SELECT a.action FROM verification_audit a WHERE a.mentor_id = users.id AND a.action IN ('application_submitted',
+          'application_resubmitted', 'application_withdrawn', 'delisted', 'reinstated', 'migrated_to_rules_v2', 'migration_notice_sent') ORDER BY a.created_at DESC LIMIT 1)` : 'NULL';
+        const kyc = has('verification_steps') ? "(SELECT s.status FROM verification_steps s WHERE s.user_id = users.id AND s.step = 'id_kyc')" : 'NULL';
+        const PENDING = `FROM users WHERE ${MENTOR} AND verification_status = 'pending' AND ${live}`;
+        const p = await one(`SELECT count(*)::int AS total, count(*) FILTER (WHERE application_submitted_at IS NOT NULL)::int AS sent,
+            count(*) FILTER (WHERE NULLIF(btrim(story), '') IS NULL OR char_length(btrim(story)) < 100)::int AS no_story,
+            count(*) FILTER (WHERE NULLIF(btrim(headline), '') IS NULL)::int AS no_headline, count(*) FILTER (WHERE ${field})::int AS no_field,
+            count(*) FILTER (WHERE price IS NULL)::int AS no_price,
+            count(*) FILTER (WHERE application_submitted_at IS NOT NULL AND (NULLIF(btrim(story), '') IS NULL OR char_length(btrim(story)) < 100
+              OR NULLIF(btrim(headline), '') IS NULL OR ${field} OR price IS NULL))::int AS sent_incomplete ${PENDING}`);
+        usersOut.push("\n**Mentors in 'pending'** (sent for review = in the admin's queue; a draft was never sent, or was opened again)\n",
+          table(['pending', 'sent for review', 'draft', 'no story (or under 100 characters)', 'no headline', 'no field', 'no price'],
+            [[n(p.total), n(p.sent), n(p.total - p.sent), n(p.no_story), n(p.no_headline), n(p.no_field), n(p.no_price)]]));
+        const byHow = (await q(`SELECT COALESCE(${how}, '(no record)') AS how, (application_submitted_at IS NOT NULL) AS sent, COALESCE(${kyc}, 'not started') AS id_check,
+            count(*)::int AS n ${PENDING} GROUP BY 1, 2, 3 ORDER BY 4 DESC`)).map((r) => [r.how, r.sent ? 'sent' : 'draft', r.id_check, n(r.n)]);
+        usersOut.push('\n**How they got to pending** (the latest of these events in the verification audit) and their ID check\n',
+          table(['latest event', 'application', 'ID check step', 'mentors'], byHow));
+        fail("Applications in the admin's review queue with no story, headline, field or price", p.sent_incomplete);
+      }
       const dup = await one(`SELECT count(*)::int AS groups, COALESCE(sum(c), 0)::int AS rows FROM (SELECT count(*) AS c FROM users WHERE email IS NOT NULL
         GROUP BY lower(regexp_replace(email, '\\s', '', 'g')) HAVING count(*) > 1) d`);
       usersOut.push('\n**Duplicate email addresses** (ignoring case and spaces)\n', table(['addresses used more than once', 'accounts involved'], [[n(dup.groups), n(dup.rows)]]));

@@ -64,6 +64,8 @@ test('every section is there, as short tables, with money in GEL', () => {
   assert.match(report, /\| answered \| 1 \|/);
   assert.match(report, /\| all \| 1 \| 60\.00 GEL \| 60\.00 GEL \| 60\.00 GEL \|/, 'tetri shown in GEL');
   assert.match(report, /\| 1 \| 60 GEL \| 60 GEL \| 60 GEL \| 0 \|/, 'a verified mentor\'s price in whole lari');
+  assert.match(report, /\*\*Mentors in 'pending'\*\*/, 'pending mentors: sent or draft, what they lack, how they got there');
+  assert.match(report, /\*\*How they got to pending\*\*/);
   assert.match(report, /\| mentor \| 1 \|/);
   assert.match(report, /\| stripe_events \(from before the Georgian banks\) \| 0 \|/);
 });

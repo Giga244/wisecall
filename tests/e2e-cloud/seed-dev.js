@@ -117,7 +117,7 @@ async function paidBooking(buyer, mentorId, question) {
 
   // A mentor applicant waiting for review (identity passed, Experience submitted).
   const ana = await user('Ana Applicant', 'ana.applicant@example.test');
-  await ana('/me', { method: 'PATCH', body: { becomeMentor: true, price: 30 } });
+  await ana('/me', { method: 'PATCH', body: { becomeMentor: true, price: 30, headline: 'Marketing for small shops' } });
   const anaMe = (await ana('/me')).user;
   if (anaMe.verificationStatus !== 'pending') {
     await passSteps(anaMe.id, 'design', ['experience']);
