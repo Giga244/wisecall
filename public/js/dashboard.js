@@ -481,6 +481,37 @@
     receivedList.setAttribute('aria-busy', 'false');
   }
 
+  // ---- The way to becoming a mentor, at the top (docs/CLAUDE-CODE-MENTOR-BUTTON-SIGNED-IN.md): "Want to share your experience?" for an
+  // asker (right after signing up too), "Continue your application – step 2 of 5" for an application started, its status once it is
+  // sent; nothing for a mentor or an admin.
+  function drawMentorCard() {
+    const box = document.getElementById('mentorCard');
+    const m = WisecallNav.mentorPath() || { state: 'none' };
+    if (!box) return;
+    const fill = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
+    const card = (state, title, body, button) => `
+      <section class="mentor-card mentor-card-${state}" aria-labelledby="mentorCardTitle">
+        <div class="mentor-card-text">
+          <h2 id="mentorCardTitle">${escapeHtml(title)}</h2>
+          <p>${escapeHtml(body)}</p>
+        </div>
+        ${button}
+      </section>`;
+    const B = window.WisecallMentorButton;
+    if (m.state === 'asker') {
+      box.innerHTML = card('asker', t('dash.mentor.asker.title'), t('dash.mentor.asker.body'),
+        `<a class="btn btn-primary btn-lg btn-arrow" href="/apply.html">${escapeHtml(t('nav.becomeMentor'))}</a>`);
+    } else if (m.state === 'draft') {
+      box.innerHTML = card('draft', m.step ? fill('dash.mentor.draft.title', { n: m.step }) : t('nav.continueApp'), t('dash.mentor.draft.body'),
+        `<a class="btn btn-primary btn-lg btn-arrow" href="${B.href(m)}">${escapeHtml(t('dash.mentor.draft.cta'))}</a>`);
+    } else if (m.state === 'sent') {
+      box.innerHTML = card('sent', t('dash.mentor.sent.title'), t('dash.mentor.sent.body'),
+        `<a class="btn btn-outline btn-lg" href="/apply.html">${escapeHtml(t('settings.progress.status'))}</a>`);
+    } else box.innerHTML = '';
+  }
+  drawMentorCard();
+  document.addEventListener('wisecall:lang-changed', drawMentorCard);
+
   askedList.innerHTML = loadingHtml;
   if (isMentor) {
     receivedList.setAttribute('aria-busy', 'true');

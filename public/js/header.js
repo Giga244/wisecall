@@ -28,18 +28,22 @@
     en: {
       'a11y.skip': 'Skip to content', 'nav.how': 'How it works', 'nav.browse': 'Browse experts', 'nav.becomeMentor': 'Become a mentor', 'footer.faq': 'FAQ',
       'nav.language': 'Language', 'nav.login': 'Log in', 'nav.signup': 'Sign up', 'nav.inbox': 'Inbox', 'nav.dashboard': 'Dashboard', 'nav.settings': 'Settings',
-      'nav.logout': 'Log out', 'nav.admin': 'Admin', 'nav.menu': 'Menu', 'nav.menuClose': 'Close menu', 'theme.toDark': 'Switch to dark mode', 'theme.toLight': 'Switch to light mode'
+      'nav.logout': 'Log out', 'nav.admin': 'Admin', 'nav.menu': 'Menu', 'nav.menuClose': 'Close menu', 'theme.toDark': 'Switch to dark mode', 'theme.toLight': 'Switch to light mode',
+      'nav.continueApp': 'Continue your application', 'nav.continueStep': 'Continue your application · step {n} of 5', 'nav.continueShort': 'Application · {n}/5',
+      'nav.inReview': 'Application in review', 'nav.inReviewShort': 'In review'
     },
     ka: {
       'a11y.skip': 'გადასვლა შინაარსზე', 'nav.how': 'როგორ მუშაობს', 'nav.browse': 'ექსპერტები', 'nav.becomeMentor': 'გახდი მენტორი', 'footer.faq': 'კითხვები',
       'nav.language': 'ენა', 'nav.login': 'შესვლა', 'nav.signup': 'რეგისტრაცია', 'nav.inbox': 'შემოსულები', 'nav.dashboard': 'პირადი კაბინეტი', 'nav.settings': 'პარამეტრები',
-      'nav.logout': 'გასვლა', 'nav.admin': 'ადმინი', 'nav.menu': 'მენიუ', 'nav.menuClose': 'მენიუს დახურვა', 'theme.toDark': 'მუქ რეჟიმზე გადართვა', 'theme.toLight': 'ღია რეჟიმზე გადართვა'
+      'nav.logout': 'გასვლა', 'nav.admin': 'ადმინი', 'nav.menu': 'მენიუ', 'nav.menuClose': 'მენიუს დახურვა', 'theme.toDark': 'მუქ რეჟიმზე გადართვა', 'theme.toLight': 'ღია რეჟიმზე გადართვა',
+      'nav.continueApp': 'განაცხადის გაგრძელება', 'nav.continueStep': 'განაცხადის გაგრძელება · ნაბიჯი {n} / 5', 'nav.continueShort': 'განაცხადი · {n}/5',
+      'nav.inReview': 'განაცხადი განხილვაშია', 'nav.inReviewShort': 'განხილვაშია'
     }
   };
   const w = (key) => WORDS[LANG][key] || WORDS.en[key];
 
-  // "Become a mentor" is always there for a visitor and for a signed-in person who is not a mentor (never for a mentor, someone already
-  // applying, or an admin: the hint below says which), in the header and in the menu panel.
+  // "Become a mentor" for a visitor, among the main links (to the mentors' page, which explains it and leads on). A signed-in person gets
+  // their own button next to Dashboard and Settings instead (the mentor button, below).
   const LINKS = [
     { hash: '#how', key: 'nav.how', extra: true },
     { hash: '#experts', key: 'nav.browse' },
@@ -63,15 +67,52 @@
   const ICON_INBOX = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13l2.5 8v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/></svg>';
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
-  // Signed in? Next to the login cookie the server leaves a small readable hint (wc_authed: "1", "mentor", or "admin"; see
-  // server/auth.js), so the header and the menu panel are drawn as they will stay from the first frame: a signed-in person never sees the
-  // signed-out menu first. nav.js still asks the server, and only if the two disagree (a session that ran out, say) does the header change,
-  // with a fade.
-  const signedIn = (() => { try { return (/(?:^|;\s*)wc_authed=(1|admin|mentor)(?:;|$)/.exec(document.cookie) || [])[1] || ''; } catch (e) { return ''; } })();
+  // Signed in? Next to the login cookie the server leaves a small readable hint (wc_authed: "1", "apply" or "apply1"..."apply5", "sent",
+  // "mentor", or "admin"; see server/auth.js), so the header and the menu panel are drawn as they will stay from the first frame: a
+  // signed-in person never sees the signed-out menu first. nav.js still asks the server, and only if the two disagree (a session that ran
+  // out, say) does the header change, with a fade.
+  const signedIn = (() => { try { return (/(?:^|;\s*)wc_authed=(1|admin|mentor|sent|apply[1-5]?)(?:;|$)/.exec(document.cookie) || [])[1] || ''; } catch (e) { return ''; } })();
   const off = (yes) => (yes ? ' style="display:none"' : '');
-  const shown = LINKS.filter((l) => !l.mentor || signedIn === '' || signedIn === '1')
-    // (signed in: straight to the application; a visitor first reads what it means, and starts from there)
-    .map((l) => (l.mentor && signedIn === '1' ? { ...l, href: '/apply.html' } : l));
+  const shown = LINKS.filter((l) => !l.mentor || signedIn === '');
+
+  // The mentor button, by where this person is on the way to becoming a mentor (docs/CLAUDE-CODE-MENTOR-BUTTON-SIGNED-IN.md):
+  //   out     signed out: "Become a mentor" among the main links (above)
+  //   asker   signed in, not applying: "Become a mentor" -> /apply.html
+  //   draft   an application started and not sent: "Continue your application · step N of 5" -> /apply.html?step=N
+  //   sent    sent, waiting for review: "Application in review" (a status, linking to /apply.html)
+  //   none    a mentor or an admin: nothing extra
+  // The page's <html> carries the state from the first frame (data-mentor-state), so the home page's button never jumps (style.css);
+  // nav.js asks the server and draws it again when it differs, and after a language switch.
+  const MENTOR = (() => {
+    if (!signedIn) return { state: 'out', step: null };
+    if (signedIn === '1') return { state: 'asker', step: null };
+    const draft = /^apply([1-5]?)$/.exec(signedIn);
+    if (draft) return { state: 'draft', step: draft[1] ? Number(draft[1]) : null };
+    return { state: signedIn === 'sent' ? 'sent' : 'none', step: null };
+  })();
+  window.WisecallMentorButton = {
+    href: (m) => (m.state === 'draft' && m.step ? `/apply.html?step=${m.step}` : '/apply.html'),
+    // say: (key) -> words. short: the words for a narrow header.
+    text(m, say, short) {
+      if (m.state === 'asker') return say('nav.becomeMentor');
+      if (m.state === 'draft') return m.step ? say(short ? 'nav.continueShort' : 'nav.continueStep').replace('{n}', m.step) : say('nav.continueApp');
+      if (m.state === 'sent') return say(short ? 'nav.inReviewShort' : 'nav.inReview');
+      return '';
+    },
+    // where: 'nav' (the header), 'menu' (the menu panel). '' for nobody.
+    html(m, where, say) {
+      if (!['asker', 'draft', 'sent'].includes(m.state)) return '';
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const cls = m.state === 'sent'
+        ? (where === 'nav' ? 'nav-mentor mentor-status' : 'btn btn-ghost btn-lg btn-block mm-mentor mentor-status')
+        : (where === 'nav' ? 'btn btn-outline nav-mentor' : 'btn btn-outline btn-lg btn-block mm-mentor');
+      const full = esc(this.text(m, say, false));
+      const words = where === 'nav' ? `<span class="nm-full">${full}</span><span class="nm-short">${esc(this.text(m, say, true))}</span>` : full;
+      return `<a href="${this.href(m)}" class="${cls}" data-mentor-cta="${where}" data-state="${m.state}">${words}</a>`;
+    }
+  };
+  document.documentElement.dataset.mentorState = MENTOR.state;
+  if (MENTOR.step) document.documentElement.dataset.mentorStep = String(MENTOR.step);
   const cls = (l, extra) => [l.extra && extra ? `nl-extra${l.faq ? ' nl-faq' : ''}` : '', l.mentor ? 'nl-mentor' : ''].filter(Boolean).join(' ');
   const adminLink = (cls) => (signedIn === 'admin' ? `<a href="/admin.html" class="${cls} admin-link" data-i18n="nav.admin">${w('nav.admin')}</a>` : '');
 
@@ -91,6 +132,7 @@
             <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">${w('nav.signup')}</a>
           </div>
           <div class="nav-actions" id="navLoggedIn"${off(!signedIn)}>
+            ${WisecallMentorButton.html(MENTOR, 'nav', w)}
             ${adminLink('btn btn-ghost')}
             <a href="/inbox.html" class="nav-inbox" data-inbox-link aria-label="${w('nav.inbox')}" data-i18n-aria="nav.inbox">${ICON_INBOX}<span class="nav-badge" data-inbox-badge hidden></span></a>
             <a href="/dashboard.html" class="btn btn-ghost" data-i18n="nav.dashboard">${w('nav.dashboard')}</a>
@@ -119,6 +161,7 @@
           <a href="/login.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.login">${w('nav.login')}</a>
         </div>
         <div class="mm-actions" id="mmLoggedIn"${off(!signedIn)}>
+          ${WisecallMentorButton.html(MENTOR, 'menu', w)}
           <a href="/inbox.html" class="btn btn-outline btn-lg btn-block mm-inbox" data-inbox-link aria-label="${w('nav.inbox')}" data-i18n-aria="nav.inbox"><span data-i18n="nav.inbox">${w('nav.inbox')}</span><span class="nav-badge" data-inbox-badge hidden></span></a>
           ${adminLink('btn btn-outline btn-lg btn-block')}
           <a href="/dashboard.html" class="btn btn-primary btn-lg btn-block" data-i18n="nav.dashboard">${w('nav.dashboard')}</a>

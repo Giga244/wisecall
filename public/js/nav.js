@@ -101,6 +101,53 @@
     } catch (e) { /* no cookies here: the header is then checked on every page, as before */ }
   }
 
+  // ---- The mentor button (header.js): where this person is on the way to becoming a mentor ---------------------------------
+  // From /api/me (user.mentorPath): out | asker | draft (+ step) | sent | none (a mentor or an admin). Drawn in the header, the menu panel
+  // and on the home page's second button, again after a language switch. docs/CLAUDE-CODE-MENTOR-BUTTON-SIGNED-IN.md
+  let mentorNow = null;
+  function mentorOf(user) {
+    if (!user) return { state: 'out', step: null };
+    if (user.isAdmin) return { state: 'none', step: null };
+    const p = user.mentorPath || { state: ['mentor', 'both'].includes(user.role) ? 'mentor' : 'asker' };
+    if (p.state === 'draft') return { state: 'draft', step: p.step || null };
+    return { state: p.state === 'mentor' ? 'none' : p.state, step: null };
+  }
+  const hintOf = (user, m) => (!user ? null : (user.isAdmin ? 'admin' : { asker: '1', draft: `apply${m.step || ''}`, sent: 'sent' }[m.state] || 'mentor'));
+  function drawMentor(m) {
+    if (m) mentorNow = m;
+    const now = mentorNow;
+    const B = window.WisecallMentorButton;
+    if (!now || !B) return;
+    const root = document.documentElement;
+    root.dataset.mentorState = now.state;
+    if (now.step) root.dataset.mentorStep = String(now.step); else delete root.dataset.mentorStep;
+    // the header and the menu panel: the button is replaced only when it changed (nothing moves when the hint was right)
+    [['navLoggedIn', 'nav'], ['mmLoggedIn', 'menu']].forEach(([id, where]) => {
+      const box = document.getElementById(id);
+      if (!box) return;
+      const old = box.querySelector('[data-mentor-cta]');
+      const html = now.state === 'out' ? '' : B.html(now, where, t).trim();
+      if (old && old.outerHTML === html) return;
+      if (old) old.remove();
+      if (html) box.insertAdjacentHTML('afterbegin', html);
+    });
+    // (signed in: the visitor's "Become a mentor" among the main links goes; their own button is next to Dashboard)
+    if (now.state !== 'out') document.querySelectorAll('.nl-mentor').forEach((a) => a.remove());
+    // the home page's second button: kept for everybody, saying where they are (and nothing extra for a mentor or an admin)
+    document.querySelectorAll('[data-mentor-cta="hero"]').forEach((a) => {
+      const wrap = a.closest('.hero-mentor') || a;
+      wrap.hidden = now.state === 'none';
+      if (now.state === 'out') { a.setAttribute('href', '/become-a-mentor.html'); a.dataset.ready = '1'; return; }
+      if (now.state === 'none') return;
+      a.setAttribute('href', B.href(now));
+      if (now.state === 'asker') { a.setAttribute('data-i18n', 'hero.mentorCta'); a.textContent = t('hero.mentorCta'); }
+      else { a.removeAttribute('data-i18n'); a.textContent = B.text(now, t, false); }
+      a.className = now.state === 'sent' ? 'hero-mentor-btn mentor-status' : 'btn btn-outline btn-lg btn-arrow hero-mentor-btn';
+      a.dataset.ready = '1';
+    });
+  }
+  document.addEventListener('wisecall:lang-changed', () => drawMentor());
+
   async function setUpNav() {
     initMenu();
     initAutoHide();
@@ -116,9 +163,9 @@
     // The theme chosen on the account (on another device, say) wins over what this device remembers; and from now on a choice made
     // here is saved on the account too.
     if (window.WisecallTheme) WisecallTheme.adopt(user);
-    setHint(user ? (user.isAdmin ? 'admin' : (['mentor', 'both'].includes(user.role) ? 'mentor' : '1')) : null);
-    // (a mentor, or someone applying, has no "Become a mentor" link: one drawn from an older hint goes)
-    if (user && (user.isAdmin || ['mentor', 'both'].includes(user.role))) document.querySelectorAll('.nl-mentor').forEach((a) => a.remove());
+    const mentor = mentorOf(user);
+    setHint(hintOf(user, mentor));
+    drawMentor(mentor);
     // The hint and the server agree: nothing on the header moves. They disagree (a session that ran out, a sign-in from before the
     // hint): the header turns into the right one with a short fade instead of a jump.
     if (header && Boolean(user) !== drawnSignedIn) {
@@ -231,5 +278,5 @@
     showToast._t = setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  window.WisecallNav = { initNav, showToast, setUnread };
+  window.WisecallNav = { initNav, showToast, setUnread, mentorPath: () => mentorNow };
 })();

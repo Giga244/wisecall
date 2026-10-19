@@ -24,7 +24,8 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   const user = req.userToken ? await getUserById(req.userToken.id) : null;
   // (signed out, or the session ran out: the header's "signed in" hint goes too, see server/auth.js)
   if (!user && req.cookies && req.cookies[HINT_COOKIE]) res.clearCookie(HINT_COOKIE);
-  res.json({ user: user ? meProfile(user) : null });
+  // (and where they are on the way to becoming a mentor: the "Become a mentor" button on every page, server/verification/experience.js)
+  res.json({ user: user ? { ...meProfile(user), mentorPath: await experience.progressFor(user) } : null });
 }));
 
 const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'theme', 'sampleAnswer'];

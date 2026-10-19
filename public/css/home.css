@@ -41,6 +41,11 @@ a.chip { display: inline-flex; align-items: center; min-height: 40px; text-decor
 /* "I'm an expert – become a mentor": the second way in, a full button under the search (the whole width on a phone) */
 .hero-mentor { margin: 14px 0 0; }
 .hero-mentor-btn { white-space: normal; text-align: center; }
+/* (signed in, the button says where they are: public/js/nav.js draws it once it knows; until then its place is kept, so nothing moves.
+   A mentor or an admin has nothing extra here.) */
+html[data-mentor-state="draft"] .hero-mentor-btn:not([data-ready]), html[data-mentor-state="sent"] .hero-mentor-btn:not([data-ready]) { visibility: hidden; }
+html[data-mentor-state="none"] .hero-mentor, .hero-mentor[hidden] { display: none; }
+.hero-mentor-btn.mentor-status { white-space: normal; }
 @media (max-width: 639px) { .hero-mentor-btn { display: flex; width: 100%; justify-content: center; } }
 
 /* the conversation stage: a mint panel on an ink slab, a sun sticker on top */

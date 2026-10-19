@@ -70,7 +70,7 @@ describe('the short home page: nothing lost, everything else one click away', ()
     assert.match(h, /data-i18n="how\.short\.3\.title">Answer within 7 days or full refund</); // ({answerDays} filled in)
     // "Become a mentor" and "Apply as a mentor" open the mentors' page
     // (the hero's second button, next to the waiting list: docs/CLAUDE-CODE-MENTOR-SIGNUP.md #1)
-    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-outline btn-lg btn-arrow hero-mentor-btn" data-i18n="hero\.mentorCta">I’m an expert – become a mentor<\/a>/);
+    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-outline btn-lg btn-arrow hero-mentor-btn" data-mentor-cta="hero" data-i18n="hero\.mentorCta">I’m an expert – become a mentor<\/a>/);
     assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-lg cta-secondary"/);
     assert.doesNotMatch(h, /redirect=\/settings\.html/);
   });

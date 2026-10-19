@@ -4,8 +4,9 @@ const { SESSION_SECRET } = require('./config');
 const COOKIE_NAME = 'wisecall_token';
 const COOKIE_DAYS = 30;
 // Next to the login cookie (which scripts cannot read) a plain "signed in" hint the page's header reads before it draws itself, so a
-// signed-in person sees their own menu from the first frame (public/js/header.js): "1", "mentor" for a mentor (no "Become a mentor"
-// link), or "admin" for an admin (the Admin button).
+// signed-in person sees their own menu from the first frame (public/js/header.js): "1" ("Become a mentor"), "apply" or "apply1"..."apply5"
+// for an application started and not sent ("Continue your application · step N"), "sent" for one waiting for review, "mentor" for a
+// mentor (nothing extra), or "admin" for an admin (the Admin button).
 // No personal data, and it grants nothing: every request is still checked with the login cookie. It is set and cleared with it.
 const HINT_COOKIE = 'wc_authed';
 
@@ -20,7 +21,7 @@ function signToken(user, extra) {
 function setAuthCookie(res, token, hint = '1') {
   const options = { sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: COOKIE_DAYS * 24 * 60 * 60 * 1000 };
   res.cookie(COOKIE_NAME, token, { ...options, httpOnly: true });
-  res.cookie(HINT_COOKIE, ['admin', 'mentor'].includes(hint) ? hint : '1', { ...options, httpOnly: false });
+  res.cookie(HINT_COOKIE, HINTS.test(hint) ? hint : '1', { ...options, httpOnly: false });
 }
 
 function clearAuthCookie(res) {
@@ -28,9 +29,15 @@ function clearAuthCookie(res) {
   res.clearCookie(HINT_COOKIE);
 }
 
-// The header's hint for this person: "admin" for an admin, "mentor" for a mentor (or someone applying), otherwise "1".
-const hintFor = (user) => (require('./adminAuth').isAdminUser({ email: user && user.email, emailVerified: Boolean(user && (user.emailVerified || user.email_verified)) })
-  ? 'admin' : (user && ['mentor', 'both'].includes(user.role) ? 'mentor' : '1'));
+// The header's hint for this person (the step of a started application is added by the page itself, public/js/nav.js).
+const HINTS = /^(1|admin|mentor|sent|apply[1-5]?)$/;
+function hintFor(user) {
+  if (require('./adminAuth').isAdminUser({ email: user && user.email, emailVerified: Boolean(user && (user.emailVerified || user.email_verified)) })) return 'admin';
+  if (!user || !['mentor', 'both'].includes(user.role)) return '1';
+  const status = user.verificationStatus || user.verification_status;
+  if (status === 'verified' || status === 'suspended') return 'mentor';
+  return status === 'pending' && (user.applicationSubmittedAt || user.application_submitted_at) ? 'sent' : 'apply';
+}
 
 // "Chrome on Windows", from the browser's user agent (a short label for Settings -> Account; nothing else is kept about the device).
 function deviceLabel(ua) {

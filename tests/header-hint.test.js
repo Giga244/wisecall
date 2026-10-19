@@ -61,13 +61,14 @@ test('a hint with nobody behind it is cleared: by /api/me, and with the login co
 test('the header draws itself from the hint before it asks the server; the server\'s answer changes it only if they disagree, with a fade', () => {
   const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8').replace(/\r\n/g, '\n');
   const header = read('public/js/header.js');
-  assert.match(header, /const signedIn = \(\(\) => \{ try \{ return \(\/\(\?:\^\|;\\s\*\)wc_authed=\(1\|admin\|mentor\)/);
+  assert.match(header, /const signedIn = \(\(\) => \{ try \{ return \(\/\(\?:\^\|;\\s\*\)wc_authed=\(1\|admin\|mentor\|sent\|apply\[1-5\]\?\)/);
   assert.match(header, /<header class="nav\$\{signedIn \? ' is-authed' : ''\}" id="siteHeader">/);
   assert.match(header, /<div class="nav-actions" id="navLoggedIn"\$\{off\(!signedIn\)\}>/);
   assert.match(header, /<div class="mm-actions" id="mmLoggedIn"\$\{off\(!signedIn\)\}>/);
   const nav = read('public/js/nav.js');
   assert.match(nav, /if \(header && Boolean\(user\) !== drawnSignedIn\) \{/);
-  assert.match(nav, /setHint\(user \? \(user\.isAdmin \? 'admin' : \(\['mentor', 'both'\]\.includes\(user\.role\) \? 'mentor' : '1'\)\) : null\);/);
+  assert.match(nav, /const mentor = mentorOf\(user\);\n    setHint\(hintOf\(user, mentor\)\);\n    drawMentor\(mentor\);/);
+  assert.match(nav, /\{ asker: '1', draft: .apply\$\{m\.step \|\| ''\}., sent: 'sent' \}\[m\.state\] \|\| 'mentor'/);
   assert.match(read('public/css/style.css'), /html\.motion \.nav\.auth-swap \.nav-links, html\.motion \.nav\.auth-swap \.nav-right \{ animation: auth-swap 0\.2s ease-out; \}/);
 });
 

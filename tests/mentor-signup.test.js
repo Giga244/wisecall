@@ -246,7 +246,7 @@ describe('the way in', () => {
   test('the pages: the header link, the hero button, the mentor sign-up and the links to the application', () => {
     const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
     assert.match(read('public/js/header.js'), /key: 'nav\.becomeMentor', mentor: true/);
-    assert.match(read('public/index.html'), /class="[^"]*hero-mentor-btn[^"]*" data-i18n="hero\.mentorCta"/);
+    assert.match(read('public/index.html'), /class="[^"]*hero-mentor-btn[^"]*" data-mentor-cta="hero" data-i18n="hero\.mentorCta"/);
     assert.match(read('public/become-a-mentor.html'), /<a href="\/signup\.html\?as=mentor" class="btn btn-ink btn-lg btn-arrow become-link" data-i18n="mentors\.start">/);
     assert.match(read('public/js/info-page.js'), /'\/apply\.html' : '\/signup\.html\?as=mentor'/);
     const signup = read('public/signup.html');

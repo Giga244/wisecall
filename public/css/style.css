@@ -180,12 +180,31 @@ html[lang="ka"] .nav-links .nl-faq { display: none; }
 @media (min-width: 1024px) and (max-width: 1179px) {
   html[lang="ka"] .nl-extra { display: none; }
   /* (signed in, in Georgian, "გახდი მენტორი" still fits next to Dashboard, Settings and Log out: a little less room around each) */
-  html[lang="ka"] .nav.is-authed .nav-inner { gap: 10px; }
+  html[lang="ka"] .nav.is-authed .nav-inner { gap: 8px; }
   html[lang="ka"] .nav.is-authed .nav-links { gap: 12px; }
   html[lang="ka"] .nav.is-authed .nav-links a { font-size: 0.9rem; }
   html[lang="ka"] .nav.is-authed .nav-right, html[lang="ka"] .nav.is-authed .nav-actions { gap: 4px; }
   html[lang="ka"] .nav.is-authed .nav-actions .btn { padding: 9px 8px; font-size: 0.85rem; }
 }
+
+/* The mentor button next to Dashboard (public/js/header.js): "Become a mentor", "Continue your application · step 2 of 5", or the status
+   "Application in review". Where the header is narrow it uses its short words ("Application · 2/5"), and in Georgian always (the longer
+   Georgian words are in the menu panel, on the home page and on the dashboard). */
+.nav-mentor .nm-short { display: none; }
+.mentor-status {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: var(--r-pill);
+  background: var(--sun-soft); color: var(--sun-ink); font-weight: 700; text-decoration: none; white-space: nowrap;
+}
+.mentor-status::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+.mentor-status:hover, .mentor-status:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.mentor-status:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.mm-mentor.mentor-status { justify-content: center; white-space: normal; }
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .nav-mentor .nm-full { display: none; }
+  .nav-mentor .nm-short { display: inline; }
+}
+html[lang="ka"] .nav-mentor .nm-full { display: none; }
+html[lang="ka"] .nav-mentor .nm-short { display: inline; }
 
 /* EN | KA: a pill with an outline; the language in use is filled with ink */
 .lang-toggle {

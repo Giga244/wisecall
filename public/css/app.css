@@ -828,3 +828,14 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .app-progress-failed a, .app-progress-failed .linklike { color: inherit; margin-left: 6px; }
 .ap-ev-more { margin: 0 0 12px; }
 .ap-ev-more > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; }
+/* Dashboard: the way to the mentor application, at the top, for someone who is not a mentor yet (public/js/dashboard.js) */
+.mentor-card {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; margin: 0 0 24px; padding: 22px 24px;
+  border: var(--line-w) solid var(--line); border-radius: var(--r-card); background: var(--mint-soft); color: var(--mint-banner-ink);
+}
+.mentor-card h2 { margin: 0 0 6px; font-size: 1.35rem; color: inherit; }
+.mentor-card p { margin: 0; line-height: 1.5; }
+.mentor-card-text { flex: 1 1 320px; min-width: 0; }
+.mentor-card-draft { background: var(--sun-tint); color: var(--ink); }
+.mentor-card-sent { background: var(--card); color: var(--ink); }
+@media (max-width: 639px) { .mentor-card { padding: 18px; } .mentor-card .btn { width: 100%; } }

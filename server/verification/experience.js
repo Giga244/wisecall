@@ -254,6 +254,24 @@ function missingFor(user, evidence, stepMap) {
   return missing;
 }
 
+// The step of /apply.html (1-5) a mentor continues from: the first one with something still missing (5: the ID check and "Submit").
+const STEP_OF = { headline: 1, years: 1, field: 1, niche: 1, story: 2, price: 3, evidence: 4, license: 4, license_document: 4 };
+const applicationStep = (missing) => Math.min(5, ...missing.map((m) => STEP_OF[m] || 5));
+
+// Where someone is on the way to becoming a mentor, for the "Become a mentor" button on every page (docs/CLAUDE-CODE-MENTOR-BUTTON-SIGNED-IN.md):
+//   asker   not a mentor applicant: "Become a mentor"
+//   draft   an application started and not sent (or sent back): "Continue your application · step N of 5" (step)
+//   sent    sent and waiting for a decision: "Application in review"
+//   mentor  approved (or suspended): nothing extra
+// (an admin sees nothing extra either: the pages check isAdmin)
+async function progressFor(user) {
+  if (!isMentor(user)) return { state: 'asker', step: null };
+  if (user.verificationStatus === 'verified' || user.verificationStatus === 'suspended') return { state: 'mentor', step: null };
+  if (submitted(user)) return { state: 'sent', step: null };
+  const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
+  return { state: 'draft', step: applicationStep(missingFor(user, evidence, stepMap)) };
+}
+
 // Specialty tags are optional: a mentor who left them empty gets them from their own words (the field, split at commas and "and"), which
 // they can change later in Settings. -> a list (at most LIMITS.tagsMax), possibly empty.
 function suggestTags(user) {
@@ -376,5 +394,5 @@ async function setFieldByAdmin({ mentorId, admin, text, niche, notRegulated }) {
 module.exports = {
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
-  bioToStory
+  bioToStory, applicationStep, progressFor
 };

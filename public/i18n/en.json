@@ -2543,5 +2543,17 @@
   "profile.bio.sync": "For mentors this is also “Your story” in your application: while the two are the same, changing one changes the other.",
   "wait.otherFields": "Other fields…",
   "wait.question": "Your question:",
-  "wait.questionNote": "We keep it with your sign-up to know which mentors to invite. It is never shown with your email."
+  "wait.questionNote": "We keep it with your sign-up to know which mentors to invite. It is never shown with your email.",
+  "nav.continueApp": "Continue your application",
+  "nav.continueStep": "Continue your application · step {n} of 5",
+  "nav.continueShort": "Application · {n}/5",
+  "nav.inReview": "Application in review",
+  "nav.inReviewShort": "In review",
+  "dash.mentor.asker.title": "Want to share your experience?",
+  "dash.mentor.asker.body": "Become a mentor: answer questions in your field, set your own price and keep {sharePct}% of it.",
+  "dash.mentor.draft.title": "Continue your application – step {n} of 5",
+  "dash.mentor.draft.body": "Everything you filled in is saved. A few more minutes and it is done.",
+  "dash.mentor.draft.cta": "Continue my application",
+  "dash.mentor.sent.title": "Your mentor application is in review",
+  "dash.mentor.sent.body": "We will email you when it is decided."
 }
