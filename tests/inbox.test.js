@@ -80,7 +80,10 @@ describe('a booking thread', () => {
     }
     const blocked = (await pool.query('SELECT * FROM blocked_messages')).rows;
     assert.equal(blocked.length, 4);
-    assert.ok(!JSON.stringify(blocked).includes('555'), 'only the kind is stored, never the text');
+    // Only the kind is stored, never the text: the table has no place for it. (It once searched every column for "555", and a random id or
+    // a time with "555" in it failed it now and then.)
+    assert.deepEqual(Object.keys(blocked[0]).sort(), ['created_at', 'id', 'reasons', 'sender_id', 'thread_id']);
+    assert.deepEqual(blocked.map((b) => b.reasons.every((k) => /^[a-z_]+$/.test(k))), [true, true, true, true], 'only the kind is stored, never the text');
     assert.equal((await pool.query(`SELECT count(*)::int AS n FROM messages WHERE kind = 'follow_up_question'`)).rows[0].n, 0);
   });
 

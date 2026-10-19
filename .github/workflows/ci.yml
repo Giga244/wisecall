@@ -1,9 +1,14 @@
-# On every push and pull request: npm audit (high and critical only), the unit and cloud tests against a throwaway Postgres, the browser
-# tests, and a secret scan of the whole git history (gitleaks). Nothing here uses a real key: the tests run with the fake bank, the fake
-# ID check and a mail log, and the database is created for the run and thrown away.
+# On every pull request and every push to main: npm audit (high and critical only), the unit and cloud tests against a throwaway Postgres,
+# the browser tests in three parallel shares, the cloud browser flows, and a secret scan of the whole git history (gitleaks). Nothing here uses
+# a real key: the tests run with the fake bank, the fake ID check and a mail log, and each job's database is created for it and thrown away.
+#
+# Each job has its own time limit with room to spare (the unit tests take about 7 minutes, each browser share about 8): one that runs far
+# over is a problem to look at, not a limit to raise. A newer push to the same branch or pull request cancels the run still going for it.
+# The runner image is pinned (ubuntu-24.04), so GitHub moving ubuntu-latest to a new Ubuntu cannot change CI under us.
 name: CI
 on:
   push:
+    branches: [main]
   pull_request:
 permissions:
   contents: read
@@ -11,9 +16,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TEST_DATABASE_URL: postgresql://wisecall:ci-only-not-secret@localhost:5432/wisecall_test
+  DATABASE_URL: postgresql://wisecall:ci-only-not-secret@localhost:5432/wisecall_test
+
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -23,9 +33,10 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm audit --audit-level=high
 
-  tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  unit:
+    name: unit and cloud tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:16
@@ -36,9 +47,6 @@ jobs:
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U wisecall" --health-interval 5s --health-timeout 5s --health-retries 20
-    env:
-      TEST_DATABASE_URL: postgresql://wisecall:ci-only-not-secret@localhost:5432/wisecall_test
-      DATABASE_URL: postgresql://wisecall:ci-only-not-secret@localhost:5432/wisecall_test
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -48,22 +56,104 @@ jobs:
       - run: npm ci
       - name: Unit and cloud tests
         run: npm test
+
+  e2e:
+    name: browser tests (share ${{ matrix.share }} of 3)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        share: [1, 2, 3]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wisecall
+          POSTGRES_PASSWORD: ci-only-not-secret
+          POSTGRES_DB: wisecall_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U wisecall" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Playwright's browser, kept between runs (its version comes with package-lock.json); the system libraries it needs are installed
+      # every time (they are not in the cache).
+      - name: Browser cache
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Browser for the end-to-end tests
+        if: steps.browser-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
-      - name: End-to-end tests
-        run: npm run test:e2e
+      - name: The browser's system libraries
+        if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - name: End-to-end tests (this share; scripts/e2e-shard.js)
+        run: node scripts/e2e-shard.js ${{ matrix.share }} 3
       - name: Keep the browser test report when something failed
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: e2e-report
+          name: e2e-report-${{ matrix.share }}
           path: |
             e2e/report
             e2e/results
           retention-days: 7
 
+  e2e-cloud:
+    name: cloud browser flows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wisecall
+          POSTGRES_PASSWORD: ci-only-not-secret
+          POSTGRES_DB: wisecall_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U wisecall" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Browser cache
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Browser for the end-to-end tests
+        if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: The browser's system libraries
+        if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - name: Cloud browser flows
+        run: npx playwright test -c tests/e2e-cloud
+      - name: Keep the report when something failed
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-cloud-report
+          path: tests/e2e-cloud/results
+          retention-days: 7
+
   secrets:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:

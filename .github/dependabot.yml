@@ -1,4 +1,6 @@
 # Dependabot: a weekly look for new versions of the npm packages and of the GitHub Actions used in .github/workflows.
+# Minor and patch updates come together in one pull request per ecosystem (one CI run, one review); a major version comes on its own, so it
+# can be read and planned. Express 5 is a major upgrade planned for after launch: its major versions are ignored until then.
 # Security fixes come as soon as they are published, whatever the schedule.
 version: 2
 updates:
@@ -9,10 +11,16 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     groups:
-      dev-tools:
-        dependency-type: development
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: express
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]

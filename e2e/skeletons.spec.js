@@ -145,9 +145,11 @@ test('the inbox: conversations and a conversation\'s messages as skeletons (one 
   await expect(page.locator('#main [role="status"]'), 'one "Loading…" for the whole page').toHaveCount(1);
   const first = await box(page.locator('#threadList .skeleton-thread').first());
   await list.release();
-  const item = page.locator('#threadList .thread-item').first();
-  await expect(item).toBeVisible();
-  expect(await item.evaluate((e) => Math.round(e.parentElement.getBoundingClientRect().top + scrollY)), 'the first conversation is where its skeleton was').toBe(first.top);
+  // (on a desktop the first conversation then opens, which draws the list once more: measure after that, in one step, so the element
+  // measured is never one that was just replaced; that is what made this fail now and then on CI)
+  await expect(page.locator('#threadList .thread-item.active')).toBeVisible();
+  const top = await page.evaluate(() => Math.round(document.querySelector('#threadList .thread-item').parentElement.getBoundingClientRect().top + scrollY));
+  expect(top, 'the first conversation is where its skeleton was').toBe(first.top);
   await expect(page.locator('#threadList')).toHaveAttribute('aria-busy', 'false');
   // a conversation that is not open yet: its messages as a skeleton while they load, the error message if they cannot
   const other = page.locator('#threadList .thread-item:not(.active)').first();
