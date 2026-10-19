@@ -213,6 +213,8 @@ describe('Bank of Georgia (BOG)', () => {
       await payAtBank(r);
       await pool.query(`UPDATE bookings SET answer_deadline = now() - interval '1 minute' WHERE id = $1`, [r.booking.id]);
       await waitFor(async () => (await row(r.booking.id)).status === 'refund_pending');
+      // The sweep claims the booking (refund_pending) before it sends the request, so wait for the request to reach the bank.
+      await waitFor(async () => refundCalls(r.booking.providerOrderId).length > 0);
 
       const calls = refundCalls(r.booking.providerOrderId);
       assert.equal(calls.length, 1, 'exactly one refund request reached the bank');
