@@ -48,11 +48,13 @@ function isListable(user) {
 // Verification tab): the steps win over the stored status, so an approved mentor with a step that no longer holds is
 // "needs_attention", never "verified".
 //   none | pending (not sent yet) | in_review | needs_attention | verified | rejected | suspended
+// An application that was never sent is "pending" (or "none") even with a failed step: the pages say neutrally how far it is and name the
+// one step that failed, instead of a red "needs attention" at 0 of 3 steps (docs/CLAUDE-CODE-UX-WALKTHROUGH.md C).
 function verificationState(user) {
   if (!user || !(user.role === 'mentor' || user.role === 'both')) return 'none';
   const s = user.verificationStatus || 'none';
   if (s === 'suspended' || s === 'rejected') return s;
-  if (user.hasFailedRequiredStep) return 'needs_attention';
+  if (user.hasFailedRequiredStep && (s === 'verified' || (s === 'pending' && user.applicationSubmittedAt))) return 'needs_attention';
   if (s === 'verified') return 'verified';
   if (s === 'pending') return user.applicationSubmittedAt ? 'in_review' : 'pending';
   return 'none';

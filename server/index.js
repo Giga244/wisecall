@@ -129,6 +129,7 @@ app.use(/^\/api\/ratings\/[^/]+\/(report|reply)$/, rateLimit({ windowMs: 60 * 60
 app.use(/^\/api\/bookings\/[^/]+\/ratings$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.post('/api/bookings', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
+app.use('/api/niches/suggest', rateLimit({ windowMs: 60 * 1000, max: 60 })); // (asked while a mentor types their field)
 app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.use('/api/me/export', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.put('/api/me/payout', rateLimit({ windowMs: 15 * 60 * 1000, max: 10 }));
@@ -239,6 +240,14 @@ app.use('/api/admin', require('./routes/adminNiches').router);
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
 if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 
+// The closest category for a field in someone's own words (the mentor application, and the home page's waiting list). Nothing is kept.
+app.get('/api/niches/suggest', (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.slice(0, 300) : '';
+  const niche = require('./fieldSuggest').suggestField(q);
+  res.set('Cache-Control', 'no-store');
+  res.json({ niche, regulated: Boolean(niche) && require('./niches').isRegulated(niche) });
+});
+
 app.get('/api/config', publicCache(), async (req, res) => {
   await launch.ensureFresh(5000);
   res.json({
@@ -256,6 +265,9 @@ app.get('/api/config', publicCache(), async (req, res) => {
     payoutHoldDays: require('./ledger').holdDays(),
     payoutMinGel: config.PAYOUT_MIN_GEL,
     disputeDays: config.DISPUTE_DAYS,
+    mentorReviewDays: config.MENTOR_REVIEW_DAYS,
+    priceSuggestMin: config.PRICE_SUGGEST_MIN,
+    priceSuggestMax: config.PRICE_SUGGEST_MAX,
     // The seller's legal details for the footer (each only when set), and whether card logos belong there (only once payments are open).
     legal: { name: config.LEGAL_NAME || null, id: config.LEGAL_ID || null, address: config.LEGAL_ADDRESS || null },
     paymentsLive: config.PAYMENTS_ENABLED && config.LAUNCH_MODE !== 'prelaunch',
@@ -274,6 +286,8 @@ app.get('/api/config', publicCache(), async (req, res) => {
     social: config.SOCIAL_URLS,
     // The niches (fields) the pages offer, with both names and an icon (they live in the database and an admin can add more).
     niches: require('./niches').forClient(),
+    // The 6 fields people wait for most: first in the waiting list's field menu.
+    popularFields: await require('./waitlist').popularFields(),
     // Only present on a developer's computer, where pages may show dev-mode helpers. In production the
     // key does not exist at all.
     ...(config.DEV_MODE ? { devMode: true } : {})

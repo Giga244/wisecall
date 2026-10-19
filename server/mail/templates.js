@@ -690,7 +690,7 @@ const BUILDERS = {
   }),
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,
-    blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.PUBLIC_URL}/settings.html` }]
+    blocks: [{ p: s.mentorRejected.intro }, ...(d.note ? [{ quote: `${s.mentorRejected.reasonLabel} ${d.note}` }] : []), { p: s.mentorRejected.after }, { button: s.mentorRejected.button, url: `${config.PUBLIC_URL}/apply.html` }]
   }),
   mentorJoined: (s, d, lang) => {
     const names = NICHE_NAMES[lang] || NICHE_NAMES.en;
@@ -735,7 +735,7 @@ const BUILDERS = {
   }),
   verificationSimplified: (s) => ({
     heading: s.verificationSimplified.heading,
-    blocks: [{ p: s.verificationSimplified.intro }, { p: s.verificationSimplified.after }, { button: s.verificationSimplified.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
+    blocks: [{ p: s.verificationSimplified.intro }, { p: s.verificationSimplified.after }, { button: s.verificationSimplified.button, url: `${config.PUBLIC_URL}/apply.html` }]
   }),
   interviewBooked: (s, d) => ({
     heading: s.interviewBooked.heading,

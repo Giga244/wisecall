@@ -1,5 +1,7 @@
-// Step 2 of an application: the Experience form (title, niche, specialty tags, years, "Your story", one sample answer) and the
-// evidence list (at least one item of ANY kind; none is required by itself). Self-taught people and business owners are welcome.
+// Step 2 of an application: the Experience form (the field in their own words and its category, years, "Your story"; a title, specialty
+// tags and a sample answer are optional) and the evidence list (at least one item of ANY kind; none is required by itself). Self-taught
+// people and business owners are welcome. The step-by-step page (/apply.html) asks only for what is required
+// (docs/CLAUDE-CODE-UX-WALKTHROUGH.md A): the rest can be added later in Settings.
 //
 // The form can be saved as a draft at any time. "Submit for review" checks that it is complete, then starts the analysis (step 3).
 // A submitted application is locked while it is reviewed; "Edit my application" unlocks it (for an approved mentor that takes the
@@ -100,11 +102,29 @@ function applyFieldRules(user, patch) {
 const regulatedByWords = (user) => !user.fieldOverride && rules.isRegulated(user.niche)
   && require('../fieldRules').regulatedCategoryIn(user.customNiche, user.roleTitle) === user.niche;
 
+// "About me" (the profile) and "Your story" (the application) are the same text for most mentors: while they are the same, or one of them is
+// still empty, writing one writes the other (docs/CLAUDE-CODE-UX-WALKTHROUGH.md D). Once they differ, each is kept as written.
+const inStep = (a, b) => !a || !String(a).trim() || tidy(a) === tidy(b || '');
+function storyToBio(user, patch) {
+  if (patch.story && inStep(user.bio, user.story)) patch.bio = patch.story;
+  return patch;
+}
+function bioToStory(user, patch) {
+  if (patch.bio === undefined || !patch.bio || isLocked(user) || !user.emailVerified) return patch;
+  if ([...patch.bio].length <= LIMITS.storyMax && inStep(user.story, user.bio)) patch.story = patch.bio;
+  return patch;
+}
+
 async function saveExperience(user, input) {
   if (isLocked(user)) throw new VerificationError('application_locked');
   const { patch, error, field } = parseExperience(input);
   if (error) throw new VerificationError(error, { field });
+  // The field in their own words with no category yet: the closest one is chosen for them ("Other" when nothing fits); they can change it.
+  const words = patch.customNiche !== undefined ? patch.customNiche : user.customNiche;
+  const category = patch.niche !== undefined ? patch.niche : user.niche;
+  if (words && !category) patch.niche = require('../fieldSuggest').suggestField(words, patch.roleTitle || user.roleTitle) || 'other';
   applyFieldRules(user, patch);
+  storyToBio(user, patch);
   // A different niche can need different steps (a licence), so the steps shown are recomputed from it when the page reloads.
   return Object.keys(patch).length ? updateUser(user.id, patch) : user;
 }
@@ -123,12 +143,15 @@ async function listEvidence(userId) {
   return rows.map(evidenceFromRow);
 }
 
-// What the mentor sees about one item: never the admin's notes, the other accounts, or the raw check.
+// What the mentor sees about one item: never the admin's notes, the other accounts, or the raw check. A link the automatic check could not
+// confirm (LinkedIn and other sites that refuse automatic visitors, a page without the name in its title) is simply checked by our team:
+// the mentor is warned only when the page does not open ('problem') or clearly belongs to someone else ('unclear').
 function evidenceForMentor(e) {
   const r = e.checkResult || {};
+  const warning = e.checkStatus === 'warning' ? ((r.flags || []).includes('other_person') ? 'unclear' : 'team') : null;
   return {
     id: e.id, kind: e.kind, url: e.url, registryId: e.registryId, note: e.note, filename: e.filename,
-    state: e.checkStatus === 'ok' ? 'verified' : (e.checkStatus === 'failed' ? 'problem' : (e.checkStatus === 'admin_check' ? 'team' : (e.checkStatus === 'warning' ? 'unclear' : 'unchecked'))),
+    state: e.checkStatus === 'ok' ? 'verified' : (e.checkStatus === 'failed' ? 'problem' : (e.checkStatus === 'admin_check' ? 'team' : (warning || 'unchecked'))),
     problem: e.checkStatus === 'failed' ? (r.flags || []).find((f) => ['dead_link', 'refused_address'].includes(f)) || 'dead_link' : null
   };
 }
@@ -143,10 +166,30 @@ function cleanUrl(value) {
   return u.toString();
 }
 
-// input: { kind, url?, registryId?, note? }. A diploma is added by uploading the file (see credentials.storeDocument).
+// What a link is, from its address, so a mentor only pastes it (the type can still be chosen under "More options"). A university's own
+// pages (a staff page, a faculty list) count as the employer's site.
+const UNIVERSITY = /(^|\.)(edu\.ge|tsu\.ge|gtu\.ge|gipa\.ge|tsmu\.edu|newvision\.ge|edu|ac\.[a-z]{2}|edu\.[a-z]{2})$/i;
+const isUniversity = (host) => UNIVERSITY.test(String(host || '').toLowerCase().replace(/\.$/, ''));
+function kindFromUrl(value) {
+  const url = cleanUrl(value);
+  if (!url) return null;
+  const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+  const on = (...domains) => domains.some((d) => host === d || host.endsWith('.' + d));
+  if (on('linkedin.com')) return 'linkedin';
+  if (on('facebook.com', 'fb.com', 'instagram.com', 'x.com', 'twitter.com', 'tiktok.com', 'threads.net', 'youtube.com', 'youtu.be')) return 'social';
+  if (on('github.com', 'gitlab.com', 'behance.net', 'dribbble.com', 'artstation.com', 'vimeo.com', 'soundcloud.com')) return 'portfolio';
+  if (on('scholar.google.com', 'researchgate.net', 'orcid.org', 'doi.org', 'academia.edu', 'scopus.com', 'semanticscholar.org', 'ssrn.com', 'pubmed.ncbi.nlm.nih.gov')) return 'publication';
+  if (on('apps.apple.com', 'play.google.com')) return 'product';
+  if (isUniversity(host)) return 'company';
+  return 'website';
+}
+
+// input: { kind, url?, registryId?, note? }. A diploma is added by uploading the file (see credentials.storeDocument). Without a kind (or
+// "auto") the kind comes from the address.
 async function addEvidence(user, input) {
   if (isLocked(user)) throw new VerificationError('application_locked');
-  const b = input || {};
+  const b = { ...(input || {}) };
+  if ((b.kind === undefined || b.kind === null || b.kind === '' || b.kind === 'auto') && b.url) b.kind = kindFromUrl(b.url) || 'website';
   if (!rules.EVIDENCE_KINDS.includes(b.kind) || b.kind === 'diploma') throw new VerificationError('invalid_kind');
   const note = b.note === undefined || b.note === null ? null : oneLine(String(b.note)).slice(0, LIMITS.evidenceNoteMax) || null;
   let url = null;
@@ -189,28 +232,33 @@ async function removeEvidence(user, id) {
 }
 
 // ---- Is it complete? ----------------------------------------------------------------------------------------------------------------------
-// -> the list of what is still missing, in the order the form shows it (codes the page explains).
+// -> the list of what is still missing, in the order /apply.html asks for it (codes the pages explain). Only what a reviewer really needs
+// (docs/CLAUDE-CODE-UX-WALKTHROUGH.md A): 1 the headline and years (and the field), 2 the story, 3 the price, 4 one piece of evidence (and
+// the licence in a regulated field). A title, specialty tags and a sample answer are optional; the ID check is step 5 and the review waits
+// for it.
 function missingFor(user, evidence, stepMap) {
   const missing = [];
   if (!user.emailVerified) missing.push('email');
-  if (!user.roleTitle || user.roleTitle.length < LIMITS.titleMin) missing.push('title');
+  if (!user.headline || !String(user.headline).trim()) missing.push('headline');
+  if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
   if (!user.customNiche) missing.push('field');
   if (!(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) missing.push('niche');
-  if (!(user.specialtyTags || []).length) missing.push('tags');
-  if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
   if (!user.story || size(user.story) < LIMITS.storyMin || looksRepeated(user.story)) missing.push('story');
-  if (!user.sampleAnswer || size(user.sampleAnswer) < LIMITS.sampleMin || looksRepeated(user.sampleAnswer)) missing.push('sample');
+  if (!user.price) missing.push('price');
   if (evidence.filter((e) => e.kind !== 'work_email' || e.checkStatus === 'ok').length < LIMITS.evidenceMin) missing.push('evidence');
   if (rules.isRegulated(user.niche)) {
     const has = (s) => stepMap[s] && ['pending', 'passed'].includes(steps.effectiveStatus(stepMap[s]));
     if (!has('license')) missing.push('license');
     if (rules.requiredFor(user.niche).includes('license_document') && !has('license_document')) missing.push('license_document');
   }
-  // (outside the Experience form: the headline on the Profile tab and the price on the Mentor tab; an application is never sent without
-  // them, docs/CLAUDE-CODE-SIGNUP-CHECKS.md #2)
-  if (!user.headline || !String(user.headline).trim()) missing.push('headline');
-  if (!user.price) missing.push('price');
   return missing;
+}
+
+// Specialty tags are optional: a mentor who left them empty gets them from their own words (the field, split at commas and "and"), which
+// they can change later in Settings. -> a list (at most LIMITS.tagsMax), possibly empty.
+function suggestTags(user) {
+  const parts = String(user.customNiche || '').split(/\s*(?:[,;/|·&+]|\s(?:and|და)\s)\s*/i).map((p) => oneLine(p)).filter((p) => p.length >= 2);
+  return parseTags(parts.slice(0, LIMITS.tagsMax).map((p) => [...p].slice(0, LIMITS.tagMax).join(''))) || [];
 }
 
 // What the admin review queue labels "Profile incomplete": the story, headline, field or price an application should never lack (one sent
@@ -234,10 +282,14 @@ async function submit(user, { req, res } = {}) {
 
   const previous = (await query(`SELECT 1 FROM verification_reviews WHERE user_id = $1 LIMIT 1`, [user.id])).rowCount > 0;
   const trigger = previous || user.verificationStatus === 'rejected' ? 'resubmitted' : 'submitted';
-  const updated = await updateUser(user.id, { applicationSubmittedAt: new Date(), verificationStatus: 'pending', verificationNote: null });
+  const patch = { applicationSubmittedAt: new Date(), verificationStatus: 'pending', verificationNote: null };
+  if (!(user.specialtyTags || []).length) { const tags = suggestTags(user); if (tags.length) patch.specialtyTags = tags; }
+  // (no title of their own: the headline says what they do)
+  if (!user.roleTitle && user.headline) patch.roleTitle = [...oneLine(user.headline)].slice(0, LIMITS.titleMax).join('');
+  const updated = await updateUser(user.id, patch);
   const actor = steps.mentorActor(user);
   if (!stepMap.experience || stepMap.experience.status !== 'passed') {
-    await steps.setStep(user.id, 'experience', 'pending', { evidence: { evidenceItems: evidence.length, tags: (user.specialtyTags || []).length }, replaceEvidence: true, actor });
+    await steps.setStep(user.id, 'experience', 'pending', { evidence: { evidenceItems: evidence.length, tags: (updated.specialtyTags || []).length }, replaceEvidence: true, actor });
   }
   await steps.syncEmailStep(updated);
   await steps.audit(user.id, actor, trigger === 'resubmitted' ? 'application_resubmitted' : 'application_submitted', { from: user.verificationStatus, to: 'pending' });
@@ -323,5 +375,6 @@ async function setFieldByAdmin({ mentorId, admin, text, niche, notRegulated }) {
 
 module.exports = {
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
-  missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin
+  missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
+  bioToStory
 };

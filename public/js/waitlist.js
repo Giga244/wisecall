@@ -12,12 +12,23 @@
 
   const CHECK = '<svg class="waitlist-check" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="22" stroke-width="2.5"/><path d="M14 25l7 7 13-15" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // The question the visitor typed in the home page's search before launch (docs/CLAUDE-CODE-UX-WALKTHROUGH.md E): it stays in sight in
+  // the form, its field is chosen from it, and it is kept with the sign-up (wanted_question: shown to our team without the email).
+  let question = '';
+  let questionField = null;
+
   let counter = 0;
   function html(niche) {
     const n = ++counter;
-    const options = ['any', ...fields()].map((k) => `<option value="${k}"${k === (niche || 'any') ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : t('niche.' + k))}</option>`).join('');
+    const chosen = questionField || niche || 'any';
+    const opt = (k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : t('niche.' + k))}</option>`;
+    // (the 6 fields people wait for most first, then the rest under "Other fields")
+    const top = WisecallI18n.popularFields().filter((k) => fields().includes(k)).slice(0, 6);
+    const rest = fields().filter((k) => !top.includes(k));
+    const options = opt('any') + (top.length ? top.map(opt).join('') + `<optgroup label="${esc(t('wait.otherFields'))}">${rest.map(opt).join('')}</optgroup>` : fields().map(opt).join(''));
     return `
       <form class="waitlist-form" novalidate>
+        <p class="waitlist-question"${question ? '' : ' hidden'}><span>${esc(t('wait.question'))}</span> <q>${esc(question)}</q><small>${esc(t('wait.questionNote'))}</small></p>
         <div class="waitlist-row">
           <label for="wl${n}-email"><span>${t('wait.email')}</span><input id="wl${n}-email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" required></label>
           <label for="wl${n}-niche"><span>${t('wait.niche')}</span><select id="wl${n}-niche" name="niche">${options}</select></label>
@@ -43,7 +54,7 @@
         const button = form.querySelector('button');
         button.disabled = true;
         try {
-          await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang(), turnstileToken: human ? await human.token(form) : undefined } });
+          await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang(), wantedQuestion: question || undefined, turnstileToken: human ? await human.token(form) : undefined } });
           // (the note keeps the form's height: the card around it does not jump)
           const done = document.createElement('div');
           done.className = 'waitlist-done';
@@ -60,5 +71,22 @@
     });
   }
 
-  window.WisecallWaitlist = { fields, html, wire };
+  // The home page's search, before launch: keep the words, pick the closest field, and show both in every waiting-list form on the page.
+  async function ask(text) {
+    question = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+    questionField = null;
+    const draw = () => document.querySelectorAll('.waitlist-form').forEach((form) => {
+      const box = form.querySelector('.waitlist-question');
+      if (box) { box.hidden = !question; box.querySelector('q').textContent = question; }
+      if (questionField && form.niche) form.niche.value = questionField;
+    });
+    draw();
+    if (!question) return;
+    try {
+      const r = await WisecallAPI.apiFetch('/niches/suggest?q=' + encodeURIComponent(question));
+      if (r.niche && fields().includes(r.niche)) { questionField = r.niche; draw(); }
+    } catch (e) { /* the visitor chooses the field */ }
+  }
+
+  window.WisecallWaitlist = { fields, html, wire, ask };
 })();

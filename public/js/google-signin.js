@@ -14,6 +14,8 @@
     const redirect = WisecallAPI.safeRedirect(params.get('redirect'), null);
     if (redirect) url.searchParams.set('redirect', redirect); else url.searchParams.delete('redirect');
     url.searchParams.set('lang', WisecallI18n.getLang());
+    // (a mentor signing up with Google goes on to the application too)
+    if (!redirect && WisecallAPI.asMentor()) url.searchParams.set('redirect', '/apply.html');
     button.setAttribute('href', url.pathname + url.search);
   }
   const say = () => { errorEl.textContent = result ? t('auth.google.err.' + (['cancelled', 'error', 'bad_state', 'link_needed', 'no_email', 'unavailable'].includes(result) ? result : 'error')) : ''; };

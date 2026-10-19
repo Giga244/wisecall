@@ -166,10 +166,12 @@ router.post('/logout', asyncHandler(async (req, res) => {
 // Reset tokens look like "<userId>.<random>": the id lets us find the one account to check,
 // and only a bcrypt hash of the random part is stored.
 router.post('/forgot-password', asyncHandler(async (req, res) => {
-  const { email } = req.body || {};
+  const { email, as } = req.body || {};
   if (!isStr(email) || !email) return res.status(400).json({ error: 'missing_fields' });
 
   const user = await getUserByEmail(email.trim());
+  // (a mentor who forgot their password mid-application comes back to the application: docs/CLAUDE-CODE-MENTOR-SIGNUP.md #2)
+  const mentorPath = as === 'mentor' ? '&as=mentor' : '';
   const rawToken = crypto.randomBytes(32).toString('hex');
   let resetUrl = null;
 
@@ -178,7 +180,7 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
       resetTokenHash: await bcrypt.hash(rawToken, 10),
       resetTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000)
     });
-    resetUrl = `${config.PUBLIC_URL}/reset-password.html?token=${user.id}.${rawToken}`;
+    resetUrl = `${config.PUBLIC_URL}/reset-password.html?token=${user.id}.${rawToken}${mentorPath}`;
   }
 
   let emailSent = false;

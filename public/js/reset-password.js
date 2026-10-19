@@ -25,7 +25,7 @@
       });
       form.style.display = 'none';
       resultEl.style.display = 'block';
-      resultEl.innerHTML = `<p class="muted">${WisecallI18n.t('auth.reset.success')}</p><a class="btn btn-primary btn-block" href="/login.html" style="margin-top:14px">${WisecallI18n.t('auth.login.cta')}</a>`;
+      resultEl.innerHTML = `<p class="muted">${WisecallI18n.t('auth.reset.success')}</p><a class="btn btn-primary btn-block" href="/login.html${WisecallAPI.asMentor() ? '?as=mentor' : ''}" style="margin-top:14px">${WisecallI18n.t('auth.login.cta')}</a>`;
     } catch (e) {
       errorEl.textContent = WisecallI18n.t({ invalid_or_expired: 'auth.reset.expired', password_breached: 'auth.error.breached' }[e.code] || 'toast.error');
       submitBtn.disabled = false;

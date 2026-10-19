@@ -75,15 +75,6 @@
           </div>
         </div>
 
-        <div class="username-edit">
-          <label for="username"><span data-i18n="profile.username">Username</span>
-            <input type="text" id="username" maxlength="30" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="usernameHint usernameStatus">
-          </label>
-          <p class="hint" id="usernameHint"></p>
-          <p class="username-status" id="usernameStatus" role="status" aria-live="polite"></p>
-          <button type="button" class="btn btn-outline btn-sm" id="usernameSave" data-i18n="profile.username.change">Change username</button>
-        </div>
-
         <label for="name"><span data-i18n="settings.profile.name">Full name</span>
           <input type="text" id="name" autocomplete="name" autocapitalize="words" maxlength="100" required>
         </label>
@@ -91,33 +82,48 @@
           <input type="text" id="headline" maxlength="100" autocomplete="off" aria-describedby="headlineHint">
           <span class="hint" id="headlineHint" data-i18n="profile.headline.hint">A short line under your name, for example “Medical student at TSMU” or “Marketing manager”.</span>
         </label>
-        <label for="currentWork"><span data-i18n="profile.currentWork">Current work or study</span>
-          <input type="text" id="currentWork" maxlength="120" autocomplete="organization">
-        </label>
-        <label for="city"><span><span data-i18n="profile.city">City</span> <span class="muted" data-i18n="profile.optional">(optional)</span></span>
-          <input type="text" id="city" maxlength="80" autocomplete="address-level2">
-        </label>
-        <fieldset class="lang-fieldset">
-          <legend data-i18n="profile.languages">Languages I speak</legend>
-          <div class="lang-checks" id="languageChecks"></div>
-        </fieldset>
         <label for="bio"><span data-i18n="profile.bio">About me</span>
-          <textarea id="bio" rows="4" maxlength="500" aria-describedby="bioCount"></textarea>
+          <textarea id="bio" rows="4" maxlength="2000" aria-describedby="bioCount bioSync"></textarea>
           <span class="hint" id="bioCount"></span>
+          <span class="hint" id="bioSync" data-i18n="profile.bio.sync" hidden>For mentors this is also “Your story” in your application: while the two are the same, changing one changes the other.</span>
         </label>
-        <label for="linkedinUrl"><span data-i18n="profile.linkedin">LinkedIn link (optional)</span>
-          <input type="url" id="linkedinUrl" maxlength="200" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://www.linkedin.com/in/yourname">
-        </label>
-        <label for="websiteUrl"><span data-i18n="profile.website">Website (optional)</span>
-          <input type="url" id="websiteUrl" maxlength="200" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://">
-        </label>
-        <label for="profileVisibility"><span data-i18n="profile.visibility">Who can see my profile</span>
-          <select id="profileVisibility" aria-describedby="visibilityHint">
-            <option value="public" data-i18n="profile.visibility.public">Everyone (public)</option>
-            <option value="contacts" data-i18n="profile.visibility.contacts">Only people I've had a question with</option>
-          </select>
-          <span class="hint" id="visibilityHint"></span>
-        </label>
+        <!-- (photo, name, what I do and about me first; the rest when they want it: docs/CLAUDE-CODE-UX-WALKTHROUGH.md D) -->
+        <details class="profile-more" id="profileMore">
+          <summary data-i18n="profile.more">More profile details</summary>
+          <div class="profile-more-body">
+          <div class="username-edit">
+            <label for="username"><span data-i18n="profile.username">Username</span>
+              <input type="text" id="username" maxlength="30" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="usernameHint usernameStatus">
+            </label>
+            <p class="hint" id="usernameHint"></p>
+            <p class="username-status" id="usernameStatus" role="status" aria-live="polite"></p>
+            <button type="button" class="btn btn-outline btn-sm" id="usernameSave" data-i18n="profile.username.change">Change username</button>
+          </div>
+          <label for="currentWork"><span data-i18n="profile.currentWork">Current work or study</span>
+            <input type="text" id="currentWork" maxlength="120" autocomplete="organization">
+          </label>
+          <label for="city"><span><span data-i18n="profile.city">City</span> <span class="muted" data-i18n="profile.optional">(optional)</span></span>
+            <input type="text" id="city" maxlength="80" autocomplete="address-level2">
+          </label>
+          <fieldset class="lang-fieldset">
+            <legend data-i18n="profile.languages">Languages I speak</legend>
+            <div class="lang-checks" id="languageChecks"></div>
+          </fieldset>
+          <label for="linkedinUrl"><span data-i18n="profile.linkedin">LinkedIn link (optional)</span>
+            <input type="url" id="linkedinUrl" maxlength="200" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://www.linkedin.com/in/yourname">
+          </label>
+          <label for="websiteUrl"><span data-i18n="profile.website">Website (optional)</span>
+            <input type="url" id="websiteUrl" maxlength="200" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://">
+          </label>
+          <label for="profileVisibility"><span data-i18n="profile.visibility">Who can see my profile</span>
+            <select id="profileVisibility" aria-describedby="visibilityHint">
+              <option value="public" data-i18n="profile.visibility.public">Everyone (public)</option>
+              <option value="contacts" data-i18n="profile.visibility.contacts">Only people I've had a question with</option>
+            </select>
+            <span class="hint" id="visibilityHint"></span>
+          </label>
+          </div>
+        </details>
         <p class="form-error" id="profileError" role="alert"></p>
         <button type="submit" class="btn btn-primary" data-i18n="profile.save">Save profile</button>
       </form>
@@ -155,7 +161,7 @@
         <span class="hint" data-i18n="pa.pref.hint">When an asker rates your answer 4 or 5 stars, they can offer to publish it without their name. Our team checks every one before it is public, and you can take it down at any time.</span>
       </label>
       <p class="muted small"><span data-i18n="settings.mentor.applicationHint">Your title, niche, experience and evidence are part of your application.</span>
-        <button type="button" class="linklike" data-goto-tab="verification" data-i18n="settings.mentor.openApplication">Open your application</button></p>
+        <a class="linklike" href="/apply.html" data-i18n="settings.mentor.openApplication">Open your application</a></p>
     </form>
   </div>
   </div>

@@ -260,7 +260,7 @@
     const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
     return listed
       ? (prelaunch ? emptyState('dash.received.prelaunch.title', 'dash.received.prelaunch.body', '') : emptyState('dash.received.empty.title', 'dash.received.empty.body', ''))
-      : emptyState('dash.received.notListed.title', 'dash.received.notListed.body', `<a class="btn btn-primary" href="/settings.html?tab=verification">${t('dash.received.notListed.cta')}</a>`);
+      : emptyState('dash.received.notListed.title', 'dash.received.notListed.body', `<a class="btn btn-primary" href="${['none', 'pending'].includes(user.verificationState) ? '/apply.html' : '/settings.html?tab=verification'}">${t('dash.received.notListed.cta')}</a>`);
   }
 
   // A short reminder above the answer box (not something to tick: nothing is required), with a link to the guide. Open for a mentor's first

@@ -1,15 +1,25 @@
 (async function () {
   await WisecallI18n.initI18n();
   const user = await WisecallNav.initNav();
-  if (!user) { window.location.href = '/login.html?redirect=/verify-email.html'; return; }
+  const asMentor = WisecallAPI.asMentor();
+  if (!user) { window.location.href = asMentor ? '/login.html?redirect=' + encodeURIComponent('/verify-email.html?as=mentor') + '&as=mentor' : '/login.html?redirect=/verify-email.html'; return; }
 
   const params = new URLSearchParams(location.search);
-  const redirect = WisecallAPI.safeRedirect(params.get('redirect'), '/dashboard.html');
+  const redirect = WisecallAPI.safeRedirect(params.get('redirect'), asMentor ? '/apply.html' : '/dashboard.html');
+  // (the mentor's sign-up: "Skip for now" leads to the application too, which says the email is still to be confirmed)
+  const skip = document.querySelector('.auth-switch a[href="/dashboard.html"]');
+  if (skip && asMentor) skip.setAttribute('href', redirect);
+  // The mentor's sign-up makes the account a mentor applicant once the email is confirmed (the same as "Become a mentor" in Settings).
+  const becomeMentor = async () => {
+    if (!asMentor || user.role === 'mentor' || user.role === 'both') return;
+    try { await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { becomeMentor: true } }); } catch (e) { /* the application page does it again */ }
+  };
   const form = document.getElementById('verifyForm');
   const errorEl = document.getElementById('formError');
   const devCodeBox = document.getElementById('devCodeBox');
 
   if (user.emailVerified) {
+    await becomeMentor();
     window.location.href = redirect;
     return;
   }
@@ -33,6 +43,7 @@
     try {
       await WisecallAPI.apiFetch('/auth/verify-email', { method: 'POST', body: { code: document.getElementById('code').value.trim() } });
       WisecallNav.showToast(WisecallI18n.t('auth.verify.success'));
+      await becomeMentor();
       window.location.href = redirect;
     } catch (e) {
       const map = { invalid_code: 'auth.verify.invalidCode', expired: 'auth.verify.expiredCode', no_pending_code: 'auth.verify.noPendingCode', too_many_attempts: 'auth.verify.tooManyAttempts' };

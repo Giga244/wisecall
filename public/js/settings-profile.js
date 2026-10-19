@@ -183,6 +183,9 @@ window.SettingsProfile = (function () {
     $('websiteUrl').value = user.websiteUrl || '';
     $('profileVisibility').value = user.profileVisibility || 'public';
     drawLanguages(user.languages || []);
+    // "More profile details" starts open once any of it is filled in; a new profile shows the four essentials first.
+    if (user.currentWork || user.city || (user.languages || []).length || user.linkedinUrl || user.websiteUrl) $('profileMore').open = true;
+    $('bioSync').hidden = !(user.role === 'mentor' || user.role === 'both');
     drawPhoto();
     drawBioCount();
     drawVisibilityHint();
@@ -197,7 +200,7 @@ window.SettingsProfile = (function () {
     const v = values();
     if (!v.name) { error.textContent = t('profile.err.name'); return; }
     if (v.bio.length > 2000) { error.textContent = t('profile.err.bioLong'); return; }
-    if (v.languages.length > MAX_LANGUAGES) { error.textContent = fill(t('profile.err.languages'), { n: MAX_LANGUAGES }); return; }
+    if (v.languages.length > MAX_LANGUAGES) { $('profileMore').open = true; error.textContent = fill(t('profile.err.languages'), { n: MAX_LANGUAGES }); return; }
     try {
       const body = { ...v };
       if (isListedMentor()) delete body.profileVisibility;
@@ -209,6 +212,7 @@ window.SettingsProfile = (function () {
     } catch (e) {
       const map = { invalid_linkedin_url: 'profile.err.linkedin', invalid_website_url: 'profile.err.website', bio_too_long: 'profile.err.bioLong', invalid_language: 'profile.err.language', missing_fields: 'profile.err.name', mentor_profile_must_be_public: 'profile.visibility.lockedMentor' };
       error.textContent = t(map[e.code] || 'toast.error');
+      if (['invalid_linkedin_url', 'invalid_website_url', 'invalid_language', 'mentor_profile_must_be_public'].includes(e.code)) $('profileMore').open = true; // (the field is under "More profile details")
     }
   }
 

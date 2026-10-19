@@ -52,6 +52,20 @@
     } catch (e) { return fallback; }
   }
 
+  // The mentor sign-up path (?as=mentor, docs/CLAUDE-CODE-MENTOR-SIGNUP.md #2): it survives the moves between sign-up, log-in, "forgot
+  // password" and the email code, so a mentor who leaves and comes back still ends up in the application (/apply.html).
+  const asMentor = () => new URLSearchParams(window.location.search).get('as') === 'mentor';
+  function keepMentorPath(root) {
+    if (!asMentor()) return;
+    (root || document).querySelectorAll('a[href]').forEach((a) => {
+      let u;
+      try { u = new URL(a.getAttribute('href'), window.location.origin); } catch (e) { return; }
+      if (u.origin !== window.location.origin || !/^\/(ka\/)?(login|signup|forgot-password|verify-email)\.html$/.test(u.pathname)) return;
+      u.searchParams.set('as', 'mentor');
+      a.setAttribute('href', u.pathname + u.search + u.hash);
+    });
+  }
+
   // Money is Georgian lari. The server stores amounts as whole tetri (1/100 lari).
   const LARI = '₾';
   const formatPrice = (lari) => `${Number(lari)} ${LARI}`;
@@ -104,5 +118,5 @@
   scheduleLinking();
   new MutationObserver(scheduleLinking).observe(document.documentElement, { childList: true, subtree: true });
 
-  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, formatPrice, formatAmount, textLength, avatarStyle, avatar, initialsOf, linkLabels };
+  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, asMentor, keepMentorPath, formatPrice, formatAmount, textLength, avatarStyle, avatar, initialsOf, linkLabels };
 })();

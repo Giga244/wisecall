@@ -263,6 +263,27 @@ function findPerson(page, requestedUrl, finalUrl, person) {
   return null;
 }
 
+// A profile address on a big platform that clearly names someone else (linkedin.com/in/john-smith-1234 for "Nino Beridze"): the only
+// case, besides a page that does not open, where the mentor is warned about a link (docs/CLAUDE-CODE-UX-WALKTHROUGH.md B). An address
+// with fewer than two name-like words ("/in/nbrdz") says nothing either way.
+const PROFILE_PATH = [
+  [['linkedin.com'], /^\/(?:in|pub)\/([^/?#]+)/i], [['facebook.com', 'instagram.com', 'x.com', 'twitter.com', 'github.com', 'threads.net'], /^\/@?([^/?#]+)\/?$/i],
+  [['tiktok.com'], /^\/@([^/?#]+)/i]
+];
+function namesSomeoneElse(url, person) {
+  let u;
+  try { u = new URL(url); } catch (e) { return false; }
+  const host = u.hostname.toLowerCase().replace(/^www\./, '');
+  const rule = PROFILE_PATH.find(([hosts]) => onPlatform(host, hosts));
+  const slug = rule && (u.pathname.match(rule[1]) || [])[1];
+  if (!slug) return false;
+  let text = slug;
+  try { text = decodeURIComponent(slug); } catch (e) { /* keep it */ }
+  const words = names.tokens(text.replace(/[0-9]+/g, ' ')).filter((w) => w.length >= 2).map(names.canon);
+  const own = new Set(names.tokens(person && person.name).filter((w) => w.length >= 2).map(names.canon));
+  return words.length >= 2 && own.size > 0 && !words.some((w) => own.has(w) || [...own].some((o) => o.length >= 4 && (w.startsWith(o) || o.startsWith(w))));
+}
+
 // A link is only ever "verified automatically" when the page opened, shows the person's name as above, and none of these is true.
 const NOT_AUTO = ['shortener', 'new_domain', 'redirected_elsewhere', 'free_hosting', 'search_page'];
 
@@ -323,6 +344,9 @@ async function checkLink(value, person, opts = {}) {
     result.match = findPerson(page, u.toString(), result.finalUrl, person);
     if (result.match !== 'name') result.flags.push('name_not_found');
   }
+  if (result.match !== 'name' && namesSomeoneElse(result.finalUrl || u.toString(), person)) result.flags.push('other_person');
+  // (a university's own page, a staff list or a faculty page, is strong proof: it is checked like any other page, and the admin sees it)
+  if (require('./experience').isUniversity(host)) result.university = true;
   const opened = Boolean(page);
   const autoVerified = opened && result.match === 'name' && !result.flags.some((f) => NOT_AUTO.includes(f));
   let checkStatus = 'warning';
@@ -340,4 +364,4 @@ function companyIdFormat(value) {
   return null;
 }
 
-module.exports = { LinkError, isBlockedAddress, checkAddress, safeGet, parseHtml, registrableDomain, isFreeHosting, findPerson, domainCreated, ageDays, checkLink, companyIdFormat, SHORTENERS };
+module.exports = { LinkError, isBlockedAddress, checkAddress, safeGet, parseHtml, registrableDomain, isFreeHosting, findPerson, domainCreated, ageDays, checkLink, companyIdFormat, SHORTENERS, namesSomeoneElse };

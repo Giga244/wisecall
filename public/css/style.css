@@ -161,8 +161,8 @@ html.motion.page-fade #main { animation: page-fade 0.2s var(--ease-out); }
 .nav-badge-dot { position: absolute; top: 4px; right: 4px; min-width: 10px; width: 10px; height: 10px; padding: 0; border: 2px solid var(--card); }
 .mm-inbox { gap: 10px; }
 /* Room in the header: a signed-in person has Dashboard, Settings (and Admin) and Log out to fit, so only "Browse experts" stays of the
-   marketing links. Georgian words are longer: there the FAQ link always leaves the header (it is in the footer), and under 1180px so do
-   "How it works" and "For mentors". */
+   marketing links (and "Become a mentor" for someone who is not one yet). Georgian words are longer: there the FAQ link always leaves the
+   header (it is in the footer), and under 1180px so does "How it works". */
 .nav.is-authed .nl-extra { display: none; }
 /* (the header is drawn signed in or out from its first frame, public/js/header.js; it changes after the sign-in check only when that
    check disagrees, and then its links and buttons fade in instead of jumping) */
@@ -179,6 +179,12 @@ html[lang="ka"] .nav-links .nl-faq { display: none; }
 }
 @media (min-width: 1024px) and (max-width: 1179px) {
   html[lang="ka"] .nl-extra { display: none; }
+  /* (signed in, in Georgian, "გახდი მენტორი" still fits next to Dashboard, Settings and Log out: a little less room around each) */
+  html[lang="ka"] .nav.is-authed .nav-inner { gap: 10px; }
+  html[lang="ka"] .nav.is-authed .nav-links { gap: 12px; }
+  html[lang="ka"] .nav.is-authed .nav-links a { font-size: 0.9rem; }
+  html[lang="ka"] .nav.is-authed .nav-right, html[lang="ka"] .nav.is-authed .nav-actions { gap: 4px; }
+  html[lang="ka"] .nav.is-authed .nav-actions .btn { padding: 9px 8px; font-size: 0.85rem; }
 }
 
 /* EN | KA: a pill with an outline; the language in use is filled with ink */
@@ -616,6 +622,11 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 .empty-wait { width: 100%; margin-top: 18px; }
 .waitlist-form { display: flex; flex-direction: column; gap: 16px; margin: 0; text-align: left; }
 .waitlist-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+/* (the question typed in the home page's search, kept with the sign-up) */
+.waitlist-question { margin: 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--mint-soft); color: var(--mint-banner-ink); font-size: 0.95rem; overflow-wrap: anywhere; }
+.waitlist-question span { font-weight: 800; }
+.waitlist-question small { display: block; margin-top: 4px; font-size: 0.85rem; }
+.waitlist-question[hidden] { display: none; }
 .waitlist-row label { margin: 0; }
 .waitlist-row label span { display: block; }
 .waitlist-row input, .waitlist-row select { min-height: 52px; }
@@ -635,7 +646,8 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 .waitlist-check path { stroke: var(--on-pastel); }
 
 /* Settings tabs */
-.tabs { display: flex; gap: 8px; margin: 0 0 24px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+/* (the tabs wrap onto a second line when they do not fit: every tab stays in sight, docs/CLAUDE-CODE-UX-WALKTHROUGH.md D) */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
 .tab {
   flex: 0 0 auto; min-height: 44px; border: var(--chip-w) solid var(--line); background: transparent; padding: 9px 18px; border-radius: var(--r-pill);
   font-family: var(--font-body); font-weight: 600; font-size: 0.95rem; cursor: pointer; color: var(--ink); transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -1106,6 +1118,9 @@ html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; 
 :lang(ka) .mentors-panel h1 { font-size: clamp(1.9rem, 2.6vw + 0.6rem, 3.2rem); line-height: 1.1; }
 .mentors-head { max-width: 760px; margin-bottom: 34px; }
 .mentors-head p { margin: 20px 0 0; font-size: 1.2rem; line-height: 1.55; max-width: 600px; }
+/* (the way in, under the promise: the button and how long it takes) */
+.mentors-head .become-start { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 26px; font-size: 1rem; }
+.become-start-note { font-weight: 600; }
 .perk-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 40px; }
 .perk { min-width: 0; padding: 22px; background: var(--sticker); color: var(--on-pastel); border: var(--line-w) solid var(--c-ink); border-radius: var(--r-card); }
 .perk h2 { margin: 0 0 6px; font-size: 1.35rem; }

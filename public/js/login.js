@@ -7,7 +7,8 @@
 
   window.WisecallTurnstile.watch(form);
   const params = new URLSearchParams(location.search);
-  const redirect = WisecallAPI.safeRedirect(params.get('redirect'), '/dashboard.html');
+  const redirect = WisecallAPI.safeRedirect(params.get('redirect'), WisecallAPI.asMentor() ? '/apply.html' : '/dashboard.html');
+  WisecallAPI.keepMentorPath();
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();

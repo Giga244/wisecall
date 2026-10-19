@@ -32,11 +32,17 @@ const config = {
   // The asker can report a problem with an answer ("dispute") this many days after they can read it. Earnings are never payable
   // before this window has passed, whatever PAYOUT_HOLD_DAYS says.
   DISPUTE_DAYS: int(env.DISPUTE_DAYS, 7),
+  // What a mentor is told after "Submit for review": "We review applications within N working days" (apply.html). Change it when the
+  // team's real target changes.
+  MENTOR_REVIEW_DAYS: Math.max(1, int(env.MENTOR_REVIEW_DAYS, 2)),
   SWEEP_INTERVAL_SECONDS: int(env.SWEEP_INTERVAL_SECONDS, 600),
   // Attempts to ask a question that were never paid (cancelled, failed, timed out) are deleted after this many days.
   UNPAID_ATTEMPT_DAYS: int(env.UNPAID_ATTEMPT_DAYS, 7),
   PRICE_MIN: 5,
   PRICE_MAX: 2000,
+  // The range /apply.html suggests to a new mentor ("most new mentors start between 20 and 60 ₾"); only advice, any price in range is fine.
+  PRICE_SUGGEST_MIN: 20,
+  PRICE_SUGGEST_MAX: 60,
 
   // Which bank takes the money: flitt | bog | tbc | mock. "mock" is a fake bank for local development
   // only and is refused in production.

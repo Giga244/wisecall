@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mentor application — Wisecall</title>
+<meta name="description" content="Apply as a mentor on Wisecall in five short steps. You can save and finish later.">
+<link rel="canonical" href="{{PUBLIC_URL}}/apply.html">
+<meta name="robots" content="noindex">
+<meta property="og:site_name" content="Wisecall">
+<meta property="og:title" content="Mentor application — Wisecall">
+<meta property="og:description" content="Apply as a mentor on Wisecall in five short steps. You can save and finish later.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{PUBLIC_URL}}/apply.html">
+<meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mentor application — Wisecall">
+<meta name="twitter:description" content="Apply as a mentor on Wisecall in five short steps. You can save and finish later.">
+<meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
+<meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
+<link rel="preload" href="/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+
+<!-- The mentor application, one step at a time (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #3, docs/CLAUDE-CODE-UX-WALKTHROUGH.md A): each step is
+     saved on its own, and the mentor can leave and come back. public/js/apply.js draws the steps; the server decides every rule. -->
+<main class="apply container" id="main">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/index.html" data-i18n="expert.crumb.home">Home</a></li>
+      <li><span aria-current="page" data-i18n="apply.crumb">Mentor application</span></li>
+    </ol>
+  </nav>
+  <header class="apply-head" id="applyHead" hidden>
+    <p class="apply-progress-text" id="applyProgressText"></p>
+    <div class="vt-bar apply-bar" id="applyBar" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><span></span></div>
+    <ol class="apply-steps" id="applySteps"></ol>
+  </header>
+  <section class="apply-card" id="applyRoot" aria-live="polite">
+    <p class="muted" data-i18n="admin.loading">Loading…</p>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/apply.js"></script>
+</body>
+</html>

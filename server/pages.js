@@ -895,6 +895,28 @@ function pageRoutes() {
     } catch (e) { next(e); }
   });
 
+  // The mentor application, one step at a time (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #3). Somebody who is not signed in goes to the mentor's
+  // sign-up first (it leads back here); the page itself is the same for everyone and fills in from the API.
+  router.get('/apply.html', async (req, res, next) => {
+    try {
+      res.set('Cache-Control', 'no-store');
+      const prefix = langOf(res) === 'ka' ? '/ka' : '';
+      if (!(await require('./auth').tokenFrom(req))) return res.redirect(302, `${prefix}/signup.html?as=mentor`);
+      if (!(await sendPage(res, 'apply.html', baseVars('/apply.html')))) next();
+    } catch (e) { next(e); }
+  });
+
+  // The invite link for mentors we contact: /mentor and /ka/mentor (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #4). Straight to the mentor's
+  // sign-up, or to the application for somebody already signed in; a sign-up from it counts as source "invite" (server/attribution.js).
+  router.get(/^\/mentor\/?$/, async (req, res, next) => {
+    try {
+      require('./attribution').markInvite(req, res);
+      const prefix = langOf(res) === 'ka' ? '/ka' : '';
+      res.set('Cache-Control', 'no-store');
+      res.redirect(302, (await require('./auth').tokenFrom(req)) ? `${prefix}/apply.html` : `${prefix}/signup.html?as=mentor`);
+    } catch (e) { next(e); }
+  });
+
   router.get(/^\/([\w-]+)\.html$/, async (req, res, next) => {
     try {
       const name = req.params[0];

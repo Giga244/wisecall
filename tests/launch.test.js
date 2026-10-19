@@ -272,7 +272,7 @@ describe('launch mode: prelaunch, then live', () => {
     }
     const home = pub('index.html');
     assert.match(home, /data-i18n-prelaunch="hero\.prelaunch\.cta"/);
-    assert.match(home, /data-i18n-prelaunch="mentors\.cta"/);
+    assert.match(home, /class="[^"]*hero-mentor-btn" data-i18n="hero\.mentorCta"/); // (the experts' way in, before and after launch)
     for (const f of ['js/main.js', 'js/profile.js','js/nav.js', 'js/dashboard.js', 'js/settings.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
   });
 });

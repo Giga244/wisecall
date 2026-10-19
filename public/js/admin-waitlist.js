@@ -20,6 +20,12 @@
       <p class="muted small">${t('admin.wl.help')}</p>
       <p><strong>${t('admin.wl.total').replace('{n}', data.total)}</strong></p>
       <p class="wl-counts">${counts}</p>
+      <section class="wl-demand" aria-labelledby="wlDemandTitle">
+        <h2 id="wlDemandTitle" class="reviews-title overview-title">${t('admin.wl.demand')}</h2>
+        <p class="muted small">${t('admin.wl.demandHelp')}</p>
+        ${(data.demand || []).length ? `<ul class="earn-list">${data.demand.map((d) => `
+          <li><span>${esc(d.question)}</span><span>${esc(field(d.niche))} · ${day(d.createdAt)}</span></li>`).join('')}</ul>` : `<p class="muted small">${t('admin.wl.demandEmpty')}</p>`}
+      </section>
       <ul class="earn-list">${data.signups.map((s) => `
         <li><span>${esc(s.email)}</span><span>${esc(field(s.niche))} · ${day(s.createdAt)}</span>
         <span class="badge ${s.notifiedAt ? 'badge-answered' : 'badge-pending_payment'}">${t(s.notifiedAt ? 'admin.wl.notified' : 'admin.wl.waiting')}</span></li>`).join('')}</ul>`;

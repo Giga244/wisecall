@@ -103,6 +103,7 @@
   }
   // The niches the site offers, in their order: [{ key, en, ka, icon, regulated }]. Known once initI18n() has finished.
   const niches = () => loadedConfig.niches || [];
+  const popularFields = () => loadedConfig.popularFields || []; // (the 6 fields people wait for most: server/waitlist.js)
   // A niche's name in the current language; "Other" shows the mentor's own words when there are some.
   const nicheName = (key, custom) => (key === 'other' && custom ? custom : t('niche.' + key));
   // "Your field": what a mentor wrote about their field, shown instead of the category (older profiles have only the category).
@@ -175,5 +176,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, nicheName, fieldName, formatDate, path };
+  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, popularFields, nicheName, fieldName, formatDate, path };
 })();

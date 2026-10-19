@@ -73,6 +73,7 @@ test('a mentor signs up, sets a price, and fills in the Experience form for the 
   // The page was drawn again for Law: the licence block is there now.
   await expect(exp.locator('form[data-form="license"]')).toBeVisible();
   const ev = exp.locator('form[data-form="evidence"]');
+  await ev.locator('details.ap-ev-more > summary').click(); // (the type of a link is found from its address; the list is under "More options")
   await ev.locator('[name="kind"]').selectOption('website');
   await ev.locator('[name="url"]').fill(`${S.fakeWeb()}/p/ana-lomidze`);
   await ev.locator('button[type="submit"]').click();

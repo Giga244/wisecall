@@ -48,6 +48,19 @@
     return 'waiting';
   }
 
+  // What a badge says: the state, and for a step that waits on the mentor, what to do next ("Next: start the ID check", "Fix your profile
+  // name"), never only "To do" or "Needs attention" (docs/CLAUDE-CODE-UX-WALKTHROUGH.md C).
+  function badgeKey(section, state) {
+    if (state !== 'todo' && state !== 'attention') return 'ap.state.' + state;
+    if (section === 'identity' && state === 'attention') {
+      if (statusOf('age') === 'failed') return 'ap.next.identity.age';
+      if (statusOf('name_match') === 'failed') return 'ap.next.identity.name';
+      return 'ap.next.identity.attention';
+    }
+    if (section === 'review' && state === 'attention') return 'ap.next.review.' + data.v.application.stage;
+    return `ap.next.${section}.${state}`;
+  }
+
   function stepper() {
     const items = [['identity', identityState()], ['experience', experienceState()], ['review', reviewState()]];
     const done = items.filter(([, s]) => s === 'done').length;
@@ -57,7 +70,7 @@
           <li class="ap-stepper-item ap-${state}">
             <a href="#ap-${key}" class="ap-stepper-link">
               <span class="ap-stepper-num" aria-hidden="true">${state === 'done' ? '✓' : i + 1}</span>
-              <span class="ap-stepper-text"><strong>${t('ap.step.' + key)}</strong><span class="small">${t('ap.state.' + state)}</span></span>
+              <span class="ap-stepper-text"><strong>${t('ap.step.' + key)}</strong><span class="small">${t(badgeKey(key, state))}</span></span>
             </a>
           </li>`).join('')}
       </ol>
@@ -106,7 +119,7 @@
       <section class="settings-card ap-section" id="ap-identity" aria-labelledby="ap-identity-h">
         <div class="vt-summary-head">
           <h3 id="ap-identity-h">${t('ap.id.title')}</h3>
-          <span class="badge badge-${BADGE[state]}">${t('ap.state.' + state)}</span>
+          <span class="badge badge-${BADGE[state]}">${t(badgeKey('identity', state))}</span>
         </div>
         <p class="muted small">${t('ap.id.help')}</p>
         ${kycBlock()}
@@ -140,13 +153,16 @@
   function evidenceForm() {
     return `
       <form class="vt-form ap-ev-form" data-form="evidence" novalidate>
-        <label><span>${t('ap.ev.kind')}</span>
-          <select name="kind">${evidenceKinds().map((k) => `<option value="${k}">${t('ap.ev.kind.' + k)}</option>`).join('')}<option value="diploma">${t('ap.ev.kind.diploma')}</option></select>
-        </label>
-        <label class="ap-ev-url"><span>${t('ap.ev.url')}</span><input type="url" name="url" maxlength="500" placeholder="https://" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
-        <label class="ap-ev-registry" hidden><span>${t('ap.ev.registry')}</span><input type="text" name="registryId" maxlength="13" inputmode="numeric" autocomplete="off"><span class="hint">${t('ap.ev.registry.hint')}</span></label>
+        <label class="ap-ev-url"><span>${t('ap.ev.url')}</span><input type="url" name="url" maxlength="500" placeholder="https://" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false"><span class="hint">${t('apply.f.url.hint')}</span></label>
         <label class="ap-ev-file" hidden><span>${t('ap.ev.upload')}</span><input type="file" name="file" accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"></label>
-        <label class="ap-ev-note"><span>${t('ap.ev.note')}</span><input type="text" name="note" maxlength="${data.v.limits.evidenceNoteMax}"></label>
+        <details class="ap-ev-more">
+          <summary>${t('apply.f.moreOptions')}</summary>
+          <label><span>${t('ap.ev.kind')}</span>
+            <select name="kind"><option value="auto">${t('apply.f.kindAuto')}</option>${evidenceKinds().map((k) => `<option value="${k}">${t('ap.ev.kind.' + k)}</option>`).join('')}<option value="diploma">${t('ap.ev.kind.diploma')}</option></select>
+          </label>
+          <label class="ap-ev-registry" hidden><span>${t('ap.ev.registry')}</span><input type="text" name="registryId" maxlength="13" inputmode="numeric" autocomplete="off"><span class="hint">${t('ap.ev.registry.hint')}</span></label>
+          <label class="ap-ev-note"><span>${t('ap.ev.note')}</span><input type="text" name="note" maxlength="${data.v.limits.evidenceNoteMax}"></label>
+        </details>
         <p class="form-error vt-error" role="alert"></p>
         <button class="btn btn-outline btn-sm" type="submit">${t('ap.ev.add')}</button>
       </form>`;
@@ -283,7 +299,7 @@
       <section class="settings-card ap-section" id="ap-experience" aria-labelledby="ap-experience-h">
         <div class="vt-summary-head">
           <h3 id="ap-experience-h">${t('ap.exp.title')}</h3>
-          <span class="badge badge-${BADGE[state]}">${t('ap.state.' + state)}</span>
+          <span class="badge badge-${BADGE[state]}">${t(badgeKey('experience', state))}</span>
         </div>
         <p class="ap-welcome">${t('ap.exp.welcome')}</p>
         ${editable ? `
@@ -349,7 +365,7 @@
       <section class="settings-card ap-section" id="ap-review" aria-labelledby="ap-review-h">
         <div class="vt-summary-head">
           <h3 id="ap-review-h">${t('ap.rev.title')}</h3>
-          <span class="badge badge-${BADGE[state]}">${t('ap.state.' + state)}</span>
+          <span class="badge badge-${BADGE[state]}">${t(badgeKey('review', state))}</span>
         </div>
         <p>${t('ap.rev.' + stage)}</p>
         ${stage === 'rejected' && v.note ? `<p class="form-error vt-reason"><strong>${t('vt.reason')}</strong> ${esc(v.note)}</p>` : ''}
@@ -411,7 +427,7 @@
     title_too_long: 'ap.err.title_too_long', invalid_niche: 'ap.err.invalid_niche', invalid_custom_niche: 'ap.err.invalid_custom_niche', application_locked: 'ap.err.application_locked', email_not_verified: 'settings.mentor.emailNotVerified'
   };
   const EV_ERR = {
-    invalid_url: 'ap.ev.err.invalid_url', not_linkedin: 'ap.ev.err.not_linkedin', duplicate_evidence: 'ap.ev.err.duplicate_evidence', too_much_evidence: 'ap.ev.err.too_much_evidence',
+    invalid_url: 'ap.ev.err.invalid_url', invalid_kind: 'ap.ev.err.invalid_url', not_linkedin: 'ap.ev.err.not_linkedin', duplicate_evidence: 'ap.ev.err.duplicate_evidence', too_much_evidence: 'ap.ev.err.too_much_evidence',
     invalid_company_id: 'ap.ev.err.invalid_company_id', company_needs_id_or_url: 'ap.ev.err.company_needs_id_or_url', application_locked: 'ap.err.application_locked', ...DOC_ERR
   };
 

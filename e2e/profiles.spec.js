@@ -61,6 +61,9 @@ test('Settings → Profile: everything can be edited, and the preview follows wh
   await expect(page.locator('#profilePreview')).toContainText('Maia Profile');
 
   await page.fill('#headline', 'Economics student');
+  // (photo, name, "What I do" and "About me" first; the rest of the profile is under "More profile details": docs/CLAUDE-CODE-UX-WALKTHROUGH.md D)
+  await expect(page.locator('#currentWork')).toBeHidden();
+  await page.locator('#profileMore > summary').click();
   await page.fill('#currentWork', 'TSU, 3rd year');
   await page.fill('#city', 'Kutaisi');
   await page.fill('#bio', 'I ask a lot of questions about careers.');

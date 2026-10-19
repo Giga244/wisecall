@@ -106,7 +106,7 @@ describe('server 1: AUTO_APPROVE=on', () => {
     const empty = await anna.c.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.status, 400);
     assert.equal(empty.error, 'incomplete');
-    assert.deepEqual(empty.missing, ['title', 'field', 'niche', 'tags', 'years', 'story', 'sample', 'evidence']);
+    assert.deepEqual(empty.missing, ['years', 'field', 'niche', 'story', 'evidence']);
 
     await fillIn(anna, 1, { story: prose(1) + ' Write to me at anna.private@mail.ge or call +995 555 123 456 for work.' });
     await addLink(anna, 'portfolio', web.url('/w01'));

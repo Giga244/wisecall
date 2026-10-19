@@ -92,7 +92,8 @@ describe('mentor application and approval', () => {
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25 } });
     const empty = await m.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.error, 'incomplete');
-    assert.deepEqual(empty.missing, ['title', 'field', 'niche', 'tags', 'years', 'story', 'sample', 'evidence', 'headline']);
+    // (only what a reviewer needs: a title, tags and a sample answer are optional, docs/CLAUDE-CODE-UX-WALKTHROUGH.md A)
+    assert.deepEqual(empty.missing, ['headline', 'years', 'field', 'niche', 'story', 'evidence']);
     assert.equal((await m.api('/me')).user.verificationStatus, 'none', 'nothing is submitted');
     assert.equal((await m.api('/me', { method: 'PATCH', body: { headline: 'Cardiologist in a public hospital in Tbilisi' } })).status, 200);
 

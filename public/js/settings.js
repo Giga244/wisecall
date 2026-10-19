@@ -102,7 +102,7 @@
       b.setAttribute('aria-selected', String(on));
       b.tabIndex = on ? 0 : -1;
     });
-    btn.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'auto' }); // on a phone the tab row scrolls: keep the chosen tab in view
+    btn.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'auto' }); // (the chosen tab stays in view)
     panels.forEach((p) => { p.hidden = p.dataset.panel !== activeTab; });
     if (o.push !== false) {
       const url = new URL(window.location.href);
@@ -167,10 +167,14 @@
     const pct = Math.round((done / total) * 100);
     const status = v.state || v.status; // (the same state as the steps)
     const verified = status === 'verified';
+    // Not sent yet: a neutral "Your application: 1 of 3 steps done – continue" (never red at 0 of 3). Red only for something that really
+    // failed, named in one sentence with what to do (docs/CLAUDE-CODE-UX-WALKTHROUGH.md C).
+    const failed = (v.requirements || []).find((r) => r.status === 'failed');
     const tone = verified ? 'answered' : (['rejected', 'suspended', 'needs_attention'].includes(status) ? 'rejected' : 'pending_payment');
     const label = verified ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed')
       : ({ suspended: 'vt.status.suspended', rejected: 'vt.status.rejected', needs_attention: 'vt.status.needsAttention' }[status] || (app.locked ? 'ap.status.inReview' : 'vt.status.pending'));
-    const text = t('ap.progressText').replace('{done}', done).replace('{total}', total);
+    const text = t(app.locked || verified ? 'ap.progressText' : 'settings.progress.neutral').replace('{done}', done).replace('{total}', total);
+    const fix = failed ? FIX[failed.step] || FIX.experience : null;
     progressBox.hidden = false;
     progressBox.innerHTML = `
       <div class="app-progress-head">
@@ -178,9 +182,18 @@
         <span class="badge badge-${tone}">${t(verified && !user.hasPayoutDetails ? 'vt.status.verifiedNoPayout' : label)}</span>
       </div>
       <div class="vt-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="${escapeHtml(text)}"><span style="width:${pct}%"></span></div>
+      ${fix ? `<p class="app-progress-failed" role="alert">${t('settings.failed.' + (FIX[failed.step] ? failed.step : 'experience'))}
+        ${fix.href ? `<a href="${fix.href}">${t('settings.failed.cta')}</a>` : `<button type="button" class="linklike" data-goto-tab="${fix.tab}">${t('settings.failed.cta')}</button>`}</p>` : ''}
       <p class="small app-progress-foot"><strong>${escapeHtml(text)}</strong>
-        ${verified ? '' : `<button type="button" class="linklike" data-goto-tab="verification">${t(app.locked && status !== 'needs_attention' ? 'settings.progress.status' : 'settings.progress.continue')}</button>`}</p>`;
+        ${verified ? '' : (app.locked && status !== 'needs_attention'
+          ? `<button type="button" class="linklike" data-goto-tab="verification">${t('settings.progress.status')}</button>`
+          : `<a class="linklike" href="/apply.html">${t('settings.progress.continue')}</a>`)}</p>`;
   }
+  // Where a mentor fixes each step that can fail: the application page (the ID check is its step 5), or a Settings tab.
+  const FIX = {
+    id_kyc: { href: '/apply.html?step=5' }, age: { tab: 'verification' }, name_match: { tab: 'profile' }, email: { href: '/verify-email.html' },
+    license: { tab: 'verification' }, license_document: { tab: 'verification' }, experience: { tab: 'verification' }, video_interview: { tab: 'verification' }
+  };
   progressBox.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-goto-tab]');
     if (btn) selectTab(btn.dataset.gotoTab, { focus: true });

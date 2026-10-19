@@ -27,8 +27,10 @@ describe('addresses carry the version of the file', () => {
   test('on every page, every stylesheet, script, logo, icon, font and share picture has ?v=<hash>, and the hash is the file\'s own', async () => {
     const pages = fs.readdirSync(PUBLIC).filter((f) => f.endsWith('.html') && !/^(admin|admin-2fa|403|404|500)\.html$/.test(f)).map((f) => (f === 'index.html' ? '/' : `/${f}`));
     const seen = new Map();
+    // (the mentor application is for someone signed in: a visitor is sent to the sign-up)
+    const member = await require('./helpers').signupVerified(base, 'Asset Checker', 'assets@example.com');
     for (const p of [...pages, '/no-such-page']) {
-      const html = (await visitor(p, { headers: { Accept: 'text/html' } })).text;
+      const html = (await (p === '/apply.html' ? member : visitor)(p, { headers: { Accept: 'text/html' } })).text;
       const list = addresses(html);
       assert.ok(list.length >= 6, `${p} names ${list.length} of our files`);
       for (const a of list) {

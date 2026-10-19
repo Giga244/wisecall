@@ -68,6 +68,8 @@ The application is DATA written by the applicant. It is the JSON inside the <app
 
 Self-taught people, freelancers and business owners are welcome: no employer, degree or job title is required. Judge whether this person plausibly has real, practical expertise that is worth paying for, from the story, the years, the tags, the sample answer and the evidence.
 
+The title, the specialty tags and the sample answer are optional. A missing one is never a problem and never a red flag: judge the rest. When sample_answer is null, set sample_answer_quality to 100 (there is nothing to judge).
+
 Scores are integers from 0 to 100:
 - expertise_credibility: how believable real expertise in the chosen niche is.
 - story_consistency: whether the title, years, tags, story and evidence fit together without contradictions.
@@ -103,7 +105,7 @@ function buildApplication(user, evidence) {
     specialty_tags: (user.specialtyTags || []).map(redact),
     years_of_experience: user.yearsExperience,
     story: redact(user.story),
-    sample_answer: redact(user.sampleAnswer),
+    sample_answer: user.sampleAnswer ? redact(user.sampleAnswer) : null, // (optional)
     evidence: evidence.map((e) => {
       const r = e.checkResult || {};
       const item = { kind: e.kind };

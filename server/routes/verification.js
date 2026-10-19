@@ -66,7 +66,7 @@ router.post('/kyc/start', requireAuth, asyncHandler(async (req, res) => {
   if (!isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
   if (!user.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
   try {
-    res.json(await kycService.startForMentor(user));
+    res.json(await kycService.startForMentor(user, { from: (req.body || {}).from === 'apply' ? 'apply' : 'settings' }));
   } catch (e) {
     if (e instanceof steps.VerificationError) return res.status(409).json({ error: e.code });
     if (e.code === 'kyc_unavailable') return res.status(503).json({ error: 'kyc_unavailable' });

@@ -139,6 +139,8 @@
       const q = form.q.value.trim();
       const box = document.getElementById('searchInput');
       if (box && q && WisecallI18n.launchMode() !== 'prelaunch') { box.value = q; box.dispatchEvent(new Event('input', { bubbles: true })); }
+      // (before launch the question is not lost: the waiting list keeps it and picks its field)
+      if (q && window.WisecallWaitlist) WisecallWaitlist.ask(q);
       document.getElementById('experts').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     });
   }

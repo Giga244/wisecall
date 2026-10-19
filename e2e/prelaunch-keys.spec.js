@@ -38,6 +38,7 @@ test('a mentor applies and sees "ID checks open soon" (English and Georgian); no
 
   // the rest works: a portfolio link is accepted as evidence
   const ev = page.locator('#ap-experience form[data-form="evidence"]');
+  await ev.locator('details.ap-ev-more > summary').click(); // (the type of a link is found from its address; the list is under "More options")
   await ev.locator('[name="kind"]').selectOption('portfolio');
   await ev.locator('[name="url"]').fill('https://early-mentor.invalid/portfolio');
   await ev.locator('button[type="submit"]').click();

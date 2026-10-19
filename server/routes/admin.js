@@ -398,7 +398,7 @@ router.get('/waitlist', requireAuth, requireAdmin, asyncHandler(async (req, res)
   const rows = await waitlist.listForAdmin();
   const byNiche = {};
   rows.forEach((r) => { byNiche[r.niche] = (byNiche[r.niche] || 0) + 1; });
-  res.json({ signups: rows, total: rows.length, byNiche });
+  res.json({ signups: rows, total: rows.length, byNiche, demand: await waitlist.demandForAdmin() });
 }));
 router.get('/waitlist.csv', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   const rows = await waitlist.listForAdmin();

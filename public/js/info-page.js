@@ -3,8 +3,8 @@
 (async function () {
   await WisecallI18n.initI18n();
   const user = await WisecallNav.initNav();
-  // "Apply as a mentor": sign up first, or straight to Settings for someone who is already signed in
-  document.querySelectorAll('.become-link').forEach((a) => { a.href = user ? '/settings.html' : '/signup.html?redirect=/settings.html'; });
+  // "Start my application": a mentor account first (the mentor sign-up), or straight to the application for someone signed in
+  document.querySelectorAll('.become-link').forEach((a) => { a.href = user ? '/apply.html' : '/signup.html?as=mentor'; });
   // (the badge texts end with "Verified {date}.", which means nothing on this page)
   const strip = () => document.querySelectorAll('.hvp-badges span').forEach((el) => { el.textContent = el.textContent.replace(/\s*[^.]*\{date\}\.?$/, ''); });
   strip();

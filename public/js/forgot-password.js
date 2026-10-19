@@ -5,6 +5,7 @@
   const resultEl = document.getElementById('result');
 
   WisecallTurnstile.watch(form);
+  WisecallAPI.keepMentorPath();
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorEl.textContent = '';
@@ -13,7 +14,7 @@
     try {
       const data = await WisecallAPI.apiFetch('/auth/forgot-password', {
         method: 'POST',
-        body: { email: document.getElementById('email').value.trim(), turnstileToken: await WisecallTurnstile.token(form) }
+        body: { email: document.getElementById('email').value.trim(), as: WisecallAPI.asMentor() ? 'mentor' : undefined, turnstileToken: await WisecallTurnstile.token(form) }
       });
       form.style.display = 'none';
       resultEl.style.display = 'block';

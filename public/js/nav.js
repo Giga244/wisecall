@@ -116,7 +116,9 @@
     // The theme chosen on the account (on another device, say) wins over what this device remembers; and from now on a choice made
     // here is saved on the account too.
     if (window.WisecallTheme) WisecallTheme.adopt(user);
-    setHint(user ? (user.isAdmin ? 'admin' : '1') : null);
+    setHint(user ? (user.isAdmin ? 'admin' : (['mentor', 'both'].includes(user.role) ? 'mentor' : '1')) : null);
+    // (a mentor, or someone applying, has no "Become a mentor" link: one drawn from an older hint goes)
+    if (user && (user.isAdmin || ['mentor', 'both'].includes(user.role))) document.querySelectorAll('.nl-mentor').forEach((a) => a.remove());
     // The hint and the server agree: nothing on the header moves. They disagree (a session that ran out, a sign-in from before the
     // hint): the header turns into the right one with a short fade instead of a jump.
     if (header && Boolean(user) !== drawnSignedIn) {
@@ -202,7 +204,7 @@
       if (!b.hasAttribute('data-dot')) b.textContent = count > 99 ? '99+' : String(count);
     });
     const label = count ? t('nav.inboxUnread').replace('{n}', count) : t('nav.inbox');
-    document.querySelectorAll('.nav-inbox[data-inbox-link]').forEach((a) => a.setAttribute('aria-label', label));
+    document.querySelectorAll('[data-inbox-link]').forEach((a) => a.setAttribute('aria-label', label)); // (the icon in the bar and the menu's button: a name with the count, docs/CLAUDE-CODE-UX-WALKTHROUGH.md E)
   }
   async function pollUnread() {
     if (document.visibilityState === 'hidden') return;

@@ -38,9 +38,10 @@ a.chip { display: inline-flex; align-items: center; min-height: 40px; text-decor
 .hero-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; margin-top: 24px; }
 .hero-note { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; font-size: 0.95rem; color: var(--ink); }
 .hero-note svg { color: var(--accent2-strong); flex: 0 0 auto; }
-.hero-become { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
-.hero-become::after { content: "→"; content: "→" / ""; display: inline-block; transition: transform 0.25s var(--ease-out); }
-.hero-become:hover::after { transform: translateX(4px); }
+/* "I'm an expert – become a mentor": the second way in, a full button under the search (the whole width on a phone) */
+.hero-mentor { margin: 14px 0 0; }
+.hero-mentor-btn { white-space: normal; text-align: center; }
+@media (max-width: 639px) { .hero-mentor-btn { display: flex; width: 100%; justify-content: center; } }
 
 /* the conversation stage: a mint panel on an ink slab, a sun sticker on top */
 .hero-stage { position: relative; min-height: 520px; min-width: 0; }

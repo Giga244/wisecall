@@ -89,14 +89,15 @@ test('what left the home page is one click away: how we verify, all questions, t
   await page.locator('#faq .faq-more a').click();
   await expect(page).toHaveURL(/\/faq\.html$/);
   await expect(page.locator('#faq-examples')).toHaveText('What an answer looks like');
-  for (const link of ['#experts .wl-mentor a', '.nav-links a[href="/become-a-mentor.html"]', '.hero-become']) {
+  for (const link of ['#experts .wl-mentor a', '.nav-links a[href="/become-a-mentor.html"]', '.hero-mentor-btn']) {
     await page.goto(`${srv.base}/`);
     await page.locator(link).click();
     await expect(page, link).toHaveURL(/\/become-a-mentor\.html$/);
     await expect(page.locator('h1')).toHaveText('Share what you know, get paid for it');
   }
-  // (its button: sign up first, then Settings)
-  await expect(page.locator('.become-link')).toHaveAttribute('href', '/signup.html?redirect=/settings.html');
+  // (its button, at the top and at the bottom: the mentor's sign-up, which leads on to the application; docs/CLAUDE-CODE-MENTOR-SIGNUP.md #1)
+  await expect(page.locator('.become-link').first()).toHaveAttribute('href', '/signup.html?as=mentor');
+  await expect(page.locator('.become-link')).toHaveCount(2);
   await ctx.close();
 });
 

@@ -6,7 +6,10 @@
   const t = WisecallI18n.t;
 
   const params = new URLSearchParams(location.search);
-  const redirect = WisecallAPI.safeRedirect(params.get('redirect'), '/dashboard.html');
+  // (?as=mentor: the mentor's sign-up, with no username to choose (one is made from the name) and the application next)
+  const asMentor = WisecallAPI.asMentor();
+  const redirect = WisecallAPI.safeRedirect(params.get('redirect'), asMentor ? '/apply.html' : '/dashboard.html');
+  WisecallAPI.keepMentorPath();
 
   // The username is the address of their profile (/u/<username>). It is suggested from the name until they type their own.
   const nameInput = document.getElementById('name');
@@ -87,10 +90,10 @@
     try {
       const data = await WisecallAPI.apiFetch('/auth/signup', {
         method: 'POST',
-        body: { name, email, password, adult: true, language: WisecallI18n.getLang(), username: usernameInput.value.trim().toLowerCase() || undefined,
+        body: { name, email, password, adult: true, language: WisecallI18n.getLang(), username: (!asMentor && usernameInput.value.trim().toLowerCase()) || undefined,
           turnstileToken: await WisecallTurnstile.token(form) }
       });
-      let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}`;
+      let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}${asMentor ? '&as=mentor' : ''}`;
       if (data.devMode && data.devVerifyCode) verifyUrl += `&devCode=${data.devVerifyCode}`;
       // The account exists but the email could not be sent (bank-grade rule: say so, never show the code).
       if (!data.emailSent && !data.devMode) verifyUrl += '&emailFailed=1';

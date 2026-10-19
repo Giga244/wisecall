@@ -167,7 +167,8 @@ async function decideAndApply(userId, reviewId, { notify = false } = {}) {
     ai: review.ai,
     injection: Boolean(checks.injection && checks.injection.found),
     links: checks.links || {},
-    signals: checks.signals || {}
+    signals: checks.signals || {},
+    noSample: !user.sampleAnswer // (the sample answer is optional: its score counts only when there is one)
   };
   const risk = rules.riskFrom(facts);
   const decision = rules.decide({
@@ -180,7 +181,8 @@ async function decideAndApply(userId, reviewId, { notify = false } = {}) {
     aiError: review.ai_error,
     injection: facts.injection,
     risk,
-    autoVerifiedEvidence: (checks.links || {}).autoVerified || 0
+    autoVerifiedEvidence: (checks.links || {}).autoVerified || 0,
+    noSample: facts.noSample
   });
   // A migrated application that was never submitted under the new rules is never approved automatically.
   const canAuto = decision.outcome === 'auto_approved' && review.trigger !== 'migrated' && experience.submitted(user);

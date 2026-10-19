@@ -666,5 +666,9 @@
   "admin.pr.itemsTitle": "Profile items (self-reported unless verified)",
   "admin.pr.verify": "Mark verified",
   "admin.pr.unverify": "Remove the mark",
-  "admin.pr.verifyPh": "Which evidence matches"
+  "admin.pr.verifyPh": "Which evidence matches",
+  "admin.ai.linkFlag.other_person": "the address names someone else",
+  "admin.wl.demand": "What people want to ask (anonymous)",
+  "admin.wl.demandHelp": "Questions typed on the home page by people who then joined the waiting list, with the field they chose. Shown without their email: use them to decide which mentors to invite.",
+  "admin.wl.demandEmpty": "No questions yet."
 }

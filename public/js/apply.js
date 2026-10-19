@@ -1,0 +1,647 @@
+// /apply.html: the mentor application, one step at a time (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #3, docs/CLAUDE-CODE-UX-WALKTHROUGH.md A).
+//   1 About you (what I do, my field in my own words with the closest category, years)  2 Your story  3 Your price
+//   4 Proof of experience (one link or document; the licence in a regulated field)       5 ID check and submit
+// Each step is saved when the mentor moves on (or leaves with "Save and finish later"), so they can come back to it. The server decides
+// every rule (what is required, what a link is, the category of a licensed profession); this page asks, saves and explains. The Settings
+// tabs stay for later changes.
+(async function () {
+  await WisecallI18n.initI18n();
+  const t = (k) => WisecallI18n.t(k);
+  const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fill = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
+  const chars = (s) => [...String(s || '').trim().replace(/\s+/g, ' ')].length;
+  const root = document.getElementById('applyRoot');
+  const head = document.getElementById('applyHead');
+  const STEPS = ['about', 'story', 'price', 'proof', 'submit'];
+  const MAX_BYTES = 10 * 1024 * 1024;
+
+  let user = await WisecallNav.initNav();
+  if (!user) { window.location.href = (WisecallI18n.getLang() === 'ka' ? '/ka' : '') + '/signup.html?as=mentor'; return; }
+  const config = await WisecallI18n.getConfig();
+
+  // ---- Not ready yet: the email first ---------------------------------------------------------------------------------------------
+  if (!user.emailVerified) {
+    head.hidden = true;
+    root.innerHTML = `
+      <div class="apply-step">
+        <h1 tabindex="-1">${esc(t('apply.email.title'))}</h1>
+        <p class="apply-lead">${esc(t('apply.email.body'))}</p>
+        <p><a class="btn btn-primary btn-lg btn-arrow" href="/verify-email.html?redirect=%2Fapply.html&amp;as=mentor">${esc(t('apply.email.cta'))}</a></p>
+      </div>`;
+    return;
+  }
+  // Somebody who came straight here (an invite, the dashboard, Google) becomes a mentor applicant now: the same as "Become a mentor".
+  if (user.role !== 'mentor' && user.role !== 'both') {
+    try { user = (await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { becomeMentor: true } })).user; }
+    catch (e) { root.innerHTML = `<p class="form-error">${esc(t('toast.error'))}</p>`; return; }
+  }
+
+  let v = null; // GET /verification
+  async function load() {
+    const [ver, me] = await Promise.all([WisecallAPI.apiFetch('/verification'), WisecallAPI.apiFetch('/me')]);
+    v = ver;
+    user = me.user;
+  }
+
+  // ---- Which step ---------------------------------------------------------------------------------------------------------------------
+  const missing = () => v.application.missing;
+  const has = (...codes) => codes.some((c) => missing().includes(c));
+  const stepDone = (i) => !({ 0: has('headline', 'years', 'field', 'niche'), 1: has('story'), 2: has('price'), 3: has('evidence', 'license', 'license_document'), 4: false }[i]);
+  const STEP_OF = { headline: 0, years: 0, field: 0, niche: 0, story: 1, price: 2, evidence: 3, license: 3, license_document: 3 };
+  function firstOpenStep() {
+    for (let i = 0; i < 4; i += 1) if (!stepDone(i)) return i;
+    return 4;
+  }
+  function stepFromUrl() {
+    const n = Number(new URLSearchParams(window.location.search).get('step'));
+    return Number.isInteger(n) && n >= 1 && n <= 5 ? n - 1 : null;
+  }
+  let current = 0;
+
+  function go(i, { push = true } = {}) {
+    current = Math.max(0, Math.min(4, i));
+    if (push) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('step', String(current + 1));
+      url.searchParams.delete('kyc');
+      window.history.pushState({ step: current }, '', url.pathname + url.search);
+    }
+    render();
+    const h = root.querySelector('h1');
+    if (h) h.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  window.addEventListener('popstate', () => { const s = stepFromUrl(); if (s !== null && v && !v.application.locked) { current = s; render(); } });
+
+  // ---- The progress bar ---------------------------------------------------------------------------------------------------------------
+  function drawHead() {
+    head.hidden = false;
+    // (on a phone the five names do not fit under the numbers: the current one is said here instead)
+    document.getElementById('applyProgressText').innerHTML = `${esc(fill('apply.progress', { n: current + 1, total: 5 }))}<span class="apply-progress-name" aria-hidden="true"> · ${esc(t('apply.step.' + STEPS[current]))}</span>`;
+    const bar = document.getElementById('applyBar');
+    bar.setAttribute('aria-valuenow', String(current + 1));
+    bar.setAttribute('aria-label', fill('apply.progress', { n: current + 1, total: 5 }));
+    bar.querySelector('span').style.width = `${((current + 1) / 5) * 100}%`;
+    document.getElementById('applySteps').innerHTML = STEPS.map((s, i) => `
+      <li class="${i === current ? 'is-current' : ''}${stepDone(i) && i < 4 ? ' is-done' : ''}">
+        <button type="button" class="apply-step-link" data-goto="${i}"${i === current ? ' aria-current="step"' : ''}>
+          <span class="apply-step-num" aria-hidden="true">${stepDone(i) && i < 4 && i !== current ? '✓' : i + 1}</span>
+          <span class="apply-step-name">${esc(t('apply.step.' + s))}</span>
+        </button>
+      </li>`).join('');
+  }
+
+  // ---- The steps ----------------------------------------------------------------------------------------------------------------------
+  const nav = (i, { nextLabel } = {}) => `
+    <p class="form-error apply-error" role="alert"></p>
+    <div class="apply-nav">
+      ${i > 0 ? `<button type="button" class="btn btn-outline btn-lg apply-back" data-back>${esc(t('apply.back'))}</button>` : ''}
+      <button type="submit" class="btn btn-primary btn-lg btn-arrow apply-next">${esc(t(nextLabel || 'apply.next'))}</button>
+    </div>
+    <p class="apply-later"><button type="button" class="linklike" data-later>${esc(t('apply.later'))}</button></p>`;
+
+  const nicheName = (key) => (key === 'other' ? t('ap.f.niche.other') : t('niche.' + key));
+  const isRegulated = (key) => Boolean((WisecallI18n.niches().find((n) => n.key === key) || {}).regulated);
+
+  function aboutStep() {
+    const f = v.application.form;
+    const niche = f.niche || '';
+    const options = WisecallI18n.niches().map((n) => `<option value="${esc(n.key)}"${niche === n.key ? ' selected' : ''}>${esc(t('niche.' + n.key))}</option>`).join('')
+      + `<option value="other"${niche === 'other' ? ' selected' : ''}>${esc(t('ap.f.niche.other'))}</option>`;
+    return `
+      <form class="apply-step" data-step="0" novalidate>
+        <h1 tabindex="-1">${esc(t('apply.about.title'))}</h1>
+        <p class="apply-lead">${esc(t('apply.about.lead'))}</p>
+        <div class="apply-field">
+          <label for="apHeadline">${esc(t('apply.f.headline'))}</label>
+          <input id="apHeadline" name="headline" type="text" maxlength="100" value="${esc(user.headline || '')}" autocomplete="organization-title" aria-describedby="apHeadlineHint" required>
+          <span class="hint" id="apHeadlineHint">${esc(t('apply.f.headline.hint'))}</span>
+        </div>
+        <div class="apply-field">
+          <label for="apField">${esc(t('apply.f.field'))}</label>
+          <input id="apField" name="customNiche" type="text" maxlength="60" value="${esc(f.customNiche || '')}" autocomplete="off" aria-describedby="apFieldHint apCategory" required>
+          <span class="hint" id="apFieldHint">${esc(t('apply.f.field.hint'))}</span>
+          <p class="apply-category" id="apCategory" aria-live="polite"${niche ? '' : ' hidden'}>
+            <span>${esc(t('apply.f.category'))} <strong data-cat-name>${niche ? esc(nicheName(niche)) : ''}</strong></span>
+            <button type="button" class="linklike" data-cat-change aria-controls="apNicheBox" aria-expanded="false">${esc(t('apply.f.category.change'))}</button>
+          </p>
+          <div class="apply-niche" id="apNicheBox" hidden>
+            <label for="apNiche">${esc(t('apply.f.category.choose'))}</label>
+            <select id="apNiche" name="niche"><option value="">${esc(t('ap.f.niche.choose'))}</option>${options}</select>
+          </div>
+          <p class="mv-note apply-licence-note" data-licence-note${isRegulated(niche) ? '' : ' hidden'}>${esc(t('apply.f.licenceNote'))}</p>
+        </div>
+        <div class="apply-field apply-years">
+          <label for="apYears">${esc(t('apply.f.years'))}</label>
+          <input id="apYears" name="yearsExperience" type="number" min="0" max="${v.limits.yearsMax}" step="1" inputmode="numeric" value="${f.yearsExperience === null || f.yearsExperience === undefined ? '' : esc(f.yearsExperience)}" required>
+        </div>
+        ${nav(0)}
+      </form>`;
+  }
+
+  function storyStep() {
+    const f = v.application.form;
+    const L = v.limits;
+    return `
+      <form class="apply-step" data-step="1" novalidate>
+        <h1 tabindex="-1">${esc(t('apply.story.title'))}</h1>
+        <p class="apply-lead">${esc(t('apply.story.lead'))}</p>
+        <div class="apply-field">
+          <label for="apStory">${esc(t('apply.f.story'))}</label>
+          <textarea id="apStory" name="story" rows="9" maxlength="${L.storyMax}" aria-describedby="apStoryCount apStoryNote" required>${esc(f.story)}</textarea>
+          <p class="apply-count" id="apStoryCount" aria-live="polite"></p>
+          <p class="hint" id="apStoryNote">${esc(t('apply.story.about'))}</p>
+        </div>
+        <div class="apply-example">
+          <p class="apply-example-label">${esc(t('apply.story.exampleLabel'))}</p>
+          <p>${esc(t('apply.story.example'))}</p>
+        </div>
+        ${nav(1)}
+      </form>`;
+  }
+
+  function priceStep() {
+    return `
+      <form class="apply-step" data-step="2" novalidate>
+        <h1 tabindex="-1">${esc(t('apply.price.title'))}</h1>
+        <p class="apply-lead">${esc(fill('apply.price.lead', { min: config.priceMin, max: config.priceMax }))}</p>
+        <div class="apply-field">
+          <label for="apPrice">${esc(t('apply.f.price'))}</label>
+          <div class="apply-money"><input id="apPrice" name="price" type="number" min="${config.priceMin}" max="${config.priceMax}" step="1" inputmode="numeric" value="${esc(user.price || '')}" aria-describedby="apPriceSuggest apPriceYou" required><span aria-hidden="true">₾</span></div>
+          <p class="hint" id="apPriceSuggest">${esc(fill('apply.price.suggest', { from: config.priceSuggestMin || 20, to: config.priceSuggestMax || 60 }))}</p>
+        </div>
+        <p class="apply-you" id="apPriceYou" aria-live="polite"></p>
+        ${nav(2)}
+      </form>`;
+  }
+
+  const EV_STATE_BADGE = { verified: 'answered', team: 'paid', unchecked: 'badge-muted', unclear: 'pending_payment', problem: 'rejected' };
+  function evidenceList() {
+    const list = v.application.evidence;
+    if (!list.length) return '';
+    return `<ul class="ap-evidence apply-evidence">${list.map((e) => `
+      <li>
+        <div class="ap-evidence-main">
+          <span class="ap-evidence-kind">${esc(t('ap.ev.kind.' + e.kind))}</span>
+          <span class="ap-evidence-what">${e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer nofollow">${esc(e.url)}</a>` : esc(e.registryId || e.filename || '')}</span>
+        </div>
+        <span class="badge badge-${EV_STATE_BADGE[e.state] || 'badge-muted'}">${esc(t('ap.ev.state.' + e.state))}</span>
+        ${e.kind !== 'work_email' ? `<button type="button" class="btn btn-ghost btn-sm" data-ev-remove="${esc(e.id)}">${esc(t('ap.ev.remove'))}</button>` : ''}
+      </li>`).join('')}</ul>`;
+  }
+
+  function licenceBlock() {
+    if (!v.regulated) return '';
+    const l = v.inputs.license;
+    const r = (v.requirements.find((x) => x.step === 'license') || { status: 'todo' });
+    const needsDoc = v.requirements.some((x) => x.step === 'license_document');
+    const docs = v.inputs.documents.filter((d) => d.step === 'license_document');
+    return `
+      <div class="apply-block apply-licence">
+        <h2>${esc(t('ap.lic.title'))}</h2>
+        <p class="hint">${esc(fill('ap.lic.help', { niche: t('niche.' + v.niche) }))}</p>
+        ${l && r.status !== 'failed' ? `<p class="ap-line ap-ok">✓ ${esc(fill('vt.lic.submitted', { last4: l.numberEnding, body: l.issuingBody, date: l.validUntil }))}</p>` : `
+        <div class="apply-sub" data-sub="license">
+          ${r.status === 'failed' && r.reason ? `<p class="form-error"><strong>${esc(t('vt.reason'))}</strong> ${esc(r.reason)}</p>` : ''}
+          <div class="apply-field"><label for="apLicNumber">${esc(t('vt.lic.number'))}</label><input id="apLicNumber" name="number" type="text" maxlength="40" autocomplete="off"></div>
+          <div class="apply-field"><label for="apLicBody">${esc(t('vt.lic.body'))}</label><input id="apLicBody" name="issuingBody" type="text" maxlength="120" placeholder="${esc(t('vt.lic.bodyHint'))}"></div>
+          <div class="apply-field"><label for="apLicHolder">${esc(t('vt.lic.holder'))}</label><input id="apLicHolder" name="holderName" type="text" maxlength="100" value="${esc(l ? l.holderName : user.name)}"></div>
+          <div class="apply-field"><label for="apLicUntil">${esc(t('vt.lic.until'))}</label><input id="apLicUntil" name="validUntil" type="date" value="${esc(l ? l.validUntil : '')}"></div>
+          <p class="form-error apply-sub-error" role="alert"></p>
+          <button type="button" class="btn btn-outline btn-lg" data-save-licence>${esc(t('vt.lic.save'))}</button>
+        </div>`}
+        ${needsDoc ? `
+          <p class="hint">${esc(t('ap.lic.docHelp'))} ${esc(t('vt.doc.private'))}</p>
+          ${docs.length ? `<ul class="vt-files">${docs.map((f) => `<li><span>${esc(f.filename)}</span> <button type="button" class="btn btn-ghost btn-sm" data-doc-remove="${esc(f.id)}">${esc(t('vt.doc.remove'))}</button></li>`).join('')}</ul>` : `
+          <div class="apply-sub" data-sub="licenceDoc">
+            <div class="apply-field"><label for="apLicDoc">${esc(t('vt.doc.choose'))}</label><input id="apLicDoc" type="file" accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"></div>
+            <p class="form-error apply-sub-error" role="alert"></p>
+            <button type="button" class="btn btn-outline btn-lg" data-upload="license_document" data-input="apLicDoc">${esc(t('vt.doc.upload'))}</button>
+          </div>`}` : ''}
+      </div>`;
+  }
+
+  function proofStep() {
+    const kinds = v.evidenceKinds.filter((k) => k !== 'diploma');
+    const count = v.application.evidence.length;
+    return `
+      <form class="apply-step" data-step="3" novalidate>
+        <h1 tabindex="-1">${esc(t('apply.proof.title'))}</h1>
+        <p class="apply-lead">${esc(t('apply.proof.lead'))}</p>
+        ${evidenceList()}
+        <div class="apply-sub" data-sub="evidence">
+          <div class="apply-field">
+            <label for="apUrl">${esc(t(count ? 'apply.f.urlMore' : 'apply.f.url'))}</label>
+            <input id="apUrl" name="url" type="url" maxlength="500" placeholder="https://" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="apUrlHint">
+            <span class="hint" id="apUrlHint">${esc(t('apply.f.url.hint'))}</span>
+          </div>
+          <details class="apply-more">
+            <summary>${esc(t('apply.f.moreOptions'))}</summary>
+            <div class="apply-field">
+              <label for="apKind">${esc(t('ap.ev.kind'))}</label>
+              <select id="apKind" name="kind"><option value="auto">${esc(t('apply.f.kindAuto'))}</option>${kinds.map((k) => `<option value="${k}">${esc(t('ap.ev.kind.' + k))}</option>`).join('')}</select>
+            </div>
+            <div class="apply-field apply-registry" hidden>
+              <label for="apRegistry">${esc(t('ap.ev.registry'))}</label>
+              <input id="apRegistry" name="registryId" type="text" maxlength="13" inputmode="numeric" autocomplete="off">
+              <span class="hint">${esc(t('ap.ev.registry.hint'))}</span>
+            </div>
+            <div class="apply-field">
+              <label for="apNote">${esc(t('ap.ev.note'))}</label>
+              <input id="apNote" name="note" type="text" maxlength="${v.limits.evidenceNoteMax}">
+            </div>
+          </details>
+          <p class="form-error apply-sub-error" role="alert"></p>
+          <button type="button" class="btn btn-outline btn-lg" data-add-link>${esc(t('apply.f.addLink'))}</button>
+        </div>
+        <div class="apply-sub apply-doc" data-sub="diploma">
+          <p class="apply-or">${esc(t('apply.proof.or'))}</p>
+          <div class="apply-field">
+            <label for="apDoc">${esc(t('apply.f.document'))}</label>
+            <input id="apDoc" type="file" accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg" aria-describedby="apDocHint">
+            <span class="hint" id="apDocHint">${esc(t('apply.f.document.hint'))}</span>
+          </div>
+          <p class="form-error apply-sub-error" role="alert"></p>
+          <button type="button" class="btn btn-outline btn-lg" data-upload="diploma" data-input="apDoc">${esc(t('vt.doc.upload'))}</button>
+        </div>
+        ${licenceBlock()}
+        ${nav(3)}
+      </form>`;
+  }
+
+  // Step 5: the ID check, what is done and what is missing (each with a link to its step), and "Submit for review".
+  function kycBlock() {
+    const r = v.requirements.find((x) => x.step === 'id_kyc') || { status: 'todo' };
+    const state = v.kycState;
+    const returned = new URLSearchParams(window.location.search).get('kyc') === 'returned';
+    if (r.status === 'passed') return `<p class="apply-check is-done"><span aria-hidden="true">✓</span> ${esc(t('ap.id.passed'))}</p>`;
+    if (!WisecallI18n.idChecksOpen()) return `<p class="vt-soon" role="status"><strong>${esc(t('vt.kyc.soon'))}</strong> ${esc(t('apply.id.soon'))}</p>`;
+    let note = '';
+    let label = 'vt.kyc.start';
+    if (r.status === 'failed') { note = `<p class="apply-failed" role="alert">${esc(t(state === 'expired' ? 'vt.kyc.expired' : 'apply.id.failed'))}</p>`; label = 'vt.kyc.retry'; }
+    else if (state === 'in_review') note = `<p class="hint">${esc(t('vt.kyc.inReview'))}</p>`;
+    else if (state === 'started') { note = `<p class="hint">${esc(t(returned ? 'vt.kyc.returned' : 'vt.kyc.started'))}</p>`; label = 'vt.kyc.continue'; }
+    return `
+      <p class="hint">${esc(t('apply.id.help'))}</p>
+      ${note}
+      <div class="apply-actions">
+        ${state === 'in_review' ? '' : `<button type="button" class="btn btn-outline btn-lg" data-kyc-start>${esc(t(label))}</button>`}
+        ${r.status === 'pending' ? `<button type="button" class="btn btn-ghost btn-lg" data-reload>${esc(t('vt.kyc.refresh'))}</button>` : ''}
+      </div>
+      <p class="form-error apply-kyc-error" role="alert"></p>`;
+  }
+
+  // The checklist: one line per thing a reviewer needs, done or not, with the step to go back to.
+  function checklist() {
+    const rows = [
+      ['email', !has('email'), null],
+      ['about', stepDone(0), 0],
+      ['story', stepDone(1), 1],
+      ['price', stepDone(2), 2],
+      ['proof', !has('evidence'), 3]
+    ];
+    if (v.regulated) rows.push(['licence', !has('license', 'license_document'), 3]);
+    const id = (v.requirements.find((x) => x.step === 'id_kyc') || {}).status;
+    return `
+      <ul class="apply-checklist">
+        ${rows.map(([key, done, step]) => `
+          <li class="${done ? 'is-done' : 'is-missing'}">
+            <span class="apply-check-mark" aria-hidden="true">${done ? '✓' : '○'}</span>
+            <span><span class="sr-only">${esc(t(done ? 'apply.check.doneSr' : 'apply.check.missingSr'))}</span>${esc(t('apply.check.' + key))}</span>
+            ${!done && step !== null ? `<button type="button" class="linklike" data-goto="${step}">${esc(fill('apply.check.goto', { n: step + 1 }))}</button>` : ''}
+          </li>`).join('')}
+        <li class="${id === 'passed' ? 'is-done' : 'is-later'}">
+          <span class="apply-check-mark" aria-hidden="true">${id === 'passed' ? '✓' : '○'}</span>
+          <span>${esc(t('apply.check.id'))}${id === 'passed' ? '' : ` <span class="hint">${esc(t('apply.check.idLater'))}</span>`}</span>
+        </li>
+      </ul>`;
+  }
+
+  function submitStep() {
+    const ready = !missing().length;
+    const lacking = missing().filter((m) => STEP_OF[m] !== undefined || m === 'email');
+    return `
+      <form class="apply-step" data-step="4" novalidate>
+        <h1 tabindex="-1">${esc(t('apply.submit.title'))}</h1>
+        <div class="apply-block">
+          <h2>${esc(t('apply.id.title'))}</h2>
+          ${kycBlock()}
+        </div>
+        <div class="apply-block">
+          <h2>${esc(t('apply.check.title'))}</h2>
+          ${checklist()}
+        </div>
+        ${ready ? '' : `
+          <div class="ap-missing apply-missing" role="note" id="apMissing">
+            <p><strong>${esc(t('apply.missing.head'))}</strong></p>
+            <ul>${lacking.map((m) => `<li>${esc(t('ap.missing.' + m))}${STEP_OF[m] !== undefined ? ` <button type="button" class="linklike" data-goto="${STEP_OF[m]}">${esc(fill('apply.check.goto', { n: STEP_OF[m] + 1 }))}</button>` : ''}</li>`).join('')}</ul>
+          </div>`}
+        <p class="hint apply-ai">${esc(t('ap.submit.ai'))} <a href="/privacy.html#automated-review">${esc(t('ap.submit.privacy'))}</a></p>
+        <p class="form-error apply-error" role="alert"></p>
+        <div class="apply-nav">
+          <button type="button" class="btn btn-outline btn-lg apply-back" data-back>${esc(t('apply.back'))}</button>
+          <button type="submit" class="btn btn-primary btn-lg apply-submit" data-submit${ready ? '' : ' disabled aria-describedby="apMissing"'}>${esc(t('ap.submit'))}</button>
+        </div>
+        <p class="apply-later"><button type="button" class="linklike" data-later>${esc(t('apply.later'))}</button></p>
+      </form>`;
+  }
+
+  // ---- After "Submit": where it stands ------------------------------------------------------------------------------------------------
+  function doneScreen() {
+    const stage = v.application.stage;
+    const id = (v.requirements.find((x) => x.step === 'id_kyc') || {}).status;
+    const days = config.mentorReviewDays || 2;
+    const approved = stage === 'approved';
+    return `
+      <div class="apply-step apply-done">
+        <h1 tabindex="-1">${esc(t(approved ? 'apply.done.approvedTitle' : 'apply.done.title'))}</h1>
+        ${approved ? `<p class="apply-lead">${esc(t('ap.rev.approved'))}</p>` : `<p class="apply-lead">${esc(fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }))}</p>`}
+        ${!approved && id !== 'passed' && stage !== 'rejected' && stage !== 'suspended' ? `
+          <div class="apply-block">
+            <h2>${esc(t('apply.done.idTitle'))}</h2>
+            ${kycBlock()}
+          </div>` : ''}
+        <p class="apply-status"><strong>${esc(t('apply.done.status'))}</strong> ${esc(t('ap.rev.' + stage))}</p>
+        <div class="apply-actions">
+          ${approved && !user.hasPayoutDetails ? `<a class="btn btn-primary btn-lg" href="/settings.html?tab=payouts">${esc(t('vt.addPayout'))}</a>` : ''}
+          <a class="btn btn-outline btn-lg" href="/dashboard.html">${esc(t('apply.done.dashboard'))}</a>
+          <a class="btn btn-ghost btn-lg" href="/settings.html?tab=verification">${esc(t('apply.done.settings'))}</a>
+        </div>
+      </div>`;
+  }
+
+  // ---- Drawing and wiring -------------------------------------------------------------------------------------------------------------
+  function render() {
+    if (v.application.locked) {
+      head.hidden = true;
+      root.innerHTML = doneScreen();
+      wireCommon();
+      return;
+    }
+    drawHead();
+    root.innerHTML = [aboutStep, storyStep, priceStep, proofStep, submitStep][current]();
+    wireCommon();
+    wireStep();
+  }
+
+  const stepError = (text) => { const el = root.querySelector('.apply-error'); if (el) el.textContent = text || ''; };
+  const subError = (sub, text) => { const el = sub && sub.querySelector('.apply-sub-error'); if (el) el.textContent = text || ''; };
+  const errText = (map, e) => t(map[e.code] || 'toast.error');
+
+  const ERR = {
+    invalid_field: 'toast.error', invalid_years: 'ap.err.invalid_years', story_too_long: 'ap.err.story_too_long', invalid_niche: 'ap.err.invalid_niche',
+    invalid_custom_niche: 'ap.err.invalid_custom_niche', application_locked: 'ap.err.application_locked', email_not_verified: 'settings.mentor.emailNotVerified',
+    invalid_price: 'apply.err.price', bio_too_long: 'toast.error'
+  };
+  const EV_ERR = {
+    invalid_url: 'ap.ev.err.invalid_url', invalid_kind: 'ap.ev.err.invalid_url', not_linkedin: 'ap.ev.err.not_linkedin', duplicate_evidence: 'ap.ev.err.duplicate_evidence', too_much_evidence: 'ap.ev.err.too_much_evidence',
+    invalid_company_id: 'ap.ev.err.invalid_company_id', company_needs_id_or_url: 'ap.ev.err.company_needs_id_or_url', application_locked: 'ap.err.application_locked',
+    unsupported_file_type: 'vt.doc.err.type', file_too_large: 'vt.doc.err.size', too_many_files: 'vt.doc.err.many', empty_file: 'vt.doc.err.empty'
+  };
+  const LIC_ERR = { invalid_license_number: 'vt.lic.err.number', invalid_issuing_body: 'vt.lic.err.body', invalid_holder_name: 'vt.lic.err.holder', invalid_valid_until: 'vt.lic.err.until' };
+
+  // Saves what the current step holds. check: also refuse to move on while something this step needs is missing.
+  async function saveStep(check) {
+    const form = root.querySelector('form.apply-step');
+    if (!form) return true;
+    const step = Number(form.dataset.step);
+    stepError('');
+    if (step === 0) {
+      const headline = form.headline.value.trim();
+      const field = form.customNiche.value.trim();
+      const years = form.yearsExperience.value.trim();
+      if (check && (!headline || !field || years === '')) { stepError(t('apply.err.about')); (!headline ? form.headline : (!field ? form.customNiche : form.yearsExperience)).focus(); return false; }
+      if (headline !== (user.headline || '')) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { headline } });
+      await WisecallAPI.apiFetch('/verification/experience', {
+        method: 'PUT', body: { customNiche: field, niche: form.niche.value || null, yearsExperience: years === '' ? null : Number(years) }
+      });
+    } else if (step === 1) {
+      const story = form.story.value;
+      if (check && chars(story) < v.limits.storyMin) { stepError(fill('apply.err.story', { min: v.limits.storyMin })); form.story.focus(); return false; }
+      await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: { story } });
+    } else if (step === 2) {
+      const raw = form.price.value.trim();
+      const price = Number(raw);
+      if (raw === '' && !check) return true;
+      if (!Number.isInteger(price) || price < config.priceMin || price > config.priceMax) { stepError(t('apply.err.price')); form.price.focus(); return false; }
+      if (price !== user.price) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price } });
+    } else if (step === 3) {
+      // A link typed in but not added yet is added now ("Next" with the link in the box does what they meant).
+      if (form.url.value.trim()) { const ok = await addLink(form); if (!ok) return false; }
+      if (check && !v.application.evidence.length) { stepError(t('apply.err.proof')); form.url.focus(); return false; }
+      if (check && v.regulated && v.application.missing.some((m) => m === 'license' || m === 'license_document')) { stepError(t('apply.err.licence')); return false; }
+    }
+    return true;
+  }
+
+  async function saveAndGo(target, check) {
+    const btns = root.querySelectorAll('button');
+    btns.forEach((b) => { b.disabled = true; });
+    try {
+      if (!(await saveStep(check))) { btns.forEach((b) => { b.disabled = false; }); restoreSubmit(); return; }
+      await load();
+      if (target === 'later') { WisecallNav.showToast(t('apply.saved')); window.location.href = '/dashboard.html'; return; }
+      go(target);
+    } catch (e) {
+      stepError(errText(ERR, e));
+      btns.forEach((b) => { b.disabled = false; });
+      restoreSubmit();
+    }
+  }
+  // (the submit button stays disabled while something is missing)
+  function restoreSubmit() { const s = root.querySelector('[data-submit]'); if (s && missing().length) s.disabled = true; }
+
+  async function addLink(form) {
+    const sub = form.querySelector('[data-sub="evidence"]');
+    subError(sub, '');
+    const kind = form.kind.value;
+    try {
+      await WisecallAPI.apiFetch('/verification/evidence', {
+        method: 'POST',
+        body: { kind, url: form.url.value.trim() || undefined, registryId: kind === 'company' ? form.registryId.value.trim() || undefined : undefined, note: form.note.value.trim() || undefined }
+      });
+      form.url.value = '';
+      await load();
+      return true;
+    } catch (e) {
+      subError(sub, errText(EV_ERR, e));
+      form.url.focus();
+      return false;
+    }
+  }
+
+  async function upload(btn) {
+    const sub = btn.closest('.apply-sub');
+    const input = document.getElementById(btn.dataset.input);
+    const file = input && input.files[0];
+    subError(sub, '');
+    const fail = (code) => subError(sub, errText(EV_ERR, { code }));
+    if (!file) return fail('empty_file');
+    if (file.size > MAX_BYTES) return fail('file_too_large');
+    if (!/\.(pdf|jpe?g)$/i.test(file.name)) return fail('unsupported_file_type');
+    btn.disabled = true;
+    try {
+      await WisecallAPI.uploadFile(`/verification/documents/${btn.dataset.upload}`, file);
+      WisecallNav.showToast(t('toast.saved'));
+      await load();
+      render();
+    } catch (e) { fail(e.code); btn.disabled = false; }
+  }
+
+  function wireCommon() {
+    root.querySelectorAll('[data-kyc-start]').forEach((start) => start.addEventListener('click', async () => {
+      start.disabled = true;
+      try {
+        const r = await WisecallAPI.apiFetch('/verification/kyc/start', { method: 'POST', body: { from: 'apply' } });
+        window.location.href = r.url; // (the identity partner's own page, which sends them back to step 5)
+      } catch (e) {
+        const el = root.querySelector('.apply-kyc-error');
+        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified' }, e);
+        start.disabled = false;
+      }
+    }));
+    root.querySelectorAll('[data-reload]').forEach((b) => b.addEventListener('click', async () => { await load(); render(); }));
+  }
+
+  function wireStep() {
+    const form = root.querySelector('form.apply-step');
+    document.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => saveAndGo(Number(b.dataset.goto), false)));
+    form.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => saveAndGo(current - 1, false)));
+    form.querySelectorAll('[data-later]').forEach((b) => b.addEventListener('click', () => saveAndGo('later', false)));
+
+    if (current === 4) {
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const btn = form.querySelector('[data-submit]');
+        if (missing().length) return;
+        btn.disabled = true;
+        stepError('');
+        try {
+          await WisecallAPI.apiFetch('/verification/submit', { method: 'POST' });
+          await load();
+          const url = new URL(window.location.href);
+          url.searchParams.delete('step');
+          window.history.replaceState(null, '', url.pathname + url.search);
+          render();
+          const h = root.querySelector('h1');
+          if (h) h.focus();
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        } catch (e) {
+          stepError(t(e.code === 'incomplete' ? 'ap.err.incomplete' : (ERR[e.code] || 'toast.error')));
+          if (e.code === 'incomplete') { await load(); render(); } else btn.disabled = false;
+        }
+      });
+      return;
+    }
+    form.addEventListener('submit', (ev) => { ev.preventDefault(); saveAndGo(current + 1, true); });
+
+    if (current === 0) {
+      // The category follows the words until the mentor chooses one themselves.
+      const field = form.customNiche;
+      const select = form.niche;
+      const line = form.querySelector('#apCategory');
+      const box = form.querySelector('#apNicheBox');
+      const change = form.querySelector('[data-cat-change]');
+      const note = form.querySelector('[data-licence-note]');
+      let chosen = false;
+      let timer = null;
+      let seq = 0;
+      const show = () => {
+        const key = select.value;
+        line.hidden = !key;
+        line.querySelector('[data-cat-name]').textContent = key ? nicheName(key) : '';
+        note.hidden = !isRegulated(key);
+      };
+      field.addEventListener('input', () => {
+        clearTimeout(timer);
+        if (chosen) return;
+        timer = setTimeout(async () => {
+          const words = field.value.trim();
+          const mine = ++seq;
+          if (!words) { select.value = ''; show(); return; }
+          try {
+            const r = await WisecallAPI.apiFetch('/niches/suggest?q=' + encodeURIComponent(words));
+            if (mine !== seq || chosen) return;
+            select.value = r.niche || 'other';
+            show();
+          } catch (e) { /* they can choose it themselves */ }
+        }, 300);
+      });
+      change.addEventListener('click', () => {
+        box.hidden = false;
+        change.setAttribute('aria-expanded', 'true');
+        select.focus();
+      });
+      select.addEventListener('change', () => { chosen = true; show(); });
+    }
+    if (current === 1) {
+      const area = form.story;
+      const out = form.querySelector('#apStoryCount');
+      const draw = () => {
+        const n = chars(area.value);
+        const ok = n >= v.limits.storyMin;
+        out.textContent = fill(ok ? 'apply.story.countOk' : 'apply.story.count', { n, min: v.limits.storyMin, max: v.limits.storyMax });
+        out.classList.toggle('is-ok', ok);
+      };
+      area.addEventListener('input', draw);
+      draw();
+    }
+    if (current === 2) {
+      const input = form.price;
+      const out = form.querySelector('#apPriceYou') || root.querySelector('#apPriceYou');
+      const share = config.mentorSharePercent || 80;
+      const draw = () => {
+        const p = Number(input.value);
+        const valid = Number.isInteger(p) && p >= config.priceMin && p <= config.priceMax;
+        out.textContent = valid ? fill('apply.price.you', { price: p, you: (Math.round(p * share) / 100).toFixed(2).replace(/\.00$/, ''), share }) : fill('apply.price.share', { share });
+      };
+      input.addEventListener('input', draw);
+      draw();
+    }
+    if (current === 3) {
+      const kind = form.kind;
+      const syncKind = () => { form.querySelector('.apply-registry').hidden = kind.value !== 'company'; };
+      kind.addEventListener('change', syncKind);
+      syncKind();
+      form.querySelector('[data-add-link]').addEventListener('click', async (ev) => {
+        ev.currentTarget.disabled = true;
+        if (await addLink(form)) { WisecallNav.showToast(t('toast.saved')); render(); }
+        else { const b = root.querySelector('[data-add-link]'); if (b) b.disabled = false; }
+      });
+      form.url.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); root.querySelector('[data-add-link]').click(); } });
+      form.querySelectorAll('[data-upload]').forEach((b) => b.addEventListener('click', () => upload(b)));
+      form.querySelectorAll('[data-ev-remove]').forEach((b) => b.addEventListener('click', async () => {
+        b.disabled = true;
+        try { await WisecallAPI.apiFetch(`/verification/evidence/${b.dataset.evRemove}`, { method: 'DELETE' }); await load(); render(); }
+        catch (e) { WisecallNav.showToast(t('toast.error')); b.disabled = false; }
+      }));
+      form.querySelectorAll('[data-doc-remove]').forEach((b) => b.addEventListener('click', async () => {
+        b.disabled = true;
+        try { await WisecallAPI.apiFetch(`/verification/documents/${b.dataset.docRemove}`, { method: 'DELETE' }); await load(); render(); }
+        catch (e) { WisecallNav.showToast(t('toast.error')); b.disabled = false; }
+      }));
+      const lic = form.querySelector('[data-save-licence]');
+      if (lic) lic.addEventListener('click', async () => {
+        const sub = lic.closest('.apply-sub');
+        const val = (n) => sub.querySelector(`[name="${n}"]`).value.trim();
+        subError(sub, '');
+        if (!val('number') || !val('issuingBody') || !val('holderName') || !val('validUntil')) { subError(sub, t('vt.fillIn')); return; }
+        lic.disabled = true;
+        try {
+          await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: val('number'), issuingBody: val('issuingBody'), holderName: val('holderName'), validUntil: val('validUntil') } });
+          WisecallNav.showToast(t('toast.saved'));
+          await load();
+          render();
+        } catch (e) { subError(sub, errText(LIC_ERR, e)); lic.disabled = false; }
+      });
+    }
+  }
+
+  document.addEventListener('wisecall:lang-changed', () => { if (v) render(); });
+
+  try { await load(); } catch (e) { root.innerHTML = `<p class="form-error">${esc(t('toast.error'))}</p>`; return; }
+  const asked = stepFromUrl();
+  current = asked !== null ? asked : firstOpenStep();
+  if (!v.application.locked) window.history.replaceState({ step: current }, '', (() => { const u = new URL(window.location.href); u.searchParams.set('step', String(current + 1)); return u.pathname + u.search; })());
+  render();
+})();

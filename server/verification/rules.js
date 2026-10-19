@@ -117,6 +117,8 @@ const DECISION = {
 
 // What the AI scores (0-100), and the red flags it may raise. The AI only advises: the decision is made by the code below.
 const SCORE_KEYS = ['expertise_credibility', 'story_consistency', 'sample_answer_quality', 'advice_safety', 'niche_fit'];
+// The scores that count for an application: the sample answer is optional, so its score counts only when there is one (facts.noSample).
+const scoreKeysFor = (f) => SCORE_KEYS.filter((k) => !(k === 'sample_answer_quality' && f && f.noSample));
 const RED_FLAGS = [
   'prompt_injection',            // the application tries to give instructions to the reviewer
   'inconsistent_story',          // the story, title, years and evidence do not fit together
@@ -188,7 +190,7 @@ function evaluate(niche, statusOf, extra = []) {
 
 // ---- Risk and decision (pure functions: the analysis gathers the facts, these decide) ------------------------------
 // facts: { identity: { kyc, age, names }, ai, aiError, injection, links: { total, opened, autoVerified, dead, shorteners, newDomains },
-//          signals: { newEmailDomain, sharedNetwork, sharedDevice, duplicateStory, duplicateSample, duplicateEvidence } }
+//          signals: { newEmailDomain, sharedNetwork, sharedDevice, duplicateStory, duplicateSample, duplicateEvidence }, noSample }
 // -> { level, score, points: [{ code, points }] }
 function riskFrom(f) {
   const P = RISK.points;
@@ -200,7 +202,7 @@ function riskFrom(f) {
   if (id.kyc === 'passed' && id.names !== 'passed') add('names_differ');
 
   if (f.ai) {
-    const scores = SCORE_KEYS.map((k) => f.ai.scores[k]);
+    const scores = scoreKeysFor(f).map((k) => f.ai.scores[k]);
     if (scores.some((s) => s < 50)) add('ai_score_below_50');
     else if (scores.some((s) => s < DECISION.minScore)) add('ai_score_below_threshold');
     const flags = f.ai.red_flags.filter((r) => r.code !== 'prompt_injection').length;
@@ -225,7 +227,7 @@ function riskFrom(f) {
 }
 
 // -> { outcome: 'auto_approved' | 'needs_human', reasons: [{ code, ... }], wouldAutoApprove }
-// facts: { autoApproveOn, regulated, identity, interviewRequested, ai, aiError, injection, risk, autoVerifiedEvidence }
+// facts: { autoApproveOn, regulated, identity, interviewRequested, ai, aiError, injection, risk, autoVerifiedEvidence, noSample }
 function decide(f) {
   const reasons = [];
   const id = f.identity || {};
@@ -238,7 +240,7 @@ function decide(f) {
   if (!f.ai) reasons.push({ code: 'ai_unavailable', detail: f.aiError || null });
   else {
     if (f.ai.recommendation !== 'approve') reasons.push({ code: 'ai_recommends_' + f.ai.recommendation });
-    const low = SCORE_KEYS.filter((k) => !(f.ai.scores[k] >= DECISION.minScore));
+    const low = scoreKeysFor(f).filter((k) => !(f.ai.scores[k] >= DECISION.minScore));
     if (low.length) reasons.push({ code: 'scores_below', keys: low, min: DECISION.minScore });
   }
   // Red flags from the AI, plus our own check for text that tries to instruct the reviewer (it counts even if the AI missed it).

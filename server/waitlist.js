@@ -15,14 +15,17 @@ class WaitlistError extends Error {
 }
 
 // Adds an address. Asking twice for the same field changes nothing (and reveals nothing).
-async function add({ email, niche, language }) {
+// wantedQuestion: what they typed on the home page (optional; contact details are taken out, at most 300 characters).
+async function add({ email, niche, language, wantedQuestion }) {
   const address = String(email || '').trim();
   if (!EMAIL_RE.test(address) || address.length > 254) throw new WaitlistError('invalid_email');
   const field = niche === undefined || niche === null || niche === '' ? 'any' : String(niche);
   if (field !== 'any' && !rules.isValidNiche(field)) throw new WaitlistError('invalid_niche');
+  const asked = typeof wantedQuestion === 'string' ? [...require('./publicAnswers').redact(wantedQuestion.replace(/\s+/g, ' ').trim())].slice(0, 300).join('') || null : null;
   await query(
-    `INSERT INTO waitlist (email, niche, language, token, prelaunch) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (lower(email), niche) DO NOTHING`,
-    [address, field, language === 'ka' ? 'ka' : 'en', crypto.randomBytes(24).toString('hex'), config.LAUNCH_MODE === 'prelaunch']
+    `INSERT INTO waitlist (email, niche, language, token, prelaunch, wanted_question) VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (lower(email), niche) DO UPDATE SET wanted_question = COALESCE(waitlist.wanted_question, EXCLUDED.wanted_question)`,
+    [address, field, language === 'ka' ? 'ka' : 'en', crypto.randomBytes(24).toString('hex'), config.LAUNCH_MODE === 'prelaunch', asked]
   );
 }
 
@@ -31,6 +34,12 @@ async function unsubscribe(token) {
   if (!/^[0-9a-f]{48}$/.test(String(token || ''))) throw new WaitlistError('not_found');
   const { rowCount } = await query('DELETE FROM waitlist WHERE token = $1', [token]);
   if (!rowCount) throw new WaitlistError('not_found');
+}
+
+// Anonymous demand for the admins: the typed questions and their fields, newest first, never with an email.
+async function demandForAdmin() {
+  const { rows } = await query('SELECT niche, wanted_question, created_at FROM waitlist WHERE wanted_question IS NOT NULL ORDER BY created_at DESC LIMIT 500');
+  return rows.map((r) => ({ niche: r.niche, question: r.wanted_question, createdAt: r.created_at }));
 }
 
 async function listForAdmin() {
@@ -81,6 +90,23 @@ async function launchDay() {
   return sendNotices(rows, (r) => (r.niche === 'any' ? fields[0] : r.niche));
 }
 
+// The fields people wait for most, for the order of the waiting list's field menu (the 6 most common first, then "Other fields").
+// Counted from the list itself once it is big enough to mean something; until then the fields we expect most. Remembered 10 minutes.
+const EXPECTED_TOP = ['careers_hr', 'study_abroad', 'tech', 'business', 'medicine', 'psychology'];
+let topMemo = null;
+async function popularFields() {
+  if (topMemo && topMemo.at > Date.now() - 10 * 60 * 1000) return topMemo.list;
+  let list = EXPECTED_TOP;
+  try {
+    const { rows } = await query(`SELECT niche, count(*)::int AS n FROM waitlist WHERE niche <> 'any' GROUP BY niche ORDER BY n DESC, niche LIMIT 6`);
+    const total = rows.reduce((s, r) => s + r.n, 0);
+    if (total >= 30) list = [...rows.map((r) => r.niche), ...EXPECTED_TOP.filter((k) => !rows.some((r) => r.niche === k))].slice(0, 6);
+  } catch (e) { /* the expected ones */ }
+  list = list.filter((k) => rules.isValidNiche(k));
+  topMemo = { at: Date.now(), list };
+  return list;
+}
+
 // Call after anything that could make a mentor visible (final approval, saving payout details).
 async function afterMaybeListed(userId) {
   try {
@@ -96,4 +122,4 @@ async function afterMaybeListed(userId) {
   return 0;
 }
 
-module.exports = { WaitlistError, add, unsubscribe, listForAdmin, mentorJoined, launchDay, afterMaybeListed };
+module.exports = { WaitlistError, add, unsubscribe, listForAdmin, demandForAdmin, popularFields, mentorJoined, launchDay, afterMaybeListed };

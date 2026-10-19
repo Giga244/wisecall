@@ -26,24 +26,28 @@
   })();
   const WORDS = {
     en: {
-      'a11y.skip': 'Skip to content', 'nav.how': 'How it works', 'nav.browse': 'Browse experts', 'footer.forMentors': 'For mentors', 'footer.faq': 'FAQ',
+      'a11y.skip': 'Skip to content', 'nav.how': 'How it works', 'nav.browse': 'Browse experts', 'nav.becomeMentor': 'Become a mentor', 'footer.faq': 'FAQ',
       'nav.language': 'Language', 'nav.login': 'Log in', 'nav.signup': 'Sign up', 'nav.inbox': 'Inbox', 'nav.dashboard': 'Dashboard', 'nav.settings': 'Settings',
       'nav.logout': 'Log out', 'nav.admin': 'Admin', 'nav.menu': 'Menu', 'nav.menuClose': 'Close menu', 'theme.toDark': 'Switch to dark mode', 'theme.toLight': 'Switch to light mode'
     },
     ka: {
-      'a11y.skip': 'გადასვლა შინაარსზე', 'nav.how': 'როგორ მუშაობს', 'nav.browse': 'ექსპერტები', 'footer.forMentors': 'მენტორებისთვის', 'footer.faq': 'კითხვები',
+      'a11y.skip': 'გადასვლა შინაარსზე', 'nav.how': 'როგორ მუშაობს', 'nav.browse': 'ექსპერტები', 'nav.becomeMentor': 'გახდი მენტორი', 'footer.faq': 'კითხვები',
       'nav.language': 'ენა', 'nav.login': 'შესვლა', 'nav.signup': 'რეგისტრაცია', 'nav.inbox': 'შემოსულები', 'nav.dashboard': 'პირადი კაბინეტი', 'nav.settings': 'პარამეტრები',
       'nav.logout': 'გასვლა', 'nav.admin': 'ადმინი', 'nav.menu': 'მენიუ', 'nav.menuClose': 'მენიუს დახურვა', 'theme.toDark': 'მუქ რეჟიმზე გადართვა', 'theme.toLight': 'ღია რეჟიმზე გადართვა'
     }
   };
   const w = (key) => WORDS[LANG][key] || WORDS.en[key];
 
+  // "Become a mentor" is always there for a visitor and for a signed-in person who is not a mentor (never for a mentor, someone already
+  // applying, or an admin: the hint below says which), in the header and in the menu panel.
   const LINKS = [
     { hash: '#how', key: 'nav.how', extra: true },
     { hash: '#experts', key: 'nav.browse' },
-    { href: '/become-a-mentor.html', key: 'footer.forMentors', extra: true },
+    { href: '/become-a-mentor.html', key: 'nav.becomeMentor', mentor: true },
     { hash: '#faq', key: 'footer.faq', extra: true, faq: true }
   ];
+  // (a page opened for a mentor, /signup.html?as=mentor and the rest of the way: its mentor words from the first frame, see style.css)
+  try { if (new URLSearchParams(window.location.search).get('as') === 'mentor') document.documentElement.dataset.as = 'mentor'; } catch (e) { /* no URL API */ }
   const langSwitch = (cls) => `
     <div class="lang-toggle ${cls}" role="group" aria-label="${w('nav.language')}" data-i18n-aria="nav.language">
       <button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button>
@@ -59,11 +63,16 @@
   const ICON_INBOX = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13l2.5 8v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/></svg>';
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
-  // Signed in? Next to the login cookie the server leaves a small readable hint (wc_authed: "1", or "admin"; see server/auth.js), so
-  // the header and the menu panel are drawn as they will stay from the first frame: a signed-in person never sees the signed-out menu
-  // first. nav.js still asks the server, and only if the two disagree (a session that ran out, say) does the header change, with a fade.
-  const signedIn = (() => { try { return (/(?:^|;\s*)wc_authed=(1|admin)(?:;|$)/.exec(document.cookie) || [])[1] || ''; } catch (e) { return ''; } })();
+  // Signed in? Next to the login cookie the server leaves a small readable hint (wc_authed: "1", "mentor", or "admin"; see
+  // server/auth.js), so the header and the menu panel are drawn as they will stay from the first frame: a signed-in person never sees the
+  // signed-out menu first. nav.js still asks the server, and only if the two disagree (a session that ran out, say) does the header change,
+  // with a fade.
+  const signedIn = (() => { try { return (/(?:^|;\s*)wc_authed=(1|admin|mentor)(?:;|$)/.exec(document.cookie) || [])[1] || ''; } catch (e) { return ''; } })();
   const off = (yes) => (yes ? ' style="display:none"' : '');
+  const shown = LINKS.filter((l) => !l.mentor || signedIn === '' || signedIn === '1')
+    // (signed in: straight to the application; a visitor first reads what it means, and starts from there)
+    .map((l) => (l.mentor && signedIn === '1' ? { ...l, href: '/apply.html' } : l));
+  const cls = (l, extra) => [l.extra && extra ? `nl-extra${l.faq ? ' nl-faq' : ''}` : '', l.mentor ? 'nl-mentor' : ''].filter(Boolean).join(' ');
   const adminLink = (cls) => (signedIn === 'admin' ? `<a href="/admin.html" class="${cls} admin-link" data-i18n="nav.admin">${w('nav.admin')}</a>` : '');
 
   const html = `
@@ -72,7 +81,7 @@
       <div class="container nav-inner">
         <a href="/index.html" class="logo">${WisecallBrand.logoHtml()}</a>
         <nav class="nav-links" aria-label="Main">
-          ${LINKS.map((l) => `<a href="${link(l)}"${l.extra ? ` class="nl-extra${l.faq ? ' nl-faq' : ''}"` : ''} data-i18n="${l.key}">${w(l.key)}</a>`).join('\n          ')}
+          ${shown.map((l) => `<a href="${link(l)}"${cls(l, true) ? ` class="${cls(l, true)}"` : ''} data-i18n="${l.key}">${w(l.key)}</a>`).join('\n          ')}
         </nav>
         <div class="nav-right">
           ${langSwitch('nav-lang')}
@@ -101,7 +110,7 @@
           <button type="button" class="mm-close" data-mm-close aria-label="${w('nav.menuClose')}" data-i18n-aria="nav.menuClose">${ICON_CLOSE}</button>
         </div>
         <nav class="mm-links" aria-label="Main">
-          ${LINKS.map((l) => `<a href="${link(l)}" data-i18n="${l.key}">${w(l.key)}</a>`).join('\n          ')}
+          ${shown.map((l) => `<a href="${link(l)}"${cls(l, false) ? ` class="${cls(l, false)}"` : ''} data-i18n="${l.key}">${w(l.key)}</a>`).join('\n          ')}
         </nav>
         <div class="mm-lang">${langSwitch('mm-lang-toggle')}</div>
         ${themeRow}
@@ -110,7 +119,7 @@
           <a href="/login.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.login">${w('nav.login')}</a>
         </div>
         <div class="mm-actions" id="mmLoggedIn"${off(!signedIn)}>
-          <a href="/inbox.html" class="btn btn-outline btn-lg btn-block mm-inbox" data-inbox-link><span data-i18n="nav.inbox">${w('nav.inbox')}</span><span class="nav-badge" data-inbox-badge hidden></span></a>
+          <a href="/inbox.html" class="btn btn-outline btn-lg btn-block mm-inbox" data-inbox-link aria-label="${w('nav.inbox')}" data-i18n-aria="nav.inbox"><span data-i18n="nav.inbox">${w('nav.inbox')}</span><span class="nav-badge" data-inbox-badge hidden></span></a>
           ${adminLink('btn btn-outline btn-lg btn-block')}
           <a href="/dashboard.html" class="btn btn-primary btn-lg btn-block" data-i18n="nav.dashboard">${w('nav.dashboard')}</a>
           <a href="/settings.html" class="btn btn-outline btn-lg btn-block" data-i18n="nav.settings">${w('nav.settings')}</a>

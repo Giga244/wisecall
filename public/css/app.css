@@ -50,6 +50,10 @@ main[data-loading] .app-progress, main[data-loading] .tabs, main[data-loading] .
 .auth-benefits li:nth-child(2) svg { background: var(--c-sun); }
 .auth-benefits li:nth-child(3) svg { background: var(--c-blush); }
 .auth-split .auth-card { max-width: none; border-radius: 0; box-shadow: none; animation: none; padding: 44px 40px; display: flex; flex-direction: column; justify-content: center; }
+/* The mentor's version of the sign-up page (?as=mentor: html[data-as="mentor"], set by public/js/header.js before the first paint) and
+   the asker's: each part says which one it belongs to. */
+html:not([data-as="mentor"]) [data-for-as="mentor"], html[data-as="mentor"] [data-for-as="asker"] { display: none !important; }
+.auth-panel > [data-for-as] { display: contents; }
 .field { margin-bottom: 16px; }
 .field > label { display: block; font-size: 0.9rem; font-weight: 600; margin: 0 0 6px; color: var(--ink); }
 .field input { margin-top: 0; }
@@ -251,14 +255,10 @@ a.tag-niche:hover { background: var(--inverse); color: var(--on-inverse); }
   .settings h1, .dash h1 { font-size: 1.7rem; margin-bottom: 18px; }
   .settings-card { padding: 20px 18px; }
 
-  /* the tab row: swipe it, with a fade at the edges (the chosen tab is scrolled into view) */
-  .tabs {
-    margin: 0 -16px 20px; padding: 2px 44px 8px 16px; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding: 0 16px;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%);
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { scroll-snap-align: center; }
+  /* the tab row wraps onto two or three lines, so every tab is in sight ("ვერიფიკაცია" was cut off when it scrolled sideways:
+     docs/CLAUDE-CODE-UX-WALKTHROUGH.md D); the chosen one is the dark, filled one */
+  .tabs { flex-wrap: wrap; overflow: visible; gap: 8px; margin: 0 0 20px; padding: 0; }
+  .tab { flex: 1 1 auto; padding: 9px 12px; text-align: center; }
 
   /* the main button of a long form stays in reach above the keyboard */
   .settings-card form > button[type="submit"], .contact-card form > button[type="submit"] {
@@ -737,3 +737,94 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .card-headline { font-size: 0.9rem; margin-top: 6px; overflow-wrap: anywhere; }
 .card-skills { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
 @media (max-width: 520px) { .ps-item { flex-wrap: wrap; } .ps-item-actions { width: 100%; justify-content: flex-end; } }
+
+/* ---- The mentor application, one step at a time (/apply.html, public/js/apply.js) --------------------------------------------------
+   Large, calm and readable: most of our first mentors are 40 to 60 years old (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #3). */
+.apply { max-width: 760px; padding-bottom: 70px; font-size: 1.1rem; }
+.apply-head { margin: 4px 0 18px; }
+.apply-progress-text { margin: 0; font-weight: 800; font-size: 1.05rem; }
+.apply-progress-name { display: none; }
+.apply-bar { height: 14px; margin: 10px 0 14px; }
+.apply-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.apply-step-link { width: 100%; min-height: 48px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; background: none; border: 0; border-radius: var(--radius-sm); font: inherit; font-size: 0.85rem; line-height: 1.2; color: var(--ink-soft); cursor: pointer; text-align: center; }
+.apply-step-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.apply-step-num { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: var(--line-w) solid var(--line); background: var(--card); color: var(--ink); font-weight: 800; }
+.apply-steps .is-done .apply-step-num { background: var(--accent2-strong); color: var(--on-accent2); border-color: var(--accent2-strong); }
+.apply-steps .is-current .apply-step-num { background: var(--inverse); color: var(--on-inverse); border-color: var(--inverse); }
+.apply-steps .is-current .apply-step-link { color: var(--ink); font-weight: 800; }
+.apply-step-name { overflow-wrap: anywhere; }
+.apply-card { background: var(--card); border: var(--line-w) solid var(--line); border-radius: var(--r-card); box-shadow: var(--offset-shadow); padding: 30px 32px; }
+.apply-step h1 { font-size: clamp(1.7rem, 2vw + 1rem, 2.3rem); line-height: 1.12; margin: 0 0 10px; }
+.apply-step h1:focus { outline: none; }
+.apply-step h2 { font-size: 1.2rem; margin: 0 0 8px; }
+.apply-lead { margin: 0 0 22px; font-size: 1.15rem; line-height: 1.55; color: var(--ink-soft); }
+.apply-field { margin-bottom: 20px; }
+.apply-field > label { display: block; font-size: 1.08rem; font-weight: 800; margin: 0 0 8px; }
+.apply form input:not([type="checkbox"]):not([type="file"]), .apply form select, .apply form textarea { font-size: 1.15rem; padding: 14px 16px; min-height: 56px; margin-top: 0; }
+.apply form input[type="file"] { font-size: 1rem; border-style: dashed; }
+.apply form .hint, .apply .hint { font-size: 0.98rem; line-height: 1.5; margin-top: 8px; color: var(--ink-soft); }
+.apply-years input { max-width: 180px; }
+.apply-category { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 12px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--mint-soft); color: var(--mint-banner-ink); }
+.apply-category .linklike { color: inherit; }
+.apply-niche { margin-top: 12px; }
+.apply-niche label { font-weight: 700; margin-bottom: 6px; display: block; }
+.apply-licence-note { margin: 12px 0 0; font-size: 0.98rem; }
+.apply-count { margin: 8px 0 0; font-weight: 700; color: var(--ink-soft); }
+.apply-count.is-ok { color: var(--accent2-text); }
+.apply-example { margin: 0 0 18px; padding: 14px 18px; border-radius: var(--radius-sm); background: var(--lav-soft); color: var(--on-pastel); }
+.apply-example p { margin: 0; line-height: 1.55; }
+.apply-example-label { font-weight: 800; margin-bottom: 6px !important; }
+.apply-money { display: flex; align-items: center; gap: 10px; max-width: 240px; }
+.apply-money span { font-size: 1.4rem; font-weight: 800; }
+.apply-you { margin: 0 0 20px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--sun-tint); color: var(--sun-ink); font-weight: 700; }
+.apply-sub { margin-bottom: 18px; }
+.apply-sub .form-error { margin: 6px 0 10px; }
+.apply-more { margin: 0 0 14px; }
+.apply-more summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.apply-or { margin: 6px 0 12px; font-weight: 800; }
+.apply-doc { padding-top: 14px; border-top: var(--chip-w, 2px) dashed var(--border); }
+.apply-evidence { margin: 0 0 18px; }
+.apply-evidence li { font-size: 1rem; }
+.apply-block { margin: 0 0 22px; padding: 18px 20px; border-radius: var(--radius-sm); background: var(--bg); }
+.apply-block > :last-child { margin-bottom: 0; }
+.apply-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; }
+.apply-failed { margin: 8px 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--pink-soft); color: var(--pink-ink); font-weight: 700; }
+.apply-check { margin: 0; font-weight: 700; color: var(--accent2-text); }
+.apply-checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.apply-checklist li { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 2px 10px; }
+.apply-checklist li > .linklike { grid-column: 2; justify-self: start; }
+.apply-check-mark { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 800; border: var(--line-w) solid var(--line); flex: 0 0 auto; }
+.apply-checklist .is-done .apply-check-mark { background: var(--accent2-strong); border-color: var(--accent2-strong); color: var(--on-accent2); }
+.apply-checklist .is-missing { font-weight: 700; }
+.apply-checklist .is-later { align-items: start; }
+.apply-checklist .is-later .hint { display: block; margin: 2px 0 0; }
+.apply-missing { font-size: 1rem; margin: 0 0 16px; }
+.apply-ai { margin: 0 0 16px; }
+.apply-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.apply-nav .btn { min-height: 56px; font-size: 1.1rem; }
+.apply-next, .apply-submit { margin-left: auto; }
+.apply-later { margin: 14px 0 0; text-align: center; }
+.apply-error { margin: 4px 0 10px; font-size: 1rem; }
+.apply-status { margin: 0 0 18px; }
+.apply-done .apply-actions { margin-top: 4px; }
+@media (max-width: 639px) {
+  .apply { font-size: 1.05rem; }
+  .apply-card { padding: 22px 18px; border-radius: var(--r-card); }
+  .apply-steps { gap: 2px; }
+  .apply-step-link { padding: 4px 0; }
+  .apply-step-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .apply-progress-name { display: inline; }
+  .apply-step-num { width: 28px; height: 28px; }
+  .apply-nav { flex-direction: column-reverse; }
+  .apply-nav .btn { width: 100%; margin-left: 0; }
+  .apply-actions .btn { width: 100%; }
+}
+/* Settings > Profile: the essentials first, the rest under "More profile details" (docs/CLAUDE-CODE-UX-WALKTHROUGH.md D) */
+.profile-more { margin: 4px 0 18px; border-top: var(--chip-w) dashed var(--border); padding-top: 6px; }
+.profile-more > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 800; }
+.profile-more > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.profile-more-body { padding-top: 10px; }
+.app-progress-failed { margin: 8px 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--pink-soft); color: var(--pink-ink); font-weight: 700; }
+.app-progress-failed a, .app-progress-failed .linklike { color: inherit; margin-left: 6px; }
+.ap-ev-more { margin: 0 0 12px; }
+.ap-ev-more > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; }

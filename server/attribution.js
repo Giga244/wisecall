@@ -54,6 +54,7 @@ function fromRequest(req) {
 // Middleware for page requests: sets the cookie on the first visit (and replaces a "direct" one when a real source comes later).
 function capture(req, res, next) {
   if (!config.ATTRIBUTION_COOKIE || req.method !== 'GET' || req.path.startsWith('/api/') || !isPage(req.path) || optedOut(req)) return next();
+  if (INVITE_PATH.test(req.path)) return next(); // (the invite link sets its own: markInvite)
   const had = req.cookies && req.cookies[COOKIE] ? read(req) : null;
   if (had && had.source !== 'direct') return next();
   const src = fromRequest(req);
@@ -62,6 +63,17 @@ function capture(req, res, next) {
     maxAge: MAX_AGE_MS, httpOnly: true, sameSite: 'lax', secure: config.IS_PROD, path: '/'
   });
   next();
+}
+
+// The invite link for mentors we contact (/mentor, /ka/mentor: docs/CLAUDE-CODE-MENTOR-SIGNUP.md #4): a sign-up through it says source
+// "invite", whatever came before (utm tags on the link, e.g. a campaign, are kept). Not for a browser that asks not to be tracked.
+const INVITE_PATH = /^\/(ka\/)?mentor\/?$/;
+function markInvite(req, res) {
+  if (!config.ATTRIBUTION_COOKIE || optedOut(req)) return;
+  const src = { ...fromRequest(req), source: 'invite' };
+  const landing = landingOf(String(req.originalUrl || '').split('?')[0].replace(/\/$/, ''));
+  if (landing) src.landing = landing;
+  res.cookie(COOKIE, Buffer.from(JSON.stringify(src)).toString('base64url'), { maxAge: MAX_AGE_MS, httpOnly: true, sameSite: 'lax', secure: config.IS_PROD, path: '/' });
 }
 
 // What the cookie says (checked again: the cookie is the visitor's own), or null.
@@ -111,4 +123,4 @@ async function bySource() {
   return rows;
 }
 
-module.exports = { COOKIE, capture, read, fromRequest, bySource, signupsBySource, clip };
+module.exports = { COOKIE, capture, markInvite, read, fromRequest, bySource, signupsBySource, clip };

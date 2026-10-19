@@ -101,6 +101,8 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   }
 
   if (isMentor && changedApplication.length) experience.applyFieldRules(existing, patch);
+  // (the profile's "About me" and the application's story stay one text while they are the same: server/verification/experience.js)
+  if (isMentor && patch.bio !== undefined) experience.bioToStory(existing, patch);
   const user = await updateUser(existing.id, patch);
   if (isMentor && changedApplication.length) await verification.syncEmailStep(user);
   // A changed name is compared with the ID again (a mentor fixing a name that did not match is checked at once).

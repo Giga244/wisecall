@@ -69,7 +69,8 @@ describe('the short home page: nothing lost, everything else one click away', ()
     assert.match(h, /<a href="\/faq\.html" class="arrow-link" data-i18n="home\.faq\.more">All questions<\/a>/);
     assert.match(h, /data-i18n="how\.short\.3\.title">Answer within 7 days or full refund</); // ({answerDays} filled in)
     // "Become a mentor" and "Apply as a mentor" open the mentors' page
-    assert.match(h, /<a href="\/become-a-mentor\.html" class="hero-become"/);
+    // (the hero's second button, next to the waiting list: docs/CLAUDE-CODE-MENTOR-SIGNUP.md #1)
+    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-outline btn-lg btn-arrow hero-mentor-btn" data-i18n="hero\.mentorCta">I’m an expert – become a mentor<\/a>/);
     assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-lg cta-secondary"/);
     assert.doesNotMatch(h, /redirect=\/settings\.html/);
   });
@@ -99,7 +100,9 @@ describe('the mentors\' page (/become-a-mentor.html, the coral panel that was on
     for (const k of ['mentors.sub', 'mentors.1.title', 'mentors.2.title', 'mentors.3.title', 'mentors.how.title', 'mentors.how.1.title', 'mentors.how.2.title', 'mentors.how.3.title']) {
       assert.match(h, new RegExp(`data-i18n="${k.replace(/\./g, '\\.')}">[^<{]+<`), k);
     }
-    assert.match(h, /<a href="\/signup\.html\?redirect=\/settings\.html" class="btn btn-ink btn-lg btn-arrow become-link" data-i18n="mentors\.cta">Apply as a mentor<\/a>/);
+    // "Start my application", at the top and at the bottom: the mentor's sign-up (public/js/info-page.js sends someone signed in to /apply.html)
+    assert.equal((h.match(/<a href="\/signup\.html\?as=mentor" class="btn btn-ink btn-lg btn-arrow become-link" data-i18n="mentors\.start">Start my application<\/a>/g) || []).length, 2);
+    assert.match(h, /data-i18n="mentors\.startNote">It takes about 10 minutes\. You can save and finish later\.</);
     assert.doesNotMatch(h, /\{\{|\{payoutMin\}|\{sharePct\}/);
     const ka = await html('/ka/become-a-mentor.html');
     assert.match(ka, /<html lang="ka"/);
@@ -112,7 +115,7 @@ describe('the mentors\' page (/become-a-mentor.html, the coral panel that was on
     assert.match(x, /<loc>http:\/\/localhost:4716\/become-a-mentor\.html<\/loc>/);
     assert.match(x, /<loc>http:\/\/localhost:4716\/ka\/become-a-mentor\.html<\/loc>/);
     const read = (f) => require('fs').readFileSync(require('path').join(__dirname, '..', 'public', f), 'utf8');
-    assert.match(read('js/header.js'), /\{ href: '\/become-a-mentor\.html', key: 'footer\.forMentors'/);
+    assert.match(read('js/header.js'), /\{ href: '\/become-a-mentor\.html', key: 'nav\.becomeMentor', mentor: true \}/);
     assert.match(read('js/footer.js'), /<a href="\/become-a-mentor\.html" data-i18n="footer\.forMentors">/);
     assert.match(read('about.html'), /<a href="\/become-a-mentor\.html" class="btn btn-outline" data-i18n="about\.become">/);
     assert.doesNotMatch(read('js/footer.js') + read('js/header.js') + read('advice.html'), /#for-mentors|#pricing|index\.html#verify/);

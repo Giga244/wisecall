@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/', asyncHandler(async (req, res) => {
   const b = req.body || {};
   try {
-    await waitlist.add({ email: b.email, niche: b.niche, language: b.language });
+    await waitlist.add({ email: b.email, niche: b.niche, language: b.language, wantedQuestion: b.wantedQuestion });
     require('../analytics').event('waitlist_join', req, { field: String(b.niche || 'any').slice(0, 40) });
     res.status(201).json({ ok: true });
   } catch (e) {
