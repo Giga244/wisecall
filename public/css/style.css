@@ -592,8 +592,10 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 }
 .launch-banner a { color: var(--accent-text); font-weight: 800; margin-left: 6px; }
 .launch-banner-admin { border: 1px solid var(--mint-line); border-radius: var(--radius-sm); text-align: left; margin: 0 0 18px; }
-[data-launch="prelaunch"] .browse-toolbar,
-[data-launch="prelaunch"] .filters { display: none; }
+/* (only the home page's expert search and field filters: #filters keeps its id when a phone moves it into the Filters sheet. Never a
+   .filters row anywhere else: the admin's tabs and status chips are one, docs/CLAUDE-CODE-ADMIN-TABS-BUG.md) */
+[data-launch="prelaunch"] #experts .browse-toolbar,
+[data-launch="prelaunch"] #filters { display: none; }
 
 /* The waiting-list card (Browse before launch, the empty list after it, a field's page). One clean card: on a phone a small picture and
    one short line above the form; from a tablet up two columns (the picture and the text on the left, the form on the right), never wider

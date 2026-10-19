@@ -232,6 +232,6 @@ describe('4. an answer held for review', () => {
     assert.match(mail.html, /answer 1 of their first 5/);
     assert.doesNotMatch(mail.html, /Three projects/, 'not the answer');
     // (the admin page opens that tab from the link)
-    assert.match(read('public/js/admin.js'), /new URLSearchParams\(location\.search\)\.get\('tab'\)/);
+    assert.match(read('public/js/admin.js'), /const params = new URLSearchParams\(location\.search\);\n  const wanted = tabs\.querySelector\(.\.chip\[data-tab="\$\{CSS\.escape\(params\.get\('tab'\)/);
   });
 });

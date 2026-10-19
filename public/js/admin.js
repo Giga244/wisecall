@@ -222,19 +222,42 @@
     load();
   });
 
+  const statusesOf = (name) => (name === 'bookings' ? BOOKING_FILTERS : MENTOR_FILTERS);
+  const defaultStatus = (name) => (name === 'bookings' ? 'paid' : (NO_FILTERS.includes(name) ? '' : 'pending'));
+  function showTab(name) {
+    tab = name;
+    tabs.querySelectorAll('.chip').forEach(c => { const on = c.dataset.tab === name; c.classList.toggle('active', on); c.setAttribute('aria-selected', on); });
+  }
+  // The address says which tab and status are open (?tab=mentors&status=verified), so a reload, or a link in an email, opens the same list.
+  function syncAddress() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    if (NO_FILTERS.includes(tab)) url.searchParams.delete('status'); else url.searchParams.set('status', activeStatus || 'all');
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+
   tabs.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.chip');
     if (!btn || btn.dataset.tab === tab) return;
-    tabs.querySelectorAll('.chip').forEach(c => { c.classList.toggle('active', c === btn); c.setAttribute('aria-selected', c === btn); });
-    tab = btn.dataset.tab;
-    activeStatus = tab === 'bookings' ? 'paid' : (NO_FILTERS.includes(tab) ? '' : 'pending');
+    showTab(btn.dataset.tab);
+    activeStatus = defaultStatus(tab);
+    syncAddress();
     drawFilters();
     load();
   });
+  filters.addEventListener('click', (ev) => { if (ev.target.closest('.chip')) syncAddress(); });
 
   document.addEventListener('wisecall:lang-changed', () => { drawFilters(); load(); });
-  // (an admin email can link straight to a tab: /admin.html?tab=queue)
-  const wanted = tabs.querySelector(`.chip[data-tab="${CSS.escape(new URLSearchParams(location.search).get('tab') || '')}"]`);
-  if (wanted && wanted.dataset.tab !== tab) wanted.click();
-  else { drawFilters(); load(); }
+  // An admin (or an email) can link straight to a tab and a status: /admin.html?tab=queue, /admin.html?tab=mentors&status=verified,
+  // /admin.html?tab=mentors&status=all. An unknown tab or status is ignored (the default list opens).
+  const params = new URLSearchParams(location.search);
+  const wanted = tabs.querySelector(`.chip[data-tab="${CSS.escape(params.get('tab') || '')}"]`);
+  if (wanted && wanted.dataset.tab !== tab) { showTab(wanted.dataset.tab); activeStatus = defaultStatus(tab); }
+  const askedStatus = params.get('status');
+  if (askedStatus !== null && !NO_FILTERS.includes(tab)) {
+    const s = askedStatus === 'all' ? '' : askedStatus;
+    if (statusesOf(tab).includes(s)) activeStatus = s;
+  }
+  drawFilters();
+  load();
 })();
