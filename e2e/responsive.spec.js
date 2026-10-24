@@ -315,13 +315,8 @@ test('card groups fill their rows: no lone card on a tablet', async ({ browser }
   await ctx.close();
 });
 
-test('the three application steps stack into one column and a question\'s progress runs down the card on a phone', async ({ browser }) => {
+test('a question\'s progress runs down the card on a phone', async ({ browser }) => {
   const { ctx, page } = await newPage(browser, 390, { login: 'ana@e2e.test' });
-  await page.goto('/settings.html?tab=verification');
-  await page.waitForLoadState('networkidle');
-  const xs = await page.evaluate(() => Array.from(document.querySelectorAll('.ap-stepper-num')).map((e) => Math.round(e.getBoundingClientRect().left)));
-  expect(xs.length).toBe(3);
-  expect(new Set(xs).size, 'Identity, Experience and Review form one column').toBe(1);
   await page.goto('/dashboard.html');
   await page.waitForLoadState('networkidle');
   await page.click('#tab-received');

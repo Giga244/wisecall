@@ -29,24 +29,27 @@ test('a mentor applies and sees "ID checks open soon" (English and Georgian); no
   const apply = await page.request.patch(`${srv.base}/api/me`, { headers, data: { becomeMentor: true, price: 25 } });
   expect(apply.status()).toBe(200);
 
-  await page.goto(`${srv.base}/settings.html?tab=verification`);
-  const step = page.locator('#ap-identity');
-  await expect(step.locator('.vt-soon')).toContainText('ID checks open soon.');
-  await expect(step.locator('.vt-soon')).toContainText('fill in the rest of your application now');
-  await expect(step.locator('[data-kyc-start]')).toHaveCount(0);
+  // (the ID check is step 5 of the application, /apply.html: the one place to apply)
+  await page.goto(`${srv.base}/apply.html?step=5`);
+  const soon = page.locator('.apply-step .vt-soon');
+  await expect(soon).toContainText('ID checks open soon.');
+  await expect(soon).toContainText('You can submit your application now');
+  await expect(page.locator('[data-kyc-start]')).toHaveCount(0);
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `${process.env.E2E_SHOTS}/id-checks-soon-en.png`, fullPage: true });
 
-  // the rest works: a portfolio link is accepted as evidence
-  const ev = page.locator('#ap-experience form[data-form="evidence"]');
-  await ev.locator('details.ap-ev-more > summary').click(); // (the type of a link is found from its address; the list is under "More options")
-  await ev.locator('[name="kind"]').selectOption('portfolio');
-  await ev.locator('[name="url"]').fill('https://early-mentor.invalid/portfolio');
-  await ev.locator('button[type="submit"]').click();
-  await expect(page.locator('#ap-experience .ap-evidence li')).toHaveCount(1);
+  // the rest works: a portfolio link is accepted as evidence (step 4), its type chosen under "More options"
+  await page.goto(`${srv.base}/apply.html?step=4`);
+  await page.locator('.apply-more > summary').first().click();
+  await page.selectOption('#apKind', 'portfolio');
+  await page.fill('#apUrl', 'https://early-mentor.invalid/portfolio');
+  await page.click('[data-add-link]');
+  await expect(page.locator('.apply-evidence li')).toHaveCount(1);
+  await expect(page.locator('.apply-evidence li')).toContainText('Portfolio');
 
   // and the server agrees that the ID check is closed
   expect((await page.request.post(`${srv.base}/api/verification/kyc/start`, { headers })).status()).toBe(503);
 
+  await page.goto(`${srv.base}/apply.html?step=5`);
   await page.locator('.lang-btn[data-lang="ka"]').first().click();
-  await expect(step.locator('.vt-soon')).toContainText('პირადობის შემოწმება მალე გაიხსნება.');
+  await expect(page.locator('.apply-step .vt-soon')).toContainText('პირადობის შემოწმება მალე გაიხსნება.');
 });

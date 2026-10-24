@@ -56,20 +56,21 @@ test('the field in the mentor\'s words is on the card, search finds it, and "Oth
   await expect(page.locator('.tag-niche')).toHaveText('Nail artist');
 });
 
-test('"Your field" and "Other" in the Experience form', async ({ page }) => {
+test('"Your field" and "Other" in the application (step 1 of /apply.html)', async ({ page }) => {
   await S.signUp(page, { name: 'Gio Bees', email: 'gio.bees@e2e.test' });
-  await page.goto('/settings.html');
-  await page.click('#tab-mentor');
-  await page.check('#becomeMentor');
-  await page.goto('/settings.html?tab=verification');
-  const form = page.locator('#ap-experience form[data-form="experience"]');
-  await expect(form.locator('.ap-custom-niche')).toBeVisible(); // (every mentor writes their field)
-  await form.locator('[name="niche"]').selectOption('other');
-  await form.locator('[name="customNiche"]').fill('www.bees.ge');
-  await form.locator('button[type="submit"]').click();
-  await expect(form.locator('.vt-error')).toContainText('without links');
-  await form.locator('[name="customNiche"]').fill('Beekeeping');
-  await form.locator('button[type="submit"]').click();
+  await page.goto('/apply.html');
+  await expect(page.locator('#apField')).toBeVisible(); // (every mentor writes their field)
+  await page.fill('#apHeadline', 'Beekeeper in Racha');
+  await page.fill('#apYears', '9');
+  await page.fill('#apField', 'www.bees.ge');
+  await expect(page.locator('#apCategory')).toBeVisible(); // (the closest category is suggested; one tap changes it)
+  await page.click('[data-cat-change]');
+  await page.selectOption('#apNiche', 'other');
+  await page.click('.apply-next');
+  await expect(page.locator('.apply-error')).toContainText('without links');
+  await page.fill('#apField', 'Beekeeping');
+  await page.click('.apply-next');
+  await page.waitForURL(/step=2$/);
   await expect.poll(async () => (await S.sql(`SELECT niche, custom_niche FROM users WHERE email = 'gio.bees@e2e.test'`))[0]).toMatchObject({ niche: 'other', custom_niche: 'Beekeeping' });
 });
 

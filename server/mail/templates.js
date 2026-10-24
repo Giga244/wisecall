@@ -139,14 +139,14 @@ const S = {
     mentorRejected: {
       subject: 'About your Wisecall mentor application', heading: "We couldn't approve your application yet",
       intro: "Thanks for applying. We couldn't approve it this time.", reasonLabel: 'Reason:',
-      after: 'You can update your details and apply again from Settings.', button: 'Open settings'
+      after: 'You can change your application and send it again.', button: 'Open my application'
     },
     verificationUpdate: {
       subject: 'An update on your Wisecall application', heading: 'An update on your application',
       passed: 'Approved: {step}.', failed: "We couldn't approve this yet: {step}.", reasonLabel: 'What we found:',
       stillNeeded: 'Still needed for your application:', allDone: 'Every required step is approved. Our team will give the final approval soon.',
       anyOf: 'At least one of: {options}', state: { todo: 'not started', pending: 'waiting for review', failed: 'needs another try' },
-      button: 'Open verification',
+      button: 'Open my application',
       delisted: 'Until this is sorted out, your profile is hidden from Browse experts and nobody can book you. Everything else on your account stays as it is.',
       reasons: {
         license_expired: 'Your license has expired. Please submit the renewed one; until it is approved your profile is hidden from Browse experts.',
@@ -169,7 +169,7 @@ const S = {
     interviewRequested: {
       subject: 'A short video call about your Wisecall application', heading: 'We would like to meet you',
       intro: 'Before we decide on your mentor application, our team would like a short video call with you (about 20 minutes).', reasonLabel: 'Why:',
-      after: 'Please choose a time that suits you in your verification settings.', button: 'Choose a time'
+      after: 'Please choose a time that suits you in your application.', button: 'Choose a time'
     },
     verificationSimplified: {
       subject: 'We made mentor verification simpler', heading: 'Mentor verification is simpler now',
@@ -180,7 +180,7 @@ const S = {
     interviewBooked: {
       subject: 'Your Wisecall video interview is booked', heading: 'Your interview is booked',
       intro: 'Your video interview is booked for {date}. It takes about {minutes} minutes.',
-      after: "We'll email you the meeting link before then. You can change the time in your verification settings up to 12 hours before it starts.", button: 'Open verification'
+      after: "We'll email you the meeting link before then. You can change the time in your application up to 12 hours before it starts.", button: 'Open my application'
     },
     interviewLink: {
       subject: 'The meeting link for your Wisecall interview', heading: 'Your meeting link',
@@ -189,7 +189,7 @@ const S = {
     interviewCancelled: {
       subject: 'Your Wisecall interview was cancelled', heading: 'We had to cancel your interview',
       intro: 'We are sorry: we had to cancel your video interview on {date}.', reasonLabel: 'Reason:',
-      after: 'Please choose another time in your verification settings.', button: 'Choose a new time'
+      after: 'Please choose another time in your application.', button: 'Choose a new time'
     },
     payoutPaid: {
       subject: 'Your Wisecall payout has been sent', heading: 'Your payout is on its way',
@@ -423,14 +423,14 @@ const S = {
     mentorRejected: {
       subject: 'შენი მენტორის განაცხადის შესახებ', heading: 'განაცხადის დამტკიცება ჯერ ვერ შევძელით',
       intro: 'მადლობა განაცხადისთვის. ამჯერად ვერ დავამტკიცეთ.', reasonLabel: 'მიზეზი:',
-      after: 'შეგიძლია განაახლო მონაცემები და თავიდან გაგზავნო განაცხადი პარამეტრებიდან.', button: 'პარამეტრების გახსნა'
+      after: 'შეგიძლია შეცვალო განაცხადი და ხელახლა გაგზავნო.', button: 'ჩემი განაცხადის გახსნა'
     },
     verificationUpdate: {
       subject: 'სიახლე შენი Wisecall-ის განაცხადის შესახებ', heading: 'სიახლე შენი განაცხადის შესახებ',
       passed: 'დამტკიცდა: {step}.', failed: 'ჯერ ვერ დავამტკიცეთ: {step}.', reasonLabel: 'რა აღმოვაჩინეთ:',
       stillNeeded: 'განაცხადისთვის კიდევ საჭიროა:', allDone: 'ყველა სავალდებულო ნაბიჯი დამტკიცებულია. ჩვენი გუნდი მალე მიიღებს საბოლოო გადაწყვეტილებას.',
       anyOf: 'სულ მცირე ერთი: {options}', state: { todo: 'არ დაწყებულა', pending: 'განხილვას ელოდება', failed: 'საჭიროა ხელახლა ცდა' },
-      button: 'ვერიფიკაციის გახსნა',
+      button: 'ჩემი განაცხადის გახსნა',
       delisted: 'სანამ ეს არ მოგვარდება, შენი პროფილი ექსპერტების სიაში დამალულია და ვერავინ დაგიჯავშნის. ანგარიშზე დანარჩენი ყველაფერი უცვლელი რჩება.',
       reasons: {
         age_under_min: 'შენი დოკუმენტის დაბადების თარიღით 18 წლამდე ხარ, მენტორი კი მინიმუმ 18 წლის უნდა იყოს. თუ დოკუმენტი არასწორად წაიკითხა სისტემამ, უპასუხე ამ წერილს ან დაუკავშირდი მხარდაჭერას: ადმინისტრატორს შეუძლია შემოწმების თავიდან გაშვება.',
@@ -453,7 +453,7 @@ const S = {
     interviewRequested: {
       subject: 'მოკლე ვიდეოზარი შენი Wisecall-ის განაცხადის შესახებ', heading: 'გვსურს გაგიცნოთ',
       intro: 'სანამ შენს მენტორის განაცხადზე გადაწყვეტილებას მივიღებთ, ჩვენს გუნდს სურს შენთან მოკლე ვიდეოზარი (დაახლოებით 20 წუთი).', reasonLabel: 'რატომ:',
-      after: 'გთხოვ, ვერიფიკაციის პარამეტრებში აირჩიე შენთვის მოსახერხებელი დრო.', button: 'დროის არჩევა'
+      after: 'გთხოვ, შენს განაცხადში აირჩიე შენთვის მოსახერხებელი დრო.', button: 'დროის არჩევა'
     },
     verificationSimplified: {
       subject: 'მენტორების ვერიფიკაცია გავამარტივეთ', heading: 'მენტორის ვერიფიკაცია ახლა უფრო მარტივია',
@@ -464,7 +464,7 @@ const S = {
     interviewBooked: {
       subject: 'შენი Wisecall-ის ვიდეო ინტერვიუ დაჯავშნილია', heading: 'ინტერვიუ დაჯავშნილია',
       intro: 'შენი ვიდეო ინტერვიუ დაჯავშნილია: {date}. გრძელდება დაახლოებით {minutes} წუთი.',
-      after: 'შეხვედრის ბმულს ამ დრომდე გამოგიგზავნით ელფოსტაზე. დროის შეცვლა შეგიძლია ვერიფიკაციის პარამეტრებში, დაწყებამდე არაუგვიანეს 12 საათით ადრე.', button: 'ვერიფიკაციის გახსნა'
+      after: 'შეხვედრის ბმულს ამ დრომდე გამოგიგზავნით ელფოსტაზე. დროის შეცვლა შეგიძლია შენს განაცხადში, დაწყებამდე არაუგვიანეს 12 საათით ადრე.', button: 'ჩემი განაცხადის გახსნა'
     },
     interviewLink: {
       subject: 'შენი Wisecall-ის ინტერვიუს ბმული', heading: 'შეხვედრის ბმული',
@@ -473,7 +473,7 @@ const S = {
     interviewCancelled: {
       subject: 'შენი Wisecall-ის ინტერვიუ გაუქმდა', heading: 'ინტერვიუ გავაუქმეთ',
       intro: 'ბოდიში: შენი ვიდეო ინტერვიუ ({date}) გაუქმებული გვქონდა.', reasonLabel: 'მიზეზი:',
-      after: 'გთხოვ, ვერიფიკაციის პარამეტრებში სხვა დრო აირჩიო.', button: 'ახალი დროის არჩევა'
+      after: 'გთხოვ, შენს განაცხადში სხვა დრო აირჩიო.', button: 'ახალი დროის არჩევა'
     },
     payoutPaid: {
       subject: 'შენი Wisecall-ის ანაზღაურება გაიგზავნა', heading: 'შენი ანაზღაურება გზაშია',
@@ -721,7 +721,7 @@ const BUILDERS = {
         ...(d.status === 'failed' && (u.reasons[d.reasonKey] || d.reason) ? [{ quote: `${u.reasonLabel} ${u.reasons[d.reasonKey] || d.reason}` }] : []),
         ...(d.delisted ? [{ p: u.delisted }] : []),
         ...(missing.length ? [{ p: u.stillNeeded }, { quote: missing.map(line).join('\n') }] : [{ p: u.allDone }]),
-        { button: u.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }
+        { button: u.button, url: `${config.PUBLIC_URL}/apply.html` }
       ]
     };
   },
@@ -731,7 +731,7 @@ const BUILDERS = {
   }),
   interviewRequested: (s, d) => ({
     heading: s.interviewRequested.heading,
-    blocks: [{ p: s.interviewRequested.intro }, ...(d.reason ? [{ quote: `${s.interviewRequested.reasonLabel} ${d.reason}` }] : []), { p: s.interviewRequested.after }, { button: s.interviewRequested.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
+    blocks: [{ p: s.interviewRequested.intro }, ...(d.reason ? [{ quote: `${s.interviewRequested.reasonLabel} ${d.reason}` }] : []), { p: s.interviewRequested.after }, { button: s.interviewRequested.button, url: `${config.PUBLIC_URL}/apply.html` }]
   }),
   verificationSimplified: (s) => ({
     heading: s.verificationSimplified.heading,
@@ -739,7 +739,7 @@ const BUILDERS = {
   }),
   interviewBooked: (s, d) => ({
     heading: s.interviewBooked.heading,
-    blocks: [{ p: fill(s.interviewBooked.intro, d), raw: true }, { p: s.interviewBooked.after }, { button: s.interviewBooked.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
+    blocks: [{ p: fill(s.interviewBooked.intro, d), raw: true }, { p: s.interviewBooked.after }, { button: s.interviewBooked.button, url: `${config.PUBLIC_URL}/apply.html` }]
   }),
   interviewLink: (s, d) => ({
     heading: s.interviewLink.heading,
@@ -747,7 +747,7 @@ const BUILDERS = {
   }),
   interviewCancelled: (s, d) => ({
     heading: s.interviewCancelled.heading,
-    blocks: [{ p: fill(s.interviewCancelled.intro, d), raw: true }, ...(d.reason ? [{ quote: `${s.interviewCancelled.reasonLabel} ${d.reason}` }] : []), { p: s.interviewCancelled.after }, { button: s.interviewCancelled.button, url: `${config.PUBLIC_URL}/settings.html?tab=verification` }]
+    blocks: [{ p: fill(s.interviewCancelled.intro, d), raw: true }, ...(d.reason ? [{ quote: `${s.interviewCancelled.reasonLabel} ${d.reason}` }] : []), { p: s.interviewCancelled.after }, { button: s.interviewCancelled.button, url: `${config.PUBLIC_URL}/apply.html` }]
   }),
   payoutPaid: (s, d) => ({
     heading: s.payoutPaid.heading,

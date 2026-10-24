@@ -46,7 +46,7 @@ describe('starting the ID check', () => {
     assert.equal(call.headers['x-api-key'], fake.API_KEY);
     assert.equal(call.body.workflow_id, fake.WORKFLOW);
     assert.equal(call.body.vendor_data, mentorId);
-    assert.match(call.body.callback, /\/settings\.html\?tab=verification&kyc=returned$/);
+    assert.match(call.body.callback, /\/apply\.html\?step=5&kyc=returned$/, 'back to the application, its step 5');
 
     const step = await kycStep();
     assert.equal(step.status, 'pending');

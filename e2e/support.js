@@ -71,6 +71,49 @@ async function apiUser(name, email) {
   return c;
 }
 
+// A signed-in person applies as a mentor at /apply.html, the one place to apply (docs/CLAUDE-CODE-ONE-APPLY-PATH.md), step by step as a
+// person would. a: { headline, field, niche (chosen with "Change"; otherwise the suggestion stands), years, title, tags, story, sample,
+// price, url, licence: { number, body, until }, submit (default true) }. Ends on "Thank you" (or on step 5 when submit is false).
+async function applyAsMentor(page, a) {
+  await page.goto('/apply.html');
+  await page.waitForURL(/\/apply\.html\?step=1$/);
+  await page.fill('#apHeadline', a.headline);
+  await page.fill('#apField', a.field);
+  if (a.niche) { await page.click('[data-cat-change]'); await page.selectOption('#apNiche', a.niche); }
+  await page.fill('#apYears', String(a.years));
+  if (a.title || a.tags) {
+    await page.locator('form[data-step="0"] .apply-optional > summary').click();
+    if (a.title) await page.fill('#apTitle', a.title);
+    if (a.tags) await page.fill('#apTags', a.tags);
+  }
+  await page.click('.apply-next');
+  await page.waitForURL(/step=2$/);
+  await page.fill('#apStory', a.story);
+  if (a.sample) { await page.locator('form[data-step="1"] .apply-optional > summary').click(); await page.fill('#apSample', a.sample); }
+  await page.click('.apply-next');
+  await page.waitForURL(/step=3$/);
+  await page.fill('#apPrice', String(a.price));
+  await page.click('.apply-next');
+  await page.waitForURL(/step=4$/);
+  await page.fill('#apUrl', a.url);
+  await page.click('[data-add-link]');
+  await expect(page.locator('.apply-evidence li')).toHaveCount(1);
+  if (a.licence) {
+    const lic = page.locator('.apply-licence');
+    await lic.locator('[name="number"]').fill(a.licence.number);
+    await lic.locator('[name="issuingBody"]').fill(a.licence.body);
+    await lic.locator('[name="validUntil"]').fill(a.licence.until);
+    await lic.locator('[data-save-licence]').click();
+    await expect(lic.locator('.ap-ok')).toBeVisible();
+  }
+  await page.click('.apply-next');
+  await page.waitForURL(/step=5$/);
+  await expect(page.locator('#apMissing')).toHaveCount(0);
+  if (a.submit === false) return;
+  await page.click('[data-submit]');
+  await expect(page.locator('.apply-done')).toBeVisible();
+}
+
 // A verified, listed mentor (every required step passed, payout details saved), ready to be asked questions.
 async function listedMentor(admin, { name, email, niche = 'business', price = 20, roleTitle = 'Founder', customNiche }) {
   const m = await apiUser(name, email);
@@ -111,4 +154,4 @@ async function untilBooking(id, predicate, message, timeout = 20000) {
 // Where the fake evidence pages are (e2e/global-setup.js writes it): /p/<name-with-dashes> shows that name.
 const fakeWeb = () => JSON.parse(fs.readFileSync(path.join(__dirname, '.tmp', 'fakes.json'), 'utf8')).web;
 
-module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };
+module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };

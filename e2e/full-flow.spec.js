@@ -40,76 +40,40 @@ test('an administrator signs up (their address is on the ADMIN_EMAILS list)', as
   await expect(adminPage.locator('#adminContent')).not.toContainText('not authorized', { ignoreCase: true });
 });
 
-test('a mentor signs up, sets a price, and fills in the Experience form for the Law field', async () => {
+test('a mentor signs up and applies at /apply.html for the Law field (a licence too), and submits before the ID check', async () => {
   await S.signUp(mentorPage, mentor);
-  await mentorPage.goto('/settings.html');
-  await mentorPage.click('#tab-mentor');
-  await mentorPage.check('#becomeMentor');
-  await mentorPage.fill('#price', '30');
-  await mentorPage.click('#mentorForm button[type="submit"]');
-  await expect.poll(async () => (await S.sql('SELECT price FROM users WHERE email = $1', [mentor.email]))[0].price).toBe(30);
+  // (the one place to apply: docs/CLAUDE-CODE-ONE-APPLY-PATH.md)
+  await S.applyAsMentor(mentorPage, {
+    headline: 'Lawyer for small businesses', field: 'Tax law for small businesses', niche: 'law', years: 11,
+    title: 'Tax lawyer for small businesses', tags: 'VAT, small business tax, contracts',
+    story: 'I studied law in Tbilisi and have advised shop owners, cafés and freelancers on tax registration and contracts since 2014. I also teach a short evening course on VAT for new business owners.',
+    sample: 'Register as soon as your turnover is close to the limit, keep every invoice, and ask an accountant to confirm the date. Late registration is the costly mistake, early registration is not.',
+    price: 30, url: `${S.fakeWeb()}/p/ana-lomidze`,
+    licence: { number: 'LAW-2015-04417', body: 'Georgian Bar Association', until: '2032-12-31' }
+  });
   ({ id: mentorId, username: mentorUsername } = (await S.sql('SELECT id, username FROM users WHERE email = $1', [mentor.email]))[0]);
-  // (the headline, "What I do", on the Profile tab: an application is not sent without it)
-  await mentorPage.click('#tab-profile');
-  await mentorPage.fill('#headline', 'Lawyer for small businesses');
-  await mentorPage.click('#profileForm button[type="submit"]');
-  await expect.poll(async () => (await S.sql('SELECT headline FROM users WHERE email = $1', [mentor.email]))[0].headline).toBe('Lawyer for small businesses');
-
-  // Step 2, Experience: one form, a piece of evidence, and (a regulated field) the licence.
-  await mentorPage.goto('/settings.html?tab=verification');
-  const exp = mentorPage.locator('#ap-experience');
-  await expect(exp).toContainText('Self-taught?');
-  const form = exp.locator('form[data-form="experience"]');
-  await form.locator('[name="roleTitle"]').fill('Tax lawyer for small businesses');
-  await form.locator('[name="customNiche"]').fill('Tax law for small businesses');
-  await form.locator('[name="niche"]').selectOption('law');
-  await form.locator('[name="specialtyTags"]').fill('VAT, small business tax, contracts');
-  await form.locator('[name="yearsExperience"]').fill('11');
-  await form.locator('[name="story"]').fill('I studied law in Tbilisi and have advised shop owners, cafés and freelancers on tax registration and contracts since 2014. I also teach a short evening course on VAT for new business owners.');
-  await form.locator('[name="sampleAnswer"]').fill('Register as soon as your turnover is close to the limit, keep every invoice, and ask an accountant to confirm the date. Late registration is the costly mistake, early registration is not.');
-  await form.locator('button[type="submit"]').click();
-  await expect.poll(async () => (await S.sql('SELECT niche, years_experience FROM users WHERE id = $1', [mentorId]))[0]).toMatchObject({ niche: 'law', years_experience: 11 });
-
-  // The page was drawn again for Law: the licence block is there now.
-  await expect(exp.locator('form[data-form="license"]')).toBeVisible();
-  const ev = exp.locator('form[data-form="evidence"]');
-  await ev.locator('details.ap-ev-more > summary').click(); // (the type of a link is found from its address; the list is under "More options")
-  await ev.locator('[name="kind"]').selectOption('website');
-  await ev.locator('[name="url"]').fill(`${S.fakeWeb()}/p/ana-lomidze`);
-  await ev.locator('button[type="submit"]').click();
-  await expect(exp.locator('.ap-evidence li')).toHaveCount(1);
-
-  await expect(exp.locator('.ap-missing')).toContainText('licence or registration number');
-  const lic = exp.locator('form[data-form="license"]');
-  await lic.locator('input[name="number"]').fill('LAW-2015-04417');
-  await lic.locator('input[name="issuingBody"]').fill('Georgian Bar Association');
-  await lic.locator('input[name="validUntil"]').fill('2032-12-31');
-  await lic.locator('button[type="submit"]').click();
-  await expect(exp.locator('.ap-missing')).toHaveCount(0);
-
-  if (process.env.E2E_SHOTS) await mentorPage.screenshot({ path: `${process.env.E2E_SHOTS}/application-experience.png`, fullPage: true });
-  // Submitted before the ID check: it waits for step 1.
-  await exp.locator('[data-submit]').click();
-  await expect(mentorPage.locator('#ap-review')).toContainText('as soon as your ID check is done');
-  await expect(mentorPage.locator('#ap-experience form[data-form="experience"]')).toHaveCount(0); // locked while reviewed
-  expect((await S.sql('SELECT verification_status FROM users WHERE id = $1', [mentorId]))[0].verification_status).toBe('pending');
+  const [u] = await S.sql('SELECT niche, years_experience, price, headline, role_title, specialty_tags, verification_status FROM users WHERE id = $1', [mentorId]);
+  expect(u).toMatchObject({ niche: 'law', years_experience: 11, price: 30, headline: 'Lawyer for small businesses', role_title: 'Tax lawyer for small businesses', verification_status: 'pending' });
+  expect(u.specialty_tags).toEqual(['VAT', 'small business tax', 'contracts']);
+  if (process.env.E2E_SHOTS) await mentorPage.screenshot({ path: `${process.env.E2E_SHOTS}/application-submitted.png`, fullPage: true });
+  // Submitted before the ID check: it waits for it.
+  await expect(mentorPage.locator('.apply-status')).toContainText('as soon as your ID check is done');
 });
 
 test('the mentor does the ID check; the automatic analysis runs and, a regulated field, it waits for a person', async () => {
-  await mentorPage.locator('#ap-identity [data-kyc-start]').click();
+  await mentorPage.locator('.apply-done [data-kyc-start]').click();
   await mentorPage.waitForURL(/mock-kyc\.html/);
   await mentorPage.fill('#fullName', mentor.name);
   await mentorPage.click('#mockKycForm button[type="submit"]');
-  await mentorPage.waitForURL(/settings\.html/);
-  await expect(mentorPage.locator('#ap-identity')).toContainText('Your name matches your ID');
-  await expect(mentorPage.locator('#ap-identity')).toContainText('Age 18+ confirmed');
+  await mentorPage.waitForURL(/apply\.html/);
   await expect.poll(async () => ((await S.sql(`SELECT outcome FROM verification_reviews WHERE user_id = $1 AND status = 'done'`, [mentorId]))[0] || {}).outcome).toBe('needs_human');
   const [review] = await S.sql(`SELECT reasons, ai_cost_usd FROM verification_reviews WHERE user_id = $1`, [mentorId]);
   expect(review.reasons.map((r) => r.code)).toContain('regulated_niche');
   expect(Number(review.ai_cost_usd)).toBeGreaterThan(0);
   await mentorPage.reload();
-  await expect(mentorPage.locator('#ap-review')).toContainText('A person on our team is reviewing your application');
-  await expect(mentorPage.locator('.ap-stepper-item').first()).toHaveClass(/ap-done/);
+  await expect(mentorPage.locator('.apply-done')).toContainText('Your name matches your ID');
+  await expect(mentorPage.locator('.apply-done')).toContainText('Age 18+ confirmed');
+  await expect(mentorPage.locator('.apply-status')).toContainText('A person on our team is reviewing your application');
   if (process.env.E2E_SHOTS) await mentorPage.screenshot({ path: `${process.env.E2E_SHOTS}/application-in-review.png`, fullPage: true });
 });
 
@@ -131,8 +95,8 @@ test('the admin sees the AI summary on top, asks for a video interview, and the 
   await adminPage.click('.iv-add button[type="submit"]');
   await expect(adminPage.locator('.earn-list li')).toHaveCount(1);
 
-  await mentorPage.goto('/settings.html?tab=verification');
-  const review = mentorPage.locator('#ap-review');
+  await mentorPage.goto('/apply.html');
+  const review = mentorPage.locator('.apply-interview');
   await review.locator('[data-book]').first().click();
   await expect(review).toContainText(/Your interview/i);
   await S.waitForMail(mentor.email, 'interview is booked');

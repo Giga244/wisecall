@@ -37,10 +37,12 @@
   }
 
   let v = null; // GET /verification
+  let iv = null; // GET /verification/interview (a video call, only when an admin asked for one)
   async function load() {
-    const [ver, me] = await Promise.all([WisecallAPI.apiFetch('/verification'), WisecallAPI.apiFetch('/me')]);
+    const [ver, me, interview] = await Promise.all([WisecallAPI.apiFetch('/verification'), WisecallAPI.apiFetch('/me'), WisecallAPI.apiFetch('/verification/interview').catch(() => null)]);
     v = ver;
     user = me.user;
+    iv = interview;
   }
 
   // ---- Which step ---------------------------------------------------------------------------------------------------------------------
@@ -135,6 +137,20 @@
           <label for="apYears">${esc(t('apply.f.years'))}</label>
           <input id="apYears" name="yearsExperience" type="number" min="0" max="${v.limits.yearsMax}" step="1" inputmode="numeric" value="${f.yearsExperience === null || f.yearsExperience === undefined ? '' : esc(f.yearsExperience)}" required>
         </div>
+        <!-- (optional: a title and specialty tags; open when something is already there, from the old Settings form for example) -->
+        <details class="apply-more apply-optional"${f.roleTitle || (f.specialtyTags || []).length ? ' open' : ''}>
+          <summary>${esc(t('apply.about.more'))}</summary>
+          <div class="apply-field">
+            <label for="apTitle">${esc(t('ap.f.title'))}</label>
+            <input id="apTitle" name="roleTitle" type="text" maxlength="${v.limits.titleMax}" value="${esc(f.roleTitle || '')}" autocomplete="organization-title" aria-describedby="apTitleHint">
+            <span class="hint" id="apTitleHint">${esc(t('ap.f.title.hint'))}</span>
+          </div>
+          <div class="apply-field">
+            <label for="apTags">${esc(t('ap.f.tags'))}</label>
+            <input id="apTags" name="specialtyTags" type="text" maxlength="400" value="${esc((f.specialtyTags || []).join(', '))}" aria-describedby="apTagsHint">
+            <span class="hint" id="apTagsHint">${esc(fill('ap.f.tags.hint', { max: v.limits.tagsMax }))}</span>
+          </div>
+        </details>
         ${nav(0)}
       </form>`;
   }
@@ -156,6 +172,14 @@
           <p class="apply-example-label">${esc(t('apply.story.exampleLabel'))}</p>
           <p>${esc(t('apply.story.example'))}</p>
         </div>
+        <details class="apply-more apply-optional"${f.sampleAnswer ? ' open' : ''}>
+          <summary>${esc(t('apply.story.more'))}</summary>
+          <div class="apply-field">
+            <label for="apSample">${esc(t('ap.f.sample'))}</label>
+            <textarea id="apSample" name="sampleAnswer" rows="6" maxlength="${v.limits.sampleMax}" aria-describedby="apSampleHint">${esc(f.sampleAnswer || '')}</textarea>
+            <span class="hint" id="apSampleHint">${esc(t('ap.f.sample.hint'))}</span>
+          </div>
+        </details>
         ${nav(1)}
       </form>`;
   }
@@ -346,27 +370,80 @@
       </form>`;
   }
 
-  // ---- After "Submit": where it stands ------------------------------------------------------------------------------------------------
+  // ---- After "Submit": where it stands, and everything still to do until the decision ---------------------------------------------------
+  // The ID check (and what it found), a licence to give again, a video call an admin asked for, a step that failed, and "Edit my
+  // application": all here. Settings only says where the application stands (docs/CLAUDE-CODE-ONE-APPLY-PATH.md).
+  const statusOf = (step) => (v.requirements.find((x) => x.step === step) || {}).status || 'todo';
+  function identityDone() {
+    if (statusOf('id_kyc') !== 'passed') return kycBlock();
+    const lines = [`<p class="apply-check is-done"><span aria-hidden="true">✓</span> ${esc(t('ap.id.passed'))}</p>`];
+    const age = statusOf('age');
+    const names = statusOf('name_match');
+    if (age === 'passed') lines.push(`<p class="apply-check is-done"><span aria-hidden="true">✓</span> ${esc(t('ap.age.passed'))}</p>`);
+    else if (age === 'failed') lines.push(`<p class="apply-failed">${esc(t('ap.age.failed'))}</p>`);
+    else lines.push(`<p class="hint">${esc(t('ap.age.pending'))}</p>`);
+    if (names === 'passed') lines.push(`<p class="apply-check is-done"><span aria-hidden="true">✓</span> ${esc(t('ap.name.passed'))}</p>`);
+    else if (names === 'todo') lines.push(`<p class="hint">${esc(t('ap.name.checking'))}</p>`);
+    else lines.push(`<p class="hint">${esc(t('ap.name.pending'))} <a href="/settings.html?tab=profile">${esc(t('ap.name.fix'))}</a></p>`);
+    return lines.join('');
+  }
+  function interviewBlock() {
+    if (!iv || !iv.required) return '';
+    if (statusOf('video_interview') === 'passed') return `<p class="apply-check is-done"><span aria-hidden="true">✓</span> ${esc(t('ap.rev.interviewDone'))}</p>`;
+    const when = (d) => WisecallI18n.formatDate(d, { dateStyle: 'full', timeStyle: 'short' });
+    let body;
+    if (iv.booking) {
+      body = `
+        <p><strong>${esc(fill('vt.iv.booked', { date: when(iv.booking.startsAt) }))}</strong></p>
+        ${iv.booking.meetingLink ? `<p><a class="btn btn-primary btn-lg" href="${esc(iv.booking.meetingLink)}" target="_blank" rel="noopener noreferrer">${esc(t('vt.iv.link'))}</a></p>` : `<p class="hint">${esc(t('vt.iv.linkPending'))}</p>`}
+        <button type="button" class="btn btn-outline btn-lg" data-iv-cancel>${esc(t('vt.iv.cancel'))}</button>`;
+    } else if (iv.blocked) body = `<p class="hint">${esc(t('vt.iv.blocked'))}</p>`;
+    else {
+      const failed = iv.result && iv.result.result === 'failed';
+      body = `
+        ${failed ? `<p class="apply-failed">${esc(t('vt.iv.failed'))}${iv.result.reason ? ' ' + esc(iv.result.reason) : ''}</p>` : ''}
+        ${iv.slots.length ? `
+          <p class="hint">${esc(fill('vt.iv.pick', { minutes: iv.slots[0].minutes }))}</p>
+          <ul class="vt-slots apply-slots">${iv.slots.map((s) => `<li><span>${esc(when(s.startsAt))}</span><button type="button" class="btn btn-outline btn-lg" data-book="${esc(s.id)}">${esc(t('vt.iv.book'))}</button></li>`).join('')}</ul>`
+          : `<p class="hint">${esc(t('vt.iv.none'))}</p>`}`;
+    }
+    const r = v.requirements.find((x) => x.step === 'video_interview') || {};
+    return `
+      <div class="apply-block apply-interview">
+        <h2>${esc(t('verify.step.video_interview'))}</h2>
+        <p class="hint">${esc(t('ap.rev.interview'))}</p>
+        ${r.reason ? `<p class="hint">${esc(r.reason)}</p>` : ''}
+        ${body}
+        <p class="form-error apply-iv-error" role="alert"></p>
+      </div>`;
+  }
   function doneScreen() {
     const stage = v.application.stage;
-    const id = (v.requirements.find((x) => x.step === 'id_kyc') || {}).status;
     const days = config.mentorReviewDays || 2;
     const approved = stage === 'approved';
+    const closed = stage === 'suspended';
+    const failed = v.requirements.find((r) => r.status === 'failed');
+    const licenceToFix = v.regulated && ['license', 'license_document'].some((s) => v.requirements.some((x) => x.step === s) && statusOf(s) !== 'passed' && statusOf(s) !== 'pending');
     return `
       <div class="apply-step apply-done">
         <h1 tabindex="-1">${esc(t(approved ? 'apply.done.approvedTitle' : 'apply.done.title'))}</h1>
-        ${approved ? `<p class="apply-lead">${esc(t('ap.rev.approved'))}</p>` : `<p class="apply-lead">${esc(fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }))}</p>`}
-        ${!approved && id !== 'passed' && stage !== 'rejected' && stage !== 'suspended' ? `
+        ${approved ? `<p class="apply-lead">${esc(t('ap.rev.approved'))}</p>` : (closed ? '' : `<p class="apply-lead">${esc(fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }))}</p>`)}
+        ${failed && !closed ? `<p class="apply-failed" role="alert">${esc(t('settings.failed.' + failed.step))}${failed.reason ? ` <span>${esc(failed.reason)}</span>` : ''}</p>` : ''}
+        ${closed ? '' : `
           <div class="apply-block">
-            <h2>${esc(t('apply.done.idTitle'))}</h2>
-            ${kycBlock()}
-          </div>` : ''}
+            <h2>${esc(t(statusOf('id_kyc') === 'passed' ? 'apply.id.title' : 'apply.done.idTitle'))}</h2>
+            ${identityDone()}
+          </div>`}
+        ${licenceToFix ? licenceBlock() : ''}
+        ${closed ? '' : interviewBlock()}
         <p class="apply-status"><strong>${esc(t('apply.done.status'))}</strong> ${esc(t('ap.rev.' + stage))}</p>
         <div class="apply-actions">
           ${approved && !user.hasPayoutDetails ? `<a class="btn btn-primary btn-lg" href="/settings.html?tab=payouts">${esc(t('vt.addPayout'))}</a>` : ''}
           <a class="btn btn-outline btn-lg" href="/dashboard.html">${esc(t('apply.done.dashboard'))}</a>
-          <a class="btn btn-ghost btn-lg" href="/settings.html?tab=verification">${esc(t('apply.done.settings'))}</a>
+          ${approved ? `<a class="btn btn-ghost btn-lg" href="/settings.html?tab=verification">${esc(t('apply.done.settings'))}</a>` : ''}
+          ${closed ? '' : `<button type="button" class="btn btn-ghost btn-lg" data-edit${approved ? ' data-confirm="1"' : ''}>${esc(t('ap.edit'))}</button>`}
         </div>
+        <p class="form-error apply-error" role="alert"></p>
       </div>`;
   }
 
@@ -376,6 +453,8 @@
       head.hidden = true;
       root.innerHTML = doneScreen();
       wireCommon();
+      wireLicence(root);
+      wireDone();
       return;
     }
     drawHead();
@@ -391,7 +470,7 @@
   const ERR = {
     invalid_field: 'toast.error', invalid_years: 'ap.err.invalid_years', story_too_long: 'ap.err.story_too_long', invalid_niche: 'ap.err.invalid_niche',
     invalid_custom_niche: 'ap.err.invalid_custom_niche', application_locked: 'ap.err.application_locked', email_not_verified: 'settings.mentor.emailNotVerified',
-    invalid_price: 'apply.err.price', bio_too_long: 'toast.error'
+    invalid_price: 'apply.err.price', bio_too_long: 'toast.error', invalid_tags: 'ap.err.invalid_tags', title_too_long: 'ap.err.title_too_long', sample_too_long: 'ap.err.sample_too_long'
   };
   const EV_ERR = {
     invalid_url: 'ap.ev.err.invalid_url', invalid_kind: 'ap.ev.err.invalid_url', not_linkedin: 'ap.ev.err.not_linkedin', duplicate_evidence: 'ap.ev.err.duplicate_evidence', too_much_evidence: 'ap.ev.err.too_much_evidence',
@@ -413,12 +492,13 @@
       if (check && (!headline || !field || years === '')) { stepError(t('apply.err.about')); (!headline ? form.headline : (!field ? form.customNiche : form.yearsExperience)).focus(); return false; }
       if (headline !== (user.headline || '')) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { headline } });
       await WisecallAPI.apiFetch('/verification/experience', {
-        method: 'PUT', body: { customNiche: field, niche: form.niche.value || null, yearsExperience: years === '' ? null : Number(years) }
+        method: 'PUT',
+        body: { customNiche: field, niche: form.niche.value || null, yearsExperience: years === '' ? null : Number(years), roleTitle: form.roleTitle.value, specialtyTags: form.specialtyTags.value }
       });
     } else if (step === 1) {
       const story = form.story.value;
       if (check && chars(story) < v.limits.storyMin) { stepError(fill('apply.err.story', { min: v.limits.storyMin })); form.story.focus(); return false; }
-      await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: { story } });
+      await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: { story, sampleAnswer: form.sampleAnswer.value } });
     } else if (step === 2) {
       const raw = form.price.value.trim();
       const price = Number(raw);
@@ -492,7 +572,7 @@
     root.querySelectorAll('[data-kyc-start]').forEach((start) => start.addEventListener('click', async () => {
       start.disabled = true;
       try {
-        const r = await WisecallAPI.apiFetch('/verification/kyc/start', { method: 'POST', body: { from: 'apply' } });
+        const r = await WisecallAPI.apiFetch('/verification/kyc/start', { method: 'POST' });
         window.location.href = r.url; // (the identity partner's own page, which sends them back to step 5)
       } catch (e) {
         const el = root.querySelector('.apply-kyc-error');
@@ -501,6 +581,58 @@
       }
     }));
     root.querySelectorAll('[data-reload]').forEach((b) => b.addEventListener('click', async () => { await load(); render(); }));
+  }
+
+  // The licence (a regulated field): saved, its copy uploaded or removed. On step 4, and after "Submit" when it has to be given again.
+  function wireLicence(scope) {
+    scope.querySelectorAll('[data-upload]').forEach((b) => b.addEventListener('click', () => upload(b)));
+    scope.querySelectorAll('[data-doc-remove]').forEach((b) => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try { await WisecallAPI.apiFetch(`/verification/documents/${b.dataset.docRemove}`, { method: 'DELETE' }); await load(); render(); }
+      catch (e) { WisecallNav.showToast(t('toast.error')); b.disabled = false; }
+    }));
+    const lic = scope.querySelector('[data-save-licence]');
+    if (lic) lic.addEventListener('click', async () => {
+      const sub = lic.closest('.apply-sub');
+      const val = (n) => sub.querySelector(`[name="${n}"]`).value.trim();
+      subError(sub, '');
+      if (!val('number') || !val('issuingBody') || !val('holderName') || !val('validUntil')) { subError(sub, t('vt.fillIn')); return; }
+      lic.disabled = true;
+      try {
+        await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: val('number'), issuingBody: val('issuingBody'), holderName: val('holderName'), validUntil: val('validUntil') } });
+        WisecallNav.showToast(t('toast.saved'));
+        await load();
+        render();
+      } catch (e) { subError(sub, errText(LIC_ERR, e)); lic.disabled = false; }
+    });
+  }
+
+  // After "Submit": book or cancel the video call, and "Edit my application" (an approved mentor leaves Browse experts until it is
+  // approved again, so they are asked first).
+  function wireDone() {
+    const ivError = (e, map) => { const el = root.querySelector('.apply-iv-error'); if (el) el.textContent = errText(map, e); };
+    root.querySelectorAll('[data-book]').forEach((btn) => btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try { await WisecallAPI.apiFetch('/verification/interview/book', { method: 'POST', body: { slotId: btn.dataset.book } }); WisecallNav.showToast(t('toast.saved')); await load(); render(); }
+      catch (e) { ivError(e, { slot_unavailable: 'vt.iv.taken', id_check_first: 'vt.iv.blocked', already_booked: 'vt.iv.err.already' }); if (e.code === 'slot_unavailable') { await load(); render(); } else btn.disabled = false; }
+    }));
+    const cancel = root.querySelector('[data-iv-cancel]');
+    if (cancel) cancel.addEventListener('click', async () => {
+      cancel.disabled = true;
+      try { await WisecallAPI.apiFetch('/verification/interview/cancel', { method: 'POST' }); await load(); render(); }
+      catch (e) { ivError(e, { too_late: 'vt.iv.tooLate' }); cancel.disabled = false; }
+    });
+    const editBtn = root.querySelector('[data-edit]');
+    if (editBtn) editBtn.addEventListener('click', async () => {
+      if (editBtn.dataset.confirm && !(await WisecallDialog.confirm({ message: t('ap.edit.confirm'), confirmText: t('ap.edit.button') }))) return;
+      editBtn.disabled = true;
+      try {
+        await WisecallAPI.apiFetch('/verification/edit', { method: 'POST' });
+        await load();
+        current = firstOpenStep();
+        go(current);
+      } catch (e) { stepError(t('toast.error')); editBtn.disabled = false; }
+    });
   }
 
   function wireStep() {
@@ -609,31 +741,12 @@
         else { const b = root.querySelector('[data-add-link]'); if (b) b.disabled = false; }
       });
       form.url.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); root.querySelector('[data-add-link]').click(); } });
-      form.querySelectorAll('[data-upload]').forEach((b) => b.addEventListener('click', () => upload(b)));
+      wireLicence(form);
       form.querySelectorAll('[data-ev-remove]').forEach((b) => b.addEventListener('click', async () => {
         b.disabled = true;
         try { await WisecallAPI.apiFetch(`/verification/evidence/${b.dataset.evRemove}`, { method: 'DELETE' }); await load(); render(); }
         catch (e) { WisecallNav.showToast(t('toast.error')); b.disabled = false; }
       }));
-      form.querySelectorAll('[data-doc-remove]').forEach((b) => b.addEventListener('click', async () => {
-        b.disabled = true;
-        try { await WisecallAPI.apiFetch(`/verification/documents/${b.dataset.docRemove}`, { method: 'DELETE' }); await load(); render(); }
-        catch (e) { WisecallNav.showToast(t('toast.error')); b.disabled = false; }
-      }));
-      const lic = form.querySelector('[data-save-licence]');
-      if (lic) lic.addEventListener('click', async () => {
-        const sub = lic.closest('.apply-sub');
-        const val = (n) => sub.querySelector(`[name="${n}"]`).value.trim();
-        subError(sub, '');
-        if (!val('number') || !val('issuingBody') || !val('holderName') || !val('validUntil')) { subError(sub, t('vt.fillIn')); return; }
-        lic.disabled = true;
-        try {
-          await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: val('number'), issuingBody: val('issuingBody'), holderName: val('holderName'), validUntil: val('validUntil') } });
-          WisecallNav.showToast(t('toast.saved'));
-          await load();
-          render();
-        } catch (e) { subError(sub, errText(LIC_ERR, e)); lic.disabled = false; }
-      });
     }
   }
 

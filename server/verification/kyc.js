@@ -19,9 +19,9 @@ async function latestSession(userId) {
   return rows[0] || null;
 }
 
-// Sends the mentor to the provider's hosted check. from: 'apply' when it was started on the application page (/apply.html), which the
-// provider then sends them back to; Settings otherwise.
-async function startForMentor(user, { from } = {}) {
+// Sends the mentor to the provider's hosted check, which sends them back to the application (/apply.html, its step 5: the one place where a
+// mentor applies, docs/CLAUDE-CODE-ONE-APPLY-PATH.md).
+async function startForMentor(user) {
   const provider = kyc.current();
   const mine = await steps.loadSteps(user.id);
   const current = mine.id_kyc;
@@ -32,7 +32,7 @@ async function startForMentor(user, { from } = {}) {
 
   const { sessionId, url } = await provider.startVerification({
     userId: user.id,
-    callbackUrl: from === 'apply' ? `${config.PUBLIC_URL}/apply.html?step=5&kyc=returned` : `${config.PUBLIC_URL}/settings.html?tab=verification&kyc=returned`
+    callbackUrl: `${config.PUBLIC_URL}/apply.html?step=5&kyc=returned`
   });
   await query('INSERT INTO kyc_sessions (user_id, provider, provider_session_id) VALUES ($1, $2, $3)', [user.id, provider.name, sessionId]);
   await steps.setStep(user.id, 'id_kyc', 'pending', {

@@ -119,7 +119,7 @@ async function walk(page, { width, shots, tag }) {
     await page.goto('/settings.html');
     await page.waitForLoadState('networkidle');
     await shot('11-settings-profile');
-    await page.goto('/settings.html?tab=verification');
+    await page.goto('/settings.html?tab=profile'); // (the application card at the top: where it stands, one button to /apply.html)
     await page.waitForLoadState('networkidle');
     await shot('12-settings-application');
   }

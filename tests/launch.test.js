@@ -59,7 +59,7 @@ describe('PUBLIC_URL is the only address the site ever gives out', () => {
     const src = ['server/payments.js', 'server/verification/kyc.js', 'server/routes/auth.js'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
     assert.match(src, /config\.PUBLIC_URL\}\/api\/payments\/callback/);
     assert.match(src, /config\.PUBLIC_URL\}\/u\/\$\{mentor\.username\}\?booking=/);
-    assert.match(src, /config\.PUBLIC_URL\}\/settings\.html\?tab=verification/);
+    assert.match(src, /config\.PUBLIC_URL\}\/apply\.html\?step=5&kyc=returned/);
     assert.match(src, /config\.PUBLIC_URL\}\/reset-password\.html/);
   });
 
@@ -273,7 +273,7 @@ describe('launch mode: prelaunch, then live', () => {
     const home = pub('index.html');
     assert.match(home, /data-i18n-prelaunch="hero\.prelaunch\.cta"/);
     assert.match(home, /class="[^"]*hero-mentor-btn" data-mentor-cta="hero" data-i18n="hero\.mentorCta"/); // (the experts' way in, before and after launch)
-    for (const f of ['js/main.js', 'js/profile.js','js/nav.js', 'js/dashboard.js', 'js/settings.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
+    for (const f of ['js/main.js', 'js/profile.js','js/nav.js', 'js/dashboard.js', 'js/settings-verification.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
   });
 });
 

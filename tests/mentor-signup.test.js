@@ -153,7 +153,7 @@ describe('proof links', () => {
 describe('status messages', () => {
   test('an application never sent is not "needs attention" with a failed ID check; the step itself says it failed', async () => {
     const m = await newMentor('Levan Arabuli', 'levan@example.com');
-    const r = await m.c.api('/verification/kyc/start', { method: 'POST', body: { from: 'apply' } });
+    const r = await m.c.api('/verification/kyc/start', { method: 'POST', });
     assert.equal(r.status, 200, r.text);
     const sid = r.url.split('session=')[1];
     const back = await client(base).api(`/mock-kyc/sessions/${sid}/complete`, { method: 'POST', body: { outcome: 'decline' } });
@@ -163,19 +163,20 @@ describe('status messages', () => {
     assert.equal(v.requirements.find((x) => x.step === 'id_kyc').status, 'failed');
     assert.ok(['none', 'pending'].includes(v.state), 'neutral: the application was never sent');
     assert.ok(['none', 'pending'].includes((await m.c.api('/me')).user.verificationState));
-    // Started in Settings, it goes back to Settings (as before).
+    // (wherever it was started, it comes back to the application: the one place to apply)
     const again = await m.c.api('/verification/kyc/start', { method: 'POST' });
     const sid2 = again.url.split('session=')[1];
     const back2 = await client(base).api(`/mock-kyc/sessions/${sid2}/complete`, { method: 'POST', body: { outcome: 'decline' } });
-    assert.match(back2.redirect, /\/settings\.html\?tab=verification&kyc=returned$/);
+    assert.match(back2.redirect, /\/apply\.html\?step=5&kyc=returned$/);
   });
 
   test('Settings names the failed step and what to do, with the next step on every badge (EN and KA)', () => {
-    const settings = fs.readFileSync(path.join(ROOT, 'public/js/settings.js'), 'utf8');
-    assert.match(settings, /settings\.failed\./);
-    assert.match(settings, /href="\/apply\.html"/, '"Continue your application" opens the application');
+    // (the card at the top of Settings: tests/one-apply-path.test.js has every state)
+    const card = fs.readFileSync(path.join(ROOT, 'public/js/settings-application.js'), 'utf8');
+    assert.match(card, /settings\.failed\./);
+    assert.match(card, /href: '\/apply\.html'/, 'its button opens the application');
     const sv = fs.readFileSync(path.join(ROOT, 'public/js/settings-verification.js'), 'utf8');
-    assert.match(sv, /badgeKey\('identity', state\)/);
+    assert.match(sv, /'ap\.next\.identity\.attention'/);
     for (const lang of ['en', 'ka']) {
       const d = JSON.parse(fs.readFileSync(path.join(ROOT, `public/i18n/${lang}.json`), 'utf8'));
       for (const k of ['settings.progress.neutral', 'settings.failed.id_kyc', 'settings.failed.cta', 'ap.next.identity.todo', 'ap.next.experience.todo', 'ap.next.review.rejected']) assert.ok(d[k], `${lang}: ${k}`);

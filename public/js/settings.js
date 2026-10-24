@@ -8,10 +8,8 @@
     return;
   }
 
-  const becomeMentorCheckbox = document.getElementById('becomeMentor');
   const mentorForm = document.getElementById('mentorForm');
   const priceInput = document.getElementById('price');
-  const verificationBox = document.getElementById('verificationBox');
   const payoutCard = document.getElementById('payoutCard');
   const payoutForm = document.getElementById('payoutForm');
   const payoutNameInput = document.getElementById('payoutName');
@@ -19,40 +17,9 @@
   const payoutError = document.getElementById('payoutError');
   const payoutStatus = document.getElementById('payoutStatus');
 
-  function renderVerification(u) {
-    const isMentor = u.role === 'mentor' || u.role === 'both';
-    if (!isMentor) { verificationBox.style.display = 'none'; return; }
-    // (verificationState, from the server: the same state as the steps, so an approved mentor with a failed step shows "Needs attention")
-    const status = u.verificationState || u.verificationStatus || 'none';
-    const map = {
-      none: { cls: 'badge-pending_payment', key: 'settings.verify.none' },
-      pending: { cls: 'badge-pending_payment', key: 'settings.verify.none' },
-      in_review: { cls: 'badge-pending_payment', key: 'settings.verify.pending' },
-      needs_attention: { cls: 'badge-rejected', key: 'settings.verify.needs_attention' },
-      verified: { cls: 'badge-answered', key: 'settings.verify.verified' },
-      rejected: { cls: 'badge-rejected', key: 'settings.verify.rejected' },
-      suspended: { cls: 'badge-rejected', key: 'settings.verify.suspended' }
-    };
-    const info = map[status] || map.none;
-    const needsPayout = status === 'verified' && !u.hasPayoutDetails;
-    let html = `<span class="badge ${info.cls}">${t(needsPayout ? 'settings.verify.approvedNoPayout' : info.key)}</span>`;
-    if (status === 'rejected' && u.verificationNote) {
-      html += `<p class="muted small" style="margin-top:8px">${escapeHtml(u.verificationNote)}</p>`;
-    }
-    // Approved mentors only appear in Browse experts once their payout details are saved.
-    if (status === 'verified' && !u.hasPayoutDetails) {
-      html += `<p class="form-error" style="margin-top:8px">${t('settings.payouts.needForListing')}</p>`;
-    }
-    html += `<p style="margin-top:10px"><button type="button" class="btn btn-outline btn-sm" data-goto-tab="verification">${t('vt.viewProgress')}</button></p>`;
-    verificationBox.innerHTML = html;
-    verificationBox.style.display = 'block';
-  }
-  verificationBox.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('[data-goto-tab]');
-    if (btn) selectTab(btn.dataset.gotoTab, { focus: true });
-  });
-
   function isMentorUser(u) { return u.role === 'mentor' || u.role === 'both'; }
+  // An approved mentor (or a suspended one): their Mentor and Verification tabs. Someone applying has the card above the tabs instead.
+  function isApprovedMentor(u) { return isMentorUser(u) && ['verified', 'suspended'].includes(u.verificationStatus); }
 
   async function loadPayout() {
     payoutCard.style.display = isMentorUser(user) ? 'block' : 'none';
@@ -78,12 +45,8 @@
   }
 
   function fillForm(u) {
-    const isMentor = u.role === 'mentor' || u.role === 'both';
-    becomeMentorCheckbox.checked = isMentor;
-    mentorForm.style.display = isMentor ? 'grid' : 'none';
     priceInput.value = u.price || '';
     document.getElementById('publicAnswersPref').value = u.publicAnswersPref || 'ask';
-    renderVerification(u);
   }
 
   // ---- Tabs: Profile, Mentor, Verification, Payouts, Account -------------------------------------------
@@ -132,10 +95,15 @@
     }));
   }
 
-  // Verification and Payouts only exist for mentors.
+  // Payouts exist for every mentor (applying or approved); the Mentor and Verification tabs for an approved mentor only (no tab is ever
+  // empty: the application itself is at /apply.html).
   function updateTabVisibility() {
     const mentor = isMentorUser(user);
-    tabButtons.forEach((b) => { if (b.hasAttribute('data-mentor-only')) b.hidden = !mentor; });
+    const approved = isApprovedMentor(user);
+    tabButtons.forEach((b) => {
+      if (b.hasAttribute('data-mentor-only')) b.hidden = !mentor;
+      if (b.hasAttribute('data-approved-only')) b.hidden = !approved;
+    });
     if (activeTab && tabButtons.find((b) => b.dataset.tab === activeTab).hidden) selectTab('profile');
   }
 
@@ -153,56 +121,25 @@
     selectTab(visible[(next + visible.length) % visible.length].dataset.tab, { focus: true });
   });
 
-  // ---- Mentor application progress, shown above the tabs ------------------------------------------------------------
+  // ---- The mentor application, above the tabs: where it stands and one button to /apply.html (public/js/settings-application.js) --------
   const progressBox = document.getElementById('appProgress');
   let lastVerification = null;
-  function drawProgress(fresh) {
-    if (fresh) lastVerification = fresh;
-    if (!isMentorUser(user) || !lastVerification) { progressBox.hidden = true; return; }
-    const v = lastVerification;
-    const passed = (s) => (v.requirements.find((r) => r.step === s) || {}).status === 'passed';
-    const app = v.application || { locked: false, stage: 'not_submitted' };
-    const total = 3;
-    const done = [['email', 'id_kyc', 'age', 'name_match'].every(passed), app.locked, app.stage === 'approved'].filter(Boolean).length;
-    const pct = Math.round((done / total) * 100);
-    const status = v.state || v.status; // (the same state as the steps)
-    const verified = status === 'verified';
-    // Not sent yet: a neutral "Your application: 1 of 3 steps done – continue" (never red at 0 of 3). Red only for something that really
-    // failed, named in one sentence with what to do (docs/CLAUDE-CODE-UX-WALKTHROUGH.md C).
-    const failed = (v.requirements || []).find((r) => r.status === 'failed');
-    const tone = verified ? 'answered' : (['rejected', 'suspended', 'needs_attention'].includes(status) ? 'rejected' : 'pending_payment');
-    const label = verified ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed')
-      : ({ suspended: 'vt.status.suspended', rejected: 'vt.status.rejected', needs_attention: 'vt.status.needsAttention' }[status] || (app.locked ? 'ap.status.inReview' : 'vt.status.pending'));
-    const text = t(app.locked || verified ? 'ap.progressText' : 'settings.progress.neutral').replace('{done}', done).replace('{total}', total);
-    const fix = failed ? FIX[failed.step] || FIX.experience : null;
-    progressBox.hidden = false;
-    progressBox.innerHTML = `
-      <div class="app-progress-head">
-        <strong>${t('settings.progress.title')}</strong>
-        <span class="badge badge-${tone}">${t(verified && !user.hasPayoutDetails ? 'vt.status.verifiedNoPayout' : label)}</span>
-      </div>
-      <div class="vt-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-label="${escapeHtml(text)}"><span style="width:${pct}%"></span></div>
-      ${fix ? `<p class="app-progress-failed" role="alert">${t('settings.failed.' + (FIX[failed.step] ? failed.step : 'experience'))}
-        ${fix.href ? `<a href="${fix.href}">${t('settings.failed.cta')}</a>` : `<button type="button" class="linklike" data-goto-tab="${fix.tab}">${t('settings.failed.cta')}</button>`}</p>` : ''}
-      <p class="small app-progress-foot"><strong>${escapeHtml(text)}</strong>
-        ${verified ? '' : (app.locked && status !== 'needs_attention'
-          ? `<button type="button" class="linklike" data-goto-tab="verification">${t('settings.progress.status')}</button>`
-          : `<a class="linklike" href="/apply.html">${t('settings.progress.continue')}</a>`)}</p>`;
+  let reviewDays = 2;
+  function drawProgress() {
+    const card = WisecallApplicationCard.view(user, lastVerification);
+    progressBox.hidden = !card;
+    progressBox.innerHTML = WisecallApplicationCard.html(card, t, reviewDays);
   }
-  // Where a mentor fixes each step that can fail: the application page (the ID check is its step 5), or a Settings tab.
-  const FIX = {
-    id_kyc: { href: '/apply.html?step=5' }, age: { tab: 'verification' }, name_match: { tab: 'profile' }, email: { href: '/verify-email.html' },
-    license: { tab: 'verification' }, license_document: { tab: 'verification' }, experience: { tab: 'verification' }, video_interview: { tab: 'verification' }
-  };
   progressBox.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-goto-tab]');
     if (btn) selectTab(btn.dataset.gotoTab, { focus: true });
   });
-  document.addEventListener('wisecall:verification-changed', (ev) => drawProgress(ev.detail));
   document.addEventListener('wisecall:lang-changed', () => drawProgress());
   async function loadProgress() {
-    if (!isMentorUser(user)) { progressBox.hidden = true; return; }
-    try { drawProgress(await WisecallAPI.apiFetch('/verification')); } catch (e) { /* the tab still works */ }
+    try { reviewDays = (await WisecallI18n.getConfig()).mentorReviewDays || 2; } catch (e) { /* 2 */ }
+    // (which step failed, if one did: only someone applying has a /verification to ask)
+    if (isMentorUser(user) && !isApprovedMentor(user)) { try { lastVerification = await WisecallAPI.apiFetch('/verification'); } catch (e) { /* the card without it */ } }
+    drawProgress();
   }
 
   AuthUI.init();
@@ -230,28 +167,10 @@
       payoutIbanInput.value = data.iban;
       payoutNameInput.value = data.name;
       payoutStatus.textContent = t('settings.payouts.saved');
-      renderVerification(user);
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       const map = { invalid_iban: 'settings.payouts.err.iban', invalid_payout_name: 'settings.payouts.err.name', password_required: 'settings.payouts.err.password', wrong_password: 'settings.payouts.err.wrongPassword', reauth_required: 'settings.payouts.reauth', too_many_requests: 'settings.payouts.err.tooMany' };
       payoutError.textContent = t(map[e.code] || 'toast.error');
-    }
-  });
-
-  becomeMentorCheckbox.addEventListener('change', async () => {
-    const checked = becomeMentorCheckbox.checked;
-    try {
-      const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { becomeMentor: checked } });
-      mentorForm.style.display = checked ? 'grid' : 'none';
-      Object.assign(user, data.user);
-      renderVerification(user);
-      loadPayout();
-      updateTabVisibility();
-      loadProgress();
-      WisecallNav.showToast(t('toast.saved'));
-    } catch (e) {
-      becomeMentorCheckbox.checked = !checked;
-      WisecallNav.showToast(t('toast.error'));
     }
   });
 
@@ -260,7 +179,6 @@
     try {
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price: Number(priceInput.value) } });
       Object.assign(user, data.user);
-      renderVerification(user);
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       WisecallNav.showToast(t(e.code === 'invalid_price' ? 'settings.mentor.price.invalid' : 'toast.error'));

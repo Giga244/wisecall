@@ -58,7 +58,8 @@ test('"Submit for review" refuses until the story, headline, field and price are
   for (const k of ['ap.missing.headline', 'ap.missing.headlineLink', 'ap.missing.story', 'ap.missing.field', 'ap.missing.price']) {
     assert.ok(en[k] && ka[k] && en[k] !== ka[k], k);
   }
-  assert.match(fs.readFileSync(path.join(ROOT, 'public/js/settings-verification.js'), 'utf8'), /m === 'headline' \? `\$\{t\('ap\.missing\.headline'\)\} <button type="button" class="linklike" data-goto="profile">/);
+  // (the application page names each missing thing with a link to its step: the headline is step 1)
+  assert.match(fs.readFileSync(path.join(ROOT, 'public/js/apply.js'), 'utf8'), /const STEP_OF = \{ headline: 0,/);
 });
 
 test('the review queue: submitted applications only; one without a story or headline is labelled "Profile incomplete"', async () => {

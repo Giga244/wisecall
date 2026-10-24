@@ -22,11 +22,9 @@ describe('form controls in the pages', () => {
     });
   }
 
-  test('the verification code and the "I\'d like to offer advice as a mentor" checkbox have visible label text', () => {
+  test('the verification code has visible label text', () => {
     const verify = fs.readFileSync(path.join(PUBLIC, 'verify-email.html'), 'utf8');
     assert.match(verify, /<label for="code">[\s\S]*?data-i18n="auth\.verify\.codeLabel"/);
-    const settings = fs.readFileSync(path.join(PUBLIC, 'settings.html'), 'utf8');
-    assert.match(settings, /<label class="checkbox-row" for="becomeMentor">[\s\S]*?data-i18n="settings\.mentor\.enable"/);
   });
 });
 

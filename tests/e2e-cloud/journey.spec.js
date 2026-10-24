@@ -48,53 +48,25 @@ test('a visitor signs up and confirms the email with the 6-digit code from the e
   expect(row.email_verified).toBe(true);
 });
 
-test('a mentor applies: price, Experience form with evidence, submit, then the (fake) ID check', async () => {
+test('a mentor applies at /apply.html (the one place to apply), submits, then takes the (fake) ID check', async () => {
   const page = pages.mentor;
   await S.signUp(page, people.mentor);
-  await page.goto('/settings.html');
-  await page.click('#tab-mentor');
-  await page.check('#becomeMentor');
-  await page.fill('#price', '35');
-  await page.click('#mentorForm button[type="submit"]');
-  await expect.poll(async () => (await S.sql('SELECT price FROM users WHERE email = $1', [people.mentor.email]))[0].price).toBe(35);
+  await S.applyAsMentor(page, {
+    headline: 'Product designer', field: 'Mobile apps for small shops', niche: 'tech', years: 7,
+    title: 'Mobile app developer', tags: 'iOS, Android, Flutter',
+    story: 'Seven years building mobile apps for Georgian banks and delivery startups; I lead a team of five and review junior developers’ code every week.',
+    sample: 'Ship the smallest version that real users can try within two weeks, measure where they stop, and fix that first. A polished app nobody opens teaches you nothing.',
+    price: 35, url: `${S.fakeWeb()}/p/${people.mentor.name.toLowerCase().replace(/ /g, '-')}`
+  });
   ({ id: mentorId, username: mentorUsername } = (await S.sql('SELECT id, username FROM users WHERE email = $1', [people.mentor.email]))[0]);
-  // (the headline, "What I do", on the Profile tab: an application is not sent without it)
-  await page.click('#tab-profile');
-  await page.fill('#headline', 'Product designer');
-  await page.click('#profileForm button[type="submit"]');
-  await expect.poll(async () => (await S.sql('SELECT headline FROM users WHERE email = $1', [people.mentor.email]))[0].headline).toBe('Product designer');
+  expect((await S.sql('SELECT niche, price, verification_status FROM users WHERE id = $1', [mentorId]))[0]).toMatchObject({ niche: 'tech', price: 35, verification_status: 'pending' });
 
-  await page.goto('/settings.html?tab=verification');
-  const exp = page.locator('#ap-experience');
-  const form = exp.locator('form[data-form="experience"]');
-  await form.locator('[name="roleTitle"]').fill('Mobile app developer');
-  await form.locator('[name="customNiche"]').fill('Mobile apps for small shops');
-  await form.locator('[name="niche"]').selectOption('tech');
-  await form.locator('[name="specialtyTags"]').fill('iOS, Android, Flutter');
-  await form.locator('[name="yearsExperience"]').fill('7');
-  await form.locator('[name="story"]').fill('Seven years building mobile apps for Georgian banks and delivery startups; I lead a team of five and review junior developers’ code every week.');
-  await form.locator('[name="sampleAnswer"]').fill('Ship the smallest version that real users can try within two weeks, measure where they stop, and fix that first. A polished app nobody opens teaches you nothing.');
-  await form.locator('button[type="submit"]').click();
-  await expect.poll(async () => (await S.sql('SELECT niche FROM users WHERE id = $1', [mentorId]))[0].niche).toBe('tech');
-
-  // (saving the Experience form draws the evidence form again: wait for that, or a choice made before it is lost)
-  await page.waitForLoadState('networkidle');
-  const ev = exp.locator('form[data-form="evidence"]');
-  await ev.locator('details.ap-ev-more > summary').click(); // (the type of a link is found from its address; the list is under "More options")
-  await ev.locator('[name="kind"]').selectOption('website');
-  await expect(ev.locator('[name="kind"]')).toHaveValue('website');
-  await ev.locator('[name="url"]').fill(`${S.fakeWeb()}/p/${people.mentor.name.toLowerCase().replace(/ /g, '-')}`);
-  await ev.locator('button[type="submit"]').click();
-  await expect(exp.locator('.ap-evidence li')).toHaveCount(1);
-  await exp.locator('[data-submit]').click();
-  await expect(page.locator('#ap-experience form[data-form="experience"]')).toHaveCount(0); // locked while it is reviewed
-
-  await page.locator('#ap-identity [data-kyc-start]').click();
+  await page.locator('.apply-done [data-kyc-start]').click();
   await page.waitForURL(/mock-kyc\.html/);
   await page.fill('#fullName', people.mentor.name);
   await page.click('#mockKycForm button[type="submit"]');
-  await page.waitForURL(/settings\.html/);
-  await expect(page.locator('#ap-identity')).toContainText('Your name matches your ID');
+  await page.waitForURL(/apply\.html/);
+  await expect(page.locator('.apply-done')).toContainText('Your name matches your ID');
 });
 
 test('the admin opens the application and approves it', async () => {

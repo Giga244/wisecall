@@ -52,7 +52,7 @@ describe('an admin decision on a step', () => {
     assert.match(text(mail), /Age 18\+ \(not started\)/);
     assert.match(text(mail), /Your experience \(not started\)/);
     assert.doesNotMatch(text(mail), /At least one of/, 'rules v2 has no either-or steps');
-    assert.match(mail.body.html, /settings\.html\?tab=verification/);
+    assert.match(mail.body.html, /\/apply\.html"/, 'the button opens the application (the one place to apply)');
   });
 
   test('an approved step says so, with what is still needed', async () => {

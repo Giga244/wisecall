@@ -34,6 +34,11 @@ main[data-loading] .app-progress, main[data-loading] .tabs, main[data-loading] .
 .app-progress-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .app-progress .vt-bar { margin: 12px 0 6px; }
 .app-progress-foot { margin: 0; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+/* (Settings: the mentor application card, public/js/settings-application.js) */
+.app-card-text { margin: 10px 0 0; color: var(--ink-soft); }
+.app-card-reason { margin: 10px 0 0; }
+.app-card-action { margin: 14px 0 0; }
+@media (max-width: 639px) { .app-card-action .btn { width: 100%; } }
 .linklike { background: none; border: none; padding: 0; min-height: 44px; font: inherit; font-weight: 700; color: var(--accent-text); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .linklike:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
 

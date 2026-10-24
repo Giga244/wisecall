@@ -103,7 +103,7 @@ async function ping({ deep = false } = {}) {
     if (e.status !== 404 && e.status !== 400) throw e;
   }
   if (!deep) return 'API key accepted (the workflow id is only proven by a real verification; run with --deep to test it now)';
-  const s = await startVerification({ userId: 'launch-check', callbackUrl: `${config.PUBLIC_URL}/settings.html?tab=verification` });
+  const s = await startVerification({ userId: 'launch-check', callbackUrl: `${config.PUBLIC_URL}/apply.html?step=5` });
   return `API key and workflow id accepted (test session ${s.sessionId} opened and left unused)`;
 }
 

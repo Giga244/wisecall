@@ -57,7 +57,7 @@ const PAGES = [
   ['dashboard-earnings', 'mentor', '/dashboard.html?tab=earnings'],
   ['settings-mentor', 'mentor', '/settings.html?tab=mentor'],
   ['settings-payouts', 'mentor', '/settings.html?tab=payouts'],
-  ['settings-verification-applicant', 'applicant', '/settings.html?tab=verification'],
+  ['apply-applicant', 'applicant', '/apply.html'],
   ['dashboard-applicant', 'applicant', '/dashboard.html'],
   ['admin-mentors', 'admin', '/admin.html'],
   ['admin-bookings', 'admin', '/admin.html', async (p) => { await p.click('[data-tab="bookings"]'); await p.waitForTimeout(600); }],

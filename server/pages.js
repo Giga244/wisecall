@@ -906,6 +906,24 @@ function pageRoutes() {
     } catch (e) { next(e); }
   });
 
+  // The old place of the application, Settings -> Verification (docs/CLAUDE-CODE-ONE-APPLY-PATH.md): someone applying is sent to /apply.html
+  // (at their step; back from the ID check, at step 5), so the links in emails already sent keep working. An approved mentor stays (the tab
+  // has their ID check, licence and badges); nobody signed in, or someone who is not a mentor, gets the page as usual.
+  router.get('/settings.html', async (req, res, next) => {
+    try {
+      if (req.query.tab !== 'verification') return next();
+      const payload = await require('./auth').tokenFrom(req);
+      const user = payload ? await require('./models').getUserById(payload.id) : null;
+      if (!user || !['mentor', 'both'].includes(user.role) || ['verified', 'suspended'].includes(user.verificationStatus)) return next();
+      const p = await require('./verification/experience').progressFor(user);
+      const qs = new URLSearchParams();
+      if (req.query.kyc === 'returned') { qs.set('step', '5'); qs.set('kyc', 'returned'); }
+      else if (p.state === 'draft' && p.step) qs.set('step', String(p.step));
+      res.set('Cache-Control', 'no-store');
+      res.redirect(302, `${langOf(res) === 'ka' ? '/ka' : ''}/apply.html${qs.toString() ? '?' + qs : ''}`);
+    } catch (e) { next(e); }
+  });
+
   // The invite link for mentors we contact: /mentor and /ka/mentor (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #4). Straight to the mentor's
   // sign-up, or to the application for somebody already signed in; a sign-up from it counts as source "invite" (server/attribution.js).
   router.get(/^\/mentor\/?$/, async (req, res, next) => {
