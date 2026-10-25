@@ -11,8 +11,9 @@ const router = express.Router();
 
 async function withStats(users) {
   const ids = users.map((u) => u.id);
-  const [stats, badges] = await Promise.all([mentorStatsFor(ids), badgesFor(ids)]);
-  return users.map((u) => ({ ...publicProfile(u), ...stats[u.id], badges: badges[u.id] }));
+  const [stats, badges, week] = await Promise.all([mentorStatsFor(ids), badgesFor(ids), require('../freeQuestions').weekFor(users)]);
+  // (a mentor who answers for free and has had this week's free questions: "Free questions are full this week")
+  return users.map((u) => ({ ...publicProfile(u), ...stats[u.id], badges: badges[u.id], ...(week[u.id] ? { freeFull: week[u.id].full } : {}) }));
 }
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => '\\' + c);
@@ -33,6 +34,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const { niche, q } = req.query;
   const params = [];
   let where = listableSql();
+  if (req.query.free === '1') where += ' AND price = 0'; // ("Free": mentors who answer for free)
   if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND niche = $${params.length}`; }
   if (q && String(q).trim()) {
     params.push('%' + escapeLike(String(q).trim().slice(0, 100)) + '%');

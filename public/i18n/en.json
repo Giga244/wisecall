@@ -301,7 +301,8 @@
     {
       "h": "7. Fees",
       "p": [
-        "Wisecall keeps a platform fee from each paid question (currently 20% of the price). The rest goes to the mentor. Our payment provider also charges its own processing fees, which are covered by the platform fee. The fee for a specific payment is stored with that payment and does not change afterwards."
+        "Wisecall keeps a platform fee from each paid question (currently 20% of the price). The rest goes to the mentor. Our payment provider also charges its own processing fees, which are covered by the platform fee. The fee for a specific payment is stored with that payment and does not change afterwards.",
+        "Mentors may answer for free. No fee is charged on free questions."
       ]
     },
     {
@@ -865,9 +866,9 @@
   "wait.error": "Please enter a valid email address.",
   "wait.mentorCta": "Are you an expert? Apply as a mentor",
   "mentors.title": "Share what you know, get paid for it",
-  "mentors.sub": "Set your own price, answer in your own time and keep {sharePct}% of every question. We handle payments, refunds and payouts.",
+  "mentors.sub": "Set your own price, or answer for free. Answer in your own time and keep {sharePct}% of every paid question. We handle payments, refunds and payouts.",
   "mentors.1.title": "Your price",
-  "mentors.1.body": "You decide what a question costs, from {priceMin} to {priceMax} ₾.",
+  "mentors.1.body": "Set your price, from {priceMin} to {priceMax} ₾ a question, or answer for free.",
   "mentors.2.title": "Your time",
   "mentors.2.body": "Answer when it suits you, within {answerDays} days of the question.",
   "mentors.3.title": "Your {sharePct}%",
@@ -2571,5 +2572,35 @@
   "settings.app.approvedTitle": "Your application",
   "settings.app.approvedText": "To change your field, story, price or evidence, edit your application. You leave Browse experts until the changes are approved.",
   "apply.about.more": "A title and specialty tags (optional)",
-  "apply.story.more": "A sample answer (optional)"
+  "apply.story.more": "A sample answer (optional)",
+  "price.free": "Free",
+  "price.mode.legend": "Your price",
+  "price.mode.free": "Answer for free (0 ₾)",
+  "price.mode.paid": "Set a price ({priceMin}–{priceMax} ₾)",
+  "price.mode.freeNote": "Askers pay nothing and no fee is taken. You can set a price at any time.",
+  "price.cap.label": "Free questions a week, at most",
+  "price.cap.hint": "When they are taken, your profile says \"Free questions are full this week\" until Monday.",
+  "price.cap.invalid": "Choose a number from 1 to 100.",
+  "experts.filter.free": "Free",
+  "expert.freeNote": "Free: no payment. The mentor answers within {answerDays} days.",
+  "expert.sendFree": "Send my question",
+  "expert.freeFull": "Free questions are full this week. Try again on Monday.",
+  "expert.err.freeVerify": "Confirm your email first: free questions need a confirmed email.",
+  "expert.err.freeMentor": "You already have {n} free questions waiting for this mentor. Ask again when one is answered.",
+  "expert.err.freeTotal": "You already have {n} free questions waiting for an answer. Ask again when one is answered.",
+  "dash.status.free.paid": "Free — awaiting answer",
+  "dash.status.free.refunded": "Closed",
+  "dash.tl.asked": "Asked",
+  "dash.free.closed.no_answer_deadline": "Closed because the mentor did not answer in time. Nothing was charged.",
+  "dash.free.closed.other": "This free question was closed. Nothing was charged.",
+  "dash.decline.helpFree": "The asker is told at once and sees the reason you chose.",
+  "dash.decline.confirmFree": "Decline this free question? The asker is told, and you can't answer it afterwards.",
+  "dash.decline.buttonFree": "Decline",
+  "dash.decline.doneFree": "Declined. The asker has been told.",
+  "dash.dispute.outcome.upheld": "Decided: our team agreed with the report. The question was free, so there is nothing to refund.",
+  "inbox.ev.dispute.upheld": "Our team agreed with the report. The question was free, so there is nothing to refund.",
+  "inbox.ev.free_asked": "A free question was asked.",
+  "inbox.ev.free_closed": "The free question was closed without an answer.",
+  "inbox.n.new_free_question": "You have a new free question.",
+  "inbox.n.free_closed": "A free question was closed."
 }

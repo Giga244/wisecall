@@ -115,8 +115,9 @@ async function view(owner, viewer) {
     ...(self ? { visibility: owner.profileVisibility } : {})
   };
   if (listable) {
-    const [stats, badges] = await Promise.all([mentorStatsFor([owner.id]), badgesFor([owner.id])]);
-    out.mentor = { roleTitle: owner.roleTitle, niche: owner.niche, customNiche: owner.customNiche || null, price: owner.price, badges: badges[owner.id] || [], ...stats[owner.id] };
+    const [stats, badges, week] = await Promise.all([mentorStatsFor([owner.id]), badgesFor([owner.id]), require('./freeQuestions').weekFor([owner])]);
+    out.mentor = { roleTitle: owner.roleTitle, niche: owner.niche, customNiche: owner.customNiche || null, price: owner.price, badges: badges[owner.id] || [], ...stats[owner.id],
+      ...(week[owner.id] ? { freeFull: week[owner.id].full } : {}) }; // (answers for free, and this week's free questions are taken)
   }
   // How mentors rated this person as an asker: nothing under 3 ratings, then a friendly badge and their top tags (never the ratings themselves).
   out.asker = await require('./ratings').askerBadge(owner.id);

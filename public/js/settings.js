@@ -44,8 +44,19 @@
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // "Answer for free" (price 0, with a weekly number) or "Set a price" (docs/CLAUDE-CODE-FREE-ANSWERS.md).
+  const priceMode = () => (mentorForm.querySelector('input[name="priceMode"]:checked') || {}).value;
+  function showPriceMode() {
+    const free = priceMode() === 'free';
+    document.getElementById('pricePaidBox').hidden = free;
+    document.getElementById('priceFreeBox').hidden = !free;
+    priceInput.required = !free;
+  }
   function fillForm(u) {
     priceInput.value = u.price || '';
+    mentorForm.querySelector(`input[name="priceMode"][value="${u.price === 0 ? 'free' : 'paid'}"]`).checked = true;
+    document.getElementById('freeWeeklyCap').value = u.freeWeeklyCap || 10;
+    showPriceMode();
     document.getElementById('publicAnswersPref').value = u.publicAnswersPref || 'ask';
   }
 
@@ -177,13 +188,15 @@
   mentorForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     try {
-      const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price: Number(priceInput.value) } });
+      const body = priceMode() === 'free' ? { price: 0, freeWeeklyCap: Number(document.getElementById('freeWeeklyCap').value) } : { price: Number(priceInput.value) };
+      const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body });
       Object.assign(user, data.user);
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
-      WisecallNav.showToast(t(e.code === 'invalid_price' ? 'settings.mentor.price.invalid' : 'toast.error'));
+      WisecallNav.showToast(t(e.code === 'invalid_price' ? 'settings.mentor.price.invalid' : (e.code === 'invalid_free_cap' ? 'price.cap.invalid' : 'toast.error')));
     }
   });
+  mentorForm.querySelectorAll('input[name="priceMode"]').forEach((r) => r.addEventListener('change', showPriceMode));
   document.getElementById('publicAnswersPref').addEventListener('change', async (ev) => {
     try {
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { publicAnswersPref: ev.target.value } });

@@ -844,3 +844,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .mentor-card-draft { background: var(--sun-tint); color: var(--ink); }
 .mentor-card-sent { background: var(--card); color: var(--ink); }
 @media (max-width: 639px) { .mentor-card { padding: 18px; } .mentor-card .btn { width: 100%; } }
+/* Free answers (docs/CLAUDE-CODE-FREE-ANSWERS.md): the price choice, and "Free questions are full this week" on the ask box. */
+.price-mode { border: 0; margin: 0 0 14px; padding: 0; min-width: 0; display: grid; gap: 4px; }
+.price-mode legend { font-weight: 800; padding: 0; margin-bottom: 6px; }
+.ask-full { background: var(--sun-tint); color: var(--ink); padding: 12px 14px; border-radius: 12px; font-weight: 700; margin: 0 0 14px; }

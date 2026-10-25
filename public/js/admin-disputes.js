@@ -31,12 +31,12 @@
           <h4 class="small">${esc(t('inbox.theQuestion'))}</h4><p class="msg-body">${esc(d.question)}</p>
           <h4 class="small">${esc(t('inbox.theAnswer'))}</h4><p class="msg-body">${esc(d.answer || '')}</p>
         </details>`}
-        <p class="small">${esc(fill('admin.dis.amounts', { price: money(d.amount), fee: money(d.fee), mentor: money(d.mentorNet) }))}</p>
+        <p class="small">${esc(d.kind !== 'ticket' && d.amount === 0 ? t('admin.dis.free') : fill('admin.dis.amounts', { price: money(d.amount), fee: money(d.fee), mentor: money(d.mentorNet) }))}</p>
         ${d.status === 'resolved' ? `<p><strong>${esc(t('admin.dis.outcome.' + d.outcome))}</strong>${d.refundAmount ? ` · ${esc(money(d.refundAmount))}` : ''} · ${esc(d.resolvedBy || '')}</p><p class="small">${esc(d.note || '')}</p>` : `
         <form class="dis-form" novalidate>
           <fieldset>
             <legend class="small">${esc(t('admin.dis.decide'))}</legend>
-            ${['full_refund', 'partial_refund', 'rejected'].map((o) => `<label class="checkbox-row"><input type="radio" name="outcome-${esc(d.id)}" value="${o}"> <span>${esc(t('admin.dis.outcome.' + o))}</span></label>`).join('')}
+            ${(d.kind !== 'ticket' && d.amount === 0 ? ['upheld', 'rejected'] : ['full_refund', 'partial_refund', 'rejected']).map((o) => `<label class="checkbox-row"><input type="radio" name="outcome-${esc(d.id)}" value="${o}"> <span>${esc(t('admin.dis.outcome.' + o))}</span></label>`).join('')}
           </fieldset>
           <label class="field-label small" for="dis-amount-${esc(d.id)}">${esc(t('admin.dis.amount'))}</label>
           <input type="number" id="dis-amount-${esc(d.id)}" min="0.01" step="0.01" max="${(d.amount / 100 - 0.01).toFixed(2)}" inputmode="decimal">
@@ -53,6 +53,7 @@
       const d = data.disputes.find((x) => x.id === card.dataset.dispute);
       const amountInput = form.querySelector('input[type="number"]');
       const split = form.querySelector('.dis-split');
+      if (d.kind !== 'ticket' && d.amount === 0) { amountInput.hidden = true; amountInput.previousElementSibling.hidden = true; } // (free: no money to return)
       const tetri = () => Math.round(Number(amountInput.value || 0) * 100);
       amountInput.addEventListener('input', () => {
         const a = tetri();

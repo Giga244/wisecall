@@ -39,7 +39,7 @@ function meProfile(user) {
 // (hasFailedRequiredStep), and a user object that does not say (undefined) is treated as not listable.
 function isListable(user) {
   return Boolean(user) && (user.role === 'mentor' || user.role === 'both') &&
-    Boolean(user.price) && Boolean(user.niche) && Boolean(user.roleTitle) &&
+    user.price !== null && user.price !== undefined && Boolean(user.niche) && Boolean(user.roleTitle) &&
     user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc) && user.hasFailedRequiredStep === false &&
     !user.deletionRequestedAt && !user.deletedAt; // (an account being deleted is closed at once)
 }

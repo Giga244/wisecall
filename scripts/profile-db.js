@@ -166,13 +166,21 @@ async function main() {
       await check('fee or net below 0', 'b.platform_fee_amount < 0 OR b.mentor_net_amount < 0');
       const over = ['refunded_amount', 'partial_refund_amount'].filter((c) => has('bookings', c)).map((c) => `b.${c} > b.amount`);
       if (over.length) await check(`${['refunded_amount', 'partial_refund_amount'].filter((c) => has('bookings', c)).join(' or ')} greater than amount`, over.join(' OR '));
-      await check("status 'paid' or 'answered' without provider_order_id", "b.status IN ('paid', 'answered') AND NULLIF(btrim(b.provider_order_id), '') IS NULL");
+      // (a free question, amount 0, never goes to a bank: no order, no receipt, no payout; docs/CLAUDE-CODE-FREE-ANSWERS.md)
+      const PAID = has('bookings', 'provider') ? "b.provider <> 'free' AND " : '';
+      await check("status 'paid' or 'answered' without provider_order_id", `${PAID}b.status IN ('paid', 'answered') AND NULLIF(btrim(b.provider_order_id), '') IS NULL`);
       await check("status 'refunded' without a refund time (refunded_at)", "b.status = 'refunded' AND b.refunded_at IS NULL");
       if (has('receipts')) {
-        await check("status 'refunded' without a refunded amount: no refunded_amount and no refund receipt", `b.status = 'refunded' AND b.refunded_amount IS NULL
+        await check("status 'refunded' without a refunded amount: no refunded_amount and no refund receipt", `${PAID}b.status = 'refunded' AND b.refunded_amount IS NULL
           AND NOT EXISTS (SELECT 1 FROM receipts r WHERE r.booking_id = b.id AND r.kind = 'refund')`, { note: 'a full refund keeps the amount on its refund receipt' });
       } else {
         await check("status 'refunded' without refunded_amount", "b.status = 'refunded' AND b.refunded_amount IS NULL", { info: true, note: 'normal for a full refund' });
+      }
+      if (has('bookings', 'provider')) {
+        const money = [has('receipts') ? 'EXISTS (SELECT 1 FROM receipts r WHERE r.booking_id = b.id)' : null, has('payouts') ? 'EXISTS (SELECT 1 FROM payouts p WHERE p.booking_id = b.id)' : null,
+          'b.platform_fee_amount <> 0', 'b.mentor_net_amount <> 0', 'b.provider_order_id IS NOT NULL'].filter(Boolean).join(' OR ');
+        await check('free question (amount 0) with a receipt, a payout, a fee, a share or a bank order', `b.amount = 0 AND (${money})`);
+        await check('free questions (amount 0)', 'b.amount = 0', { info: true, note: 'mentors who answer for free' });
       }
       if (has('ratings') && has('bookings', 'rating')) {
         const A2M = "r.booking_id = b.id AND r.direction = 'asker_to_mentor'";

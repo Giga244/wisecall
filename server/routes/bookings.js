@@ -50,6 +50,22 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     if (config.BOOKINGS_PER_HOUR && n.hour >= config.BOOKINGS_PER_HOUR) return res.status(429).json({ error: 'too_many_bookings', max: config.BOOKINGS_PER_HOUR });
   }
 
+  // A mentor who answers for free (price 0): no bank, no receipt, no fee, no payout (server/freeQuestions.js). The "are you a person?"
+  // check is asked here, where paid questions have the bank in the way.
+  if (mentor.price === 0) {
+    if (typeof discountCode === 'string' && discountCode.trim()) return res.status(400).json({ error: 'free_no_code' });
+    const human = await require('../turnstile').verify((req.body || {}).turnstileToken, req.ip);
+    if (!human.ok) return res.status(human.code === 'human_check_unavailable' ? 503 : 400).json({ error: human.code });
+    const free = require('../freeQuestions');
+    try {
+      const booking = await free.ask({ seeker, mentor, question: checked.text, source: require('../attribution').read(req) });
+      return res.status(201).json({ booking: probation.toClient(booking, seeker.id), free: true });
+    } catch (e) {
+      if (e instanceof free.FreeError) return res.status(free.STATUS[e.code] || 409).json({ error: e.code, ...e.extra });
+      throw e;
+    }
+  }
+
   // A one-time code from a live session (15 % off a question to the same mentor; server/live/after.js): the price, the fee and the mentor's
   // share are all worked out on what is actually paid.
   const listPrice = Math.round(mentor.price * 100);

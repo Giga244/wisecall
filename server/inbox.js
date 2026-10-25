@@ -73,10 +73,15 @@ async function bookingEvent(booking, event, data, notices) {
   await addMessage(threadId, { role: 'system', kind: 'event', event, data });
   for (const [userId, kind] of notices) await notifyUser(userId, kind, { threadId, bookingId: booking.id, data });
 }
-const onPaid = (booking) => safely('paid', () => bookingEvent(booking, 'paid', {}, [[booking.mentorId, 'new_question']]));
+const onPaid = (booking) => (booking.amount === 0 // (a free question: asked, not paid)
+  ? safely('free asked', () => bookingEvent(booking, 'free_asked', {}, [[booking.mentorId, 'new_free_question']]))
+  : safely('paid', () => bookingEvent(booking, 'paid', {}, [[booking.mentorId, 'new_question']])));
 const onAnswered = (booking) => safely('answered', () => bookingEvent(booking, 'answered', {}, [[booking.seekerId, 'answered']]));
-const onRefunded = (booking, reason) => safely('refunded', () => bookingEvent(booking, 'refunded', { reason: reason || null, amount: booking.refundedAmount || booking.amount },
-  [[booking.seekerId, 'refunded'], [booking.mentorId, 'refunded']]));
+// (a free question is "closed": nothing was paid, so nothing is refunded)
+const onRefunded = (booking, reason) => (booking.amount === 0
+  ? safely('free closed', () => bookingEvent(booking, 'free_closed', { reason: reason || null }, [[booking.seekerId, 'free_closed'], [booking.mentorId, 'free_closed']]))
+  : safely('refunded', () => bookingEvent(booking, 'refunded', { reason: reason || null, amount: booking.refundedAmount || booking.amount },
+    [[booking.seekerId, 'refunded'], [booking.mentorId, 'refunded']])));
 const onDeclined = (booking, reason) => safely('declined', () => bookingEvent(booking, 'declined', { reason }, [[booking.seekerId, 'declined']]));
 const onDisputeOpened = (booking) => safely('dispute opened', () => bookingEvent(booking, 'dispute_opened', {}, [[booking.mentorId, 'dispute_opened']]));
 const onDisputeResolved = (booking, d) => safely('dispute resolved', () => bookingEvent(booking, 'dispute_resolved',

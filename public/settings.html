@@ -143,9 +143,18 @@
     <h2 data-i18n="settings.mentor.title">Mentor profile</h2>
     <!-- (an approved mentor's settings; the application itself is at /apply.html, docs/CLAUDE-CODE-ONE-APPLY-PATH.md) -->
     <form id="mentorForm">
-      <label for="price"><span data-i18n="settings.mentor.price">Price per question (USD)</span>
+      <fieldset class="price-mode">
+        <legend data-i18n="price.mode.legend">Your price</legend>
+        <label class="checkbox-row"><input type="radio" name="priceMode" value="free"> <span data-i18n="price.mode.free">Answer for free</span></label>
+        <label class="checkbox-row"><input type="radio" name="priceMode" value="paid" checked> <span data-i18n="price.mode.paid">Set a price</span></label>
+      </fieldset>
+      <label for="price" id="pricePaidBox"><span data-i18n="settings.mentor.price">Price per question (USD)</span>
         <input type="number" id="price" min="5" max="2000" step="1" inputmode="numeric" required>
         <span class="hint" data-i18n="settings.mentor.price.hint">You can change your price at any time.</span>
+      </label>
+      <label for="freeWeeklyCap" id="priceFreeBox" hidden><span data-i18n="price.cap.label">Free questions a week, at most</span>
+        <input type="number" id="freeWeeklyCap" min="1" max="100" step="1" inputmode="numeric" value="10">
+        <span class="hint" data-i18n="price.cap.hint">When they are taken, your profile says "Free questions are full this week" until Monday.</span>
       </label>
       <button type="submit" class="btn btn-primary" data-i18n="settings.mentor.savePrice">Save price</button>
       <label for="publicAnswersPref"><span data-i18n="pa.pref.label">Public answers</span>

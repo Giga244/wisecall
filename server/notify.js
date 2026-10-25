@@ -25,7 +25,9 @@ async function safeSend(label, name, user, data, { category } = {}) {
 
 const notifyMentorNewQuestion = (mentor, booking) => Promise.all([
   inbox().onPaid(booking),
-  safeSend('new-question notify', 'newQuestion', mentor, { amount: money(booking), question: booking.question })
+  booking.amount === 0 // (a free question: docs/CLAUDE-CODE-FREE-ANSWERS.md)
+    ? safeSend('new-question notify', 'newFreeQuestion', mentor, { question: booking.question })
+    : safeSend('new-question notify', 'newQuestion', mentor, { amount: money(booking), question: booking.question })
 ]);
 
 const notifySeekerAnswered = (seeker, mentor, booking) => Promise.all([
@@ -35,8 +37,9 @@ const notifySeekerAnswered = (seeker, mentor, booking) => Promise.all([
 
 const notifyRefund = (seeker, mentor, booking, reason) => Promise.all([
   inbox().onRefunded(booking, reason),
-  safeSend('refund notify (seeker)', 'refundSeeker', seeker, { amount: money(booking), mentor: mentor.name, reason }),
-  safeSend('refund notify (mentor)', 'refundMentor', mentor, { question: booking.question, reason })
+  // (a free question is closed, not refunded: nothing was paid)
+  safeSend('refund notify (seeker)', booking.amount === 0 ? 'freeClosedSeeker' : 'refundSeeker', seeker, { amount: money(booking), mentor: mentor.name, reason }),
+  safeSend('refund notify (mentor)', booking.amount === 0 ? 'freeClosedMentor' : 'refundMentor', mentor, { question: booking.question, reason })
 ]);
 
 // The one free follow-up question (to the mentor) and its reply (to the asker). data: { kind, from, body, threadId }
@@ -67,7 +70,7 @@ const notifySupportReply = (user, data) => safeSend('support reply', 'supportRep
 const notifyMentorDeadlineSoon = (mentor, booking) => {
   const locale = mentor.language === 'ka' ? 'ka-GE' : 'en-GB';
   const date = new Date(booking.answerDeadline).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
-  return safeSend('deadline reminder', 'deadlineSoon', mentor, { question: booking.question, date });
+  return safeSend('deadline reminder', booking.amount === 0 ? 'deadlineSoonFree' : 'deadlineSoon', mentor, { question: booking.question, date });
 };
 
 const notifyMentorDecision = (mentor, approved, note) => Promise.all([

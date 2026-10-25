@@ -17,6 +17,7 @@
     const a = d.applications.byStatus;
     const r = d.applications.waitingByRisk;
     const q = d.questions.byStatus;
+    const fq = d.questions.free || { byStatus: {}, last30Days: 0 }; // (free questions: no money, counted on their own)
     const wl = Object.entries(d.waitlist.byNiche);
     container.innerHTML = [
       section(t('admin.ov.signups'), cards([
@@ -31,7 +32,10 @@
         + (wl.length ? `<p class="wl-counts">${wl.map(([k, v]) => `<span class="badge badge-paid">${esc(field(k))}: ${n(v)}</span>`).join(' ')}</p>` : '')),
       section(t('admin.ov.questions'), cards([
         card(t('admin.ov.q.month'), n(d.questions.paidLast30Days)), card(t('admin.ov.q.paid'), n(q.paid), q.paid > 0),
-        card(t('admin.ov.q.answered'), n(q.answered)), card(t('admin.ov.q.unpaid'), n(q.pending_payment)), card(t('admin.ov.q.expired'), n(q.expired))])),
+        card(t('admin.ov.q.answered'), n(q.answered)), card(t('admin.ov.q.unpaid'), n(q.pending_payment)), card(t('admin.ov.q.expired'), n(q.expired))])
+        + `<h3 class="small">${esc(t('admin.ov.q.freeTitle'))}</h3>` + cards([
+          card(t('admin.ov.q.freeMonth'), n(fq.last30Days)), card(t('admin.ov.q.paid'), n(fq.byStatus.paid), fq.byStatus.paid > 0),
+          card(t('admin.ov.q.answered'), n(fq.byStatus.answered)), card(t('admin.ov.q.freeClosed'), n(fq.byStatus.refunded))])),
       section(t('admin.ov.problems'), cards([
         card(t('admin.ov.refunds.pending'), n(d.refunds.pending), d.refunds.pending > 0), card(t('admin.ov.refunds.full'), n(d.refunds.full)),
         card(t('admin.ov.refunds.partial'), n(d.refunds.partial)), card(t('admin.ov.refunds.amount'), money(d.refunds.amount)),

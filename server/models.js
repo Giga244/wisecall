@@ -41,6 +41,7 @@ function userFromRow(r) {
     publicAnswersPref: r.public_answers_pref || 'ask',
     fieldOverride: Boolean(r.field_override),
     liveApprovedAt: r.live_approved_at || null,
+    freeWeeklyCap: r.free_weekly_cap === undefined || r.free_weekly_cap === null ? 10 : r.free_weekly_cap, // (free questions a week, when the price is 0)
     emailVerified: r.email_verified,
     emailVerifyCodeHash: r.email_code_hash,
     emailVerifyCodeExpiresAt: r.email_code_expires_at,
@@ -118,7 +119,8 @@ const USER_COLUMNS = {
   headline: 'headline', currentWork: 'current_work', city: 'city', languages: 'languages', linkedinUrl: 'linkedin_url', websiteUrl: 'website_url',
   profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme',
   specialtyTags: 'specialty_tags', yearsExperience: 'years_experience', story: 'story', applicationSubmittedAt: 'application_submitted_at',
-  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at'
+  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
+  freeWeeklyCap: 'free_weekly_cap'
 };
 
 const BOOKING_COLUMNS = {

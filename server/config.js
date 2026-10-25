@@ -38,6 +38,7 @@ const config = {
   SWEEP_INTERVAL_SECONDS: int(env.SWEEP_INTERVAL_SECONDS, 600),
   // Attempts to ask a question that were never paid (cancelled, failed, timed out) are deleted after this many days.
   UNPAID_ATTEMPT_DAYS: int(env.UNPAID_ATTEMPT_DAYS, 7),
+  // A mentor's price: 0 (they answer for free: docs/CLAUDE-CODE-FREE-ANSWERS.md), or PRICE_MIN to PRICE_MAX lari.
   PRICE_MIN: 5,
   PRICE_MAX: 2000,
   // The range /apply.html suggests to a new mentor ("most new mentors start between 20 and 60 ₾"); only advice, any price in range is fine.
@@ -88,6 +89,11 @@ const config = {
   PAYOUT_DAILY_LIMIT_GEL: Math.max(1, int(env.PAYOUT_DAILY_LIMIT_GEL, 3000)),
   BOOKINGS_PER_HOUR: Math.max(0, int(env.BOOKINGS_PER_HOUR, 10)),
   MAX_OPEN_UNPAID_BOOKINGS: Math.max(0, int(env.MAX_OPEN_UNPAID_BOOKINGS, 3)),
+  // Free questions (nothing stops a flood of them but these): open (asked, not answered yet) per asker with one mentor, per asker in all,
+  // and the mentor's own weekly number (users.free_weekly_cap, 10 unless they change it; 1 to 100).
+  FREE_OPEN_PER_MENTOR: 2,
+  FREE_OPEN_TOTAL: 5,
+  FREE_WEEKLY_CAP_MAX: 100,
   TBC_MAX_EXPIRATION_MINUTES: Math.max(1, int(env.TBC_MAX_EXPIRATION_MINUTES, 12)),
   TBC_SUBTOTAL_FIELD: ['subTotal', 'subtotal'].includes(env.TBC_SUBTOTAL_FIELD) ? env.TBC_SUBTOTAL_FIELD : 'subTotal',
 

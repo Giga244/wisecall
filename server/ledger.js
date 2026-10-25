@@ -41,6 +41,7 @@ const holdDays = () => Math.max(config.PAYOUT_HOLD_DAYS, config.DISPUTE_DAYS);
 // The booking row is locked and must still be answered: a refund that won the race (it locks the same row) leaves no payout behind, and
 // one that comes after finds this payout and voids it (docs/AUDIT.md #6).
 async function onAnswered(booking, from) {
+  if (!(booking.mentorNetAmount > 0)) return; // (a free question: nothing is earned, so no payout row)
   const payableAt = new Date(new Date(from || booking.answeredAt || Date.now()).getTime() + holdDays() * 86400000);
   await query(
     `INSERT INTO payouts (booking_id, mentor_id, amount, currency, payable_at)

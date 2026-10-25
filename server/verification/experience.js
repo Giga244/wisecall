@@ -244,7 +244,7 @@ function missingFor(user, evidence, stepMap) {
   if (!user.customNiche) missing.push('field');
   if (!(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) missing.push('niche');
   if (!user.story || size(user.story) < LIMITS.storyMin || looksRepeated(user.story)) missing.push('story');
-  if (!user.price) missing.push('price');
+  if (user.price === null || user.price === undefined) missing.push('price'); // (0 is a price: free)
   if (evidence.filter((e) => e.kind !== 'work_email' || e.checkStatus === 'ok').length < LIMITS.evidenceMin) missing.push('evidence');
   if (rules.isRegulated(user.niche)) {
     const has = (s) => stepMap[s] && ['pending', 'passed'].includes(steps.effectiveStatus(stepMap[s]));
@@ -286,7 +286,7 @@ function profileGaps(user) {
   if (!user.story || size(user.story) < LIMITS.storyMin) gaps.push('story');
   if (!user.headline || !String(user.headline).trim()) gaps.push('headline');
   if (!user.customNiche || !(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) gaps.push('field');
-  if (!user.price) gaps.push('price');
+  if (user.price === null || user.price === undefined) gaps.push('price');
   return gaps;
 }
 
@@ -356,7 +356,7 @@ async function applicationFor(user, stepMap) {
   return {
     form: {
       roleTitle: user.roleTitle || '', niche: user.niche || null, customNiche: user.customNiche || '', regulatedByWords: regulatedByWords(user), specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
-      story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price || null
+      story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price === undefined ? null : user.price // (0: answers for free)
     },
     evidence: evidence.map(evidenceForMentor),
     missing: missingFor(user, evidence, stepMap),

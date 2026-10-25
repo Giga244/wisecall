@@ -189,7 +189,12 @@
       <form class="apply-step" data-step="2" novalidate>
         <h1 tabindex="-1">${esc(t('apply.price.title'))}</h1>
         <p class="apply-lead">${esc(fill('apply.price.lead', { min: config.priceMin, max: config.priceMax }))}</p>
-        <div class="apply-field">
+        <fieldset class="apply-field price-mode">
+          <legend>${esc(t('price.mode.legend'))}</legend>
+          <label class="checkbox-row"><input type="radio" name="priceMode" value="free"${user.price === 0 ? ' checked' : ''}> <span>${esc(t('price.mode.free'))}</span></label>
+          <label class="checkbox-row"><input type="radio" name="priceMode" value="paid"${user.price === 0 ? '' : ' checked'}> <span>${esc(t('price.mode.paid'))}</span></label>
+        </fieldset>
+        <div class="apply-field" id="apPaidBox"${user.price === 0 ? ' hidden' : ''}>
           <label for="apPrice">${esc(t('apply.f.price'))}</label>
           <div class="apply-money"><input id="apPrice" name="price" type="number" min="${config.priceMin}" max="${config.priceMax}" step="1" inputmode="numeric" value="${esc(user.price || '')}" aria-describedby="apPriceSuggest apPriceYou" required><span aria-hidden="true">₾</span></div>
           <p class="hint" id="apPriceSuggest">${esc(fill('apply.price.suggest', { from: config.priceSuggestMin || 20, to: config.priceSuggestMax || 60 }))}</p>
@@ -500,6 +505,8 @@
       if (check && chars(story) < v.limits.storyMin) { stepError(fill('apply.err.story', { min: v.limits.storyMin })); form.story.focus(); return false; }
       await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: { story, sampleAnswer: form.sampleAnswer.value } });
     } else if (step === 2) {
+      // "Answer for free" is price 0 (docs/CLAUDE-CODE-FREE-ANSWERS.md).
+      if (form.priceMode.value === 'free') { if (user.price !== 0) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price: 0 } }); return true; }
       const raw = form.price.value.trim();
       const price = Number(raw);
       if (raw === '' && !check) return true;
@@ -722,12 +729,16 @@
       const input = form.price;
       const out = form.querySelector('#apPriceYou') || root.querySelector('#apPriceYou');
       const share = config.mentorSharePercent || 80;
+      const box = form.querySelector('#apPaidBox');
       const draw = () => {
+        const free = form.priceMode.value === 'free';
+        box.hidden = free;
         const p = Number(input.value);
         const valid = Number.isInteger(p) && p >= config.priceMin && p <= config.priceMax;
-        out.textContent = valid ? fill('apply.price.you', { price: p, you: (Math.round(p * share) / 100).toFixed(2).replace(/\.00$/, ''), share }) : fill('apply.price.share', { share });
+        out.textContent = free ? t('price.mode.freeNote') : valid ? fill('apply.price.you', { price: p, you: (Math.round(p * share) / 100).toFixed(2).replace(/\.00$/, ''), share }) : fill('apply.price.share', { share });
       };
       input.addEventListener('input', draw);
+      form.querySelectorAll('input[name="priceMode"]').forEach((r) => r.addEventListener('change', () => { draw(); if (r.value === 'paid' && r.checked) input.focus(); }));
       draw();
     }
     if (current === 3) {

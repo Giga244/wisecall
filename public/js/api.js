@@ -68,7 +68,8 @@
 
   // Money is Georgian lari. The server stores amounts as whole tetri (1/100 lari).
   const LARI = '₾';
-  const formatPrice = (lari) => `${Number(lari)} ${LARI}`;
+  // A mentor's price in whole lari; 0 is "Free" (they answer for free: docs/CLAUDE-CODE-FREE-ANSWERS.md).
+  const formatPrice = (lari) => (Number(lari) === 0 ? ((window.WisecallI18n && WisecallI18n.t('price.free')) || 'Free') : `${Number(lari)} ${LARI}`);
   const formatAmount = (tetri) => `${(tetri / 100).toFixed(2)} ${LARI}`;
   // The length the server counts for a question or an answer: blanks at both ends removed, a run of blanks counted once.
   const textLength = (s) => [...String(s).replace(/\r\n?/g, '\n').trim().replace(/\s+/g, ' ')].length;

@@ -26,7 +26,7 @@
         ${WisecallBadges.row(e.badges)}
         <div class="card-bottom">
           <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${t('expert.reviewsShort')})` : t('expert.noReviewsYet')}</span>
-          <span class="price">${WisecallAPI.formatPrice(e.price)}<span> ${t('expert.perQuestion')}</span></span>
+          <span class="price${e.price === 0 ? ' is-free' : ''}">${WisecallAPI.formatPrice(e.price)}${e.price === 0 ? '' : `<span> ${t('expert.perQuestion')}</span>`}</span>
         </div>
         <span class="btn btn-primary btn-sm btn-block">${t('expert.ask')}</span>
       </a>`;

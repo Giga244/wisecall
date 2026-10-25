@@ -442,7 +442,7 @@ async function recent() {
 async function overview() {
   const { rows: [m] } = await query(
     `SELECT COALESCE(sum(amount - COALESCE(refunded_amount, 0)) FILTER (WHERE status IN ('paid', 'answered')), 0)::bigint AS received,
-            COALESCE(sum(platform_fee_amount - round(COALESCE(refunded_amount, 0)::numeric * platform_fee_amount / amount)) FILTER (WHERE status = 'answered'), 0)::bigint AS fee
+            COALESCE(sum(platform_fee_amount - round(COALESCE(refunded_amount, 0)::numeric * platform_fee_amount / NULLIF(amount, 0))) FILTER (WHERE status = 'answered' AND amount > 0), 0)::bigint AS fee
        FROM bookings`);
   const { rows: [h] } = await query(`SELECT COALESCE(sum(amount) FILTER (WHERE status = 'pending'), 0)::bigint AS held FROM payouts`);
   const received = Number(m.received);

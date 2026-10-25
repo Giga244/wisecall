@@ -91,7 +91,7 @@
     document.getElementById('askSheetTitle').textContent = prelaunch ? t('expert.prelaunch.title') : t('expert.askTitle').replace('{name}', expert.name);
     sheetEl.querySelector('.sheet-close').setAttribute('aria-label', t('sheet.close'));
     bar.innerHTML = `
-      <div class="ask-bar-price"><strong>${WisecallAPI.formatPrice(expert.price)}</strong><span>${t('expert.priceLabel')}</span></div>
+      <div class="ask-bar-price"><strong>${WisecallAPI.formatPrice(expert.price)}</strong>${expert.price === 0 ? '' : `<span>${t('expert.priceLabel')}</span>`}</div>
       <button type="button" class="btn btn-primary btn-lg" id="askOpen" aria-haspopup="dialog" aria-expanded="false" aria-controls="askSheet">${t(prelaunch ? 'wait.join' : 'expert.askCta')}</button>`;
     const open = bar.querySelector('#askOpen');
     open.addEventListener('click', () => sheet.open(open));
@@ -306,13 +306,15 @@
   let codeTried = false;
   const NOTE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>';
 
+  const free = expert.price === 0;
   const askHeader = () => `
     <h2>${escapeHtml(t('expert.askTitle').replace('{name}', expert.name))}</h2>
-    <p class="ask-price"><strong>${WisecallAPI.formatPrice(expert.price)}</strong><span>${t('expert.priceLabel')}</span></p>`;
+    <p class="ask-price${free ? ' is-free' : ''}"><strong>${WisecallAPI.formatPrice(expert.price)}</strong>${free ? '' : `<span>${t('expert.priceLabel')}</span>`}</p>`;
+  // (a free question has no bank and nothing to refund: docs/CLAUDE-CODE-FREE-ANSWERS.md)
   const askNotes = () => `
     <ul class="ask-notes">
-      <li>${NOTE_ICON}<span>${t('expert.refundNote')}</span></li>
-      <li>${NOTE_ICON}<span>${t('expert.secureNote')}</span></li>
+      ${free ? `<li>${NOTE_ICON}<span>${t('expert.freeNote')}</span></li>` : `<li>${NOTE_ICON}<span>${t('expert.refundNote')}</span></li>
+      <li>${NOTE_ICON}<span>${t('expert.secureNote')}</span></li>`}
     </ul>
     <p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
 
@@ -381,6 +383,11 @@
       area.innerHTML = `${askHeader()}<p class="muted">${t('expert.ownProfile')}</p>`;
       return;
     }
+    // This week's free questions are taken: back on Monday.
+    if (free && expert.freeFull) {
+      area.innerHTML = `${askHeader()}<p class="ask-full" role="status">${escapeHtml(t('expert.freeFull'))}</p>${askNotes()}`;
+      return;
+    }
     area.innerHTML = `
       ${askHeader()}
       ${noticeKey ? `<p class="pay-notice ${noticeKey === 'expert.paymentCancelled' ? 'cancelled' : 'failed'}" id="payNotice" role="status" tabindex="-1">${escapeHtml(t(noticeKey))}</p>` : ''}
@@ -390,17 +397,17 @@
           <textarea id="question" rows="5" maxlength="${MAX_QUESTION}" placeholder="${escapeHtml(t('expert.questionPlaceholder'))}" aria-describedby="qMeta askError" required></textarea>
         </label>
         <div class="q-meta" id="qMeta"><span id="qHelp"></span><span id="qCount"></span></div>
-        <details class="ask-code" id="askCodeBox"${codeParam ? ' open' : ''}><summary class="small">${t('expert.code.label')}</summary>
+        ${free ? '' : `<details class="ask-code" id="askCodeBox"${codeParam ? ' open' : ''}><summary class="small">${t('expert.code.label')}</summary>
           <div class="ask-code-row"><label for="askCode" class="sr-only">${t('expert.code.label')}</label>
             <input type="text" id="askCode" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${escapeHtml(appliedCode ? appliedCode.code : codeParam)}">
             <button type="button" class="btn btn-outline btn-sm" id="askCodeApply">${t('expert.code.apply')}</button></div>
           <p class="small" id="askCodeNote" role="status"></p>
-        </details>
+        </details>`}
         <p class="form-error" id="askError" role="alert"></p>
-        <button type="submit" class="btn btn-primary btn-block" id="askBtn">${t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
+        <button type="submit" class="btn btn-primary btn-block" id="askBtn">${free ? t('expert.sendFree') : t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
       </form>
       ${askNotes()}`;
-    wireCode();
+    if (!free) wireCode(); else WisecallTurnstile.watch(document.getElementById('askForm'));
     const box = document.getElementById('question');
     box.value = draft;
     box.addEventListener('input', () => { draft = box.value; stored.set(draft); });
@@ -456,7 +463,15 @@
     submitBtn.disabled = true;
     try {
       stored.set(question); // (kept while the buyer is at the bank)
-      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question, ...(appliedCode ? { discountCode: appliedCode.code } : {}) } });
+      const form = document.getElementById('askForm');
+      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question, ...(appliedCode ? { discountCode: appliedCode.code } : {}), ...(free ? { turnstileToken: await WisecallTurnstile.token(form) } : {}) } });
+      // A free question is sent at once: no bank.
+      if (res.free) {
+        stored.set(''); draft = '';
+        askState = `<div class="booking-result success"><div class="success-icon" aria-hidden="true">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+        askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
+        return;
+      }
       if (res.checkoutUrl) {
         window.location.href = res.checkoutUrl;
         return;
@@ -466,7 +481,8 @@
     } catch (e) {
       submitBtn.disabled = false;
       if (e.code === 'emergency') { showEmergencyHelp(); return; }
-      const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings' };
+      const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings', email_not_verified: 'expert.err.freeVerify', free_limit_mentor: 'expert.err.freeMentor', free_limit_total: 'expert.err.freeTotal', free_full: 'expert.freeFull' };
+      if (free) { WisecallTurnstile.reset(document.getElementById('askForm')); const human = WisecallTurnstile.errorText(e.code); if (human) { errorEl.textContent = human; return; } }
       if (/^(invalid_code|code_)/.test(e.code || '')) { errorEl.textContent = t('live.err.' + e.code); appliedCode = null; return; }
       errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION)
         : (limits[e.code] ? t(limits[e.code]).replace('{n}', (e.data && e.data.max) || '') : (e.message2 || t('expert.sendError')));

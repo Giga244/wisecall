@@ -292,7 +292,7 @@
             <div class="card-name">${esc(m.name)}</div>
             <span class="muted small">${esc(m.email)}</span>
           </div>
-          <div class="booking-amount">${m.price ? WisecallAPI.formatPrice(m.price) : '—'}</div>
+          <div class="booking-amount">${m.price === null || m.price === undefined ? '—' : WisecallAPI.formatPrice(m.price)}</div>
         </div>
         <p class="booking-question">
           <strong>${esc(m.roleTitle || '—')}</strong> · ${m.customNiche ? `${esc(m.customNiche)} <span class="muted small">(${esc(m.niche ? t('niche.' + m.niche) : '—')})</span>` : (m.niche ? esc(t('niche.' + m.niche)) : '—')}

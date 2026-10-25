@@ -4,7 +4,7 @@ Anyone 18 or older with real, practical experience can apply. You don't need an 
 
 **The steps**
 1. **Create an account** and confirm your email with the 6-digit code.
-2. **Settings → Mentor:** turn on "I want to answer questions", choose your field and set your price (5–2,000 ₾ per question).
+2. **Settings → Mentor:** turn on "I want to answer questions", choose your field and set your price (5–2,000 ₾ per question) or choose to answer for free.
 3. **Settings → Verification**, in three parts:
    - **Identity:** a quick ID + selfie check with our identity provider, on your phone or computer. See "Verification steps".
    - **Experience:** one form: your title, your field, a few specialty tags, years of experience, your story (100–1,500 characters), a **sample answer** (150–3,000 characters) and **at least one piece of evidence** (a link to your work, a website, LinkedIn, a publication, a company, a diploma…).

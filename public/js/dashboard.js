@@ -21,6 +21,8 @@
 
   const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const money = (cents) => WisecallAPI.formatAmount(cents);
+  // A free question (amount 0: the mentor answers for free) shows "Free", and "Closed" instead of "Refunded" when it ended unanswered.
+  const isFree = (b) => b.amount === 0;
   const locale = () => (WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB');
   const fmtDate = (d) => WisecallI18n.formatDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
   const HOUR = 3600000;
@@ -77,12 +79,12 @@
     const reviewed = Boolean(b.rating && b.rating.mine);
     const steps = role === 'mentor'
       ? [
-        { key: 'paid', label: t('dash.tl.paid'), done: paid },
+        { key: 'paid', label: t(isFree(b) ? 'dash.tl.asked' : 'dash.tl.paid'), done: paid },
         { key: 'waiting', label: t('dash.tl.toAnswer'), done: answered, current: b.status === 'paid' },
         { key: 'answered', label: held ? t('dash.tl.checking') : t('dash.tl.answered'), done: answered && !held, current: held }
       ]
       : [
-        { key: 'paid', label: t('dash.tl.paid'), done: paid },
+        { key: 'paid', label: t(isFree(b) ? 'dash.tl.asked' : 'dash.tl.paid'), done: paid },
         { key: 'waiting', label: t('dash.tl.waiting'), done: answered, current: b.status === 'paid' },
         { key: 'answered', label: held ? t('dash.tl.checking') : t('dash.tl.answered'), done: answered && !held, current: held },
         { key: 'reviewed', label: t('dash.tl.reviewed'), done: reviewed, current: answered && !held && !reviewed }
@@ -96,6 +98,7 @@
   function bookingNote(b) {
     let text = '';
     if (b.status === 'refund_pending') text = t('dash.refund.pending');
+    else if (b.status === 'refunded' && isFree(b)) text = t(b.refundReason === 'no_answer_deadline' ? 'dash.free.closed.no_answer_deadline' : 'dash.free.closed.other');
     else if (b.status === 'refunded') {
       const known = ['no_answer_deadline', 'mentor_suspended', 'answer_rejected', 'declined_not_qualified', 'declined_against_rules', 'dispute'];
       text = t(known.includes(b.refundReason) ? 'dash.refund.' + b.refundReason : 'dash.refund.other');
@@ -106,7 +109,7 @@
     } else if (b.status === 'pending_payment') text = t('dash.pending.note');
     return text ? `<p class="booking-note">${escapeHtml(text)}</p>` : '';
   }
-  const statusLabel = (status) => t('dash.status.' + status) || status;
+  const statusLabel = (b) => (isFree(b) && ['paid', 'refunded'].includes(b.status) ? t('dash.status.free.' + b.status) : (t('dash.status.' + b.status) || b.status));
   const showsTimeline = (b) => ['paid', 'answered'].includes(b.status);
 
   // ---- My questions ------------------------------------------------------------------------------------------------
@@ -165,9 +168,9 @@
           ${WisecallAPI.avatar({ name: b.otherPartyName, color: b.otherPartyColor, photoUrl: b.otherPartyPhotoUrl })}
           <div>
             <div class="card-name"><a class="plain-link" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${escapeHtml(b.otherPartyName)}</a></div>
-            <span class="badge badge-${b.status}">${statusLabel(b.status)}</span>
+            <span class="badge badge-${b.status}">${statusLabel(b)}</span>
           </div>
-          <div class="booking-amount">${money(b.amount)}<span class="muted small block">${b.paidAt ? t('dash.paidOn').replace('{date}', fmtDate(b.paidAt)) : ''}</span></div>
+          <div class="booking-amount">${isFree(b) ? escapeHtml(t('price.free')) : `${money(b.amount)}<span class="muted small block">${b.paidAt ? t('dash.paidOn').replace('{date}', fmtDate(b.paidAt)) : ''}</span>`}</div>
         </div>
         ${showsTimeline(b) ? timelineHtml(b, 'seeker') : ''}
         <p class="booking-question">${escapeHtml(b.question)}</p>
@@ -216,7 +219,7 @@
   const declineHtml = (b) => `
     <details class="decline-box">
       <summary>${t('dash.decline.open')}</summary>
-      <form class="decline-form" data-id="${b.id}" data-amount="${b.amount}" novalidate>
+      <form class="decline-form" data-id="${b.id}" data-amount="${b.amount}"${isFree(b) ? ' data-free' : ''} novalidate>
         <fieldset>
           <legend class="small">${t('dash.decline.why')}</legend>
           <label class="checkbox-row"><input type="radio" name="reason" value="not_qualified"> <span>${t('dash.decline.not_qualified')}</span></label>
@@ -224,7 +227,7 @@
         </fieldset>
         <label class="field-label small" for="decline-note-${b.id}">${t('dash.decline.note')}</label>
         <textarea id="decline-note-${b.id}" rows="2" maxlength="500"></textarea>
-        <p class="small muted">${t('dash.decline.help')}</p>
+        <p class="small muted">${t(isFree(b) ? 'dash.decline.helpFree' : 'dash.decline.help')}</p>
         <p class="form-error" role="alert"></p>
         <button type="submit" class="btn btn-outline btn-sm">${t('dash.decline.send')}</button>
       </form>
@@ -288,9 +291,9 @@
           ${WisecallAPI.avatar({ name: b.otherPartyName, color: b.otherPartyColor, photoUrl: b.otherPartyPhotoUrl })}
           <div>
             <div class="card-name"><a class="plain-link" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${escapeHtml(b.otherPartyName)}</a></div>
-            <span class="badge badge-${b.status}">${statusLabel(b.status)}</span>
+            <span class="badge badge-${b.status}">${statusLabel(b)}</span>
           </div>
-          <div class="booking-amount">${money(b.mentorNetAmount)}<span class="muted small block">${t('dash.fee.note')}: ${money(b.platformFeeAmount)}</span></div>
+          <div class="booking-amount">${isFree(b) ? escapeHtml(t('price.free')) : `${money(b.mentorNetAmount)}<span class="muted small block">${t('dash.fee.note')}: ${money(b.platformFeeAmount)}</span>`}</div>
         </div>
         ${['paid', 'answered'].includes(b.status) ? WisecallRatings.askerLineHtml(b.askerRating) : ''}
         ${showsTimeline(b) ? timelineHtml(b, 'mentor') : ''}
@@ -336,12 +339,13 @@
       const reason = (form.querySelector('input[name="reason"]:checked') || {}).value;
       const err = form.querySelector('.form-error');
       if (!reason) { err.textContent = t('dash.decline.pick'); return; }
-      if (!(await WisecallDialog.confirm({ message: t('dash.decline.confirm'), confirmText: t('dash.decline.button').replace('{amount}', WisecallAPI.formatAmount(Number(form.dataset.amount))), danger: true }))) return;
+      const free = form.hasAttribute('data-free');
+      if (!(await WisecallDialog.confirm({ message: t(free ? 'dash.decline.confirmFree' : 'dash.decline.confirm'), confirmText: free ? t('dash.decline.buttonFree') : t('dash.decline.button').replace('{amount}', WisecallAPI.formatAmount(Number(form.dataset.amount))), danger: true }))) return;
       const btn = form.querySelector('button[type="submit"]');
       btn.disabled = true;
       try {
         await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/decline`, { method: 'POST', body: { reason, note: form.querySelector('textarea').value } });
-        WisecallNav.showToast(t('dash.decline.done'));
+        WisecallNav.showToast(t(free ? 'dash.decline.doneFree' : 'dash.decline.done'));
         load();
       } catch (e) {
         err.textContent = t(e.code === 'already_answered' ? 'dash.answer.err.already' : 'toast.error');

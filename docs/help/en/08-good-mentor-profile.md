@@ -8,7 +8,7 @@ Buyers choose in a few seconds. Your profile should answer: *who are you, what c
 
 **Photo.** A clear, friendly photo of your face. JPG, PNG or WebP up to 5 MB; we crop it square and remove hidden data such as location.
 
-**Price.** Between 5 ₾ and 2,000 ₾. Start where a first-time buyer would say yes; you can change it any time (questions already paid for keep their price).
+**Price.** Between 5 ₾ and 2,000 ₾, or **Answer for free**. Start where a first-time buyer would say yes; you can change it any time (questions already asked keep their price). If you answer for free, choose how many free questions you take a week (10 unless you change it); no fee is taken on free questions.
 
 **Languages and city.** Buyers look for someone who speaks their language.
 

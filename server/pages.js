@@ -195,7 +195,7 @@ async function sendProfile(res, row, asked) {
     // draws the full, interactive profile over it). Only what a visitor may see: About and the headline follow their visibility.
     const profile = await require('./profiles').view(u, null);
     const text = listable
-      ? (lang === 'ka' ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price} ₾. ${profile.bio || ''}` : `Ask ${u.name} (${u.roleTitle}) a question on Wisecall for ${u.price} GEL. ${profile.bio || ''}`)
+      ? (lang === 'ka' ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price === 0 ? 'უფასოდ' : `${u.price} ₾`}. ${profile.bio || ''}` : `Ask ${u.name} (${u.roleTitle}) a question on Wisecall ${u.price === 0 ? 'for free' : `for ${u.price} GEL`}. ${profile.bio || ''}`)
       : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`;
     vars.DESCRIPTION = escapeHtml(shortText(text));
     if (u.photoUpdatedAt) vars.OG_IMAGE = config.PUBLIC_URL + require('./util').photoUrl(u);
@@ -242,7 +242,7 @@ function profileSsr(p, stats, mentor, lang) {
   const facts = [
     p.city ? fact('profile.city', p.city) : '',
     (p.languages || []).length ? fact('profile.languages', p.languages.map((l) => d['lang.' + l] || l).join(', ')) : '',
-    mentor ? fact('expert.stat.price', ka ? `${mentor.price} ₾ ერთ კითხვაზე` : `${mentor.price} GEL per question`) : '',
+    mentor ? fact('expert.stat.price', mentor.price === 0 ? (ka ? 'უფასო' : 'Free') : (ka ? `${mentor.price} ₾ ერთ კითხვაზე` : `${mentor.price} GEL per question`)) : '',
     stats && stats.reviewCount ? fact('expert.stat.rating', ka ? `★ ${stats.ratingAvg} (${stats.reviewCount} შეფასება)` : `★ ${stats.ratingAvg} (${stats.reviewCount} reviews)`) : ''
   ].join('');
   const role = mentor ? mentor.roleTitle : p.headline;
@@ -786,7 +786,7 @@ async function sendAdvice(req, res, key) {
       ? `${name} რეგულირებადი სფეროა: აქაურმა მენტორებმა ლიცენზიაც წარმოადგინეს და ჩვენი გუნდის წევრმა შეამოწმა. პასუხები პირადი გამოცდილება და აზრია და არა პროფესიული რჩევა შენი კონკრეტული შემთხვევისთვის.`
       : `${name} is a regulated field: mentors here also showed their licence, and a person on our team checked it. Answers are personal experience and opinion, not professional advice for your situation.`) : '',
     MENTORS: rows.length
-      ? rows.map((r) => `<a class="expert-card" href="/u/${encodeURIComponent(r.username)}"><div class="card-top"><div><div class="card-name">${escapeHtml(r.name)}</div><div class="card-role">${escapeHtml([r.role_title, r.custom_niche].filter(Boolean).join(' · '))}</div></div></div><div class="card-bottom"><span class="price">${escapeHtml(String(r.price))} ₾</span></div></a>`).join('')
+      ? rows.map((r) => `<a class="expert-card" href="/u/${encodeURIComponent(r.username)}"><div class="card-top"><div><div class="card-name">${escapeHtml(r.name)}</div><div class="card-role">${escapeHtml([r.role_title, r.custom_niche].filter(Boolean).join(' · '))}</div></div></div><div class="card-bottom"><span class="price">${r.price === 0 ? (ka ? 'უფასო' : 'Free') : `${escapeHtml(String(r.price))} ₾`}</span></div></a>`).join('')
       : `<p class="muted">${escapeHtml(live ? (ka ? `${name}: მენტორები ჯერ არ არიან.` : `No mentors in ${name} yet.`) : (ka ? 'Wisecall მალე გაიხსნება.' : 'Wisecall opens soon.'))}</p>`,
     OTHER_NICHES: niches.active().filter((x) => x.key !== key).map((x) => `<li><a class="niche-chip" href="${ka ? '/ka' : ''}/advice/${x.key}"><span>${escapeHtml(ka ? x.ka : x.en)}</span></a></li>`).join('')
   };

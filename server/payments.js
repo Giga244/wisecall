@@ -182,10 +182,17 @@ async function handleCallback({ rawBody, headers, ip }) {
 async function refundBooking(bookingId, reason) {
   let claimed = null;
   let alreadyDone = null;
+  let closedFree = null;
   await tx(async (client) => {
     const booking = await lockBooking(client, bookingId);
     if (!booking) throw new PaymentError('not_found');
     if (booking.status === 'refunded') { alreadyDone = booking; return; }
+    // A free question (amount 0) is closed: no bank, no receipt, no ledger (server/freeQuestions.js).
+    if (booking.amount === 0) {
+      if (!['paid', 'answered'].includes(booking.status)) throw new PaymentError('not_refundable');
+      closedFree = await require('./freeQuestions').close(client, booking, reason);
+      return;
+    }
     if (booking.status === 'refund_pending' && !booking.refundError) { alreadyDone = booking; return; }
     if (!['paid', 'answered', 'refund_pending'].includes(booking.status)) throw new PaymentError('not_refundable');
     if (booking.partialRefundAmount) throw new PaymentError('refund_unconfirmed'); // (a partial refund's answer from the bank is not known yet)
@@ -201,6 +208,11 @@ async function refundBooking(bookingId, reason) {
     await ledger.onRefundRequested(client, claimed);
   });
   if (alreadyDone) return alreadyDone;
+  if (closedFree) {
+    const [seeker, mentor] = await Promise.all([getUserById(closedFree.seekerId), getUserById(closedFree.mentorId)]);
+    if (seeker && mentor) notify.notifyRefund(seeker, mentor, closedFree, closedFree.refundReason);
+    return closedFree;
+  }
 
   try {
     // After a partial refund (a dispute) only what is left goes back, as a partial return of that much (docs/REVIEW-2.md #2).

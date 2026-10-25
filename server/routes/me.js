@@ -28,7 +28,7 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   res.json({ user: user ? { ...meProfile(user), mentorPath: await experience.progressFor(user) } : null });
 }));
 
-const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'language', 'theme', 'sampleAnswer'];
+const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'freeWeeklyCap', 'language', 'theme', 'sampleAnswer'];
 // Part of the mentor application (step 2, "Experience"): they cannot change while it is being reviewed or once it is approved (the
 // mentor presses "Edit my application" first). The price is not part of the application and can change at any time.
 const APPLICATION_FIELDS = ['niche', 'roleTitle', 'sampleAnswer'];
@@ -55,8 +55,13 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     if (updates[field] === undefined) continue;
     if (field === 'price') {
       const n = Number(updates.price);
-      if (!Number.isFinite(n) || n < config.PRICE_MIN || n > config.PRICE_MAX) return res.status(400).json({ error: 'invalid_price' });
+      // 0 is "answer for free" (docs/CLAUDE-CODE-FREE-ANSWERS.md); a paid price is PRICE_MIN to PRICE_MAX.
+      if (updates.price === '' || !Number.isFinite(n) || (n !== 0 && (n < config.PRICE_MIN || n > config.PRICE_MAX))) return res.status(400).json({ error: 'invalid_price' });
       patch.price = Math.round(n);
+    } else if (field === 'freeWeeklyCap') {
+      const n = Number(updates.freeWeeklyCap);
+      if (!Number.isInteger(n) || n < 1 || n > config.FREE_WEEKLY_CAP_MAX) return res.status(400).json({ error: 'invalid_free_cap', max: config.FREE_WEEKLY_CAP_MAX });
+      patch.freeWeeklyCap = n;
     } else if (field === 'niche') {
       if (updates.niche !== null && !rules.isValidNiche(updates.niche)) return res.status(400).json({ error: 'invalid_niche' }); // ("Other" is chosen in the Experience form)
       patch.niche = updates.niche;

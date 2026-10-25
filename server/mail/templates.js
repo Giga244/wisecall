@@ -57,6 +57,21 @@ const S = {
       after: 'It can take 5–10 business days to appear on your statement.',
       reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: "the mentor's profile was suspended", answer_rejected: 'the answer did not meet our standards', declined_not_qualified: 'the mentor declined it: it is outside what they can answer well', declined_against_rules: "the mentor declined it: the question is against Wisecall's rules", dispute: 'our team agreed with your report about the answer', other: 'our team refunded it' }
     },
+    newFreeQuestion: {
+      subject: 'You have a new free question on Wisecall', heading: 'New free question',
+      intro: 'Someone asked you a free question:',
+      after: "Answer within {days} days. If you don't, the question closes and the asker is told.",
+      button: 'Answer the question'
+    },
+    freeClosedSeeker: {
+      subject: 'Your free question was closed', heading: 'Your question was closed',
+      intro: 'Your free question to {mentor} was closed because {reason}.',
+      after: 'Nothing was charged. You can ask it again, or ask another mentor.'
+    },
+    freeClosedMentor: {
+      subject: 'A free question was closed on Wisecall', heading: 'A free question was closed',
+      intro: 'The free question below was closed because {reason}.'
+    },
     refundMentor: {
       subject: 'A question was refunded on Wisecall', heading: 'A question was refunded',
       intro: 'The question below was refunded to the buyer because {reason}. You will not receive a payout for it.',
@@ -75,6 +90,10 @@ const S = {
     deadlineSoon: {
       subject: 'Answer soon or the question will be refunded', heading: 'A paid question is waiting',
       intro: 'You have a paid question waiting:', after: "If it isn't answered by {date}, the buyer is refunded automatically.", button: 'Answer now'
+    },
+    deadlineSoonFree: {
+      subject: 'Answer soon or the free question will close', heading: 'A free question is waiting',
+      intro: 'You have a free question waiting:', after: "If it isn't answered by {date}, it closes and the asker is told.", button: 'Answer now'
     },
     rateReminder: {
       subject: 'Please rate your Wisecall question', headingAsker: 'How was the answer?', headingMentor: 'How was the question?',
@@ -109,7 +128,7 @@ const S = {
     },
     disputeResolved: {
       subject: 'We decided on the reported answer', heading: 'Our decision',
-      outcomes: { full_refund: 'The asker is refunded in full.', partial_refund: 'The asker is refunded {amount}.', rejected: 'There is no refund: the answer stands.' },
+      outcomes: { full_refund: 'The asker is refunded in full.', partial_refund: 'The asker is refunded {amount}.', rejected: 'There is no refund: the answer stands.', upheld: 'Our team agreed with the report. The question was free, so there is nothing to refund.' },
       mentorShare: 'Your payout changes in proportion to the refund.', noteLabel: 'Why:', button: 'Open your dashboard'
     },
     followUpQuestion: {
@@ -341,6 +360,21 @@ const S = {
       after: 'თანხა ბანკის ამონაწერში 5–10 სამუშაო დღეში გამოჩნდება.',
       reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'მენტორის პროფილი შეჩერდა', answer_rejected: 'პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', declined_not_qualified: 'მენტორმა კითხვა უარყო: ეს სცდება იმას, რაზეც კარგად უპასუხებს', declined_against_rules: 'მენტორმა კითხვა უარყო: კითხვა Wisecall-ის წესებს ეწინააღმდეგება', dispute: 'ჩვენმა გუნდმა გაიზიარა შენი საჩივარი პასუხზე', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
     },
+    newFreeQuestion: {
+      subject: 'Wisecall-ზე ახალი უფასო კითხვა გაქვს', heading: 'ახალი უფასო კითხვა',
+      intro: 'შენ უფასო კითხვა დაგისვეს:',
+      after: 'უპასუხე {days} დღის განმავლობაში. თუ არ უპასუხე, კითხვა დაიხურება და მის ავტორს ვაცნობებთ.',
+      button: 'კითხვაზე პასუხი'
+    },
+    freeClosedSeeker: {
+      subject: 'შენი უფასო კითხვა დაიხურა', heading: 'კითხვა დაიხურა',
+      intro: '{mentor}-სთვის დასმული შენი უფასო კითხვა დაიხურა, რადგან {reason}.',
+      after: 'არაფერი ჩამოგეჭრა. შეგიძლია ხელახლა ჰკითხო ან სხვა მენტორს მიმართო.'
+    },
+    freeClosedMentor: {
+      subject: 'Wisecall-ზე უფასო კითხვა დაიხურა', heading: 'უფასო კითხვა დაიხურა',
+      intro: 'ქვემოთ მოცემული უფასო კითხვა დაიხურა, რადგან {reason}.'
+    },
     refundMentor: {
       subject: 'Wisecall-ზე კითხვის თანხა დაბრუნდა', heading: 'კითხვის თანხა დაბრუნდა',
       intro: 'ქვემოთ მოცემული კითხვის თანხა დაუბრუნდა მყიდველს, რადგან {reason}. ამ კითხვაზე ანაზღაურებას ვერ მიიღებ.',
@@ -359,6 +393,10 @@ const S = {
     deadlineSoon: {
       subject: 'უპასუხე მალე, თორემ კითხვის თანხა დაბრუნდება', heading: 'ფასიანი კითხვა გელოდება',
       intro: 'გელოდება ფასიანი კითხვა:', after: 'თუ {date}-მდე არ უპასუხე, თანხა ავტომატურად დაუბრუნდება მყიდველს.', button: 'უპასუხე ახლა'
+    },
+    deadlineSoonFree: {
+      subject: 'უპასუხე მალე, თორემ უფასო კითხვა დაიხურება', heading: 'უფასო კითხვა გელოდება',
+      intro: 'გელოდება უფასო კითხვა:', after: 'თუ {date}-მდე არ უპასუხე, კითხვა დაიხურება და მის ავტორს ვაცნობებთ.', button: 'უპასუხე ახლავე'
     },
     rateReminder: {
       subject: 'შეაფასე შენი Wisecall-ის კითხვა', headingAsker: 'როგორი იყო პასუხი?', headingMentor: 'როგორი იყო კითხვა?',
@@ -393,7 +431,7 @@ const S = {
     },
     disputeResolved: {
       subject: 'გადაწყვეტილება საჩივარზე პასუხის შესახებ', heading: 'ჩვენი გადაწყვეტილება',
-      outcomes: { full_refund: 'კითხვის ავტორს თანხა სრულად დაუბრუნდება.', partial_refund: 'კითხვის ავტორს დაუბრუნდება {amount}.', rejected: 'თანხა არ ბრუნდება: პასუხი ძალაში რჩება.' },
+      outcomes: { full_refund: 'კითხვის ავტორს თანხა სრულად დაუბრუნდება.', partial_refund: 'კითხვის ავტორს დაუბრუნდება {amount}.', rejected: 'თანხა არ ბრუნდება: პასუხი ძალაში რჩება.', upheld: 'ჩვენმა გუნდმა საჩივარი გაიზიარა. კითხვა უფასო იყო, ამიტომ დასაბრუნებელი თანხა არ არის.' },
       mentorShare: 'შენი ანაზღაურება თანხის დაბრუნების პროპორციულად იცვლება.', noteLabel: 'მიზეზი:', button: 'პირადი კაბინეტის გახსნა'
     },
     followUpQuestion: {
@@ -619,9 +657,26 @@ const BUILDERS = {
     heading: s.refundSeeker.heading,
     blocks: [{ p: fill(s.refundSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.refundSeeker.after }]
   }),
+  newFreeQuestion: (s, d) => ({
+    heading: s.newFreeQuestion.heading,
+    blocks: [{ p: s.newFreeQuestion.intro }, { quote: d.question }, { p: fill(s.newFreeQuestion.after, d), raw: true }, { button: s.newFreeQuestion.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  // A free question that ended without an answer (or was taken back): nothing to refund. The reasons are the refund emails' own.
+  freeClosedSeeker: (s, d) => ({
+    heading: s.freeClosedSeeker.heading,
+    blocks: [{ p: fill(s.freeClosedSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.freeClosedSeeker.after }]
+  }),
+  freeClosedMentor: (s, d) => ({
+    heading: s.freeClosedMentor.heading,
+    blocks: [{ p: fill(s.freeClosedMentor.intro, { reason: fill(s.refundMentor.reasons[d.reason] || s.refundMentor.reasons.other, d, false) }), raw: true }, { quote: d.question }]
+  }),
   refundMentor: (s, d) => ({
     heading: s.refundMentor.heading,
     blocks: [{ p: fill(s.refundMentor.intro, { reason: fill(s.refundMentor.reasons[d.reason] || s.refundMentor.reasons.other, d, false) }), raw: true }, { quote: d.question }]
+  }),
+  deadlineSoonFree: (s, d) => ({
+    heading: s.deadlineSoonFree.heading,
+    blocks: [{ p: s.deadlineSoonFree.intro }, { quote: d.question }, { p: fill(s.deadlineSoonFree.after, d), raw: true }, { button: s.deadlineSoonFree.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
   }),
   deadlineSoon: (s, d) => ({
     heading: s.deadlineSoon.heading,
@@ -663,7 +718,7 @@ const BUILDERS = {
     heading: s.disputeResolved.heading,
     blocks: [
       { p: fill(s.disputeResolved.outcomes[d.outcome] || '', d), raw: true },
-      ...(d.role === 'mentor' && d.outcome !== 'rejected' ? [{ p: s.disputeResolved.mentorShare }] : []),
+      ...(d.role === 'mentor' && ['full_refund', 'partial_refund'].includes(d.outcome) ? [{ p: s.disputeResolved.mentorShare }] : []),
       ...(d.note ? [{ quote: `${s.disputeResolved.noteLabel} ${d.note}` }] : []),
       { button: s.disputeResolved.button, url: `${config.PUBLIC_URL}/dashboard.html` }
     ]

@@ -120,9 +120,10 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
              GROUP BY 1`),
     query(`SELECT count(*)::int AS n FROM mentor_flags WHERE status = 'open'`),
     query(`SELECT niche, count(*)::int AS n FROM waitlist WHERE notified_at IS NULL GROUP BY niche ORDER BY n DESC, niche`),
-    query(`SELECT status, count(*)::int AS n, count(*) FILTER (WHERE paid_at > now() - interval '30 days')::int AS month FROM bookings GROUP BY status`),
+    // (free questions, amount 0, are counted on their own: docs/CLAUDE-CODE-FREE-ANSWERS.md)
+    query(`SELECT status, amount = 0 AS free, count(*)::int AS n, count(*) FILTER (WHERE paid_at > now() - interval '30 days')::int AS month FROM bookings GROUP BY 1, 2`),
     query(`SELECT COALESCE(sum(amount - COALESCE(refunded_amount, 0)) FILTER (WHERE status IN ('paid', 'answered')), 0)::bigint AS received,
-                   COALESCE(sum(platform_fee_amount - round(COALESCE(refunded_amount, 0)::numeric * platform_fee_amount / amount)) FILTER (WHERE status = 'answered'), 0)::bigint AS fee,
+                   COALESCE(sum(platform_fee_amount - round(COALESCE(refunded_amount, 0)::numeric * platform_fee_amount / NULLIF(amount, 0))) FILTER (WHERE status = 'answered' AND amount > 0), 0)::bigint AS fee,
                    COALESCE(sum(CASE WHEN status = 'refunded' THEN amount ELSE COALESCE(refunded_amount, 0) END) FILTER (WHERE paid_at IS NOT NULL), 0)::bigint AS refunded,
                    count(*) FILTER (WHERE refunded_amount IS NOT NULL AND status <> 'refunded')::int AS partial,
                    count(*) FILTER (WHERE provider = 'mock' AND paid_at IS NOT NULL)::int AS test_payments
@@ -140,14 +141,19 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
   const byKey = (rows, key, val = 'n') => Object.fromEntries(rows.map((r) => [r[key], r[val]]));
   const m = money.rows[0];
   const p = payouts.rows[0];
-  const q = byKey(bookings.rows, 'status');
+  const paidRows = bookings.rows.filter((r) => !r.free);
+  const freeRows = bookings.rows.filter((r) => r.free);
+  const q = byKey(paidRows, 'status');
   res.json({
     currency: config.CURRENCY,
     feePercent: config.PLATFORM_FEE_PERCENT,
     signups: users.rows[0],
     applications: { byStatus: byKey(apps.rows, 'status'), waitingByRisk: byKey(risks.rows, 'risk'), openFlags: flags.rows[0].n },
     waitlist: { byNiche: byKey(waiting.rows, 'niche'), total: waiting.rows.reduce((s, r) => s + r.n, 0) },
-    questions: { byStatus: q, paidLast30Days: bookings.rows.reduce((s, r) => s + r.month, 0) },
+    questions: {
+      byStatus: q, paidLast30Days: paidRows.reduce((s, r) => s + r.month, 0),
+      free: { byStatus: byKey(freeRows, 'status'), total: freeRows.reduce((s, r) => s + r.n, 0), last30Days: freeRows.reduce((s, r) => s + r.month, 0) }
+    },
     refunds: { pending: q.refund_pending || 0, full: q.refunded || 0, partial: m.partial, amount: Number(m.refunded) },
     disputes: { open: disputes.rows[0].open, resolved: disputes.rows[0].resolved, openSafety: safety.rows[0].n, openSupport: support.rows[0].n },
     money: { received: Number(m.received), fee: Number(m.fee), testPayments: m.test_payments },

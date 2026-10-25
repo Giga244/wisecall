@@ -4,7 +4,7 @@
 // is empty. A visitor whose browser asks not to be tracked (Do Not Track or Global Privacy Control) is not counted.
 //   pageview                           every public page that is sent (not the admin pages), or that the browser had fetched ahead
 //                                      and then opened (counted then, not when it was fetched)
-//   signup, mentor_application_started, mentor_application_submitted, waitlist_join, question_paid
+//   signup, mentor_application_started, mentor_application_submitted, waitlist_join, question_paid, question_free
 // Only the page's path is sent, never its query (a reset link carries a token), and events carry no personal data at all.
 const config = require('./config');
 

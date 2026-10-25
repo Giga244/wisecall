@@ -12,7 +12,8 @@ const ANSWER_REASONS = ['not_an_answer', 'wrong_or_harmful', 'off_topic', 'rude'
 // then, even after the answer's own DISPUTE_DAYS have ended.
 const IGNORED_FOLLOW_UP = 'mentor_ignored_follow_up';
 const REASONS = [...ANSWER_REASONS, IGNORED_FOLLOW_UP];
-const OUTCOMES = ['full_refund', 'partial_refund', 'rejected'];
+// (a free question has no money to return: its report is upheld or rejected; docs/CLAUDE-CODE-FREE-ANSWERS.md)
+const OUTCOMES = ['full_refund', 'partial_refund', 'rejected', 'upheld'];
 const DETAILS_MAX = 1500;
 
 class DisputeError extends Error {
@@ -153,8 +154,10 @@ async function resolve(admin, disputeId, { outcome, amount, note } = {}) {
   if (!isUuid(disputeId)) throw new DisputeError('not_found');
   const found = (await query('SELECT * FROM disputes WHERE id = $1', [disputeId])).rows[0];
   if (!found) throw new DisputeError('not_found');
+  if (found.ticket_id && outcome === 'upheld') throw new DisputeError('invalid_outcome');
   if (found.ticket_id) return resolveTicket(admin, found, { outcome, amount, note: text });
   const booking = await getBookingById(found.booking_id);
+  if (!(booking.amount === 0 ? ['rejected', 'upheld'] : ['full_refund', 'partial_refund', 'rejected']).includes(outcome)) throw new DisputeError('invalid_outcome');
   if (outcome === 'partial_refund' && !(Number.isInteger(amount) && amount >= 1 && amount < booking.amount)) throw new DisputeError('invalid_amount');
   const { rows } = await query(
     `UPDATE disputes SET status = 'resolved', outcome = $2, refund_amount = $3, resolution_note = $4, resolved_by = $5, resolved_at = now()

@@ -23,6 +23,8 @@
   // Mentors the server found for the search (it also matches their specialty tags, which are not sent to the page): ids, or null.
   let serverMatches = null;
   let sortMode = 'rating';
+  // "Free": only mentors who answer for free (?free=1), on top of the field.
+  let freeOnly = new URLSearchParams(window.location.search).get('free') === '1';
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -42,7 +44,9 @@
   function drawChips() {
     const used = new Set(allExperts.map((e) => e.niche));
     const keys = WisecallI18n.niches().map((n) => n.key).concat('other').filter((k) => used.has(k) || k === activeNiche);
+    const anyFree = freeOnly || allExperts.some((e) => e.price === 0);
     filters.innerHTML = [`<button type="button" class="chip" data-niche="all">${escapeHtml(t('niche.all'))}</button>`,
+      ...(anyFree ? [`<button type="button" class="chip chip-free${freeOnly ? ' active' : ''}" data-free aria-pressed="${freeOnly}">${escapeHtml(t('experts.filter.free'))}</button>`] : []),
       ...keys.map((k) => `<button type="button" class="chip" data-niche="${escapeHtml(k)}">${escapeHtml(t('niche.' + k))}</button>`)].join('');
   }
 
@@ -50,7 +54,7 @@
   function setNiche(niche, opts) {
     activeNiche = knownNiche(niche) ? niche : 'all';
     drawChips();
-    filters.querySelectorAll('.chip').forEach(c => {
+    filters.querySelectorAll('.chip[data-niche]').forEach(c => {
       const on = c.dataset.niche === activeNiche;
       c.classList.toggle('active', on);
       c.setAttribute('aria-pressed', String(on));
@@ -58,6 +62,7 @@
     if (!opts || opts.push !== false) {
       const url = new URL(window.location.href);
       if (activeNiche === 'all') url.searchParams.delete('niche'); else url.searchParams.set('niche', activeNiche);
+      if (freeOnly) url.searchParams.set('free', '1'); else url.searchParams.delete('free');
       window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     }
     render();
@@ -99,7 +104,7 @@
   // "8 experts" under the search, the number of filters in use on the Filters button, and the sheet's own button.
   let shown = 0;
   function summary() {
-    const active = (activeNiche !== 'all' ? 1 : 0) + (sortMode !== 'rating' ? 1 : 0);
+    const active = (activeNiche !== 'all' ? 1 : 0) + (sortMode !== 'rating' ? 1 : 0) + (freeOnly ? 1 : 0);
     filtersCount.hidden = active === 0;
     filtersCount.textContent = String(active);
     filtersBtn.setAttribute('aria-label', active ? `${t('experts.filters')} (${active})` : t('experts.filters'));
@@ -113,6 +118,7 @@
     if (prelaunch) { launchingSoon(); return; }
     if (!loaded) { grid.innerHTML = loadingHtml; summary(); return; }
     let list = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
+    if (freeOnly) list = list.filter((e) => e.price === 0);
     if (searchTerm) {
       const needle = searchTerm.toLowerCase();
       const has = (s) => Boolean(s) && String(s).toLowerCase().includes(needle);
@@ -158,7 +164,7 @@
         ${WisecallBadges.row(e.badges)}
         <div class="card-bottom">
           <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : t('expert.noReviewsYet')}</span>
-          <span class="price">${WisecallAPI.formatPrice(e.price)}<span> ${perQ}</span></span>
+          <span class="price${e.price === 0 ? ' is-free' : ''}">${WisecallAPI.formatPrice(e.price)}${e.price === 0 ? '' : `<span> ${perQ}</span>`}</span>
         </div>
         <span class="btn btn-primary btn-sm btn-block">${askLabel}</span>
       </a>
@@ -167,6 +173,7 @@
 
   filters.addEventListener('click', ev => {
     const btn = ev.target.closest('.chip');
+    if (btn && btn.hasAttribute('data-free')) { freeOnly = !freeOnly; setNiche(activeNiche); return; }
     if (btn) setNiche(btn.dataset.niche);
   });
 
@@ -198,6 +205,7 @@
   document.getElementById('filtersClear').addEventListener('click', () => {
     sortMode = 'rating';
     sortSelect.value = 'rating';
+    freeOnly = false;
     setNiche('all');
   });
 
