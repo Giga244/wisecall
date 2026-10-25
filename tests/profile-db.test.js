@@ -88,7 +88,7 @@ test('aggregates only: no name, email address, IBAN, question, answer or id, and
 });
 
 test('read-only: one READ ONLY transaction, rolled back, and not a single write statement; the report is never committed', () => {
-  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'profile-db.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'profile-db.js'), 'utf8').replace(/\r\n/g, '\n'); // (a Windows checkout has CRLF)
   assert.match(src, /await client\.query\('BEGIN'\);\n\s+await client\.query\('SET TRANSACTION READ ONLY'\);/);
   assert.match(src, /SHOW transaction_read_only/);
   assert.match(src, /await client\.query\('ROLLBACK'\)/);
