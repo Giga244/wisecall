@@ -1,6 +1,6 @@
 // Free answers (docs/CLAUDE-CODE-FREE-ANSWERS.md), in the browser: a mentor chooses "Answer for free" in Settings; Browse shows "Free" on
 // the card and a "Free" filter; the asker sends a question with no payment step and sees "Free" in the dashboard; the mentor's line
-// says "Free" too. Georgian: "უფასო".
+// says "Free" too. Georgian: "უფასო". (Named to run after e2e/full-flow.spec.js in one long run: that spec signs the e2e admin up.)
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
 const { client } = require('../tests/helpers');
