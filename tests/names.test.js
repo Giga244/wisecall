@@ -77,7 +77,9 @@ describe('name match in the verification flow (with the fake ID check)', () => {
 
   test('when every name matches, the step passes by itself (Georgian profile vs Latin ID)', async () => {
     await passId(mentor, 'Nino Beridze');
-    const s = await step();
+    // (the name is compared just after the ID check passes, server/verification/kyc.js afterApproved: wait for it rather than race it)
+    let s;
+    for (let i = 0; i < 50 && !(s && s.status === 'passed'); i++) { s = await step(); if (!(s && s.status === 'passed')) await wait(100); }
     assert.equal(s.status, 'passed');
     assert.equal(s.decided_by, null, 'decided by the system');
     assert.ok(s.evidence.results.some((r) => /Profile name.*matches/.test(r)));
