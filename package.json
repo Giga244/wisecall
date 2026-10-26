@@ -27,16 +27,16 @@
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.2",
     "cookie-parser": "^1.4.6",
-    "dotenv": "^18.0.8",
+    "dotenv": "^18.0.9",
     "express": "^4.19.2",
-    "jose": "^6.2.12",
+    "jose": "^6.2.13",
     "jsonwebtoken": "^9.0.2",
     "openid-client": "^6.8.8",
     "pdfkit": "^0.20.2",
     "pg": "^8.23.1",
     "qrcode": "^1.5.4",
     "sharp": "^0.35.5",
-    "tldts": "^7.4.18"
+    "tldts": "^7.4.19"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
