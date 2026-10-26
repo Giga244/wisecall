@@ -63,7 +63,8 @@ async function walk(page, { width, shots, tag }) {
   await expect.poll(async () => (await S.sql('SELECT role FROM users WHERE email = $1', [email]))[0].role).toBe('mentor');
 
   // 1. About you: what I do, the field in my own words (its category comes by itself), years.
-  await expect(page.locator('#applyProgressText')).toContainText('ნაბიჯი 1 / 5');
+  await expect(page.locator('#applyProgressText')).toHaveText('ნაბიჯი 1: შენ შესახებ');
+  await expect(page.locator('#applyDoneText')).toHaveText('დასრულებულია 0 / 5');
   await page.fill('#apHeadline', 'ეკონომიკის ასოცირებული პროფესორი თსუ-ში');
   await page.fill('#apField', 'მაკროეკონომიკა');
   await expect(page.locator('#apCategory [data-cat-name]')).toHaveText('ბიზნესი');

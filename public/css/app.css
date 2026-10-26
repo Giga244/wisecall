@@ -748,7 +748,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .apply { max-width: 760px; padding-bottom: 70px; font-size: 1.1rem; }
 .apply-head { margin: 4px 0 18px; }
 .apply-progress-text { margin: 0; font-weight: 800; font-size: 1.05rem; }
-.apply-progress-name { display: none; }
+.apply-done-count { margin: 6px 0 0; font-size: 0.88rem; font-weight: 700; color: var(--ink-soft); }
 .apply-bar { height: 14px; margin: 10px 0 14px; }
 .apply-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .apply-step-link { width: 100%; min-height: 48px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; background: none; border: 0; border-radius: var(--radius-sm); font: inherit; font-size: 0.85rem; line-height: 1.2; color: var(--ink-soft); cursor: pointer; text-align: center; }
@@ -818,7 +818,6 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
   .apply-steps { gap: 2px; }
   .apply-step-link { padding: 4px 0; }
   .apply-step-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .apply-progress-name { display: inline; }
   .apply-step-num { width: 28px; height: 28px; }
   .apply-nav { flex-direction: column-reverse; }
   .apply-nav .btn { width: 100%; margin-left: 0; }

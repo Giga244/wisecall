@@ -109,10 +109,11 @@
     if (!user) return { state: 'out', step: null };
     if (user.isAdmin) return { state: 'none', step: null };
     const p = user.mentorPath || { state: ['mentor', 'both'].includes(user.role) ? 'mentor' : 'asker' };
-    if (p.state === 'draft') return { state: 'draft', step: p.step || null };
+    if (p.state === 'draft') return { state: 'draft', step: p.step || null, done: Number.isInteger(p.done) ? p.done : null };
     return { state: p.state === 'mentor' ? 'none' : p.state, step: null };
   }
-  const hintOf = (user, m) => (!user ? null : (user.isAdmin ? 'admin' : { asker: '1', draft: `apply${m.step || ''}`, sent: 'sent' }[m.state] || 'mentor'));
+  const draftHint = (m) => `apply${m.step ? m.step + (Number.isInteger(m.done) ? `-${m.done}` : '') : ''}`; // ("apply2-2": step 2 next, 2 done)
+  const hintOf = (user, m) => (!user ? null : (user.isAdmin ? 'admin' : { asker: '1', draft: draftHint(m), sent: 'sent' }[m.state] || 'mentor'));
   function drawMentor(m) {
     if (m) mentorNow = m;
     const now = mentorNow;
@@ -278,5 +279,8 @@
     showToast._t = setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  window.WisecallNav = { initNav, showToast, setUnread, mentorPath: () => mentorNow };
+  // A page that changed where the application stands (/apply.html, after a step is saved) hands over the new user: the header's count and
+  // the hint follow at once, without a reload.
+  function setUser(user) { const m = mentorOf(user); setHint(hintOf(user, m)); drawMentor(m); }
+  window.WisecallNav = { initNav, showToast, setUnread, setUser, mentorPath: () => mentorNow };
 })();

@@ -254,13 +254,22 @@ function missingFor(user, evidence, stepMap) {
   return missing;
 }
 
-// The step of /apply.html (1-5) a mentor continues from: the first one with something still missing (5: the ID check and "Submit").
-const STEP_OF = { headline: 1, years: 1, field: 1, niche: 1, story: 2, price: 3, evidence: 4, license: 4, license_document: 4 };
-const applicationStep = (missing) => Math.min(5, ...missing.map((m) => STEP_OF[m] || 5));
+// How far an application is (docs/CLAUDE-CODE-APPLY-PROGRESS.md), the one count every page shows (the header's "2/5", the bar on
+// /apply.html, the Settings card): which of the five steps are done, how many, and the first one that is not (where "Continue" goes).
+// Steps 1-4 are done when nothing they ask for is missing; step 5 when the ID check has passed ("pending" is only started).
+//   missing: missingFor(); idStatus: the effective status of the id_kyc step (or undefined) -> { done: [5 booleans], count, next }
+const STEP_CODES = [['headline', 'years', 'field', 'niche'], ['story'], ['price'], ['evidence', 'license', 'license_document']];
+function applicationProgress(missing, idStatus) {
+  const done = [...STEP_CODES.map((codes) => !codes.some((c) => missing.includes(c))), idStatus === 'passed'];
+  const open = done.indexOf(false);
+  return { done, count: done.filter(Boolean).length, next: open === -1 ? 5 : open + 1 };
+}
+const progressOf = (missing, stepMap) => applicationProgress(missing, stepMap.id_kyc ? steps.effectiveStatus(stepMap.id_kyc) : undefined);
 
 // Where someone is on the way to becoming a mentor, for the "Become a mentor" button on every page (docs/CLAUDE-CODE-MENTOR-BUTTON-SIGNED-IN.md):
 //   asker   not a mentor applicant: "Become a mentor"
-//   draft   an application started and not sent (or sent back): "Continue your application · step N of 5" (step)
+//   draft   an application started and not sent (or sent back): "Continue your application" (step: the first unfinished step, done: how
+//           many of the 5 are done)
 //   sent    sent and waiting for a decision: "Application in review"
 //   mentor  approved (or suspended): nothing extra
 // (an admin sees nothing extra either: the pages check isAdmin)
@@ -269,7 +278,8 @@ async function progressFor(user) {
   if (user.verificationStatus === 'verified' || user.verificationStatus === 'suspended') return { state: 'mentor', step: null };
   if (submitted(user)) return { state: 'sent', step: null };
   const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
-  return { state: 'draft', step: applicationStep(missingFor(user, evidence, stepMap)) };
+  const p = progressOf(missingFor(user, evidence, stepMap), stepMap);
+  return { state: 'draft', step: p.next, done: p.count };
 }
 
 // Specialty tags are optional: a mentor who left them empty gets them from their own words (the field, split at commas and "and"), which
@@ -360,6 +370,7 @@ async function applicationFor(user, stepMap) {
     },
     evidence: evidence.map(evidenceForMentor),
     missing: missingFor(user, evidence, stepMap),
+    progress: progressOf(missingFor(user, evidence, stepMap), stepMap),
     submittedAt: user.applicationSubmittedAt,
     locked: isLocked(user),
     stage: await stageFor(user, stepMap)
@@ -394,5 +405,5 @@ async function setFieldByAdmin({ mentorId, admin, text, niche, notRegulated }) {
 module.exports = {
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
-  bioToStory, applicationStep, progressFor
+  bioToStory, applicationProgress, progressFor
 };

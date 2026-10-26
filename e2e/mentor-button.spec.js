@@ -14,7 +14,7 @@ const SHOTS = process.env.E2E_MENTOR_BUTTON_SHOTS;
 const STORY = 'I have taught macroeconomics at Tbilisi State University for eighteen years and worked on the National Bank inflation reports. Students ask me how to choose a master programme abroad.';
 const ADMIN = { name: 'E2E Admin', email: 'e2e-admin@example.com' };
 const KA = {
-  become: 'გახდი მენტორი', hero: 'ექსპერტი ვარ – გავხდე მენტორი', continue2: 'განაცხადის გაგრძელება · ნაბიჯი 2 / 5', short2: 'განაცხადი · 2/5',
+  become: 'გახდი მენტორი', hero: 'ექსპერტი ვარ – გავხდე მენტორი', continue2: 'განაცხადის გაგრძელება · დასრულებულია 1 / 5', short2: 'განაცხადი · 1/5',
   review: 'განაცხადი განხილვაშია', reviewShort: 'განხილვაშია', askerCard: 'გინდა შენი გამოცდილება სხვებს გაუზიარო?', draftCard: 'განაცხადის გაგრძელება – ნაბიჯი 2 / 5',
   sentCard: 'შენი მენტორის განაცხადი განხილვაშია'
 };
@@ -129,7 +129,8 @@ test('an asker: "გახდი მენტორი" next to Dashboard, to /a
   await check(browser, 'asker', people.asker, { nav: [KA.become, '/apply.html'], hero: [KA.hero, '/apply.html'], card: KA.askerCard });
 });
 
-test('an application started: "continue · step 2 of 5" to /apply.html?step=2 (short in the desktop header), on the home page and the dashboard', async ({ browser }) => {
+// (the words count the steps done, 1 of 5; the link goes to the first unfinished step, 2: docs/CLAUDE-CODE-APPLY-PROGRESS.md)
+test('an application started: "continue · 1 of 5 done" to /apply.html?step=2 (short in the desktop header), on the home page and the dashboard', async ({ browser }) => {
   await check(browser, 'draft', people.draft, { nav: [KA.short2, '/apply.html?step=2'], menu: KA.continue2, hero: [KA.continue2, '/apply.html?step=2'], card: KA.draftCard });
 });
 

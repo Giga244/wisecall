@@ -20,9 +20,11 @@
     const path = user.mentorPath || {};
     const sent = path.state === 'sent' || (status === 'pending' && Boolean(user.applicationSubmittedAt));
     if (sent) return { state: fix ? 'fix' : 'sent', fix, button: { key: 'settings.app.see', href: '/apply.html' } };
-    // (an ID check to take again is step 5)
+    // step: the first unfinished step, where "Continue" goes (an ID check to take again is step 5); done: how many of the five are done,
+    // the same count as the header's "2/5" and the bar on /apply.html (docs/CLAUDE-CODE-APPLY-PROGRESS.md)
     const step = fix === 'id_kyc' || fix === 'age' ? 5 : (path.step || 1);
-    return { state: fix ? 'fix' : 'draft', step, fix, button: { key: 'settings.app.continue', step, href: `/apply.html?step=${step}` } };
+    const done = Number.isInteger(path.done) ? path.done : 0;
+    return { state: fix ? 'fix' : 'draft', step, done, fix, button: { key: 'settings.app.continue', step, href: `/apply.html?step=${step}` } };
   }
 
   const TONE = { none: 'badge-muted', draft: 'badge-pending_payment', sent: 'badge-pending_payment', fix: 'badge-rejected', rejected: 'badge-rejected' };
@@ -32,7 +34,7 @@
     if (!card) return '';
     const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fill = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
-    const label = card.state === 'draft' ? fill('settings.app.state.draft', { n: card.step }) : t('settings.app.state.' + card.state);
+    const label = card.state === 'draft' ? fill('settings.app.state.draft', { n: card.done }) : t('settings.app.state.' + card.state);
     const text = { none: t('settings.app.text.none'), draft: t('settings.app.text.draft'), sent: fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }),
       fix: t('settings.app.text.fix'), rejected: t('settings.app.text.rejected') }[card.state];
     const button = card.button.key === 'settings.app.continue' ? fill('settings.app.continue', { n: card.button.step }) : t(card.button.key);
@@ -41,7 +43,7 @@
         <strong>${esc(t('settings.progress.title'))}</strong>
         <span class="badge ${TONE[card.state]}" data-app-state="${card.state}">${esc(label)}</span>
       </div>
-      ${card.state === 'draft' ? `<div class="vt-bar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="${card.step - 1}" aria-label="${esc(label)}"><span style="width:${((card.step - 1) / 5) * 100}%"></span></div>` : ''}
+      ${card.state === 'draft' ? `<div class="vt-bar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="${card.done}" aria-label="${esc(label)}"><span style="width:${(card.done / 5) * 100}%"></span></div>` : ''}
       ${card.fix ? `<p class="app-progress-failed" role="alert">${esc(t('settings.failed.' + card.fix))}${card.fix === 'name_match' ? ` <button type="button" class="linklike" data-goto-tab="profile">${esc(t('ap.name.fix'))}</button>` : ''}</p>` : ''}
       ${card.reason ? `<p class="app-card-reason"><strong>${esc(t('vt.reason'))}</strong> ${esc(card.reason)}</p>` : ''}
       <p class="app-card-text">${esc(text)}</p>

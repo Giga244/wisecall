@@ -2440,7 +2440,6 @@
   "meta.apply.title": "მენტორის განაცხადი — Wisecall",
   "meta.apply.description": "გახდი Wisecall-ის მენტორი ხუთ მოკლე ნაბიჯში. შეგიძლია შეინახო და მოგვიანებით დაასრულო.",
   "apply.crumb": "მენტორის განაცხადი",
-  "apply.progress": "ნაბიჯი {n} / {total}",
   "apply.step.about": "შენ შესახებ",
   "apply.step.story": "ისტორია",
   "apply.step.price": "ფასი",
@@ -2546,7 +2545,7 @@
   "wait.question": "შენი კითხვა:",
   "wait.questionNote": "მას შენს რეგისტრაციასთან ერთად ვინახავთ, რომ ვიცოდეთ, რომელი მენტორები მოვიწვიოთ. შენს ელფოსტასთან ერთად არასდროს ჩანს.",
   "nav.continueApp": "განაცხადის გაგრძელება",
-  "nav.continueStep": "განაცხადის გაგრძელება · ნაბიჯი {n} / 5",
+  "nav.continueStep": "განაცხადის გაგრძელება · დასრულებულია {n} / 5",
   "nav.continueShort": "განაცხადი · {n}/5",
   "nav.inReview": "განაცხადი განხილვაშია",
   "nav.inReviewShort": "განხილვაშია",
@@ -2558,7 +2557,7 @@
   "dash.mentor.sent.title": "შენი მენტორის განაცხადი განხილვაშია",
   "dash.mentor.sent.body": "გადაწყვეტილებას ელფოსტით შეგატყობინებთ.",
   "settings.app.state.none": "არ დაწყებულა",
-  "settings.app.state.draft": "ნაბიჯი {n} / 5",
+  "settings.app.state.draft": "დასრულებულია {n} / 5",
   "settings.app.state.sent": "გაგზავნილია – განხილვაშია",
   "settings.app.state.fix": "გამოსასწორებელია",
   "settings.app.state.rejected": "არ დამტკიცდა",
@@ -2604,5 +2603,7 @@
   "inbox.n.new_free_question": "ახალი უფასო კითხვა გაქვს.",
   "inbox.n.free_closed": "უფასო კითხვა დაიხურა.",
   "settings.payouts.notSavedFree": "ანაზღაურების მონაცემები ჯერ არ გაქვს. სანამ უფასოდ პასუხობ, ისინი არ გჭირდება.",
-  "settings.payouts.neededForPrice": "შენახულია. ფასით ექსპერტების სიაში რომ დარჩე, ქვემოთ ანაზღაურების მონაცემები მიუთითე."
+  "settings.payouts.neededForPrice": "შენახულია. ფასით ექსპერტების სიაში რომ დარჩე, ქვემოთ ანაზღაურების მონაცემები მიუთითე.",
+  "apply.stepTitle": "ნაბიჯი {n}: {name}",
+  "apply.doneCount": "დასრულებულია {n} / {total}"
 }

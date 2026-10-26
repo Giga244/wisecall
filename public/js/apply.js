@@ -43,17 +43,19 @@
     v = ver;
     user = me.user;
     iv = interview;
+    // (the header's "2/5" follows a saved step at once)
+    if (window.WisecallNav && WisecallNav.setUser) WisecallNav.setUser(user);
   }
 
   // ---- Which step ---------------------------------------------------------------------------------------------------------------------
   const missing = () => v.application.missing;
   const has = (...codes) => codes.some((c) => missing().includes(c));
-  const stepDone = (i) => !({ 0: has('headline', 'years', 'field', 'niche'), 1: has('story'), 2: has('price'), 3: has('evidence', 'license', 'license_document'), 4: false }[i]);
+  // Which steps are done, how many, and the first one that is not: the server's one count (experience.applicationProgress), the same
+  // the header's "2/5" and the Settings card show (docs/CLAUDE-CODE-APPLY-PROGRESS.md). Step 5 is done when the ID check has passed.
+  const progress = () => v.application.progress;
+  const stepDone = (i) => Boolean(progress().done[i]);
   const STEP_OF = { headline: 0, years: 0, field: 0, niche: 0, story: 1, price: 2, evidence: 3, license: 3, license_document: 3 };
-  function firstOpenStep() {
-    for (let i = 0; i < 4; i += 1) if (!stepDone(i)) return i;
-    return 4;
-  }
+  const firstOpenStep = () => progress().next - 1;
   function stepFromUrl() {
     const n = Number(new URLSearchParams(window.location.search).get('step'));
     return Number.isInteger(n) && n >= 1 && n <= 5 ? n - 1 : null;
@@ -78,16 +80,18 @@
   // ---- The progress bar ---------------------------------------------------------------------------------------------------------------
   function drawHead() {
     head.hidden = false;
-    // (on a phone the five names do not fit under the numbers: the current one is said here instead)
-    document.getElementById('applyProgressText').innerHTML = `${esc(fill('apply.progress', { n: current + 1, total: 5 }))}<span class="apply-progress-name" aria-hidden="true"> · ${esc(t('apply.step.' + STEPS[current]))}</span>`;
+    // Where you are ("Step 2: Story") is one thing; how much is done ("2 of 5 done", the bar) is another.
+    document.getElementById('applyProgressText').textContent = fill('apply.stepTitle', { n: current + 1, name: t('apply.step.' + STEPS[current]) });
+    const done = fill('apply.doneCount', { n: progress().count, total: 5 });
+    document.getElementById('applyDoneText').textContent = done;
     const bar = document.getElementById('applyBar');
-    bar.setAttribute('aria-valuenow', String(current + 1));
-    bar.setAttribute('aria-label', fill('apply.progress', { n: current + 1, total: 5 }));
-    bar.querySelector('span').style.width = `${((current + 1) / 5) * 100}%`;
+    bar.setAttribute('aria-valuenow', String(progress().count));
+    bar.setAttribute('aria-label', done);
+    bar.querySelector('span').style.width = `${(progress().count / 5) * 100}%`;
     document.getElementById('applySteps').innerHTML = STEPS.map((s, i) => `
-      <li class="${i === current ? 'is-current' : ''}${stepDone(i) && i < 4 ? ' is-done' : ''}">
+      <li class="${i === current ? 'is-current' : ''}${stepDone(i) ? ' is-done' : ''}">
         <button type="button" class="apply-step-link" data-goto="${i}"${i === current ? ' aria-current="step"' : ''}>
-          <span class="apply-step-num" aria-hidden="true">${stepDone(i) && i < 4 && i !== current ? '✓' : i + 1}</span>
+          <span class="apply-step-num" aria-hidden="true">${stepDone(i) && i !== current ? '✓' : i + 1}</span>
           <span class="apply-step-name">${esc(t('apply.step.' + s))}</span>
         </button>
       </li>`).join('');

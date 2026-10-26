@@ -67,7 +67,7 @@ test.beforeAll(async () => {
 // state -> [the card's label, the button's words, its address] (null: no card)
 const KA = {
   asker: ['არ დაწყებულა', 'განაცხადის დაწყება', '/apply.html'],
-  draft: ['ნაბიჯი 2 / 5', 'გაგრძელება – ნაბიჯი 2 / 5', '/apply.html?step=2'],
+  draft: ['დასრულებულია 1 / 5', 'გაგრძელება – ნაბიჯი 2 / 5', '/apply.html?step=2'], // (1 of 5 done; continue at step 2)
   sent: ['გაგზავნილია – განხილვაშია', 'ჩემი განაცხადის ნახვა', '/apply.html'],
   rejected: ['არ დამტკიცდა', 'ჩემი განაცხადის ნახვა', '/apply.html'],
   mentor: null,

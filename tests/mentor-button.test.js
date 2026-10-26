@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const { ROOT, resetDatabase, startServer, signupVerified, approveMentor } = require('./helpers');
-const { applicationStep } = require('../server/verification/experience');
+const { applicationProgress } = require('../server/verification/experience');
 
 let srv, base, admin;
 const STORY = 'I have taught macroeconomics at Tbilisi State University for eighteen years and worked on the National Bank inflation reports. Students ask me how to choose a master programme abroad.';
@@ -43,19 +43,19 @@ describe('where someone is, from the server', () => {
     assert.equal(await hintAtLogin('ana-asker@example.com'), '1');
   });
 
-  test('an application started and not sent: "draft" with the step to continue from, which follows what is filled in; the hint "apply"', async () => {
+  test('an application started and not sent: "draft" with the step to continue from and how many are done, which follow what is filled in; the hint "apply"', async () => {
     const c = await signupVerified(base, 'Dato Draft', 'dato-draft@example.com');
     assert.equal((await c.api('/me', { method: 'PATCH', body: { becomeMentor: true } })).status, 200);
-    assert.deepEqual(await path_(c), { state: 'draft', step: 1 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 1, done: 0 });
     await c.api('/me', { method: 'PATCH', body: { headline: 'Associate professor of economics at TSU' } });
     await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', yearsExperience: 18 } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 2 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 2, done: 1 });
     await c.api('/verification/experience', { method: 'PUT', body: { story: STORY } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 3 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 3, done: 2 });
     await c.api('/me', { method: 'PATCH', body: { price: 40 } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 4 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 4, done: 3 });
     await c.api('/verification/evidence', { method: 'POST', body: { url: 'https://www.tsu.ge/en/staff/dato-draft' } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 5 }, 'everything is there: the ID check and "Submit"');
+    assert.deepEqual(await path_(c), { state: 'draft', step: 5, done: 4 }, 'everything is there but the ID check: step 5 next, 4 of 5 done');
     assert.equal(await hintAtLogin('dato-draft@example.com'), 'apply', 'the page adds the step itself (public/js/nav.js)');
   });
 
@@ -80,20 +80,26 @@ describe('where someone is, from the server', () => {
     assert.match(read('public/js/nav.js'), /if \(user\.isAdmin\) return \{ state: 'none', step: null \};/);
   });
 
-  test('the step to continue from: the first step with something missing', () => {
-    assert.equal(applicationStep(['headline', 'story', 'price']), 1);
-    assert.equal(applicationStep(['niche']), 1);
-    assert.equal(applicationStep(['story', 'evidence']), 2);
-    assert.equal(applicationStep(['price']), 3);
-    assert.equal(applicationStep(['evidence']), 4);
-    assert.equal(applicationStep(['license_document']), 4);
-    assert.equal(applicationStep([]), 5);
-    assert.equal(applicationStep(['email']), 5);
+  test('how far an application is: the steps done, how many, and the first unfinished one (docs/CLAUDE-CODE-APPLY-PROGRESS.md)', () => {
+    const p = applicationProgress;
+    assert.deepEqual(p(['headline', 'years', 'field', 'story', 'price', 'evidence']), { done: [false, false, false, false, false], count: 0, next: 1 });
+    // steps 1 and 3 done, step 2 (the story) open: 2 of 5, and "Continue" goes to step 2
+    assert.deepEqual(p(['story', 'evidence']), { done: [true, false, true, false, false], count: 2, next: 2 });
+    assert.deepEqual(p(['evidence']), { done: [true, true, true, false, false], count: 3, next: 4 });
+    assert.deepEqual(p(['niche']), { done: [false, true, true, true, false], count: 3, next: 1 });
+    assert.deepEqual(p(['license_document']), { done: [true, true, true, false, false], count: 3, next: 4 });
+    // step 5 is the ID check: done only when it has passed ("pending" is a check just started)
+    assert.deepEqual(p([], undefined), { done: [true, true, true, true, false], count: 4, next: 5 });
+    assert.deepEqual(p([], 'pending'), { done: [true, true, true, true, false], count: 4, next: 5 });
+    assert.deepEqual(p([], 'passed'), { done: [true, true, true, true, true], count: 5, next: 5 }, 'all five: 5/5');
+    assert.deepEqual(p(['story'], 'passed'), { done: [true, false, true, true, true], count: 4, next: 2 });
+    // (the email is confirmed at sign-up: not one of the five)
+    assert.deepEqual(p(['email'], undefined).count, 4);
   });
 
   test('a made-up hint is not kept: only the known values', () => {
     const auth = read('server/auth.js');
-    assert.match(auth, /const HINTS = \/\^\(1\|admin\|mentor\|sent\|apply\[1-5\]\?\)\$\/;/);
+    assert.match(auth, /const HINTS = \/\^\(1\|admin\|mentor\|sent\|apply\(\?:\[1-5\]\(\?:-\[0-5\]\)\?\)\?\)\$\/;/);
     assert.match(auth, /res\.cookie\(HINT_COOKIE, HINTS\.test\(hint\) \? hint : '1'/);
   });
 });
@@ -109,8 +115,11 @@ describe('what the pages show', () => {
     const run = (hint) => new Function('signedIn', 'document', 'window', `${src}; return MENTOR;`)(hint, {}, {});
     assert.deepEqual(run(''), { state: 'out', step: null });
     assert.deepEqual(run('1'), { state: 'asker', step: null });
-    assert.deepEqual(run('apply3'), { state: 'draft', step: 3 });
-    assert.deepEqual(run('apply'), { state: 'draft', step: null });
+    // ("apply<next step>-<steps done>": docs/CLAUDE-CODE-APPLY-PROGRESS.md; an older hint without the count still works)
+    assert.deepEqual(run('apply2-2'), { state: 'draft', step: 2, done: 2 });
+    assert.deepEqual(run('apply5-4'), { state: 'draft', step: 5, done: 4 });
+    assert.deepEqual(run('apply3'), { state: 'draft', step: 3, done: null });
+    assert.deepEqual(run('apply'), { state: 'draft', step: null, done: null });
     assert.deepEqual(run('sent'), { state: 'sent', step: null });
     assert.deepEqual(run('mentor'), { state: 'none', step: null });
     assert.deepEqual(run('admin'), { state: 'none', step: null });
@@ -125,19 +134,23 @@ describe('what the pages show', () => {
     for (const lang of ['en', 'ka']) {
       const d = JSON.parse(read(`public/i18n/${lang}.json`));
       const say = (k) => d[k];
-      const html = (state, step, where = 'nav') => B.html({ state, step }, where, say);
+      const html = (state, step, where = 'nav', done) => B.html({ state, step, done }, where, say);
       assert.match(html('asker'), new RegExp(`href="/apply\\.html" class="btn btn-outline nav-mentor"[^>]*><span class="nm-full">${d['nav.becomeMentor']}</span>`));
-      assert.match(html('draft', 2), /href="\/apply\.html\?step=2"/);
-      assert.ok(html('draft', 2).includes(d['nav.continueStep'].replace('{n}', 2)));
-      assert.ok(html('draft', 2).includes(d['nav.continueShort'].replace('{n}', 2)), 'the short words where the header is narrow');
+      // (the link goes to the first unfinished step; the words say how many steps are done: steps 1 and 3 done, step 2 next)
+      assert.match(html('draft', 2, 'nav', 2), /href="\/apply\.html\?step=2"/);
+      assert.ok(html('draft', 2, 'nav', 2).includes(d['nav.continueStep'].replace('{n}', 2)));
+      assert.ok(html('draft', 2, 'nav', 2).includes(d['nav.continueShort'].replace('{n}', 2)), 'the short words where the header is narrow');
+      assert.ok(html('draft', 5, 'nav', 3).includes(d['nav.continueShort'].replace('{n}', 3)), 'the count, not the step');
+      assert.ok(html('draft', 2).includes(d['nav.continueApp']), 'no count known yet: no number');
       assert.match(html('sent'), new RegExp(`href="/apply\\.html" class="nav-mentor mentor-status"[^>]*><span class="nm-full">${d['nav.inReview']}</span>`));
-      assert.match(html('draft', 4, 'menu'), new RegExp(`class="btn btn-outline btn-lg btn-block mm-mentor"[^>]*>${d['nav.continueStep'].replace('{n}', 4)}</a>`));
+      assert.match(html('draft', 4, 'menu', 3), new RegExp(`href="/apply\\.html\\?step=4" class="btn btn-outline btn-lg btn-block mm-mentor"[^>]*>${d['nav.continueStep'].replace('{n}', 3)}</a>`));
       assert.equal(html('none'), '');
       assert.equal(html('out'), '');
     }
     const ka = JSON.parse(read('public/i18n/ka.json'));
     assert.equal(ka['nav.becomeMentor'], 'გახდი მენტორი');
-    assert.equal(ka['nav.continueStep'].replace('{n}', 2), 'განაცხადის გაგრძელება · ნაბიჯი 2 / 5');
+    assert.equal(ka['nav.continueStep'].replace('{n}', 2), 'განაცხადის გაგრძელება · დასრულებულია 2 / 5');
+    assert.equal(ka['nav.continueShort'].replace('{n}', 2), 'განაცხადი · 2/5');
     assert.equal(ka['nav.inReview'], 'განაცხადი განხილვაშია');
   });
 

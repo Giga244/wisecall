@@ -53,15 +53,16 @@ describe('the card at the top of Settings', () => {
 
   test('the right state, words and button for each case (and no card for an approved mentor or an admin)', () => {
     const asker = { role: 'seeker' };
-    const draft = { role: 'mentor', verificationStatus: 'none', mentorPath: { state: 'draft', step: 2 } };
+    // (steps 1 and 3 done, step 2 next: docs/CLAUDE-CODE-APPLY-PROGRESS.md)
+    const draft = { role: 'mentor', verificationStatus: 'none', mentorPath: { state: 'draft', step: 2, done: 2 } };
     const sent = { role: 'mentor', verificationStatus: 'pending', applicationSubmittedAt: '2026-10-20T10:00:00Z', mentorPath: { state: 'sent' } };
     const rejected = { role: 'mentor', verificationStatus: 'rejected', verificationNote: 'The link does not show your work.', mentorPath: { state: 'draft', step: 5 } };
     const failedId = { requirements: [{ step: 'id_kyc', status: 'failed' }] };
     assert.deepEqual(C.view(asker, null), { state: 'none', button: { key: 'settings.app.start', href: '/apply.html' } });
-    assert.deepEqual(C.view(draft, { requirements: [] }), { state: 'draft', step: 2, fix: null, button: { key: 'settings.app.continue', step: 2, href: '/apply.html?step=2' } });
+    assert.deepEqual(C.view(draft, { requirements: [] }), { state: 'draft', step: 2, done: 2, fix: null, button: { key: 'settings.app.continue', step: 2, href: '/apply.html?step=2' } });
     assert.equal(C.view(sent, { requirements: [] }).state, 'sent');
     assert.equal(C.view(sent, { requirements: [] }).button.href, '/apply.html');
-    assert.deepEqual(C.view(draft, failedId), { state: 'fix', step: 5, fix: 'id_kyc', button: { key: 'settings.app.continue', step: 5, href: '/apply.html?step=5' } }, 'an ID check to take again: step 5');
+    assert.deepEqual(C.view(draft, failedId), { state: 'fix', step: 5, done: 2, fix: 'id_kyc', button: { key: 'settings.app.continue', step: 5, href: '/apply.html?step=5' } }, 'an ID check to take again: step 5');
     assert.equal(C.view(sent, failedId).state, 'fix');
     assert.deepEqual(C.view(rejected, null), { state: 'rejected', reason: 'The link does not show your work.', fix: null, button: { key: 'settings.app.see', href: '/apply.html' } });
     assert.equal(C.view({ role: 'mentor', verificationStatus: 'verified' }, null), null, 'an approved mentor: no card');
@@ -76,6 +77,7 @@ describe('the card at the top of Settings', () => {
       assert.ok(html(asker, null).includes(`>${d['settings.app.start']}</a>`));
       assert.ok(html(draft, { requirements: [] }).includes(d['settings.app.continue'].replace('{n}', 2)));
       assert.ok(html(draft, { requirements: [] }).includes(d['settings.app.state.draft'].replace('{n}', 2)));
+      assert.match(html(draft, { requirements: [] }), /aria-valuenow="2"[^>]*><span style="width:40%">/, 'the bar: 2 of 5 done');
       assert.ok(html(sent, { requirements: [] }).includes(d['settings.app.state.sent']));
       assert.ok(html(draft, failedId).includes(d['settings.failed.id_kyc']), 'what failed, in one sentence');
       assert.ok(html(rejected, null).includes('The link does not show your work.'), 'the reason');
