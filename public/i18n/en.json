@@ -34,7 +34,7 @@
   "how.short.1.title": "Ask your question",
   "how.short.1.body": "Pick a mentor in your field and write what you're stuck on.",
   "how.short.2.title": "Pay once",
-  "how.short.2.body": "The mentor's own price, in lari, through a Georgian bank. No subscription.",
+  "how.short.2.body": "The mentor's own price, in lari, through a Georgian bank. No subscription. Some mentors answer for free.",
   "how.short.3.title": "Answer within {answerDays} days or full refund",
   "how.short.3.body": "Read it in your dashboard and by email. No answer in time? Your money comes back automatically.",
   "how.verify": "Every mentor is verified by our team —",
@@ -252,7 +252,7 @@
     {
       "h": "1. What Wisecall is",
       "p": [
-        "Wisecall is a marketplace. People who want advice (“seekers”) pay to ask a question, and people with experience (“mentors”) answer it.",
+        "Wisecall is a marketplace. People who want advice (“seekers”) pay the mentor’s price to ask a question, or nothing if the mentor answers for free, and people with experience (“mentors”) answer it.",
         "Mentors are independent people, not employees or agents of Wisecall. Wisecall is not a party to the advice itself. We provide the platform, take payment, and pay mentors."
       ]
     },
@@ -504,7 +504,7 @@
       "h": "How we verify mentors",
       "p": [
         "Nobody appears on Wisecall just by signing up. Every mentor confirms their email and passes a government ID and live selfie check with our identity partner: they must be 18 or older, and the name has to match their profile. Then they tell us about their experience, write a sample answer, and show at least one piece of evidence of their work: a portfolio, a website, a company, a diploma, publications or a product. Self-taught experts and business owners are welcome; nobody needs an employer.",
-        "Part of the review is automatic: we open the links a mentor gives, and an AI model reads the application to help our team. In regulated fields such as medicine, law and finance we go further: we check the professional license against the official register, and a person always makes the decision. Our team may also ask for a short video call.",
+        "Part of the review is automatic: we open the links a mentor gives, and an AI model reads the application to help our team. In regulated fields such as medicine, law and finance we go further: we check the professional license against the official register, and a person always makes the decision. Our team may also ask for one more document.",
         "A person on our team makes every rejection and writes down why. Your ID photos never reach Wisecall, and a mentor’s license number, evidence and documents are never public. Profiles show only badges for the checks passed, with the date.",
         "After approval we keep checking: a new mentor’s first answers are reviewed before you see them, buyers can report a mentor, low ratings are looked at again, and we can suspend a profile at once. We remove people who mislead others."
       ]
@@ -512,7 +512,7 @@
     {
       "h": "Fair for both sides",
       "p": [
-        "Mentors set their own price and answer in their own time. Wisecall keeps a small platform fee to run the service and pays the rest out to the mentor.",
+        "Mentors set their own price and answer in their own time. Some mentors answer for free. Wisecall keeps a small platform fee to run the service and pays the rest out to the mentor.",
         "Answers are personal experience and opinion, not professional medical, legal, or financial advice. See our Terms for details."
       ]
     },
@@ -654,7 +654,7 @@
   "vt.status.suspended": "Your profile is suspended",
   "vt.addPayout": "Add payout details",
   "vt.gate": "You can't receive questions or payouts until every required step is approved.",
-  "vt.level.regulated": "This is a regulated field, so we also check your professional license and meet you on a short video call.",
+  "vt.level.regulated": "This is a regulated field, so we also check your professional license, and we may ask for one more document.",
   "vt.level.business": "For business advice we also check your company, or your role in it.",
   "vt.level.standard": "We also want one piece of proof of your background: a work email, a diploma or certificate, or a portfolio.",
   "vt.anyOf": "Do at least one of these",
@@ -762,7 +762,7 @@
   "hv.3.title": "Licensed where it matters",
   "hv.3.body": "Doctors, lawyers, financial advisers and other regulated professions also give us their license, and a person checks it against the official register before approving them.",
   "hv.4.title": "A person decides",
-  "hv.4.body": "An automatic review helps our team, but a person makes every rejection and every decision in regulated fields. We may also meet a mentor on a short video call.",
+  "hv.4.body": "An automatic review helps our team, but a person makes every rejection and every decision in regulated fields. We may also ask a mentor for one more document.",
   "hv.5.title": "Watched after approval",
   "hv.5.body": "A new mentor's first answers are checked before you see them. Reports and low ratings are reviewed, and we can suspend a profile at once.",
   "hv.badges": "Look for these badges on a mentor’s profile:",
@@ -879,13 +879,13 @@
   "mentors.how.2.title": "Get verified",
   "mentors.how.2.body": "Confirm your ID and show proof of your experience. In regulated fields we also check your license. A person on our team reviews each step.",
   "mentors.how.3.title": "Start answering",
-  "mentors.how.3.body": "Once you are approved and have added your bank account, you appear in Browse experts. Answer from your dashboard, and withdraw your earnings by bank transfer once your balance reaches {payoutMin} ₾.",
+  "mentors.how.3.body": "Once you are approved, you appear in Browse experts (if you charge a price, add your bank account first). Answer from your dashboard, and withdraw your earnings by bank transfer once your balance reaches {payoutMin} ₾.",
   "mentors.cta": "Apply as a mentor",
   "faq.title": "Questions and answers",
   "faq.1.q": "How does Wisecall work?",
   "faq.1.a": "You choose a mentor, ask one question and pay the price on their profile. The mentor answers in your dashboard and by email, and you can rate the answer.",
   "faq.2.q": "How much does it cost?",
-  "faq.2.a": "Each mentor sets their own price per question, between {priceMin} and {priceMax} ₾. You pay once per question. There are no subscriptions or hidden fees.",
+  "faq.2.a": "Each mentor sets their own price per question, between {priceMin} and {priceMax} ₾. You pay once per question. There are no subscriptions or hidden fees. Some mentors answer for free.",
   "faq.3.q": "What if the mentor doesn't answer?",
   "faq.3.a": "Mentors have {answerDays} days to answer. If they don't, your payment is refunded in full automatically. You don't need to contact us.",
   "faq.4.q": "Is my payment safe?",
@@ -899,7 +899,7 @@
   "faq.8.q": "Is this professional medical, legal or financial advice?",
   "faq.8.a": "No. Answers are personal experience and opinion, not professional advice, and they don't replace a doctor, a lawyer or a financial adviser. In an emergency, call the emergency services.",
   "faq.9.q": "How do I become a mentor and get paid?",
-  "faq.9.a": "Sign up and apply in Settings. After we verify you and you add your bank account (IBAN), you appear in Browse experts. Each answer's earnings become available {holdDays} days later; withdraw once your balance reaches {payoutMin} ₾ and we send it by bank transfer.",
+  "faq.9.a": "Sign up and send your application. Once we verify you, you appear in Browse experts; if you charge a price, add your bank account (IBAN) first. Each answer's earnings become available {holdDays} days later; withdraw once your balance reaches {payoutMin} ₾ and we send it by bank transfer.",
   "faq.10.q": "Which languages does Wisecall support?",
   "faq.10.a": "The whole site works in English and Georgian, and you can switch at any time. Ask in the language you are most comfortable with.",
   "cta.title": "Ready to ask your question?",
@@ -1593,7 +1593,7 @@
   "settings.twoStep.admin": "As an admin you manage two-step verification on the admin page; it can't be turned off.",
   "settings.twoStep.verifyEmail": "Confirm your email address first: two-step verification can be turned on once it is confirmed.",
   "meta.index.title": "Wisecall — Ask verified experts in Georgia",
-  "meta.index.description": "Pay per question and get a written answer from a verified mentor within 7 days, or your money back. Founders, engineers, doctors and more.",
+  "meta.index.description": "Pay per question and get a written answer from a verified mentor within 7 days, or your money back. Some mentors answer for free. Founders, engineers, doctors and more.",
   "meta.about.title": "About Wisecall — how it works",
   "meta.about.description": "How Wisecall checks mentors, how payment and refunds work, and who we are.",
   "meta.faq.title": "Questions and answers — Wisecall",
@@ -2602,5 +2602,7 @@
   "inbox.ev.free_asked": "A free question was asked.",
   "inbox.ev.free_closed": "The free question was closed without an answer.",
   "inbox.n.new_free_question": "You have a new free question.",
-  "inbox.n.free_closed": "A free question was closed."
+  "inbox.n.free_closed": "A free question was closed.",
+  "settings.payouts.notSavedFree": "No payout details yet. You don't need them while you answer for free.",
+  "settings.payouts.neededForPrice": "Saved. Add your payout details below to stay in Browse experts with a price."
 }

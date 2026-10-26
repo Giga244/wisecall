@@ -85,7 +85,7 @@ for (const state of Object.keys(KA)) {
         await expect(card).toBeVisible();
         await expect(card.locator('[data-app-state]')).toHaveText(KA[state][0]);
         await expect(card.locator('[data-app-button]')).toHaveText(KA[state][1]);
-        await expect(card.locator('[data-app-button]')).toHaveAttribute('href', KA[state][2]);
+        await expect(card.locator('[data-app-button]')).toHaveAttribute('href', '/ka' + KA[state][2]); // (in Georgian, the Georgian page)
         if (state === 'rejected') await expect(card.locator('.app-card-reason')).toContainText('დაამატე უნივერსიტეტის გვერდი');
       } else await expect(card).toBeHidden();
       // never the old form: no experience or evidence form, no "Submit for review", no "I'd like to offer advice" checkbox

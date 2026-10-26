@@ -22,7 +22,7 @@ async function open(browser, lang = 'en') {
 async function noLive(page, where) {
   await page.waitForLoadState('networkidle');
   expect(await page.locator('a[href="/live"], a[href^="/live/"], a[href="/ka/live"], a[href^="/ka/live/"]').filter({ visible: true }).count(), where).toBe(0);
-  expect(await page.locator('#footerLive, #liveHome, #tab-live, #profileLive, #profileFollow').filter({ visible: true }).count(), where).toBe(0);
+  expect(await page.locator('#liveHome, #tab-live, #profileLive, #profileFollow').filter({ visible: true }).count(), where).toBe(0);
   expect(await page.locator('body').innerText(), where).not.toMatch(/live sessions?|ცოცხალი სესი/i);
 }
 

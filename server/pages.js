@@ -97,10 +97,23 @@ function translateBody(html, lang) {
   return html.slice(0, body) + rest;
 }
 
+// A link on a Georgian page leads to the Georgian page (/answers -> /ka/answers; docs/CLAUDE-CODE-WALKTHROUGH-FIXES.md #2): every page of
+// the site has a /ka address. Files (styles, scripts, fonts, images, the sitemap), the API and addresses already in Georgian stay as they
+// are. The same rule runs in the browser for links the scripts draw (public/js/i18n.js kaHref).
+const KA_SKIP = /^\/(?:ka(?:[/?#]|$)|api\/|js\/|css\/|fonts\/|img\/|images\/|brand\/|uploads?\/|mock-|auth\/)/;
+function kaHref(href) {
+  if (typeof href !== 'string' || !href.startsWith('/') || href.startsWith('//') || KA_SKIP.test(href)) return href;
+  const p = href.split(/[?#]/)[0];
+  if (/\.[a-z0-9]+$/i.test(p) && !/\.html$/i.test(p)) return href;
+  return '/ka' + href;
+}
+const kaLinks = (html) => html.replace(/(<a\b[^>]*?\shref=")([^"]+)(")/g, (m, a, href, b) => a + kaHref(href) + b);
+
 // The head of a page in its language, with its alternates. Pages without a canonical address (error pages) only get <html lang>.
 function localize(html, lang) {
   html = html.replace(/<html lang="[a-z-]+"/, () => `<html lang="${lang}"${config.LAUNCH_MODE === 'prelaunch' ? ' data-launch="prelaunch"' : ''}`);
   html = translateBody(html, lang);
+  if (lang === 'ka') html = kaLinks(html);
   const canon = /<link rel="canonical" href="([^"]*)">/.exec(html);
   if (!canon) return html;
   const enUrl = canon[1];
@@ -1051,4 +1064,4 @@ function errorPage(req, res) {
   sendHtml(res, 500, fill(html, baseVars(req.path)));
 }
 
-module.exports = { pageRoutes, seoRoutes, blockRawHtml, notFoundHandler, errorPage, languagePrefix, localize, shortText };
+module.exports = { pageRoutes, seoRoutes, blockRawHtml, notFoundHandler, errorPage, languagePrefix, localize, shortText, kaHref };

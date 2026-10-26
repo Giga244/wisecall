@@ -75,7 +75,8 @@ const notifyMentorDeadlineSoon = (mentor, booking) => {
 
 const notifyMentorDecision = (mentor, approved, note) => Promise.all([
   inbox().systemMessage(mentor.id, approved ? 'approved' : 'rejected', { note: note || null }),
-  safeSend('mentor decision', approved ? 'mentorApproved' : 'mentorRejected', mentor, { note })
+  // (a mentor who answers for free needs no payout details to be listed: docs/CLAUDE-CODE-WALKTHROUGH-FIXES.md #5)
+  safeSend('mentor decision', approved ? 'mentorApproved' : 'mentorRejected', mentor, { note, free: mentor.price === 0 })
 ]);
 
 const notifyPayoutPaid = (mentor, batch) => Promise.all([

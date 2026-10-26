@@ -36,6 +36,8 @@ async function pageFor(browser, width, who) {
   if (who) await S.logIn(page, { email: who.email });
   return { ctx, page };
 }
+// (in Georgian every link leads to the Georgian page: docs/CLAUDE-CODE-WALKTHROUGH-FIXES.md #2)
+const ka = (href) => '/ka' + href;
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: false }); };
 
 // What the desktop header, the home page and the dashboard show for one person. want: { nav: [words, href] | null, hero: [words, href] |
@@ -49,14 +51,14 @@ async function check(browser, key, who, want) {
   if (want.nav) {
     await expect(nav).toBeVisible();
     await expect(nav).toHaveText(want.nav[0], { useInnerText: true }); // (the words shown: the short ones where the header is narrow)
-    await expect(nav).toHaveAttribute('href', want.nav[1]);
+    await expect(nav).toHaveAttribute('href', ka(want.nav[1]));
   } else await expect(nav).toHaveCount(0);
   await expect(page.locator('.nav-links .nl-mentor')).toHaveCount(who ? 0 : 1);
   const hero = page.locator('[data-mentor-cta="hero"]');
   if (want.hero) {
     await expect(hero).toBeVisible();
     await expect(hero).toHaveText(want.hero[0]);
-    await expect(hero).toHaveAttribute('href', want.hero[1]);
+    await expect(hero).toHaveAttribute('href', ka(want.hero[1]));
   } else await expect(hero).toBeHidden();
   await shot(page, `1280-${key}-home`);
   if (who) {
@@ -65,7 +67,7 @@ async function check(browser, key, who, want) {
     const card = page.locator('#mentorCard .mentor-card');
     if (want.card) {
       await expect(card.locator('h2')).toHaveText(want.card);
-      await expect(card.locator('a')).toHaveAttribute('href', want.hero[1]);
+      await expect(card.locator('a')).toHaveAttribute('href', ka(want.hero[1]));
     } else await expect(card).toHaveCount(0);
     await shot(page, `1280-${key}-dashboard`);
   }
@@ -81,9 +83,9 @@ async function check(browser, key, who, want) {
   if (want.nav) {
     await expect(menu).toBeVisible();
     await expect(menu).toHaveText(want.menu || want.nav[0]);
-    await expect(menu).toHaveAttribute('href', want.nav[1]);
+    await expect(menu).toHaveAttribute('href', ka(want.nav[1]));
   } else await expect(menu).toHaveCount(0);
-  if (!who) await expect(phone.page.locator('.mm-links .nl-mentor')).toHaveAttribute('href', '/become-a-mentor.html');
+  if (!who) await expect(phone.page.locator('.mm-links .nl-mentor')).toHaveAttribute('href', ka('/become-a-mentor.html'));
   await shot(phone.page, `360-${key}-menu`);
   if (who && want.card) {
     await phone.page.goto('/dashboard.html');
@@ -144,5 +146,5 @@ test('a new asker sees the dashboard card right after signing up', async ({ page
   await page.addInitScript(() => { try { localStorage.setItem('wisecall_lang', 'ka'); } catch (e) { /* none */ } });
   await S.signUp(page, { name: 'ახალი მომხმარებელი', email: `new-${tag}@e2e.test` });
   await expect(page.locator('#mentorCard h2')).toHaveText(KA.askerCard);
-  await expect(page.locator('#mentorCard a')).toHaveAttribute('href', '/apply.html');
+  await expect(page.locator('#mentorCard a')).toHaveAttribute('href', ka('/apply.html'));
 });

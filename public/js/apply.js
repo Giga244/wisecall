@@ -443,7 +443,7 @@
         ${closed ? '' : interviewBlock()}
         <p class="apply-status"><strong>${esc(t('apply.done.status'))}</strong> ${esc(t('ap.rev.' + stage))}</p>
         <div class="apply-actions">
-          ${approved && !user.hasPayoutDetails ? `<a class="btn btn-primary btn-lg" href="/settings.html?tab=payouts">${esc(t('vt.addPayout'))}</a>` : ''}
+          ${approved && user.needsPayout ? `<a class="btn btn-primary btn-lg" href="/settings.html?tab=payouts">${esc(t('vt.addPayout'))}</a>` : ''}
           <a class="btn btn-outline btn-lg" href="/dashboard.html">${esc(t('apply.done.dashboard'))}</a>
           ${approved ? `<a class="btn btn-ghost btn-lg" href="/settings.html?tab=verification">${esc(t('apply.done.settings'))}</a>` : ''}
           ${closed ? '' : `<button type="button" class="btn btn-ghost btn-lg" data-edit${approved ? ' data-confirm="1"' : ''}>${esc(t('ap.edit'))}</button>`}

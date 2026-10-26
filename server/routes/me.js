@@ -117,7 +117,10 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     // Evidence pages are checked for the mentor's name, so an application already analysed is analysed again with the new name.
     if (experience.submitted(user)) require('../verification/analysis').afterNameChange(user.id);
   }
-  res.json({ user: meProfile(user) });
+  // An approved mentor who answered for free and now sets a price needs payout details to stay in Browse experts: the page asks for them
+  // now (and not before: a free mentor never needs a bank account).
+  const payoutNeeded = patch.price > 0 && existing.verificationStatus === 'verified' && !existing.payoutIbanEnc;
+  res.json({ user: meProfile(user), ...(payoutNeeded ? { payoutNeeded: true } : {}) });
 }));
 
 // The username (the /u/<name> address): once every 30 days; the old one keeps redirecting.

@@ -134,6 +134,32 @@
     return fillVars(currentDict[key] || key);
   }
 
+  // In Georgian, links lead to the Georgian pages (/answers -> /ka/answers): every page has a /ka address. Files, the API and addresses
+  // already in Georgian stay as they are. The server writes the links of the page it sends the same way (server/pages.js kaHref); this
+  // covers the links the scripts draw (the header, the footer, cards), now and whenever they draw more.
+  const KA_SKIP = /^\/(?:ka(?:[/?#]|$)|api\/|js\/|css\/|fonts\/|img\/|images\/|brand\/|uploads?\/|mock-|auth\/)/;
+  function kaHref(href) {
+    if (typeof href !== 'string' || !href.startsWith('/') || href.startsWith('//') || KA_SKIP.test(href)) return href;
+    const p = href.split(/[?#]/)[0];
+    if (/\.[a-z0-9]+$/i.test(p) && !/\.html$/i.test(p)) return href;
+    return '/ka' + href;
+  }
+  function kaLinks(root) {
+    const fix = (a) => { const h = a.getAttribute('href'); const k = kaHref(h); if (k !== h) a.setAttribute('href', k); };
+    if (root.nodeType !== 1) return;
+    if (root.matches('a[href]')) fix(root);
+    root.querySelectorAll('a[href]').forEach(fix);
+  }
+  let linkWatch = null;
+  function watchLinks() {
+    if (linkWatch || !document.documentElement) return;
+    kaLinks(document.documentElement);
+    linkWatch = new MutationObserver((list) => list.forEach((m) => {
+      if (m.type === 'attributes') kaLinks(m.target); else m.addedNodes.forEach(kaLinks);
+    }));
+    linkWatch.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['href'] });
+  }
+
   async function setLang(lang) {
     // On a Georgian address, English is the same page without /ka.
     if (lang !== 'ka' && onKaPath()) {
@@ -150,6 +176,7 @@
     const dict = await loadDict(lang);
     applyDict(dict);
     applyTitle(dict);
+    if (lang === 'ka') watchLinks();
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
     document.dispatchEvent(new CustomEvent('wisecall:lang-changed', { detail: { lang, dict } }));
     return dict;
@@ -161,6 +188,13 @@
 
   async function initI18n() {
     const lang = getLang();
+    // Georgian chosen earlier, on the English address of a page the server writes in its language (the help centre, answers, a field's
+    // page): go to its Georgian address, or the page would be English inside a Georgian header.
+    if (lang === 'ka' && !onKaPath() && document.querySelector('meta[name="wisecall-server-lang"]')) {
+      location.replace('/ka' + path() + location.search + location.hash);
+      return new Promise(() => {}); // (the Georgian page is on its way)
+    }
+    if (lang === 'ka') watchLinks();
     document.documentElement.lang = lang;
     const [dict, cfg] = await Promise.all([loadDict(lang), getConfig()]);
     setVarsFrom(cfg);
@@ -176,5 +210,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, popularFields, nicheName, fieldName, formatDate, path };
+  window.WisecallI18n = { initI18n, kaHref, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, popularFields, nicheName, fieldName, formatDate, path };
 })();

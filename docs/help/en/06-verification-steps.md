@@ -16,6 +16,6 @@ Buyers pay for real experience, so we check every mentor before they appear. Her
 - **Wisecall never receives pictures of your ID or your face.** The identity provider does the check and tells us the result, your verified name, date of birth and country. From the date of birth we only use "18 or older: yes/no".
 - The automatic check opens your evidence links to see whether they show your name. Links that clearly show your name or brand help most. Avoid link shorteners and brand-new websites.
 - **Nobody is ever rejected by the computer.** A person makes every rejection and tells you why.
-- Sometimes we may ask for a short **video interview** if something is unclear. You pick a time slot in Settings.
+- Sometimes, if something is unclear, we may ask for **one more document**. You upload it in your application.
 - Uploaded documents are encrypted, only our team can open them, and they're deleted 90 days after the decision.
 - Before launch, the ID step may say "ID checks open soon": you can fill in the rest meanwhile.

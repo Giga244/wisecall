@@ -31,7 +31,7 @@
       const data = await WisecallAPI.apiFetch('/me/payout');
       payoutNameInput.value = data.name || '';
       payoutIbanInput.value = data.iban || '';
-      payoutStatus.textContent = data.hasPayoutDetails ? t('settings.payouts.saved') : t('settings.payouts.notSaved');
+      payoutStatus.textContent = data.hasPayoutDetails ? t('settings.payouts.saved') : t(user.price === 0 ? 'settings.payouts.notSavedFree' : 'settings.payouts.notSaved');
       document.getElementById('payoutPasswordField').hidden = !user.hasPassword;
       document.getElementById('payoutReauth').hidden = Boolean(user.hasPassword);
       if (user.payoutHoldUntil && new Date(user.payoutHoldUntil) > new Date()) {
@@ -191,6 +191,8 @@
       const body = priceMode() === 'free' ? { price: 0, freeWeeklyCap: Number(document.getElementById('freeWeeklyCap').value) } : { price: Number(priceInput.value) };
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body });
       Object.assign(user, data.user);
+      // From free to a price: payout details are needed now, to stay in Browse experts.
+      if (data.payoutNeeded) { WisecallNav.showToast(t('settings.payouts.neededForPrice')); selectTab('payouts'); return; }
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       WisecallNav.showToast(t(e.code === 'invalid_price' ? 'settings.mentor.price.invalid' : (e.code === 'invalid_free_cap' ? 'price.cap.invalid' : 'toast.error')));

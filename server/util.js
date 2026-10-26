@@ -28,7 +28,8 @@ function meProfile(user) {
   // The encrypted IBAN never leaves the server through this; owners fetch it from /api/me/payout.
   const { passwordHash, resetTokenHash, resetTokenExpiresAt, emailVerifyCodeHash, emailVerifyCodeExpiresAt, payoutIbanEnc, ...rest } = user;
   return {
-    ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), hasPassword: Boolean(passwordHash), photoUrl: photoUrl(user), isListedMentor: isListable(user),
+    // needsPayout: payout details are still needed to be listed (a mentor who answers for free needs none)
+    ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), needsPayout: user.price !== 0 && !payoutIbanEnc, hasPassword: Boolean(passwordHash), photoUrl: photoUrl(user), isListedMentor: isListable(user),
     verificationState: verificationState(user),
     isAdmin: Boolean(user.email) && Boolean(user.emailVerified) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase())
   };
@@ -40,7 +41,7 @@ function meProfile(user) {
 function isListable(user) {
   return Boolean(user) && (user.role === 'mentor' || user.role === 'both') &&
     user.price !== null && user.price !== undefined && Boolean(user.niche) && Boolean(user.roleTitle) &&
-    user.verificationStatus === 'verified' && Boolean(user.payoutIbanEnc) && user.hasFailedRequiredStep === false &&
+    user.verificationStatus === 'verified' && (user.price === 0 || Boolean(user.payoutIbanEnc)) && user.hasFailedRequiredStep === false && // (free: no bank needed)
     !user.deletionRequestedAt && !user.deletedAt; // (an account being deleted is closed at once)
 }
 

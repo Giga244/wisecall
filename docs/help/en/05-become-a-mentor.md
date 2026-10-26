@@ -4,12 +4,9 @@ Anyone 18 or older with real, practical experience can apply. You don't need an 
 
 **The steps**
 1. **Create an account** and confirm your email with the 6-digit code.
-2. **Settings → Mentor:** turn on "I want to answer questions", choose your field and set your price (5–2,000 ₾ per question) or choose to answer for free.
-3. **Settings → Verification**, in three parts:
-   - **Identity:** a quick ID + selfie check with our identity provider, on your phone or computer. See "Verification steps".
-   - **Experience:** one form: your title, your field, a few specialty tags, years of experience, your story (100–1,500 characters), a **sample answer** (150–3,000 characters) and **at least one piece of evidence** (a link to your work, a website, LinkedIn, a publication, a company, a diploma…).
-   - **Review:** press **Submit for review**. An automatic check runs first, then a person on our team decides.
-4. **Settings → Payouts:** add the account holder's name and your Georgian IBAN. **You only appear on Wisecall after you're approved and your payout details are saved.**
+2. **Your application** (the "Become a mentor" button, or [the application](/apply.html)), in five short steps: about you (a headline, your field, years of experience), your story (100–1,500 characters), your price (5–2,000 ₾ per question, or answer for free), proof of your work (at least one link: your work, a website, LinkedIn, a publication, a company, a diploma…) and a quick ID + selfie check with our identity provider. See "Verification steps".
+3. **Send it.** An automatic check runs first, then a person on our team decides.
+4. **Payout details, if you charge a price:** in **Settings → Payouts**, add the account holder's name and your Georgian IBAN. **You appear on Wisecall once you're approved; with a price, your payout details must be saved too.** A mentor who answers for free needs no bank account.
 
 Applying takes about 10 minutes if you have your links ready.
 

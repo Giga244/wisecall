@@ -259,7 +259,7 @@
 
   // ---- Questions for me (mentors) -----------------------------------------------------------------------------------
   function receivedEmpty() {
-    const listed = user.verificationStatus === 'verified' && user.hasPayoutDetails;
+    const listed = user.verificationStatus === 'verified' && !user.needsPayout; // (a free mentor needs no payout details)
     const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
     return listed
       ? (prelaunch ? emptyState('dash.received.prelaunch.title', 'dash.received.prelaunch.body', '') : emptyState('dash.received.empty.title', 'dash.received.empty.body', ''))

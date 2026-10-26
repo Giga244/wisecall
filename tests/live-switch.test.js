@@ -121,8 +121,8 @@ describe('switched off (LIVE_SESSIONS=off, the default in production)', () => {
     assert.equal((await page(off.base, '/help/live-sessions')).status, 404);
     assert.equal((await page(off.base, '/ka/help/live-sessions')).status, 404);
     assert.doesNotMatch((await page(off.base, '/sitemap.xml')).html, /\/live/);
-    // (the scripts: the footer's link is hidden until the server says live sessions are on; the profile asks before drawing them)
-    assert.match(fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'footer.js'), 'utf8'), /<li id="footerLive" hidden>/);
+    // (the scripts: the footer has no link to live sessions at all (docs/CLAUDE-CODE-WALKTHROUGH-FIXES.md #3); the profile asks before drawing them)
+    assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'footer.js'), 'utf8'), /footerLive|href="\/live/);
     assert.match(fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'profile.js'), 'utf8'), /isMentor && !isSelf && liveOn \?/);
   });
 

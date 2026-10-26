@@ -153,6 +153,7 @@ const S = {
       subject: "You're approved as a Wisecall mentor", heading: 'Welcome aboard',
       intro: 'Your mentor application was approved.',
       after: 'One last step: add your name and IBAN in Settings so you appear in Browse experts and can be paid.', button: 'Add payout details',
+      afterFree: 'You answer for free, so you need no bank account: you are in Browse experts now. If you set a price later, add your payout details in Settings first.', buttonFree: 'Open your dashboard',
       prelaunch: "Wisecall has not opened to buyers yet. Your profile goes live on launch day, and we'll email you the day it does."
     },
     mentorRejected: {
@@ -456,6 +457,7 @@ const S = {
       subject: 'შენ დამტკიცდი Wisecall-ის მენტორად', heading: 'კეთილი იყოს შენი მობრძანება',
       intro: 'შენი მენტორის განაცხადი დამტკიცდა.',
       after: 'ბოლო ნაბიჯი: პარამეტრებში მიუთითე შენი სახელი და IBAN, რომ გამოჩნდე ექსპერტების სიაში და ანაზღაურება მიიღო.', button: 'გადახდის მონაცემების დამატება',
+      afterFree: 'უფასოდ პასუხობ, ამიტომ საბანკო ანგარიში არ გჭირდება: უკვე ჩანხარ ექსპერტების სიაში. თუ მოგვიანებით ფასს დააწესებ, ჯერ პარამეტრებში მიუთითე ანაზღაურების მონაცემები.', buttonFree: 'პირადი კაბინეტის გახსნა',
       prelaunch: 'Wisecall ჯერ მყიდველებისთვის არ გახსნილა. შენი პროფილი გამოჩნდება გახსნის დღეს და იმ დღესვე მოგწერთ ელფოსტით.'
     },
     mentorRejected: {
@@ -739,9 +741,10 @@ const BUILDERS = {
     heading: s.supportReply.heading,
     blocks: [{ p: s.supportReply.intro }, { quote: d.body }, { p: s.supportReply.after }, { button: s.supportReply.button, url: `${config.PUBLIC_URL}/inbox.html?thread=${d.threadId}` }]
   }),
-  mentorApproved: (s) => ({
+  mentorApproved: (s, d) => ({
     heading: s.mentorApproved.heading,
-    blocks: [{ p: s.mentorApproved.intro }, { p: s.mentorApproved.after }, ...(config.LAUNCH_MODE === 'prelaunch' ? [{ p: s.mentorApproved.prelaunch }] : []), { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]
+    blocks: [{ p: s.mentorApproved.intro }, { p: d.free ? s.mentorApproved.afterFree : s.mentorApproved.after }, ...(config.LAUNCH_MODE === 'prelaunch' ? [{ p: s.mentorApproved.prelaunch }] : []),
+      d.free ? { button: s.mentorApproved.buttonFree, url: `${config.PUBLIC_URL}/dashboard.html` } : { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]
   }),
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,
