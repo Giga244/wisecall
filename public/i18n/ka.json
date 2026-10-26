@@ -2605,5 +2605,9 @@
   "settings.payouts.notSavedFree": "ანაზღაურების მონაცემები ჯერ არ გაქვს. სანამ უფასოდ პასუხობ, ისინი არ გჭირდება.",
   "settings.payouts.neededForPrice": "შენახულია. ფასით ექსპერტების სიაში რომ დარჩე, ქვემოთ ანაზღაურების მონაცემები მიუთითე.",
   "apply.stepTitle": "ნაბიჯი {n}: {name}",
-  "apply.doneCount": "დასრულებულია {n} / {total}"
+  "apply.doneCount": "დასრულებულია {n} / {total}",
+  "apply.err.storyRepeated": "ეს ტექსტი განმეორებადს ჰგავს. დაწერე რამდენიმე ნამდვილი წინადადება შენს გამოცდილებაზე.",
+  "apply.story.countRepeated": "{n} სიმბოლო – ტექსტი განმეორებადს ჰგავს",
+  "apply.gap": "აქ ჯერ კიდევ აკლია: {list}",
+  "apply.stepIncomplete": "(ჯერ კიდევ რაღაც აკლია)"
 }

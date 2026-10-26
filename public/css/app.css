@@ -756,6 +756,9 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .apply-step-num { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: var(--line-w) solid var(--line); background: var(--card); color: var(--ink); font-weight: 800; }
 .apply-steps .is-done .apply-step-num { background: var(--accent2-strong); color: var(--on-accent2); border-color: var(--accent2-strong); }
 .apply-steps .is-current .apply-step-num { background: var(--inverse); color: var(--on-inverse); border-color: var(--inverse); }
+/* a step started or passed that the server still finds incomplete: "!" on its dot, and one line when it is opened (docs/CLAUDE-CODE-STORY-STEP-CHECK.md) */
+.apply-steps .has-gap:not(.is-current) .apply-step-num { background: var(--pink-soft); color: var(--red-strong); border-color: var(--red-strong); }
+.apply-gap { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; background: var(--pink-soft); color: var(--red-strong); font-weight: 700; }
 .apply-steps .is-current .apply-step-link { color: var(--ink); font-weight: 800; }
 .apply-step-name { overflow-wrap: anywhere; }
 .apply-card { background: var(--card); border: var(--line-w) solid var(--line); border-radius: var(--r-card); box-shadow: var(--offset-shadow); padding: 30px 32px; }

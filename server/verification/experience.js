@@ -9,7 +9,8 @@
 const { query } = require('../db');
 const rules = require('./rules');
 const steps = require('./steps');
-const { size, tidy, looksRepeated } = require('../content');
+const { size, tidy } = require('../content');
+const { storyVerdict } = require('../../public/js/text-rules');
 const { getUserById, updateUser } = require('../models');
 const linkCheck = require('./linkCheck');
 
@@ -243,7 +244,7 @@ function missingFor(user, evidence, stepMap) {
   if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
   if (!user.customNiche) missing.push('field');
   if (!(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) missing.push('niche');
-  if (!user.story || size(user.story) < LIMITS.storyMin || looksRepeated(user.story)) missing.push('story');
+  if (!storyVerdict(user.story, LIMITS.storyMin).ok) missing.push('story'); // (the page runs the same check: public/js/text-rules.js)
   if (user.price === null || user.price === undefined) missing.push('price'); // (0 is a price: free)
   if (evidence.filter((e) => e.kind !== 'work_email' || e.checkStatus === 'ok').length < LIMITS.evidenceMin) missing.push('evidence');
   if (rules.isRegulated(user.niche)) {
@@ -371,6 +372,8 @@ async function applicationFor(user, stepMap) {
     evidence: evidence.map(evidenceForMentor),
     missing: missingFor(user, evidence, stepMap),
     progress: progressOf(missingFor(user, evidence, stepMap), stepMap),
+    // why the story does not count yet, when it does not: 'short' | 'repeated' (docs/CLAUDE-CODE-STORY-STEP-CHECK.md)
+    storyReason: storyVerdict(user.story, LIMITS.storyMin).reason,
     submittedAt: user.applicationSubmittedAt,
     locked: isLocked(user),
     stage: await stageFor(user, stepMap)

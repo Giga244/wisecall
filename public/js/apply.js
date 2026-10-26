@@ -9,7 +9,6 @@
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fill = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
-  const chars = (s) => [...String(s || '').trim().replace(/\s+/g, ' ')].length;
   const root = document.getElementById('applyRoot');
   const head = document.getElementById('applyHead');
   const STEPS = ['about', 'story', 'price', 'proof', 'submit'];
@@ -56,6 +55,22 @@
   const stepDone = (i) => Boolean(progress().done[i]);
   const STEP_OF = { headline: 0, years: 0, field: 0, niche: 0, story: 1, price: 2, evidence: 3, license: 3, license_document: 3 };
   const firstOpenStep = () => progress().next - 1;
+  // A step 1-4 the mentor started or moved past, but that the server still finds incomplete, is never left silently unchecked: its dot
+  // shows "!" and, opened, one line says what is missing (docs/CLAUDE-CODE-STORY-STEP-CHECK.md).
+  let furthest = 0;
+  const missingIn = (i) => missing().filter((c) => STEP_OF[c] === i);
+  function started(i) {
+    const f = v.application.form;
+    return [Boolean(user.headline || f.customNiche || (f.yearsExperience !== null && f.yearsExperience !== undefined)),
+      Boolean(f.story && f.story.trim()), user.price !== null && user.price !== undefined, v.application.evidence.length > 0][i];
+  }
+  const flagged = (i) => i < 4 && !stepDone(i) && missingIn(i).length > 0 && (i < furthest || started(i));
+  // The line under the step's title: for the story, why it does not count; otherwise what is missing.
+  function gapLine(i) {
+    if (i === 1 && v.application.storyReason === 'repeated') return t('apply.err.storyRepeated');
+    return fill('apply.gap', { list: missingIn(i).map((c) => t('ap.missing.' + c)).join(', ') });
+  }
+  const storyMessage = (verdict) => (verdict.reason === 'repeated' ? t('apply.err.storyRepeated') : fill('apply.err.story', { min: v.limits.storyMin }));
   function stepFromUrl() {
     const n = Number(new URLSearchParams(window.location.search).get('step'));
     return Number.isInteger(n) && n >= 1 && n <= 5 ? n - 1 : null;
@@ -64,6 +79,7 @@
 
   function go(i, { push = true } = {}) {
     current = Math.max(0, Math.min(4, i));
+    furthest = Math.max(furthest, current);
     if (push) {
       const url = new URL(window.location.href);
       url.searchParams.set('step', String(current + 1));
@@ -89,12 +105,14 @@
     bar.setAttribute('aria-label', done);
     bar.querySelector('span').style.width = `${(progress().count / 5) * 100}%`;
     document.getElementById('applySteps').innerHTML = STEPS.map((s, i) => `
-      <li class="${i === current ? 'is-current' : ''}${stepDone(i) ? ' is-done' : ''}">
+      <li class="${i === current ? 'is-current' : ''}${stepDone(i) ? ' is-done' : ''}${flagged(i) ? ' has-gap' : ''}">
         <button type="button" class="apply-step-link" data-goto="${i}"${i === current ? ' aria-current="step"' : ''}>
-          <span class="apply-step-num" aria-hidden="true">${stepDone(i) && i !== current ? '✓' : i + 1}</span>
+          <span class="apply-step-num" aria-hidden="true">${stepDone(i) && i !== current ? '✓' : (flagged(i) && i !== current ? '!' : i + 1)}</span>${flagged(i) ? `<span class="sr-only">${esc(t('apply.stepIncomplete'))}</span>` : ''}
           <span class="apply-step-name">${esc(t('apply.step.' + s))}</span>
         </button>
       </li>`).join('');
+    // (wired here: the dots are drawn again on their own after a step is saved)
+    document.getElementById('applySteps').querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => saveAndGo(Number(b.dataset.goto), false)));
   }
 
   // ---- The steps ----------------------------------------------------------------------------------------------------------------------
@@ -468,6 +486,8 @@
     }
     drawHead();
     root.innerHTML = [aboutStep, storyStep, priceStep, proofStep, submitStep][current]();
+    const h1 = root.querySelector('form.apply-step h1');
+    if (h1 && flagged(current)) h1.insertAdjacentHTML('afterend', `<p class="apply-gap" role="status"><span aria-hidden="true">!</span> ${esc(gapLine(current))}</p>`);
     wireCommon();
     wireStep();
   }
@@ -506,8 +526,10 @@
       });
     } else if (step === 1) {
       const story = form.story.value;
-      if (check && chars(story) < v.limits.storyMin) { stepError(fill('apply.err.story', { min: v.limits.storyMin })); form.story.focus(); return false; }
+      // (saved first, so nothing is lost; then the server's own rule decides whether it counts: public/js/text-rules.js)
       await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: { story, sampleAnswer: form.sampleAnswer.value } });
+      const verdict = WisecallTextRules.storyVerdict(story, v.limits.storyMin);
+      if (check && !verdict.ok) { await load(); drawHead(); stepError(storyMessage(verdict)); form.story.focus(); return false; }
     } else if (step === 2) {
       // "Answer for free" is price 0 (docs/CLAUDE-CODE-FREE-ANSWERS.md).
       if (form.priceMode.value === 'free') { if (user.price !== 0) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price: 0 } }); return true; }
@@ -532,6 +554,13 @@
       if (!(await saveStep(check))) { btns.forEach((b) => { b.disabled = false; }); restoreSubmit(); return; }
       await load();
       if (target === 'later') { WisecallNav.showToast(t('apply.saved')); window.location.href = '/dashboard.html'; return; }
+      // (the server is the judge: a step it still finds incomplete is not left behind silently)
+      if (check && target === current + 1 && current < 4 && !stepDone(current)) {
+        drawHead();
+        btns.forEach((b) => { b.disabled = false; });
+        stepError(gapLine(current));
+        return;
+      }
       go(target);
     } catch (e) {
       stepError(errText(ERR, e));
@@ -648,7 +677,7 @@
 
   function wireStep() {
     const form = root.querySelector('form.apply-step');
-    document.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => saveAndGo(Number(b.dataset.goto), false)));
+    root.querySelectorAll('[data-goto]').forEach((b) => b.addEventListener('click', () => saveAndGo(Number(b.dataset.goto), false))); // (the dots: drawHead)
     form.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => saveAndGo(current - 1, false)));
     form.querySelectorAll('[data-later]').forEach((b) => b.addEventListener('click', () => saveAndGo('later', false)));
 
@@ -721,10 +750,11 @@
       const area = form.story;
       const out = form.querySelector('#apStoryCount');
       const draw = () => {
-        const n = chars(area.value);
-        const ok = n >= v.limits.storyMin;
-        out.textContent = fill(ok ? 'apply.story.countOk' : 'apply.story.count', { n, min: v.limits.storyMin, max: v.limits.storyMax });
-        out.classList.toggle('is-ok', ok);
+        const verdict = WisecallTextRules.storyVerdict(area.value, v.limits.storyMin);
+        const n = verdict.n;
+        const key = verdict.ok ? 'apply.story.countOk' : (verdict.reason === 'repeated' ? 'apply.story.countRepeated' : 'apply.story.count');
+        out.textContent = fill(key, { n, min: v.limits.storyMin, max: v.limits.storyMax });
+        out.classList.toggle('is-ok', verdict.ok);
       };
       area.addEventListener('input', draw);
       draw();
@@ -770,6 +800,7 @@
   try { await load(); } catch (e) { root.innerHTML = `<p class="form-error">${esc(t('toast.error'))}</p>`; return; }
   const asked = stepFromUrl();
   current = asked !== null ? asked : firstOpenStep();
+  furthest = current;
   if (!v.application.locked) window.history.replaceState({ step: current }, '', (() => { const u = new URL(window.location.href); u.searchParams.set('step', String(current + 1)); return u.pathname + u.search; })());
   render();
 })();

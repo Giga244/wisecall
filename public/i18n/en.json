@@ -2605,5 +2605,9 @@
   "settings.payouts.notSavedFree": "No payout details yet. You don't need them while you answer for free.",
   "settings.payouts.neededForPrice": "Saved. Add your payout details below to stay in Browse experts with a price.",
   "apply.stepTitle": "Step {n}: {name}",
-  "apply.doneCount": "{n} of {total} done"
+  "apply.doneCount": "{n} of {total} done",
+  "apply.err.storyRepeated": "This looks like repeated text. Write a few real sentences about your experience.",
+  "apply.story.countRepeated": "{n} characters – this looks like repeated text",
+  "apply.gap": "Still missing here: {list}",
+  "apply.stepIncomplete": "(something is still missing)"
 }
