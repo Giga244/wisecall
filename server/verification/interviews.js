@@ -93,7 +93,9 @@ async function recordResult(admin, id, { result, reason, notes }) {
   if (!['passed', 'failed'].includes(result)) throw new VerificationError('invalid_decision');
   const row = await loadBooked(id);
   if (new Date(row.starts_at).getTime() > Date.now()) throw new VerificationError('not_started');
-  // The same decision every other step goes through: reason required, audit log, delisting of a live mentor.
+  // An interview's result always says why (passing an ordinary step no longer needs a reason: docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md).
+  if (String(reason || '').trim().length < 5) throw new VerificationError('reason_required');
+  // The same decision every other step goes through: audit log, delisting of a live mentor.
   await require('./review').decideStep({ mentorId: row.booked_by, step: STEP, decision: result, reason, admin });
   await query(
     `UPDATE interview_slots SET status = 'completed', result = $2, reason = $3, notes = $4, decided_by = $5, decided_at = now() WHERE id = $1`,

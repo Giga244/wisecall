@@ -75,7 +75,7 @@ describe('an admin decision on a step', () => {
 
   test('a decision that fails validation sends nothing', async () => {
     const n = resend.sent.length;
-    assert.equal((await decide(doctorId, 'license', 'passed', '')).error, 'reason_required');
+    assert.equal((await decide(doctorId, 'license', 'failed', '')).error, 'reason_required'); // (failing needs a reason; passing does not)
     assert.equal((await decide(doctorId, 'id_kyc', 'passed', 'I saw the ID')).error, 'not_manual');
     await wait(300);
     assert.equal(resend.sent.length, n);

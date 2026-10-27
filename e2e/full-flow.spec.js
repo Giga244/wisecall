@@ -133,6 +133,7 @@ test('the admin checks the licence in the register and gives the final approval'
   await expect(card.locator('.mv-step[data-step="license"]')).toContainText(/passed/i);
   await expect(card.locator('.mv-approve')).toBeEnabled();
   await card.locator('.mv-approve').click();
+  await adminPage.locator('.wc-dialog [data-ok]').click(); // (one question first: docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md)
   await expect.poll(async () => (await S.sql('SELECT verification_status FROM users WHERE id = $1', [mentorId]))[0].verification_status).toBe('verified');
   await S.waitForMail(mentor.email, 'approved');
   const steps = Object.fromEntries((await S.sql('SELECT step, status FROM verification_steps WHERE user_id = $1', [mentorId])).map((r) => [r.step, r.status]));

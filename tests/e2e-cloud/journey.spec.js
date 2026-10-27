@@ -80,6 +80,7 @@ test('the admin opens the application and approves it', async () => {
   await card.locator('.mv-open').click();
   await expect(card.locator('.mv-approve')).toBeEnabled();
   await card.locator('.mv-approve').click();
+  await page.locator('.wc-dialog [data-ok]').click(); // (one tap: one question, nothing to type)
   await expect.poll(async () => (await S.sql('SELECT verification_status FROM users WHERE id = $1', [mentorId]))[0].verification_status).toBe('verified');
 });
 

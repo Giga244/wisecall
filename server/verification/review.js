@@ -17,6 +17,11 @@ function cleanReason(reason) {
   if (text.length < 5) throw new VerificationError('reason_required');
   return text.slice(0, 1000);
 }
+// Passing a step (or confirming a piece of evidence) needs no reason: an admin often has nothing to add to "looks fine". Left empty, the
+// note is "Approved by admin"; the admin and the time are in the step and the audit log either way. Failing, rejecting and suspending
+// still need one: the mentor sees why (docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md).
+const PASS_NOTE = 'Approved by admin';
+const passReason = (reason) => String(reason || '').trim().slice(0, 1000) || PASS_NOTE;
 
 async function mentorOrThrow(mentorId) {
   const mentor = await getUserById(mentorId);
@@ -26,10 +31,10 @@ async function mentorOrThrow(mentorId) {
 
 // Pass or fail one step. Only things a person decides can be decided here: the ID check comes from the
 // provider's signed webhook, and the email steps are decided by the server.
-async function decideStep({ mentorId, step, decision, reason, admin }) {
+async function decideStep({ mentorId, step, decision, reason, admin, quiet = false }) {
   if (!rules.STEPS[step]) throw new VerificationError('unknown_step');
   if (!['passed', 'failed'].includes(decision)) throw new VerificationError('invalid_decision');
-  const text = cleanReason(reason);
+  const text = decision === 'passed' ? passReason(reason) : cleanReason(reason);
   if (!MANUAL.has(rules.STEPS[step].decider)) throw new VerificationError('not_manual');
 
   const mentor = await mentorOrThrow(mentorId);
@@ -48,7 +53,8 @@ async function decideStep({ mentorId, step, decision, reason, admin }) {
   // Uploaded documents for a decided step are deleted 90 days later.
   if (credentials.DOCUMENT_STEPS.includes(step)) await credentials.scheduleDeletion(mentor.id, step);
   // The mentor is emailed the outcome and what is still missing (unless the delisting already did).
-  const emailAfter = () => (saved.delisted ? null : require('./updates').stepDecided(mentor.id, step, decision, text));
+  // (quiet: part of a one-tap approval, whose own email says it all)
+  const emailAfter = () => (saved.delisted || quiet ? null : require('./updates').stepDecided(mentor.id, step, decision, text));
   // An admin who accepts the names as they are closes the mismatch flag. (A payout-name flag is closed on its own: it only holds payouts.)
   if (step === 'name_match' && decision === 'passed') {
     await flags.resolveFlags(mentor.id, ['name_mismatch'], steps.adminActor(admin), text);
@@ -173,7 +179,7 @@ async function reinstate({ mentorId, reason, admin, reapprove }) {
 // An admin confirms (or refuses) one piece of evidence by hand: a company code looked up in the Public Registry, a document, a link.
 async function decideEvidence({ mentorId, evidenceId, decision, reason, admin }) {
   if (!['ok', 'failed'].includes(decision)) throw new VerificationError('invalid_decision');
-  const text = cleanReason(reason);
+  const text = decision === 'ok' ? passReason(reason) : cleanReason(reason);
   const mentor = await mentorOrThrow(mentorId);
   if (!/^[0-9a-f-]{36}$/i.test(String(evidenceId))) throw new VerificationError('not_found');
   const db = require('../db');
@@ -203,4 +209,43 @@ async function requestInterview({ mentorId, reason, admin }) {
   return steps.describeFor(await getUserById(mentor.id));
 }
 
-module.exports = { decideStep, approve, autoApprove, reject, suspend, reinstate, decideEvidence, requestInterview, VerificationError };
+// ---- One-tap approve (docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md) -------------------------------------------------------------------
+// What a person is there to judge, and is waiting for them, is counted in one action: the licence or diploma details and their document
+// (submitted, not decided yet), and the evidence the automatic check did not settle. What the automatic checks decide is never passed by
+// hand: the email, the ID check and 18+; nor is a name that does not match the ID or a video interview asked for, which an admin decides
+// on their own. -> { willPass: [steps], evidence: [{ id, kind }], blockedBy: [codes], canApprove }
+const ONE_TAP_STEPS = ['license', 'license_document', 'diploma'];
+async function oneTapPlan(mentor) {
+  const stepMap = await steps.loadSteps(mentor.id);
+  const status = (s) => (stepMap[s] ? steps.effectiveStatus(stepMap[s]) : null);
+  const blockedBy = [];
+  if (mentor.verificationStatus !== 'pending') blockedBy.push('invalid_state');
+  if (!mentor.applicationSubmittedAt) blockedBy.push('not_submitted');
+  if (!mentor.emailVerified) blockedBy.push('email');
+  if (status('id_kyc') !== 'passed') blockedBy.push('id_kyc');
+  if (status('age') !== 'passed') blockedBy.push('age');
+  const willPass = ONE_TAP_STEPS.filter((s) => stepMap[s] && stepMap[s].status === 'pending');
+  // (a diploma whose step is passed above is that same decision: not counted twice)
+  const { rows } = await require('../db').query(
+    `SELECT id, kind FROM mentor_evidence WHERE user_id = $1 AND kind <> 'work_email' AND COALESCE(check_status, '') NOT IN ('ok', 'failed')
+       AND NOT (kind = 'diploma' AND $2) ORDER BY created_at`, [mentor.id, willPass.includes('diploma')]);
+  // what would still be missing once those are passed (the experience step is accepted by the approval itself)
+  const { missing } = rules.evaluate(mentor.niche, (s) => (willPass.includes(s) ? 'passed' : status(s)), steps.extraStepsFor(stepMap));
+  for (const s of missing) if (!blockedBy.includes(s) && s !== 'email') blockedBy.push(s);
+  return { willPass, evidence: rows, blockedBy, canApprove: blockedBy.length === 0 };
+}
+// Passes what the plan counts, each with its own audit entry, then approves. Refused, with what blocks it, when anything does.
+async function approveAll({ mentorId, admin }) {
+  const mentor = await mentorOrThrow(mentorId);
+  const plan = await oneTapPlan(mentor);
+  if (!plan.canApprove) throw new VerificationError('cannot_approve', { missing: plan.blockedBy });
+  for (const step of plan.willPass) await decideStep({ mentorId: mentor.id, step, decision: 'passed', admin, quiet: true });
+  for (const e of plan.evidence) {
+    await require('../db').query(`UPDATE mentor_evidence SET check_status = 'ok', decided_by = $3, decided_at = now() WHERE id = $1 AND user_id = $2`, [e.id, mentor.id, admin.id]);
+    await steps.audit(mentor.id, steps.adminActor(admin), 'evidence_confirmed', { reason: `${e.kind}: ${PASS_NOTE}` });
+  }
+  const approved = await approve({ mentorId: mentor.id, admin });
+  return { mentor: approved, passed: plan.willPass, evidence: plan.evidence.length };
+}
+
+module.exports = { oneTapPlan, approveAll, PASS_NOTE, decideStep, approve, autoApprove, reject, suspend, reinstate, decideEvidence, requestInterview, VerificationError };

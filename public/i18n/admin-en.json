@@ -675,5 +675,20 @@
   "admin.dis.outcome.upheld": "Report upheld (free question: no refund)",
   "admin.ov.q.freeTitle": "Free questions",
   "admin.ov.q.freeMonth": "Asked, last 30 days",
-  "admin.ov.q.freeClosed": "Closed without an answer"
+  "admin.ov.q.freeClosed": "Closed without an answer",
+  "admin.oneTap.approve": "Approve mentor",
+  "admin.oneTap.confirm": "Confirm {name} as a mentor?",
+  "admin.oneTap.confirmWith": "Confirm {name} as a mentor? This will count: {list}.",
+  "admin.oneTap.yes": "Confirm",
+  "admin.oneTap.no": "Cancel",
+  "admin.oneTap.done": "Approved.",
+  "admin.oneTap.will": "Approving also counts: {list}.",
+  "admin.oneTap.blocked": "Can't approve yet: {list}.",
+  "admin.oneTap.block.not_submitted": "the application hasn't been sent",
+  "admin.oneTap.block.invalid_state": "not waiting for review",
+  "admin.oneTap.block.email": "email not confirmed",
+  "admin.oneTap.diploma": "diploma",
+  "admin.oneTap.diplomaCopy": "copy of the diploma",
+  "admin.oneTap.evidence": "evidence",
+  "admin.mv.reasonToFail": "Reason (only needed to fail)"
 }

@@ -255,7 +255,8 @@
   if (wanted && wanted.dataset.tab !== tab) { showTab(wanted.dataset.tab); activeStatus = defaultStatus(tab); }
   const askedStatus = params.get('status');
   if (askedStatus !== null && !NO_FILTERS.includes(tab)) {
-    const s = askedStatus === 'all' ? '' : askedStatus;
+    // (needs_human: the waiting list, the mentors tab's own default; docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md)
+    const s = askedStatus === 'all' ? '' : (askedStatus === 'needs_human' && tab === 'mentors' ? 'pending' : askedStatus);
     if (statusesOf(tab).includes(s)) activeStatus = s;
   }
   drawFilters();

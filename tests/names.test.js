@@ -108,7 +108,8 @@ describe('name match in the verification flow (with the fake ID check)', () => {
     assert.equal((await step()).status, 'passed', 'a longer double surname still matches');
     await mentor.api('/me', { method: 'PATCH', body: { name: 'Ana Kapanadze' } });
     assert.equal((await step()).status, 'pending');
-    assert.equal((await admin.api(`/admin/mentors/${mentorId}/steps/name_match`, { method: 'POST', body: { decision: 'passed', reason: 'ok' } })).error, 'reason_required');
+    // (refusing a name needs a reason the mentor can read; accepting one does not)
+    assert.equal((await admin.api(`/admin/mentors/${mentorId}/steps/name_match`, { method: 'POST', body: { decision: 'failed', reason: 'ok' } })).error, 'reason_required');
     const ok = await admin.api(`/admin/mentors/${mentorId}/steps/name_match`, { method: 'POST', body: { decision: 'passed', reason: 'Married name confirmed with a marriage certificate' } });
     assert.equal(ok.status, 200);
     assert.equal((await step()).status, 'passed');

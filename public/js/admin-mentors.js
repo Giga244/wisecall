@@ -55,7 +55,7 @@
         ${s.reason ? `<p class="muted small">${esc(s.reason)}${s.decidedBy ? ` — ${esc(s.decidedBy)}` : ''}${s.decidedAt ? `, ${fmt(s.decidedAt)}` : ''}</p>` : ''}
         ${canDecide ? `
           <div class="mv-decide">
-            <input type="text" class="mv-reason" maxlength="300" placeholder="${esc(t('admin.mv.reasonPlaceholder'))}" aria-label="${esc(t('admin.mv.reasonPlaceholder'))}">
+            <input type="text" class="mv-reason" maxlength="300" placeholder="${esc(t('admin.mv.reasonToFail'))}" aria-label="${esc(t('admin.mv.reasonToFail'))}">
             <button class="btn btn-primary btn-sm mv-pass">${t('admin.mv.pass')}</button>
             <button class="btn btn-outline btn-sm mv-fail">${t('admin.mv.fail')}</button>
           </div>` : ''}
@@ -158,7 +158,7 @@
               ${e.decidedAt ? `<p class="muted small">${esc(fill('admin.ai.decidedAt', { date: fmt(e.decidedAt) }))}</p>` : ''}
               ${manual ? `
                 <div class="mv-decide">
-                  <input type="text" class="mv-ev-reason" maxlength="300" placeholder="${esc(t('admin.mv.reasonPlaceholder'))}" aria-label="${esc(t('admin.mv.reasonPlaceholder'))}">
+                  <input type="text" class="mv-ev-reason" maxlength="300" placeholder="${esc(t('admin.mv.reasonToFail'))}" aria-label="${esc(t('admin.mv.reasonToFail'))}">
                   <button class="btn btn-primary btn-sm mv-ev-ok">${t('admin.ai.ev.confirm')}</button>
                   <button class="btn btn-outline btn-sm mv-ev-failed">${t('admin.ai.ev.refuse')}</button>
                 </div>` : ''}
@@ -236,6 +236,20 @@
         </div>
       </div>`).join('')}</div>`;
   }
+  // One tap (docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md): the names of what "Approve" will count first, and why it cannot approve yet.
+  const isDiplomaNiche = (key) => (WisecallI18n.niches().find((n) => n.key === key) || {}).credential === 'diploma';
+  function oneTapItems(d) {
+    const p = d.oneTap || { willPass: [], evidence: [] };
+    const dip = isDiplomaNiche(d.application && d.application.niche);
+    const names = p.willPass.map((s) => (dip && s === 'license' ? t('admin.oneTap.diploma') : (dip && s === 'license_document' ? t('admin.oneTap.diplomaCopy') : stepTitle(s))));
+    if (p.evidence.length) names.push(t('admin.oneTap.evidence'));
+    return names;
+  }
+  const blockText = (code) => (['not_submitted', 'invalid_state', 'email'].includes(code) ? t('admin.oneTap.block.' + code) : stepTitle(code));
+  function oneTapHtml(d) {
+    const items = oneTapItems(d);
+    return d.oneTap && d.oneTap.canApprove && items.length ? `<p class="small mv-onetap">${esc(fill('admin.oneTap.will', { list: items.join(', ') }))}</p>` : '';
+  }
   function panelHtml(d) {
     const rows = d.requirements.map(stepRow).join('');
     const optional = (d.optional || []).filter((r) => r.status !== 'todo').map(stepRow).join('');
@@ -257,8 +271,9 @@
         ${fieldBlock(d.application)}
         <div class="mv-final">
           ${d.standing && d.standing.backInReview ? `<p class="mv-note" role="note"><strong>${t('admin.mv.reinstateNote')}</strong></p>` : ''}
-          <button class="btn btn-primary mv-approve" ${d.ready && d.mentor.verificationStatus === 'pending' ? '' : 'disabled'}>${t(d.standing && d.standing.wasApproved ? 'admin.reapprove' : 'admin.approve')}</button>
-          ${d.ready ? '' : `<span class="muted small">${t('admin.mv.approveBlocked')}</span>`}
+          ${oneTapHtml(d)}
+          <button class="btn btn-primary btn-lg mv-approve" ${d.oneTap && d.oneTap.canApprove ? '' : 'disabled'}>${t(d.standing && d.standing.wasApproved ? 'admin.reapprove' : 'admin.oneTap.approve')}</button>
+          ${d.oneTap && !d.oneTap.canApprove ? `<p class="muted small mv-blocked">${esc(fill('admin.oneTap.blocked', { list: d.oneTap.blockedBy.map(blockText).join(', ') }))}</p>` : ''}
           <div class="mv-reject">
             <input type="text" class="mv-reject-reason" maxlength="500" placeholder="${esc(t('admin.rejectReasonPlaceholder'))}" aria-label="${esc(t('admin.rejectReasonPlaceholder'))}">
             <button class="btn btn-outline btn-sm mv-reject-btn">${t('admin.reject')}</button>
@@ -337,10 +352,12 @@
       const body = el.querySelector('.mv-body');
       const openBtn = el.querySelector('.mv-open');
 
+      let current = null; // (the mentor as last loaded: the one-tap dialog names what it will count)
       async function loadPanel() {
         body.innerHTML = `<p class="muted">${t('admin.loading')}</p>`;
         try {
           const d = await WisecallAPI.apiFetch(`/admin/mentors/${id}/verification`);
+          current = d;
           body.innerHTML = panelHtml(d);
           wire(d);
           // (their profile items: self-reported unless marked verified here, next to the evidence above)
@@ -359,9 +376,10 @@
           const step = row.dataset.step;
           const decide = async (decision) => {
             const reason = row.querySelector('.mv-reason').value.trim();
-            if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+            // (passing needs no reason; failing does, since the mentor reads it)
+            if (decision === 'failed' && reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
             try {
-              await WisecallAPI.apiFetch(`/admin/mentors/${id}/steps/${step}`, { method: 'POST', body: { decision, reason } });
+              await WisecallAPI.apiFetch(`/admin/mentors/${id}/steps/${step}`, { method: 'POST', body: { decision, ...(reason ? { reason } : {}) } });
               WisecallNav.showToast(t('toast.saved'));
               await loadPanel();
               onChange({ soft: true });
@@ -383,8 +401,8 @@
         body.querySelectorAll('[data-evidence]').forEach((row) => {
           const decide = async (decision) => {
             const reason = row.querySelector('.mv-ev-reason').value.trim();
-            if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
-            try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/evidence/${row.dataset.evidence}`, { method: 'POST', body: { decision, reason } }); await loadPanel(); onChange({ soft: true }); }
+            if (decision === 'failed' && reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+            try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/evidence/${row.dataset.evidence}`, { method: 'POST', body: { decision, ...(reason ? { reason } : {}) } }); await loadPanel(); onChange({ soft: true }); }
             catch (e) { WisecallNav.showToast(t('toast.error')); }
           };
           const ok = row.querySelector('.mv-ev-ok');
@@ -465,15 +483,21 @@
             fieldSave.disabled = false;
           }
         });
+        // One tap: one question (what it will count), nothing to type; then what is waiting is passed and the mentor approved.
         const approve = body.querySelector('.mv-approve');
         if (approve) approve.addEventListener('click', async () => {
+          const items = oneTapItems(current);
+          const name = current.mentor.name;
+          const message = items.length ? fill('admin.oneTap.confirmWith', { name, list: items.join(', ') }) : fill('admin.oneTap.confirm', { name });
+          if (!(await WisecallDialog.confirm({ message, confirmText: t('admin.oneTap.yes'), cancelText: t('admin.oneTap.no') }))) return;
           approve.disabled = true;
           try {
-            await WisecallAPI.apiFetch(`/admin/mentors/${id}/approve`, { method: 'POST' });
-            WisecallNav.showToast(t('toast.saved'));
+            await WisecallAPI.apiFetch(`/admin/mentors/${id}/approve`, { method: 'POST', body: { all: true } });
+            WisecallNav.showToast(t('admin.oneTap.done'));
             onChange();
           } catch (e) {
-            WisecallNav.showToast(e.code === 'steps_incomplete' && e.data && e.data.missing ? `${t('admin.mv.approveBlocked')} ${e.data.missing.map(stepTitle).join(', ')}` : t(e.code === 'steps_incomplete' ? 'admin.mv.approveBlocked' : 'toast.error'));
+            const missing = e.data && e.data.missing;
+            WisecallNav.showToast(missing && missing.length ? fill('admin.oneTap.blocked', { list: missing.map(blockText).join(', ') }) : t('toast.error'));
             approve.disabled = false;
           }
         });

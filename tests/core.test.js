@@ -152,10 +152,10 @@ describe('mentor application and approval', () => {
     assert.ok(d.registries.length > 0);
     assert.ok(d.audit.some((a) => a.action === 'step_submitted' && a.step === 'experience'));
 
-    // Step decisions need a reason, and only cover what a person is allowed to decide.
+    // Failing a step needs a reason (passing does not: docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md), and only what a person is allowed to decide.
     const decide = (step, body) => ids.admin.api(`/admin/mentors/${ids.mentor}/steps/${step}`, { method: 'POST', body });
-    assert.equal((await decide('license', { decision: 'passed' })).error, 'reason_required');
-    assert.equal((await decide('license', { decision: 'passed', reason: 'ok' })).error, 'reason_required', 'a reason of a few characters is not enough');
+    assert.equal((await decide('license', { decision: 'failed' })).error, 'reason_required');
+    assert.equal((await decide('license', { decision: 'failed', reason: 'ok' })).error, 'reason_required', 'a reason of a few characters is not enough');
     assert.equal((await decide('id_kyc', { decision: 'passed', reason: 'I looked at the ID myself' })).error, 'not_manual', 'the ID check is decided only by the provider');
     assert.equal((await decide('email', { decision: 'failed', reason: 'because I want to' })).error, 'not_manual');
     assert.equal((await decide('experience', { decision: 'passed', reason: 'Looks fine to me' })).error, 'not_manual', 'the Experience step is accepted by the final approval');

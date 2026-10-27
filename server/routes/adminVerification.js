@@ -24,7 +24,7 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const STATUS_FOR_CODE = {
   not_found: 404, unknown_step: 404,
   reason_required: 400, invalid_decision: 400,
-  not_manual: 409, not_submitted: 409, invalid_state: 409, steps_incomplete: 409,
+  not_manual: 409, not_submitted: 409, invalid_state: 409, steps_incomplete: 409, cannot_approve: 409,
   invalid_slot: 400, invalid_link: 400, not_started: 409, already_passed: 409,
   invalid_custom_niche: 400, invalid_niche: 400, regulated_words: 409, licence_missing: 409
 };
@@ -93,6 +93,8 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
     legacySteps: Object.values(detail).filter((d) => d.legacy),
     ready: summary.ready,
     missing: summary.missing,
+    // One tap: what "Approve" would pass first, and what blocks it (docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md).
+    oneTap: await review.oneTapPlan(mentor),
     // Was this mentor listed before, and did an admin just lift their suspension? (Reinstated mentors go back to review on purpose.)
     standing: (() => {
       const last = auditRows.rows.find((a) => ['suspended', 'reinstated', 'approved', 'rejected', 'delisted'].includes(a.action));
@@ -126,10 +128,14 @@ router.post('/mentors/:id/field', requireAuth, requireAdmin, asyncHandler(async 
   } catch (e) { fail(res, e); }
 }));
 
+// { all: true }: one tap (docs/CLAUDE-CODE-ADMIN-ONE-TAP-APPROVE.md): what is waiting for a person's judgement is passed, then the mentor is
+// approved; refused (cannot_approve, with what blocks it) while an automatic check has not passed. Without it: approve as before.
 router.post('/mentors/:id/approve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
   try {
-    const mentor = await review.approve({ mentorId: req.params.id, admin: req.adminUser });
+    const mentor = (req.body || {}).all === true
+      ? (await review.approveAll({ mentorId: req.params.id, admin: req.adminUser })).mentor
+      : await review.approve({ mentorId: req.params.id, admin: req.adminUser });
     notify.notifyMentorDecision(mentor, true, null);
     require('../waitlist').afterMaybeListed(mentor.id); // if they are now visible, tell the people waiting for their field
     res.json({ mentor: meProfile(mentor) });

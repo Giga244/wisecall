@@ -675,5 +675,20 @@
   "admin.dis.outcome.upheld": "საჩივარი გაზიარებულია (უფასო კითხვა: თანხა არ ბრუნდება)",
   "admin.ov.q.freeTitle": "უფასო კითხვები",
   "admin.ov.q.freeMonth": "დასმული, ბოლო 30 დღე",
-  "admin.ov.q.freeClosed": "დაიხურა პასუხის გარეშე"
+  "admin.ov.q.freeClosed": "დაიხურა პასუხის გარეშე",
+  "admin.oneTap.approve": "მენტორად დადასტურება",
+  "admin.oneTap.confirm": "დაადასტურო {name} მენტორად?",
+  "admin.oneTap.confirmWith": "დაადასტურო {name} მენტორად? ეს ჩაითვლება: {list}.",
+  "admin.oneTap.yes": "დადასტურება",
+  "admin.oneTap.no": "გაუქმება",
+  "admin.oneTap.done": "დადასტურებულია.",
+  "admin.oneTap.will": "დადასტურებისას ჩაითვლება: {list}.",
+  "admin.oneTap.blocked": "ჯერ ვერ დადასტურდება: {list}.",
+  "admin.oneTap.block.not_submitted": "განაცხადი გაგზავნილი არ არის",
+  "admin.oneTap.block.invalid_state": "განხილვას არ ელოდება",
+  "admin.oneTap.block.email": "ელფოსტა დადასტურებული არ არის",
+  "admin.oneTap.diploma": "დიპლომი",
+  "admin.oneTap.diplomaCopy": "დიპლომის ასლი",
+  "admin.oneTap.evidence": "მტკიცებულება",
+  "admin.mv.reasonToFail": "მიზეზი (საჭიროა მხოლოდ უარისთვის)"
 }

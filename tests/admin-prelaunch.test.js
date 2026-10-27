@@ -37,7 +37,7 @@ test('the pages are served with data-launch="prelaunch" before launch (what the 
 test('?tab=mentors&status=verified opens the verified mentors (and status=all every mentor); the API lists them', async () => {
   const js = read('public/js/admin.js');
   assert.match(js, /const askedStatus = params\.get\('status'\);/);
-  assert.match(js, /const s = askedStatus === 'all' \? '' : askedStatus;/);
+  assert.match(js, /const s = askedStatus === 'all' \? '' : \(askedStatus === 'needs_human' && tab === 'mentors' \? 'pending' : askedStatus\);/);
   assert.match(js, /if \(statusesOf\(tab\)\.includes\(s\)\) activeStatus = s;/);
   assert.match(js, /url\.searchParams\.set\('status', activeStatus \|\| 'all'\)/, 'the address follows the chosen status');
 
