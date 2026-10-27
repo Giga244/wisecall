@@ -1,6 +1,13 @@
-# On every pull request and every push to main: npm audit (high and critical only), the unit and cloud tests against a throwaway Postgres,
-# the browser tests in three parallel shares, the cloud browser flows, and a secret scan of the whole git history (gitleaks). Nothing here uses
-# a real key: the tests run with the fake bank, the fake ID check and a mail log, and each job's database is created for it and thrown away.
+# What runs when (the Actions minutes of a private repository are limited, and the browser jobs use most of them):
+#   every push to main      npm audit (high and critical only), the unit and cloud tests against a throwaway Postgres, and a secret scan of
+#                           the whole git history (gitleaks)
+#   a pull request, a run   all of that, plus the browser tests in three parallel shares and the cloud browser flows
+#   started by hand, and
+#   every Monday
+#   a Dependabot pull       npm audit and the unit and cloud tests only
+#   request
+# Run the browser tests locally before pushing to main (npx playwright test, and -c tests/e2e-cloud). Nothing here uses a real key: the
+# tests run with the fake bank, the fake ID check and a mail log, and each job's database is created for it and thrown away.
 #
 # Each job has its own time limit with room to spare (the unit tests take about 7 minutes, each browser share about 8): one that runs far
 # over is a problem to look at, not a limit to raise. A newer push to the same branch or pull request cancels the run still going for it.
@@ -10,6 +17,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 1' # every Monday, 04:00 UTC
 permissions:
   contents: read
 concurrency:
@@ -59,6 +69,8 @@ jobs:
 
   e2e:
     name: browser tests (share ${{ matrix.share }} of 3)
+    # (pull requests, by hand and weekly; never on a push to main, never for Dependabot)
+    if: github.event_name != 'push' && !(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]')
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -110,6 +122,7 @@ jobs:
 
   e2e-cloud:
     name: cloud browser flows
+    if: github.event_name != 'push' && !(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -152,6 +165,8 @@ jobs:
           retention-days: 7
 
   secrets:
+    # (everywhere but a Dependabot pull request, which only changes package versions)
+    if: "!(github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]')"
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

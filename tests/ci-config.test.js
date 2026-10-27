@@ -26,7 +26,7 @@ test('the three shares hold every browser spec exactly once, each starting with 
 
 test('CI: pull requests and pushes to main, older runs cancelled, every job pinned and limited in time, the browser cached', () => {
   const ci = read('.github/workflows/ci.yml');
-  assert.match(ci, /on:\n  push:\n    branches: \[main\]\n  pull_request:\n/);
+  assert.match(ci, /on:\n  push:\n    branches: \[main\]\n  pull_request:\n  workflow_dispatch:\n  schedule:\n    - cron: '0 4 \* \* 1'/);
   assert.match(ci, /concurrency:\n  group: ci-\$\{\{ github\.ref \}\}\n  cancel-in-progress: true/);
   const jobs = ci.slice(ci.indexOf('\njobs:\n')).split(/\n  (?=[\w-]+:\n)/).slice(1);
   assert.deepEqual(jobs.map((j) => j.split(':')[0]), ['audit', 'unit', 'e2e', 'e2e-cloud', 'secrets']);
@@ -40,6 +40,21 @@ test('CI: pull requests and pushes to main, older runs cancelled, every job pinn
   assert.match(ci, /run: node scripts\/e2e-shard\.js \$\{\{ matrix\.share \}\} 3/);
   assert.match(ci, /uses: actions\/cache@v6\n        with:\n          path: ~\/\.cache\/ms-playwright/);
   assert.match(ci, /cache: npm/);
+});
+
+test('CI minutes: a push to main runs audit, secrets and the unit tests; the browser jobs run on pull requests, by hand and weekly; Dependabot gets audit and the unit tests', () => {
+  const ci = read('.github/workflows/ci.yml');
+  const jobs = Object.fromEntries(ci.slice(ci.indexOf('\njobs:\n')).split(/\n  (?=[\w-]+:\n)/).slice(1).map((j) => [j.split(':')[0], j]));
+  const ifOf = (name) => (jobs[name].match(/\n    if: (.+)\n/) || [])[1] || null;
+  const notDependabot = /!\(github\.event_name == 'pull_request' && github\.event\.pull_request\.user\.login == 'dependabot\[bot\]'\)/;
+  assert.equal(ifOf('audit'), null, 'audit: always');
+  assert.equal(ifOf('unit'), null, 'the unit and cloud tests: always');
+  for (const name of ['e2e', 'e2e-cloud']) {
+    assert.match(ifOf(name), /^github\.event_name != 'push' && /, `${name}: never on a push`);
+    assert.match(ifOf(name), notDependabot, `${name}: never for Dependabot`);
+  }
+  assert.match(ifOf('secrets'), notDependabot);
+  assert.doesNotMatch(ifOf('secrets'), /push/, 'secrets: on a push too');
 });
 
 test('Dependabot: minor and patch updates grouped, Express majors ignored for now', () => {
