@@ -86,24 +86,27 @@
     const needsDoc = data.v.requirements.some((x) => x.step === 'license_document');
     const expired = r.status === 'failed' && r.expiresAt && new Date(r.expiresAt) < new Date();
     const docs = data.v.inputs.documents.filter((d) => d.step === 'license_document');
+    // (a field with no licence at all, psychology or nursing: a diploma or certificate, with no end date; docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
+    const dip = Boolean(data.v.licence && data.v.licence.credential === 'diploma');
+    const lic = (key) => t(dip ? key + '.dip' : key);
     return `
       <section class="settings-card ap-section" id="ap-licence" aria-labelledby="ap-licence-h">
-        <h3 id="ap-licence-h">${t('ap.lic.title')}</h3>
-        <p class="muted small">${fill('ap.lic.help', { niche: t('niche.' + data.v.niche) })}</p>
-        ${l ? `<p class="muted small">${fill('vt.lic.submitted', { last4: esc(l.numberEnding), body: esc(l.issuingBody), date: esc(l.validUntil) })} <span class="badge badge-${BADGE[r.status === 'passed' ? 'done' : (r.status === 'failed' ? 'attention' : 'waiting')]}">${t('verify.status.' + r.status)}</span></p>` : ''}
+        <h3 id="ap-licence-h">${lic('ap.lic.title')}</h3>
+        <p class="muted small">${fill(dip ? 'ap.lic.help.dip' : 'ap.lic.help', { niche: t('niche.' + data.v.niche) })}</p>
+        ${l ? `<p class="muted small">${fill(dip || !l.validUntil ? 'vt.lic.submitted.dip' : 'vt.lic.submitted', { last4: esc(l.numberEnding), body: esc(l.issuingBody), date: esc(l.validUntil) })} <span class="badge badge-${BADGE[r.status === 'passed' ? 'done' : (r.status === 'failed' ? 'attention' : 'waiting')]}">${t('verify.status.' + r.status)}</span></p>` : ''}
         ${expired ? `<p class="form-error">${t('vt.lic.expired')}</p>` : ''}
         ${r.status === 'failed' && r.reason && !expired ? `<p class="form-error vt-reason"><strong>${t('vt.reason')}</strong> ${esc(r.reason)}</p>` : ''}
         ${!l || r.status === 'failed' || expired ? `
         <form class="vt-form" data-form="license" novalidate>
-          <label><span>${t('vt.lic.number')}</span><input type="text" name="number" maxlength="40" autocomplete="off" required></label>
-          <label><span>${t('vt.lic.body')}</span><input type="text" name="issuingBody" maxlength="120" placeholder="${esc(t('vt.lic.bodyHint'))}" required></label>
-          <label><span>${t('vt.lic.holder')}</span><input type="text" name="holderName" maxlength="100" value="${esc(l ? l.holderName : data.user.name)}" required></label>
-          <label><span>${t('vt.lic.until')}</span><input type="date" name="validUntil" value="${esc(l ? l.validUntil : '')}" required></label>
+          <label><span>${lic('vt.lic.number')}</span><input type="text" name="number" maxlength="40" autocomplete="off" required></label>
+          <label><span>${lic('vt.lic.body')}</span><input type="text" name="issuingBody" maxlength="120" placeholder="${esc(lic('vt.lic.bodyHint'))}" required></label>
+          <label><span>${lic('vt.lic.holder')}</span><input type="text" name="holderName" maxlength="100" value="${esc(l ? l.holderName : data.user.name)}" required></label>
+          <label><span>${lic('vt.lic.until')}</span><input type="date" name="validUntil" value="${esc(l && l.validUntil ? l.validUntil : '')}"${dip ? '' : ' required'}></label>
           <p class="form-error vt-error" role="alert"></p>
-          <button class="btn btn-primary btn-sm" type="submit">${t('vt.lic.save')}</button>
+          <button class="btn btn-primary btn-sm" type="submit">${lic('vt.lic.save')}</button>
         </form>` : ''}
         ${needsDoc ? `
-          <p class="muted small">${t('ap.lic.docHelp')} ${t('vt.doc.private')}</p>
+          <p class="muted small">${lic('ap.lic.docHelp')} ${t('vt.doc.private')}</p>
           ${docs.length ? `<ul class="vt-files">${docs.map((f) => `
             <li><span>${esc(f.filename)} · ${Math.max(1, Math.round(f.size / 1024))} KB</span>
               <button type="button" class="btn btn-ghost btn-sm" data-remove="${esc(f.id)}">${t('vt.doc.remove')}</button></li>`).join('')}</ul>` : ''}

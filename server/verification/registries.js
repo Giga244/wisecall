@@ -6,6 +6,9 @@
 //                   false: there is no public register we could confirm, so the mentor ALSO uploads the licence, certificate or diploma
 //                   and an admin checks the document by hand. Mentors in these fields are never blocked for lack of a register.
 //   registries      links the admin panel shows next to the licence (never fetched by the server: an admin opens them).
+//   credential      'diploma' when there is no licence at all and what we accept is a diploma or certificate (psychology, nursing):
+//                   the pages then say "diploma or certificate", never "licence", and it needs no end date
+//                   (docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md).
 //   sources         where the facts above come from.
 //
 // The keys are niche keys (the niches table, migration 019).
@@ -43,6 +46,7 @@ const REGULATED = {
   nursing: {
     label: 'Nursing',
     licence: 'Nursing diploma or certificate (no public register of nurses could be confirmed)',
+    credential: 'diploma',
     publicRegister: false,
     registries: [],
     sources: ['https://rama.moh.gov.ge/']
@@ -50,6 +54,7 @@ const REGULATED = {
   psychology: {
     label: 'Psychology',
     licence: 'Psychology diploma or certificate (no licensing law or public register for psychologists could be confirmed)',
+    credential: 'diploma',
     publicRegister: false,
     registries: [],
     sources: ['https://matsne.gov.ge/ka/document/view/24178 (Law of Georgia on Mental Health: mentions psychologists, no register)']

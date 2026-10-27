@@ -68,7 +68,7 @@
   // The line under the step's title: for the story, why it does not count; otherwise what is missing.
   function gapLine(i) {
     if (i === 1 && v.application.storyReason === 'repeated') return t('apply.err.storyRepeated');
-    return fill('apply.gap', { list: missingIn(i).map((c) => t('ap.missing.' + c)).join(', ') });
+    return fill('apply.gap', { list: missingIn(i).map(missingText).join(', ') });
   }
   const storyMessage = (verdict) => (verdict.reason === 'repeated' ? t('apply.err.storyRepeated') : fill('apply.err.story', { min: v.limits.storyMin }));
   function stepFromUrl() {
@@ -126,6 +126,22 @@
 
   const nicheName = (key) => (key === 'other' ? t('ap.f.niche.other') : t('niche.' + key));
   const isRegulated = (key) => Boolean((WisecallI18n.niches().find((n) => n.key === key) || {}).regulated);
+  // A regulated field with no licence at all (psychology, nursing): a diploma or certificate counts, and the words say so, never "licence"
+  // (server/verification/registries.js credential; docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md).
+  const isDiploma = (key) => (WisecallI18n.niches().find((n) => n.key === key) || {}).credential === 'diploma';
+  const dip = () => Boolean(v.licence && v.licence.credential === 'diploma');
+  const lic = (key) => (dip() ? t(key + '.dip') : t(key));
+  const missingText = (code) => ((code === 'license' || code === 'license_document') && dip() ? t(`ap.missing.${code}.dip`) : t('ap.missing.' + code));
+  // The years, as typed: the first whole number in it ("25", "25 წელი", "25+"), or why there is none. A text box, not type="number",
+  // which leaves the value empty for anything else (a word, a Georgian keyboard) and so looked like nothing was typed.
+  function yearsOf(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return { empty: true };
+    const m = s.match(/\d+/);
+    if (!m) return { error: 'nan' };
+    const n = Number(m[0]);
+    return n > v.limits.yearsMax ? { error: 'max' } : { n };
+  }
 
   function aboutStep() {
     const f = v.application.form;
@@ -138,26 +154,32 @@
         <p class="apply-lead">${esc(t('apply.about.lead'))}</p>
         <div class="apply-field">
           <label for="apHeadline">${esc(t('apply.f.headline'))}</label>
-          <input id="apHeadline" name="headline" type="text" maxlength="100" value="${esc(user.headline || '')}" autocomplete="organization-title" aria-describedby="apHeadlineHint" required>
+          <input id="apHeadline" name="headline" type="text" maxlength="100" value="${esc(user.headline || '')}" autocomplete="organization-title" aria-describedby="apHeadlineHint apHeadlineErr" required>
           <span class="hint" id="apHeadlineHint">${esc(t('apply.f.headline.hint'))}</span>
+          <p class="apply-field-error" id="apHeadlineErr" data-error-for="headline" hidden></p>
         </div>
         <div class="apply-field">
           <label for="apField">${esc(t('apply.f.field'))}</label>
-          <input id="apField" name="customNiche" type="text" maxlength="60" value="${esc(f.customNiche || '')}" autocomplete="off" aria-describedby="apFieldHint apCategory" required>
+          <input id="apField" name="customNiche" type="text" maxlength="60" value="${esc(f.customNiche || '')}" autocomplete="off" aria-describedby="apFieldHint apCategory apFieldErr" required>
           <span class="hint" id="apFieldHint">${esc(t('apply.f.field.hint'))}</span>
+          <p class="apply-field-error" id="apFieldErr" data-error-for="field" hidden></p>
           <p class="apply-category" id="apCategory" aria-live="polite"${niche ? '' : ' hidden'}>
             <span>${esc(t('apply.f.category'))} <strong data-cat-name>${niche ? esc(nicheName(niche)) : ''}</strong></span>
             <button type="button" class="linklike" data-cat-change aria-controls="apNicheBox" aria-expanded="false">${esc(t('apply.f.category.change'))}</button>
           </p>
           <div class="apply-niche" id="apNicheBox" hidden>
             <label for="apNiche">${esc(t('apply.f.category.choose'))}</label>
-            <select id="apNiche" name="niche"><option value="">${esc(t('ap.f.niche.choose'))}</option>${options}</select>
+            <select id="apNiche" name="niche" aria-describedby="apNicheErr"><option value="">${esc(t('ap.f.niche.choose'))}</option>${options}</select>
           </div>
-          <p class="mv-note apply-licence-note" data-licence-note${isRegulated(niche) ? '' : ' hidden'}>${esc(t('apply.f.licenceNote'))}</p>
+          <p class="apply-field-error" id="apNicheErr" data-error-for="niche" hidden></p>
+          <p class="mv-note apply-licence-note" data-licence-note${isRegulated(niche) ? '' : ' hidden'}>${esc(t(isDiploma(niche) ? 'apply.f.licenceNote.dip' : 'apply.f.licenceNote'))}</p>
+          <p class="hint apply-psych-note" data-psych-note${niche === 'psychology' ? '' : ' hidden'}>${esc(t('apply.f.psychAcademic'))}</p>
         </div>
         <div class="apply-field apply-years">
           <label for="apYears">${esc(t('apply.f.years'))}</label>
-          <input id="apYears" name="yearsExperience" type="number" min="0" max="${v.limits.yearsMax}" step="1" inputmode="numeric" value="${f.yearsExperience === null || f.yearsExperience === undefined ? '' : esc(f.yearsExperience)}" required>
+          <input id="apYears" name="yearsExperience" type="text" inputmode="numeric" maxlength="20" autocomplete="off" value="${f.yearsExperience === null || f.yearsExperience === undefined ? '' : esc(f.yearsExperience)}" aria-describedby="apYearsHint apYearsErr" required>
+          <span class="hint" id="apYearsHint">${esc(t('apply.f.years.hint'))}</span>
+          <p class="apply-field-error" id="apYearsErr" data-error-for="years" hidden></p>
         </div>
         <!-- (optional: a title and specialty tags; open when something is already there, from the old Settings form for example) -->
         <details class="apply-more apply-optional"${f.roleTitle || (f.specialtyTags || []).length ? ' open' : ''}>
@@ -249,20 +271,20 @@
     const docs = v.inputs.documents.filter((d) => d.step === 'license_document');
     return `
       <div class="apply-block apply-licence">
-        <h2>${esc(t('ap.lic.title'))}</h2>
-        <p class="hint">${esc(fill('ap.lic.help', { niche: t('niche.' + v.niche) }))}</p>
-        ${l && r.status !== 'failed' ? `<p class="ap-line ap-ok">✓ ${esc(fill('vt.lic.submitted', { last4: l.numberEnding, body: l.issuingBody, date: l.validUntil }))}</p>` : `
+        <h2>${esc(lic('ap.lic.title'))}</h2>
+        <p class="hint">${esc(fill(dip() ? 'ap.lic.help.dip' : 'ap.lic.help', { niche: t('niche.' + v.niche) }))}</p>
+        ${l && r.status !== 'failed' ? `<p class="ap-line ap-ok">✓ ${esc(fill(dip() || !l.validUntil ? 'vt.lic.submitted.dip' : 'vt.lic.submitted', { last4: l.numberEnding, body: l.issuingBody, date: l.validUntil }))}</p>` : `
         <div class="apply-sub" data-sub="license">
           ${r.status === 'failed' && r.reason ? `<p class="form-error"><strong>${esc(t('vt.reason'))}</strong> ${esc(r.reason)}</p>` : ''}
-          <div class="apply-field"><label for="apLicNumber">${esc(t('vt.lic.number'))}</label><input id="apLicNumber" name="number" type="text" maxlength="40" autocomplete="off"></div>
-          <div class="apply-field"><label for="apLicBody">${esc(t('vt.lic.body'))}</label><input id="apLicBody" name="issuingBody" type="text" maxlength="120" placeholder="${esc(t('vt.lic.bodyHint'))}"></div>
-          <div class="apply-field"><label for="apLicHolder">${esc(t('vt.lic.holder'))}</label><input id="apLicHolder" name="holderName" type="text" maxlength="100" value="${esc(l ? l.holderName : user.name)}"></div>
-          <div class="apply-field"><label for="apLicUntil">${esc(t('vt.lic.until'))}</label><input id="apLicUntil" name="validUntil" type="date" value="${esc(l ? l.validUntil : '')}"></div>
+          <div class="apply-field"><label for="apLicNumber">${esc(lic('vt.lic.number'))}</label><input id="apLicNumber" name="number" type="text" maxlength="40" autocomplete="off"></div>
+          <div class="apply-field"><label for="apLicBody">${esc(lic('vt.lic.body'))}</label><input id="apLicBody" name="issuingBody" type="text" maxlength="120" placeholder="${esc(lic('vt.lic.bodyHint'))}"></div>
+          <div class="apply-field"><label for="apLicHolder">${esc(lic('vt.lic.holder'))}</label><input id="apLicHolder" name="holderName" type="text" maxlength="100" value="${esc(l ? l.holderName : user.name)}"></div>
+          <div class="apply-field"><label for="apLicUntil">${esc(lic('vt.lic.until'))}</label><input id="apLicUntil" name="validUntil" type="date" value="${esc(l ? l.validUntil : '')}"></div>
           <p class="form-error apply-sub-error" role="alert"></p>
-          <button type="button" class="btn btn-outline btn-lg" data-save-licence>${esc(t('vt.lic.save'))}</button>
+          <button type="button" class="btn btn-outline btn-lg" data-save-licence>${esc(lic('vt.lic.save'))}</button>
         </div>`}
         ${needsDoc ? `
-          <p class="hint">${esc(t('ap.lic.docHelp'))} ${esc(t('vt.doc.private'))}</p>
+          <p class="hint">${esc(lic('ap.lic.docHelp'))} ${esc(t('vt.doc.private'))}</p>
           ${docs.length ? `<ul class="vt-files">${docs.map((f) => `<li><span>${esc(f.filename)}</span> <button type="button" class="btn btn-ghost btn-sm" data-doc-remove="${esc(f.id)}">${esc(t('vt.doc.remove'))}</button></li>`).join('')}</ul>` : `
           <div class="apply-sub" data-sub="licenceDoc">
             <div class="apply-field"><label for="apLicDoc">${esc(t('vt.doc.choose'))}</label><input id="apLicDoc" type="file" accept="application/pdf,image/jpeg,.pdf,.jpg,.jpeg"></div>
@@ -358,7 +380,7 @@
         ${rows.map(([key, done, step]) => `
           <li class="${done ? 'is-done' : 'is-missing'}">
             <span class="apply-check-mark" aria-hidden="true">${done ? '✓' : '○'}</span>
-            <span><span class="sr-only">${esc(t(done ? 'apply.check.doneSr' : 'apply.check.missingSr'))}</span>${esc(t('apply.check.' + key))}</span>
+            <span><span class="sr-only">${esc(t(done ? 'apply.check.doneSr' : 'apply.check.missingSr'))}</span>${esc(key === 'licence' ? lic('apply.check.licence') : t('apply.check.' + key))}</span>
             ${!done && step !== null ? `<button type="button" class="linklike" data-goto="${step}">${esc(fill('apply.check.goto', { n: step + 1 }))}</button>` : ''}
           </li>`).join('')}
         <li class="${id === 'passed' ? 'is-done' : 'is-later'}">
@@ -385,7 +407,7 @@
         ${ready ? '' : `
           <div class="ap-missing apply-missing" role="note" id="apMissing">
             <p><strong>${esc(t('apply.missing.head'))}</strong></p>
-            <ul>${lacking.map((m) => `<li>${esc(t('ap.missing.' + m))}${STEP_OF[m] !== undefined ? ` <button type="button" class="linklike" data-goto="${STEP_OF[m]}">${esc(fill('apply.check.goto', { n: STEP_OF[m] + 1 }))}</button>` : ''}</li>`).join('')}</ul>
+            <ul>${lacking.map((m) => `<li>${esc(missingText(m))}${STEP_OF[m] !== undefined ? ` <button type="button" class="linklike" data-goto="${STEP_OF[m]}">${esc(fill('apply.check.goto', { n: STEP_OF[m] + 1 }))}</button>` : ''}</li>`).join('')}</ul>
           </div>`}
         <p class="hint apply-ai">${esc(t('ap.submit.ai'))} <a href="/privacy.html#automated-review">${esc(t('ap.submit.privacy'))}</a></p>
         <p class="form-error apply-error" role="alert"></p>
@@ -492,7 +514,8 @@
     wireStep();
   }
 
-  const stepError = (text) => { const el = root.querySelector('.apply-error'); if (el) el.textContent = text || ''; };
+  // (brought into view: on a phone the line under the buttons can be below the screen)
+  const stepError = (text) => { const el = root.querySelector('.apply-error'); if (!el) return; el.textContent = text || ''; if (text && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
   const subError = (sub, text) => { const el = sub && sub.querySelector('.apply-sub-error'); if (el) el.textContent = text || ''; };
   const errText = (map, e) => t(map[e.code] || 'toast.error');
 
@@ -508,6 +531,54 @@
   };
   const LIC_ERR = { invalid_license_number: 'vt.lic.err.number', invalid_issuing_body: 'vt.lic.err.body', invalid_holder_name: 'vt.lic.err.holder', invalid_valid_until: 'vt.lic.err.until' };
 
+  // ---- Step 1 (about you): an error under each field, the years read from what was typed, and a draft saved as the mentor goes
+  // (docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
+  let aboutDraftTimer = null;
+  const ERROR_INPUT = { headline: 'apHeadline', field: 'apField', niche: 'apNiche', years: 'apYears' };
+  function fieldError(form, name, text) {
+    const el = form.querySelector(`[data-error-for="${name}"]`);
+    const input = form.querySelector('#' + ERROR_INPUT[name]);
+    if (el) { el.textContent = text || ''; el.hidden = !text; }
+    if (input) input.setAttribute('aria-invalid', text ? 'true' : 'false');
+    // (the category list is behind "Change": opened when it is the category that needs choosing)
+    if (name === 'niche' && text) { const box = form.querySelector('#apNicheBox'); if (box) box.hidden = false; }
+  }
+  function clearFieldErrors(form) { Object.keys(ERROR_INPUT).forEach((n) => fieldError(form, n, '')); }
+  // The field in view (on a phone it may be off screen) and in focus, so the message under it is seen and read out.
+  function focusField(form, name) {
+    const input = form.querySelector('#' + ERROR_INPUT[name]);
+    if (!input) return;
+    if (input.scrollIntoView) input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    input.focus({ preventScroll: true });
+  }
+  // [field, message] for each thing step 1 still needs, in the order of the page.
+  function aboutProblems(form) {
+    const out = [];
+    if (!form.headline.value.trim()) out.push(['headline', t('apply.err.headline')]);
+    if (!form.customNiche.value.trim()) out.push(['field', t('apply.err.field')]);
+    const y = yearsOf(form.yearsExperience.value);
+    if (y.empty) out.push(['years', t('apply.err.yearsEmpty')]);
+    else if (y.error === 'nan') out.push(['years', t('apply.err.years')]);
+    else if (y.error === 'max') out.push(['years', fill('apply.err.yearsMax', { max: v.limits.yearsMax })]);
+    return out;
+  }
+  // Saves what step 1 holds that can be saved (years only as a number; left as it was when what was typed has none).
+  async function saveAbout(form) {
+    const headline = form.headline.value.trim();
+    if (headline !== (user.headline || '')) { await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { headline } }); user.headline = headline; }
+    const y = yearsOf(form.yearsExperience.value);
+    await WisecallAPI.apiFetch('/verification/experience', {
+      method: 'PUT',
+      body: { customNiche: form.customNiche.value.trim(), niche: form.niche.value || null, roleTitle: form.roleTitle.value, specialtyTags: form.specialtyTags.value,
+        ...(y.empty ? { yearsExperience: null } : (y.n !== undefined ? { yearsExperience: y.n } : {})) }
+    });
+  }
+  // A field left: saved a moment later, quietly (a failure here is said again on "Next", where it matters).
+  function draftAbout(form) {
+    clearTimeout(aboutDraftTimer);
+    aboutDraftTimer = setTimeout(() => { if (form.isConnected) saveAbout(form).catch(() => {}); }, 600);
+  }
+
   // Saves what the current step holds. check: also refuse to move on while something this step needs is missing.
   async function saveStep(check) {
     const form = root.querySelector('form.apply-step');
@@ -515,15 +586,12 @@
     const step = Number(form.dataset.step);
     stepError('');
     if (step === 0) {
-      const headline = form.headline.value.trim();
-      const field = form.customNiche.value.trim();
-      const years = form.yearsExperience.value.trim();
-      if (check && (!headline || !field || years === '')) { stepError(t('apply.err.about')); (!headline ? form.headline : (!field ? form.customNiche : form.yearsExperience)).focus(); return false; }
-      if (headline !== (user.headline || '')) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { headline } });
-      await WisecallAPI.apiFetch('/verification/experience', {
-        method: 'PUT',
-        body: { customNiche: field, niche: form.niche.value || null, yearsExperience: years === '' ? null : Number(years), roleTitle: form.roleTitle.value, specialtyTags: form.specialtyTags.value }
-      });
+      clearTimeout(aboutDraftTimer);
+      clearFieldErrors(form);
+      // Each field says what it needs, under itself; what is right is saved either way, so nothing typed is lost.
+      const problems = check ? aboutProblems(form) : [];
+      await saveAbout(form);
+      if (problems.length) { problems.forEach(([name, text]) => fieldError(form, name, text)); focusField(form, problems[0][0]); return false; }
     } else if (step === 1) {
       const story = form.story.value;
       // (saved first, so nothing is lost; then the server's own rule decides whether it counts: public/js/text-rules.js)
@@ -542,7 +610,7 @@
       // A link typed in but not added yet is added now ("Next" with the link in the box does what they meant).
       if (form.url.value.trim()) { const ok = await addLink(form); if (!ok) return false; }
       if (check && !v.application.evidence.length) { stepError(t('apply.err.proof')); form.url.focus(); return false; }
-      if (check && v.regulated && v.application.missing.some((m) => m === 'license' || m === 'license_document')) { stepError(t('apply.err.licence')); return false; }
+      if (check && v.regulated && v.application.missing.some((m) => m === 'license' || m === 'license_document')) { stepError(lic('apply.err.licence')); return false; }
     }
     return true;
   }
@@ -558,15 +626,27 @@
       if (check && target === current + 1 && current < 4 && !stepDone(current)) {
         drawHead();
         btns.forEach((b) => { b.disabled = false; });
-        stepError(gapLine(current));
+        const form = root.querySelector('form.apply-step');
+        const gaps = current === 0 && form ? missingIn(0).map((c) => [{ headline: 'headline', field: 'field', niche: 'niche', years: 'years' }[c], missingText(c)]).filter(([n]) => n) : [];
+        if (gaps.length) { gaps.forEach(([n, text]) => fieldError(form, n, text)); focusField(form, gaps[0][0]); } else stepError(gapLine(current));
         return;
       }
       go(target);
     } catch (e) {
-      stepError(errText(ERR, e));
+      showSaveError(e);
       btns.forEach((b) => { b.disabled = false; });
       restoreSubmit();
     }
+  }
+  // A refused or failed save: under the field the server named (step 1), otherwise one line in view. A request that never reached the
+  // server (no connection, a dropped network in an in-app browser) says so, and what was typed stays on the page.
+  const FIELD_OF = { headline: 'headline', customNiche: 'field', niche: 'niche', yearsExperience: 'years' };
+  function showSaveError(e) {
+    const form = root.querySelector('form.apply-step');
+    if (!e || !e.code) { stepError(t('apply.err.network')); return; }
+    const field = form && form.dataset.step === '0' && FIELD_OF[(e.data || {}).field || (e.code === 'invalid_niche' ? 'niche' : (e.code === 'invalid_years' ? 'yearsExperience' : (e.code === 'invalid_custom_niche' ? 'customNiche' : '')))];
+    if (field) { fieldError(form, field, errText(ERR, e)); focusField(form, field); return; }
+    stepError(errText(ERR, e));
   }
   // (the submit button stays disabled while something is missing)
   function restoreSubmit() { const s = root.querySelector('[data-submit]'); if (s && missing().length) s.disabled = true; }
@@ -723,6 +803,9 @@
         line.hidden = !key;
         line.querySelector('[data-cat-name]').textContent = key ? nicheName(key) : '';
         note.hidden = !isRegulated(key);
+        note.textContent = t(isDiploma(key) ? 'apply.f.licenceNote.dip' : 'apply.f.licenceNote');
+        form.querySelector('[data-psych-note]').hidden = key !== 'psychology';
+        if (key) fieldError(form, 'niche', '');
       };
       field.addEventListener('input', () => {
         clearTimeout(timer);
@@ -736,7 +819,12 @@
             if (mine !== seq || chosen) return;
             select.value = r.niche || 'other';
             show();
-          } catch (e) { /* they can choose it themselves */ }
+          } catch (e) {
+            // (not answered: no guess is kept, an earlier one for fewer words included; the server suggests one on saving, or they choose)
+            if (mine !== seq || chosen) return;
+            select.value = '';
+            show();
+          }
         }, 300);
       });
       change.addEventListener('click', () => {
@@ -744,7 +832,15 @@
         change.setAttribute('aria-expanded', 'true');
         select.focus();
       });
-      select.addEventListener('change', () => { chosen = true; show(); });
+      select.addEventListener('change', () => { chosen = true; show(); draftAbout(form); });
+      ['headline', 'customNiche', 'roleTitle', 'specialtyTags'].forEach((n) => form[n].addEventListener('blur', () => draftAbout(form)));
+      // the years: what is wrong is said as soon as the field is left, and a typed field clears its own message
+      form.yearsExperience.addEventListener('blur', () => {
+        const p = aboutProblems(form).find(([n]) => n === 'years');
+        if (p && form.yearsExperience.value.trim()) fieldError(form, 'years', p[1]);
+        draftAbout(form);
+      });
+      Object.entries(ERROR_INPUT).forEach(([n, id]) => { const el = form.querySelector('#' + id); if (el) el.addEventListener('input', () => fieldError(form, n, '')); });
     }
     if (current === 1) {
       const area = form.story;

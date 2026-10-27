@@ -48,7 +48,8 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
       evidenceMax: rules.LIMITS.evidenceMax, evidenceNoteMax: rules.LIMITS.evidenceNoteMax, minutesToApply: rules.LIMITS.minutesToApply
     },
     evidenceKinds: rules.EVIDENCE_KINDS,
-    licence: summary.regulated ? { publicRegister: Boolean(rules.REGULATED[user.niche] && rules.REGULATED[user.niche].publicRegister) } : null,
+    licence: summary.regulated ? { publicRegister: Boolean(rules.REGULATED[user.niche] && rules.REGULATED[user.niche].publicRegister),
+      credential: (rules.REGULATED[user.niche] && rules.REGULATED[user.niche].credential) || 'licence' } : null,
     inputs: {
       license: await credentials.ownCredentials(user.id),
       workEmailDomain: user.workEmail ? user.workEmail.split('@')[1] : null,
@@ -108,7 +109,11 @@ async function mentorOr(req, res) {
 const submit = (handler) => [requireAuth, asyncHandler(async (req, res) => {
   const user = await mentorOr(req, res);
   if (!user) return;
-  try { res.json((await handler(user, req.body || {}, req, res)) || { ok: true }); } catch (e) { fail(res, e); }
+  try { res.json((await handler(user, req.body || {}, req, res)) || { ok: true }); } catch (e) {
+    // (what was refused, by its code only: never the person or what they wrote; docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
+    if (e instanceof steps.VerificationError) console.warn(`[verification] refused ${req.method} ${req.baseUrl}${req.path} ${e.code}${e.field ? ` (${e.field})` : ''}`);
+    fail(res, e);
+  }
 })];
 
 // Step 2: the Experience form (saved as a draft), the evidence list, then "Submit for review".

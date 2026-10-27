@@ -67,7 +67,7 @@ test('"Your field" and "Other" in the application (step 1 of /apply.html)', asyn
   await page.click('[data-cat-change]');
   await page.selectOption('#apNiche', 'other');
   await page.click('.apply-next');
-  await expect(page.locator('.apply-error')).toContainText('without links');
+  await expect(page.locator('#apFieldErr')).toContainText('without links'); // (under the field it is about)
   await page.fill('#apField', 'Beekeeping');
   await page.click('.apply-next');
   await page.waitForURL(/step=2$/);

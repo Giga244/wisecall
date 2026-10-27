@@ -31,8 +31,8 @@ describe('the niche list', () => {
     const cfg = await client(base).api('/config');
     assert.equal(cfg.niches.length, 36);
     const psych = cfg.niches.find((n) => n.key === 'psychology');
-    assert.deepEqual(Object.keys(psych).sort(), ['en', 'icon', 'ka', 'key', 'regulated']);
-    assert.equal(psych.ka, 'ფსიქოლოგია და კეთილდღეობა');
+    assert.deepEqual(Object.keys(psych).sort(), ['credential', 'en', 'icon', 'ka', 'key', 'regulated']); // (credential: 'diploma', no licence exists)
+    assert.equal(psych.ka, 'ფსიქოლოგია'); // (renamed: docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
     assert.deepEqual(cfg.niches.filter((n) => n.regulated).map((n) => n.key).sort(),
       ['accounting_tax', 'dentistry', 'finance', 'law', 'medicine', 'nursing', 'pharmacy', 'psychology']);
     assert.equal(cfg.niches[0].key, 'business', 'in their order');

@@ -34,20 +34,22 @@ async function submitLicense(user, input) {
   if (!number || !/^[\p{L}\p{N}][\p{L}\p{N}\s./\-]*$/u.test(number)) throw new VerificationError('invalid_license_number');
   if (!issuingBody) throw new VerificationError('invalid_issuing_body');
   if (!holderName) throw new VerificationError('invalid_holder_name');
+  // A diploma or certificate (psychology, nursing: no licence exists) has no end date: it may be left empty; given, it is checked.
+  const diploma = (rules.REGULATED[user.niche] || {}).credential === 'diploma';
   const until = /^\d{4}-\d{2}-\d{2}$/.test(validUntil) ? new Date(`${validUntil}T23:59:59Z`) : null;
   const latest = Date.now() + 15 * 365 * 86400000;
-  if (!until || Number.isNaN(until.getTime()) || until.getTime() < Date.now() || until.getTime() > latest) throw new VerificationError('invalid_valid_until');
+  if (!(diploma && !validUntil) && (!until || Number.isNaN(until.getTime()) || until.getTime() < Date.now() || until.getTime() > latest)) throw new VerificationError('invalid_valid_until');
 
   await query(
     `INSERT INTO mentor_credentials (user_id, license_number_enc, license_last4, issuing_body, holder_name, valid_until)
      VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (user_id) DO UPDATE SET license_number_enc = EXCLUDED.license_number_enc, license_last4 = EXCLUDED.license_last4,
        issuing_body = EXCLUDED.issuing_body, holder_name = EXCLUDED.holder_name, valid_until = EXCLUDED.valid_until, updated_at = now()`,
-    [user.id, encrypt(number), number.replace(/\s/g, '').slice(-4), issuingBody, holderName, validUntil]
+    [user.id, encrypt(number), number.replace(/\s/g, '').slice(-4), issuingBody, holderName, validUntil || null]
   );
   // Never the number itself in evidence: only the last characters, the body and the expiry.
   await steps.setStep(user.id, 'license', 'pending', {
-    evidence: { issuingBody, validUntil, numberEnding: number.replace(/\s/g, '').slice(-4) }, replaceEvidence: true, actor: steps.mentorActor(user)
+    evidence: { issuingBody, validUntil: validUntil || null, numberEnding: number.replace(/\s/g, '').slice(-4) }, replaceEvidence: true, actor: steps.mentorActor(user)
   });
   await require('./names').recompute(user.id); // the name on the licence is compared with the ID
 }

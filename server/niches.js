@@ -49,7 +49,9 @@ function nameOf(key, lang, custom) {
   return lang === 'ka' ? n.ka : n.en;
 }
 // For the pages (/api/config): what they need to show and filter niches.
-const forClient = () => active().map((n) => ({ key: n.key, en: n.en, ka: n.ka, icon: n.icon, regulated: n.regulated }));
+// (credential: 'diploma' for a regulated field with no licence at all, where a diploma or certificate is what counts)
+const forClient = () => active().map((n) => ({ key: n.key, en: n.en, ka: n.ka, icon: n.icon, regulated: n.regulated,
+  ...(REGULATED[n.key] && REGULATED[n.key].credential ? { credential: REGULATED[n.key].credential } : {}) }));
 
 // What a mentor's field is called on the site: their own words, or the category's name when they wrote none (older profiles).
 const fieldOf = (user, lang) => (user && user.customNiche) || nameOf(user && user.niche, lang);
