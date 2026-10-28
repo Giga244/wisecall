@@ -29,7 +29,7 @@ const ownHosts = () => {
 const optedOut = (req) => req.get('dnt') === '1' || req.get('sec-gpc') === '1';
 const isPage = (p) => p === '/' || /\.html$/.test(p) || !/\.[a-z0-9]+$/i.test(p);
 // Facebook and Instagram, from the referring domain (facebook.com, m.facebook.com, l.facebook.com, instagram.com, l.instagram.com, ...).
-const socialOf = (ref) => (!ref ? null : /(^|\.)facebook\.com$/.test(ref) ? 'facebook' : /(^|\.)instagram\.com$/.test(ref) ? 'instagram' : null);
+const socialOf = (ref) => (!ref ? null : /(^|\.)facebook\.com$/.test(ref) ? 'facebook' : /(^|\.)instagram\.com$/.test(ref) ? 'instagram' : /(^|\.)tiktok\.com$/.test(ref) ? 'tiktok' : null);
 // The page they landed on: its path only (the Georgian /ka/... included), never the query.
 const landingOf = (p) => (typeof p === 'string' && /^\/[A-Za-z0-9._~/-]{0,99}$/.test(p) ? p : null);
 
@@ -43,6 +43,8 @@ function fromRequest(req) {
   if (ref && (ownHosts().has(ref) || ref === domain(req.hostname))) ref = null; // (a page of this site is not a source)
   if (ref) out.referrer = ref;
   // (Facebook and Instagram without tags: the fbclid only says it was them, its value is never kept)
+  // (?ref=tiktok, ?ref=instagram ...: the short tag in a bio link or a post; utm_source wins when both are there)
+  if (!out.source && clip(q.ref)) out.source = clip(q.ref).toLowerCase();
   if (!out.source) out.source = socialOf(ref) || (q.fbclid ? 'facebook' : undefined);
   if (!out.source && !out.referrer && !out.medium && !out.campaign) out.source = 'direct';
   if (!out.source) delete out.source;

@@ -2726,5 +2726,10 @@
   "dash.samples.published": "Published",
   "dash.samples.rejected": "Not published: {reason}",
   "dash.samples.withdrawn": "Taken down",
-  "dash.samples.short": "Write at least {min} characters."
+  "dash.samples.short": "Write at least {min} characters.",
+  "wait.position": "You're #{n} on the list",
+  "wait.share": "Share Wisecall with a friend",
+  "wait.shareText": "Wisecall: real answers from verified people. Join the list:",
+  "wait.copied": "Link copied",
+  "wait.hero": "Wisecall opens soon. Get one email when it does:"
 }

@@ -114,10 +114,35 @@
   // screen reader hears its label once, never the rotation.
   const firstExample = (count, random = Math.random) => Math.min(count - 1, Math.floor(random() * count));
   const nextExample = (i, count) => (i + 1) % count;
+  // Once mentors have written sample answers (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md parts 4 and 5), the conversation shows those
+  // real ones instead, shortened, with the mentor's name and field; until then, the examples in the page.
+  const clipText = (s, n) => { const a = [...String(s || '').replace(/\s+/g, ' ').trim()]; return a.length > n ? a.slice(0, n - 1).join('') + '…' : a.join(''); };
+  async function realExamples(stage) {
+    let list = [];
+    try { list = ((await WisecallAPI.apiFetch('/answers?limit=12')).answers || []).filter((a) => a.sample).slice(0, 6); } catch (e) { return null; }
+    if (!list.length) return null;
+    const model = stage.querySelector('.stage-example');
+    const box = model.parentNode;
+    const made = list.map((a) => {
+      const ex = model.cloneNode(true);
+      ex.classList.remove('is-active');
+      ex.querySelectorAll('[data-i18n]').forEach((el) => el.removeAttribute('data-i18n'));
+      ex.querySelector('.bubble-q p:last-child').textContent = clipText(a.question, 150);
+      const who = ex.querySelector('.bubble-a .bubble-who span:last-child');
+      if (who) who.textContent = [a.mentor.name, a.mentor.field || a.mentor.roleTitle].filter(Boolean).join(' · ');
+      ex.querySelector('.bubble-a p:last-child').textContent = clipText(a.answer, 220);
+      return ex;
+    });
+    box.querySelectorAll('.stage-example').forEach((ex) => ex.remove());
+    made.forEach((ex) => box.appendChild(ex));
+    return made;
+  }
   function initExamples() {
     const stage = document.querySelector('.hero-stage .stage');
-    const examples = stage ? [...stage.querySelectorAll('.stage-example')] : [];
+    let examples = stage ? [...stage.querySelectorAll('.stage-example')] : [];
     if (!examples.length) return;
+    // (the page's examples show at once; real sample answers take their place when they arrive)
+    realExamples(stage).then((real) => { if (real) { examples = real; show(firstExample(examples.length)); } }).catch(() => {});
     let current = -1;
     const show = (i) => { current = i; examples.forEach((ex, k) => ex.classList.toggle('is-active', k === i)); };
     show(firstExample(examples.length));

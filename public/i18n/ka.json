@@ -2726,5 +2726,10 @@
   "dash.samples.published": "გამოქვეყნდა",
   "dash.samples.rejected": "არ გამოქვეყნდა: {reason}",
   "dash.samples.withdrawn": "წაიშალა",
-  "dash.samples.short": "დაწერე მინიმუმ {min} სიმბოლო."
+  "dash.samples.short": "დაწერე მინიმუმ {min} სიმბოლო.",
+  "wait.position": "შენ ხარ #{n} სიაში",
+  "wait.share": "გაუზიარე მეგობარს",
+  "wait.shareText": "Wisecall: რეალური პასუხები გადამოწმებული ადამიანებისგან. შემოგვიერთდი სიაში:",
+  "wait.copied": "ბმული დაკოპირდა",
+  "wait.hero": "Wisecall მალე იხსნება. გახსნისას ერთ წერილს მიიღებ:"
 }

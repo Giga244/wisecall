@@ -8,9 +8,12 @@ const router = express.Router();
 router.post('/', asyncHandler(async (req, res) => {
   const b = req.body || {};
   try {
-    await waitlist.add({ email: b.email, niche: b.niche, language: b.language, wantedQuestion: b.wantedQuestion });
-    require('../analytics').event('waitlist_join', req, { field: String(b.niche || 'any').slice(0, 40) });
-    res.status(201).json({ ok: true });
+    const source = require('../attribution').read(req);
+    const { position } = await waitlist.add({ email: b.email, niche: b.niche, language: b.language, wantedQuestion: b.wantedQuestion, source });
+    require('../analytics').event('waitlist_join', req, { field: String(b.niche || 'any').slice(0, 40), source: (source && source.source) || 'unknown' });
+    // (the link to pass on: the home page in their language, tagged so a friend's sign-up shows where it came from)
+    const share = `${require('../config').PUBLIC_URL}${b.language === 'ka' ? '/ka/' : '/'}?ref=share`;
+    res.status(201).json({ ok: true, position, share });
   } catch (e) {
     if (e instanceof waitlist.WaitlistError) return res.status(400).json({ error: e.code });
     throw e;

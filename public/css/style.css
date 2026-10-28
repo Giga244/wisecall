@@ -1253,3 +1253,11 @@ html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; 
 .home-mentor-grid { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
 .home-mentor { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 16px 10px; border: var(--line-w) solid var(--line); border-radius: var(--r-card-lg); background: var(--card); color: var(--ink); text-decoration: none; min-height: 44px; }
 .home-mentor-name { font-weight: 800; }
+/* the waiting list in the hero: before launch, on a phone only (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 5) */
+.hero-wait { margin: 0 0 18px; }
+.hero-wait-lead { margin: 0 0 8px; font-weight: 700; }
+.hero-wait .waitlist-hint { font-size: 0.8rem; }
+@media (min-width: 768px) { .hero-wait { display: none !important; } }
+html:not([data-launch="prelaunch"]) .hero-wait { display: none !important; }
+.waitlist-place { margin: 6px 0 0; font-size: 1.15rem; }
+.waitlist-share { margin-top: 8px; }

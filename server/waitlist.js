@@ -16,17 +16,22 @@ class WaitlistError extends Error {
 
 // Adds an address. Asking twice for the same field changes nothing (and reveals nothing).
 // wantedQuestion: what they typed on the home page (optional; contact details are taken out, at most 300 characters).
-async function add({ email, niche, language, wantedQuestion }) {
+// -> { position }: how many addresses are on the list now ("You're #N on the list"). It is the same answer whether or not the address was
+// there already, so it says nothing about who is on the list.
+async function add({ email, niche, language, wantedQuestion, source }) {
   const address = String(email || '').trim();
   if (!EMAIL_RE.test(address) || address.length > 254) throw new WaitlistError('invalid_email');
   const field = niche === undefined || niche === null || niche === '' ? 'any' : String(niche);
   if (field !== 'any' && !rules.isValidNiche(field)) throw new WaitlistError('invalid_niche');
   const asked = typeof wantedQuestion === 'string' ? [...require('./publicAnswers').redact(wantedQuestion.replace(/\s+/g, ' ').trim())].slice(0, 300).join('') || null : null;
   await query(
-    `INSERT INTO waitlist (email, niche, language, token, prelaunch, wanted_question) VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT (lower(email), niche) DO UPDATE SET wanted_question = COALESCE(waitlist.wanted_question, EXCLUDED.wanted_question)`,
-    [address, field, language === 'ka' ? 'ka' : 'en', crypto.randomBytes(24).toString('hex'), config.LAUNCH_MODE === 'prelaunch', asked]
+    `INSERT INTO waitlist (email, niche, language, token, prelaunch, wanted_question, source) VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (lower(email), niche) DO UPDATE SET wanted_question = COALESCE(waitlist.wanted_question, EXCLUDED.wanted_question),
+       source = COALESCE(waitlist.source, EXCLUDED.source)`,
+    [address, field, language === 'ka' ? 'ka' : 'en', crypto.randomBytes(24).toString('hex'), config.LAUNCH_MODE === 'prelaunch', asked, source ? JSON.stringify(source) : null]
   );
+  const { rows: [n] } = await query('SELECT count(DISTINCT lower(email))::int AS n FROM waitlist');
+  return { position: n.n };
 }
 
 // The link in every email removes that person from the list.
@@ -49,7 +54,12 @@ async function listForAdmin() {
 
 // A mentor was just listed: tell everyone waiting for that field. Each person is claimed with one UPDATE,
 // so two mentors joining at once (or two server processes) never send the same person two emails.
+// One email per address: someone on the list for two fields is told once (and both entries count as told).
 async function sendNotices(rows, mentorFieldFor) {
+  const seen = new Set();
+  const once = rows.filter((r) => { const k = r.email.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  if (once.length) await query('UPDATE waitlist SET notified_at = now() WHERE notified_at IS NULL AND lower(email) = ANY($1::text[])', [[...seen]]);
+  rows = once;
   for (const r of rows) {
     const mentorField = mentorFieldFor(r);
     try {

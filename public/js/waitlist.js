@@ -54,14 +54,25 @@
         const button = form.querySelector('button');
         button.disabled = true;
         try {
-          await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang(), wantedQuestion: question || undefined, turnstileToken: human ? await human.token(form) : undefined } });
+          const joined = await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang(), wantedQuestion: question || undefined, turnstileToken: human ? await human.token(form) : undefined } });
           // (the note keeps the form's height: the card around it does not jump)
           const done = document.createElement('div');
           done.className = 'waitlist-done';
           done.setAttribute('role', 'status');
-          done.innerHTML = `${CHECK}<p>${esc(t(prelaunch() ? 'wait.prelaunch.done' : 'wait.done'))}</p>`;
+          // ("You're #N on the list" and a link to pass on: docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 5)
+          const place = joined && joined.position ? `<p class="waitlist-place"><strong>${esc(t('wait.position').replace('{n}', joined.position))}</strong></p>` : '';
+          const share = joined && joined.share ? `<button type="button" class="btn btn-outline btn-sm waitlist-share" data-share="${esc(joined.share)}">${esc(t('wait.share'))}</button>` : '';
+          done.innerHTML = `${CHECK}${place}<p>${esc(t(prelaunch() ? 'wait.prelaunch.done' : 'wait.done'))}</p>${share}`;
           done.style.minHeight = `${form.offsetHeight}px`;
           form.replaceWith(done);
+          const sb = done.querySelector('[data-share]');
+          if (sb) sb.addEventListener('click', async () => {
+            const url = sb.dataset.share;
+            try {
+              if (navigator.share) await navigator.share({ title: 'Wisecall', text: t('wait.shareText'), url });
+              else { await navigator.clipboard.writeText(url); WisecallNav.showToast(t('wait.copied')); }
+            } catch (e) { /* (closed, or no clipboard) */ }
+          });
         } catch (e) {
           error.textContent = (human && human.errorText(e.code)) || t(e.code === 'invalid_email' ? 'wait.error' : 'toast.error');
           if (human) human.reset(form);
@@ -87,6 +98,17 @@
       if (r.niche && fields().includes(r.niche)) { questionField = r.niche; draw(); }
     } catch (e) { /* the visitor chooses the field */ }
   }
+
+  // On a phone before launch, the form is in the hero too, above the fold (the "Wisecall opens soon" card is far below on a small screen).
+  function hero() {
+    const box = document.getElementById('heroWait');
+    if (!box || !prelaunch() || box.dataset.ready) return;
+    box.dataset.ready = '1';
+    box.innerHTML = `<p class="hero-wait-lead">${esc(t('wait.hero'))}</p>${html()}`;
+    wire(box);
+    box.hidden = false;
+  }
+  WisecallI18n.ready.then(hero).catch(() => {});
 
   window.WisecallWaitlist = { fields, html, wire, ask };
 })();
