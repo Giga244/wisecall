@@ -11,7 +11,7 @@ const OTHER = 'other'; // a mentor's own niche, written in users.custom_niche
 
 const FALLBACK = [
   ['business', 'Business', 'ბიზნესი', 'business'], ['medicine', 'Medicine', 'მედიცინა', 'medicine'], ['law', 'Law', 'სამართალი', 'law'],
-  ['finance', 'Finance', 'ფინანსები', 'finance'], ['tech', 'Tech', 'IT და პროგრამირება', 'tech'], ['teaching', 'Teaching', 'განათლება და სწავლება', 'teaching'],
+  ['finance', 'Finance', 'ფინანსები', 'finance'], ['tech', 'Tech', 'IT სფერო', 'tech'], ['teaching', 'Teaching', 'განათლება და სწავლება', 'teaching'],
   ['fitness', 'Fitness', 'ფიტნესი', 'fitness'], ['creative', 'Creative', 'ხელოვნება და ხელნაკეთობა', 'creative'], ['marketing', 'Marketing', 'მარკეტინგი', 'marketing'],
   ['design', 'Design', 'დიზაინი', 'design'], ['writing', 'Writing', 'წერა და ჟურნალისტიკა', 'writing'], ['parenting', 'Parenting', 'მშობლობა და ბავშვის აღზრდა', 'parenting'],
   ['engineering', 'Engineering', 'ინჟინერია', 'engineering'], ['science', 'Science', 'მეცნიერება და კვლევა', 'science']

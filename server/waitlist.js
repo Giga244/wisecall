@@ -54,12 +54,10 @@ async function listForAdmin() {
 
 // A mentor was just listed: tell everyone waiting for that field. Each person is claimed with one UPDATE,
 // so two mentors joining at once (or two server processes) never send the same person two emails.
-// One email per address: someone on the list for two fields is told once (and both entries count as told).
+// One email per address for one event: someone in two of the entries told now (a field and "any") gets it once.
 async function sendNotices(rows, mentorFieldFor) {
   const seen = new Set();
-  const once = rows.filter((r) => { const k = r.email.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
-  if (once.length) await query('UPDATE waitlist SET notified_at = now() WHERE notified_at IS NULL AND lower(email) = ANY($1::text[])', [[...seen]]);
-  rows = once;
+  rows = rows.filter((r) => { const k = r.email.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
   for (const r of rows) {
     const mentorField = mentorFieldFor(r);
     try {
@@ -97,6 +95,13 @@ async function launchDay() {
       WHERE id IN (SELECT id FROM waitlist WHERE notified_at IS NULL AND prelaunch AND (niche = ANY($1::text[]) OR niche = 'any') ORDER BY created_at LIMIT 500)
       RETURNING email, niche, language, token`, [fields]
   );
+  // One email at launch (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 5): this person's other entries that this email already
+  // covers (a field that has a mentor now) count as told too; a field still without a mentor gets its own email when one joins.
+  const emails = [...new Set(rows.map((r) => r.email.toLowerCase()))];
+  if (emails.length) {
+    await query(`UPDATE waitlist SET notified_at = now() WHERE notified_at IS NULL AND prelaunch AND lower(email) = ANY($1::text[])
+                   AND (niche = ANY($2::text[]) OR niche = 'any')`, [emails, fields]);
+  }
   return sendNotices(rows, (r) => (r.niche === 'any' ? fields[0] : r.niche));
 }
 

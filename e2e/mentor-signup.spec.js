@@ -86,7 +86,7 @@ async function walk(page, { width, shots, tag }) {
   await page.waitForURL(/step=3$/);
 
   // 3. The price: a suggested range, and what the mentor keeps.
-  await expect(page.locator('#apPriceSuggest')).toContainText('20–60');
+  await expect(page.locator('#apPriceSuggest')).toContainText('20–50');
   await page.fill('#apPrice', '40');
   await expect(page.locator('#apPriceYou')).toContainText('32 ₾');
   await shot('07-step3-price');

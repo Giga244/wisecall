@@ -425,9 +425,14 @@ async function markNotificationsRead(userId, ids) {
 
 // ---- Email settings and unsubscribe links --------------------------------------------------------------------------------------
 async function emailSettings(userId) {
-  const { rows } = await query('SELECT email_off FROM notification_settings WHERE user_id = $1', [userId]);
+  const [{ rows }, who] = await Promise.all([
+    query('SELECT email_off FROM notification_settings WHERE user_id = $1', [userId]),
+    query('SELECT role FROM users WHERE id = $1', [userId])
+  ]);
   const off = rows[0] ? rows[0].email_off : [];
-  return { optional: OPTIONAL_EMAILS.map((key) => ({ key, on: !off.includes(key) })) };
+  // (the application reminders are a mentor's only)
+  const mentor = Boolean(who.rows[0]) && ['mentor', 'both'].includes(who.rows[0].role);
+  return { optional: OPTIONAL_EMAILS.filter((key) => key !== 'apply_reminders' || mentor).map((key) => ({ key, on: !off.includes(key) })) };
 }
 async function setEmailOff(userId, off) {
   if (!Array.isArray(off) || off.some((k) => !OPTIONAL_EMAILS.includes(k))) throw new InboxError('not_optional');

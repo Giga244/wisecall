@@ -43,7 +43,7 @@ const config = {
   PRICE_MAX: 2000,
   // The range /apply.html suggests to a new mentor ("most new mentors start between 20 and 60 ₾"); only advice, any price in range is fine.
   PRICE_SUGGEST_MIN: 20,
-  PRICE_SUGGEST_MAX: 60,
+  PRICE_SUGGEST_MAX: 50,
 
   // Which bank takes the money: flitt | bog | tbc | mock. "mock" is a fake bank for local development
   // only and is refused in production.

@@ -1,6 +1,6 @@
 -- Undoes migrations/049_categories.sql (run by hand, then delete its row from schema_migrations). The extra categories and the
 -- "teach / practise" choice are lost; the main category (users.niche) is untouched.
-UPDATE niches SET name_ka = 'ტექნოლოგია' WHERE key = 'tech' AND name_ka = 'IT და პროგრამირება';
+UPDATE niches SET name_ka = 'ტექნოლოგია' WHERE key = 'tech' AND name_ka = 'IT სფერო';
 UPDATE niches SET name_ka = 'სწავლება' WHERE key = 'teaching' AND name_ka = 'განათლება და სწავლება';
 UPDATE niches SET name_ka = 'კრეატიული' WHERE key = 'creative' AND name_ka = 'ხელოვნება და ხელნაკეთობა';
 UPDATE niches SET name_ka = 'წერა' WHERE key = 'writing' AND name_ka = 'წერა და ჟურნალისტიკა';

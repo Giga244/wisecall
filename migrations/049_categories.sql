@@ -5,7 +5,7 @@
 ALTER TABLE users ADD COLUMN IF NOT EXISTS extra_niches text[] NOT NULL DEFAULT '{}' CHECK (cardinality(extra_niches) <= 2);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS practice_kind text CHECK (practice_kind IN ('academic', 'practitioner', 'both'));
 
-UPDATE niches SET name_ka = 'IT და პროგრამირება' WHERE key = 'tech' AND name_ka = 'ტექნოლოგია';
+UPDATE niches SET name_ka = 'IT სფერო' WHERE key = 'tech' AND name_ka = 'ტექნოლოგია';
 UPDATE niches SET name_ka = 'განათლება და სწავლება' WHERE key = 'teaching' AND name_ka = 'სწავლება';
 UPDATE niches SET name_ka = 'ხელოვნება და ხელნაკეთობა' WHERE key = 'creative' AND name_ka = 'კრეატიული';
 UPDATE niches SET name_ka = 'წერა და ჟურნალისტიკა' WHERE key = 'writing' AND name_ka = 'წერა';

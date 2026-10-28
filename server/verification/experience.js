@@ -486,9 +486,10 @@ async function priceRangeFor(niche) {
     const { rows: [r] } = await query(
       `SELECT count(*)::int AS n, percentile_cont(0.25) WITHIN GROUP (ORDER BY price) AS lo, percentile_cont(0.75) WITHIN GROUP (ORDER BY price) AS hi
          FROM users WHERE ${require('../models').listableSql()} AND niche = $1 AND price > 0`, [niche]);
-    if (r && r.n >= 3) return { from: Math.round(r.lo), to: Math.round(r.hi), fromData: true };
+    // (a range that is one price, "20–20 ₾", says nothing: the general one is shown instead)
+    if (r && r.n >= 3 && Math.round(r.hi) - Math.round(r.lo) >= 5) return { from: Math.round(r.lo), to: Math.round(r.hi), fromData: true };
   }
-  return { from: 20, to: 50, fromData: false };
+  return { from: require('../config').PRICE_SUGGEST_MIN, to: require('../config').PRICE_SUGGEST_MAX, fromData: false };
 }
 
 module.exports = {

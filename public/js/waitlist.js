@@ -60,9 +60,9 @@
           done.className = 'waitlist-done';
           done.setAttribute('role', 'status');
           // ("You're #N on the list" and a link to pass on: docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 5)
-          const place = joined && joined.position ? `<p class="waitlist-place"><strong>${esc(t('wait.position').replace('{n}', joined.position))}</strong></p>` : '';
-          const share = joined && joined.share ? `<button type="button" class="btn btn-outline btn-sm waitlist-share" data-share="${esc(joined.share)}">${esc(t('wait.share'))}</button>` : '';
-          done.innerHTML = `${CHECK}${place}<p>${esc(t(prelaunch() ? 'wait.prelaunch.done' : 'wait.done'))}</p>${share}`;
+          const place = joined && joined.position ? `<strong class="waitlist-place">${esc(t('wait.position').replace('{n}', joined.position))}.</strong> ` : '';
+          const share = joined && joined.share ? ` <button type="button" class="linklike waitlist-share" data-share="${esc(joined.share)}">${esc(t('wait.share'))}</button>` : '';
+          done.innerHTML = `${CHECK}<p>${place}${esc(t(prelaunch() ? 'wait.prelaunch.done' : 'wait.done'))}${share}</p>`;
           done.style.minHeight = `${form.offsetHeight}px`;
           form.replaceWith(done);
           const sb = done.querySelector('[data-share]');

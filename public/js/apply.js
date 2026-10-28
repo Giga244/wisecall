@@ -941,6 +941,7 @@
       showLimit();
       ['headline', 'customNiche', 'roleTitle', 'specialtyTags'].forEach((n) => form[n].addEventListener('blur', () => draftAbout(form)));
       // the years: what is wrong is said as soon as the field is left, and a typed field clears its own message
+      form.yearsExperience.addEventListener('change', () => { fieldError(form, 'years', ''); draftAbout(form); });
       form.yearsExperience.addEventListener('blur', () => {
         const p = aboutProblems(form).find(([n]) => n === 'years');
         if (p && form.yearsExperience.value.trim()) fieldError(form, 'years', p[1]);

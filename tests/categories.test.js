@@ -161,7 +161,7 @@ describe('a main category and up to two extra ones', () => {
 describe('the words on the page', () => {
   test('clearer Georgian names, in the dictionary and in the database', async () => {
     const ka = dict('ka');
-    const want = { tech: 'IT და პროგრამირება', teaching: 'განათლება და სწავლება', creative: 'ხელოვნება და ხელნაკეთობა', writing: 'წერა და ჟურნალისტიკა',
+    const want = { tech: 'IT სფერო', teaching: 'განათლება და სწავლება', creative: 'ხელოვნება და ხელნაკეთობა', writing: 'წერა და ჟურნალისტიკა',
       parenting: 'მშობლობა და ბავშვის აღზრდა', science: 'მეცნიერება და კვლევა', sports_coaching: 'სპორტი და მწვრთნელობა', data_ai: 'მონაცემთა ანალიზი და ხელოვნური ინტელექტი', psychology: 'ფსიქოლოგია' };
     const { rows } = await pool.query('SELECT key, name_ka FROM niches WHERE key = ANY($1)', [Object.keys(want)]);
     for (const [k, v] of Object.entries(want)) {
