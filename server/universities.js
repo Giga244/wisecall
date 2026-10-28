@@ -38,4 +38,11 @@ function universityOf(urlOrHost) {
   return GENERIC.test(host) ? { domain: host, en: null, ka: null } : null;
 }
 
-module.exports = { LIST, universityOf };
+// A known Georgian university from a link or a domain -> { domain, en, ka }, or null (a generic .edu page earns no badge).
+function knownUniversity(urlOrDomain) {
+  const u = universityOf(urlOrDomain);
+  return u && u.en ? u : null;
+}
+const byDomain = (domain) => LIST.find((u) => u.domain === domain) || null;
+
+module.exports = { knownUniversity, byDomain, LIST, universityOf };

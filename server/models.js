@@ -14,7 +14,10 @@ function userFromRow(r) {
     role: r.role,
     niche: r.niche,
     extraNiches: r.extra_niches || [], // (up to two more categories; niche is the main one)
-    practiceKind: r.practice_kind || null, // academic | practitioner | both ("I mainly teach or research" ...), or not said
+    practiceKind: r.practice_kind || null,
+    foundingMentorAt: r.founding_mentor_at || null, // (approved before launch: "Founding mentor", for good)
+    universityDomain: r.university_domain || null, universityBadge: r.university_badge || null, // (confirmed | removed by an admin)
+    showOnHome: Boolean(r.show_on_home), // ("show my profile on the home page": off unless they choose it) // academic | practitioner | both ("I mainly teach or research" ...), or not said
     roleTitle: r.role_title,
     bio: r.bio,
     price: r.price,
@@ -123,7 +126,7 @@ const USER_COLUMNS = {
   headline: 'headline', currentWork: 'current_work', city: 'city', languages: 'languages', linkedinUrl: 'linkedin_url', websiteUrl: 'website_url',
   profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme',
   specialtyTags: 'specialty_tags', yearsExperience: 'years_experience', story: 'story', applicationSubmittedAt: 'application_submitted_at',
-  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', extraNiches: 'extra_niches', practiceKind: 'practice_kind', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
+  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', extraNiches: 'extra_niches', practiceKind: 'practice_kind', foundingMentorAt: 'founding_mentor_at', universityDomain: 'university_domain', universityBadge: 'university_badge', showOnHome: 'show_on_home', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
   freeWeeklyCap: 'free_weekly_cap', applyTouchedAt: 'apply_touched_at'
 };
 

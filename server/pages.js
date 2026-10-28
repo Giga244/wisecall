@@ -429,6 +429,7 @@ function homeJsonLd(lang) {
 const paText = (text) => escapeHtml(String(text || '')).replace(/\n/g, '<br>');
 function answerCard(a, prefix, d) {
   return `<article class="answer-card">
+      ${a.sample ? `<span class="chip-tag answer-sample">${escapeHtml(d['pa.sample'])}</span>` : ''}
       <h2 class="answer-q"><a href="${prefix}/answers/${encodeURIComponent(a.slug)}">${escapeHtml(shortText(a.question, 160))}</a></h2>
       <p class="answer-a">${escapeHtml(shortText(a.answer, 240))}</p>
       <p class="muted small">${escapeHtml(a.mentor.name)}${a.mentor.field || a.mentor.roleTitle ? ' · ' + escapeHtml(a.mentor.field || a.mentor.roleTitle) : ''} · ${escapeHtml((d['answers.helpfulCount'] || '{n} found this helpful').replace('{n}', a.helpful))}</p>
@@ -490,7 +491,7 @@ async function sendAnswer(req, res, slug) {
   const body = `
   <article class="answer-full">
     <h1 class="answer-full-q">${paText(a.question)}</h1>
-    <p class="muted small">${escapeHtml(d['answers.asker'])}</p>
+    ${a.sample ? `<p><span class="chip-tag answer-sample">${escapeHtml(d['pa.sample'])}</span> <span class="muted small">${escapeHtml(d['pa.sample.note'])}</span></p>` : `<p class="muted small">${escapeHtml(d['answers.asker'])}</p>`}
     ${a.regulated ? `<p class="advice-regulated">${escapeHtml(d['answers.regulated'])}</p>` : ''}
     <div class="answer-full-a">${paText(a.answer)}</div>
     <p class="answer-helpful"><button type="button" class="btn btn-outline btn-sm" id="helpfulBtn" data-slug="${escapeHtml(a.slug)}">${escapeHtml(d['answers.helpful'])}</button>

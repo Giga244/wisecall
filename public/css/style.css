@@ -1248,3 +1248,8 @@ html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; 
 .apply-preview { margin: 0 0 28px; }
 .apply-preview-steps { margin: 0 0 18px; padding-left: 1.4em; display: grid; gap: 6px; }
 .apply-preview-ready { margin: 0 0 14px; padding-left: 1.2em; display: grid; gap: 6px; }
+/* the home page: our mentors (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 4) */
+.home-mentors { padding: 48px 0; }
+.home-mentor-grid { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+.home-mentor { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 16px 10px; border: var(--line-w) solid var(--line); border-radius: var(--r-card-lg); background: var(--card); color: var(--ink); text-decoration: none; min-height: 44px; }
+.home-mentor-name { font-weight: 800; }

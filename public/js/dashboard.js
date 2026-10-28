@@ -305,6 +305,7 @@
           : (b.status === 'paid' ? `
             <form class="answer-form" data-id="${b.id}" novalidate>
               <div class="answer-edit">
+                <p class="hint answer-tips">${escapeHtml(t('dash.answer.tips'))}</p>
                 ${checklistHtml(answeredSoFar < 5)}
                 <label class="sr-only" for="answer-${b.id}">${t('dash.answer.placeholder')}</label>
                 <textarea id="answer-${b.id}" rows="7" maxlength="${answerMax}" placeholder="${escapeHtml(t('dash.answer.placeholder'))}" aria-describedby="answer-meta-${b.id} answer-error-${b.id}" required></textarea>

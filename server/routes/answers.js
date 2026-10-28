@@ -8,13 +8,24 @@ const pa = require('../publicAnswers');
 
 const router = express.Router();
 const STATUS = { not_found: 404, not_answered: 409, rating_needed: 409, mentor_declines: 409, already_decided: 409, invalid_question: 400,
-  invalid_answer: 400, offensive: 400, invalid_visitor: 400 };
+  invalid_answer: 400, offensive: 400, invalid_visitor: 400, not_approved: 403 };
 const fail = (res, e) => {
   if (!(e instanceof pa.AnswerError)) throw e;
   res.status(STATUS[e.code] || 400).json({ error: e.code, ...(e.min ? { min: e.min, max: e.max } : {}) });
 };
 const isId = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s));
 const me = async (req, res) => { const u = await getUserById(req.userToken.id); if (!u) res.status(401).json({ error: 'not_authenticated' }); return u; };
+
+// Sample answers: the team's questions an approved mentor can answer before launch, with their own answer (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 4).
+router.get('/samples', requireAuth, asyncHandler(async (req, res) => {
+  const user = await me(req, res); if (!user) return;
+  res.json({ questions: await pa.sampleQuestionsFor(user) });
+}));
+router.put('/samples/:questionId', requireAuth, asyncHandler(async (req, res) => {
+  const user = await me(req, res); if (!user) return;
+  if (!isId(req.params.questionId)) return res.status(404).json({ error: 'not_found' });
+  try { res.json({ publicAnswer: await pa.saveSample(user, req.params.questionId, (req.body || {}).answer) }); } catch (e) { fail(res, e); }
+}));
 
 // The published answers: ?q= ?niche= ?sort=newest|helpful ?mentor=<id> ?limit=
 router.get('/', asyncHandler(async (req, res) => {

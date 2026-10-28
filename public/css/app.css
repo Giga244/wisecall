@@ -871,3 +871,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 @media (min-width: 600px) { .apply-extra-selects { grid-template-columns: 1fr 1fr; } }
 .apply-kind-option { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .profile-fields { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* the dashboard: sample answers (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 4) */
+.dash-samples { margin-top: 24px; }
+.sample-form { display: grid; gap: 8px; margin-top: 18px; }
+.answer-sample { margin-right: 6px; }

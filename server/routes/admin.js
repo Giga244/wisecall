@@ -35,13 +35,14 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
   const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
   const mentors = rows.map(userFromRow);
   const ids = mentors.map((m) => m.id);
-  const [stats, stepMap, flagRows, standingRows, reviews] = await Promise.all([
+  const [stats, stepMap, flagRows, standingRows, reviews, badges] = await Promise.all([
     mentorStatsFor(ids), verificationSteps.loadStepsFor(ids),
     query(`SELECT mentor_id, count(*)::int AS n FROM mentor_flags WHERE status = 'open' AND mentor_id = ANY($1::uuid[]) GROUP BY mentor_id`, [ids]),
     // the last thing that happened to each mentor's standing: "reinstated" (and still pending) means back in review after a suspension
     query(`SELECT DISTINCT ON (mentor_id) mentor_id, action FROM verification_audit
             WHERE mentor_id = ANY($1::uuid[]) AND action IN ('suspended', 'reinstated', 'approved', 'rejected', 'delisted') ORDER BY mentor_id, created_at DESC`, [ids]),
-    require('../verification/analysis').latestFor(ids)
+    require('../verification/analysis').latestFor(ids),
+    require('../verification/badges').badgesFor(ids) // (the university badge as it shows, for "confirm / remove")
   ]);
   const openFlags = Object.fromEntries(flagRows.rows.map((r) => [r.mentor_id, r.n]));
   const lastStanding = Object.fromEntries(standingRows.rows.map((r) => [r.mentor_id, r.action]));
@@ -57,6 +58,7 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
       const submitted = m.verificationStatus === 'pending' && Boolean(m.applicationSubmittedAt);
       return {
         ...meProfile(m), ...stats[m.id],
+        university: ((badges[m.id] || []).find((b) => b.key === 'university') || {}).university || null,
         verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted, failedRequired: Boolean(m.hasFailedRequiredStep),
           // ("Profile incomplete: missing story, headline": never approve an empty profile)
           profileGaps: require('../verification/experience').profileGaps(m) },
@@ -278,6 +280,43 @@ router.post(['/live/hosts', '/live/hosts/:userId'], requireAuth, requireAdmin, a
   await query(`INSERT INTO verification_audit (mentor_id, actor_id, actor_label, action, reason) VALUES ($1, $2, $3, $4, $5)`,
     [u.id, req.adminUser.id, req.adminUser.email, allow ? 'live_host_allowed' : 'live_host_removed', null]);
   res.json({ ok: true, allowed: allow });
+}));
+
+// Sample questions for approved mentors to answer before launch (their answers come into the queue below, marked "sample").
+router.get('/sample-questions', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ questions: await require('../publicAnswers').sampleQuestions({ all: true }) });
+}));
+router.post('/sample-questions', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { res.status(201).json({ question: await require('../publicAnswers').addSampleQuestion(req.adminUser, { question: b.question, niche: b.niche }) }); }
+  catch (e) { paFail(res, e); }
+}));
+router.post('/sample-questions/:id', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/i.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try { res.json({ question: await require('../publicAnswers').setSampleQuestionActive(req.params.id, (req.body || {}).active === true) }); }
+  catch (e) { paFail(res, e); }
+}));
+
+// The university badge: an admin confirms it (the university from the mentor's pages, or one named) or removes it; "reset" goes back
+// to what the checked pages say.
+router.post('/mentors/:id/university-badge', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/i.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const b = req.body || {};
+  const u = await getUserById(req.params.id);
+  if (!u) return res.status(404).json({ error: 'not_found' });
+  const { byDomain } = require('../universities');
+  let patch;
+  if (b.action === 'confirm') {
+    const uni = (b.domain && byDomain(String(b.domain))) || await require('../verification/badges').universityGuess(u.id);
+    if (!uni) return res.status(400).json({ error: 'no_university' });
+    patch = { universityBadge: 'confirmed', universityDomain: uni.domain };
+  } else if (b.action === 'remove') patch = { universityBadge: 'removed' };
+  else if (b.action === 'reset') patch = { universityBadge: null };
+  else return res.status(400).json({ error: 'invalid_action' });
+  await require('../models').updateUser(u.id, patch);
+  await query(`INSERT INTO verification_audit (mentor_id, actor_id, actor_label, action, reason) VALUES ($1, $2, $3, $4, $5)`,
+    [u.id, req.adminUser.id, req.adminUser.email, 'university_badge_' + b.action, patch.universityDomain || null]);
+  res.json({ ok: true, universityBadge: patch.universityBadge, universityDomain: patch.universityDomain || u.universityDomain || null });
 }));
 
 router.get('/public-answers', requireAuth, requireAdmin, asyncHandler(async (req, res) => {

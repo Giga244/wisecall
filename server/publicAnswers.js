@@ -48,7 +48,7 @@ function slugFor(question, id) {
 // ---- What the dashboard shows ------------------------------------------------------------------------------------------------------
 const rowOf = async (bookingId, client) => (await (client ? client.query.bind(client) : query)('SELECT * FROM public_answers WHERE booking_id = $1', [bookingId])).rows[0] || null;
 const view = (r) => r && ({
-  id: r.id, status: r.status, slug: r.status === 'published' ? r.slug : null, question: r.question_public, answer: r.answer_public,
+  id: r.id, status: r.status, slug: r.status === 'published' ? r.slug : null, question: r.question_public, answer: r.answer_public, sample: Boolean(r.is_sample),
   askerAgreed: r.asker_consent === true, mentorAgreed: r.mentor_consent === true, rejectReason: r.status === 'rejected' ? r.reject_reason : null
 });
 
@@ -171,11 +171,66 @@ async function queue() {
   return rows.map((r) => ({ ...view(r), niche: r.niche, regulated: r.regulated, mentorName: r.mentor_name, mentorUsername: r.mentor_username, createdAt: r.created_at }));
 }
 
+// ---- Sample answers (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 4) ------------------------------------------------------------
+// Before launch the team writes questions ("How do I choose a faculty?"); an approved mentor answers one. It is a public answer with no
+// booking behind it: the same checks on the text, the same admin review (and the regulated-field permission), the same pages and the same
+// "withdraw"; it is marked "Sample" wherever it shows.
+const sampleQuestionView = (r) => ({ id: r.id, question: r.question, niche: r.niche, active: r.active, createdAt: r.created_at });
+async function sampleQuestions({ all = false } = {}) {
+  const { rows } = await query(`SELECT q.*, (SELECT count(*)::int FROM public_answers pa WHERE pa.sample_question_id = q.id AND pa.status = 'published') AS published
+    FROM sample_questions q ${all ? '' : 'WHERE q.active'} ORDER BY q.created_at DESC LIMIT 100`);
+  return rows.map((r) => ({ ...sampleQuestionView(r), published: r.published }));
+}
+async function addSampleQuestion(admin, { question, niche }) {
+  const q = textSafety.cleanText(question || '');
+  if ([...q].length < QUESTION_MIN || [...q].length > QUESTION_MAX) throw new AnswerError('invalid_question', { min: QUESTION_MIN, max: QUESTION_MAX });
+  const key = niche && niches.isValid(niche) ? niche : null;
+  const { rows: [r] } = await query('INSERT INTO sample_questions (question, niche, created_by) VALUES ($1, $2, $3) RETURNING *', [q, key, admin.id]);
+  return sampleQuestionView(r);
+}
+async function setSampleQuestionActive(id, active) {
+  const { rows: [r] } = await query('UPDATE sample_questions SET active = $2 WHERE id = $1 RETURNING *', [id, Boolean(active)]);
+  if (!r) throw new AnswerError('not_found');
+  return sampleQuestionView(r);
+}
+// The open questions, each with this mentor's own answer (if any). Only an approved mentor answers them.
+async function sampleQuestionsFor(user) {
+  if (!user || user.verificationStatus !== 'verified') return [];
+  const [list, mine] = await Promise.all([
+    sampleQuestions(),
+    query('SELECT * FROM public_answers WHERE mentor_id = $1 AND is_sample', [user.id])
+  ]);
+  return list.map((q) => ({ ...q, mine: view(mine.rows.find((r) => r.sample_question_id === q.id)) || null }));
+}
+// Writes (or rewrites, while it waits for review or after a "no") the mentor's sample answer. -> view
+async function saveSample(user, questionId, answer) {
+  if (!user || user.verificationStatus !== 'verified') throw new AnswerError('not_approved');
+  const { rows: [q] } = await query('SELECT * FROM sample_questions WHERE id = $1 AND active', [questionId]);
+  if (!q) throw new AnswerError('not_found');
+  const text = textSafety.cleanText(answer || '');
+  if ([...text].length < LIMITS.answerMin || [...text].length > LIMITS.answerMax) throw new AnswerError('invalid_answer', { min: LIMITS.answerMin, max: LIMITS.answerMax });
+  if (textSafety.isOffensive(text)) throw new AnswerError('offensive');
+  const niche = q.niche || user.niche || null;
+  const regulated = Boolean(niche) && niches.isRegulated(niche);
+  const { rows: [r] } = await query(
+    `INSERT INTO public_answers (mentor_id, niche, regulated, status, mentor_consent, mentor_decided_at, question_public, answer_public, is_sample, sample_question_id)
+       VALUES ($1, $2, $3, 'pending_review', true, now(), $4, $5, true, $6)
+     ON CONFLICT (mentor_id, sample_question_id) WHERE is_sample AND sample_question_id IS NOT NULL
+       DO UPDATE SET answer_public = EXCLUDED.answer_public, question_public = EXCLUDED.question_public, status = 'pending_review', reject_reason = NULL,
+                     mentor_decided_at = now(), niche = EXCLUDED.niche, regulated = EXCLUDED.regulated
+       WHERE public_answers.status IN ('pending_review', 'rejected', 'withdrawn')
+     RETURNING *`, [user.id, niche, regulated, q.question, text, q.id]);
+  if (!r) throw new AnswerError('already_decided'); // (published: withdraw it first to write a new one)
+  require('./notify').notifyAdmins('A sample answer waits for review', '<p>Open Answers in the admin panel.</p>');
+  return view(r);
+}
+
 async function approve(admin, id, { question, answer, allowRegulated }) {
   return tx(async (client) => {
     const { rows: [r] } = await client.query('SELECT * FROM public_answers WHERE id = $1 FOR UPDATE', [id]);
     if (!r) throw new AnswerError('not_found');
-    if (r.status !== 'pending_review' || r.asker_consent !== true || r.mentor_consent !== true) throw new AnswerError('not_ready');
+    // (a sample answer has no asker: the mentor's yes and this review are what count)
+    if (r.status !== 'pending_review' || (r.asker_consent !== true && !r.is_sample) || r.mentor_consent !== true) throw new AnswerError('not_ready');
     if (r.regulated && allowRegulated !== true) throw new AnswerError('regulated_needs_permission');
     const q = typeof question === 'string' && question.trim() ? redact(question) : r.question_public;
     const a = typeof answer === 'string' && answer.trim() ? textSafety.cleanText(answer) : r.answer_public;
@@ -207,12 +262,12 @@ async function reject(admin, id, reason) {
 }
 
 // ---- The public pages ------------------------------------------------------------------------------------------------------------------
-const PUBLIC_COLUMNS = `pa.id, pa.slug, pa.question_public, pa.answer_public, pa.niche, pa.regulated, pa.published_at, pa.helpful_count,
+const PUBLIC_COLUMNS = `pa.id, pa.slug, pa.question_public, pa.answer_public, pa.niche, pa.regulated, pa.published_at, pa.helpful_count, pa.is_sample,
   m.name AS mentor_name, m.username AS mentor_username, m.role_title AS mentor_title, m.custom_niche AS mentor_field, m.price AS mentor_price, m.color AS mentor_color,
   m.photo_updated_at AS mentor_photo_at, m.id AS mentor_id, (${require('./models').listableSql('m')}) AS mentor_listed`;
 const publicView = (r) => ({
   id: r.id, slug: r.slug, question: r.question_public, answer: r.answer_public, niche: r.niche, regulated: r.regulated, publishedAt: r.published_at,
-  helpful: r.helpful_count,
+  helpful: r.helpful_count, sample: Boolean(r.is_sample), // (a sample answer to the team's question, written before launch)
   mentor: { id: r.mentor_id, name: r.mentor_name, username: r.mentor_username, roleTitle: r.mentor_title, field: r.mentor_field, price: r.mentor_price,
     color: r.mentor_color, photoUrl: r.mentor_photo_at ? `/api/photo/${r.mentor_id}?v=${new Date(r.mentor_photo_at).getTime()}` : null, listed: r.mentor_listed }
 });
@@ -262,5 +317,6 @@ async function sitemapSlugs() {
   return rows;
 }
 
-module.exports = { AnswerError, PREFS, QUESTION_MAX, redact, slugFor, forBookings, askerAgrees, askerDeclines, mentorDecides, withdraw, onAccountDeleted,
+module.exports = { sampleQuestions, addSampleQuestion, setSampleQuestionActive, sampleQuestionsFor, saveSample,
+  AnswerError, PREFS, QUESTION_MAX, redact, slugFor, forBookings, askerAgrees, askerDeclines, mentorDecides, withdraw, onAccountDeleted,
   queue, approve, reject, list, bySlug, helpful, sitemapSlugs };

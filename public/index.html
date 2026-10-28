@@ -285,6 +285,15 @@
   </div>
 </section>
 
+<!-- 3b. Our mentors: only approved mentors who chose "show my profile on the home page" (public/js/home-mentors.js) -->
+<section class="home-mentors" id="homeMentors" aria-labelledby="homeMentorsTitle" hidden>
+  <div class="container">
+    <h2 id="homeMentorsTitle" data-i18n="home.mentors.title" data-i18n-prelaunch="home.mentors.prelaunch">Our mentors</h2>
+    <p class="section-sub" id="homeMentorsCount" hidden></p>
+    <ul class="home-mentor-grid" id="homeMentorsList"></ul>
+  </div>
+</section>
+
 <!-- live -->
 <!-- Live sessions coming up (only when there are any): an ink band -->
 <section class="live-home" id="liveHome" aria-labelledby="liveHomeTitle" hidden>
@@ -419,5 +428,6 @@
 <script src="/js/niche-icons.js"></script>
 <script src="/js/home.js"></script>
 <script src="/js/main.js"></script>
+<script src="/js/home-mentors.js"></script>
 </body>
 </html>

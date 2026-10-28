@@ -82,6 +82,12 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     }
   }
 
+  // "Show my profile on the home page" (mentors; off unless they choose it).
+  if (updates.showOnHome !== undefined) {
+    if (typeof updates.showOnHome !== 'boolean') return res.status(400).json({ error: 'invalid_field', field: 'showOnHome' });
+    patch.showOnHome = updates.showOnHome;
+  }
+
   // Public answers: always allow / ask me each time / never (mentors).
   if (updates.publicAnswersPref !== undefined) {
     if (!require('../publicAnswers').PREFS.includes(updates.publicAnswersPref)) return res.status(400).json({ error: 'invalid_field', field: 'publicAnswersPref' });

@@ -91,7 +91,10 @@ async function finishApproval(mentor, actor, reason) {
   const exp = (await steps.loadSteps(mentor.id)).experience;
   if (!exp || exp.status !== 'passed') await steps.setStep(mentor.id, 'experience', 'passed', { reason: reason || 'Approved', actor });
   // (a listed mentor's profile is public: the field pages, the sitemap and search engines show it)
-  const updated = await updateUser(mentor.id, { verificationStatus: 'verified', verificationNote: null, verificationDecidedAt: new Date(), verificationRules: rules.VERSION, profileVisibility: 'public' });
+  // (approved before launch: a founding mentor, for good; after launch it is no longer given)
+  const founding = mentor.foundingMentorAt || (require('../config').LAUNCH_MODE === 'prelaunch' ? new Date() : null);
+  const updated = await updateUser(mentor.id, { verificationStatus: 'verified', verificationNote: null, verificationDecidedAt: new Date(), verificationRules: rules.VERSION, profileVisibility: 'public',
+    ...(founding ? { foundingMentorAt: founding } : {}) });
   await steps.audit(mentor.id, actor, 'approved', { from: 'pending', to: 'verified', ...(reason ? { reason } : {}) });
   await credentials.scheduleDeletion(mentor.id, null);
   return updated;

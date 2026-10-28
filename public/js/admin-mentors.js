@@ -317,6 +317,10 @@
           <strong>${esc(m.roleTitle || '—')}</strong> · ${m.customNiche ? `${esc(m.customNiche)} <span class="muted small">(${esc(m.niche ? t('niche.' + m.niche) : '—')})</span>` : (m.niche ? esc(t('niche.' + m.niche)) : '—')}
           ${v.level === 'regulated' ? `<span class="badge badge-paid">${t('verify.level.regulated')}</span>` : ''}
         </p>
+        <p class="small mv-uni">${esc(t('admin.uni.title'))}: ${esc(m.universityBadge === 'removed' ? t('admin.uni.removed') : (m.university ? fill('admin.uni.shown', { name: WisecallI18n.getLang() === 'ka' ? m.university.ka : m.university.en }) : t('admin.uni.none')))}
+          ${m.universityBadge === 'confirmed' || !m.university ? `<button type="button" class="btn btn-ghost btn-sm" data-uni="confirm">${esc(t('admin.uni.confirm'))}</button>` : ''}
+          ${m.universityBadge === 'removed' ? '' : `<button type="button" class="btn btn-ghost btn-sm" data-uni="remove">${esc(t('admin.uni.remove'))}</button>`}
+          ${m.universityBadge ? `<button type="button" class="btn btn-ghost btn-sm" data-uni="reset">${esc(t('admin.uni.reset'))}</button>` : ''}</p>
         ${m.analysis && m.analysis.summary ? `<p class="mv-ai-summary small">${riskBadge(m.analysis.risk)} <span class="badge badge-paid">${t('admin.ai.summaryLabel')}</span> ${esc(m.analysis.summary)}</p>` : (m.analysis && m.analysis.risk ? `<p class="small">${riskBadge(m.analysis.risk)} ${m.analysis.aiError ? esc(aiErrorText(m.analysis.aiError)) : ''}</p>` : '')}
         ${m.verificationStatus === 'pending' && !v.submitted ? `<p><span class="badge badge-pending_payment">${t('admin.ai.draft')}</span></p>` : ''}
         ${m.verificationStatus !== 'none' && v.profileGaps && v.profileGaps.length ? `<p class="mv-incomplete" role="note"><span class="badge badge-rejected">${esc(t('admin.mv.incomplete').replace('{missing}', v.profileGaps.map((g) => t('admin.mv.gap.' + g)).join(', ')))}</span></p>` : ''}
@@ -353,6 +357,12 @@
 
     container.querySelectorAll('.mv-card').forEach((el) => {
       const id = el.dataset.id;
+      // The university badge: confirm (from their pages), remove, or back to automatic.
+      el.querySelectorAll('[data-uni]').forEach((b) => b.addEventListener('click', async () => {
+        b.disabled = true;
+        try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/university-badge`, { method: 'POST', body: { action: b.dataset.uni } }); WisecallNav.showToast(t('toast.saved')); if (onChange) onChange(); }
+        catch (e) { WisecallNav.showToast(t(e.code === 'no_university' ? 'admin.uni.noUniversity' : 'toast.error')); b.disabled = false; }
+      }));
       const body = el.querySelector('.mv-body');
       const openBtn = el.querySelector('.mv-open');
 

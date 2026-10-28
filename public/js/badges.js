@@ -10,14 +10,18 @@
     experience: '<path d="M4 6h10M4 11h7M4 16h6"/><path d="M14 16l2.5 2.5L21 13"/>',
     workEmail: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 8l8 5 8-5"/>',
     diploma: '<path d="M3 9l9-4 9 4-9 4-9-4z"/><path d="M7 11v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V11"/><path d="M21 9v5"/>',
-    interview: '<rect x="3" y="6" width="12" height="12" rx="3"/><path d="M15 10l6-3v10l-6-3"/>'
+    interview: '<rect x="3" y="6" width="12" height="12" rx="3"/><path d="M15 10l6-3v10l-6-3"/>',
+    founding: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9L12 3z"/>',
+    university: '<path d="M3 10l9-5 9 5"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>'
   };
   const icon = (key) => `<svg class="trust-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[key] || ''}</svg>`;
 
-  const KEYS = ['id', 'experience', 'license', 'workEmail', 'diploma', 'interview'];
-  const label = (key) => WisecallI18n.t('badge.' + key);
+  const KEYS = ['founding', 'university', 'id', 'experience', 'license', 'workEmail', 'diploma', 'interview'];
+  // (the university badge names the university, in the page's language)
+  const uniName = (b) => (b.university ? (WisecallI18n.getLang() === 'ka' ? b.university.ka : b.university.en) : '');
+  const label = (key, b) => WisecallI18n.t('badge.' + key) + (key === 'university' && b && uniName(b) ? ' · ' + uniName(b) : '');
   const dateOf = (d) => WisecallI18n.formatDate(d, { dateStyle: 'medium' });
-  const tip = (b) => WisecallI18n.t('badge.' + b.key + '.tip').replace('{date}', dateOf(b.date));
+  const tip = (b) => WisecallI18n.t('badge.' + b.key + '.tip').replace('{date}', dateOf(b.date)).replace('{university}', uniName(b));
 
   function known(badges) {
     return (badges || []).filter((b) => KEYS.includes(b.key)).sort((a, b) => KEYS.indexOf(a.key) - KEYS.indexOf(b.key));
@@ -27,7 +31,7 @@
   function row(badges) {
     const list = known(badges);
     if (!list.length) return '';
-    return `<div class="trust-row">${list.map((b) => `<span class="trust-badge" title="${esc(tip(b))}">${icon(b.key)}<span>${esc(label(b.key))}</span></span>`).join('')}</div>`;
+    return `<div class="trust-row">${list.map((b) => `<span class="trust-badge" title="${esc(tip(b))}">${icon(b.key)}<span>${esc(label(b.key, b))}</span></span>`).join('')}</div>`;
   }
 
   // Full version for the profile page: focusable, with the explanation shown on hover or focus.
@@ -35,14 +39,14 @@
     const list = known(badges);
     if (!list.length) return '';
     return `<ul class="trust-list" aria-label="${esc(WisecallI18n.t('badge.title'))}">${list.map((b) => `
-      <li><span class="trust-badge trust-badge-lg" tabindex="0" aria-describedby="tip-${b.key}">${icon(b.key)}<span>${esc(label(b.key))}</span>
+      <li><span class="trust-badge trust-badge-lg" tabindex="0" aria-describedby="tip-${b.key}">${icon(b.key)}<span>${esc(label(b.key, b))}</span>
         <span class="trust-tip" role="tooltip" id="tip-${b.key}">${esc(tip(b))}</span></span></li>`).join('')}</ul>
-      <ul class="trust-explain">${list.map((b) => `<li><strong>${esc(label(b.key))}</strong> ${esc(tip(b))}</li>`).join('')}</ul>`;
+      <ul class="trust-explain">${list.map((b) => `<li><strong>${esc(label(b.key, b))}</strong> ${esc(tip(b))}</li>`).join('')}</ul>`;
   }
 
   // Every badge a new mentor can earn, for pages that explain how verification works.
   function legend() {
-    return `<ul class="trust-list" aria-label="${esc(WisecallI18n.t('badge.title'))}">${KEYS.filter((k) => k !== 'interview').map((key) => `
+    return `<ul class="trust-list" aria-label="${esc(WisecallI18n.t('badge.title'))}">${KEYS.filter((k) => !['interview', 'founding', 'university'].includes(k)).map((key) => `
       <li><span class="trust-badge trust-badge-lg">${icon(key)}<span>${esc(label(key))}</span></span></li>`).join('')}</ul>`;
   }
 

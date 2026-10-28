@@ -698,5 +698,21 @@
   "admin.email.bounced": "bounced",
   "admin.email.complained": "marked as spam",
   "admin.email.none": "pending",
-  "admin.niches.extra": "{n} more as an extra category"
+  "admin.niches.extra": "{n} more as an extra category",
+  "admin.samples.title": "Sample questions",
+  "admin.samples.help": "Approved mentors can answer these before launch. Each answer comes into the queue below, marked \"Sample\", and is published only after your check.",
+  "admin.samples.question": "A question (at least 20 characters)",
+  "admin.samples.add": "Add the question",
+  "admin.samples.published": "{n} published",
+  "admin.samples.closed": "closed",
+  "admin.samples.close": "Close",
+  "admin.samples.open": "Open again",
+  "admin.uni.title": "University badge",
+  "admin.uni.shown": "Shown: {name}",
+  "admin.uni.none": "Not shown",
+  "admin.uni.removed": "Removed by an admin",
+  "admin.uni.confirm": "Confirm",
+  "admin.uni.remove": "Remove",
+  "admin.uni.reset": "Back to automatic",
+  "admin.uni.noUniversity": "None of their links is on a known Georgian university's site."
 }

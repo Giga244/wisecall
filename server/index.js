@@ -253,6 +253,32 @@ app.get('/api/niches/suggest', (req, res) => {
   res.json({ niche, regulated: Boolean(niche) && require('./niches').isRegulated(niche), choices });
 });
 
+// The home page's "our mentors" (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 4): approved mentors who chose "show my profile on
+// the home page" (off by default): photo, name, field, university or company, "Founding mentor". The count of verified mentors only from 5.
+app.get('/api/home-mentors', publicCache(), require('./util').asyncHandler(async (req, res) => {
+  const { query } = require('./db');
+  const { userFromRow } = require('./models');
+  const { publicProfile } = require('./util');
+  const [picked, count] = await Promise.all([
+    query(`SELECT u.* FROM users u WHERE u.role IN ('mentor', 'both') AND u.verification_status = 'verified' AND u.show_on_home AND u.username IS NOT NULL
+             AND u.deleted_at IS NULL AND u.deletion_requested_at IS NULL
+             AND NOT EXISTS (SELECT 1 FROM profile_settings ps WHERE ps.user_id = u.id AND ps.hidden_at IS NOT NULL)
+           ORDER BY u.founding_mentor_at NULLS LAST, u.verification_decided_at LIMIT 12`),
+    query(`SELECT count(*)::int AS n FROM users WHERE role IN ('mentor', 'both') AND verification_status = 'verified' AND deleted_at IS NULL AND deletion_requested_at IS NULL`)
+  ]);
+  const users = picked.rows.map(userFromRow);
+  const [badges, summaries] = await Promise.all([require('./verification/badges').badgesFor(users.map((u) => u.id)), require('./profileSections').publicSummaries(users)]);
+  const mentors = users.map((u) => {
+    const p = publicProfile(u);
+    const uni = (badges[u.id] || []).find((b) => b.key === 'university');
+    const work = summaries[u.id] && summaries[u.id].currentPosition;
+    return { id: p.id, name: p.name, username: p.username, photoUrl: p.photoUrl, color: p.color, niche: p.niche, customNiche: p.customNiche,
+      founding: Boolean(u.foundingMentorAt), university: uni ? uni.university : null, organisation: work ? work.organisation : null };
+  });
+  const n = count.rows[0].n;
+  res.json({ mentors, verifiedCount: n >= 5 ? n : null });
+}));
+
 app.get('/api/config', publicCache(), async (req, res) => {
   await launch.ensureFresh(5000);
   res.json({

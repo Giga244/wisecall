@@ -698,5 +698,21 @@
   "admin.email.bounced": "ვერ მივიდა",
   "admin.email.complained": "სპამად მონიშნა",
   "admin.email.none": "მოლოდინში",
-  "admin.niches.extra": "კიდევ {n} დამატებით კატეგორიად"
+  "admin.niches.extra": "კიდევ {n} დამატებით კატეგორიად",
+  "admin.samples.title": "სანიმუშო კითხვები",
+  "admin.samples.help": "დამტკიცებულ მენტორებს გახსნამდე შეუძლიათ ამ კითხვებს უპასუხონ. თითოეული პასუხი ქვემოთ, რიგში შემოვა „სანიმუშოდ“ მონიშნული და მხოლოდ შენი შემოწმების შემდეგ გამოქვეყნდება.",
+  "admin.samples.question": "კითხვა (მინიმუმ 20 სიმბოლო)",
+  "admin.samples.add": "კითხვის დამატება",
+  "admin.samples.published": "გამოქვეყნდა {n}",
+  "admin.samples.closed": "დახურულია",
+  "admin.samples.close": "დახურვა",
+  "admin.samples.open": "ხელახლა გახსნა",
+  "admin.uni.title": "უნივერსიტეტის ნიშანი",
+  "admin.uni.shown": "ჩანს: {name}",
+  "admin.uni.none": "არ ჩანს",
+  "admin.uni.removed": "ადმინმა მოხსნა",
+  "admin.uni.confirm": "დადასტურება",
+  "admin.uni.remove": "მოხსნა",
+  "admin.uni.reset": "ავტომატურზე დაბრუნება",
+  "admin.uni.noUniversity": "მის არცერთ ბმულს ცნობილი ქართული უნივერსიტეტის საიტზე არ მივყავართ."
 }

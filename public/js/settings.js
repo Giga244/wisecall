@@ -58,6 +58,7 @@
     document.getElementById('freeWeeklyCap').value = u.freeWeeklyCap || 10;
     showPriceMode();
     document.getElementById('publicAnswersPref').value = u.publicAnswersPref || 'ask';
+    document.getElementById('showOnHome').checked = Boolean(u.showOnHome);
   }
 
   // ---- Tabs: Profile, Mentor, Verification, Payouts, Account -------------------------------------------
@@ -199,6 +200,13 @@
     }
   });
   mentorForm.querySelectorAll('input[name="priceMode"]').forEach((r) => r.addEventListener('change', showPriceMode));
+  document.getElementById('showOnHome').addEventListener('change', async (ev) => {
+    try {
+      const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { showOnHome: ev.target.checked } });
+      Object.assign(user, data.user);
+      WisecallNav.showToast(t('toast.saved'));
+    } catch (e) { ev.target.checked = !ev.target.checked; WisecallNav.showToast(t('toast.error')); }
+  });
   document.getElementById('publicAnswersPref').addEventListener('change', async (ev) => {
     try {
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { publicAnswersPref: ev.target.value } });

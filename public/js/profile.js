@@ -274,7 +274,7 @@
     try { d = await WisecallAPI.apiFetch(`/answers?mentor=${encodeURIComponent(expert.id)}&limit=10`); } catch (e) { return; }
     if (!d.answers.length) return;
     const prefix = WisecallI18n.getLang() === 'ka' ? '/ka' : '';
-    document.getElementById('publicAnswersBody').innerHTML = `<ul class="earn-list">${d.answers.map((a) => `<li><a class="plain-link" href="${prefix}/answers/${encodeURIComponent(a.slug)}">${escapeHtml(a.question.length > 140 ? a.question.slice(0, 139) + '…' : a.question)}</a></li>`).join('')}</ul>`;
+    document.getElementById('publicAnswersBody').innerHTML = `<ul class="earn-list">${d.answers.map((a) => `<li>${a.sample ? `<span class="chip-tag answer-sample">${escapeHtml(t('pa.sample'))}</span> ` : ''}<a class="plain-link" href="${prefix}/answers/${encodeURIComponent(a.slug)}">${escapeHtml(a.question.length > 140 ? a.question.slice(0, 139) + '…' : a.question)}</a></li>`).join('')}</ul>`;
     document.getElementById('publicAnswers').hidden = false;
   }
 
