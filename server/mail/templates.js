@@ -26,8 +26,8 @@ const S = {
     tagline: "Real advice, from people who've done it.",
     linkFallback: "If the button doesn't work, copy this link into your browser:",
     verify: {
-      subject: 'Your Wisecall verification code', heading: 'Verify your email',
-      intro: 'Use this code to finish setting up your account:', expiry: 'The code expires in 15 minutes.',
+      subject: 'Wisecall – your code: {code}', heading: 'Verify your email',
+      intro: 'Use this code to finish setting up your account:', expiry: 'The code expires in 15 minutes.', page: 'Enter it here',
       footer: "If you didn't create a Wisecall account, you can safely ignore this email."
     },
     loginAttempts: {
@@ -330,7 +330,7 @@ const S = {
     tagline: 'რეალური რჩევა მათგან, ვინც ეს გაიარა.',
     linkFallback: 'თუ ღილაკი არ მუშაობს, დააკოპირე ეს ბმული ბრაუზერში:',
     verify: {
-      subject: 'შენი Wisecall-ის დადასტურების კოდი', heading: 'დაადასტურე ელფოსტა',
+      subject: 'Wisecall – შენი კოდი: {code}', heading: 'დაადასტურე ელფოსტა', page: 'კოდი აქ ჩაწერე',
       intro: 'გამოიყენე ეს კოდი ანგარიშის შექმნის დასასრულებლად:', expiry: 'კოდი მოქმედია 15 წუთის განმავლობაში.',
       footer: 'თუ Wisecall-ზე ანგარიში შენ არ შეგიქმნია, უბრალოდ უგულებელყავი ეს წერილი.'
     },
@@ -635,9 +635,12 @@ const S = {
 //   { p: text }  paragraph      { code }  big code box      { quote }  quoted text
 //   { button: label, url }      { small: text }             { link: url } fallback link
 const BUILDERS = {
+  // The code email is as plain as an email can be (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 1): the code in the subject, no
+  // pictures, no tracking, a text part; mail filters (Outlook, live.com) treat short plain mail best.
   verify: (s, d) => ({
     heading: s.verify.heading,
-    blocks: [{ p: s.verify.intro }, { code: d.code }, { small: s.verify.expiry }, { small: s.verify.footer }]
+    plain: true,
+    blocks: [{ p: s.verify.intro }, { code: d.code }, { small: s.verify.expiry }, { link: `${config.PUBLIC_URL}/verify-email.html`, label: s.verify.page }, { small: s.verify.footer }]
   }),
   loginAttempts: (s, d) => ({
     heading: s.loginAttempts.heading,
@@ -902,7 +905,7 @@ const BUILDERS = {
   })
 };
 
-function layout(lang, heading, blocks) {
+function layout(lang, heading, blocks, { plain = false } = {}) {
   const s = S[lang];
   const rows = blocks.map((b) => {
     const text = b.raw ? b.p : (b.p !== undefined ? escapeHtml(b.p) : '');
@@ -920,7 +923,7 @@ function layout(lang, heading, blocks) {
 <body class="wc-bg" style="margin:0;padding:0;background:${COLORS.bg};font-family:${FONT}">
 <table role="presentation" class="wc-bg" width="100%" cellspacing="0" cellpadding="0" style="background:${COLORS.bg};padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px">
-<tr><td style="padding:0 6px 14px"><a href="${escapeHtml(config.PUBLIC_URL)}" style="text-decoration:none"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/wisecall-logo-email.png" width="200" height="48" alt="Wisecall" class="wc-light" style="display:block;border:0;outline:none;height:auto;max-width:100%;font-size:26px;font-weight:800;color:${COLORS.ink}"><!--[if !mso]><!--><div class="wc-dark" style="display:none;max-height:0;overflow:hidden"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/wisecall-logo-email-dark.png" width="200" height="48" alt="Wisecall" style="display:block;border:0;outline:none;height:auto;max-width:100%"></div><!--<![endif]--></a></td></tr>
+<tr><td style="padding:0 6px 14px">${plain ? `<span class="wc-ink" style="font-size:24px;font-weight:800;color:${COLORS.ink}">Wisecall</span>` : `<a href="${escapeHtml(config.PUBLIC_URL)}" style="text-decoration:none"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/wisecall-logo-email.png" width="200" height="48" alt="Wisecall" class="wc-light" style="display:block;border:0;outline:none;height:auto;max-width:100%;font-size:26px;font-weight:800;color:${COLORS.ink}"><!--[if !mso]><!--><div class="wc-dark" style="display:none;max-height:0;overflow:hidden"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/wisecall-logo-email-dark.png" width="200" height="48" alt="Wisecall" style="display:block;border:0;outline:none;height:auto;max-width:100%"></div><!--<![endif]--></a>`}</td></tr>
 <tr><td class="wc-card" style="background:${COLORS.card};border:2px solid ${COLORS.ink};border-radius:24px;padding:30px 28px">
 <h1 class="wc-ink" style="margin:0 0 18px;font-family:${DISPLAY};font-size:26px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;color:${COLORS.ink}">${escapeHtml(heading)}</h1>
 ${rows}
@@ -945,9 +948,9 @@ function render(name, lang, data = {}) {
   const build = BUILDERS[name];
   if (!build) throw new Error(`Unknown email template: ${name}`);
   const d = { days: config.ANSWER_DEADLINE_DAYS, ...data };
-  const { heading, blocks } = build(s, d, l);
+  const { heading, blocks, plain } = build(s, d, l);
   const subject = fill(s[name].subject, d, false).replace(/[<>]/g, '');
-  return { subject, ...layout(l, heading, blocks) };
+  return { subject, ...layout(l, heading, blocks, { plain: Boolean(plain) }) };
 }
 
 module.exports = { render, TEMPLATE_NAMES: Object.keys(BUILDERS) };

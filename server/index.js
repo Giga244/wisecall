@@ -59,6 +59,8 @@ app.use('/api/payments', express.raw({ type: '*/*', limit: '100kb' }), require('
 
 // ID-verification webhook: raw body (the signature covers the exact bytes), exempt from the CSRF header.
 app.use('/api/kyc', express.raw({ type: '*/*', limit: '200kb' }), require('./routes/kycWebhook'));
+// The email provider's delivery results (Resend, signed with Svix): raw body, exempt from the CSRF header, rate limited.
+app.use('/api/email/webhook', rateLimit({ windowMs: 60 * 1000, max: 300 }), express.raw({ type: '*/*', limit: '64kb' }), require('./routes/emailWebhook'));
 
 // Development only: the fake ID-check page. Never exists in production.
 const useMockKyc = config.KYC_PROVIDER === 'mock' && !config.IS_PROD;
@@ -108,6 +110,7 @@ app.use('/api/auth/login', authLimit(15));
 app.use('/api/auth/signup', authLimit(15));
 app.use('/api/auth/verify-email', authLimit(10));
 app.use('/api/auth/resend-verification', authLimit(6));
+app.use('/api/auth/change-unconfirmed-email', authLimit(6));
 app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
 app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));

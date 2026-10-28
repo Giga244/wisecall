@@ -58,7 +58,7 @@ describe('every email goes out through the Resend API', () => {
     const { mail } = await signup('Nino Beridze', 'nino@example.com', 'ka');
     assert.equal(mail.headers.authorization, 'Bearer re_test_key');
     assert.equal(mail.body.from, 'Wisecall <hello@wisecall.example>');
-    assert.match(mail.body.subject, /დადასტურების კოდი/);
+    assert.match(mail.body.subject, /^Wisecall – შენი კოდი: \d{6}$/); // (the code in the subject: docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md)
     assert.ok(mail.body.html && mail.body.text, 'HTML and plain-text versions');
     assert.match(mail.body.text, /\d{6}/);
   });

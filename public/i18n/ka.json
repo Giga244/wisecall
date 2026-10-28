@@ -136,8 +136,6 @@
   "auth.verify.sub": "შეიყვანე 6-ნიშნა კოდი, რომელიც გამოგიგზავნეთ.",
   "auth.verify.codeLabel": "დადასტურების კოდი",
   "auth.verify.cta": "დადასტურება",
-  "auth.verify.noCode": "კოდი არ მიგიღია?",
-  "auth.verify.resend": "ხელახლა გაგზავნა",
   "auth.verify.skip": "ახლა გამოტოვება",
   "auth.verify.devModeNote": "ამ სერვერზე ელფოსტის გაგზავნა ჯერ არ არის კონფიგურირებული, ამიტომ შენი კოდი პირდაპირ აქ არის (მხოლოდ სატესტო რეჟიმში):",
   "auth.verify.success": "ელფოსტა დადასტურდა!",
@@ -2632,5 +2630,15 @@
   "apply.check.licence.dip": "შენი დიპლომი ან სერტიფიკატი",
   "apply.err.licence.dip": "ქვემოთ მიუთითე დიპლომის ან სერტიფიკატის მონაცემები.",
   "ap.missing.license.dip": "დიპლომის ან სერტიფიკატის ნომერი",
-  "ap.missing.license_document.dip": "დიპლომის ან სერტიფიკატის ასლი"
+  "ap.missing.license_document.dip": "დიპლომის ან სერტიფიკატის ასლი",
+  "auth.verify.sentTo": "კოდი გავაგზავნეთ მისამართზე: {email}",
+  "auth.verify.change": "ელფოსტის შეცვლა",
+  "auth.verify.newEmail": "ახალი ელფოსტა",
+  "auth.verify.changeSave": "კოდის იქ გაგზავნა",
+  "auth.verify.changed": "ახალი კოდი გავაგზავნეთ მისამართზე: {email}",
+  "auth.verify.sameEmail": "კოდი სწორედ ამ მისამართზე გაიგზავნა.",
+  "auth.verify.resendBtn": "კოდის ხელახლა გაგზავნა",
+  "auth.verify.resendIn": "ხელახლა გაგზავნა {s} წამში",
+  "auth.verify.tooMany": "ახლა ძალიან ბევრი ცდაა. გთხოვ, რამდენიმე წუთი მოიცადე.",
+  "auth.verify.spam": "არ მოვიდა? შეამოწმე Spam / Junk საქაღალდე. Outlook-ში შეიძლება რამდენიმე წუთი დასჭირდეს."
 }

@@ -34,6 +34,15 @@
   <div class="auth-card">
     <h1 data-i18n="auth.verify.title">Verify your email</h1>
     <p class="muted" id="verifySub" data-i18n="auth.verify.sub">Enter the 6-digit code we sent you.</p>
+    <!-- (where the code went, and a way to correct a typo in the address) -->
+    <p class="verify-to" id="verifyTo" hidden><span id="verifyToText"></span> <button type="button" class="linklike" id="changeEmailBtn" aria-expanded="false" aria-controls="changeEmailForm" data-i18n="auth.verify.change">Change email</button></p>
+    <form id="changeEmailForm" class="verify-change" hidden novalidate>
+      <label for="newEmail"><span data-i18n="auth.verify.newEmail">New email address</span>
+        <input type="email" id="newEmail" autocomplete="email" maxlength="254" required>
+      </label>
+      <p class="form-error" id="changeError" role="alert"></p>
+      <button type="submit" class="btn btn-outline btn-block" data-i18n="auth.verify.changeSave">Send the code there</button>
+    </form>
     <div id="devCodeBox" style="display:none; margin-bottom: 16px;"></div>
     <form id="verifyForm">
       <label for="code"><span data-i18n="auth.verify.codeLabel">Verification code</span>
@@ -42,9 +51,9 @@
       <p class="form-error" id="formError" role="alert"></p>
       <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.verify.cta">Verify</button>
     </form>
+    <p class="muted small verify-spam" data-i18n="auth.verify.spam">Didn't arrive? Check your Spam / Junk folder. In Outlook it can take a few minutes.</p>
     <p class="auth-switch">
-      <span data-i18n="auth.verify.noCode">Didn't get a code?</span>
-      <a href="#" id="resendLink" data-i18n="auth.verify.resend">Resend it</a>
+      <button type="button" class="btn btn-outline btn-block" id="resendBtn" data-i18n="auth.verify.resendBtn">Resend code</button>
     </p>
     <p class="auth-switch"><a href="/dashboard.html" data-i18n="auth.verify.skip">Skip for now</a></p>
   </div>

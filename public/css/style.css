@@ -1240,3 +1240,7 @@ html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; 
 .live-kind { font-weight: 700; color: var(--accent-text); }
 .live-card-foot { margin: auto 0 0; padding-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-top: var(--chip-w) dashed var(--border); }
 .live-card-foot .price { font-size: 1.4rem; }
+/* the code screen: where the code went, and correcting the address (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 1) */
+.verify-to { margin: 0 0 14px; overflow-wrap: anywhere; }
+.verify-change { margin: 0 0 16px; }
+.verify-spam { margin: 14px 0 0; }

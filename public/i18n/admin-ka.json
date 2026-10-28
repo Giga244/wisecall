@@ -690,5 +690,12 @@
   "admin.oneTap.diploma": "დიპლომი",
   "admin.oneTap.diplomaCopy": "დიპლომის ასლი",
   "admin.oneTap.evidence": "მტკიცებულება",
-  "admin.mv.reasonToFail": "მიზეზი (საჭიროა მხოლოდ უარისთვის)"
+  "admin.mv.reasonToFail": "მიზეზი (საჭიროა მხოლოდ უარისთვის)",
+  "admin.email.last": "ბოლო წერილი: {status}",
+  "admin.email.sent": "გაგზავნილია, პასუხი ჯერ არ არის",
+  "admin.email.delivered": "მიტანილია",
+  "admin.email.delayed": "იგვიანებს",
+  "admin.email.bounced": "ვერ მივიდა",
+  "admin.email.complained": "სპამად მონიშნა",
+  "admin.email.none": "მოლოდინში"
 }

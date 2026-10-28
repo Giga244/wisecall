@@ -136,8 +136,6 @@
   "auth.verify.sub": "Enter the 6-digit code we sent you.",
   "auth.verify.codeLabel": "Verification code",
   "auth.verify.cta": "Verify",
-  "auth.verify.noCode": "Didn't get a code?",
-  "auth.verify.resend": "Resend it",
   "auth.verify.skip": "Skip for now",
   "auth.verify.devModeNote": "Email sending isn't set up on this server yet, so here's your code directly (dev mode only):",
   "auth.verify.success": "Email verified!",
@@ -2632,5 +2630,15 @@
   "apply.check.licence.dip": "Your diploma or certificate",
   "apply.err.licence.dip": "Please add your diploma or certificate details below.",
   "ap.missing.license.dip": "Your diploma or certificate number",
-  "ap.missing.license_document.dip": "A copy of your diploma or certificate"
+  "ap.missing.license_document.dip": "A copy of your diploma or certificate",
+  "auth.verify.sentTo": "We sent the code to {email}.",
+  "auth.verify.change": "Change email",
+  "auth.verify.newEmail": "New email address",
+  "auth.verify.changeSave": "Send the code there",
+  "auth.verify.changed": "We sent a new code to {email}.",
+  "auth.verify.sameEmail": "That is the address the code already went to.",
+  "auth.verify.resendBtn": "Resend code",
+  "auth.verify.resendIn": "Resend code in {s} s",
+  "auth.verify.tooMany": "Too many tries for now. Please wait a few minutes.",
+  "auth.verify.spam": "Didn't arrive? Check your Spam / Junk folder. In Outlook it can take a few minutes."
 }

@@ -19,6 +19,20 @@ const router = express.Router();
 const isStr = (v) => typeof v === 'string';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Sends the email code. Replies go to the support address (a person who answers), and the person's last email result starts as "sent"
+// until the provider reports what happened (server/routes/emailWebhook.js). -> true when the provider took it.
+async function sendCode(user, to, code) {
+  if (!config.EMAIL_ENABLED) return false;
+  try {
+    await sendTemplate('verify', { to, lang: user.language, data: { code }, quick: true, ...(config.SUPPORT_EMAIL ? { replyTo: config.SUPPORT_EMAIL } : {}) });
+    await query(`UPDATE users SET email_status = 'sent', email_status_at = now() WHERE id = $1`, [user.id]);
+    return true;
+  } catch (e) {
+    console.error('[email] verification send failed:', e.message);
+    return false;
+  }
+}
 // Compared against when the email is unknown so a wrong email and a wrong password take equally long.
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
 
@@ -67,16 +81,8 @@ router.post('/signup', asyncHandler(async (req, res) => {
   }
   user = await getUserById(user.id);
 
-  let emailSent = false;
-  if (config.EMAIL_ENABLED) {
-    try {
-      await sendTemplate('verify', { to: normalizedEmail, lang: user.language, data: { code: verifyCode }, quick: true });
-      emailSent = true;
-    } catch (e) {
-      // Fall through to the dev-mode fallback below (local development only).
-      console.error('[email] signup verification send failed:', e.message);
-    }
-  }
+  // (not sent: the dev-mode fallback below, local development only)
+  const emailSent = await sendCode(user, normalizedEmail, verifyCode);
 
   await startSession(req, res, user, null, 'sign_in');
   await require('../verification/signals').record(req, res, user.id, 'signup');
@@ -261,17 +267,32 @@ router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) =
     emailCodeAttempts: 0
   });
 
-  let emailSent = false;
-  if (config.EMAIL_ENABLED) {
-    try {
-      await sendTemplate('verify', { to: user.email, lang: user.language, data: { code: verifyCode }, quick: true });
-      emailSent = true;
-    } catch (e) {
-      console.error('[email] resend verification send failed:', e.message);
-    }
-  }
-
+  const emailSent = await sendCode(user, user.email, verifyCode);
   res.json({ ok: true, emailSent, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
+}));
+
+// A typo in the address (the code went nowhere): while the email is not confirmed yet, the person can correct it on the code screen, and
+// a new code goes to the new address. Signed in, rate limited, refused when the address belongs to another account.
+router.post('/change-unconfirmed-email', requireAuth, asyncHandler(async (req, res) => {
+  const email = isStr((req.body || {}).email) ? req.body.email.trim().toLowerCase() : '';
+  if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (user.emailVerified) return res.status(400).json({ error: 'already_verified' });
+  if (email === String(user.email).toLowerCase()) return res.status(400).json({ error: 'same_email' });
+  const other = await getUserByEmail(email);
+  if (other && other.id !== user.id) return res.status(409).json({ error: 'email_taken' });
+  const verifyCode = String(crypto.randomInt(100000, 1000000));
+  let updated;
+  try {
+    updated = await updateUser(user.id, { email, emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10), emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000), emailCodeAttempts: 0 });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
+    throw err;
+  }
+  await query('UPDATE users SET email_status = NULL, email_status_at = NULL WHERE id = $1', [user.id]);
+  const emailSent = await sendCode(updated, email, verifyCode);
+  res.json({ user: meProfile(updated), emailSent, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
 }));
 
 function randomColor() {

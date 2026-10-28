@@ -35,6 +35,66 @@
   }
   if (params.get('emailFailed') === '1') errorEl.textContent = WisecallI18n.t('auth.verify.sendFailed');
 
+  // Where the code went (a typo shows at once), and "Change email" to correct it: a new code goes to the new address.
+  const t = WisecallI18n.t;
+  let address = user.email;
+  const toText = document.getElementById('verifyToText');
+  const showAddress = () => { toText.textContent = t('auth.verify.sentTo').replace('{email}', address); document.getElementById('verifyTo').hidden = false; };
+  showAddress();
+  document.addEventListener('wisecall:lang-changed', () => { showAddress(); tick(); });
+  const changeBtn = document.getElementById('changeEmailBtn');
+  const changeForm = document.getElementById('changeEmailForm');
+  const changeError = document.getElementById('changeError');
+  changeBtn.addEventListener('click', () => {
+    changeForm.hidden = !changeForm.hidden;
+    changeBtn.setAttribute('aria-expanded', String(!changeForm.hidden));
+    if (!changeForm.hidden) document.getElementById('newEmail').focus();
+  });
+  const showDevCode = (data) => {
+    if (data.devMode && data.devVerifyCode) {
+      devCodeBox.style.display = 'block';
+      devCodeBox.innerHTML = `<div class="hero-cta-banner">${t('auth.verify.devModeNote')} <strong class="mono">${data.devVerifyCode}</strong></div>`;
+    }
+  };
+  changeForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    changeError.textContent = '';
+    const email = document.getElementById('newEmail').value.trim();
+    try {
+      const data = await WisecallAPI.apiFetch('/auth/change-unconfirmed-email', { method: 'POST', body: { email } });
+      address = data.user.email;
+      showAddress();
+      changeForm.hidden = true;
+      changeBtn.setAttribute('aria-expanded', 'false');
+      showDevCode(data);
+      if (!data.emailSent && !data.devMode) { errorEl.textContent = t('auth.verify.sendFailed'); return; }
+      WisecallNav.showToast(t('auth.verify.changed').replace('{email}', address));
+      startCountdown();
+    } catch (e) {
+      const map = { invalid_email: 'auth.error.invalidEmail', email_taken: 'auth.error.emailTaken', same_email: 'auth.verify.sameEmail', too_many_requests: 'auth.verify.tooMany' };
+      changeError.textContent = t(map[e.code] || 'toast.error');
+    }
+  });
+
+  // "Resend code": then a countdown before it can be asked again (the server keeps its own limit too).
+  const WAIT_S = 60;
+  const resendBtn = document.getElementById('resendBtn');
+  let until = 0;
+  let timer = null;
+  function tick() {
+    const left = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+    resendBtn.disabled = left > 0;
+    resendBtn.textContent = left > 0 ? t('auth.verify.resendIn').replace('{s}', left) : t('auth.verify.resendBtn');
+    if (!left && timer) { clearInterval(timer); timer = null; }
+  }
+  function startCountdown() {
+    until = Date.now() + WAIT_S * 1000;
+    if (!timer) timer = setInterval(tick, 1000);
+    tick();
+  }
+  // (the code was sent a moment ago, at sign-up: the first resend waits a minute too)
+  if (params.get('emailFailed') !== '1') startCountdown();
+
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorEl.textContent = '';
@@ -52,22 +112,22 @@
     }
   });
 
-  document.getElementById('resendLink').addEventListener('click', async (ev) => {
-    ev.preventDefault();
+  resendBtn.addEventListener('click', async () => {
+    if (resendBtn.disabled) return;
+    resendBtn.disabled = true;
     try {
       const data = await WisecallAPI.apiFetch('/auth/resend-verification', { method: 'POST' });
-      if (data.devMode && data.devVerifyCode) {
-        devCodeBox.style.display = 'block';
-        devCodeBox.innerHTML = `<div class="hero-cta-banner">${WisecallI18n.t('auth.verify.devModeNote')} <strong class="mono">${data.devVerifyCode}</strong></div>`;
-      }
+      showDevCode(data);
+      startCountdown();
       if (!data.emailSent && !data.devMode) {
-        errorEl.textContent = WisecallI18n.t('auth.verify.sendFailed');
+        errorEl.textContent = t('auth.verify.sendFailed');
         return;
       }
       errorEl.textContent = '';
-      WisecallNav.showToast(WisecallI18n.t('auth.verify.resent'));
+      WisecallNav.showToast(t('auth.verify.resent'));
     } catch (e) {
-      WisecallNav.showToast(WisecallI18n.t('toast.error'));
+      WisecallNav.showToast(t(e.code === 'too_many_requests' ? 'auth.verify.tooMany' : 'toast.error'));
+      tick();
     }
   });
 })();

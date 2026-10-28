@@ -68,11 +68,13 @@ describe('templates', () => {
     for (const name of TEMPLATE_NAMES) {
       for (const lang of ['en', 'ka']) {
         const { html, text } = render(name, lang, { ...sample, question: 'Is this fine?', answer: 'An answer', mentor: 'Dr Who', body: 'A follow-up question', field: 'Keeping bees', title: 'A live session' }); // (no HTML in what people wrote)
-        assert.match(html, /\/brand\/wisecall-logo-email\.png"/, `${name} ${lang}: the logo`);
+        // (the code email has no pictures at all, the name as text instead: mail filters like short plain mail best)
+        if (name === 'verify') assert.doesNotMatch(html, /<img/, 'verify: no pictures');
+        else assert.match(html, /\/brand\/wisecall-logo-email\.png"/, `${name} ${lang}: the logo`);
         assert.match(html, /background:#f4f2ee/, `${name} ${lang}: the brand colours`);
         assert.match(html, /<meta name="color-scheme" content="light dark">/, `${name} ${lang}: tells mail apps it has a dark version`);
         assert.match(html, /@media \(prefers-color-scheme:dark\)/);
-        assert.match(html, /\/brand\/wisecall-logo-email-dark\.png"/, `${name} ${lang}: the logo for dark backgrounds`);
+        if (name !== 'verify') assert.match(html, /\/brand\/wisecall-logo-email-dark\.png"/, `${name} ${lang}: the logo for dark backgrounds`);
         assert.match(html, new RegExp(`<html lang="${lang}">`));
         assert.doesNotMatch(text, /<\/?(p|div|a|strong|b|br|table|td|img|span)\b/i, `${name} ${lang}: the text version has no HTML`);
         assert.ok(text.length > 40, `${name} ${lang}: the text version says something`);
@@ -93,7 +95,7 @@ describe('delivery through the email provider', () => {
     assert.equal(su.devVerifyCode, undefined, 'code must not be in the response when email was sent');
     assert.equal(su.user.language, 'ka');
     const mail = await waitFor(() => mailTo('nino@example.com')[0]);
-    assert.match(mail.subject, /დადასტურების კოდი/);
+    assert.match(mail.subject, /^Wisecall – შენი კოდი: \d{6}$/);
     assert.equal(mail.replyTo, 'help@example.com');
     const code = codeFrom(mail);
     assert.match(code, /^\d{6}$/);

@@ -159,10 +159,12 @@ describe('the logo in the header, the menu, the footer and the emails', () => {
     assert.match(header, /<a href="\/index\.html" class="logo">\$\{WisecallBrand\.logoHtml\(\)\}<\/a>/);
   });
 
-  test('emails carry the logo as a PNG on an absolute address (mail apps block SVG)', () => {
+  // (the sign-up code is a plain email, with no images at all, so it reaches the inbox: docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 1)
+  test('emails carry the logo as a PNG on an absolute address (mail apps block SVG); the sign-up code has none', () => {
     const { render } = require('../server/mail/templates');
     for (const lang of ['en', 'ka']) {
-      const { html } = render('verify', lang, { code: '123456' });
+      assert.doesNotMatch(render('verify', lang, { code: '123456' }).html, /<img/, lang);
+      const { html } = render('reset', lang, { link: 'https://wisecall.test/reset' });
       assert.match(html, /<img src="https?:\/\/[^"]+\/brand\/wisecall-logo-email\.png" width="200" height="48" alt="Wisecall"/, lang);
       assert.doesNotMatch(html, /Wisecall<span/);
     }

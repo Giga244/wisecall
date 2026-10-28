@@ -108,6 +108,8 @@ const config = {
   EMAIL_PROVIDER: (env.EMAIL_PROVIDER || 'resend').toLowerCase(),
   RESEND_API_KEY: env.RESEND_API_KEY || '',
   RESEND_API_URL: env.RESEND_API_URL || 'https://api.resend.com/emails',
+  // Resend → Webhooks → the endpoint's signing secret (whsec_...): delivery results per person for the admins (server/routes/emailWebhook.js).
+  RESEND_WEBHOOK_SECRET: env.RESEND_WEBHOOK_SECRET || '',
   POSTMARK_TOKEN: env.POSTMARK_TOKEN || '',
   EMAIL_LOG_FILE: env.EMAIL_LOG_FILE || '',
   EMAIL_FROM: env.EMAIL_FROM || 'Wisecall <onboarding@resend.dev>',

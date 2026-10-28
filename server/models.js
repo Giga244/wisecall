@@ -41,6 +41,8 @@ function userFromRow(r) {
     publicAnswersPref: r.public_answers_pref || 'ask',
     fieldOverride: Boolean(r.field_override),
     liveApprovedAt: r.live_approved_at || null,
+    emailStatus: r.email_status || null, // (the last email's result: sent, delivered, delayed, bounced, complained)
+    emailStatusAt: r.email_status_at || null,
     freeWeeklyCap: r.free_weekly_cap === undefined || r.free_weekly_cap === null ? 10 : r.free_weekly_cap, // (free questions a week, when the price is 0)
     emailVerified: r.email_verified,
     emailVerifyCodeHash: r.email_code_hash,

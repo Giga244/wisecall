@@ -690,5 +690,12 @@
   "admin.oneTap.diploma": "diploma",
   "admin.oneTap.diplomaCopy": "copy of the diploma",
   "admin.oneTap.evidence": "evidence",
-  "admin.mv.reasonToFail": "Reason (only needed to fail)"
+  "admin.mv.reasonToFail": "Reason (only needed to fail)",
+  "admin.email.last": "Last email: {status}",
+  "admin.email.sent": "sent, no answer yet",
+  "admin.email.delivered": "delivered",
+  "admin.email.delayed": "delayed",
+  "admin.email.bounced": "bounced",
+  "admin.email.complained": "marked as spam",
+  "admin.email.none": "pending"
 }
