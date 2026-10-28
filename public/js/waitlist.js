@@ -1,5 +1,5 @@
-// The "tell me when Wisecall opens / when a mentor in my field joins" form, shared by the home page (Browse experts: the "Wisecall
-// opens soon" card before launch, the empty list after it), a field's page and the expert profile. It has no heading of its own: the
+// The "tell me when Wisecall opens / when a mentor in my field joins" form, shared by the home page (before launch, the hero: the page's
+// one waiting list; after it, the empty list in Browse experts), a field's page and the expert profile. It has no heading of its own: the
 // card or panel around it says what it is for. A sign-up turns it into a "you're on the list" note of the same height, so nothing around
 // it moves.
 (function () {
@@ -99,16 +99,36 @@
     } catch (e) { /* the visitor chooses the field */ }
   }
 
-  // On a phone before launch, the form is in the hero too, above the fold (the "Wisecall opens soon" card is far below on a small screen).
+  // Before launch the form is in the hero, above the fold at every width: the home page's one waiting list
+  // (docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md; it takes the place of the skeleton the page arrives with).
   function hero() {
     const box = document.getElementById('heroWait');
     if (!box || !prelaunch() || box.dataset.ready) return;
     box.dataset.ready = '1';
     box.innerHTML = `<p class="hero-wait-lead">${esc(t('wait.hero'))}</p>${html()}`;
     wire(box);
-    box.hidden = false;
   }
-  WisecallI18n.ready.then(hero).catch(() => {});
+  const ready = WisecallI18n.ready.then(hero);
+  ready.catch(() => {});
 
-  window.WisecallWaitlist = { fields, html, wire, ask };
+  // A field chosen somewhere else on the page (the home page's tiles) becomes the hero form's field; what the visitor typed stays.
+  function chooseField(niche) {
+    ready.then(() => {
+      const form = document.querySelector('#heroWait .waitlist-form');
+      if (form && niche && fields().concat('any').includes(niche)) form.niche.value = niche;
+    }).catch(() => {});
+  }
+
+  // Scroll to the hero's form and (unless told not to) put the cursor in its email; after a sign-up, to the "you're on the list" note.
+  function goToHero(opts) {
+    ready.then(() => {
+      const box = document.getElementById('heroWait');
+      if (!box) return;
+      box.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      const email = box.querySelector('input[type=email]');
+      if (email && !(opts && opts.focus === false)) email.focus({ preventScroll: true });
+    }).catch(() => {});
+  }
+
+  window.WisecallWaitlist = { fields, html, wire, ask, chooseField, goToHero };
 })();

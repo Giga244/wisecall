@@ -133,7 +133,8 @@ describe('loading skeletons', () => {
     assert.equal(count(grid, /role="status"/g), 1);
     assert.equal(count(grid, /<div class="expert-card skeleton-expert" aria-hidden="true">/g), 8, '8 cards (6 below 1024px)');
     assert.match(grid, /<!-- after launch -->[\s\S]*skeleton-expert[\s\S]*<!-- \/after launch -->/);
-    assert.match(grid, /<!-- before launch -->\s*<div class="wl-card prelaunch-panel skeleton-wl" aria-hidden="true">[\s\S]*<!-- \/before launch -->/);
+    assert.doesNotMatch(grid, /<!-- before launch -->/, 'before launch Browse is hidden: the hero has the waiting list');
+    assert.match(home, /<div class="hero-wait" id="heroWait"><!-- before launch --><div class="hero-wait-skeleton" aria-hidden="true">[\s\S]*?<!-- \/before launch --><\/div>/);
     assert.equal(count(home, /<li class="skeleton-tile" aria-hidden="true">/g), 10);
     const dash = read('public/dashboard.html');
     assert.match(dash, /<div id="askedList" aria-live="polite" aria-busy="true">\s*<p class="sr-only" role="status" data-i18n="experts\.loading">Loading…<\/p>/);

@@ -89,18 +89,12 @@
       <p class="wl-mentor"><a class="arrow-link" href="${becomeHref}">${t('wait.mentorCta')}</a></p>`;
   }
 
-  // Before launch nobody can ask a question, so Browse shows the waiting list instead of the experts.
+  // Before launch nobody can ask a question, so Browse is not shown: the hero's form is the page's one waiting list
+  // (docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md). A field chosen in the tiles becomes that form's field.
   const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
-  let prelaunchLang = null;
   function launchingSoon() {
-    const field = activeNiche === 'all' ? 'any' : activeNiche;
-    const form = grid.querySelector('.waitlist-form');
-    // Choosing a field in the tiles only changes the field; what the visitor has typed (or the "you're on the list" note) stays.
-    if (prelaunchLang === WisecallI18n.getLang() && (form || grid.querySelector('.waitlist-done'))) { if (form) form.niche.value = field; return; }
-    prelaunchLang = WisecallI18n.getLang();
-    // (one title: the section's "Wisecall opens soon"; in the card a short line, and from a tablet up one more sentence)
-    grid.innerHTML = waitCard(`<p class="wl-lead">${escapeHtml(t('experts.prelaunch.panelTitle'))}</p><p class="wl-sub">${escapeHtml(t('experts.prelaunch.body'))}</p>`, field, ' prelaunch-panel');
-    WisecallWaitlist.wire(grid);
+    grid.innerHTML = '';
+    WisecallWaitlist.chooseField(activeNiche === 'all' ? 'any' : activeNiche);
   }
 
   // "8 experts" under the search, the number of filters in use on the Filters button, and the sheet's own button.
@@ -179,14 +173,25 @@
     if (btn) setNiche(btn.dataset.niche);
   });
 
-  // The strip under the hero: choose the field without reloading the page, then scroll to the list.
+  // The strip under the hero: choose the field without reloading the page, then scroll to the list (before launch, to the hero's form).
   document.addEventListener('click', ev => {
     const link = ev.target.closest('[data-niche-link]');
     if (!link || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) return;
     ev.preventDefault();
     setNiche(link.dataset.nicheLink);
+    if (prelaunch) { WisecallWaitlist.goToHero(); return; }
     document.getElementById('experts').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
+  // (before launch, "Browse experts" in the header and links from other pages, /#experts, lead to the hero's form too)
+  if (prelaunch) {
+    document.addEventListener('click', (ev) => {
+      const a = ev.target.closest('a[href$="#experts"]');
+      if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button || new URL(a.href).pathname.replace(/^\/ka(?=\/|$)/, '').replace(/^\/index\.html$/, '/') !== '/') return;
+      ev.preventDefault();
+      WisecallWaitlist.goToHero();
+    });
+    if (window.location.hash === '#experts') WisecallWaitlist.goToHero({ focus: false });
+  }
 
   // Phones: the sort and field controls live in a bottom sheet behind a Filters button. From 640px they sit on the page.
   const sheet = WisecallSheet.create(document.getElementById('filtersSheet'));

@@ -822,8 +822,8 @@ function pageRoutes() {
     try {
       let html = readPage('index.html');
       if (html === null) return next();
-      // (before launch the last call to action and the experts' skeleton are left out: the waiting-list card already asks for the
-      // email, and it is what Browse shows; after launch, the waiting-list card's skeleton)
+      // (before launch the last call to action and the experts' skeleton are left out: the hero's waiting-list form already asks for the
+      // email; after launch, the hero form's skeleton)
       const gone = config.LAUNCH_MODE === 'prelaunch' ? 'after launch' : 'before launch';
       html = html.replace(new RegExp(`[ \\t]*<!-- ${gone} -->[\\s\\S]*?<!-- /${gone} -->\\r?\\n?`, 'g'), '');
       sendHtml(res, 200, addToHead(fill(html, baseVars('/')), homeJsonLd(langOf(res))));

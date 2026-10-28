@@ -21,6 +21,9 @@
   // An approved mentor (or a suspended one): their Mentor and Verification tabs. Someone applying has the card above the tabs instead.
   function isApprovedMentor(u) { return isMentorUser(u) && ['verified', 'suspended'].includes(u.verificationStatus); }
 
+  // No payout details yet: a mentor who answers for free needs none, one with a price needs them to be listed.
+  const payoutMissing = () => t(user.price === 0 ? 'settings.payouts.notSavedFree' : 'settings.payouts.notSaved');
+
   async function loadPayout() {
     payoutCard.style.display = isMentorUser(user) ? 'block' : 'none';
     const balanceBox = document.getElementById('balanceSettings');
@@ -31,7 +34,7 @@
       const data = await WisecallAPI.apiFetch('/me/payout');
       payoutNameInput.value = data.name || '';
       payoutIbanInput.value = data.iban || '';
-      payoutStatus.textContent = data.hasPayoutDetails ? t('settings.payouts.saved') : t(user.price === 0 ? 'settings.payouts.notSavedFree' : 'settings.payouts.notSaved');
+      payoutStatus.textContent = data.hasPayoutDetails ? t('settings.payouts.saved') : payoutMissing();
       document.getElementById('payoutPasswordField').hidden = !user.hasPassword;
       document.getElementById('payoutReauth').hidden = Boolean(user.hasPassword);
       if (user.payoutHoldUntil && new Date(user.payoutHoldUntil) > new Date()) {
@@ -192,6 +195,8 @@
       const body = priceMode() === 'free' ? { price: 0, freeWeeklyCap: Number(document.getElementById('freeWeeklyCap').value) } : { price: Number(priceInput.value) };
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body });
       Object.assign(user, data.user);
+      // (no payout details: the Payouts tab says whether they are needed, which a change between free and a price changes)
+      if (!user.hasPayoutDetails) payoutStatus.textContent = payoutMissing();
       // From free to a price: payout details are needed now, to stay in Browse experts.
       if (data.payoutNeeded) { WisecallNav.showToast(t('settings.payouts.neededForPrice')); selectTab('payouts'); return; }
       WisecallNav.showToast(t('toast.saved'));

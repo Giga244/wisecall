@@ -155,7 +155,7 @@
   }
   initExamples();
 
-  // The hero's search: the words go into Browse experts' own search, and the page scrolls there (before launch, to the waiting list).
+  // The hero's search: the words go into Browse experts' own search, and the page scrolls there (before launch, to the hero's waiting list).
   function initHeroSearch() {
     const form = document.getElementById('heroSearch');
     if (!form) return;
@@ -166,6 +166,7 @@
       if (box && q && WisecallI18n.launchMode() !== 'prelaunch') { box.value = q; box.dispatchEvent(new Event('input', { bubbles: true })); }
       // (before launch the question is not lost: the waiting list keeps it and picks its field)
       if (q && window.WisecallWaitlist) WisecallWaitlist.ask(q);
+      if (WisecallI18n.launchMode() === 'prelaunch' && window.WisecallWaitlist) { WisecallWaitlist.goToHero(); return; }
       document.getElementById('experts').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     });
   }

@@ -73,6 +73,29 @@ describe('the price', () => {
     assert.equal((await mentor.api('/me', { method: 'PATCH', body: { freeWeeklyCap: 4 } })).user.freeWeeklyCap, 4);
   });
 
+  test('an approved free mentor without payout details is not told to add them; with a price they are', async () => {
+    const c = await signupVerified(base, 'Free Fiona', 'fiona@example.com');
+    await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Career coach', niche: 'business', price: 0, proofUrl: 'https://linkedin.com/in/fiona', sampleAnswer: SAMPLE } });
+    await approveMentor(admin, c);
+    let me = (await c.api('/me')).user;
+    assert.equal(me.needsPayout, false);
+    assert.equal(me.isListedMentor, true, 'listed with no bank details');
+    me = (await c.api('/me', { method: 'PATCH', body: { price: 30 } })).user;
+    assert.equal(me.needsPayout, true);
+    assert.equal((await c.api('/me', { method: 'PATCH', body: { price: 0 } })).user.needsPayout, false);
+    // (left with a price and no bank details: not listed, so Nino stays the only free mentor in Browse for the tests below)
+    assert.equal((await c.api('/me', { method: 'PATCH', body: { price: 30 } })).user.isListedMentor, false);
+    // (Settings: "add your payout details to be listed" only to a mentor with a price, and the texts say a free mentor needs none)
+    const pub = (f) => require('fs').readFileSync(require('path').join(ROOT, 'public', f), 'utf8');
+    assert.match(pub('js/settings-verification.js'), /needsPayout && data\.user\.price > 0 \? `<p class="muted small">\$\{t\('settings\.payouts\.needForListing'\)\}/);
+    assert.match(pub('js/settings.js'), /const payoutMissing = \(\) => t\(user\.price === 0 \? 'settings\.payouts\.notSavedFree'/);
+    for (const [lang, free] of [['en', /for free needs none/], ['ka', /უფასოდ პასუხისთვის ისინი არ გჭირდება/]]) {
+      const d = JSON.parse(pub(`i18n/${lang}.json`));
+      assert.match(d['settings.mentor.hint'], free, lang);
+      assert.match(d['settings.payouts.needForListing'], lang === 'en' ? /You charge for answers/ : /პასუხებში თანხას იღებ/, lang);
+    }
+  });
+
   test('the database allows 0 and 5–2000 only', async () => {
     await assert.rejects(pool.query('UPDATE users SET price = 2 WHERE id = $1', [mentorId]), /users_price_check/);
     await assert.rejects(pool.query('UPDATE users SET free_weekly_cap = 0 WHERE id = $1', [mentorId]), /free_weekly_cap/);

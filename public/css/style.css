@@ -377,18 +377,9 @@ html.motion .skeleton::after {
   .skeleton-tile > .skeleton { min-height: 64px; }
   .skeleton-more { width: 320px; margin: 20px auto 0; }
 }
-/* before launch: the waiting-list card */
-.skeleton-wl .waitlist-hint .skeleton-line { margin: 4px 0; } /* (the privacy note's small lines) */
-.skeleton-wl .sk-ka, .skeleton-wl .sk-tablet { display: none; }
-:lang(ka) .skeleton-wl .sk-ka { display: block; }
-@media (min-width: 1024px) { .skeleton-wl .sk-phone { display: none; } }
-@media (min-width: 768px) and (max-width: 1023px) { .skeleton-wl .sk-tablet { display: block; } }
 /* the hero's popular fields */
 .skeleton-chip { width: 86px; height: 40px; border-radius: var(--r-pill); }
 @media (max-width: 1023px), (pointer: coarse) { .skeleton-chip { height: 44px; } }
-.skeleton-art { width: 94px; height: 64px; border-radius: 18px; }
-.skeleton-wl .waitlist-hint { display: grid; justify-items: center; }
-@media (min-width: 768px) { .skeleton-art { width: 141px; height: 96px; } }
 
 /* the profile (the server writes the name and the words; these stand in for what the page script adds) */
 .profile-tags .skeleton-pill { height: 30px; } .skeleton-pill.sm { width: 60px; } .skeleton-pill.lg { width: 140px; }
@@ -596,8 +587,10 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
    .filters row anywhere else: the admin's tabs and status chips are one, docs/CLAUDE-CODE-ADMIN-TABS-BUG.md) */
 [data-launch="prelaunch"] #experts .browse-toolbar,
 [data-launch="prelaunch"] #filters { display: none; }
+/* (and Browse itself: before launch the hero's form is the only waiting list on the page, docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md) */
+[data-launch="prelaunch"] #experts { display: none; }
 
-/* The waiting-list card (Browse before launch, the empty list after it, a field's page). One clean card: on a phone a small picture and
+/* The waiting-list card (the empty list after launch, a field's page). One clean card: on a phone a small picture and
    one short line above the form; from a tablet up two columns (the picture and the text on the left, the form on the right), never wider
    than 960px. Under it, a plain link for mentors. */
 .wl-card {
@@ -613,7 +606,6 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 .wl-lead { margin: 0; font-size: 1.08rem; font-weight: 700; line-height: 1.35; color: var(--ink); }
 .wl-title { margin: 0; font-size: 1.15rem; line-height: 1.3; }
 .wl-sub { margin: 6px 0 0; font-size: 0.95rem; line-height: 1.5; color: var(--ink-soft); }
-.prelaunch-panel .wl-sub { display: none; } /* (on a phone one short line; from a tablet up the sentence too) */
 .wl-mentor { grid-column: 1 / -1; margin: 16px 0 0; line-height: 1.6; }
 /* (inline, so a long line wraps with the arrow after its last word; the padding makes the tap area 44px tall) */
 .arrow-link {
@@ -630,7 +622,6 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
   .wl-lead { font-size: 1.3rem; }
   .wl-title { font-size: 1.4rem; }
   .wl-intro .wl-sub { font-size: 1rem; margin-top: 10px; }
-  .prelaunch-panel .wl-sub { display: block; }
 }
 @media (min-width: 1024px) {
   /* (the email and the field side by side, each wide enough for "Any field" in Georgian) */
@@ -1254,10 +1245,13 @@ html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; 
 .home-mentor-grid { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
 .home-mentor { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 16px 10px; border: var(--line-w) solid var(--line); border-radius: var(--r-card-lg); background: var(--card); color: var(--ink); text-decoration: none; min-height: 44px; }
 .home-mentor-name { font-weight: 800; }
-/* the waiting list in the hero: before launch, on a phone only (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 5) */
+/* the waiting list in the hero: before launch, the page's one waiting-list form at every width (docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md).
+   The skeleton it arrives with has the form's shape, so nothing moves when the form takes its place. */
 .hero-wait { margin: 0 0 18px; }
 .hero-wait-lead { margin: 0 0 8px; font-weight: 700; }
 .hero-wait .waitlist-hint { font-size: 0.8rem; }
-@media (min-width: 768px) { .hero-wait { display: none !important; } }
+.hero-wait-skeleton label .skeleton-input { margin-top: 6px; } /* (where the field is, as tall: its texts are the form's own, so they wrap the same) */
+.hero-wait-skeleton .waitlist-hint strong { color: var(--accent-text); }
+@media (min-width: 640px) { .hero-wait .waitlist-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 html:not([data-launch="prelaunch"]) .hero-wait { display: none !important; }
 .waitlist-share { min-height: 44px; }

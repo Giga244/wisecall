@@ -39,8 +39,8 @@
       <p class="hero-pill rise"><span class="hero-pill-dot" aria-hidden="true"></span><span data-i18n="home.pill">Verified people. Real answers. Made in Georgia.</span></p>
       <h1 id="heroTitle" class="rise rise-1"><span data-i18n="hero.title1">Get advice from people</span> <em class="hero-accent"><span data-i18n="hero.title2">who've already done it.</span><svg class="squiggle" viewBox="0 0 420 24" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M4 16 C 70 4, 120 22, 190 12 S 320 4, 416 14"/></svg></em></h1>
       <p class="hero-sub rise rise-2" data-i18n="hero.sub">Doctors, founders, teachers, engineers, and more — book a real answer from someone who's lived the path you want to walk.</p>
-      <!-- (before launch, on a phone: the waiting list above the fold; public/js/waitlist.js) -->
-      <div class="hero-wait" id="heroWait" hidden></div>
+      <!-- (before launch: the page's one waiting-list form, above the fold on a phone; its skeleton until public/js/waitlist.js draws it) -->
+      <div class="hero-wait" id="heroWait"><!-- before launch --><div class="hero-wait-skeleton" aria-hidden="true"><p class="hero-wait-lead" data-i18n="wait.hero">Wisecall opens soon. Get one email when it does:</p><form class="waitlist-form" action="#"><div class="waitlist-row"><label><span data-i18n="wait.email">Your email</span><span class="skeleton skeleton-input"></span></label><label><span data-i18n="wait.niche">Your field</span><span class="skeleton skeleton-input"></span></label></div><span class="skeleton skeleton-input"></span><p class="hint waitlist-hint"><span data-i18n="wait.consent">We will email you once when a mentor in your field joins, and never share your address. You can unsubscribe from that email.</span> <strong data-i18n="footer.privacy">Privacy</strong></p></form></div><!-- /before launch --></div>
       <form class="hero-search rise rise-3" id="heroSearch" role="search" action="/" method="get">
         <label for="heroQ" class="sr-only" data-i18n="home.search.label">What are you trying to figure out?</label>
         <input type="search" id="heroQ" name="q" data-i18n-placeholder="home.search.placeholder" placeholder="e.g. Is a bootcamp worth it?" autocomplete="off" enterkeyhint="search">
@@ -173,10 +173,11 @@
   </div>
 </section>
 
-<!-- 3. Browse experts: people, not profiles (before launch, the "Wisecall opens soon" card) -->
+<!-- 3. Browse experts: people, not profiles (before launch the section is not shown: the hero has the one waiting-list form, and a link
+     here takes the visitor to it; public/js/main.js) -->
 <section class="experts" id="experts" aria-labelledby="expertsTitle">
   <div class="container">
-    <h2 id="expertsTitle" data-i18n="experts.title" data-i18n-prelaunch="experts.prelaunch.title">Browse experts</h2>
+    <h2 id="expertsTitle" data-i18n="experts.title">Browse experts</h2>
     <div class="browse-toolbar">
       <label for="searchInput" class="sr-only" data-i18n="experts.searchPlaceholder">Search by name or specialty…</label>
       <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" data-i18n-aria="experts.searchPlaceholder" aria-label="Search by name or specialty" placeholder="Search by name or specialty…" autocomplete="off" enterkeyhint="search">
@@ -271,17 +272,6 @@
         <span class="skeleton skeleton-btn"></span>
       </div>
       <!-- /after launch -->
-      <!-- before launch -->
-      <div class="wl-card prelaunch-panel skeleton-wl" aria-hidden="true">
-        <div class="wl-intro"><span class="skeleton skeleton-art"></span><div class="wl-text"><span class="skeleton skeleton-title"></span><span class="wl-sub"><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w80 sk-ka"></span><span class="skeleton skeleton-line sk-tablet"></span><span class="skeleton skeleton-line sk-tablet"></span><span class="skeleton skeleton-line w70 sk-tablet"></span></span></div></div>
-        <div class="wl-form"><div class="waitlist-form">
-          <div class="waitlist-row"><div><span class="skeleton skeleton-label"></span><span class="skeleton skeleton-input"></span></div><div><span class="skeleton skeleton-label"></span><span class="skeleton skeleton-input"></span></div></div>
-          <span class="skeleton skeleton-input"></span>
-          <div class="waitlist-hint"><span class="skeleton skeleton-line w90"></span><span class="skeleton skeleton-line w90 sk-phone"></span><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-line w80 sk-ka"></span><span class="skeleton skeleton-line w60 sk-ka"></span></div>
-        </div></div>
-      </div>
-      <p class="wl-mentor" aria-hidden="true"><span class="skeleton skeleton-line w40"></span></p>
-      <!-- /before launch -->
     </div>
     <p class="rq-cta"><a href="/find-a-mentor.html" data-i18n="rq.cta">Can't find the right person? Tell us who you need.</a></p>
   </div>

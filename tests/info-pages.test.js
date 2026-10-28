@@ -82,10 +82,10 @@ describe('the short home page: nothing lost, everything else one click away', ()
     assert.match(h, /data-i18n="home\.faq\.more">ყველა კითხვა</);
   });
 
-  test('after launch the list loads as 8 skeleton cards (the waiting-list skeleton is left out), with "Loading…" in the page\'s language', async () => {
+  test('after launch the list loads as 8 skeleton cards (the hero form\'s skeleton is left out), with "Loading…" in the page\'s language', async () => {
     const h = await html('/');
     assert.equal((h.match(/class="expert-card skeleton-expert"/g) || []).length, 8);
-    assert.doesNotMatch(h, /skeleton-wl|<!-- before launch -->/);
+    assert.doesNotMatch(h, /hero-wait-skeleton|<!-- before launch -->/);
     assert.match(h, /<html lang="en">/, 'not marked as before launch');
     assert.match(await html('/ka/'), /<p class="sr-only" role="status" data-i18n="experts\.loading">იტვირთება…<\/p>/);
   });
