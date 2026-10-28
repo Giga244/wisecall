@@ -125,6 +125,18 @@
     <p class="apply-later"><button type="button" class="linklike" data-later>${esc(t('apply.later'))}</button></p>`;
 
   const nicheName = (key) => (key === 'other' ? t('ap.f.niche.other') : t('niche.' + key));
+  // Examples that fit the field (a headline, a lecturer's and a practitioner's story): one set for each family of fields
+  // (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 2).
+  const GROUP_OF = {
+    medicine: 'health', dentistry: 'health', pharmacy: 'health', nursing: 'health', psychology: 'health', fitness: 'life',
+    law: 'law',
+    finance: 'money', accounting_tax: 'money', business: 'money', ecommerce: 'money', real_estate: 'money',
+    tech: 'tech', data_ai: 'tech', cybersecurity: 'tech', gaming: 'tech', engineering: 'tech', architecture: 'tech',
+    design: 'creative', creative: 'creative', film_photo: 'creative', music: 'creative', writing: 'creative', content_creation: 'creative', marketing: 'creative',
+    teaching: 'education', study_abroad: 'education', languages: 'education', science: 'education', careers_hr: 'education',
+    parenting: 'life', sports_coaching: 'life', cooking: 'life', tourism: 'life', wine_agriculture: 'life', freelancing: 'life'
+  };
+  const groupOf = (key) => GROUP_OF[key] || 'education';
   const isRegulated = (key) => Boolean((WisecallI18n.niches().find((n) => n.key === key) || {}).regulated);
   // A regulated field with no licence at all (psychology, nursing): a diploma or certificate counts, and the words say so, never "licence"
   // (server/verification/registries.js credential; docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md).
@@ -154,7 +166,7 @@
         <p class="apply-lead">${esc(t('apply.about.lead'))}</p>
         <div class="apply-field">
           <label for="apHeadline">${esc(t('apply.f.headline'))}</label>
-          <input id="apHeadline" name="headline" type="text" maxlength="100" value="${esc(user.headline || '')}" autocomplete="organization-title" aria-describedby="apHeadlineHint apHeadlineErr" required>
+          <input id="apHeadline" name="headline" type="text" maxlength="100" value="${esc(user.headline || '')}" placeholder="${esc(t(`apply.ex.${groupOf(niche)}.headline`))}" autocomplete="organization-title" aria-describedby="apHeadlineHint apHeadlineErr" required>
           <span class="hint" id="apHeadlineHint">${esc(t('apply.f.headline.hint'))}</span>
           <p class="apply-field-error" id="apHeadlineErr" data-error-for="headline" hidden></p>
         </div>
@@ -177,8 +189,10 @@
         </div>
         <div class="apply-field apply-years">
           <label for="apYears">${esc(t('apply.f.years'))}</label>
-          <input id="apYears" name="yearsExperience" type="text" inputmode="numeric" maxlength="20" autocomplete="off" value="${f.yearsExperience === null || f.yearsExperience === undefined ? '' : esc(f.yearsExperience)}" aria-describedby="apYearsHint apYearsErr" required>
-          <span class="hint" id="apYearsHint">${esc(t('apply.f.years.hint'))}</span>
+          <select id="apYears" name="yearsExperience" aria-describedby="apYearsErr" required>
+            <option value="">${esc(t('apply.f.years.choose'))}</option>
+            ${Array.from({ length: v.limits.yearsMax + 1 }, (x, n) => `<option value="${n}"${f.yearsExperience === n ? ' selected' : ''}>${esc(n === 0 ? t('apply.f.years.lessThanOne') : String(n))}</option>`).join('')}
+          </select>
           <p class="apply-field-error" id="apYearsErr" data-error-for="years" hidden></p>
         </div>
         <!-- (optional: a title and specialty tags; open when something is already there, from the old Settings form for example) -->
@@ -213,8 +227,10 @@
           <p class="hint" id="apStoryNote">${esc(t('apply.story.about'))}</p>
         </div>
         <div class="apply-example">
-          <p class="apply-example-label">${esc(t('apply.story.exampleLabel'))}</p>
-          <p>${esc(t('apply.story.example'))}</p>
+          <p class="apply-example-label">${esc(t('apply.story.exampleLecturer'))}</p>
+          <p>${esc(t(`apply.ex.${groupOf(v.niche)}.lecturer`))}</p>
+          <p class="apply-example-label">${esc(t('apply.story.examplePractitioner'))}</p>
+          <p>${esc(t(`apply.ex.${groupOf(v.niche)}.practitioner`))}</p>
         </div>
         <details class="apply-more apply-optional"${f.sampleAnswer ? ' open' : ''}>
           <summary>${esc(t('apply.story.more'))}</summary>
@@ -241,7 +257,7 @@
         <div class="apply-field" id="apPaidBox"${user.price === 0 ? ' hidden' : ''}>
           <label for="apPrice">${esc(t('apply.f.price'))}</label>
           <div class="apply-money"><input id="apPrice" name="price" type="number" min="${config.priceMin}" max="${config.priceMax}" step="1" inputmode="numeric" value="${esc(user.price || '')}" aria-describedby="apPriceSuggest apPriceYou" required><span aria-hidden="true">₾</span></div>
-          <p class="hint" id="apPriceSuggest">${esc(fill('apply.price.suggest', { from: config.priceSuggestMin || 20, to: config.priceSuggestMax || 60 }))}</p>
+          <p class="hint" id="apPriceSuggest">${esc(fill(v.priceRange && v.priceRange.fromData ? 'apply.price.range' : 'apply.price.suggest', { from: (v.priceRange || {}).from || 20, to: (v.priceRange || {}).to || 50, field: nicheName(v.niche) }))}</p>
         </div>
         <p class="apply-you" id="apPriceYou" aria-live="polite"></p>
         ${nav(2)}
@@ -307,6 +323,7 @@
             <label for="apUrl">${esc(t(count ? 'apply.f.urlMore' : 'apply.f.url'))}</label>
             <input id="apUrl" name="url" type="url" maxlength="500" placeholder="https://" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="apUrlHint">
             <span class="hint" id="apUrlHint">${esc(t('apply.f.url.hint'))}</span>
+            <p class="hint apply-uni" id="apUniHint" aria-live="polite" hidden></p>
           </div>
           <details class="apply-more">
             <summary>${esc(t('apply.f.moreOptions'))}</summary>
@@ -342,6 +359,22 @@
       </form>`;
   }
 
+  // What the ID check is, why we ask, and what stays private: before the button, in a few lines.
+  const idExplainer = () => `
+      <div class="apply-idbox">
+        <p><strong>${esc(t('apply.id.whatTitle'))}</strong> ${esc(t('apply.id.what'))}</p>
+        <p><strong>${esc(t('apply.id.whyTitle'))}</strong> ${esc(t('apply.id.why'))}</p>
+        <p><strong>${esc(t('apply.id.privacyTitle'))}</strong> ${esc(t('apply.id.privacy'))}</p>
+      </div>`;
+  // A university from a link (the known Georgian ones by name; any .edu or ac. address as "a university page").
+  function universityOf(value) {
+    let host = '';
+    try { host = new URL(String(value).trim()).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { return null; }
+    const known = (v.universities || []).find((u) => host === u.domain || host.endsWith('.' + u.domain));
+    if (known) return { name: WisecallI18n.getLang() === 'ka' ? known.ka : known.en };
+    return /(^|\.)(edu\.ge|edu|ac\.[a-z]{2}|edu\.[a-z]{2})$/i.test(host) ? { name: null } : null;
+  }
+
   // Step 5: the ID check, what is done and what is missing (each with a link to its step), and "Submit for review".
   function kycBlock() {
     const r = v.requirements.find((x) => x.step === 'id_kyc') || { status: 'todo' };
@@ -354,11 +387,14 @@
     if (r.status === 'failed') { note = `<p class="apply-failed" role="alert">${esc(t(state === 'expired' ? 'vt.kyc.expired' : 'apply.id.failed'))}</p>`; label = 'vt.kyc.retry'; }
     else if (state === 'in_review') note = `<p class="hint">${esc(t('vt.kyc.inReview'))}</p>`;
     else if (state === 'started') { note = `<p class="hint">${esc(t(returned ? 'vt.kyc.returned' : 'vt.kyc.started'))}</p>`; label = 'vt.kyc.continue'; }
+    // (on a computer: the same check on a phone, by its camera, from a QR code of the partner's link)
+    const desktop = window.matchMedia('(pointer: fine)').matches && window.innerWidth >= 900;
     return `
-      <p class="hint">${esc(t('apply.id.help'))}</p>
+      ${idExplainer()}
       ${note}
       <div class="apply-actions">
         ${state === 'in_review' ? '' : `<button type="button" class="btn btn-outline btn-lg" data-kyc-start>${esc(t(label))}</button>`}
+        ${state === 'in_review' || !desktop ? '' : `<button type="button" class="btn btn-ghost btn-lg" data-kyc-qr>${esc(t('apply.id.qr'))}</button>`}
         ${r.status === 'pending' ? `<button type="button" class="btn btn-ghost btn-lg" data-reload>${esc(t('vt.kyc.refresh'))}</button>` : ''}
       </div>
       <p class="form-error apply-kyc-error" role="alert"></p>`;
@@ -476,7 +512,15 @@
     return `
       <div class="apply-step apply-done">
         <h1 tabindex="-1">${esc(t(approved ? 'apply.done.approvedTitle' : 'apply.done.title'))}</h1>
-        ${approved ? `<p class="apply-lead">${esc(t('ap.rev.approved'))}</p>` : (closed ? '' : `<p class="apply-lead">${esc(fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }))}</p>`)}
+        ${approved ? `<p class="apply-lead">${esc(t('ap.rev.approved'))}</p>` : (closed ? '' : `<p class="apply-lead">${esc(fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }))}</p>
+          <div class="apply-block apply-next-steps">
+            <h2>${esc(t('apply.done.next.title'))}</h2>
+            <ol>
+              <li>${esc(fill('apply.done.next.1', { days }))}</li>
+              <li>${esc(t('apply.done.next.2'))}</li>
+              <li>${esc(t(WisecallI18n.launchMode() === 'prelaunch' ? 'apply.done.next.3' : 'apply.done.next.3live'))}</li>
+            </ol>
+          </div>`)}
         ${failed && !closed ? `<p class="apply-failed" role="alert">${esc(t('settings.failed.' + failed.step))}${failed.reason ? ` <span>${esc(failed.reason)}</span>` : ''}</p>` : ''}
         ${closed ? '' : `
           <div class="apply-block">
@@ -700,6 +744,21 @@
         start.disabled = false;
       }
     }));
+    root.querySelectorAll('[data-kyc-qr]').forEach((b) => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try {
+        const r = await WisecallAPI.apiFetch('/verification/kyc/start', { method: 'POST', body: { qr: true } });
+        const box = document.createElement('div');
+        box.className = 'apply-qr';
+        box.innerHTML = `${r.qr || ''}<p class="hint">${esc(t('apply.id.qrHelp'))}</p><button type="button" class="btn btn-ghost" data-reload>${esc(t('vt.kyc.refresh'))}</button>`; // (the SVG is the server's own, drawn from the partner's link)
+        b.replaceWith(box);
+        box.querySelector('[data-reload]').addEventListener('click', async () => { await load(); render(); });
+      } catch (e) {
+        const el = root.querySelector('.apply-kyc-error');
+        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed' }, e);
+        b.disabled = false;
+      }
+    }));
     root.querySelectorAll('[data-reload]').forEach((b) => b.addEventListener('click', async () => { await load(); render(); }));
   }
 
@@ -804,6 +863,7 @@
         line.querySelector('[data-cat-name]').textContent = key ? nicheName(key) : '';
         note.hidden = !isRegulated(key);
         note.textContent = t(isDiploma(key) ? 'apply.f.licenceNote.dip' : 'apply.f.licenceNote');
+        form.headline.placeholder = t(`apply.ex.${groupOf(key)}.headline`);
         form.querySelector('[data-psych-note]').hidden = key !== 'psychology';
         if (key) fieldError(form, 'niche', '');
       };
@@ -882,6 +942,13 @@
         else { const b = root.querySelector('[data-add-link]'); if (b) b.disabled = false; }
       });
       form.url.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); root.querySelector('[data-add-link]').click(); } });
+      // "University page: Tbilisi State University": a lecturer's page on the university's own site is all that is needed.
+      const uniHint = form.querySelector('#apUniHint');
+      form.url.addEventListener('input', () => {
+        const u = universityOf(form.url.value);
+        uniHint.hidden = !u;
+        uniHint.textContent = u ? (u.name ? fill('apply.uni.named', { name: u.name }) : t('apply.uni.page')) : '';
+      });
       wireLicence(form);
       form.querySelectorAll('[data-ev-remove]').forEach((b) => b.addEventListener('click', async () => {
         b.disabled = true;

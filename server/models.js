@@ -122,7 +122,7 @@ const USER_COLUMNS = {
   profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme',
   specialtyTags: 'specialty_tags', yearsExperience: 'years_experience', story: 'story', applicationSubmittedAt: 'application_submitted_at',
   verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
-  freeWeeklyCap: 'free_weekly_cap'
+  freeWeeklyCap: 'free_weekly_cap', applyTouchedAt: 'apply_touched_at'
 };
 
 const BOOKING_COLUMNS = {

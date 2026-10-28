@@ -55,7 +55,7 @@ describe('what an application needs', () => {
     assert.equal((await m.c.api('/me', { method: 'PATCH', body: { price: 40 } })).status, 200);
     const ev = await m.c.api('/verification/evidence', { method: 'POST', body: { url: 'https://www.tsu.ge/en/faculty/economics/staff/nino-beridze' } });
     assert.equal(ev.status, 200, ev.text);
-    assert.equal(ev.evidence.kind, 'company', 'a university page counts as the employer\'s site, with no type chosen');
+    assert.equal(ev.evidence.kind, 'university', 'a university page is recognised as one, with no type chosen');
 
     const v = await m.c.api('/verification');
     assert.deepEqual(v.application.missing, []);
@@ -104,9 +104,9 @@ describe('proof links', () => {
   test('the kind comes from the address', () => {
     const k = experience.kindFromUrl;
     assert.equal(k('https://www.linkedin.com/in/nino-beridze'), 'linkedin');
-    assert.equal(k('https://iliauni.edu.ge/en/people/123'), 'company');
-    assert.equal(k('https://ug.edu.ge/ka/staff'), 'company');
-    assert.equal(k('https://www.ox.ac.uk/people/x'), 'company');
+    assert.equal(k('https://iliauni.edu.ge/en/people/123'), 'university');
+    assert.equal(k('https://ug.edu.ge/ka/staff'), 'university');
+    assert.equal(k('https://www.ox.ac.uk/people/x'), 'university');
     assert.equal(k('https://scholar.google.com/citations?user=abc'), 'publication');
     assert.equal(k('https://github.com/nino'), 'portfolio');
     assert.equal(k('https://www.facebook.com/nino'), 'social');

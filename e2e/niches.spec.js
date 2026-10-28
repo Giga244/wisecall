@@ -61,7 +61,7 @@ test('"Your field" and "Other" in the application (step 1 of /apply.html)', asyn
   await page.goto('/apply.html');
   await expect(page.locator('#apField')).toBeVisible(); // (every mentor writes their field)
   await page.fill('#apHeadline', 'Beekeeper in Racha');
-  await page.fill('#apYears', '9');
+  await page.selectOption('#apYears', '9');
   await page.fill('#apField', 'www.bees.ge');
   await expect(page.locator('#apCategory')).toBeVisible(); // (the closest category is suggested; one tap changes it)
   await page.click('[data-cat-change]');

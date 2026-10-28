@@ -207,6 +207,7 @@ async function runSweep({ wait = false } = {}) {
       await verificationHousekeeping();
       await safetyHousekeeping();
       await accountHousekeeping();
+      await require('./verification/reminders').sweep().catch((e) => console.error('[jobs] application reminders failed:', e.message)); // (an unfinished application)
       await require('./live/settle').sweep(); // (live sessions: holds, refunds, minimum, no-shows, endings, reminders, clean-up)
       lastSweepAt = new Date();
     } finally {

@@ -29,8 +29,9 @@ describe('the years, as the page reads them', () => {
     assert.deepEqual(yearsOf('ოცდაათი'), { error: 'nan' });
     assert.deepEqual(yearsOf('71'), { error: 'max' });
   });
-  test('a text box with a number keyboard, not type="number" (which drops "25 წელი" and looks empty)', () => {
-    assert.match(src, /<input id="apYears" name="yearsExperience" type="text" inputmode="numeric"/);
+  test('the years are chosen from a list (0 to 70), never typed: the same on every phone and keyboard', () => {
+    assert.match(src, /<select id="apYears" name="yearsExperience"/);
+    assert.match(src, /Array\.from\(\{ length: v\.limits\.yearsMax \+ 1 \}/);
     assert.doesNotMatch(src, /id="apYears"[^>]*type="number"/);
     for (const k of ['headline', 'field', 'niche', 'years']) assert.match(src, new RegExp(`data-error-for="${k}"`), k);
   });
@@ -38,7 +39,7 @@ describe('the years, as the page reads them', () => {
     assert.equal(dict('ka')['apply.err.years'], 'ჩაწერე მხოლოდ რიცხვი, მაგ. 25'); // (informal, like every Georgian text: tests/i18n.test.js)
     for (const l of ['en', 'ka']) {
       const d = dict(l);
-      for (const k of ['apply.err.headline', 'apply.err.field', 'apply.err.category', 'apply.err.years', 'apply.err.yearsEmpty', 'apply.err.yearsMax', 'apply.err.network', 'apply.f.years.hint', 'apply.f.psychAcademic']) assert.ok(d[k], `${l} ${k}`);
+      for (const k of ['apply.err.headline', 'apply.err.field', 'apply.err.category', 'apply.err.years', 'apply.err.yearsEmpty', 'apply.err.yearsMax', 'apply.err.network', 'apply.f.years.choose', 'apply.f.psychAcademic']) assert.ok(d[k], `${l} ${k}`);
       assert.match(d['apply.err.yearsMax'].replace(/\{max\}/g, '70'), /70/);
     }
   });

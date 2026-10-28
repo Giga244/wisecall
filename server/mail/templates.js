@@ -95,6 +95,25 @@ const S = {
       subject: 'Answer soon or the free question will close', heading: 'A free question is waiting',
       intro: 'You have a free question waiting:', after: "If it isn't answered by {date}, it closes and the asker is told.", button: 'Answer now'
     },
+    applicationReceived: {
+      subject: 'We got your Wisecall application', heading: 'Your application is in',
+      intro: 'Thank you. Here is what happens next:',
+      steps: ['A person on our team reviews it, usually within {days} working days.', 'We email you as soon as you are approved, or if anything is missing.', 'Wisecall opens to students soon: your profile goes public on launch day.'],
+      stepsLive: ['A person on our team reviews it, usually within {days} working days.', 'We email you as soon as you are approved, or if anything is missing.', 'Once approved, your profile is public and students can ask you.'],
+      button: 'See your application'
+    },
+    applyReminder: {
+      subject: 'Your Wisecall application is waiting', heading: 'Your application is waiting',
+      intro: 'You stopped at step {step} of 5. Everything you wrote is saved, so finishing takes only a few minutes.',
+      second: 'This is the last reminder we send about it.',
+      button: 'Continue at step {step}', unsubscribe: 'No more reminders like this:'
+    },
+    idReminder: {
+      subject: 'One step left: the ID check', heading: 'One step left',
+      intro: 'Your application is in. The last step is the ID check: a photo of your ID card or passport and a selfie, about 3 minutes, on your phone.',
+      why: 'We check every mentor this way so students know who they are talking to: 18 or older, and the name matches the ID. Wisecall never sees the ID photos.',
+      button: 'Do the ID check', unsubscribe: 'No more reminders like this:'
+    },
     rateReminder: {
       subject: 'Please rate your Wisecall question', headingAsker: 'How was the answer?', headingMentor: 'How was the question?',
       introAsker: 'How was the answer from {name}? Your rating helps other people find great mentors.',
@@ -399,6 +418,25 @@ const S = {
       subject: 'უპასუხე მალე, თორემ უფასო კითხვა დაიხურება', heading: 'უფასო კითხვა გელოდება',
       intro: 'გელოდება უფასო კითხვა:', after: 'თუ {date}-მდე არ უპასუხე, კითხვა დაიხურება და მის ავტორს ვაცნობებთ.', button: 'უპასუხე ახლავე'
     },
+    applicationReceived: {
+      subject: 'შენი განაცხადი Wisecall-ზე მიღებულია', heading: 'განაცხადი მიღებულია',
+      intro: 'გმადლობ. აი, რა მოხდება შემდეგ:',
+      steps: ['ჩვენი გუნდის წევრი განაცხადს განიხილავს, ჩვეულებრივ {days} სამუშაო დღეში.', 'დამტკიცებისთანავე მოგწერთ, ან თუ რამე დააკლდება.', 'Wisecall სტუდენტებისთვის მალე გაიხსნება: შენი პროფილი გახსნის დღეს გამოჩნდება.'],
+      stepsLive: ['ჩვენი გუნდის წევრი განაცხადს განიხილავს, ჩვეულებრივ {days} სამუშაო დღეში.', 'დამტკიცებისთანავე მოგწერთ, ან თუ რამე დააკლდება.', 'დამტკიცების შემდეგ შენი პროფილი გამოჩნდება და სტუდენტები შეძლებენ კითხვის დასმას.'],
+      button: 'განაცხადის ნახვა'
+    },
+    applyReminder: {
+      subject: 'შენი განაცხადი Wisecall-ზე გელოდება', heading: 'განაცხადი გელოდება',
+      intro: 'შეჩერდი მე-{step} ნაბიჯზე (სულ 5-ია). ყველაფერი, რაც დაწერე, შენახულია, ასე რომ დასრულებას რამდენიმე წუთი სჭირდება.',
+      second: 'ამაზე ეს ბოლო შეხსენებაა.',
+      button: 'გაგრძელება მე-{step} ნაბიჯიდან', unsubscribe: 'მსგავსი შეხსენებები აღარ მინდა:'
+    },
+    idReminder: {
+      subject: 'დარჩა ერთი ნაბიჯი: პირადობის შემოწმება', heading: 'დარჩა ერთი ნაბიჯი',
+      intro: 'განაცხადი მიღებულია. ბოლო ნაბიჯი პირადობის შემოწმებაა: პირადობის მოწმობის ან პასპორტის ფოტო და სელფი, დაახლოებით 3 წუთი, ტელეფონით.',
+      why: 'ყველა მენტორს ასე ვამოწმებთ, რომ სტუდენტმა იცოდეს, ვის ესაუბრება: 18 წლის ან უფროსი, და სახელი ემთხვევა დოკუმენტს. დოკუმენტის ფოტოებს Wisecall ვერ ხედავს.',
+      button: 'პირადობის შემოწმება', unsubscribe: 'მსგავსი შეხსენებები აღარ მინდა:'
+    },
     rateReminder: {
       subject: 'შეაფასე შენი Wisecall-ის კითხვა', headingAsker: 'როგორი იყო პასუხი?', headingMentor: 'როგორი იყო კითხვა?',
       introAsker: 'როგორი იყო {name}-ის პასუხი? შენი შეფასება სხვებს ეხმარება კარგი მენტორების პოვნაში.',
@@ -686,6 +724,23 @@ const BUILDERS = {
   deadlineSoon: (s, d) => ({
     heading: s.deadlineSoon.heading,
     blocks: [{ p: s.deadlineSoon.intro }, { quote: d.question }, { p: fill(s.deadlineSoon.after, d), raw: true }, { button: s.deadlineSoon.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  // The mentor journey (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 2): what happens after sending, and the reminders.
+  applicationReceived: (s, d) => ({
+    heading: s.applicationReceived.heading,
+    blocks: [{ p: s.applicationReceived.intro }, ...(d.prelaunch ? s.applicationReceived.steps : s.applicationReceived.stepsLive).map((x, i) => ({ p: `${i + 1}. ${fill(x, d, false)}` })),
+      { button: s.applicationReceived.button, url: `${config.PUBLIC_URL}/apply.html` }]
+  }),
+  applyReminder: (s, d) => ({
+    heading: s.applyReminder.heading,
+    blocks: [{ p: fill(s.applyReminder.intro, d, false) }, ...(d.second ? [{ small: s.applyReminder.second }] : []),
+      { button: fill(s.applyReminder.button, d, false), url: `${config.PUBLIC_URL}/apply.html?step=${Number(d.step) || 1}` },
+      ...(d.unsubscribeUrl ? [{ small: s.applyReminder.unsubscribe }, { link: d.unsubscribeUrl }] : [])]
+  }),
+  idReminder: (s, d) => ({
+    heading: s.idReminder.heading,
+    blocks: [{ p: s.idReminder.intro }, { small: s.idReminder.why }, { button: s.idReminder.button, url: `${config.PUBLIC_URL}/apply.html?step=5` },
+      ...(d.unsubscribeUrl ? [{ small: s.idReminder.unsubscribe }, { link: d.unsubscribeUrl }] : [])]
   }),
   rateReminder: (s, d) => {
     const asker = d.role !== 'mentor';

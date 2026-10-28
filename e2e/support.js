@@ -80,7 +80,7 @@ async function applyAsMentor(page, a) {
   await page.fill('#apHeadline', a.headline);
   await page.fill('#apField', a.field);
   if (a.niche) { await page.click('[data-cat-change]'); await page.selectOption('#apNiche', a.niche); }
-  await page.fill('#apYears', String(a.years));
+  await page.selectOption('#apYears', String(a.years));
   if (a.title || a.tags) {
     await page.locator('form[data-step="0"] .apply-optional > summary').click();
     if (a.title) await page.fill('#apTitle', a.title);

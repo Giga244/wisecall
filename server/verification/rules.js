@@ -44,7 +44,7 @@ const isRegulated = (niche) => niches().isRegulated(niche);
 const isCustomNiche = (niche) => niche === 'other';
 
 // ---- The Experience form and evidence --------------------------------------------------------------
-const EVIDENCE_KINDS = ['linkedin', 'website', 'portfolio', 'social', 'publication', 'company', 'diploma', 'product', 'testimonials', 'other'];
+const EVIDENCE_KINDS = ['linkedin', 'website', 'portfolio', 'social', 'publication', 'company', 'diploma', 'product', 'testimonials', 'other', 'university'];
 // work_email evidence is added by the server when a work address is confirmed; it cannot be typed in.
 
 // ---- Limits and timings ---------------------------------------------------------------------

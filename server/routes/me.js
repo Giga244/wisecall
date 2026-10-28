@@ -110,6 +110,8 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   // (the profile's "About me" and the application's story stay one text while they are the same: server/verification/experience.js)
   if (isMentor && patch.bio !== undefined) experience.bioToStory(existing, patch);
   const user = await updateUser(existing.id, patch);
+  // (the headline and the price are part of the application: its reminders count from this change)
+  if (isMentor && (patch.price !== undefined || patch.headline !== undefined)) await require('../verification/reminders').touch(user.id);
   if (isMentor && changedApplication.length) await verification.syncEmailStep(user);
   // A changed name is compared with the ID again (a mentor fixing a name that did not match is checked at once).
   if (isMentor && patch.name !== undefined && patch.name !== existing.name) {

@@ -126,6 +126,7 @@ async function saveExperience(user, input) {
   if (words && !category) patch.niche = require('../fieldSuggest').suggestField(words, patch.roleTitle || user.roleTitle) || 'other';
   applyFieldRules(user, patch);
   storyToBio(user, patch);
+  if (Object.keys(patch).length) patch.applyTouchedAt = new Date(); // (the reminders count from the last change: ./reminders.js)
   // A different niche can need different steps (a licence), so the steps shown are recomputed from it when the page reloads.
   return Object.keys(patch).length ? updateUser(user.id, patch) : user;
 }
@@ -168,9 +169,8 @@ function cleanUrl(value) {
 }
 
 // What a link is, from its address, so a mentor only pastes it (the type can still be chosen under "More options"). A university's own
-// pages (a staff page, a faculty list) count as the employer's site.
-const UNIVERSITY = /(^|\.)(edu\.ge|tsu\.ge|gtu\.ge|gipa\.ge|tsmu\.edu|newvision\.ge|edu|ac\.[a-z]{2}|edu\.[a-z]{2})$/i;
-const isUniversity = (host) => UNIVERSITY.test(String(host || '').toLowerCase().replace(/\.$/, ''));
+// pages (a staff page, a faculty list) are "a university page" (server/universities.js knows the Georgian ones by name).
+const isUniversity = (host) => Boolean(require('../universities').universityOf(host));
 function kindFromUrl(value) {
   const url = cleanUrl(value);
   if (!url) return null;
@@ -181,7 +181,7 @@ function kindFromUrl(value) {
   if (on('github.com', 'gitlab.com', 'behance.net', 'dribbble.com', 'artstation.com', 'vimeo.com', 'soundcloud.com')) return 'portfolio';
   if (on('scholar.google.com', 'researchgate.net', 'orcid.org', 'doi.org', 'academia.edu', 'scopus.com', 'semanticscholar.org', 'ssrn.com', 'pubmed.ncbi.nlm.nih.gov')) return 'publication';
   if (on('apps.apple.com', 'play.google.com')) return 'product';
-  if (isUniversity(host)) return 'company';
+  if (isUniversity(host)) return 'university';
   return 'website';
 }
 
@@ -405,7 +405,20 @@ async function setFieldByAdmin({ mentorId, admin, text, niche, notRegulated }) {
   return updated;
 }
 
+// The price range shown on step 3: the middle half of the prices listed mentors in the field ask (free ones aside), once there are 3 of
+// them; until then a neutral 20–50 ₾. -> { from, to, fromData }
+async function priceRangeFor(niche) {
+  if (niche && rules.isValidNiche(niche)) {
+    const { rows: [r] } = await query(
+      `SELECT count(*)::int AS n, percentile_cont(0.25) WITHIN GROUP (ORDER BY price) AS lo, percentile_cont(0.75) WITHIN GROUP (ORDER BY price) AS hi
+         FROM users WHERE ${require('../models').listableSql()} AND niche = $1 AND price > 0`, [niche]);
+    if (r && r.n >= 3) return { from: Math.round(r.lo), to: Math.round(r.hi), fromData: true };
+  }
+  return { from: 20, to: 50, fromData: false };
+}
+
 module.exports = {
+  priceRangeFor,
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
   bioToStory, applicationProgress, progressFor

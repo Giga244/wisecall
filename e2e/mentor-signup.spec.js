@@ -68,7 +68,7 @@ async function walk(page, { width, shots, tag }) {
   await page.fill('#apHeadline', 'ეკონომიკის ასოცირებული პროფესორი თსუ-ში');
   await page.fill('#apField', 'მაკროეკონომიკა');
   await expect(page.locator('#apCategory [data-cat-name]')).toHaveText('ბიზნესი');
-  await page.fill('#apYears', '18');
+  await page.selectOption('#apYears', '18');
   await shot('05-step1-about');
   await page.click('.apply-next');
   await page.waitForURL(/step=2$/);

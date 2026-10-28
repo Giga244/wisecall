@@ -46,7 +46,8 @@ test.beforeAll(async () => {
     story: 'თბილისის სახელმწიფო უნივერსიტეტში ოცი წელია ფსიქოლოგიის ისტორიას და განათლების ფსიქოლოგიას ვასწავლი, ვხელმძღვანელობ დოქტორანტებს.' } });
 });
 
-test('the years: empty, "abc" and 71 say what is wrong under the field, in view; "25 წელი" is saved as 25', async ({ browser }) => {
+// (the years are chosen from a list: nothing to type, the same on every phone and keyboard; docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md)
+test('the years: none chosen says so under the field, in view; 25 chosen is saved as 25', async ({ browser }) => {
   const { ctx, page } = await phone(browser, people.nana);
   await page.fill('#apHeadline', 'ფსიქოლოგიის პროფესორი');
   await page.fill('#apField', 'განათლების ფსიქოლოგია, ფსიქოლოგიის ისტორია, პედაგოგი');
@@ -57,14 +58,9 @@ test('the years: empty, "abc" and 71 say what is wrong under the field, in view;
   await seen(page, err, KA['apply.err.yearsEmpty']);
   await expect(page.locator('#apYears')).toHaveAttribute('aria-invalid', 'true');
   expect(new URL(page.url()).searchParams.get('step')).toBe('1');
-  await page.fill('#apYears', 'abc');
-  await page.click('.apply-next');
-  await seen(page, err, 'ჩაწერე მხოლოდ რიცხვი, მაგ. 25');
-  await page.fill('#apYears', '71');
-  await page.click('.apply-next');
-  await seen(page, err, KA['apply.err.yearsMax'].replace(/\{max\}/g, '70'));
-  await expect(err).toContainText('70');
-  await page.fill('#apYears', '25 წელი');
+  expect(await page.locator('#apYears option').count(), '"choose", then 0 to 70').toBe(72);
+  await page.selectOption('#apYears', '25');
+  await expect(err).toBeHidden();
   await page.click('.apply-next');
   await page.waitForURL(/step=2$/);
   const [u] = await S.sql('SELECT years_experience, headline, niche FROM users WHERE email = $1', [people.nana.email]);
@@ -92,7 +88,7 @@ test('a server refusal shows its own message under its field; a lost connection 
 
 test('a field left is saved as a draft, with no "Next"', async ({ browser }) => {
   const { ctx, page } = await phone(browser, people.nana);
-  await page.fill('#apYears', '27');
+  await page.selectOption('#apYears', '27');
   await page.locator('#apHeadline').focus(); // (the years field is left)
   await expect.poll(async () => (await S.sql('SELECT years_experience FROM users WHERE email = $1', [people.nana.email]))[0].years_experience, { timeout: 8000 }).toBe(27);
   await ctx.close();

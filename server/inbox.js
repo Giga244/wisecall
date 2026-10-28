@@ -24,7 +24,7 @@ const LIMITS = {
 };
 // Emails a person may turn off in Settings -> Notifications. Everything else (payments, answers, follow-ups, refunds, application
 // decisions, payouts, support replies, security) is transactional and always sent.
-const OPTIONAL_EMAILS = ['rating_reminders', 'tips'];
+const OPTIONAL_EMAILS = ['rating_reminders', 'tips', 'apply_reminders'];
 const REPORT_REASONS = ['contact_details', 'abuse', 'spam', 'scam', 'other'];
 // Why a withdrawal request lost a payout, or was closed, when a follow-up question came in for it (the mentor reads it in their language).
 const FOLLOW_UP_WAITS = {

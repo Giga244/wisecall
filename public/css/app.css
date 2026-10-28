@@ -854,3 +854,11 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .price-mode { border: 0; margin: 0 0 14px; padding: 0; min-width: 0; display: grid; gap: 4px; }
 .price-mode legend { font-weight: 800; padding: 0; margin-bottom: 6px; }
 .ask-full { background: var(--sun-tint); color: var(--ink); padding: 12px 14px; border-radius: 12px; font-weight: 700; margin: 0 0 14px; }
+/* /apply.html: the ID check explained, the QR code to continue on a phone, what happens next (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 2) */
+.apply-idbox { margin: 0 0 14px; padding: 12px 14px; border: var(--line-w) solid var(--line); border-radius: 12px; background: var(--card); }
+.apply-idbox p { margin: 0 0 6px; }
+.apply-idbox p:last-child { margin: 0; }
+.apply-qr { display: grid; justify-items: start; gap: 8px; }
+.apply-qr svg { width: 220px; height: 220px; background: var(--white); border-radius: 8px; } /* (white in both themes: a phone camera reads it) */
+.apply-next-steps ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.apply-uni { margin: 6px 0 0; font-weight: 700; }

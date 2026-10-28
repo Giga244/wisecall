@@ -144,4 +144,10 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
-module.exports = { notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifyFollowUpReminder, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };
+// The application was sent: what happens next. Reminders for one left unfinished (server/verification/reminders.js), which the footer
+// switches off.
+const notifyApplicationReceived = (mentor) => safeSend('application received', 'applicationReceived', mentor, { days: config.MENTOR_REVIEW_DAYS, prelaunch: config.LAUNCH_MODE === 'prelaunch' });
+const notifyApplyReminder = (mentor, d) => safeSend('application reminder', 'applyReminder', mentor, d, { category: 'apply_reminders' });
+const notifyIdReminder = (mentor) => safeSend('ID check reminder', 'idReminder', mentor, {}, { category: 'apply_reminders' });
+
+module.exports = { notifyApplicationReceived, notifyApplyReminder, notifyIdReminder, notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifyFollowUpReminder, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins };

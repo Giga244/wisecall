@@ -42,6 +42,10 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
     // Where the ID check stands, for the progress screen: 'started', 'in_review', 'approved', ...
     kycState: (stepRows.id_kyc && stepRows.id_kyc.evidence && stepRows.id_kyc.evidence.state) || null,
     application: await experience.applicationFor(user, stepRows),
+    // What mentors in this field usually ask (the middle half of listed prices, once there are 3), else 20–50 ₾; and the universities
+    // a link is recognised from (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 2).
+    priceRange: await experience.priceRangeFor(user.niche),
+    universities: require('../universities').LIST.map((u) => ({ domain: u.domain, en: u.en, ka: u.ka })),
     limits: {
       titleMax: rules.LIMITS.titleMax, tagsMax: rules.LIMITS.tagsMax, tagMax: rules.LIMITS.tagMax, yearsMax: rules.LIMITS.yearsMax,
       storyMin: rules.LIMITS.storyMin, storyMax: rules.LIMITS.storyMax, sampleMin: rules.LIMITS.sampleMin, sampleMax: rules.LIMITS.sampleMax,
@@ -67,7 +71,10 @@ router.post('/kyc/start', requireAuth, asyncHandler(async (req, res) => {
   if (!isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
   if (!user.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
   try {
-    res.json(await kycService.startForMentor(user));
+    const out = await kycService.startForMentor(user);
+    // On a computer: the partner's link as a QR code, to do the check on a phone (its camera) instead.
+    if (req.body && req.body.qr === true && out && out.url) out.qr = await require('qrcode').toString(out.url, { type: 'svg', margin: 1, width: 220, errorCorrectionLevel: 'M' });
+    res.json(out);
   } catch (e) {
     if (e instanceof steps.VerificationError) return res.status(409).json({ error: e.code });
     if (e.code === 'kyc_unavailable') return res.status(503).json({ error: 'kyc_unavailable' });
@@ -123,11 +130,14 @@ router.put('/experience', ...submit(async (user, b) => {
 }));
 router.post('/evidence', ...submit(async (user, b) => {
   const item = await experience.addEvidence(user, b);
+  await require('../verification/reminders').touch(user.id);
   return { evidence: { id: item.id, kind: item.kind, url: item.url, registryId: item.registryId, note: item.note } };
 }));
 router.delete('/evidence/:id', ...submit(async (user, b, req) => { await experience.removeEvidence(user, req.params.id); }));
 router.post('/submit', ...submit(async (user, b, req, res) => {
-  const out = { user: meProfile(await experience.submit(user, { req, res })) };
+  const sentUser = await experience.submit(user, { req, res });
+  const out = { user: meProfile(sentUser) };
+  require('../notify').notifyApplicationReceived(sentUser); // (what happens next, by email too)
   require('../analytics').event('mentor_application_submitted', req);
   const source = require('../attribution').read(req);
   if (source) await require('../db').query('UPDATE users SET application_source = $2 WHERE id = $1 AND application_source IS NULL', [user.id, JSON.stringify(source)]);
