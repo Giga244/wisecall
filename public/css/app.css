@@ -862,3 +862,12 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .apply-qr svg { width: 220px; height: 220px; background: var(--white); border-radius: 8px; } /* (white in both themes: a phone camera reads it) */
 .apply-next-steps ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
 .apply-uni { margin: 6px 0 0; font-weight: 700; }
+/* /apply.html step 1: the closest categories as chips, the extra categories, how they mainly work (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 3) */
+.apply-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+.apply-chip[aria-pressed="true"] { background: var(--inverse); color: var(--on-inverse); border-color: var(--inverse); }
+.apply-extra, .apply-kind { border: 0; padding: 0; margin-inline: 0; }
+.apply-extra legend, .apply-kind legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+.apply-extra-selects { display: grid; gap: 8px; }
+@media (min-width: 600px) { .apply-extra-selects { grid-template-columns: 1fr 1fr; } }
+.apply-kind-option { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.profile-fields { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

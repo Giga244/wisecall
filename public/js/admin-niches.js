@@ -58,7 +58,7 @@
             ${n.active ? '' : `<span class="badge badge-rejected">${t('admin.niches.inactive')}</span>`}
           </span>
         </div>
-        <p class="muted small">${esc(fill('admin.niches.mentors', { mentors: n.mentors, listed: n.listed }))}${n.promotedFrom ? ' · ' + esc(fill('admin.niches.promotedFrom', { label: n.promotedFrom })) : ''}</p>
+        <p class="muted small">${esc(fill('admin.niches.mentors', { mentors: n.mentors, listed: n.listed }))}${n.extra ? ' · ' + esc(fill('admin.niches.extra', { n: n.extra })) : ''}${n.promotedFrom ? ' · ' + esc(fill('admin.niches.promotedFrom', { label: n.promotedFrom })) : ''}</p>
         <details><summary>${t('admin.niches.edit')}</summary>${nicheForm(n, `nf${i}`)}</details>
       </div>`;
   }

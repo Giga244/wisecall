@@ -13,6 +13,8 @@ function userFromRow(r) {
     passwordHash: r.password_hash,
     role: r.role,
     niche: r.niche,
+    extraNiches: r.extra_niches || [], // (up to two more categories; niche is the main one)
+    practiceKind: r.practice_kind || null, // academic | practitioner | both ("I mainly teach or research" ...), or not said
     roleTitle: r.role_title,
     bio: r.bio,
     price: r.price,
@@ -121,7 +123,7 @@ const USER_COLUMNS = {
   headline: 'headline', currentWork: 'current_work', city: 'city', languages: 'languages', linkedinUrl: 'linkedin_url', websiteUrl: 'website_url',
   profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme',
   specialtyTags: 'specialty_tags', yearsExperience: 'years_experience', story: 'story', applicationSubmittedAt: 'application_submitted_at',
-  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
+  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', extraNiches: 'extra_niches', practiceKind: 'practice_kind', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
   freeWeeklyCap: 'free_weekly_cap', applyTouchedAt: 'apply_touched_at'
 };
 

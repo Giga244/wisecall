@@ -173,7 +173,7 @@ async function decideAndApply(userId, reviewId, { notify = false } = {}) {
   const risk = rules.riskFrom(facts);
   const decision = rules.decide({
     autoApproveOn: config.AUTO_APPROVE,
-    regulated: rules.isRegulated(user.niche),
+    regulated: experience.anyRegulated(user), // (the main category or an extra one)
     customNiche: rules.isCustomNiche(user.niche),
     identity,
     interviewRequested: interviewRequested(stepMap),

@@ -775,7 +775,7 @@ async function sendAdvice(req, res, key) {
   await require('./launch').ensureFresh(5000);
   const live = config.LAUNCH_MODE !== 'prelaunch';
   const rows = live ? (await query(
-    `SELECT name, username, role_title, custom_niche, price FROM users WHERE ${listableSql()} AND niche = $1 AND username IS NOT NULL AND profile_visibility = 'public'
+    `SELECT name, username, role_title, custom_niche, price FROM users WHERE ${listableSql()} AND (niche = $1 OR $1 = ANY(extra_niches)) AND username IS NOT NULL AND profile_visibility = 'public'
       ORDER BY created_at DESC LIMIT 60`, [key])).rows : [];
   const lang = langOf(res);
   const ka = lang === 'ka';
@@ -1003,7 +1003,7 @@ function seoRoutes() {
       await require('./launch').ensureFresh(5000);
       const rows = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT username, GREATEST(created_at, COALESCE(photo_updated_at, created_at), COALESCE(verification_decided_at, created_at)) AS changed_at FROM users WHERE ${listableSql()} AND username IS NOT NULL AND profile_visibility = 'public' ORDER BY created_at DESC LIMIT 5000`)).rows;
       // A field's page, once it has a mentor people can ask.
-      const fields = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT DISTINCT niche FROM users WHERE ${listableSql()} AND profile_visibility = 'public'`)).rows
+      const fields = config.LAUNCH_MODE === 'prelaunch' ? [] : (await query(`SELECT DISTINCT unnest(niche || extra_niches) AS niche FROM users WHERE ${listableSql()} AND profile_visibility = 'public'`)).rows
         .map((r) => r.niche).filter((k) => require('./niches').isValid(k));
       // Published answers (only those: a withdrawn one is gone).
       const answers = config.LAUNCH_MODE === 'prelaunch' ? [] : await require('./publicAnswers').sitemapSlugs();

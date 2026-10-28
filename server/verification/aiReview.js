@@ -100,7 +100,7 @@ function buildApplication(user, evidence) {
   return {
     niche: redact(require('../niches').nameOf(user.niche, 'en', user.customNiche) + (user.niche !== 'other' && user.customNiche ? ` (${user.customNiche})` : '')),
     ...(rules.isCustomNiche(user.niche) ? { niche_is_applicants_own_words: true } : {}),
-    regulated_niche: rules.isRegulated(user.niche),
+    regulated_niche: require('./experience').anyRegulated(user),
     title: redact(user.roleTitle),
     specialty_tags: (user.specialtyTags || []).map(redact),
     years_of_experience: user.yearsExperience,

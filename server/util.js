@@ -13,6 +13,7 @@ function publicProfile(user) {
     name: user.name,
     roleTitle: user.roleTitle,
     niche: user.niche,
+    extraNiches: user.extraNiches || [], practiceKind: user.practiceKind || null,
     customNiche: user.customNiche || null, // "Your field", in the mentor's own words (shown instead of the category)
     bio: user.bio,
     price: user.price,

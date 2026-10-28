@@ -115,6 +115,13 @@
       <li><span aria-current="page">${escapeHtml(expert.name)}</span></li>
     </ol>`;
   }
+  // The main category first, then the extra ones; and "Lecturer" / "Practitioner" when they said how they mainly work.
+  function fieldsHtml() {
+    if (!isMentor) return '';
+    const extra = (expert.extraNiches || []).filter((k) => k !== expert.niche);
+    if (!extra.length && !expert.practiceKind) return '';
+    return `<p class="profile-fields">${expert.practiceKind ? `<span class="chip-tag kind-tag">${escapeHtml(t('profile.kind.' + expert.practiceKind))}</span> ` : ''}${extra.length ? `<span class="muted small">${escapeHtml(t('profile.alsoIn'))}</span> ${extra.map((k) => `<a class="tag" href="/advice/${encodeURIComponent(k)}">${escapeHtml(t('niche.' + k))}</a>`).join(' ')}` : ''}</p>`;
+  }
 
   // ---- The details every profile has: work or study, city, languages, links, member since -----------------------------
   const LINK_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
@@ -157,6 +164,7 @@
                 ${isMentor ? `<span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>` : ''}
                 ${isMentor && (expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
               </div>
+              ${fieldsHtml()}
             </div>
           </div>
           ${isMentor && expert.username ? `<p class="profile-share">${WisecallCopy.button(location.origin + location.pathname)}</p>` : ''}

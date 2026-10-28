@@ -42,7 +42,7 @@
   // The chips: "All", and every field somebody listed works in (plus the chosen one, even when nobody is there yet).
   const knownNiche = (key) => key === 'other' || WisecallI18n.niches().some((n) => n.key === key);
   function drawChips() {
-    const used = new Set(allExperts.map((e) => e.niche));
+    const used = new Set(allExperts.flatMap((e) => [e.niche, ...(e.extraNiches || [])]));
     const keys = WisecallI18n.niches().map((n) => n.key).concat('other').filter((k) => used.has(k) || k === activeNiche);
     const anyFree = freeOnly || allExperts.some((e) => e.price === 0);
     filters.innerHTML = [`<button type="button" class="chip" data-niche="all">${escapeHtml(t('niche.all'))}</button>`,
@@ -51,6 +51,8 @@
   }
 
   // The chips (and the strip's links) choose a field; the address shows it (?niche=) so it can be shared.
+  // A mentor is in their main category and their (up to two) extra ones.
+  const inNiche = (e, key) => e.niche === key || (e.extraNiches || []).includes(key);
   function setNiche(niche, opts) {
     activeNiche = knownNiche(niche) ? niche : 'all';
     drawChips();
@@ -117,13 +119,13 @@
     grid.setAttribute('aria-busy', String(!prelaunch && !loaded));
     if (prelaunch) { launchingSoon(); return; }
     if (!loaded) { grid.innerHTML = loadingHtml; summary(); return; }
-    let list = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
+    let list = activeNiche === 'all' ? allExperts : allExperts.filter((e) => inNiche(e, activeNiche));
     if (freeOnly) list = list.filter((e) => e.price === 0);
     if (searchTerm) {
       const needle = searchTerm.toLowerCase();
       const has = (s) => Boolean(s) && String(s).toLowerCase().includes(needle);
       list = list.filter(e => has(e.name) || has(e.roleTitle) || has(e.bio) || has(e.customNiche)
-        || (e.niche && has(t('niche.' + e.niche))) || Boolean(serverMatches && serverMatches.has(e.id)));
+        || [e.niche, ...(e.extraNiches || [])].some((k) => k && has(t('niche.' + k))) || Boolean(serverMatches && serverMatches.has(e.id)));
     }
     list = sortList(list);
     shown = list.length;
@@ -135,7 +137,7 @@
       return;
     }
     if (list.length === 0) {
-      const inField = activeNiche === 'all' ? allExperts : allExperts.filter(e => e.niche === activeNiche);
+      const inField = activeNiche === 'all' ? allExperts : allExperts.filter((e) => inNiche(e, activeNiche));
       if (searchTerm && inField.length) {
         grid.innerHTML = `<p class="muted">${t('experts.noMatch')}</p>
           <p><a class="btn btn-outline btn-sm" href="/find-a-mentor.html?field=${encodeURIComponent(searchTerm)}${activeNiche !== 'all' ? '&niche=' + encodeURIComponent(activeNiche) : ''}">${t('rq.cta')}</a></p>`;
@@ -154,7 +156,7 @@
           ${WisecallAPI.avatar(e)}
           <div>
             <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
-            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(WisecallI18n.fieldName(e))}` : ''}</div>
+            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(WisecallI18n.fieldName(e))}` : ''}${e.practiceKind ? ` <span class="chip-tag kind-tag">${escapeHtml(t('profile.kind.' + e.practiceKind))}</span>` : ''}</div>
             ${e.profile && (e.profile.currentPosition || e.profile.yearsOfExperience) ? `<div class="card-role small">${e.profile.currentPosition ? escapeHtml(t('experts.card.at').replace('{title}', e.profile.currentPosition.title).replace('{organisation}', e.profile.currentPosition.organisation)) : ''}${e.profile.currentPosition && e.profile.yearsOfExperience ? ' · ' : ''}${e.profile.yearsOfExperience ? escapeHtml(t('experts.card.years').replace('{n}', e.profile.yearsOfExperience)) : ''}</div>` : ''}
           </div>
         </div>

@@ -160,6 +160,11 @@
     const niche = f.niche || '';
     const options = WisecallI18n.niches().map((n) => `<option value="${esc(n.key)}"${niche === n.key ? ' selected' : ''}>${esc(t('niche.' + n.key))}</option>`).join('')
       + `<option value="other"${niche === 'other' ? ' selected' : ''}>${esc(t('ap.f.niche.other'))}</option>`;
+    // Up to two more categories (an educational psychologist: Psychology + Teaching), and whether they mainly teach or work in practice.
+    const extras = f.extraNiches || [];
+    const extraSelect = (i) => `<select id="apExtra${i + 1}" name="extra${i + 1}" aria-describedby="apExtraHint apExtraErr"><option value="">${esc(t('apply.f.extra.none'))}</option>${WisecallI18n.niches().map((n) => `<option value="${esc(n.key)}"${extras[i] === n.key ? ' selected' : ''}>${esc(t('niche.' + n.key))}</option>`).join('')}</select>`;
+    const kind = f.practiceKind || '';
+    const kindRadio = (k) => `<label class="apply-kind-option"><input type="radio" name="practiceKind" value="${k}"${kind === k ? ' checked' : ''}> <span>${esc(t('apply.f.kind.' + k))}</span></label>`;
     return `
       <form class="apply-step" data-step="0" novalidate>
         <h1 tabindex="-1">${esc(t('apply.about.title'))}</h1>
@@ -175,6 +180,7 @@
           <input id="apField" name="customNiche" type="text" maxlength="60" value="${esc(f.customNiche || '')}" autocomplete="off" aria-describedby="apFieldHint apCategory apFieldErr" required>
           <span class="hint" id="apFieldHint">${esc(t('apply.f.field.hint'))}</span>
           <p class="apply-field-error" id="apFieldErr" data-error-for="field" hidden></p>
+          <div class="apply-chips" data-cat-chips role="group" aria-label="${esc(t('apply.f.chips'))}" hidden></div>
           <p class="apply-category" id="apCategory" aria-live="polite"${niche ? '' : ' hidden'}>
             <span>${esc(t('apply.f.category'))} <strong data-cat-name>${niche ? esc(nicheName(niche)) : ''}</strong></span>
             <button type="button" class="linklike" data-cat-change aria-controls="apNicheBox" aria-expanded="false">${esc(t('apply.f.category.change'))}</button>
@@ -187,6 +193,17 @@
           <p class="mv-note apply-licence-note" data-licence-note${isRegulated(niche) ? '' : ' hidden'}>${esc(t(isDiploma(niche) ? 'apply.f.licenceNote.dip' : 'apply.f.licenceNote'))}</p>
           <p class="hint apply-psych-note" data-psych-note${niche === 'psychology' ? '' : ' hidden'}>${esc(t('apply.f.psychAcademic'))}</p>
         </div>
+        <fieldset class="apply-field apply-extra">
+          <legend>${esc(t('apply.f.extra'))}</legend>
+          <div class="apply-extra-selects">${extraSelect(0)}${extraSelect(1)}</div>
+          <span class="hint" id="apExtraHint">${esc(t('apply.f.extra.hint'))}</span>
+          <p class="apply-field-error" id="apExtraErr" data-error-for="extra" hidden></p>
+        </fieldset>
+        <fieldset class="apply-field apply-kind">
+          <legend>${esc(t('apply.f.kind'))}</legend>
+          ${['academic', 'practitioner', 'both'].map(kindRadio).join('')}
+          <p class="mv-note" data-academic-limit hidden>${esc(t('apply.f.academicLimit'))}</p>
+        </fieldset>
         <div class="apply-field apply-years">
           <label for="apYears">${esc(t('apply.f.years'))}</label>
           <select id="apYears" name="yearsExperience" aria-describedby="apYearsErr" required>
@@ -566,7 +583,7 @@
   const ERR = {
     invalid_field: 'toast.error', invalid_years: 'ap.err.invalid_years', story_too_long: 'ap.err.story_too_long', invalid_niche: 'ap.err.invalid_niche',
     invalid_custom_niche: 'ap.err.invalid_custom_niche', application_locked: 'ap.err.application_locked', email_not_verified: 'settings.mentor.emailNotVerified',
-    invalid_price: 'apply.err.price', bio_too_long: 'toast.error', invalid_tags: 'ap.err.invalid_tags', title_too_long: 'ap.err.title_too_long', sample_too_long: 'ap.err.sample_too_long'
+    invalid_price: 'apply.err.price', extra_regulated: 'apply.err.extraRegulated', too_many_niches: 'apply.err.extraRegulated', bio_too_long: 'toast.error', invalid_tags: 'ap.err.invalid_tags', title_too_long: 'ap.err.title_too_long', sample_too_long: 'ap.err.sample_too_long'
   };
   const EV_ERR = {
     invalid_url: 'ap.ev.err.invalid_url', invalid_kind: 'ap.ev.err.invalid_url', not_linkedin: 'ap.ev.err.not_linkedin', duplicate_evidence: 'ap.ev.err.duplicate_evidence', too_much_evidence: 'ap.ev.err.too_much_evidence',
@@ -614,9 +631,12 @@
     await WisecallAPI.apiFetch('/verification/experience', {
       method: 'PUT',
       body: { customNiche: form.customNiche.value.trim(), niche: form.niche.value || null, roleTitle: form.roleTitle.value, specialtyTags: form.specialtyTags.value,
+        extraNiches: extraOf(form), practiceKind: (form.querySelector('input[name="practiceKind"]:checked') || {}).value || null,
         ...(y.empty ? { yearsExperience: null } : (y.n !== undefined ? { yearsExperience: y.n } : {})) }
     });
   }
+  // The extra categories chosen, without the main one or the same one twice.
+  const extraOf = (form) => [...new Set([form.extra1.value, form.extra2.value].filter((k) => k && k !== form.niche.value))];
   // A field left: saved a moment later, quietly (a failure here is said again on "Next", where it matters).
   function draftAbout(form) {
     clearTimeout(aboutDraftTimer);
@@ -684,7 +704,7 @@
   }
   // A refused or failed save: under the field the server named (step 1), otherwise one line in view. A request that never reached the
   // server (no connection, a dropped network in an in-app browser) says so, and what was typed stays on the page.
-  const FIELD_OF = { headline: 'headline', customNiche: 'field', niche: 'niche', yearsExperience: 'years' };
+  const FIELD_OF = { headline: 'headline', customNiche: 'field', niche: 'niche', yearsExperience: 'years', extraNiches: 'extra' };
   function showSaveError(e) {
     const form = root.querySelector('form.apply-step');
     if (!e || !e.code) { stepError(t('apply.err.network')); return; }
@@ -857,8 +877,30 @@
       let chosen = false;
       let timer = null;
       let seq = 0;
+      const chips = form.querySelector('[data-cat-chips]');
+      // The closest categories as chips to tap, "Other" last; the chosen one is pressed.
+      const drawChips = (choices) => {
+        const keys = choices.map((c) => c.key).filter((k) => k !== 'other');
+        chips.hidden = !keys.length;
+        chips.innerHTML = keys.concat('other').map((k) => `<button type="button" class="chip apply-chip" data-chip="${esc(k)}" aria-pressed="${select.value === k}">${esc(nicheName(k))}</button>`).join('');
+      };
+      chips.addEventListener('click', (ev) => {
+        const b = ev.target.closest('[data-chip]');
+        if (!b) return;
+        chosen = true;
+        select.value = b.dataset.chip;
+        show();
+        draftAbout(form);
+      });
+      const limit = form.querySelector('[data-academic-limit]');
+      const showLimit = () => {
+        const kindNow = (form.querySelector('input[name="practiceKind"]:checked') || {}).value;
+        limit.hidden = !(kindNow === 'academic' && [select.value, ...extraOf(form)].some(isRegulated));
+      };
       const show = () => {
         const key = select.value;
+        chips.querySelectorAll('[data-chip]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.chip === key)));
+        showLimit();
         line.hidden = !key;
         line.querySelector('[data-cat-name]').textContent = key ? nicheName(key) : '';
         note.hidden = !isRegulated(key);
@@ -873,11 +915,12 @@
         timer = setTimeout(async () => {
           const words = field.value.trim();
           const mine = ++seq;
-          if (!words) { select.value = ''; show(); return; }
+          if (!words) { select.value = ''; drawChips([]); show(); return; }
           try {
             const r = await WisecallAPI.apiFetch('/niches/suggest?q=' + encodeURIComponent(words));
             if (mine !== seq || chosen) return;
             select.value = r.niche || 'other';
+            drawChips(r.choices || []);
             show();
           } catch (e) {
             // (not answered: no guess is kept, an earlier one for fewer words included; the server suggests one on saving, or they choose)
@@ -893,6 +936,9 @@
         select.focus();
       });
       select.addEventListener('change', () => { chosen = true; show(); draftAbout(form); });
+      [form.extra1, form.extra2].forEach((s) => s.addEventListener('change', () => { fieldError(form, 'extra', ''); showLimit(); draftAbout(form); }));
+      form.querySelectorAll('input[name="practiceKind"]').forEach((r) => r.addEventListener('change', () => { fieldError(form, 'extra', ''); showLimit(); draftAbout(form); }));
+      showLimit();
       ['headline', 'customNiche', 'roleTitle', 'specialtyTags'].forEach((n) => form[n].addEventListener('blur', () => draftAbout(form)));
       // the years: what is wrong is said as soon as the field is left, and a typed field clears its own message
       form.yearsExperience.addEventListener('blur', () => {

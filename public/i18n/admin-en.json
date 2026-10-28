@@ -697,5 +697,6 @@
   "admin.email.delayed": "delayed",
   "admin.email.bounced": "bounced",
   "admin.email.complained": "marked as spam",
-  "admin.email.none": "pending"
+  "admin.email.none": "pending",
+  "admin.niches.extra": "{n} more as an extra category"
 }

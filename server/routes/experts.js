@@ -35,13 +35,13 @@ router.get('/', asyncHandler(async (req, res) => {
   const params = [];
   let where = listableSql();
   if (req.query.free === '1') where += ' AND price = 0'; // ("Free": mentors who answer for free)
-  if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND niche = $${params.length}`; }
+  if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND (niche = $${params.length} OR $${params.length} = ANY(extra_niches))`; } // (the main category or an extra one)
   if (q && String(q).trim()) {
     params.push('%' + escapeLike(String(q).trim().slice(0, 100)) + '%');
     const p = `$${params.length}`;
     where += ` AND (name ILIKE ${p} OR role_title ILIKE ${p}
                 OR (bio ILIKE ${p} AND ${ABOUT_PUBLIC_SQL}) OR custom_niche ILIKE ${p} OR array_to_string(specialty_tags, ' ') ILIKE ${p}
-                OR EXISTS (SELECT 1 FROM niches n WHERE n.key = users.niche AND (n.name_en ILIKE ${p} OR n.name_ka ILIKE ${p}))
+                OR EXISTS (SELECT 1 FROM niches n WHERE (n.key = users.niche OR n.key = ANY(users.extra_niches)) AND (n.name_en ILIKE ${p} OR n.name_ka ILIKE ${p}))
                 OR EXISTS (SELECT 1 FROM profile_settings ps WHERE ps.user_id = users.id AND ps.hidden_at IS NULL AND ps.search_text ILIKE ${p}))`;
   }
   const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);

@@ -101,7 +101,7 @@ async function finishApproval(mentor, actor, reason) {
 // once more, like an admin's approval. Returns the mentor, or null when it was not possible after all (it then waits for a person).
 async function autoApprove({ mentorId, reviewId }) {
   const mentor = await getUserById(mentorId);
-  if (!isMentor(mentor) || mentor.verificationStatus !== 'pending' || rules.isRegulated(mentor.niche)) return null;
+  if (!isMentor(mentor) || mentor.verificationStatus !== 'pending' || require('./experience').anyRegulated(mentor)) return null; // (the main category or an extra one)
   const summary = await steps.describeFor(mentor);
   if (!summary.ready) return null;
   const actor = { id: null, label: 'system (automatic approval)' };

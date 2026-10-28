@@ -11,10 +11,10 @@ const OTHER = 'other'; // a mentor's own niche, written in users.custom_niche
 
 const FALLBACK = [
   ['business', 'Business', 'ბიზნესი', 'business'], ['medicine', 'Medicine', 'მედიცინა', 'medicine'], ['law', 'Law', 'სამართალი', 'law'],
-  ['finance', 'Finance', 'ფინანსები', 'finance'], ['tech', 'Tech', 'ტექნოლოგია', 'tech'], ['teaching', 'Teaching', 'სწავლება', 'teaching'],
-  ['fitness', 'Fitness', 'ფიტნესი', 'fitness'], ['creative', 'Creative', 'კრეატიული', 'creative'], ['marketing', 'Marketing', 'მარკეტინგი', 'marketing'],
-  ['design', 'Design', 'დიზაინი', 'design'], ['writing', 'Writing', 'წერა', 'writing'], ['parenting', 'Parenting', 'მშობლობა', 'parenting'],
-  ['engineering', 'Engineering', 'ინჟინერია', 'engineering'], ['science', 'Science', 'მეცნიერება', 'science']
+  ['finance', 'Finance', 'ფინანსები', 'finance'], ['tech', 'Tech', 'IT და პროგრამირება', 'tech'], ['teaching', 'Teaching', 'განათლება და სწავლება', 'teaching'],
+  ['fitness', 'Fitness', 'ფიტნესი', 'fitness'], ['creative', 'Creative', 'ხელოვნება და ხელნაკეთობა', 'creative'], ['marketing', 'Marketing', 'მარკეტინგი', 'marketing'],
+  ['design', 'Design', 'დიზაინი', 'design'], ['writing', 'Writing', 'წერა და ჟურნალისტიკა', 'writing'], ['parenting', 'Parenting', 'მშობლობა და ბავშვის აღზრდა', 'parenting'],
+  ['engineering', 'Engineering', 'ინჟინერია', 'engineering'], ['science', 'Science', 'მეცნიერება და კვლევა', 'science']
 ].map(([key, en, ka, icon], i) => ({ key, en, ka, icon, regulated: Object.prototype.hasOwnProperty.call(REGULATED, key), sort: (i + 1) * 10, active: true }));
 
 let list = FALLBACK;

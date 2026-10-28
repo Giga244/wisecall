@@ -2692,5 +2692,19 @@
   "mentors.ready.title": "Have these ready",
   "mentors.ready.link": "Your university or work page link, or a photo of a diploma or certificate",
   "mentors.ready.id": "Your ID card or passport, for a selfie check (a phone is easiest)",
-  "mentors.ready.lecturers": "If you teach at a university, your university page link is enough."
+  "mentors.ready.lecturers": "If you teach at a university, your university page link is enough.",
+  "apply.f.chips": "Closest categories",
+  "apply.f.extra": "Extra categories (optional, up to 2)",
+  "apply.f.extra.none": "None",
+  "apply.f.extra.hint": "People browsing these categories find you too. Your main category is shown first.",
+  "apply.f.kind": "How do you mainly work? (optional)",
+  "apply.f.kind.academic": "I mainly teach or research",
+  "apply.f.kind.practitioner": "I mainly work in practice",
+  "apply.f.kind.both": "Both",
+  "apply.f.academicLimit": "As a lecturer or researcher in a regulated field, you may give academic, career and study advice without a practising licence. You may not give clinical, legal or financial advice about a specific person's case. To give that advice, make the field your main category: a licence and a review by our team are needed, as before.",
+  "apply.err.extraRegulated": "A regulated field can be an extra category only if you mainly teach or research. Choose \"I mainly teach or research\", or make it your main category.",
+  "profile.kind.academic": "Lecturer",
+  "profile.kind.practitioner": "Practitioner",
+  "profile.kind.both": "Lecturer · Practitioner",
+  "profile.alsoIn": "Also in:"
 }

@@ -63,10 +63,13 @@ async function moveGroup(group, key, admin) {
 }
 
 router.get('/niches', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
-  const [counts, listed] = await Promise.all([
+  const [counts, listed, extra] = await Promise.all([
     query(`SELECT niche, count(*)::int AS n FROM users WHERE role IN ('mentor', 'both') AND niche IS NOT NULL GROUP BY niche`),
-    query(`SELECT niche, count(*)::int AS n FROM users WHERE ${listableSql()} GROUP BY niche`)
+    query(`SELECT niche, count(*)::int AS n FROM users WHERE ${listableSql()} GROUP BY niche`),
+    // (mentors who have it as one of their two extra categories)
+    query(`SELECT x AS niche, count(*)::int AS n FROM users, unnest(extra_niches) AS x WHERE role IN ('mentor', 'both') GROUP BY x`)
   ]);
+  const asExtra = Object.fromEntries(extra.rows.map((r) => [r.niche, r.n]));
   const mentors = Object.fromEntries(counts.rows.map((r) => [r.niche, r.n]));
   const live = Object.fromEntries(listed.rows.map((r) => [r.niche, r.n]));
   res.json({
@@ -74,7 +77,7 @@ router.get('/niches', requireAuth, requireAdmin, asyncHandler(async (req, res) =
     niches: niches.all().map((n) => ({
       key: n.key, en: n.en, ka: n.ka, icon: n.icon, sort: n.sort, active: n.active, regulated: n.regulated,
       researched: Object.prototype.hasOwnProperty.call(REGULATED, n.key), promotedFrom: n.promotedFrom || null,
-      mentors: mentors[n.key] || 0, listed: live[n.key] || 0
+      mentors: mentors[n.key] || 0, listed: live[n.key] || 0, extra: asExtra[n.key] || 0
     })),
     other: mentors.other || 0,
     suggestions: await suggestions()

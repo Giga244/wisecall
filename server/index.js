@@ -247,8 +247,10 @@ if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 app.get('/api/niches/suggest', (req, res) => {
   const q = typeof req.query.q === 'string' ? req.query.q.slice(0, 300) : '';
   const niche = require('./fieldSuggest').suggestField(q);
+  // (up to 3 choices for the chips under the field, the suggestion first; the page adds "Other" last)
+  const choices = require('./fieldSuggest').suggestFields(3, q).map((key) => ({ key, regulated: require('./niches').isRegulated(key) }));
   res.set('Cache-Control', 'no-store');
-  res.json({ niche, regulated: Boolean(niche) && require('./niches').isRegulated(niche) });
+  res.json({ niche, regulated: Boolean(niche) && require('./niches').isRegulated(niche), choices });
 });
 
 app.get('/api/config', publicCache(), async (req, res) => {

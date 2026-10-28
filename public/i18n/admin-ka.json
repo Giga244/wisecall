@@ -697,5 +697,6 @@
   "admin.email.delayed": "იგვიანებს",
   "admin.email.bounced": "ვერ მივიდა",
   "admin.email.complained": "სპამად მონიშნა",
-  "admin.email.none": "მოლოდინში"
+  "admin.email.none": "მოლოდინში",
+  "admin.niches.extra": "კიდევ {n} დამატებით კატეგორიად"
 }

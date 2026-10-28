@@ -43,6 +43,9 @@ function parseTags(input) {
 
 // Checks the fields that were sent (a draft may be incomplete; lengths are only checked up to the maximum here).
 // -> { patch } or { error, field }
+const EXTRA_NICHES_MAX = 2;
+const PRACTICE_KINDS = ['academic', 'practitioner', 'both'];
+
 function parseExperience(input) {
   const b = input || {};
   const patch = {};
@@ -55,6 +58,19 @@ function parseExperience(input) {
   if (b.niche !== undefined) {
     if (b.niche !== null && !rules.isCustomNiche(b.niche) && !rules.isValidNiche(b.niche)) return { error: 'invalid_niche', field: 'niche' };
     patch.niche = b.niche;
+  }
+  // Up to two more categories (an educational psychologist: Psychology + Teaching). Browse and the filters use them all; niche is the main one.
+  if (b.extraNiches !== undefined) {
+    if (b.extraNiches !== null && !Array.isArray(b.extraNiches)) return { error: 'invalid_niche', field: 'extraNiches' };
+    const keys = [...new Set((b.extraNiches || []).filter((k) => k !== '' && k !== null))];
+    if (keys.length > EXTRA_NICHES_MAX) return { error: 'too_many_niches', field: 'extraNiches' };
+    if (keys.some((k) => typeof k !== 'string' || !rules.isValidNiche(k) || rules.isCustomNiche(k))) return { error: 'invalid_niche', field: 'extraNiches' };
+    patch.extraNiches = keys;
+  }
+  // "I mainly teach or research" / "I mainly work in practice" / both: optional, a small tag on the profile.
+  if (b.practiceKind !== undefined) {
+    if (b.practiceKind !== null && b.practiceKind !== '' && !PRACTICE_KINDS.includes(b.practiceKind)) return { error: 'invalid_field', field: 'practiceKind' };
+    patch.practiceKind = b.practiceKind || null;
   }
   // "Your field": the field in the mentor's own words, whatever the category (public on the profile, so it is checked like one).
   if (b.customNiche !== undefined) {
@@ -96,9 +112,28 @@ function applyFieldRules(user, patch) {
   if (wordsChanged && user.fieldOverride) patch.fieldOverride = false;
   const value = (k) => (patch[k] !== undefined ? patch[k] : user[k]);
   const r = require('../fieldRules').categoryFor({ niche: value('niche'), field: value('customNiche'), title: value('roleTitle'), overridden: user.fieldOverride && !wordsChanged });
-  if (r.forced) patch.niche = r.forced;
+  // (an academic with that regulated category among their extra ones keeps the main one they chose: it is still theirs, and still reviewed
+  // by a person, never approved automatically)
+  const academicExtra = r.forced && value('practiceKind') === 'academic' && (value('extraNiches') || []).includes(r.forced);
+  if (r.forced && !academicExtra) patch.niche = r.forced;
   return patch;
 }
+// The extra categories: never the main one again. A regulated one (Psychology, Law...) only for someone who mainly teaches or researches:
+// they may give academic, career and study advice in it, never advice on a specific clinical, legal or financial case. Anyone who wants to
+// give that advice makes it their main category, with its licence and a person's review, as before.
+function extraNicheRules(user, patch) {
+  const value = (k) => (patch[k] !== undefined ? patch[k] : user[k]);
+  const main = value('niche');
+  const extra = (value('extraNiches') || []).filter((k) => k !== main);
+  if (extra.some((k) => rules.isRegulated(k)) && value('practiceKind') !== 'academic') throw new VerificationError('extra_regulated', { field: 'extraNiches' });
+  if (patch.extraNiches !== undefined || extra.length !== (user.extraNiches || []).length) patch.extraNiches = extra;
+  return patch;
+}
+// Every category a mentor is in (the main one first).
+const nichesOf = (user) => [user.niche, ...(user.extraNiches || [])].filter(Boolean);
+// Whether any of them is regulated (never approved automatically).
+const anyRegulated = (user) => nichesOf(user).some((k) => rules.isRegulated(k));
+
 // Whether the category was chosen by the words (shown to the mentor, so they know why a licence is asked for).
 const regulatedByWords = (user) => !user.fieldOverride && rules.isRegulated(user.niche)
   && require('../fieldRules').regulatedCategoryIn(user.customNiche, user.roleTitle) === user.niche;
@@ -124,7 +159,9 @@ async function saveExperience(user, input) {
   const words = patch.customNiche !== undefined ? patch.customNiche : user.customNiche;
   const category = patch.niche !== undefined ? patch.niche : user.niche;
   if (words && !category) patch.niche = require('../fieldSuggest').suggestField(words, patch.roleTitle || user.roleTitle) || 'other';
+  extraNicheRules(user, patch); // (what they chose is checked first, then again after the words had their say)
   applyFieldRules(user, patch);
+  extraNicheRules(user, patch);
   storyToBio(user, patch);
   if (Object.keys(patch).length) patch.applyTouchedAt = new Date(); // (the reminders count from the last change: ./reminders.js)
   // A different niche can need different steps (a licence), so the steps shown are recomputed from it when the page reloads.
@@ -366,7 +403,7 @@ async function applicationFor(user, stepMap) {
   const evidence = await listEvidence(user.id);
   return {
     form: {
-      roleTitle: user.roleTitle || '', niche: user.niche || null, customNiche: user.customNiche || '', regulatedByWords: regulatedByWords(user), specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
+      roleTitle: user.roleTitle || '', niche: user.niche || null, extraNiches: user.extraNiches || [], practiceKind: user.practiceKind || null, customNiche: user.customNiche || '', regulatedByWords: regulatedByWords(user), specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
       story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price === undefined ? null : user.price // (0: answers for free)
     },
     evidence: evidence.map(evidenceForMentor),
@@ -418,7 +455,7 @@ async function priceRangeFor(niche) {
 }
 
 module.exports = {
-  priceRangeFor,
+  priceRangeFor, nichesOf, anyRegulated, EXTRA_NICHES_MAX, PRACTICE_KINDS,
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
   bioToStory, applicationProgress, progressFor
