@@ -165,7 +165,9 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
     // ...and every sign-up by its source, counts only ("direct", or "unknown" when nothing was recorded).
     signupsBySource: await require('../attribution').signupsBySource(),
     // Live sessions: what is coming, live now, the last 30 days (tickets, money), open reports.
-    live: await require('../live/analytics').forAdmin()
+    live: await require('../live/analytics').forAdmin(),
+    // Where mentors stop: the last 30 days, from the database (the same steps as the Plausible goals: docs/ANALYTICS.md).
+    mentorFunnel: await require('../verification/experience').funnel(30)
   });
 }));
 

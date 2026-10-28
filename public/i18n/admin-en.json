@@ -714,5 +714,19 @@
   "admin.uni.confirm": "Confirm",
   "admin.uni.remove": "Remove",
   "admin.uni.reset": "Back to automatic",
-  "admin.uni.noUniversity": "None of their links is on a known Georgian university's site."
+  "admin.uni.noUniversity": "None of their links is on a known Georgian university's site.",
+  "admin.ov.funnel": "Where mentors stop (last 30 days)",
+  "admin.ov.funnel.step": "Step",
+  "admin.ov.funnel.mentors": "Mentors",
+  "admin.ov.funnel.share": "Of sign-ups",
+  "admin.ov.funnel.signup": "Signed up as a mentor",
+  "admin.ov.funnel.emailVerified": "Email confirmed",
+  "admin.ov.funnel.step1": "Step 1: about you",
+  "admin.ov.funnel.step2": "Step 2: story",
+  "admin.ov.funnel.step3": "Step 3: price",
+  "admin.ov.funnel.step4": "Step 4: proof",
+  "admin.ov.funnel.sent": "Application sent",
+  "admin.ov.funnel.idPassed": "ID check passed",
+  "admin.ov.funnel.approved": "Approved",
+  "admin.ov.funnel.help": "Mentors who signed up in the last 30 days, counted from the database. The same steps are goals in Plausible (docs/ANALYTICS.md)."
 }

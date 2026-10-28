@@ -77,6 +77,7 @@ async function applyResult(providerName, result) {
     );
 
     if (result.status === 'approved') {
+      require('../analytics').event('id_check_passed', null);
       await steps.setStep(session.user_id, 'id_kyc', 'passed', { evidence: { provider: providerName, state: 'approved', country: p && p.country }, replaceEvidence: true, actor: steps.PROVIDER, client });
     } else if (result.status === 'declined') {
       await steps.setStep(session.user_id, 'id_kyc', 'failed', { evidence: { provider: providerName, state: 'declined' }, replaceEvidence: true, reason: REASON.declined, actor: steps.PROVIDER, client });

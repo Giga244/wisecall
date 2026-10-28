@@ -96,6 +96,7 @@ async function finishApproval(mentor, actor, reason) {
   const updated = await updateUser(mentor.id, { verificationStatus: 'verified', verificationNote: null, verificationDecidedAt: new Date(), verificationRules: rules.VERSION, profileVisibility: 'public',
     ...(founding ? { foundingMentorAt: founding } : {}) });
   await steps.audit(mentor.id, actor, 'approved', { from: 'pending', to: 'verified', ...(reason ? { reason } : {}) });
+  require('../analytics').event('mentor_approved', null);
   await credentials.scheduleDeletion(mentor.id, null);
   return updated;
 }

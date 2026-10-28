@@ -5,6 +5,8 @@
 //   pageview                           every public page that is sent (not the admin pages), or that the browser had fetched ahead
 //                                      and then opened (counted then, not when it was fetched)
 //   signup, mentor_application_started, mentor_application_submitted, waitlist_join, question_paid, question_free
+//   the funnel (docs/ANALYTICS.md): waitlist_join (field, source), signup (role), email_verified, apply_step_1_done .. apply_step_4_done,
+//   apply_sent, id_check_started, id_check_passed, mentor_approved
 // Only the page's path is sent, never its query (a reset link carries a token), and events carry no personal data at all.
 const config = require('./config');
 

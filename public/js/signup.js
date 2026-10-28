@@ -90,7 +90,7 @@
     try {
       const data = await WisecallAPI.apiFetch('/auth/signup', {
         method: 'POST',
-        body: { name, email, password, adult: true, language: WisecallI18n.getLang(), username: (!asMentor && usernameInput.value.trim().toLowerCase()) || undefined,
+        body: { name, email, password, adult: true, language: WisecallI18n.getLang(), as: asMentor ? 'mentor' : undefined, username: (!asMentor && usernameInput.value.trim().toLowerCase()) || undefined,
           turnstileToken: await WisecallTurnstile.token(form) }
       });
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}${asMentor ? '&as=mentor' : ''}`;

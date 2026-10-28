@@ -100,6 +100,8 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   Object.assign(patch, profile.patch);
 
   if (updates.becomeMentor === true && existing.role === 'seeker') { patch.role = 'mentor'; require('../analytics').event('mentor_application_started', req); }
+  // (the price is step 3 of the application: its "done" event, when this save completes it)
+  const stepsBefore = updates.price !== undefined ? await require('../verification/experience').stepsDone(existing).catch(() => null) : null;
   if (updates.becomeMentor === false) patch.role = 'seeker';
 
   const next = { ...existing, ...patch };
@@ -129,6 +131,7 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   // now (and not before: a free mentor never needs a bank account).
   const payoutNeeded = patch.price > 0 && existing.verificationStatus === 'verified' && !existing.payoutIbanEnc;
   res.json({ user: meProfile(user), ...(payoutNeeded ? { payoutNeeded: true } : {}) });
+  if (stepsBefore) require('../verification/experience').trackSteps(req, stepsBefore, user.id);
 }));
 
 // The username (the /u/<name> address): once every 30 days; the old one keeps redirecting.

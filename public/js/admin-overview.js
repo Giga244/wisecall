@@ -53,6 +53,14 @@
         card(t('admin.live.t.tickets30'), n(d.live.tickets30)), card(t('admin.live.t.gross30'), money(d.live.gross30)),
         card(t('admin.live.t.fee30'), money(d.live.fee30)), card(t('admin.live.t.reports'), n(d.live.reportsOpen), d.live.reportsOpen > 0)])
         + `<p class="muted small">${esc(t('admin.ov.live.help'))}</p>`) : '',
+      d.mentorFunnel ? section(t('admin.ov.funnel'), (() => {
+        const f = d.mentorFunnel;
+        const rows = ['signup', 'emailVerified', 'step1', 'step2', 'step3', 'step4', 'sent', 'idPassed', 'approved'];
+        const pct = (x) => (f.signup ? `${Math.round((x / f.signup) * 100)}%` : '-');
+        return `<div class="table-scroll"><table class="ov-sources ov-funnel"><thead><tr><th scope="col">${esc(t('admin.ov.funnel.step'))}</th><th scope="col">${esc(t('admin.ov.funnel.mentors'))}</th><th scope="col">${esc(t('admin.ov.funnel.share'))}</th></tr></thead>
+          <tbody>${rows.map((k) => `<tr><td>${esc(t('admin.ov.funnel.' + k))}</td><td>${n(f[k])}</td><td>${pct(f[k])}</td></tr>`).join('')}</tbody></table></div>
+          <p class="muted small">${esc(t('admin.ov.funnel.help'))}</p>`;
+      })()) : '',
       section(t('admin.ov.sources'), (d.sources && d.sources.length)
         ? `<div class="table-scroll"><table class="ov-sources"><thead><tr><th scope="col">${esc(t('admin.ov.src.source'))}</th><th scope="col">${esc(t('admin.ov.src.campaign'))}</th>
             <th scope="col">${esc(t('admin.ov.src.signups'))}</th><th scope="col">${esc(t('admin.ov.src.applications'))}</th><th scope="col">${esc(t('admin.ov.src.paid'))}</th></tr></thead>

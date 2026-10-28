@@ -72,6 +72,7 @@ router.post('/kyc/start', requireAuth, asyncHandler(async (req, res) => {
   if (!user.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
   try {
     const out = await kycService.startForMentor(user);
+    require('../analytics').event('id_check_started', req);
     // On a computer: the partner's link as a QR code, to do the check on a phone (its camera) instead.
     if (req.body && req.body.qr === true && out && out.url) out.qr = await require('qrcode').toString(out.url, { type: 'svg', margin: 1, width: 220, errorCorrectionLevel: 'M' });
     res.json(out);
@@ -116,7 +117,11 @@ async function mentorOr(req, res) {
 const submit = (handler) => [requireAuth, asyncHandler(async (req, res) => {
   const user = await mentorOr(req, res);
   if (!user) return;
-  try { res.json((await handler(user, req.body || {}, req, res)) || { ok: true }); } catch (e) {
+  const before = await experience.stepsDone(user).catch(() => [true, true, true, true]);
+  try {
+    res.json((await handler(user, req.body || {}, req, res)) || { ok: true });
+    experience.trackSteps(req, before, user.id);
+  } catch (e) {
     // (what was refused, by its code only: never the person or what they wrote; docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
     if (e instanceof steps.VerificationError) console.warn(`[verification] refused ${req.method} ${req.baseUrl}${req.path} ${e.code}${e.field ? ` (${e.field})` : ''}`);
     fail(res, e);
@@ -139,6 +144,7 @@ router.post('/submit', ...submit(async (user, b, req, res) => {
   const out = { user: meProfile(sentUser) };
   require('../notify').notifyApplicationReceived(sentUser); // (what happens next, by email too)
   require('../analytics').event('mentor_application_submitted', req);
+  require('../analytics').event('apply_sent', req);
   const source = require('../attribution').read(req);
   if (source) await require('../db').query('UPDATE users SET application_source = $2 WHERE id = $1 AND application_source IS NULL', [user.id, JSON.stringify(source)]);
   return out;

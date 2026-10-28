@@ -714,5 +714,19 @@
   "admin.uni.confirm": "დადასტურება",
   "admin.uni.remove": "მოხსნა",
   "admin.uni.reset": "ავტომატურზე დაბრუნება",
-  "admin.uni.noUniversity": "მის არცერთ ბმულს ცნობილი ქართული უნივერსიტეტის საიტზე არ მივყავართ."
+  "admin.uni.noUniversity": "მის არცერთ ბმულს ცნობილი ქართული უნივერსიტეტის საიტზე არ მივყავართ.",
+  "admin.ov.funnel": "სად ჩერდებიან მენტორები (ბოლო 30 დღე)",
+  "admin.ov.funnel.step": "ნაბიჯი",
+  "admin.ov.funnel.mentors": "მენტორები",
+  "admin.ov.funnel.share": "რეგისტრაციებიდან",
+  "admin.ov.funnel.signup": "დარეგისტრირდა მენტორად",
+  "admin.ov.funnel.emailVerified": "ელფოსტა დაადასტურა",
+  "admin.ov.funnel.step1": "ნაბიჯი 1: შენ შესახებ",
+  "admin.ov.funnel.step2": "ნაბიჯი 2: ისტორია",
+  "admin.ov.funnel.step3": "ნაბიჯი 3: ფასი",
+  "admin.ov.funnel.step4": "ნაბიჯი 4: მტკიცებულება",
+  "admin.ov.funnel.sent": "განაცხადი გაგზავნა",
+  "admin.ov.funnel.idPassed": "პირადობის შემოწმება გაიარა",
+  "admin.ov.funnel.approved": "დამტკიცდა",
+  "admin.ov.funnel.help": "ბოლო 30 დღეში დარეგისტრირებული მენტორები, მონაცემთა ბაზიდან დათვლილი. იგივე ნაბიჯები Plausible-ში მიზნებადაა (docs/ANALYTICS.md)."
 }

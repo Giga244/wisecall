@@ -86,7 +86,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
 
   await startSession(req, res, user, null, 'sign_in');
   await require('../verification/signals').record(req, res, user.id, 'signup');
-  require('../analytics').event('signup', req, { method: 'email' });
+  require('../analytics').event('signup', req, { method: 'email', role: (req.body || {}).as === 'mentor' ? 'mentor' : 'asker' });
   const source = require('../attribution').read(req);
   if (source) await query('UPDATE users SET signup_source = $2 WHERE id = $1', [user.id, JSON.stringify(source)]);
   res.status(201).json({
@@ -252,6 +252,7 @@ router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
 
   const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null, emailCodeAttempts: 0 });
   if (updated.role === 'mentor' || updated.role === 'both') await verification.syncEmailStep(updated);
+  require('../analytics').event('email_verified', req);
   res.json({ user: meProfile(updated) });
 }));
 

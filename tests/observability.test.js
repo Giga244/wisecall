@@ -56,8 +56,9 @@ describe('visitor statistics', () => {
     await client(base).api('/waitlist', { method: 'POST', body: { email: 'wait.person@example.com', niche: 'tech', language: 'en' } });
     const s = await until(() => seen.plausible.find((e) => e.body.name === 'signup'));
     const w = await until(() => seen.plausible.find((e) => e.body.name === 'waitlist_join'));
-    assert.deepEqual(s.body.props, { method: 'email' });
-    assert.deepEqual(w.body.props, { field: 'tech' });
+    assert.deepEqual(s.body.props, { method: 'email', role: 'asker' }); // (role: docs/ANALYTICS.md)
+    assert.equal(w.body.props.field, 'tech');
+    assert.ok(['direct', 'unknown'].includes(w.body.props.source), w.body.props.source); // (where they came from, never who)
     assert.doesNotMatch(JSON.stringify(seen.plausible), /stat\.person|wait\.person|@example\.com/);
   });
 });

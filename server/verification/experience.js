@@ -311,6 +311,43 @@ const progressOf = (missing, stepMap) => applicationProgress(missing, stepMap.id
 //   sent    sent and waiting for a decision: "Application in review"
 //   mentor  approved (or suspended): nothing extra
 // (an admin sees nothing extra either: the pages check isAdmin)
+// Which of the steps 1-4 are done now. -> [bool, bool, bool, bool]
+async function stepsDone(user) {
+  if (!isMentor(user)) return [false, false, false, false];
+  const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
+  return progressOf(missingFor(user, evidence, stepMap), stepMap).done.slice(0, 4);
+}
+// After a save: apply_step_N_done for each step that was not done before and is now (docs/ANALYTICS.md; no personal data).
+async function trackSteps(req, before, userId) {
+  try {
+    const after = await stepsDone(await require('../models').getUserById(userId));
+    after.forEach((d, i) => { if (d && !before[i]) require('../analytics').event(`apply_step_${i + 1}_done`, req); });
+  } catch (e) { /* (statistics never break a save) */ }
+}
+
+// The mentors' funnel for the admin overview (docs/ANALYTICS.md): of the mentors who signed up in the last `days` days, how many verified
+// their email, finished each of the steps 1-4, sent the application, passed the ID check and were approved. Counts only.
+async function funnel(days = 30) {
+  const { query } = require('../db');
+  const { userFromRow, userColumnsSql } = require('../models');
+  const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE role IN ('mentor', 'both') AND deleted_at IS NULL AND created_at > now() - make_interval(days => $1)
+    ORDER BY created_at DESC LIMIT 2000`, [days]);
+  const out = { days, signup: 0, emailVerified: 0, step1: 0, step2: 0, step3: 0, step4: 0, sent: 0, idPassed: 0, approved: 0 };
+  for (const r of rows) {
+    const u = userFromRow(r);
+    const stepMap = await steps.loadSteps(u.id);
+    const done = await stepsDone(u);
+    const sent = submitted(u) || ['verified', 'suspended'].includes(u.verificationStatus);
+    out.signup += 1;
+    if (u.emailVerified) out.emailVerified += 1;
+    done.forEach((d, i) => { if (d || sent) out['step' + (i + 1)] += 1; });
+    if (sent) out.sent += 1;
+    if (stepMap.id_kyc && steps.effectiveStatus(stepMap.id_kyc) === 'passed') out.idPassed += 1;
+    if (u.verificationStatus === 'verified') out.approved += 1;
+  }
+  return out;
+}
+
 async function progressFor(user) {
   if (!isMentor(user)) return { state: 'asker', step: null };
   if (user.verificationStatus === 'verified' || user.verificationStatus === 'suspended') return { state: 'mentor', step: null };
@@ -455,7 +492,7 @@ async function priceRangeFor(niche) {
 }
 
 module.exports = {
-  priceRangeFor, nichesOf, anyRegulated, EXTRA_NICHES_MAX, PRACTICE_KINDS,
+  stepsDone, trackSteps, funnel, priceRangeFor, nichesOf, anyRegulated, EXTRA_NICHES_MAX, PRACTICE_KINDS,
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
   bioToStory, applicationProgress, progressFor
