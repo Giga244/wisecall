@@ -2731,5 +2731,10 @@
   "wait.share": "გაუზიარე მეგობარს",
   "wait.shareText": "Wisecall: რეალური პასუხები გადამოწმებული ადამიანებისგან. შემოგვიერთდი სიაში:",
   "wait.copied": "ბმული დაკოპირდა",
-  "wait.hero": "Wisecall მალე იხსნება. გახსნისას ერთ წერილს მიიღებ:"
+  "wait.hero": "Wisecall მალე იხსნება. გახსნისას ერთ წერილს მიიღებ:",
+  "legal.operator": "Wisecall-ს მართავს: {details}.",
+  "legal.operator.id": "საიდენტიფიკაციო ნომერი {id}",
+  "about.founder.placeholderName": "[ადგილი შენი სახელისთვის]",
+  "about.founder.placeholderRole": "[დამფუძნებელი]",
+  "about.founder.placeholderStory": "[ადგილი ტექსტისთვის, ჩანს მხოლოდ საცდელ გარემოში: ორი-სამი წინადადება იმაზე, ვინ ხარ, რატომ შექმენი Wisecall და რა გინდა, რომ ის საქართველოში ადამიანებს მისცეს. დააყენე FOUNDER_NAME, FOUNDER_ROLE, FOUNDER_PHOTO და FOUNDER_STORY_EN / FOUNDER_STORY_KA: docs/TODO-OWNER.md.]"
 }

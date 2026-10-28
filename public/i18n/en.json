@@ -2731,5 +2731,10 @@
   "wait.share": "Share Wisecall with a friend",
   "wait.shareText": "Wisecall: real answers from verified people. Join the list:",
   "wait.copied": "Link copied",
-  "wait.hero": "Wisecall opens soon. Get one email when it does:"
+  "wait.hero": "Wisecall opens soon. Get one email when it does:",
+  "legal.operator": "Wisecall is run by {details}.",
+  "legal.operator.id": "identification number {id}",
+  "about.founder.placeholderName": "[Placeholder: your name]",
+  "about.founder.placeholderRole": "[Founder]",
+  "about.founder.placeholderStory": "[Placeholder, shown only outside production: two or three sentences on who you are, why you started Wisecall, and what you want it to be for people in Georgia. Set FOUNDER_NAME, FOUNDER_ROLE, FOUNDER_PHOTO and FOUNDER_STORY_EN / FOUNDER_STORY_KA: docs/TODO-OWNER.md.]"
 }

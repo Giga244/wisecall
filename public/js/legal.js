@@ -15,6 +15,15 @@
     return `<p>${esc(before || '')}<a href="mailto:${esc(supportEmail)}">${esc(supportEmail)}</a>${esc(after || '')}</p>`;
   }
 
+  // The Terms name who runs Wisecall (LEGAL_NAME, LEGAL_ID, LEGAL_ADDRESS), each part only when it is set; nothing before registration.
+  let legal = {};
+  function operatorLine() {
+    const t = WisecallI18n.t;
+    if (!legal.name) return '';
+    const parts = [legal.name, legal.id && t('legal.operator.id').replace('{id}', legal.id), legal.address].filter(Boolean).join(', ');
+    return `<p class="legal-operator">${esc(t('legal.operator').replace('{details}', parts))}</p>`;
+  }
+
   function render() {
     const t = WisecallI18n.t;
     const sections = t(`legal.${kind}.sections`);
@@ -25,6 +34,7 @@
       <section class="legal-section"${s.id ? ` id="${esc(s.id)}"` : ''}>
         <h2>${esc(s.h)}</h2>
         ${s.p.map(p => `<p>${esc(p)}</p>`).join('')}
+        ${i === 0 && kind === 'terms' ? operatorLine() : ''}
         ${i === withContact ? contactLine() : ''}
       </section>`).join('') : '';
   }
@@ -35,6 +45,9 @@
     if (!box) return;
     if (!founder) { box.hidden = true; return; }
     const lang = WisecallI18n.getLang();
+    // (outside production with no founder set: the placeholder, marked as one)
+    const t = WisecallI18n.t;
+    if (founder.placeholder) founder = { ...founder, name: t('about.founder.placeholderName'), role: t('about.founder.placeholderRole'), story: { [lang]: t('about.founder.placeholderStory') } };
     const story = (founder.story && (founder.story[lang] || founder.story.en)) || '';
     box.innerHTML = `<h2 id="founderTitle">${esc(WisecallI18n.t('about.founder.title'))}</h2>
       <div class="founder">${founder.photo ? `<img class="founder-photo" src="${esc(founder.photo)}" alt="" width="120" height="120" decoding="async">` : ''}
@@ -46,5 +59,5 @@
   // The sections are drawn by this script, so a link to one of them (/privacy.html#automated-review) is scrolled to once it exists.
   if (window.location.hash) { const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1))); if (target) target.scrollIntoView(); }
   document.addEventListener('wisecall:lang-changed', () => { render(); renderFounder(); });
-  WisecallI18n.getConfig().then((cfg) => { supportEmail = cfg.contactEmail || null; founder = cfg.founder || null; render(); renderFounder(); });
+  WisecallI18n.getConfig().then((cfg) => { supportEmail = cfg.contactEmail || null; legal = cfg.legal || {}; founder = cfg.founder || null; render(); renderFounder(); });
 })();

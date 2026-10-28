@@ -165,6 +165,27 @@ describe('settings the pages read', () => {
     assert.equal(cfg.founder.photo, '', 'only a picture on this site');
     assert.equal(cfg.founder.story.en, 'I started Wisecall because <good> advice is hard to find.', 'plain text: the page sets it as text');
   });
+
+  // (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 7)
+  test('the Terms name who runs Wisecall, only when set; with no founder set, production shows nothing and elsewhere a marked placeholder', async () => {
+    const fs = require('fs');
+    const path = require('path');
+    const legal = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'legal.js'), 'utf8');
+    assert.match(legal, /if \(!legal\.name\) return '';/);
+    assert.match(legal, /i === 0 && kind === 'terms' \? operatorLine\(\)/);
+    const ka = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'public', 'i18n', 'ka.json'), 'utf8'));
+    assert.equal(ka['legal.operator'], 'Wisecall-ს მართავს: {details}.');
+    assert.match(ka['about.founder.placeholderStory'], /^\[/);
+    const index = fs.readFileSync(path.join(__dirname, '..', 'server', 'index.js'), 'utf8');
+    assert.match(index, /founder: config\.FOUNDER\.name \? config\.FOUNDER : \(config\.IS_PROD \? null : \{ placeholder: true/);
+    const unset = await startServer(4786, { FOUNDER_NAME: '' });
+    try {
+      const cfg = await client(unset.base).api('/config');
+      assert.equal(cfg.founder.placeholder, true);
+      assert.equal(cfg.founder.photo, '/brand/founder-placeholder.svg');
+      assert.equal((await fetch(unset.base + '/brand/founder-placeholder.svg')).status, 200);
+    } finally { unset.proc.kill(); }
+  });
 });
 
 describe('the help centre', () => {

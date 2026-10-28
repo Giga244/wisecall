@@ -304,7 +304,9 @@ app.get('/api/config', publicCache(), async (req, res) => {
     paymentsLive: config.PAYMENTS_ENABLED && config.LAUNCH_MODE !== 'prelaunch',
     // Live sessions on or off (LIVE_SESSIONS): off hides every link, section and text about them.
     liveSessions: config.LIVE_ENABLED,
-    founder: config.FOUNDER.name ? config.FOUNDER : null,
+    // (outside production, a marked placeholder shows where the founder's photo and words will go: docs/TODO-OWNER.md; production shows
+    // nothing until FOUNDER_NAME is set)
+    founder: config.FOUNDER.name ? config.FOUNDER : (config.IS_PROD ? null : { placeholder: true, name: '', role: '', photo: '/brand/founder-placeholder.svg', story: { en: '', ka: '' } }),
     answerDeadlineDays: config.ANSWER_DEADLINE_DAYS,
     unpaidAttemptDays: config.UNPAID_ATTEMPT_DAYS,
     // How long a question and an answer must be (the forms show these; the server decides, see server/content.js).
