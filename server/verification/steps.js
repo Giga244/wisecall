@@ -136,6 +136,9 @@ async function delistFailedApproved() {
     const row = failed.find((f) => isRequiredStep(niche, f.step)) || failed[0];
     if (!row) continue;
     const expired = row.status === 'passed';
+    // (an expired licence is left to the licence check, verification/monitoring.js licenseSweep: it takes the mentor off the site too, and
+    // also opens the "license expired" flag and tells the admins, which it could not do once this had delisted them first)
+    if (expired && row.step === 'license') continue;
     // (reasons the email has in both languages; otherwise the words stored with the step)
     const reasonKey = expired ? 'license_expired' : ({ age: 'age_under_min', name_match: 'name_mismatch' }[row.step] || null);
     try {

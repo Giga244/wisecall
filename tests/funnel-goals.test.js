@@ -41,7 +41,8 @@ test('a mentor\'s journey sends each goal once, in order, with no personal data;
     await pool.query(`UPDATE users SET email_code_hash = $2, email_code_expires_at = now() + interval '10 minutes' WHERE email = $1`, ['funnel-mentor@example.com', await bcrypt.hash('123456', 4)]);
   } finally { await pool.end(); }
   assert.equal((await c.api('/auth/verify-email', { method: 'POST', body: { code: '123456' } })).status, 200);
-  assert.ok(await until(() => count('email_verified') === 1));
+  // (the admin's, then the mentor's: waiting for exactly one passed only when the mentor's event happened to arrive after the check)
+  assert.ok(await until(() => count('email_verified') === 2), names().join());
 
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'Professor of economics' } });
   await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', niche: 'business', yearsExperience: 18 } });

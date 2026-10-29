@@ -108,6 +108,8 @@ describe('license watch', () => {
     await waitFor(async () => (await status(doctorId)) === 'pending');
     assert.equal(await listed(doctorId), false, 'off the site');
     assert.equal((await client(base).api(`/experts/${doctorId}`)).status, 404);
+    // (the sweep takes the mentor off the site, then opens the flag: wait for it rather than look in between)
+    await waitFor(async () => (await openFlags(doctorId, 'license_expired')).length === 1);
     assert.equal((await openFlags(doctorId, 'license_expired')).length, 1);
 
     const mail = await resend.waitFor('levan@example.com', 'update on your Wisecall application');
