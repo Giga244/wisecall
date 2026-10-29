@@ -728,5 +728,9 @@
   "admin.ov.funnel.sent": "Application sent",
   "admin.ov.funnel.idPassed": "ID check passed",
   "admin.ov.funnel.approved": "Approved",
-  "admin.ov.funnel.help": "Mentors who signed up in the last 30 days, counted from the database. The same steps are goals in Plausible (docs/ANALYTICS.md)."
+  "admin.ov.funnel.help": "Mentors who signed up in the last 30 days, counted from the database. The same steps are goals in Plausible (docs/ANALYTICS.md).",
+  "admin.mv.waitingForId": "Waiting for ID",
+  "admin.mv.idReminder": "Send ID reminder",
+  "admin.mv.idReminderSent": "ID reminder sent.",
+  "admin.mv.idReminderSoon": "A reminder was sent in the last 48 hours: the next one is possible from {date}."
 }

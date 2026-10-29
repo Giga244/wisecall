@@ -52,6 +52,11 @@ test.beforeAll(async () => {
   const s = await S.apiUser('სოფო გაგზავნილი', people.sent.email);
   await filledIn(s);
   if ((await s.api('/verification/submit', { method: 'POST' })).status !== 200) throw new Error('submit failed');
+  // (in review once the ID check has passed too: until then it is "one step left", docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
+  const start = await s.api('/verification/kyc/start', { method: 'POST' });
+  if (start.status !== 200) throw new Error('ID check failed to start: ' + start.text);
+  await client(S.BASE).api(`/mock-kyc/sessions/${start.url.split('=').pop()}/complete`, { method: 'POST', body: { outcome: 'approve', fullName: 'სოფო გაგზავნილი', dateOfBirth: '1988-03-02' } });
+  await expect.poll(async () => (await s.api('/me')).user.mentorPath.idLeft, { timeout: 15000 }).toBe(false);
   people.rejected = { email: `oap-rejected-${tag}@e2e.test` };
   const r = await S.apiUser('ლევან უარყოფილი', people.rejected.email);
   await filledIn(r);

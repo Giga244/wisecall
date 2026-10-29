@@ -72,9 +72,10 @@ describe('everything sent but the ID check', () => {
     assert.equal(sent.status, 200, sent.text);
   });
 
-  test('sending it brings "what happens next" by email, and no "unfinished" reminder', async () => {
-    const mail = await resend.waitFor(email, 'We got your Wisecall application');
-    assert.match(mail.body.text, /usually within \d+ working days/);
+  test('sending it brings "one step left" by email (not "what happens next": the ID check comes first), and no "unfinished" reminder', async () => {
+    const mail = await resend.waitFor(email, 'Wisecall – one step left');
+    assert.match(mail.body.text, /review your application once the ID check is done/);
+    assert.equal(reminders(email, 'We got your Wisecall application').length, 0);
     await back(email, 'apply_touched_at', 3);
     await settle();
     assert.equal(reminders(email, 'is waiting').length, 0);
@@ -83,7 +84,7 @@ describe('everything sent but the ID check', () => {
   test('2 days after sending: a reminder about the ID check; switched off from its footer, no second one', async () => {
     await back(email, 'application_submitted_at', 3);
     const mail = await resend.waitFor(email, 'One step left: the ID check');
-    assert.match(mail.body.html, /\/apply\.html\?step=5"/);
+    assert.match(mail.body.html, /\/apply\.html\?step=5&amp;start=id"/);
     const unsubscribe = (mail.body.text.match(/https?:\/\/\S+unsubscribe\S*/) || [])[0];
     assert.ok(unsubscribe, 'an unsubscribe link');
     const token = new URL(unsubscribe).searchParams.get('t');

@@ -728,5 +728,9 @@
   "admin.ov.funnel.sent": "განაცხადი გაგზავნა",
   "admin.ov.funnel.idPassed": "პირადობის შემოწმება გაიარა",
   "admin.ov.funnel.approved": "დამტკიცდა",
-  "admin.ov.funnel.help": "ბოლო 30 დღეში დარეგისტრირებული მენტორები, მონაცემთა ბაზიდან დათვლილი. იგივე ნაბიჯები Plausible-ში მიზნებადაა (docs/ANALYTICS.md)."
+  "admin.ov.funnel.help": "ბოლო 30 დღეში დარეგისტრირებული მენტორები, მონაცემთა ბაზიდან დათვლილი. იგივე ნაბიჯები Plausible-ში მიზნებადაა (docs/ANALYTICS.md).",
+  "admin.mv.waitingForId": "ID-ს ელოდება",
+  "admin.mv.idReminder": "ID-ის შეხსენების გაგზავნა",
+  "admin.mv.idReminderSent": "შეხსენება გაიგზავნა.",
+  "admin.mv.idReminderSoon": "ბოლო 48 საათში შეხსენება უკვე გაიგზავნა: შემდეგი შესაძლებელია {date}-დან."
 }

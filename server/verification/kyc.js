@@ -125,12 +125,15 @@ async function tellMentor(out) {
   if (o) await require('./updates').stepDecided(out.userId, 'id_kyc', o[0], null, o[1]);
 }
 
-// Things that depend on the verified person run here once an ID check is approved: the age step and the name-match step. Then the
-// application is looked at again (a finished Experience form is analysed, or the earlier analysis decided again).
+// Things that depend on the verified person run here once an ID check is approved: the age step and the name-match step. Then an
+// application with nothing else missing that was not sent yet is sent (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 7: nothing more to press), which
+// starts its analysis; a sent one is looked at again (a finished Experience form is analysed, or the earlier analysis decided again).
 async function afterApproved(userId) {
   try { await updateAge(userId); } catch (e) { console.error('[kyc] age check failed:', e.message); }
   try { await require('./names').recompute(userId); } catch (e) { console.error('[kyc] name match failed:', e.message); }
-  require('./analysis').afterIdentityChange(userId);
+  let sent = null;
+  try { sent = await require('./experience').sendAfterIdPassed(userId); } catch (e) { console.error('[kyc] sending the application failed:', e.message); }
+  if (!sent) require('./analysis').afterIdentityChange(userId);
 }
 
 // Age in whole years on a given day, from 'YYYY-MM-DD' (null when the date is missing or not a real date).

@@ -488,7 +488,7 @@
 
   // ---- The way to becoming a mentor, at the top (docs/CLAUDE-CODE-MENTOR-BUTTON-SIGNED-IN.md): "Want to share your experience?" for an
   // asker (right after signing up too), "Continue your application – step 2 of 5" for an application started, its status once it is
-  // sent; nothing for a mentor or an admin.
+  // sent, "One step left: confirm your identity" when only the ID check is left; nothing for a mentor or an admin.
   function drawMentorCard() {
     const box = document.getElementById('mentorCard');
     const m = WisecallNav.mentorPath() || { state: 'none' };
@@ -509,8 +509,13 @@
     } else if (m.state === 'draft') {
       box.innerHTML = card('draft', m.step ? fill('dash.mentor.draft.title', { n: m.step }) : t('nav.continueApp'), t('dash.mentor.draft.body'),
         `<a class="btn btn-primary btn-lg btn-arrow" href="${B.href(m)}">${escapeHtml(t('dash.mentor.draft.cta'))}</a>`);
+    } else if (m.state === 'idleft' && window.WisecallIdCard) {
+      // (steps 1-4 done and the ID check is what is left, sent or not: "One step left", with its own button; docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
+      box.innerHTML = WisecallIdCard.html(m.id || 'todo');
+      WisecallIdCard.wire(box);
     } else if (m.state === 'sent') {
-      box.innerHTML = card('sent', t('dash.mentor.sent.title'), t('dash.mentor.sent.body'),
+      // (sent and the ID check is with the partner: "being checked", not yet "in review")
+      box.innerHTML = card('sent', t('dash.mentor.sent.title'), t(m.id === 'checking' ? 'idcard.checking' : 'dash.mentor.sent.body'),
         `<a class="btn btn-outline btn-lg" href="/apply.html">${escapeHtml(t('settings.progress.status'))}</a>`);
     } else box.innerHTML = '';
   }

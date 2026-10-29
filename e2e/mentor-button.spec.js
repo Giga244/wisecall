@@ -16,7 +16,8 @@ const ADMIN = { name: 'E2E Admin', email: 'e2e-admin@example.com' };
 const KA = {
   become: 'გახდი მენტორი', hero: 'ექსპერტი ვარ – გავხდე მენტორი', continue2: 'განაცხადის გაგრძელება · დასრულებულია 1 / 5', short2: 'განაცხადი · 1/5',
   review: 'განაცხადი განხილვაშია', reviewShort: 'განხილვაშია', askerCard: 'გინდა შენი გამოცდილება სხვებს გაუზიარო?', draftCard: 'განაცხადის გაგრძელება – ნაბიჯი 2 / 5',
-  sentCard: 'შენი მენტორის განაცხადი განხილვაშია'
+  sentCard: 'შენი მენტორის განაცხადი განხილვაშია',
+  idLeft: 'განაცხადი · 4/5 · დარჩა პირადობა', idLeftShort: '4/5 · დარჩა პირადობა', idCard: 'დარჩა ერთი ნაბიჯი: პირადობის დადასტურება'
 };
 const tag = Date.now();
 const people = {};
@@ -115,6 +116,18 @@ test.beforeAll(async () => {
   await s.api('/verification/evidence', { method: 'POST', body: { url: 'https://sopo-wines.example.com/about' } });
   const sent = await s.api('/verification/submit', { method: 'POST' });
   if (sent.status !== 200) throw new Error('submit failed: ' + sent.text);
+  // (in review once the ID check has passed too: until then it is "one step left", docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
+  const start = await s.api('/verification/kyc/start', { method: 'POST' });
+  if (start.status !== 200) throw new Error('ID check failed to start: ' + start.text);
+  await client(S.BASE).api(`/mock-kyc/sessions/${start.url.split('=').pop()}/complete`, { method: 'POST', body: { outcome: 'approve', fullName: 'სოფო გაგზავნილი', dateOfBirth: '1988-03-02' } });
+  await expect.poll(async () => (await s.api('/me')).user.mentorPath.idLeft, { timeout: 15000 }).toBe(false);
+  // sent without the ID check (the case in docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
+  people.idleft = { email: `idleft-${tag}@e2e.test` };
+  const i = await S.apiUser('ია პირადობა', people.idleft.email);
+  await i.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'ფიზიკის პროფესორი', price: 30 } });
+  await i.api('/verification/experience', { method: 'PUT', body: { customNiche: 'ფიზიკა', yearsExperience: 20, story: STORY } });
+  await i.api('/verification/evidence', { method: 'POST', body: { url: 'https://ia-physics.example.com/about' } });
+  if ((await i.api('/verification/submit', { method: 'POST' })).status !== 200) throw new Error('submit failed');
   // an approved mentor
   people.mentor = { email: `mentor-${tag}@e2e.test` };
   await S.listedMentor(admin, { name: 'მარიამ მენტორი', email: people.mentor.email });
@@ -136,6 +149,30 @@ test('an application started: "continue · 1 of 5 done" to /apply.html?step=2 (s
 
 test('sent: the status "in review" linking to /apply.html, on the home page and the dashboard', async ({ browser }) => {
   await check(browser, 'sent', people.sent, { nav: [KA.reviewShort, '/apply.html'], menu: KA.review, hero: [KA.review, '/apply.html'], card: KA.sentCard });
+});
+
+test('sent without the ID check: a coral "4/5 · დარჩა პირადობა" to step 5, and "one step left" on the dashboard, not "in review"', async ({ browser }) => {
+  const { ctx, page } = await pageFor(browser, 1280, people.idleft);
+  await page.goto('/ka/');
+  await page.waitForLoadState('networkidle');
+  const nav = page.locator('#navLoggedIn [data-mentor-cta="nav"]');
+  await expect(nav).toHaveText(KA.idLeftShort, { useInnerText: true }); // (the short words in the desktop header, as for "1/5")
+  await expect(nav).toHaveAttribute('href', ka('/apply.html?step=5'));
+  await expect(nav).toHaveClass(/btn-primary/);
+  await expect(page.locator('[data-mentor-cta="hero"]')).toHaveText(KA.idLeft);
+  await page.goto('/dashboard.html');
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('#mentorCard .id-card h2')).toHaveText(KA.idCard);
+  await expect(page.locator('#mentorCard [data-id-start]')).toBeVisible();
+  await expect(page.locator('#mentorCard')).not.toContainText('განხილვაშია');
+  await shot(page, '1280-idleft-dashboard');
+  await ctx.close();
+  const phone = await pageFor(browser, 360, people.idleft);
+  await phone.page.goto('/ka/');
+  await phone.page.waitForLoadState('networkidle');
+  await phone.page.click('#navToggle');
+  await expect(phone.page.locator('#mmLoggedIn [data-mentor-cta="menu"]')).toHaveText(KA.idLeft);
+  await phone.ctx.close();
 });
 
 test('an approved mentor and an admin: nothing extra', async ({ browser }) => {

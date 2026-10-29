@@ -46,16 +46,16 @@ describe('where someone is, from the server', () => {
   test('an application started and not sent: "draft" with the step to continue from and how many are done, which follow what is filled in; the hint "apply"', async () => {
     const c = await signupVerified(base, 'Dato Draft', 'dato-draft@example.com');
     assert.equal((await c.api('/me', { method: 'PATCH', body: { becomeMentor: true } })).status, 200);
-    assert.deepEqual(await path_(c), { state: 'draft', step: 1, done: 0 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 1, done: 0, id: 'todo', idLeft: false });
     await c.api('/me', { method: 'PATCH', body: { headline: 'Associate professor of economics at TSU' } });
     await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', yearsExperience: 18 } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 2, done: 1 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 2, done: 1, id: 'todo', idLeft: false });
     await c.api('/verification/experience', { method: 'PUT', body: { story: STORY } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 3, done: 2 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 3, done: 2, id: 'todo', idLeft: false });
     await c.api('/me', { method: 'PATCH', body: { price: 40 } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 4, done: 3 });
+    assert.deepEqual(await path_(c), { state: 'draft', step: 4, done: 3, id: 'todo', idLeft: false });
     await c.api('/verification/evidence', { method: 'POST', body: { url: 'https://www.tsu.ge/en/staff/dato-draft' } });
-    assert.deepEqual(await path_(c), { state: 'draft', step: 5, done: 4 }, 'everything is there but the ID check: step 5 next, 4 of 5 done');
+    assert.deepEqual(await path_(c), { state: 'draft', step: 5, done: 4, id: 'todo', idLeft: true }, 'everything is there but the ID check: step 5 next, 4 of 5 done');
     assert.equal(await hintAtLogin('dato-draft@example.com'), 'apply', 'the page adds the step itself (public/js/nav.js)');
   });
 
@@ -65,7 +65,7 @@ describe('where someone is, from the server', () => {
     await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Georgian wine', yearsExperience: 12, story: STORY } });
     await c.api('/verification/evidence', { method: 'POST', body: { url: 'https://sopo-wines.example.com/about' } });
     assert.equal((await c.api('/verification/submit', { method: 'POST' })).status, 200);
-    assert.deepEqual(await path_(c), { state: 'sent', step: null });
+    assert.deepEqual(await path_(c), { state: 'sent', step: null, id: 'todo', idLeft: true });
     assert.equal(await hintAtLogin('sopo-sent@example.com'), 'sent');
 
     await approveMentor(admin, c);
@@ -99,7 +99,7 @@ describe('where someone is, from the server', () => {
 
   test('a made-up hint is not kept: only the known values', () => {
     const auth = read('server/auth.js');
-    assert.match(auth, /const HINTS = \/\^\(1\|admin\|mentor\|sent\|apply\(\?:\[1-5\]\(\?:-\[0-5\]\)\?\)\?\)\$\/;/);
+    assert.match(auth, /const HINTS = \/\^\(1\|admin\|mentor\|sent\|idleft\|apply\(\?:\[1-5\]\(\?:-\[0-5\]\)\?\)\?\)\$\/;/);
     assert.match(auth, /res\.cookie\(HINT_COOKIE, HINTS\.test\(hint\) \? hint : '1'/);
   });
 });
@@ -121,6 +121,7 @@ describe('what the pages show', () => {
     assert.deepEqual(run('apply3'), { state: 'draft', step: 3, done: null });
     assert.deepEqual(run('apply'), { state: 'draft', step: null, done: null });
     assert.deepEqual(run('sent'), { state: 'sent', step: null });
+    assert.deepEqual(run('idleft'), { state: 'idleft', step: 5, done: 4 }); // (steps 1-4 done, the ID check left: docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
     assert.deepEqual(run('mentor'), { state: 'none', step: null });
     assert.deepEqual(run('admin'), { state: 'none', step: null });
   });

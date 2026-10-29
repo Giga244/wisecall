@@ -56,10 +56,13 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
       const done = v.requirements.filter((r) => r.status === 'passed').length;
       const a = reviews[m.id];
       const submitted = m.verificationStatus === 'pending' && Boolean(m.applicationSubmittedAt);
+      // (sent, and only the ID check is left: "Waiting for ID", with a one-tap reminder; docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 6)
+      const experience = require('../verification/experience');
+      const waitingForId = submitted && experience.ID_LEFT.includes(experience.idStatusOf(stepMap[m.id]));
       return {
         ...meProfile(m), ...stats[m.id],
         university: ((badges[m.id] || []).find((b) => b.key === 'university') || {}).university || null,
-        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted, failedRequired: Boolean(m.hasFailedRequiredStep),
+        verification: { level: v.level, ready: v.ready, missing: v.missing, done, total: v.requirements.length, waiting, openFlags: openFlags[m.id] || 0, backInReview: m.verificationStatus === 'pending' && lastStanding[m.id] === 'reinstated', submitted, waitingForId, failedRequired: Boolean(m.hasFailedRequiredStep),
           // ("Profile incomplete: missing story, headline": never approve an empty profile)
           profileGaps: require('../verification/experience').profileGaps(m) },
         analysis: a ? {
@@ -297,6 +300,23 @@ router.post('/sample-questions/:id', requireAuth, requireAdmin, asyncHandler(asy
   if (!/^[0-9a-f-]{36}$/i.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
   try { res.json({ question: await require('../publicAnswers').setSampleQuestionActive(req.params.id, (req.body || {}).active === true) }); }
   catch (e) { paFail(res, e); }
+}));
+
+// "Send ID reminder" for an application stuck on the ID check: the reminder email, at most once in 48 hours per mentor (429 with the time
+// the next one is allowed). Logged in the mentor's audit.
+router.post('/mentors/:id/id-reminder', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/i.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const u = await getUserById(req.params.id);
+  if (!u || !['mentor', 'both'].includes(u.role)) return res.status(404).json({ error: 'not_found' });
+  const admin = await getUserById(req.userToken.id);
+  try {
+    const out = await require('../verification/reminders').adminIdReminder(u, admin);
+    if (!out.sent) return res.status(429).json({ error: 'too_soon', nextAt: out.nextAt });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === 'not_waiting_for_id') return res.status(409).json({ error: e.code });
+    throw e;
+  }
 }));
 
 // The university badge: an admin confirms it (the university from the mentor's pages, or one named) or removes it; "reset" goes back

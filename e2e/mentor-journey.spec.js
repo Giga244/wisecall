@@ -90,22 +90,24 @@ for (const width of [360, 1280]) {
     await shot('04-step-4-proof');
     await page.click('.apply-next');
 
-    // Step 5: the ID check explained; on a computer, a QR code to do it on a phone.
+    // Step 5: "One step left: confirm your identity", before any "send" (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md); on a computer, a QR code to
+    // do it on a phone.
     await page.waitForURL(/step=5$/);
-    await expect(page.locator('.apply-idbox')).toContainText(KA['apply.id.whatTitle']);
-    const qr = page.locator('[data-kyc-qr]');
+    await expect(page.locator('.id-card h1')).toHaveText(KA['idcard.title']);
+    await expect(page.locator('[data-submit]')).toHaveCount(0);
+    const qr = page.locator('[data-id-qr]');
     if (width >= 900) {
-      await expect(qr).toHaveText(KA['apply.id.qr']);
+      await expect(qr).toHaveText(KA['idcard.qr']);
       await qr.click();
-      await expect(page.locator('.apply-qr svg')).toBeVisible();
+      await expect(page.locator('.id-card-qr svg')).toBeVisible();
     } else {
       await expect(qr).toHaveCount(0);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no sideways scroll').toBe(true);
     await shot('05-step-5-id-check');
-    await page.click('[data-submit]');
+    await S.passIdCheck(page);
 
-    // After sending: what happens next, on screen and by email.
+    // The ID check passed: the application is sent by itself; what happens next, on screen and by email.
     await expect(page.locator('.apply-done')).toBeVisible();
     await expect(page.locator('.apply-next-steps h2')).toHaveText(KA['apply.done.next.title']);
     await expect(page.locator('.apply-next-steps li')).toHaveCount(3);

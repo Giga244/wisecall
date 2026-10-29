@@ -48,7 +48,7 @@ test('a visitor signs up and confirms the email with the 6-digit code from the e
   expect(row.email_verified).toBe(true);
 });
 
-test('a mentor applies at /apply.html (the one place to apply), submits, then takes the (fake) ID check', async () => {
+test('a mentor applies at /apply.html (the one place to apply), takes the (fake) ID check, and the application is sent by itself', async () => {
   const page = pages.mentor;
   await S.signUp(page, people.mentor);
   await S.applyAsMentor(page, {
@@ -60,12 +60,6 @@ test('a mentor applies at /apply.html (the one place to apply), submits, then ta
   });
   ({ id: mentorId, username: mentorUsername } = (await S.sql('SELECT id, username FROM users WHERE email = $1', [people.mentor.email]))[0]);
   expect((await S.sql('SELECT niche, price, verification_status FROM users WHERE id = $1', [mentorId]))[0]).toMatchObject({ niche: 'tech', price: 35, verification_status: 'pending' });
-
-  await page.locator('.apply-done [data-kyc-start]').click();
-  await page.waitForURL(/mock-kyc\.html/);
-  await page.fill('#fullName', people.mentor.name);
-  await page.click('#mockKycForm button[type="submit"]');
-  await page.waitForURL(/apply\.html/);
   await expect(page.locator('.apply-done')).toContainText('Your name matches your ID');
 });
 

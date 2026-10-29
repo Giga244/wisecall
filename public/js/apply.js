@@ -1,6 +1,8 @@
 // /apply.html: the mentor application, one step at a time (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #3, docs/CLAUDE-CODE-UX-WALKTHROUGH.md A).
 //   1 About you (what I do, my field in my own words with the closest category, years)  2 Your story  3 Your price
-//   4 Proof of experience (one link or document; the licence in a regulated field)       5 ID check and submit
+//   4 Proof of experience (one link or document; the licence in a regulated field)       5 ID check, then send
+// The ID check comes before "send" (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md): until it has passed or is with the partner, step 5's one button
+// starts it, and with steps 1-4 done "One step left: confirm your identity" is at the top of every step and of the "sent" screen.
 // Each step is saved when the mentor moves on (or leaves with "Save and finish later"), so they can come back to it. The server decides
 // every rule (what is required, what a link is, the category of a licensed profession); this page asks, saves and explains. The Settings
 // tabs stay for later changes.
@@ -93,6 +95,20 @@
   }
   window.addEventListener('popstate', () => { const s = stepFromUrl(); if (s !== null && v && !v.application.locked) { current = s; render(); } });
 
+  // ---- The ID check: where it stands ------------------------------------------------------------------------------------------------------
+  // (the server's one word: todo | started | checking | passed | failed | blocked | closed; idLeft: steps 1-4 done and the check is what is left)
+  const idState = () => v.application.id;
+  const idWaits = () => WisecallI18n.idChecksOpen() && ['todo', 'started', 'failed'].includes(idState());
+  const idFailedText = () => t(v.kycState === 'expired' ? 'vt.kyc.expired' : 'apply.id.failed');
+  const returned = () => new URLSearchParams(window.location.search).get('kyc') === 'returned';
+  function drawIdTop() {
+    const top = document.getElementById('applyIdTop');
+    // (on step 5 and on the "sent" screen the card is the page itself, not a second one on top)
+    const show = idWaits() && v.application.idLeft && !v.application.locked && current !== 4;
+    top.innerHTML = show ? WisecallIdCard.html(idState(), { failedText: idFailedText() }) : '';
+    if (show) WisecallIdCard.wire(top);
+  }
+
   // ---- The progress bar ---------------------------------------------------------------------------------------------------------------
   function drawHead() {
     head.hidden = false;
@@ -107,7 +123,7 @@
     document.getElementById('applySteps').innerHTML = STEPS.map((s, i) => `
       <li class="${i === current ? 'is-current' : ''}${stepDone(i) ? ' is-done' : ''}${flagged(i) ? ' has-gap' : ''}">
         <button type="button" class="apply-step-link" data-goto="${i}"${i === current ? ' aria-current="step"' : ''}>
-          <span class="apply-step-num" aria-hidden="true">${stepDone(i) && i !== current ? '✓' : (flagged(i) && i !== current ? '!' : i + 1)}</span>${flagged(i) ? `<span class="sr-only">${esc(t('apply.stepIncomplete'))}</span>` : ''}
+          <span class="apply-step-num" aria-hidden="true">${stepDone(i) && (i !== current || i === 4) ? '✓' : (flagged(i) && i !== current ? '!' : (i === 4 ? WisecallIdCard.ICON : i + 1))}</span>${flagged(i) ? `<span class="sr-only">${esc(t('apply.stepIncomplete'))}</span>` : ''}
           <span class="apply-step-name">${esc(t('apply.step.' + s))}</span>
         </button>
       </li>`).join('');
@@ -402,7 +418,7 @@
     let note = '';
     let label = 'vt.kyc.start';
     if (r.status === 'failed') { note = `<p class="apply-failed" role="alert">${esc(t(state === 'expired' ? 'vt.kyc.expired' : 'apply.id.failed'))}</p>`; label = 'vt.kyc.retry'; }
-    else if (state === 'in_review') note = `<p class="hint">${esc(t('vt.kyc.inReview'))}</p>`;
+    else if (state === 'in_review') note = `<p class="apply-id-checking" role="status">${esc(t('idcard.checking'))}</p>`;
     else if (state === 'started') { note = `<p class="hint">${esc(t(returned ? 'vt.kyc.returned' : 'vt.kyc.started'))}</p>`; label = 'vt.kyc.continue'; }
     // (on a computer: the same check on a phone, by its camera, from a QR code of the partner's link)
     const desktop = window.matchMedia('(pointer: fine)').matches && window.innerWidth >= 900;
@@ -438,7 +454,7 @@
           </li>`).join('')}
         <li class="${id === 'passed' ? 'is-done' : 'is-later'}">
           <span class="apply-check-mark" aria-hidden="true">${id === 'passed' ? '✓' : '○'}</span>
-          <span>${esc(t('apply.check.id'))}${id === 'passed' ? '' : ` <span class="hint">${esc(t('apply.check.idLater'))}</span>`}</span>
+          <span>${esc(t('apply.check.id'))}${id === 'passed' ? '' : ` <span class="hint">${esc(t(idWaits() ? 'apply.check.idFirst' : (idState() === 'checking' ? 'idcard.checking' : 'apply.check.idLater')))}</span>`}</span>
         </li>
       </ul>`;
   }
@@ -446,6 +462,23 @@
   function submitStep() {
     const ready = !missing().length;
     const lacking = missing().filter((m) => STEP_OF[m] !== undefined || m === 'email');
+    // The ID check first: until it has passed (or is with the partner) its button is the step's one button, and there is no "send" yet.
+    if (idWaits()) {
+      return `
+      <form class="apply-step apply-step-id" data-step="4" novalidate>
+        ${WisecallIdCard.html(idState(), { heading: 'h1', failedText: idFailedText(), returned: returned(), title: v.application.idLeft ? null : 'apply.id.title' })}
+        <div class="apply-block">
+          <h2>${esc(t('apply.check.title'))}</h2>
+          ${checklist()}
+        </div>
+        <p class="hint apply-send-after">${esc(t(ready ? 'apply.id.sendAfter' : 'apply.id.sendAfterSteps'))}</p>
+        <p class="form-error apply-error" role="alert"></p>
+        <div class="apply-nav">
+          <button type="button" class="btn btn-outline btn-lg apply-back" data-back>${esc(t('apply.back'))}</button>
+        </div>
+        <p class="apply-later"><button type="button" class="linklike" data-later>${esc(t('apply.later'))}</button></p>
+      </form>`;
+    }
     return `
       <form class="apply-step" data-step="4" novalidate>
         <h1 tabindex="-1">${esc(t('apply.submit.title'))}</h1>
@@ -521,6 +554,20 @@
   }
   function doneScreen() {
     const stage = v.application.stage;
+    // Sent, but the ID check is still to do: not "we're reviewing", but the one step left (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 5).
+    if (idWaits() && stage !== 'suspended' && stage !== 'rejected') {
+      return `
+      <div class="apply-step apply-done apply-done-id">
+        ${WisecallIdCard.html(idState(), { heading: 'h1', failedText: idFailedText(), returned: returned() })}
+        <p class="apply-status"><strong>${esc(t('apply.done.status'))}</strong> ${esc(t('apply.id.sentWaiting'))}</p>
+        <div class="apply-actions">
+          <a class="btn btn-outline btn-lg" href="/dashboard.html">${esc(t('apply.done.dashboard'))}</a>
+          <button type="button" class="btn btn-ghost btn-lg" data-edit>${esc(t('ap.edit'))}</button>
+        </div>
+        <p class="form-error apply-error" role="alert"></p>
+      </div>`;
+    }
+    const checkingId = idState() === 'checking' && stage === 'waiting_identity';
     const days = config.mentorReviewDays || 2;
     const approved = stage === 'approved';
     const closed = stage === 'suspended';
@@ -529,7 +576,7 @@
     return `
       <div class="apply-step apply-done">
         <h1 tabindex="-1">${esc(t(approved ? 'apply.done.approvedTitle' : 'apply.done.title'))}</h1>
-        ${approved ? `<p class="apply-lead">${esc(t('ap.rev.approved'))}</p>` : (closed ? '' : `<p class="apply-lead">${esc(fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }))}</p>
+        ${approved ? `<p class="apply-lead">${esc(t('ap.rev.approved'))}</p>` : (closed ? '' : checkingId ? `<p class="apply-lead apply-id-checking" role="status">${esc(t('idcard.checking'))}</p>` : `<p class="apply-lead">${esc(fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }))}</p>
           <div class="apply-block apply-next-steps">
             <h2>${esc(t('apply.done.next.title'))}</h2>
             <ol>
@@ -559,9 +606,11 @@
 
   // ---- Drawing and wiring -------------------------------------------------------------------------------------------------------------
   function render() {
+    drawIdTop();
     if (v.application.locked) {
       head.hidden = true;
       root.innerHTML = doneScreen();
+      WisecallIdCard.wire(root);
       wireCommon();
       wireLicence(root);
       wireDone();
@@ -569,6 +618,7 @@
     }
     drawHead();
     root.innerHTML = [aboutStep, storyStep, priceStep, proofStep, submitStep][current]();
+    WisecallIdCard.wire(root);
     const h1 = root.querySelector('form.apply-step h1');
     if (h1 && flagged(current)) h1.insertAdjacentHTML('afterend', `<p class="apply-gap" role="status"><span aria-hidden="true">!</span> ${esc(gapLine(current))}</p>`);
     wireCommon();
@@ -844,7 +894,7 @@
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         const btn = form.querySelector('[data-submit]');
-        if (missing().length) return;
+        if (!btn || missing().length) return; // (no "send" while the ID check comes first)
         btn.disabled = true;
         stepError('');
         try {
@@ -1013,4 +1063,27 @@
   furthest = current;
   if (!v.application.locked) window.history.replaceState({ step: current }, '', (() => { const u = new URL(window.location.href); u.searchParams.set('step', String(current + 1)); return u.pathname + u.search; })());
   render();
+  // Back from the partner's page (…&kyc=returned): the result arrives a moment later, so the page asks again every 2 seconds for a minute
+  // and shows it as soon as it is there (passed: the application is sent by itself, and the "sent" screen follows).
+  if (returned() && ['started', 'checking'].includes(idState())) {
+    let tries = 0;
+    const before = () => `${idState()}|${v.application.locked}`;
+    let was = before();
+    const again = async () => {
+      tries += 1;
+      try { await load(); } catch (e) { /* the next try */ }
+      if (before() !== was) { was = before(); render(); }
+      if (tries < 30 && ['started', 'checking'].includes(idState())) setTimeout(again, 2000);
+    };
+    setTimeout(again, 2000);
+  }
+  // The emails' "Do the ID check" (…&start=id): straight to the partner, as the card's button would (once: the address loses it).
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('start') === 'id') {
+    const u = new URL(window.location.href);
+    u.searchParams.delete('start');
+    window.history.replaceState(window.history.state, '', u.pathname + u.search);
+    const start = idWaits() && root.querySelector('[data-id-start]');
+    if (start) start.click();
+  }
 })();

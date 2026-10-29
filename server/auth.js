@@ -31,7 +31,7 @@ function clearAuthCookie(res) {
 
 // The header's hint for this person (where a started application stands, "apply<next step>-<steps done>", is added by the page itself,
 // public/js/nav.js).
-const HINTS = /^(1|admin|mentor|sent|apply(?:[1-5](?:-[0-5])?)?)$/;
+const HINTS = /^(1|admin|mentor|sent|idleft|apply(?:[1-5](?:-[0-5])?)?)$/;
 function hintFor(user) {
   if (require('./adminAuth').isAdminUser({ email: user && user.email, emailVerified: Boolean(user && (user.emailVerified || user.email_verified)) })) return 'admin';
   if (!user || !['mentor', 'both'].includes(user.role)) return '1';

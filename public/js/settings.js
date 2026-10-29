@@ -144,6 +144,7 @@
     const card = WisecallApplicationCard.view(user, lastVerification);
     progressBox.hidden = !card;
     progressBox.innerHTML = WisecallApplicationCard.html(card, t, reviewDays);
+    if (window.WisecallIdCard) WisecallIdCard.wire(progressBox);
   }
   progressBox.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-goto-tab]');

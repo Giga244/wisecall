@@ -30,14 +30,14 @@
       'nav.language': 'Language', 'nav.login': 'Log in', 'nav.signup': 'Sign up', 'nav.inbox': 'Inbox', 'nav.dashboard': 'Dashboard', 'nav.settings': 'Settings',
       'nav.logout': 'Log out', 'nav.admin': 'Admin', 'nav.menu': 'Menu', 'nav.menuClose': 'Close menu', 'theme.toDark': 'Switch to dark mode', 'theme.toLight': 'Switch to light mode',
       'nav.continueApp': 'Continue your application', 'nav.continueStep': 'Continue your application · {n} of 5 done', 'nav.continueShort': 'Application · {n}/5',
-      'nav.inReview': 'Application in review', 'nav.inReviewShort': 'In review'
+      'nav.inReview': 'Application in review', 'nav.inReviewShort': 'In review', 'nav.idLeft': 'Application · 4/5 · ID left', 'nav.idLeftShort': '4/5 · ID left'
     },
     ka: {
       'a11y.skip': 'გადასვლა შინაარსზე', 'nav.how': 'როგორ მუშაობს', 'nav.browse': 'ექსპერტები', 'nav.becomeMentor': 'გახდი მენტორი', 'footer.faq': 'კითხვები',
       'nav.language': 'ენა', 'nav.login': 'შესვლა', 'nav.signup': 'რეგისტრაცია', 'nav.inbox': 'შემოსულები', 'nav.dashboard': 'პირადი კაბინეტი', 'nav.settings': 'პარამეტრები',
       'nav.logout': 'გასვლა', 'nav.admin': 'ადმინი', 'nav.menu': 'მენიუ', 'nav.menuClose': 'მენიუს დახურვა', 'theme.toDark': 'მუქ რეჟიმზე გადართვა', 'theme.toLight': 'ღია რეჟიმზე გადართვა',
       'nav.continueApp': 'განაცხადის გაგრძელება', 'nav.continueStep': 'განაცხადის გაგრძელება · დასრულებულია {n} / 5', 'nav.continueShort': 'განაცხადი · {n}/5',
-      'nav.inReview': 'განაცხადი განხილვაშია', 'nav.inReviewShort': 'განხილვაშია'
+      'nav.inReview': 'განაცხადი განხილვაშია', 'nav.inReviewShort': 'განხილვაშია', 'nav.idLeft': 'განაცხადი · 4/5 · დარჩა პირადობა', 'nav.idLeftShort': '4/5 · დარჩა პირადობა'
     }
   };
   const w = (key) => WORDS[LANG][key] || WORDS.en[key];
@@ -67,11 +67,11 @@
   const ICON_INBOX = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5.5 5h13l2.5 8v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/></svg>';
   const ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
-  // Signed in? Next to the login cookie the server leaves a small readable hint (wc_authed: "1", "apply" or "apply<next step>-<steps done>" such as "apply2-2", "sent",
+  // Signed in? Next to the login cookie the server leaves a small readable hint (wc_authed: "1", "apply" or "apply<next step>-<steps done>" such as "apply2-2", "sent", "idleft",
   // "mentor", or "admin"; see server/auth.js), so the header and the menu panel are drawn as they will stay from the first frame: a
   // signed-in person never sees the signed-out menu first. nav.js still asks the server, and only if the two disagree (a session that ran
   // out, say) does the header change, with a fade.
-  const signedIn = (() => { try { return (/(?:^|;\s*)wc_authed=(1|admin|mentor|sent|apply(?:[1-5](?:-[0-5])?)?)(?:;|$)/.exec(document.cookie) || [])[1] || ''; } catch (e) { return ''; } })();
+  const signedIn = (() => { try { return (/(?:^|;\s*)wc_authed=(1|admin|mentor|sent|idleft|apply(?:[1-5](?:-[0-5])?)?)(?:;|$)/.exec(document.cookie) || [])[1] || ''; } catch (e) { return ''; } })();
   const off = (yes) => (yes ? ' style="display:none"' : '');
   const shown = LINKS.filter((l) => !l.mentor || signedIn === '');
 
@@ -81,6 +81,8 @@
   //   draft   an application started and not sent: "Continue your application · 2 of 5 done" ("Application · 2/5" where the header is narrow)
   //           -> /apply.html?step=N, the first unfinished step (docs/CLAUDE-CODE-APPLY-PROGRESS.md)
   //   sent    sent, waiting for review: "Application in review" (a status, linking to /apply.html)
+  //   idleft  steps 1-4 done (sent or not) and the ID check is what is left: "Application · 4/5 · ID left", coral, to step 5
+  //           (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 3)
   //   none    a mentor or an admin: nothing extra
   // The page's <html> carries the state from the first frame (data-mentor-state), so the home page's button never jumps (style.css);
   // nav.js asks the server and draws it again when it differs, and after a language switch.
@@ -89,25 +91,29 @@
     if (signedIn === '1') return { state: 'asker', step: null };
     const draft = /^apply(?:([1-5])(?:-([0-5]))?)?$/.exec(signedIn);
     if (draft) return { state: 'draft', step: draft[1] ? Number(draft[1]) : null, done: draft[2] !== undefined ? Number(draft[2]) : null };
+    if (signedIn === 'idleft') return { state: 'idleft', step: 5, done: 4 };
     return { state: signedIn === 'sent' ? 'sent' : 'none', step: null };
   })();
   window.WisecallMentorButton = {
-    href: (m) => (m.state === 'draft' && m.step ? `/apply.html?step=${m.step}` : '/apply.html'),
+    href: (m) => (m.state === 'idleft' ? '/apply.html?step=5' : (m.state === 'draft' && m.step ? `/apply.html?step=${m.step}` : '/apply.html')),
     // say: (key) -> words. short: the words for a narrow header.
     text(m, say, short) {
       if (m.state === 'asker') return say('nav.becomeMentor');
       // (how much is done, not the step: "2/5" means two of the five steps are done)
       if (m.state === 'draft') return Number.isInteger(m.done) ? say(short ? 'nav.continueShort' : 'nav.continueStep').replace('{n}', m.done) : say('nav.continueApp');
       if (m.state === 'sent') return say(short ? 'nav.inReviewShort' : 'nav.inReview');
+      if (m.state === 'idleft') return say(short ? 'nav.idLeftShort' : 'nav.idLeft');
       return '';
     },
     // where: 'nav' (the header), 'menu' (the menu panel). '' for nobody.
     html(m, where, say) {
-      if (!['asker', 'draft', 'sent'].includes(m.state)) return '';
+      if (!['asker', 'draft', 'sent', 'idleft'].includes(m.state)) return '';
       const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
       const cls = m.state === 'sent'
         ? (where === 'nav' ? 'nav-mentor mentor-status' : 'btn btn-ghost btn-lg btn-block mm-mentor mentor-status')
-        : (where === 'nav' ? 'btn btn-outline nav-mentor' : 'btn btn-outline btn-lg btn-block mm-mentor');
+        : m.state === 'idleft'
+          ? (where === 'nav' ? 'btn btn-primary nav-mentor' : 'btn btn-primary btn-lg btn-block mm-mentor')
+          : (where === 'nav' ? 'btn btn-outline nav-mentor' : 'btn btn-outline btn-lg btn-block mm-mentor');
       const full = esc(this.text(m, say, false));
       const words = where === 'nav' ? `<span class="nm-full">${full}</span><span class="nm-short">${esc(this.text(m, say, true))}</span>` : full;
       return `<a href="${this.href(m)}" class="${cls}" data-mentor-cta="${where}" data-state="${m.state}">${words}</a>`;

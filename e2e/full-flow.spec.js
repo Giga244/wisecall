@@ -40,7 +40,7 @@ test('an administrator signs up (their address is on the ADMIN_EMAILS list)', as
   await expect(adminPage.locator('#adminContent')).not.toContainText('not authorized', { ignoreCase: true });
 });
 
-test('a mentor signs up and applies at /apply.html for the Law field (a licence too), and submits before the ID check', async () => {
+test('a mentor signs up and applies at /apply.html for the Law field (a licence too); step 5 asks for the ID check first', async () => {
   await S.signUp(mentorPage, mentor);
   // (the one place to apply: docs/CLAUDE-CODE-ONE-APPLY-PATH.md)
   await S.applyAsMentor(mentorPage, {
@@ -49,23 +49,22 @@ test('a mentor signs up and applies at /apply.html for the Law field (a licence 
     story: 'I studied law in Tbilisi and have advised shop owners, cafés and freelancers on tax registration and contracts since 2014. I also teach a short evening course on VAT for new business owners.',
     sample: 'Register as soon as your turnover is close to the limit, keep every invoice, and ask an accountant to confirm the date. Late registration is the costly mistake, early registration is not.',
     price: 30, url: `${S.fakeWeb()}/p/ana-lomidze`,
-    licence: { number: 'LAW-2015-04417', body: 'Georgian Bar Association', until: '2032-12-31' }
+    licence: { number: 'LAW-2015-04417', body: 'Georgian Bar Association', until: '2032-12-31' },
+    submit: false
   });
   ({ id: mentorId, username: mentorUsername } = (await S.sql('SELECT id, username FROM users WHERE email = $1', [mentor.email]))[0]);
   const [u] = await S.sql('SELECT niche, years_experience, price, headline, role_title, specialty_tags, verification_status FROM users WHERE id = $1', [mentorId]);
-  expect(u).toMatchObject({ niche: 'law', years_experience: 11, price: 30, headline: 'Lawyer for small businesses', role_title: 'Tax lawyer for small businesses', verification_status: 'pending' });
+  expect(u).toMatchObject({ niche: 'law', years_experience: 11, price: 30, headline: 'Lawyer for small businesses', role_title: 'Tax lawyer for small businesses' });
   expect(u.specialty_tags).toEqual(['VAT', 'small business tax', 'contracts']);
   if (process.env.E2E_SHOTS) await mentorPage.screenshot({ path: `${process.env.E2E_SHOTS}/application-submitted.png`, fullPage: true });
-  // Submitted before the ID check: it waits for it.
-  await expect(mentorPage.locator('.apply-status')).toContainText('as soon as your ID check is done');
+  // Steps 1-4 done, the ID check not: no "send", but "One step left" (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md).
+  await expect(mentorPage.locator('.id-card h1')).toHaveText('One step left: confirm your identity');
+  await expect(mentorPage.locator('[data-submit]')).toHaveCount(0);
 });
 
-test('the mentor does the ID check; the automatic analysis runs and, a regulated field, it waits for a person', async () => {
-  await mentorPage.locator('.apply-done [data-kyc-start]').click();
-  await mentorPage.waitForURL(/mock-kyc\.html/);
-  await mentorPage.fill('#fullName', mentor.name);
-  await mentorPage.click('#mockKycForm button[type="submit"]');
-  await mentorPage.waitForURL(/apply\.html/);
+test('the mentor does the ID check; the application is sent by itself, the automatic analysis runs and, a regulated field, it waits for a person', async () => {
+  await S.passIdCheck(mentorPage, mentor.name);
+  await expect(mentorPage.locator('.apply-done')).toBeVisible();
   await expect.poll(async () => ((await S.sql(`SELECT outcome FROM verification_reviews WHERE user_id = $1 AND status = 'done'`, [mentorId]))[0] || {}).outcome).toBe('needs_human');
   const [review] = await S.sql(`SELECT reasons, ai_cost_usd FROM verification_reviews WHERE user_id = $1`, [mentorId]);
   expect(review.reasons.map((r) => r.code)).toContain('regulated_niche');

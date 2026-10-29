@@ -44,11 +44,13 @@ test.beforeAll(async () => {
   const a = await S.apiUser(people.all.name, people.all.email);
   await a.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'მეღვინე კახეთში', price: 30 } });
   await a.api('/verification/experience', { method: 'PUT', body: { customNiche: 'ქართული ღვინო', yearsExperience: 12, story: STORY } });
-  await a.api('/verification/evidence', { method: 'POST', body: { url: `https://levan-wines-${tag}.example.com/about` } });
   const start = await a.api('/verification/kyc/start', { method: 'POST' });
   if (start.status !== 200) throw new Error('ID check failed to start: ' + start.text);
   await client(S.BASE).api(`/mock-kyc/sessions/${start.url.split('=').pop()}/complete`, { method: 'POST', body: { outcome: 'approve', fullName: people.all.name, dateOfBirth: '1988-03-02' } });
   await expect.poll(async () => (await a.api('/verification')).requirements.find((r) => r.step === 'id_kyc').status, { timeout: 15000 }).toBe('passed');
+  // (step 4 after the ID check: a finished application is sent by itself the moment the check passes, docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md;
+  // done in this order it waits for its own "send")
+  await a.api('/verification/evidence', { method: 'POST', body: { url: `https://levan-wines-${tag}.example.com/about` } });
 });
 
 test('steps 1 and 3 done, step 2 open: "ნაბიჯი 2: ისტორია", 2 of 5 done, a 40% bar, "2/5" in the header; Continue goes to step 2', async ({ browser }) => {
@@ -103,7 +105,7 @@ test('all five steps done (the ID check passed): 5 of 5 and a full bar', async (
   for (const width of [1280, 360]) {
     const { ctx, page } = await pageFor(browser, width, people.all);
     await page.goto('/apply.html');
-    await expectProgress(page, { step: 5, name: 'გაგზავნა', done: 5, ticks: [true, true, true, true, true] });
+    await expectProgress(page, { step: 5, name: 'პირადობა', done: 5, ticks: [true, true, true, true, true] });
     if (width === 1280) await expect(page.locator('#navLoggedIn [data-mentor-cta="nav"] .nm-short')).toHaveText('განაცხადი · 5/5');
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${width}-apply-all-done.png` });
     await ctx.close();

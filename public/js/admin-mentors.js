@@ -332,6 +332,8 @@
           ${v.waiting ? `<span class="badge badge-pending_payment">${t('admin.mv.waiting').replace('{n}', v.waiting)}</span>` : ''}
           ${v.openFlags ? `<span class="badge badge-rejected">${t('admin.mv.flagsOpen').replace('{n}', v.openFlags)}</span>` : ''}
           ${v.failedRequired ? `<span class="badge badge-rejected">${t('admin.mv.failedRequired')}</span>` : ''}
+          ${v.waitingForId ? `<span class="badge badge-rejected mv-waiting-id">${esc(t('admin.mv.waitingForId'))}</span>
+            <button type="button" class="btn btn-outline btn-sm mv-id-reminder">${esc(t('admin.mv.idReminder'))}</button>` : ''}
           ${(m.reviewCount >= 3 && m.ratingAvg < 3.5) ? `<span class="form-error" style="margin:0">${t('admin.lowRatingFlag').replace('{avg}', m.ratingAvg)}</span>` : ''}
           <button class="btn btn-outline btn-sm mv-open" aria-expanded="false">${t('admin.mv.review')}</button>
         </div>
@@ -363,6 +365,17 @@
         try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/university-badge`, { method: 'POST', body: { action: b.dataset.uni } }); WisecallNav.showToast(t('toast.saved')); if (onChange) onChange(); }
         catch (e) { WisecallNav.showToast(t(e.code === 'no_university' ? 'admin.uni.noUniversity' : 'toast.error')); b.disabled = false; }
       }));
+      // "Send ID reminder" (at most once in 48 hours per mentor: the server says when the next one is allowed)
+      const remind = el.querySelector('.mv-id-reminder');
+      if (remind) remind.addEventListener('click', async () => {
+        remind.disabled = true;
+        try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/id-reminder`, { method: 'POST' }); WisecallNav.showToast(t('admin.mv.idReminderSent')); }
+        catch (e) {
+          WisecallNav.showToast(e.code === 'too_soon' && e.data && e.data.nextAt
+            ? fill('admin.mv.idReminderSoon', { date: WisecallI18n.formatDate(e.data.nextAt, { dateStyle: 'medium', timeStyle: 'short' }) })
+            : t('toast.error'));
+        }
+      });
       const body = el.querySelector('.mv-body');
       const openBtn = el.querySelector('.mv-open');
 

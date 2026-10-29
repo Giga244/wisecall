@@ -101,11 +101,12 @@ async function walk(page, { width, shots, tag }) {
   const [ev] = await S.sql('SELECT e.kind FROM mentor_evidence e JOIN users u ON u.id = e.user_id WHERE u.email = $1', [email]);
   expect(ev.kind).toBe('linkedin');
 
-  // 5. The ID check and the checklist; everything required is done, so "Submit" is on.
+  // 5. Everything else is done: "One step left: confirm your identity", and no "send" before it (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md).
+  //    Once the (fake) ID check has passed, the application is sent by itself.
   await expect(page.locator('.apply-checklist .is-missing')).toHaveCount(0);
-  await expect(page.locator('[data-submit]')).toBeEnabled();
+  await expect(page.locator('.id-card h1')).toHaveText('დარჩა ერთი ნაბიჯი: პირადობის დადასტურება');
   await shot('09-step5-submit');
-  await page.click('[data-submit]');
+  await S.passIdCheck(page);
   await expect(page.locator('.apply-done h1')).toHaveText('გმადლობთ! განაცხადი მიღებულია.');
   await expect(page.locator('.apply-done')).toContainText('2 სამუშაო დღეში');
   await shot('10-submitted');

@@ -111,9 +111,13 @@ const S = {
     idReminder: {
       subject: 'One step left: the ID check', heading: 'One step left',
       intro: 'Your application is in. The last step is the ID check: a photo of your ID card or passport and a selfie, about 3 minutes, on your phone.',
+      introDraft: 'Everything else in your application is done. The last step is the ID check: a photo of your ID card or passport and a selfie, about 3 minutes, on your phone.',
+      reviewAfter: 'We can only review your application once the ID check is done.',
       why: 'We check every mentor this way so students know who they are talking to: 18 or older, and the name matches the ID. Wisecall never sees the ID photos.',
+      second: 'This is the last reminder we send about it.',
       button: 'Do the ID check', unsubscribe: 'No more reminders like this:'
     },
+    idOneStep: { subject: 'Wisecall – one step left', heading: 'One step left: confirm your identity' },
     rateReminder: {
       subject: 'Please rate your Wisecall question', headingAsker: 'How was the answer?', headingMentor: 'How was the question?',
       introAsker: 'How was the answer from {name}? Your rating helps other people find great mentors.',
@@ -434,9 +438,13 @@ const S = {
     idReminder: {
       subject: 'დარჩა ერთი ნაბიჯი: პირადობის შემოწმება', heading: 'დარჩა ერთი ნაბიჯი',
       intro: 'განაცხადი მიღებულია. ბოლო ნაბიჯი პირადობის შემოწმებაა: პირადობის მოწმობის ან პასპორტის ფოტო და სელფი, დაახლოებით 3 წუთი, ტელეფონით.',
+      introDraft: 'განაცხადში ყველაფერი დანარჩენი შევსებულია. ბოლო ნაბიჯი პირადობის შემოწმებაა: პირადობის მოწმობის ან პასპორტის ფოტო და სელფი, დაახლოებით 3 წუთი, ტელეფონით.',
+      reviewAfter: 'განაცხადს მხოლოდ პირადობის დადასტურების შემდეგ განვიხილავთ.',
       why: 'ყველა მენტორს ასე ვამოწმებთ, რომ სტუდენტმა იცოდეს, ვის ესაუბრება: 18 წლის ან უფროსი, და სახელი ემთხვევა დოკუმენტს. დოკუმენტის ფოტოებს Wisecall ვერ ხედავს.',
+      second: 'ამაზე ეს ბოლო შეხსენებაა.',
       button: 'პირადობის შემოწმება', unsubscribe: 'მსგავსი შეხსენებები აღარ მინდა:'
     },
+    idOneStep: { subject: 'Wisecall – დარჩა ერთი ნაბიჯი', heading: 'დარჩა ერთი ნაბიჯი: პირადობის დადასტურება' },
     rateReminder: {
       subject: 'შეაფასე შენი Wisecall-ის კითხვა', headingAsker: 'როგორი იყო პასუხი?', headingMentor: 'როგორი იყო კითხვა?',
       introAsker: 'როგორი იყო {name}-ის პასუხი? შენი შეფასება სხვებს ეხმარება კარგი მენტორების პოვნაში.',
@@ -737,10 +745,17 @@ const BUILDERS = {
       { button: fill(s.applyReminder.button, d, false), url: `${config.PUBLIC_URL}/apply.html?step=${Number(d.step) || 1}` },
       ...(d.unsubscribeUrl ? [{ small: s.applyReminder.unsubscribe }, { link: d.unsubscribeUrl }] : [])]
   }),
+  // (only the ID check: when it is the one thing missing, nothing else is asked; the button starts it, docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 4)
   idReminder: (s, d) => ({
     heading: s.idReminder.heading,
-    blocks: [{ p: s.idReminder.intro }, { small: s.idReminder.why }, { button: s.idReminder.button, url: `${config.PUBLIC_URL}/apply.html?step=5` },
+    blocks: [{ p: d.draft ? s.idReminder.introDraft : s.idReminder.intro }, { p: s.idReminder.reviewAfter }, { small: s.idReminder.why }, ...(d.second ? [{ small: s.idReminder.second }] : []),
+      { button: s.idReminder.button, url: `${config.PUBLIC_URL}/apply.html?step=5&start=id` },
       ...(d.unsubscribeUrl ? [{ small: s.idReminder.unsubscribe }, { link: d.unsubscribeUrl }] : [])]
+  }),
+  // Right after sending without the ID check: the same words as the reminder, once.
+  idOneStep: (s) => ({
+    heading: s.idOneStep.heading,
+    blocks: [{ p: s.idReminder.intro }, { p: s.idReminder.reviewAfter }, { small: s.idReminder.why }, { button: s.idReminder.button, url: `${config.PUBLIC_URL}/apply.html?step=5&start=id` }]
   }),
   rateReminder: (s, d) => {
     const asker = d.role !== 'mentor';

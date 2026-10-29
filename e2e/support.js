@@ -73,7 +73,9 @@ async function apiUser(name, email) {
 
 // A signed-in person applies as a mentor at /apply.html, the one place to apply (docs/CLAUDE-CODE-ONE-APPLY-PATH.md), step by step as a
 // person would. a: { headline, field, niche (chosen with "Change"; otherwise the suggestion stands), years, title, tags, story, sample,
-// price, url, licence: { number, body, until }, submit (default true) }. Ends on "Thank you" (or on step 5 when submit is false).
+// price, url, licence: { number, body, until }, submit (default true) }. Ends on "Thank you" (or on step 5 when submit is false). The ID
+// check comes before sending (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md): "submit" takes the (fake) ID check with the account's name, and the
+// application is sent by itself once it has passed.
 async function applyAsMentor(page, a) {
   await page.goto('/apply.html');
   await page.waitForURL(/\/apply\.html\?step=1$/);
@@ -110,8 +112,19 @@ async function applyAsMentor(page, a) {
   await page.waitForURL(/step=5$/);
   await expect(page.locator('#apMissing')).toHaveCount(0);
   if (a.submit === false) return;
-  await page.click('[data-submit]');
+  await passIdCheck(page);
   await expect(page.locator('.apply-done')).toBeVisible();
+}
+
+// The (fake) ID check from the "One step left" card on /apply.html, with the account's own name (so the names match); back on /apply.html.
+async function passIdCheck(page, name) {
+  await expect(page.locator('[data-submit]')).toHaveCount(0);
+  const who = name || (await page.evaluate(async () => (await (await fetch('/api/me')).json()).user.name));
+  await page.click('[data-id-start]');
+  await page.waitForURL(/mock-kyc\.html/);
+  await page.fill('#fullName', who);
+  await page.click('#mockKycForm button[type="submit"]');
+  await page.waitForURL(/apply\.html/);
 }
 
 // A verified, listed mentor (every required step passed, payout details saved), ready to be asked questions.
@@ -154,4 +167,4 @@ async function untilBooking(id, predicate, message, timeout = 20000) {
 // Where the fake evidence pages are (e2e/global-setup.js writes it): /p/<name-with-dashes> shows that name.
 const fakeWeb = () => JSON.parse(fs.readFileSync(path.join(__dirname, '.tmp', 'fakes.json'), 'utf8')).web;
 
-module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };
+module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, passIdCheck, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };

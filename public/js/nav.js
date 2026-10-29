@@ -109,11 +109,13 @@
     if (!user) return { state: 'out', step: null };
     if (user.isAdmin) return { state: 'none', step: null };
     const p = user.mentorPath || { state: ['mentor', 'both'].includes(user.role) ? 'mentor' : 'asker' };
+    // (steps 1-4 done, sent or not, and the ID check is what is left: docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
+    if (p.idLeft && (p.state === 'draft' || p.state === 'sent')) return { state: 'idleft', step: 5, done: 4, id: p.id };
     if (p.state === 'draft') return { state: 'draft', step: p.step || null, done: Number.isInteger(p.done) ? p.done : null };
-    return { state: p.state === 'mentor' ? 'none' : p.state, step: null };
+    return { state: p.state === 'mentor' ? 'none' : p.state, step: null, id: p.id };
   }
   const draftHint = (m) => `apply${m.step ? m.step + (Number.isInteger(m.done) ? `-${m.done}` : '') : ''}`; // ("apply2-2": step 2 next, 2 done)
-  const hintOf = (user, m) => (!user ? null : (user.isAdmin ? 'admin' : { asker: '1', draft: draftHint(m), sent: 'sent' }[m.state] || 'mentor'));
+  const hintOf = (user, m) => (!user ? null : (user.isAdmin ? 'admin' : { asker: '1', draft: draftHint(m), sent: 'sent', idleft: 'idleft' }[m.state] || 'mentor'));
   function drawMentor(m) {
     if (m) mentorNow = m;
     const now = mentorNow;
@@ -143,7 +145,7 @@
       a.setAttribute('href', B.href(now));
       if (now.state === 'asker') { a.setAttribute('data-i18n', 'hero.mentorCta'); a.textContent = t('hero.mentorCta'); }
       else { a.removeAttribute('data-i18n'); a.textContent = B.text(now, t, false); }
-      a.className = now.state === 'sent' ? 'hero-mentor-btn mentor-status' : 'btn btn-outline btn-lg btn-arrow hero-mentor-btn';
+      a.className = now.state === 'sent' ? 'hero-mentor-btn mentor-status' : `btn ${now.state === 'idleft' ? 'btn-primary' : 'btn-outline'} btn-lg btn-arrow hero-mentor-btn`;
       a.dataset.ready = '1';
     });
   }

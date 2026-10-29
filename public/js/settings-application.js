@@ -3,6 +3,7 @@
 //   none      not started (someone who is not a mentor applicant)    "Start my application"
 //   draft     step X of 5                                             "Continue – step X of 5"
 //   sent      sent, under review                                      "See my application"
+//   idleft    steps 1-4 done (sent or not), the ID check left           the "One step left" card and its own button (id-card.js)
 //   fix       a required step failed: named in one sentence           "Continue – step X of 5" or "See my application"
 //   rejected  not approved, with the reason when one was given        "See my application"
 // An approved mentor (or a suspended one) and an admin get no card. Loaded by settings.html before settings.js.
@@ -18,6 +19,7 @@
     const fix = failed ? failed.step : null;
     if (status === 'rejected') return { state: 'rejected', reason: user.verificationNote || null, fix: null, button: { key: 'settings.app.see', href: '/apply.html' } };
     const path = user.mentorPath || {};
+    if (path.idLeft) return { state: 'idleft', id: path.id || 'todo', done: 4, fix: null, button: null };
     const sent = path.state === 'sent' || (status === 'pending' && Boolean(user.applicationSubmittedAt));
     if (sent) return { state: fix ? 'fix' : 'sent', fix, button: { key: 'settings.app.see', href: '/apply.html' } };
     // step: the first unfinished step, where "Continue" goes (an ID check to take again is step 5); done: how many of the five are done,
@@ -27,13 +29,21 @@
     return { state: fix ? 'fix' : 'draft', step, done, fix, button: { key: 'settings.app.continue', step, href: `/apply.html?step=${step}` } };
   }
 
-  const TONE = { none: 'badge-muted', draft: 'badge-pending_payment', sent: 'badge-pending_payment', fix: 'badge-rejected', rejected: 'badge-rejected' };
+  const TONE = { none: 'badge-muted', draft: 'badge-pending_payment', sent: 'badge-pending_payment', idleft: 'badge-rejected', fix: 'badge-rejected', rejected: 'badge-rejected' };
 
   // -> the card's HTML ('' for no card). t: the dictionary; days: how many working days a review takes.
   function html(card, t, days) {
     if (!card) return '';
     const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fill = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), t(key));
+    if (card.state === 'idleft') {
+      return `
+      <div class="app-progress-head">
+        <strong>${esc(t('settings.progress.title'))}</strong>
+        <span class="badge ${TONE.idleft}" data-app-state="idleft">${esc(t('nav.idLeft'))}</span>
+      </div>
+      ${window.WisecallIdCard ? WisecallIdCard.html(card.id) : ''}`;
+    }
     const label = card.state === 'draft' ? fill('settings.app.state.draft', { n: card.done }) : t('settings.app.state.' + card.state);
     const text = { none: t('settings.app.text.none'), draft: t('settings.app.text.draft'), sent: fill(days === 1 ? 'apply.done.body1' : 'apply.done.body', { days }),
       fix: t('settings.app.text.fix'), rejected: t('settings.app.text.rejected') }[card.state];

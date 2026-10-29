@@ -304,12 +304,31 @@ function applicationProgress(missing, idStatus) {
 }
 const progressOf = (missing, stepMap) => applicationProgress(missing, stepMap.id_kyc ? steps.effectiveStatus(stepMap.id_kyc) : undefined);
 
+// Where the ID check stands, in one word for every page (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md):
+//   passed | todo | started (opened at the partner, not finished) | checking (finished, the partner is checking) | failed
+//   | blocked (under 18 on the ID: only an admin can open it again) | closed (ID checks are not open on this site yet)
+function idStatusOf(stepMap) {
+  const row = stepMap.id_kyc;
+  const s = steps.effectiveStatus(row);
+  if (s === 'passed') return 'passed';
+  if (stepMap.age && stepMap.age.status === 'failed') return 'blocked';
+  if (!require('../config').ID_CHECKS_ENABLED) return 'closed';
+  if (s === 'failed') return 'failed';
+  if (s === 'pending') return row.evidence && row.evidence.state === 'in_review' ? 'checking' : 'started';
+  return 'todo';
+}
+// The ID check is what is left: steps 1-4 are done and the check is not passed, nor with the partner.
+const ID_LEFT = ['todo', 'started', 'failed'];
+const idLeftOf = (progress, id) => progress.next === 5 && ID_LEFT.includes(id);
+
 // Where someone is on the way to becoming a mentor, for the "Become a mentor" button on every page (docs/CLAUDE-CODE-MENTOR-BUTTON-SIGNED-IN.md):
 //   asker   not a mentor applicant: "Become a mentor"
 //   draft   an application started and not sent (or sent back): "Continue your application" (step: the first unfinished step, done: how
 //           many of the 5 are done)
 //   sent    sent and waiting for a decision: "Application in review"
 //   mentor  approved (or suspended): nothing extra
+// A draft or a sent application also says where its ID check stands (id: idStatusOf) and whether it is the one step left (idLeft): then
+// every page shows "One step left: confirm your identity" (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md).
 // (an admin sees nothing extra either: the pages check isAdmin)
 // Which of the steps 1-4 are done now. -> [bool, bool, bool, bool]
 async function stepsDone(user) {
@@ -351,10 +370,11 @@ async function funnel(days = 30) {
 async function progressFor(user) {
   if (!isMentor(user)) return { state: 'asker', step: null };
   if (user.verificationStatus === 'verified' || user.verificationStatus === 'suspended') return { state: 'mentor', step: null };
-  if (submitted(user)) return { state: 'sent', step: null };
   const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
   const p = progressOf(missingFor(user, evidence, stepMap), stepMap);
-  return { state: 'draft', step: p.next, done: p.count };
+  const id = idStatusOf(stepMap);
+  if (submitted(user)) return { state: 'sent', step: null, id, idLeft: idLeftOf(p, id) };
+  return { state: 'draft', step: p.next, done: p.count, id, idLeft: idLeftOf(p, id) };
 }
 
 // Specialty tags are optional: a mentor who left them empty gets them from their own words (the field, split at commas and "and"), which
@@ -399,6 +419,19 @@ async function submit(user, { req, res } = {}) {
   if (req) await require('./signals').record(req, res, user.id, 'application');
   require('./analysis').afterSubmit(user.id, trigger);
   return updated;
+}
+
+// The ID check passed: an application with nothing else missing is sent at once, with nothing more to press
+// (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 7). Never one that was turned down (that is sent again on purpose). -> the sent mentor, or null
+async function sendAfterIdPassed(userId) {
+  const user = await getUserById(userId);
+  if (!isMentor(user) || isLocked(user) || !['none', 'pending'].includes(user.verificationStatus || 'none')) return null;
+  const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
+  if (missingFor(user, evidence, stepMap).length || steps.effectiveStatus(stepMap.id_kyc) !== 'passed') return null;
+  const sent = await submit(user);
+  require('../notify').notifyApplicationReceived(sent);
+  require('../analytics').event('apply_sent', null);
+  return sent;
 }
 
 // "Edit my application": unlocks a submitted (or approved) application. An approved mentor leaves Browse experts until it is approved again.
@@ -446,6 +479,9 @@ async function applicationFor(user, stepMap) {
     evidence: evidence.map(evidenceForMentor),
     missing: missingFor(user, evidence, stepMap),
     progress: progressOf(missingFor(user, evidence, stepMap), stepMap),
+    // the ID check in one word, and whether it is the one step left (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
+    id: idStatusOf(stepMap),
+    idLeft: idLeftOf(progressOf(missingFor(user, evidence, stepMap), stepMap), idStatusOf(stepMap)),
     // why the story does not count yet, when it does not: 'short' | 'repeated' (docs/CLAUDE-CODE-STORY-STEP-CHECK.md)
     storyReason: storyVerdict(user.story, LIMITS.storyMin).reason,
     submittedAt: user.applicationSubmittedAt,
@@ -496,5 +532,5 @@ module.exports = {
   stepsDone, trackSteps, funnel, priceRangeFor, nichesOf, anyRegulated, EXTRA_NICHES_MAX, PRACTICE_KINDS,
   isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
-  bioToStory, applicationProgress, progressFor
+  bioToStory, applicationProgress, progressFor, idStatusOf, ID_LEFT, sendAfterIdPassed
 };

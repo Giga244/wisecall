@@ -142,7 +142,10 @@ router.delete('/evidence/:id', ...submit(async (user, b, req) => { await experie
 router.post('/submit', ...submit(async (user, b, req, res) => {
   const sentUser = await experience.submit(user, { req, res });
   const out = { user: meProfile(sentUser) };
-  require('../notify').notifyApplicationReceived(sentUser); // (what happens next, by email too)
+  // (what happens next, by email too; sent while the ID check is still to do: "one step left" instead, once, with a link that starts it)
+  const id = experience.idStatusOf(await steps.loadSteps(user.id));
+  if (experience.ID_LEFT.includes(id)) await require('../verification/reminders').oneStepLeft(sentUser);
+  else require('../notify').notifyApplicationReceived(sentUser);
   require('../analytics').event('mentor_application_submitted', req);
   require('../analytics').event('apply_sent', req);
   const source = require('../attribution').read(req);
