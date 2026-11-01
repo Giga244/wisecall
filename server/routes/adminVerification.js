@@ -285,6 +285,43 @@ router.post('/reports/:id/resolve', requireAuth, requireAdmin, asyncHandler(asyn
   }
 }));
 
+router.get('/question-reports', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ reports: await reports.listOpenForQuestions() });
+}));
+router.post('/question-reports/:id/resolve', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { await reports.resolveForQuestion(req.params.id, req.adminUser, b.resolution, b.note); res.json({ ok: true }); }
+  catch (e) {
+    if (e instanceof reports.ReportError) return res.status(REPORT_CODES[e.code] || 400).json({ error: e.code });
+    throw e;
+  }
+}));
+
+// ---- People to keep an eye on: minors, blocked contact details, the "unsafe" flag (docs/CLAUDE-CODE-ASKERS-16-PLUS.md part 6) ----------
+router.get('/people', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ people: await reports.people({ minor: req.query.minor === '1' }) });
+}));
+// "Unsafe" suspends a mentor while it is looked at: the usual suspension (their open questions are refunded, as with any suspension), and a flag that says why.
+// Reinstating them closes the flag.
+router.post('/people/:id/unsafe', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const reason = String((req.body || {}).reason || '').trim();
+  if (reason.length < 5) return res.status(400).json({ error: 'reason_required' });
+  try {
+    const out = await review.suspend({ mentorId: req.params.id, reason: `Marked unsafe: ${reason}`, admin: req.adminUser });
+    await require('../verification/flags').openFlag(req.params.id, 'unsafe', { reason: reason.slice(0, 500), by: req.adminUser.email });
+    res.json({ ok: true, ...(out && out.refunded !== undefined ? { refunded: out.refunded } : {}) });
+  } catch (e) { fail(res, e); }
+}));
+// A wrong birth year and month (a typing mistake, somebody's own request): cleared, and they are asked again at their next login.
+router.post('/people/:id/clear-age', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const { rowCount } = await require('../db').query('UPDATE users SET birth_ym = NULL, age_group = NULL, age_confirmed_at = NULL, parent_permission_at = NULL WHERE id = $1', [req.params.id]);
+  if (!rowCount) return res.status(404).json({ error: 'not_found' });
+  await steps.audit(req.params.id, steps.adminActor(req.adminUser), 'age_cleared', {});
+  res.json({ ok: true });
+}));
+
 // ---- Video interview slots ----------------------------------------------------------------------------
 router.get('/interviews', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   res.json({ slots: await interviews.listForAdmin() });

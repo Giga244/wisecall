@@ -4,6 +4,9 @@
 //   - an answer nobody has flagged is released automatically after LIMITS.probationHoldHours, unless
 //     the mentor has an open flag
 //   - the mentor's payout hold period starts when the answer is released, not when it was written
+//   - an answer to a 16-17-year-old is held too, for the first MINOR_ANSWER_HOLD_MONTHS after the site went live, and is NEVER released automatically: an admin
+//     approves it, and is reminded every 24 hours until they do (docs/CLAUDE-CODE-ASKERS-16-PLUS.md part 6). The mentor's 7-day deadline was met when they
+//     answered: a held answer is "answered", which the overdue-refund sweep leaves alone.
 const { query } = require('./db');
 const rules = require('./verification/rules');
 const steps = require('./verification/steps');
@@ -19,9 +22,17 @@ async function shouldHold(mentorId) {
   return rows[0].n < rules.LIMITS.probationAnswers;
 }
 
+// Does this answer to a minor wait for an admin? (The first months after the site went live; before that nobody can ask, and it would count as those months.)
+async function shouldHoldForMinor(booking) {
+  const months = require('./config').MINOR_ANSWER_HOLD_MONTHS;
+  if (!booking.askerMinor || !(months > 0)) return false;
+  const { rows } = await query(`SELECT at + make_interval(months => $1) > now() AS within FROM site_facts WHERE key = 'first_live'`, [months]);
+  return !rows[0] || rows[0].within;
+}
+
 // The columns that put an answer on hold. They are written in the same statement as the answer itself, so there is
 // never a moment when the answer is saved but the buyer could already read it.
-const holdPatch = () => ({ answerReview: 'held', answerHeldUntil: new Date(Date.now() + rules.LIMITS.probationHoldHours * HOUR) });
+const holdPatch = (minor = false) => ({ answerReview: 'held', answerHeldUntil: new Date(Date.now() + rules.LIMITS.probationHoldHours * HOUR), minor });
 
 // A new answer was held: the admins are emailed with a link to the review queue, so they can read it before it is released by itself
 // after LIMITS.probationHoldHours. Only the mentor's name and email go in it (escaped), never the question or the answer.
@@ -30,6 +41,10 @@ async function tellAdmins(mentor, booking) {
   const esc = require('./email').escapeHtml;
   const url = `${require('./config').PUBLIC_URL}/admin.html?tab=queue`;
   const hours = rules.LIMITS.probationHoldHours;
+  if (booking.answerMinorHoldAt) {
+    return notify.notifyAdmins('An answer to a 16-17-year-old is waiting for your check',
+      `<p>${esc(mentor ? mentor.name : '?')} answered a question from somebody under 18. They see it only after you approve it: it is never released automatically.</p><p><a href="${esc(url)}">Open the review queue</a> (${esc(url)})</p>`);
+  }
   await notify.notifyAdmins('An answer is waiting for review',
     `<p>${esc(mentor ? mentor.name : '?')} (${esc(mentor ? mentor.email : '?')}) sent answer ${n.n} of their first ${rules.LIMITS.probationAnswers}. The asker sees it only after
      a check, or automatically in ${hours} hours unless it is flagged.</p><p><a href="${esc(url)}">Open the review queue</a> (${esc(url)})</p>`);
@@ -77,6 +92,7 @@ async function releaseDue() {
   const { rows } = await query(
     `SELECT b.id FROM bookings b JOIN users u ON u.id = b.mentor_id
       WHERE b.answer_review = 'held' AND b.status = 'answered' AND b.answer_held_until <= now() AND b.answer_flagged_at IS NULL
+        AND b.answer_minor_hold_at IS NULL
         AND u.verification_status <> 'suspended'
         AND NOT EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = b.mentor_id AND f.status = 'open')
       ORDER BY b.answer_held_until LIMIT 50`
@@ -87,6 +103,21 @@ async function releaseDue() {
     catch (e) { console.error(`[jobs] could not release held answer ${id}:`, e.message); }
   }
   return n;
+}
+
+// Answers to minors still waiting after 24 hours: the admins are reminded, and again every 24 hours until they are dealt with. Each answer is claimed in one
+// statement, so two servers never send the same reminder. -> how many
+async function minorHoldReminders() {
+  const { rows } = await query(
+    `UPDATE bookings SET minor_hold_reminded_at = now()
+      WHERE answer_review = 'held' AND status = 'answered' AND answer_minor_hold_at <= now() - interval '24 hours'
+        AND (minor_hold_reminded_at IS NULL OR minor_hold_reminded_at <= now() - interval '24 hours') RETURNING id`);
+  if (rows.length) {
+    const url = `${require('./config').PUBLIC_URL}/admin.html?tab=queue`;
+    await notify.notifyAdmins('Reminder: answers to 16-17-year-olds are waiting for your check',
+      `<p>${rows.length} answer(s) to somebody under 18 have waited more than 24 hours. They are not released automatically.</p><p><a href="${url}">Open the review queue</a> (${url})</p>`);
+  }
+  return rows.length;
 }
 
 // The queue an admin works through.
@@ -100,7 +131,7 @@ async function queue() {
   );
   return rows.map((r) => ({
     id: r.id, question: r.question, answer: r.answer, answeredAt: r.answered_at, heldUntil: r.answer_held_until,
-    flagged: Boolean(r.answer_flagged_at), mentorFlagged: r.mentor_flagged, answerNumber: r.answer_number, of: rules.LIMITS.probationAnswers,
+    flagged: Boolean(r.answer_flagged_at), mentorFlagged: r.mentor_flagged, minorHold: Boolean(r.answer_minor_hold_at), askerMinor: Boolean(r.asker_minor), answerNumber: r.answer_number, of: rules.LIMITS.probationAnswers,
     mentor: { id: r.mentor_id, name: r.mentor_name, email: r.mentor_email, niche: r.mentor_niche }
   }));
 }
@@ -118,7 +149,7 @@ function forViewer(booking, viewerId) {
 
 // What the asker or the mentor is SENT about a booking, at the edge of the API (the server has used the rest by then): forViewer, without the
 // moderation's and the bank's internals, and a mentor does not get the asker's account id. (Admins have their own views.)
-const NOT_SENT = ['reminderSentAt', 'answerFlaggedAt', 'answerHeldUntil', 'partialRefundStartedAt', 'partialRefundAmount', 'refundRequestedAt', 'answerReview'];
+const NOT_SENT = ['answerMinorHoldAt', 'reminderSentAt', 'answerFlaggedAt', 'answerHeldUntil', 'partialRefundStartedAt', 'partialRefundAmount', 'refundRequestedAt', 'answerReview'];
 function trimForClient(b, viewerId) {
   const out = { ...b };
   for (const k of NOT_SENT) delete out[k];
@@ -127,4 +158,4 @@ function trimForClient(b, viewerId) {
 }
 const toClient = (booking, viewerId) => trimForClient(forViewer(booking, viewerId), viewerId);
 
-module.exports = { shouldHold, holdPatch, tellAdmins, release, flag, reject, releaseDue, queue, forViewer, toClient, trimForClient };
+module.exports = { shouldHold, shouldHoldForMinor, minorHoldReminders, holdPatch, tellAdmins, release, flag, reject, releaseDue, queue, forViewer, toClient, trimForClient };

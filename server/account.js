@@ -178,7 +178,7 @@ async function anonymize(userId) {
       'DELETE FROM discount_codes WHERE user_id = $1', 'UPDATE live_ratings SET comment = NULL WHERE rater_id = $1',
       'DELETE FROM profile_items WHERE user_id = $1', 'DELETE FROM profile_settings WHERE user_id = $1', "UPDATE profile_reports SET details = NULL WHERE reporter_id = $1 OR owner_id = $1",
       // (the words they wrote in disputes, reports and a live session's question panel: docs/REVIEW-2.md #6)
-      'UPDATE disputes SET details = NULL WHERE opened_by = $1', 'UPDATE message_reports SET details = NULL WHERE reporter_id = $1',
+      'UPDATE disputes SET details = NULL WHERE opened_by = $1', 'UPDATE message_reports SET details = NULL WHERE reporter_id = $1', 'UPDATE question_reports SET details = NULL WHERE reporter_id = $1',
       'UPDATE live_reports SET details = NULL WHERE reporter_id = $1', "UPDATE live_questions SET body = '[deleted]' WHERE author_id = $1"
     ]) await c.query(sql, [userId]);
     await c.query('DELETE FROM waitlist WHERE lower(email) = lower($1)', [u.email]);

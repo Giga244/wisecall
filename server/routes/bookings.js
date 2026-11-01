@@ -216,9 +216,10 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
 
   if (await refuseContact(res, existing.mentorId, 'answer', checked.text, existing.askerMinor)) return;
 
-  // One of a new mentor's first answers? Then it waits for an admin before the buyer sees it.
-  const held = await probation.shouldHold(existing.mentorId);
-  const booking = await claimAnswer(existing.id, checked.text, held ? probation.holdPatch() : null);
+  // One of a new mentor's first answers, or an answer to somebody under 18? Then it waits for an admin before the buyer sees it.
+  const heldForMinor = await probation.shouldHoldForMinor(existing);
+  const held = heldForMinor || await probation.shouldHold(existing.mentorId);
+  const booking = await claimAnswer(existing.id, checked.text, held ? probation.holdPatch(heldForMinor) : null);
   if (!booking) { // somebody (the same mentor, twice) answered a moment before, the question was refunded meanwhile, or the deadline passed
     const now = await getBookingById(existing.id);
     if (now && (now.status === 'answered' || now.answeredAt)) return res.status(409).json({ error: 'already_answered' });
@@ -238,6 +239,19 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
     probation.tellAdmins(mentorNow, booking).catch((e) => console.error('[probation] admin notice failed:', e.message));
   }
   res.json({ booking: probation.toClient(booking, req.userToken.id) });
+}));
+
+// A mentor reports a question (server/reports.js): to the admins, and no money is touched.
+router.post('/:id/report-question', requireAuth, asyncHandler(async (req, res) => {
+  const reports = require('../reports');
+  const b = req.body || {};
+  try {
+    await reports.createForQuestion({ reporterId: req.userToken.id, bookingId: req.params.id, reason: b.reason, details: b.details });
+    res.status(201).json({ ok: true });
+  } catch (e) {
+    if (e instanceof reports.ReportError) return res.status({ not_found: 404, already_reported: 409 }[e.code] || 400).json({ error: e.code });
+    throw e;
+  }
 }));
 
 // "Report a problem with this answer" (the asker, within DISPUTE_DAYS of being able to read it; once per question).

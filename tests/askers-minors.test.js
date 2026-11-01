@@ -23,7 +23,12 @@ async function waitFor(fn, ms = 15000) {
   }
 }
 const row = async (id) => (await pool.query('SELECT * FROM bookings WHERE id = $1', [id])).rows[0];
-const ask = (c, mentorId, extra = {}) => c.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion('Which university should I choose for computer science?'), ...extra } });
+// (at most a few open free questions per person: earlier ones of these tests are closed first)
+const ask = async (c, mentorId, extra = {}) => {
+  const me = (await c.api('/me')).user.id;
+  await pool.query(`UPDATE bookings SET status = 'refunded', refunded_at = now() WHERE seeker_id = $1 AND amount = 0 AND status = 'paid' AND answered_at IS NULL`, [me]);
+  return c.api('/bookings', { method: 'POST', body: { mentorId, question: longQuestion('Which university should I choose for computer science?'), ...extra } });
+};
 async function payAtBank(c, booking) {
   await client(base).api(`/mock-bank/orders/${booking.providerOrderId}/complete`, { method: 'POST', body: { outcome: 'success' } });
   await c.api(`/bookings/${booking.id}/sync`, { method: 'POST' });
@@ -31,7 +36,7 @@ async function payAtBank(c, booking) {
 }
 async function makeMentor(name, email, price, niche = 'business') {
   const c = await signupVerified(base, name, email);
-  await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Career coach', niche, price, proofUrl: `https://example.org/in/${email.split('@')[0]}`, sampleAnswer: SAMPLE } });
+  await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Career coach', niche, price, ...(price === 0 ? { freeWeeklyCap: 100 } : {}), proofUrl: `https://example.org/in/${email.split('@')[0]}`, sampleAnswer: SAMPLE } });
   await approveMentor(admin, c);
   await addPayoutDetails(c);
   return { c, id: (await c.api('/me')).user.id };
@@ -183,5 +188,163 @@ describe('what a mentor sees', () => {
   test('a minor is not offered to publish their question, and cannot', async () => {
     const r = await minor.api('/answers/offer', { method: 'POST', body: { bookingId: id } });
     assert.equal(r.status, 404);
+  });
+});
+
+describe('the check on answers to minors', () => {
+  const ANSWER = longAnswer('Start with the entry requirements of each programme, then compare what graduates do three years later.');
+  const heldQueue = async () => (await admin.api('/admin/answers')).answers;
+  let id;
+  before(async () => {
+    const r = await ask(minor, freeMentorId);
+    id = r.booking.id;
+    assert.equal((await freeMentor.api(`/bookings/${id}/answer`, { method: 'POST', body: { answer: ANSWER } })).status, 200);
+  });
+
+  test('the answer is invisible to the minor until an admin approves it; the mentor still sees theirs', async () => {
+    const seen = (await minor.api('/bookings/mine')).asked.find((b) => b.id === id);
+    assert.equal(seen.answer, null);
+    assert.equal(seen.answerHeld, true);
+    assert.equal(seen.status, 'answered');
+    assert.equal((await minor.api(`/bookings/${id}`)).booking.answer, null);
+    assert.equal((await freeMentor.api(`/bookings/${id}`)).booking.answer, ANSWER);
+    const q = (await heldQueue()).find((a) => a.id === id);
+    assert.equal(q.minorHold, true);
+  });
+
+  test('it is never released by itself, and the deadline passing changes nothing: the mentor met it when they answered', async () => {
+    // (the check window is long over, and so is the answer deadline)
+    await pool.query(`UPDATE bookings SET answer_held_until = now() - interval '2 days', answer_deadline = now() - interval '1 minute' WHERE id = $1`, [id]);
+    await wait(2500);
+    const b = await row(id);
+    assert.equal(b.answer_review, 'held');
+    assert.equal(b.status, 'answered', 'not refunded or closed for being late');
+    assert.equal((await minor.api('/bookings/mine')).asked.find((x) => x.id === id).answer, null);
+  });
+
+  test('after 24 hours the admins get a reminder, again a day later, not on every sweep', async () => {
+    assert.equal((await row(id)).minor_hold_reminded_at, null, 'not before 24 hours');
+    await pool.query(`UPDATE bookings SET answer_minor_hold_at = now() - interval '25 hours' WHERE id = $1`, [id]);
+    const first = await waitFor(async () => (await row(id)).minor_hold_reminded_at);
+    await wait(2500);
+    assert.equal(+(await row(id)).minor_hold_reminded_at, +first, 'once per day');
+    assert.match(srv.logs(), /reminded the admins of 1 answer/);
+    await pool.query(`UPDATE bookings SET minor_hold_reminded_at = now() - interval '25 hours' WHERE id = $1`, [id]);
+    await waitFor(async () => +(await row(id)).minor_hold_reminded_at > Date.now() - 60000);
+  });
+
+  test('one tap in admin: the minor can read it now', async () => {
+    assert.equal((await admin.api(`/admin/answers/${id}/approve`, { method: 'POST' })).status, 200);
+    const seen = (await minor.api('/bookings/mine')).asked.find((b) => b.id === id);
+    assert.equal(seen.answer, ANSWER);
+    assert.equal(seen.answerHeld, false);
+    assert.ok(!(await heldQueue()).some((a) => a.id === id));
+    assert.ok((await row(id)).answer_released_at);
+  });
+
+  test('a paid answer: the earnings wait for the approval, and the hold counts from it', async () => {
+    const r = await ask(minor, paidMentorId, { adultPayer: true });
+    await payAtBank(minor, r.booking);
+    assert.equal((await paidMentor.api(`/bookings/${r.booking.id}/answer`, { method: 'POST', body: { answer: ANSWER } })).status, 200);
+    const count = async () => (await pool.query('SELECT count(*)::int AS n FROM payouts WHERE booking_id = $1', [r.booking.id])).rows[0].n;
+    assert.equal(await count(), 0, 'no earnings while it waits');
+    assert.equal((await admin.api(`/admin/answers/${r.booking.id}/approve`, { method: 'POST' })).status, 200);
+    const { rows: [p] } = await pool.query('SELECT amount, payable_at FROM payouts WHERE booking_id = $1', [r.booking.id]);
+    assert.equal(p.amount, 3200, 'the same 80 %');
+    assert.ok(Math.abs(+new Date(p.payable_at) - Date.now() - 7 * 86400000) < 60000, 'the usual 7 days from now');
+  });
+
+  test('an adult\'s answer is not held for this', async () => {
+    const r = await ask(adult, freeMentorId);
+    assert.equal((await freeMentor.api(`/bookings/${r.booking.id}/answer`, { method: 'POST', body: { answer: ANSWER } })).status, 200);
+    assert.equal((await row(r.booking.id)).answer_review, 'none');
+  });
+
+  test('the check ends 3 months after the first live day', async () => {
+    await waitFor(async () => (await pool.query(`SELECT 1 FROM site_facts WHERE key = 'first_live'`)).rows[0]);
+    await pool.query(`UPDATE site_facts SET at = now() - interval '4 months' WHERE key = 'first_live'`);
+    const r = await ask(minor, freeMentorId);
+    assert.equal((await freeMentor.api(`/bookings/${r.booking.id}/answer`, { method: 'POST', body: { answer: ANSWER } })).status, 200);
+    const b = await row(r.booking.id);
+    assert.equal(b.answer_review, 'none');
+    assert.equal(b.answer_minor_hold_at, null);
+    await pool.query(`UPDATE site_facts SET at = now() WHERE key = 'first_live'`);
+  });
+});
+
+describe('reports and the admin view', () => {
+  let answered, unsafeMentor, unsafeMentorId;
+  before(async () => {
+    const r = await ask(minor, paidMentorId, { adultPayer: true });
+    await payAtBank(minor, r.booking);
+    answered = r.booking.id;
+    await paidMentor.api(`/bookings/${answered}/answer`, { method: 'POST', body: { answer: longAnswer('Compare the programmes by what their graduates do, not by their brochures.') } });
+    await admin.api(`/admin/answers/${answered}/approve`, { method: 'POST' });
+    ({ c: unsafeMentor, id: unsafeMentorId } = await makeMentor('Unsafe Una', 'una@example.com', 0));
+  });
+
+  test('the asker reports an answer: it reaches the admin queue with the answer', async () => {
+    const sent = await minor.api(`/experts/${paidMentorId}/report`, { method: 'POST', body: { reason: 'contact_request', details: 'Asked me to write to them elsewhere', bookingId: answered } });
+    assert.ok([200, 201].includes(sent.status), sent.text);
+    const { reports } = await admin.api('/admin/reports');
+    const r = reports.find((x) => x.bookingId === answered);
+    assert.equal(r.reason, 'contact_request');
+    assert.equal(r.askerMinor, true);
+    assert.ok(r.answer);
+    assert.equal(r.reporter.email, 'luka@example.com');
+  });
+
+  test('the mentor reports a question: once, only their own, and no money moves', async () => {
+    const q = await ask(adult, freeMentorId);
+    const res = await freeMentor.api(`/bookings/${q.booking.id}/report-question`, { method: 'POST', body: { reason: 'inappropriate', details: 'Not a study question' } });
+    assert.equal(res.status, 201, res.text);
+    assert.equal((await freeMentor.api(`/bookings/${q.booking.id}/report-question`, { method: 'POST', body: { reason: 'spam' } })).error, 'already_reported');
+    assert.equal((await paidMentor.api(`/bookings/${q.booking.id}/report-question`, { method: 'POST', body: { reason: 'spam' } })).status, 404, 'not their question');
+    assert.equal((await freeMentor.api(`/bookings/${q.booking.id}/report-question`, { method: 'POST', body: { reason: 'nonsense' } })).error, 'invalid_reason');
+    assert.equal((await row(q.booking.id)).status, 'paid');
+    const { reports } = await admin.api('/admin/question-reports');
+    const r = reports.find((x) => x.bookingId === q.booking.id);
+    assert.equal(r.asker.email, 'ana-adult@example.com');
+    assert.equal((await admin.api(`/admin/question-reports/${r.id}/resolve`, { method: 'POST', body: { resolution: 'dismissed', note: 'A fair question' } })).status, 200);
+    assert.ok(!(await admin.api('/admin/question-reports')).reports.some((x) => x.id === r.id));
+  });
+
+  test('admin: the minor filter, the permission time, blocked counts per person. Not for everybody else', async () => {
+    assert.equal((await minor.api('/admin/people')).status, 403);
+    const { people } = await admin.api('/admin/people?minor=1');
+    const luka = people.find((p) => p.email === 'luka@example.com');
+    assert.equal(luka.minor, true);
+    assert.ok(luka.parentPermissionAt);
+    assert.ok(luka.blocked >= 1, 'the Telegram question counted');
+    assert.ok(!people.some((p) => p.email === 'ana-adult@example.com'), 'only minors under that filter');
+    const all = (await admin.api('/admin/people')).people;
+    assert.ok(all.find((p) => p.email === 'ana-adult@example.com').blocked >= 1, 'an adult with a stopped number is on the full list');
+    assert.ok(all.find((p) => p.email === 'fred@example.com').blocked >= 1, 'and a mentor');
+  });
+
+  test('"unsafe" suspends the mentor pending review, with a flag; reinstating closes it', async () => {
+    const q = await ask(adult, unsafeMentorId);
+    assert.equal((await admin.api(`/admin/people/${unsafeMentorId}/unsafe`, { method: 'POST', body: { reason: 'no' } })).error, 'reason_required');
+    assert.equal((await admin.api(`/admin/people/${unsafeMentorId}/unsafe`, { method: 'POST', body: { reason: 'Asked a student for their number' } })).status, 200);
+    const u = (await unsafeMentor.api('/me')).user;
+    assert.equal(u.verificationStatus, 'suspended');
+    const open = async () => (await pool.query(`SELECT count(*)::int AS n FROM mentor_flags WHERE mentor_id = $1 AND kind = 'unsafe' AND status = 'open'`, [unsafeMentorId])).rows[0].n;
+    assert.equal(await open(), 1);
+    assert.ok((await admin.api('/admin/people')).people.find((p) => p.id === unsafeMentorId).unsafe);
+    assert.equal((await unsafeMentor.api(`/bookings/${q.booking.id}/answer`, { method: 'POST', body: { answer: longAnswer('x y z') } })).error, 'suspended');
+    assert.ok(!(await client(base).api('/experts')).experts.some((e) => e.id === unsafeMentorId), 'off the site');
+    const back = await admin.api(`/admin/mentors/${unsafeMentorId}/reinstate`, { method: 'POST', body: { reason: 'Looked at it: nothing happened' } });
+    assert.equal(back.status, 200, back.text);
+    assert.equal(await open(), 0);
+  });
+
+  test('clearing a wrong birth year and month: they are asked again', async () => {
+    const c = await signupMinor('Typo Tamta', 'tamta@example.com');
+    const id = (await c.api('/me')).user.id;
+    assert.equal((await admin.api(`/admin/people/${id}/clear-age`, { method: 'POST' })).status, 200);
+    const me = (await c.api('/me')).user;
+    assert.equal(me.needsAge, true);
+    assert.equal(me.parentPermissionAt, null);
+    assert.equal((await c.api('/me/age', { method: 'POST', body: { birthYm: '1990-01' } })).user.ageGroup, 'adult');
   });
 });

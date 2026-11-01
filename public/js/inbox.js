@@ -196,7 +196,7 @@
     if (th.kind === 'booking') {
       const b = data.booking;
       body += `<div class="qa-card"><h3 class="small">${esc(t(th.role === 'asker' ? 'inbox.yourQuestion' : 'inbox.theQuestion'))}</h3><p class="msg-body">${esc(b.question)}</p></div>`;
-      if (b.answer) body += `<div class="qa-card qa-answer"><h3 class="small">${esc(t('inbox.theAnswer'))}</h3><p class="msg-body">${esc(b.answer)}</p>${b.answerHeld ? `<p class="small muted">${esc(t('inbox.answerHeld'))}</p>` : ''}</div>`;
+      if (b.answer) body += `<div class="qa-card qa-answer"><h3 class="small">${esc(t('inbox.theAnswer'))}</h3><p class="msg-body">${esc(b.answer)}</p>${b.answerHeld ? `<p class="small muted">${esc(t(b.askerMinor ? 'inbox.answerHeldMinor' : 'inbox.answerHeld'))}</p>` : ''}</div>`;
       else if (b.status === 'paid') body += `<p class="muted small">${esc(fill('inbox.waitingAnswer', { date: b.answerDeadline ? day(b.answerDeadline) : '—' }))}</p>`;
     }
     body += `<ol class="msg-list">${data.messages.map(messageHtml).join('')}</ol>`;

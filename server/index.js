@@ -127,6 +127,7 @@ app.use('/api/verification/evidence', rateLimit({ windowMs: 60 * 60 * 1000, max:
 app.use('/api/verification/experience', rateLimit({ windowMs: 60 * 60 * 1000, max: 120 }));
 app.use(/^\/api\/admin\/mentors\/[^/]+\/analysis$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use(/^\/api\/experts\/[^/]+\/report$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
+app.use(/^\/api\/bookings\/[^/]+\/report-question$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
 app.use('/api/me/photo', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use(/^\/api\/ratings\/[^/]+\/(report|reply)$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use(/^\/api\/bookings\/[^/]+\/ratings$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));

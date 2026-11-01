@@ -496,6 +496,7 @@ async function sendAnswer(req, res, slug) {
     <div class="answer-full-a">${paText(a.answer)}</div>
     <p class="answer-helpful"><button type="button" class="btn btn-outline btn-sm" id="helpfulBtn" data-slug="${escapeHtml(a.slug)}">${escapeHtml(d['answers.helpful'])}</button>
       <span class="muted small" id="helpfulCount" aria-live="polite">${escapeHtml((d['answers.helpfulCount'] || '{n}').replace('{n}', a.helpful))}</span></p>
+    <div id="answerReport" data-mentor="${escapeHtml(m.id || '')}"></div>
   </article>
   ${mentorCard}
   ${found.related.length ? `<section class="answers-related"><h2>${escapeHtml(d['answers.related'])}</h2>${found.related.map((x) => answerCard(x, prefix, d)).join('')}</section>` : ''}

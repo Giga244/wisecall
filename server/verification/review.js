@@ -173,6 +173,7 @@ async function reinstate({ mentorId, reason, admin, reapprove }) {
   if (mentor.verificationStatus !== 'suspended') throw new VerificationError('invalid_state');
   const pending = await updateUser(mentor.id, { verificationStatus: 'pending', suspendedAt: null, suspensionReason: null, verificationNote: null });
   await steps.audit(mentor.id, steps.adminActor(admin), 'reinstated', { from: 'suspended', to: 'pending', reason: text });
+  await require('./flags').resolveFlags(mentor.id, ['unsafe'], steps.adminActor(admin), `reinstated: ${text}`);
   if (!reapprove) return { mentor: pending, reapproved: false };
   const summary = await steps.describeFor(pending);
   if (!summary.ready) return { mentor: pending, reapproved: false, missing: summary.missing };

@@ -117,6 +117,12 @@ async function releaseHeldAnswers() {
 }
 
 // Follow-up questions waiting for the mentor's reply: a reminder after 2 days; after 3, the asker may report it and the admins are told.
+// Answers to minors nobody has checked after 24 hours: a reminder to the admins (they are never released by themselves).
+async function minorHoldReminders() {
+  const n = await require('./probation').minorHoldReminders();
+  if (n) console.log(`[jobs] reminded the admins of ${n} answer(s) to minors`);
+}
+
 async function followUpDeadlines() {
   const r = await require('./inbox').followUpSweep();
   if (r.reminded || r.missed) console.log(`[jobs] follow-ups: ${r.reminded} reminder(s), ${r.missed} reply deadline(s) missed`);
@@ -206,6 +212,7 @@ async function runSweep({ wait = false } = {}) {
       await purgeUnpaid();
       await purgeDocuments();
       await releaseHeldAnswers();
+      await minorHoldReminders();
       await followUpDeadlines();
       await checkLicenses();
       await notifyWaitingList();

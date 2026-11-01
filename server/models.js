@@ -113,6 +113,7 @@ function bookingFromRow(r) {
     declinedAt: r.declined_at,
     declineReason: r.decline_reason,
     askerMinor: Boolean(r.asker_minor), // (the asker was 16-17 when they asked)
+    answerMinorHoldAt: r.answer_minor_hold_at || null, // (waits for an admin, with no automatic release: server/probation.js)
     refundedAmount: r.refunded_amount,
     partialRefundStartedAt: r.partial_refund_started_at,
     partialRefundAmount: r.partial_refund_amount, // (sent to the bank, its answer not known yet: docs/REVIEW-2.md #3)
@@ -233,9 +234,10 @@ async function claimAnswer(id, answer, hold) {
   if (!isUuid(id)) return null;
   const { rows } = await query(
     `UPDATE bookings SET answer = $2, status = 'answered', answered_at = now(),
-            answer_review = COALESCE($3, answer_review), answer_held_until = COALESCE($4, answer_held_until)
+            answer_review = COALESCE($3, answer_review), answer_held_until = COALESCE($4, answer_held_until),
+            answer_minor_hold_at = CASE WHEN $5::boolean THEN now() END
       WHERE id = $1 AND status = 'paid' AND answered_at IS NULL AND declined_at IS NULL AND (answer_deadline IS NULL OR answer_deadline > now()) RETURNING *`,
-    [id, answer, hold ? hold.answerReview : null, hold ? hold.answerHeldUntil : null]
+    [id, answer, hold ? hold.answerReview : null, hold ? hold.answerHeldUntil : null, Boolean(hold && hold.minor)]
   );
   return bookingFromRow(rows[0]);
 }

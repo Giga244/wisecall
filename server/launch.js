@@ -8,6 +8,7 @@ const config = require('./config');
 const { listableSql } = require('./models');
 
 let lastCheck = 0;
+let firstLiveKept = false;
 
 async function refresh() {
   const before = config.LAUNCH_MODE;
@@ -18,6 +19,11 @@ async function refresh() {
     console.error('[launch] could not count the listed mentors:', e.message);
   }
   lastCheck = Date.now();
+  // (the first day the site is live is kept, once: the check on answers to minors counts from it, server/probation.js)
+  if (!firstLiveKept && config.LAUNCH_MODE === 'live') {
+    try { await query(`INSERT INTO site_facts (key) VALUES ('first_live') ON CONFLICT (key) DO NOTHING`); firstLiveKept = true; }
+    catch (e) { console.error('[launch] could not keep the first live day:', e.message); }
+  }
   if (before !== config.LAUNCH_MODE) console.log(`[launch] the site is now in ${config.LAUNCH_MODE.toUpperCase()} mode (${config.LISTED_MENTORS} listed mentor(s))`);
   return config.LISTED_MENTORS;
 }

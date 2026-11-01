@@ -3,7 +3,13 @@
 // browser, which the server only stores as a hash).
 (async function () {
   await WisecallI18n.initI18n();
-  await WisecallNav.initNav();
+  const viewer = await WisecallNav.initNav();
+  // (one published answer: the report button, docs/CLAUDE-CODE-ASKERS-16-PLUS.md part 6)
+  const reportBox = document.getElementById('answerReport');
+  if (reportBox && reportBox.dataset.mentor) {
+    reportBox.innerHTML = viewer ? WisecallReport.buttonHtml({ mentorId: reportBox.dataset.mentor }) : WisecallReport.html(reportBox.dataset.mentor, null, false);
+    WisecallReport.wire(reportBox);
+  }
   const t = WisecallI18n.t;
 
   // A new search or field: while the next page is on its way, the list shows three answers as skeletons (and "Loading…" for screen

@@ -32,6 +32,8 @@ const config = {
   // The asker can report a problem with an answer ("dispute") this many days after they can read it. Earnings are never payable
   // before this window has passed, whatever PAYOUT_HOLD_DAYS says.
   DISPUTE_DAYS: int(env.DISPUTE_DAYS, 7),
+  // Answers to 16-17-year-olds wait for an admin for this many months from the first day the site was live (0: no check).
+  MINOR_ANSWER_HOLD_MONTHS: int(env.MINOR_ANSWER_HOLD_MONTHS, 3),
   // What a mentor is told after "Submit for review": "We review applications within N working days" (apply.html). Change it when the
   // team's real target changes.
   MENTOR_REVIEW_DAYS: Math.max(1, int(env.MENTOR_REVIEW_DAYS, 2)),

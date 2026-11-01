@@ -15,7 +15,7 @@
   let tab = 'mentors';
   const MENTOR_FILTERS = ['pending', 'verified', 'failed_step', 'rejected', 'suspended', ''];
   const BOOKING_FILTERS = ['paid', 'answered', 'refund_pending', 'refunded', 'pending_payment', ''];
-  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist', 'niches', 'support', 'disputes', 'overview', 'answers', 'requests', 'live']; // tabs that have no status chips
+  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist', 'niches', 'support', 'disputes', 'overview', 'answers', 'requests', 'live', 'safety']; // tabs that have no status chips
   const tabs = document.getElementById('adminTabs');
 
   function escapeHtml(str) {
@@ -35,6 +35,8 @@
       const qs = tab === 'mentors' && activeStatus === 'pending' ? '?queue=needs_human' : (activeStatus ? `?status=${activeStatus}` : '');
       if (tab === 'interviews') {
         await AdminInterviews.render(content);
+      } else if (tab === 'safety') {
+        await AdminSafety.render(content);
       } else if (tab === 'queue') {
         await AdminQueue.render(content);
       } else if (tab === 'reviews') {

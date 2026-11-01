@@ -7,7 +7,8 @@ const flags = require('./verification/flags');
 const notify = require('./notify');
 const { getUserById } = require('./models');
 
-const REASONS = ['misleading', 'fake_credentials', 'inappropriate', 'spam', 'other'];
+const REASONS = ['misleading', 'fake_credentials', 'inappropriate', 'spam', 'other', 'contact_request', 'unsafe'];
+const QUESTION_REASONS = ['contact_request', 'inappropriate', 'unsafe', 'spam', 'other'];
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 class ReportError extends Error {
@@ -45,12 +46,14 @@ async function create({ reporter, mentorId, bookingId, reason, details }) {
 async function listOpen() {
   const { rows } = await query(
     `SELECT r.*, m.name AS mentor_name, m.email AS mentor_email, m.verification_status AS mentor_status, p.name AS reporter_name, p.email AS reporter_email,
-            (SELECT count(*)::int FROM mentor_reports x WHERE x.mentor_id = r.mentor_id AND x.status = 'open') AS open_for_mentor
-       FROM mentor_reports r JOIN users m ON m.id = r.mentor_id LEFT JOIN users p ON p.id = r.reporter_id
+            (SELECT count(*)::int FROM mentor_reports x WHERE x.mentor_id = r.mentor_id AND x.status = 'open') AS open_for_mentor,
+            b.question AS booking_question, b.answer AS booking_answer, b.asker_minor
+       FROM mentor_reports r JOIN users m ON m.id = r.mentor_id LEFT JOIN users p ON p.id = r.reporter_id LEFT JOIN bookings b ON b.id = r.booking_id
       WHERE r.status = 'open' ORDER BY r.created_at LIMIT 200`
   );
   return rows.map((r) => ({
     id: r.id, reason: r.reason, details: r.details, createdAt: r.created_at, bookingId: r.booking_id, openForMentor: r.open_for_mentor,
+    question: r.booking_question || null, answer: r.booking_answer || null, askerMinor: Boolean(r.asker_minor),
     mentor: { id: r.mentor_id, name: r.mentor_name, email: r.mentor_email, status: r.mentor_status },
     reporter: r.reporter_id ? { name: r.reporter_name, email: r.reporter_email } : null
   }));
@@ -74,4 +77,57 @@ async function resolve(id, admin, resolution, note) {
   if (left < rules.LIMITS.reportsToFlag) await flags.resolveFlags(mentorId, ['reports'], steps.adminActor(admin), `reports ${resolution}: ${text}`);
 }
 
-module.exports = { REASONS, ReportError, create, listOpen, resolve };
+// ---- A mentor reports a question. No money is touched: an admin reads it, and can mark the question's asker or suspend whoever it concerns by hand. ----
+const isUuid = (v) => /^[0-9a-f-]{36}$/i.test(String(v || ''));
+async function createForQuestion({ reporterId, bookingId, reason, details }) {
+  if (!QUESTION_REASONS.includes(reason)) throw new ReportError('invalid_reason');
+  const text = details === undefined || details === null ? '' : String(details).trim();
+  if (text.length > 1000) throw new ReportError('details_too_long');
+  const { rows: [b] } = await query('SELECT id, asker_minor FROM bookings WHERE id = $1 AND mentor_id = $2', [isUuid(bookingId) ? bookingId : null, reporterId]);
+  if (!b) throw new ReportError('not_found');
+  try {
+    await query('INSERT INTO question_reports (booking_id, reporter_id, reason, details) VALUES ($1, $2, $3, $4)', [b.id, reporterId, reason, text || null]);
+  } catch (e) {
+    if (e.code === '23505') throw new ReportError('already_reported');
+    throw e;
+  }
+  notify.notifyAdmins(`A question was reported${b.asker_minor ? ' (the asker is 16-17)' : ''}`, `<p>Reason: ${esc(reason)}. Open the review queue in the admin panel.</p>`);
+}
+async function listOpenForQuestions() {
+  const { rows } = await query(
+    `SELECT r.*, b.question, b.asker_minor, a.name AS asker_name, a.email AS asker_email, p.name AS reporter_name, p.email AS reporter_email
+       FROM question_reports r JOIN bookings b ON b.id = r.booking_id JOIN users a ON a.id = b.seeker_id LEFT JOIN users p ON p.id = r.reporter_id
+      WHERE r.status = 'open' ORDER BY r.created_at LIMIT 200`);
+  return rows.map((r) => ({
+    id: r.id, reason: r.reason, details: r.details, createdAt: r.created_at, bookingId: r.booking_id, question: r.question, askerMinor: Boolean(r.asker_minor),
+    asker: { name: r.asker_name, email: r.asker_email }, reporter: r.reporter_id ? { name: r.reporter_name, email: r.reporter_email } : null
+  }));
+}
+async function resolveForQuestion(id, admin, resolution, note) {
+  if (!['dismissed', 'upheld'].includes(resolution)) throw new ReportError('invalid_resolution');
+  const text = String(note || '').trim();
+  if (text.length < 5) throw new ReportError('reason_required');
+  if (!isUuid(id)) throw new ReportError('not_found');
+  const { rowCount } = await query(
+    `UPDATE question_reports SET status = 'resolved', resolution = $2, resolution_note = $3, resolved_by = $4, resolved_at = now() WHERE id = $1 AND status = 'open'`,
+    [id, resolution, text.slice(0, 1000), admin.id]);
+  if (!rowCount) throw new ReportError('not_found');
+}
+
+// ---- The admin's list of people (docs/CLAUDE-CODE-ASKERS-16-PLUS.md part 6): the minors, and whoever had contact details stopped, with the counts. ----
+async function people({ minor = false } = {}) {
+  const { rows } = await query(
+    `SELECT * FROM (
+       SELECT u.id, u.name, u.email, u.role, u.verification_status, u.birth_ym, u.age_group, u.parent_permission_at, u.created_at,
+              (SELECT count(*)::int FROM contact_blocks c WHERE c.user_id = u.id) + (SELECT count(*)::int FROM blocked_messages m WHERE m.sender_id = u.id) AS blocked,
+              EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = u.id AND f.kind = 'unsafe' AND f.status = 'open') AS unsafe
+         FROM users u WHERE u.deleted_at IS NULL) p
+      WHERE p.age_group = 'minor_16_17' OR (NOT $1::boolean AND (p.blocked > 0 OR p.unsafe))
+      ORDER BY p.blocked DESC, p.created_at DESC LIMIT 300`, [minor]);
+  return rows.map((r) => ({
+    id: r.id, name: r.name, email: r.email, role: r.role, verificationStatus: r.verification_status, birthYm: r.birth_ym, minor: r.age_group === 'minor_16_17',
+    parentPermissionAt: r.parent_permission_at, blocked: r.blocked, unsafe: r.unsafe
+  }));
+}
+
+module.exports = { REASONS, QUESTION_REASONS, ReportError, create, listOpen, resolve, createForQuestion, listOpenForQuestions, resolveForQuestion, people };

@@ -105,7 +105,8 @@
     } else if (b.status === 'answered' && b.refundedAmount) {
       text = t('dash.refund.partial').replace('{amount}', money(b.refundedAmount));
     } else if (b.status === 'answered' && b.answerHeld) {
-      text = t(b.__role === 'mentor' ? 'dash.answer.held.mentor' : 'dash.answer.held.buyer');
+      // (an answer to somebody under 18 is checked whoever the mentor is)
+      text = t(b.__role === 'mentor' ? (b.askerMinor ? 'dash.answer.held.mentorMinor' : 'dash.answer.held.mentor') : (b.askerMinor ? 'dash.answer.held.minor' : 'dash.answer.held.buyer'));
     } else if (b.status === 'pending_payment') text = t('dash.pending.note');
     return text ? `<p class="booking-note">${escapeHtml(text)}</p>` : '';
   }
@@ -179,7 +180,7 @@
         ${b.status === 'pending_payment' || b.status === 'expired' ? `<a class="btn btn-outline btn-sm" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${t('dash.retry')}</a>` : ''}
         ${b.answer ? `<div class="booking-answer"><strong>${t('dash.answer.label')}</strong> ${escapeHtml(b.answer)}</div>` : ''}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
-        ${b.status === 'answered' && !b.answerHeld ? WisecallReport.html(b.mentorId, b.id, true) : ''}
+        ${b.status === 'answered' && !b.answerHeld ? WisecallReport.buttonHtml({ mentorId: b.mentorId, bookingId: b.id }) : ''}
         ${WisecallPublicAnswers.html(b, 'asker')}
         ${disputeHtml(b, 'asker')}
         ${receiptLinks(b)}
@@ -327,6 +328,7 @@
             </form>` : '')}
         ${b.status === 'answered' && !b.answerHeld ? WisecallRatings.panel(b, user) : ''}
         ${b.status === 'paid' && !b.answer ? declineHtml(b) : ''}
+        ${['paid', 'answered'].includes(b.status) ? WisecallReport.buttonHtml({ bookingId: b.id, question: true }) : ''}
         ${WisecallPublicAnswers.html(b, 'mentor')}
         ${disputeHtml(b, 'mentor')}
         ${conversationLink(b)}
@@ -334,6 +336,7 @@
     }).join('');
     WisecallRatings.wire(receivedList, { reload: load });
     WisecallPublicAnswers.wire(receivedList, { reload: load });
+    WisecallReport.wire(receivedList);
 
     // Declining a question: the asker is refunded in full at once and sees the reason.
     receivedList.querySelectorAll('.decline-form').forEach((form) => form.addEventListener('submit', async (ev) => {
