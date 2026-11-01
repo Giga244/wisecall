@@ -55,7 +55,9 @@ describe('consent', () => {
     const low = await answeredAndRated(mentor, mentorId, 3, 'How should Nino Beridze plan the first year as a developer?');
     assert.equal(await paOf(asker, low), null, 'no offer under 4 stars');
     assert.equal((await asker.api('/answers/offer', { method: 'POST', body: { bookingId: low } })).error, 'rating_needed');
-    bookingId = await answeredAndRated(mentor, mentorId, 5, 'I am Nino Beridze, call me on 599123456: how should I plan my first year as a developer?');
+    bookingId = await answeredAndRated(mentor, mentorId, 5, 'I am Nino Beridze: how should I plan my first year as a developer?');
+    // (a question from before contact details were refused in questions: the draft still cleans it)
+    await pool.query('UPDATE bookings SET question = $2 WHERE id = $1', [bookingId, 'I am Nino Beridze, call me on 599123456: how should I plan my first year as a developer?']);
     const offer = await paOf(asker, bookingId);
     assert.equal(offer.canOffer, true);
     assert.doesNotMatch(offer.draft, /Nino|599123456/);

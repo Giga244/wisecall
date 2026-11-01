@@ -55,6 +55,7 @@ test('the whole journey of a 16-year-old', async ({ page, browser }) => {
   await page.fill('#email', email);
   await page.fill('#password', S.PASSWORD);
   await expect(page.locator('#adult')).toBeHidden();
+  await expect(page.locator('#birthMonth option[value="01"]')).toHaveText('იანვარი');
   await fillAge(page, 16);
   await expect(page.locator('#ageParent')).toBeVisible();
   await expect(page.locator('#ageParent')).toContainText('მშობლებისთვის');

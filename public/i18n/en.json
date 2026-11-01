@@ -1571,7 +1571,6 @@
   "nav.deletionKeep": "Keep my account",
   "inbox.deleted": "(deleted)",
   "auth.adult": "I'm 18 or older",
-  "auth.adultRequired": "Wisecall is for people who are 18 or older. Please confirm your age.",
   "age.title": "One question before you go on",
   "age.sub": "Wisecall is for people who are 16 or older. We keep only your birth year and month.",
   "age.legend": "When were you born?",

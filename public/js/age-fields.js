@@ -4,9 +4,12 @@
   const t = (k) => WisecallI18n.t(k);
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  function monthName(m) {
-    return new Intl.DateTimeFormat(WisecallI18n.getLang() === 'ka' ? 'ka-GE' : 'en-GB', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, m - 1, 1)));
-  }
+  // (written out: not every browser has Georgian month names)
+  const MONTHS = {
+    ka: ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი', 'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'],
+    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  };
+  const monthName = (m) => MONTHS[WisecallI18n.getLang() === 'ka' ? 'ka' : 'en'][m - 1];
 
   function html() {
     const thisYear = new Date().getUTCFullYear();

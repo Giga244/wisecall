@@ -71,7 +71,7 @@ test('an approved mentor keeps the approval, gets the Experience step and the ag
   assert.equal(steps.experience.status, 'passed');
   assert.equal(steps.experience.reason, 'carried over from verification rules v1');
   assert.equal(steps.age.status, 'passed');
-  assert.deepEqual(steps.age.evidence, { adult: true, birthYm: '1990-01' });
+  assert.deepEqual(steps.age.evidence, { adult: true });
   const u = (await q('SELECT story, application_submitted_at FROM users WHERE id = $1', [ids.approved]))[0];
   assert.ok(u.application_submitted_at, 'counts as submitted');
   assert.match(u.story, /packaging and brand identities/, 'a long bio became the starting story');
