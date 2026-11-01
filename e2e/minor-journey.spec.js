@@ -34,11 +34,26 @@ test('under 16: a kind message, and no account', async ({ page }) => {
   await page.fill('#name', 'პატარა ნიკა');
   await page.fill('#email', email);
   await page.fill('#password', S.PASSWORD);
+  // (at once, right under the fields, with no way to send)
+  const button = page.locator('#signupForm button[type="submit"]');
+  await expect(button).toBeEnabled();
   await fillAge(page, 15);
   await expect(page.locator('#ageParent')).toBeHidden();
-  await page.click('#signupForm button[type="submit"]');
-  await expect(page.locator('.age-under16')).toContainText('Wisecall 16 წლიდან არის ხელმისაწვდომი. დაგელოდებით!');
+  await expect(page.locator('#ageTooYoung')).toHaveText('Wisecall 16 წლიდან არის ხელმისაწვდომი. დაგელოდებით!');
+  await expect(button).toBeDisabled();
   expect(await fits(page)).toBe(true);
+  // (Enter in a field sends nothing either)
+  let sent = false;
+  page.on('request', (r) => { if (r.url().endsWith('/api/auth/signup')) sent = true; });
+  await page.press('#email', 'Enter');
+  await page.waitForTimeout(300);
+  expect(sent).toBe(false);
+  // choosing a later year: the message goes and the button comes back; 15 again, and it stops again
+  await fillAge(page, 20);
+  await expect(page.locator('#ageTooYoung')).toBeHidden();
+  await expect(button).toBeEnabled();
+  await fillAge(page, 15);
+  await expect(button).toBeDisabled();
   const c = client(S.BASE);
   expect((await c.api('/auth/login', { method: 'POST', body: { email, password: S.PASSWORD } })).status).toBe(401);
 });

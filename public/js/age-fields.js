@@ -23,6 +23,7 @@
           <label for="birthMonth"><span>${esc(t('age.month'))}</span><select id="birthMonth" required><option value="">${esc(t('age.choose'))}</option>${months}</select></label>
         </div>
         <span class="hint">${esc(t('age.why'))}</span>
+        <p class="age-too-young" id="ageTooYoung" role="status" hidden>${esc(t('age.under16'))}</p>
         <div class="age-parent" id="ageParent" hidden>
           <label class="checkbox-row" for="parentPermission"><input type="checkbox" id="parentPermission"> <span>${esc(t('age.parent.confirm'))}</span></label>
           <p class="hint">${esc(t('age.parent.forParents'))}</p>
@@ -30,16 +31,26 @@
       </fieldset>`;
   }
 
-  // 16-17 (the same count as server/ageGate.js; the server decides): a parent's or guardian's agreement, and a short line for the parents.
-  function isMinor(ym) {
+  // The same count as server/ageGate.js (the server decides): whole years, once the whole birth month has passed.
+  function ageOf(ym) {
     const [year, month] = ym.split('-').map(Number);
     const now = new Date();
-    const age = Math.floor(((now.getUTCFullYear() * 12 + now.getUTCMonth() + 1) - (year * 12 + month) - 1) / 12);
-    return age >= 16 && age < 18;
+    return Math.floor(((now.getUTCFullYear() * 12 + now.getUTCMonth() + 1) - (year * 12 + month) - 1) / 12);
   }
+  // As soon as the year and month are chosen: under 16, the kind message right under them and no way to send; 16-17, a parent's or guardian's
+  // agreement and a short line for the parents.
   function wire(root) {
     const box = root.querySelector('#ageParent');
-    const draw = () => { const ym = value(root); box.hidden = !(ym && isMinor(ym)); };
+    const young = root.querySelector('#ageTooYoung');
+    const button = root.closest('form').querySelector('button[type="submit"]');
+    const draw = () => {
+      const ym = value(root);
+      const age = ym === null ? null : ageOf(ym);
+      const tooYoung = age !== null && age < 16;
+      young.hidden = !tooYoung;
+      box.hidden = !(age !== null && age >= 16 && age < 18);
+      button.disabled = tooYoung;
+    };
     root.querySelector('#birthYear').addEventListener('change', draw);
     root.querySelector('#birthMonth').addEventListener('change', draw);
   }
