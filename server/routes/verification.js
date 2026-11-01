@@ -73,8 +73,16 @@ router.post('/kyc/start', requireAuth, asyncHandler(async (req, res) => {
   try {
     const out = await kycService.startForMentor(user);
     require('../analytics').event('id_check_started', req);
-    // On a computer: the partner's link as a QR code, to do the check on a phone (its camera) instead.
-    if (req.body && req.body.qr === true && out && out.url) out.qr = await require('qrcode').toString(out.url, { type: 'svg', margin: 1, width: 220, errorCorrectionLevel: 'M' });
+    // On a computer: the partner's link as a QR code, to do the check on a phone (its camera) instead. Never an empty answer: when the code
+    // cannot be drawn the page is told so, with the link itself to open on the phone.
+    if (req.body && req.body.qr === true) {
+      try {
+        out.qr = await require('qrcode').toString(out.url, { type: 'svg', margin: 1, width: 220, errorCorrectionLevel: 'M' });
+      } catch (e) {
+        console.error('[kyc] could not draw the QR code:', e.message);
+        return res.status(502).json({ error: 'qr_failed', url: out.url });
+      }
+    }
     res.json(out);
   } catch (e) {
     if (e instanceof steps.VerificationError) return res.status(409).json({ error: e.code });

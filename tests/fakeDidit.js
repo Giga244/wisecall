@@ -18,6 +18,7 @@ const hmac = (data, secret = SECRET) => crypto.createHmac('sha256', secret).upda
 function createFakeDidit() {
   const sessions = new Map(); // id -> { id, vendorData, callback, status, decision }
   const calls = [];
+  const options = { hugeLinks: false }; // (a link too long for a QR code)
   let server, port, counter = 0;
 
   const send = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
@@ -35,7 +36,7 @@ function createFakeDidit() {
       if (!body || body.workflow_id !== WORKFLOW || !body.vendor_data) return send(res, 400, { detail: 'bad request' });
       const id = `didit-session-${++counter}`;
       sessions.set(id, { id, vendorData: body.vendor_data, callback: body.callback, status: 'Not Started', decision: {} });
-      return send(res, 201, { session_id: id, session_token: 'tok', url: `http://localhost:${port}/verify/${id}` });
+      return send(res, 201, { session_id: id, session_token: 'tok', url: `http://localhost:${port}/verify/${id}${options.hugeLinks ? `?x=${'a'.repeat(5000)}` : ''}` });
     }
     const m = req.url.match(/^\/v3\/session\/([^/]+)\/decision\/$/);
     if (req.method === 'GET' && m) {
@@ -55,6 +56,7 @@ function createFakeDidit() {
   });
 
   return {
+    options,
     API_KEY, WORKFLOW, SECRET, calls, sessions,
     start: () => new Promise((resolve) => { server = http.createServer((q, r) => handle(q, r).catch((e) => send(r, 500, { detail: e.message }))); server.listen(0, () => { port = server.address().port; resolve(port); }); }),
     stop: () => new Promise((resolve) => (server ? server.close(() => resolve()) : resolve())),

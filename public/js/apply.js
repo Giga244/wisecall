@@ -426,7 +426,7 @@
     else if (state === 'in_review') note = `<p class="apply-id-checking" role="status">${esc(t('idcard.checking'))}</p>`;
     else if (state === 'started') { note = `<p class="hint">${esc(t(returned ? 'vt.kyc.returned' : 'vt.kyc.started'))}</p>`; label = 'vt.kyc.continue'; }
     // (on a computer: the same check on a phone, by its camera, from a QR code of the partner's link)
-    const desktop = window.matchMedia('(pointer: fine)').matches && window.innerWidth >= 900;
+    const desktop = WisecallIdCard.showsQr();
     return `
       ${idExplainer()}
       ${note}
@@ -435,6 +435,7 @@
         ${state === 'in_review' || !desktop ? '' : `<button type="button" class="btn btn-ghost btn-lg" data-kyc-qr>${esc(t('apply.id.qr'))}</button>`}
         ${r.status === 'pending' ? `<button type="button" class="btn btn-ghost btn-lg" data-reload>${esc(t('vt.kyc.refresh'))}</button>` : ''}
       </div>
+      <div class="apply-qr" data-kyc-qr-box hidden></div>
       <p class="form-error apply-kyc-error" role="alert"></p>`;
   }
 
@@ -819,21 +820,9 @@
         start.disabled = false;
       }
     }));
-    root.querySelectorAll('[data-kyc-qr]').forEach((b) => b.addEventListener('click', async () => {
-      b.disabled = true;
-      try {
-        const r = await WisecallAPI.apiFetch('/verification/kyc/start', { method: 'POST', body: { qr: true } });
-        const box = document.createElement('div');
-        box.className = 'apply-qr';
-        box.innerHTML = `${r.qr || ''}<p class="hint">${esc(t('apply.id.qrHelp'))}</p><button type="button" class="btn btn-ghost" data-reload>${esc(t('vt.kyc.refresh'))}</button>`; // (the SVG is the server's own, drawn from the partner's link)
-        b.replaceWith(box);
-        box.querySelector('[data-reload]').addEventListener('click', async () => { await load(); render(); });
-      } catch (e) {
-        const el = root.querySelector('.apply-kyc-error');
-        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed' }, e);
-        b.disabled = false;
-      }
-    }));
+    root.querySelectorAll('[data-kyc-qr]').forEach((b) => b.addEventListener('click', () => WisecallIdCard.openQr({
+      button: b, box: root.querySelector('[data-kyc-qr-box]'), error: root.querySelector('.apply-kyc-error'), reload: async () => { await load(); render(); }
+    })));
     root.querySelectorAll('[data-reload]').forEach((b) => b.addEventListener('click', async () => { await load(); render(); }));
   }
 

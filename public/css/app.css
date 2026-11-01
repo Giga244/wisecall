@@ -923,3 +923,6 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .minor-guidance ul { margin: 0; padding-left: 18px; }
 .ask-minor-hint { border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.92rem; }
 .age-too-young { margin: 12px 0 0; font-weight: 700; }
+.apply-qr[hidden] { display: none; }
+.id-card-link { display: block; margin-top: 10px; font-weight: 700; }
+.id-card-link input { width: 100%; margin-top: 6px; font-weight: 400; font-size: 0.9rem; }
