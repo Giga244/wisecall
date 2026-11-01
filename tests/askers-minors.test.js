@@ -96,3 +96,44 @@ describe('payments', () => {
     assert.equal(b.refunded_amount === null ? b.amount : b.refunded_amount, 4000);
   });
 });
+
+describe('contact details', () => {
+  test('a question with a phone number is refused with the kinds, nothing is sent, and the attempt is counted without its text', async () => {
+    const before_ = (await pool.query('SELECT count(*)::int AS n FROM bookings')).rows[0].n;
+    const q = longQuestion('Please call me on 555 12 34 56 about choosing a university');
+    const r = await adult.api('/bookings', { method: 'POST', body: { mentorId: paidMentorId, question: q } });
+    assert.equal(r.status, 400);
+    assert.equal(r.error, 'contact_blocked');
+    assert.deepEqual(r.kinds, ['phone']);
+    assert.equal((await pool.query('SELECT count(*)::int AS n FROM bookings')).rows[0].n, before_, 'nothing went to the bank');
+    const { rows } = await pool.query(`SELECT b.* FROM contact_blocks b JOIN users u ON u.id = b.user_id WHERE u.email = 'ana-adult@example.com'`);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].surface, 'question');
+    assert.deepEqual(rows[0].kinds, ['phone']);
+    assert.equal(rows[0].minor, false);
+    assert.doesNotMatch(JSON.stringify(rows[0]), /555/);
+  });
+
+  test('a minor is held to the strict rule: naming a messenger is refused for them, not for an adult', async () => {
+    const q = longQuestion('Is it worth learning to build Telegram bots before university starts?');
+    assert.equal((await minor.api('/bookings', { method: 'POST', body: { mentorId: freeMentorId, question: q } })).error, 'contact_blocked');
+    assert.equal((await adult.api('/bookings', { method: 'POST', body: { mentorId: paidMentorId, question: q } })).status, 201);
+  });
+
+  test('an answer: public links are fine for everybody; an answer to a minor cannot carry a social link or contact details, and can be sent once edited', async () => {
+    const adultQ = await ask(adult, paidMentorId);
+    await payAtBank(adult, adultQ.booking);
+    const withLink = longAnswer('Read the programme page at https://www.tsu.ge/en/faculties before you decide.');
+    assert.equal((await paidMentor.api(`/bookings/${adultQ.booking.id}/answer`, { method: 'POST', body: { answer: withLink } })).status, 200);
+
+    const minorQ = await ask(minor, freeMentorId);
+    const social = longAnswer('You can follow my notes at https://www.instagram.com/fred.notes for more on this.');
+    const refused = await freeMentor.api(`/bookings/${minorQ.booking.id}/answer`, { method: 'POST', body: { answer: social } });
+    assert.equal(refused.error, 'contact_blocked');
+    assert.equal((await row(minorQ.booking.id)).answer, null, 'not saved');
+    const { rows } = await pool.query(`SELECT b.* FROM contact_blocks b JOIN users u ON u.id = b.user_id WHERE u.email = 'fred@example.com'`);
+    assert.equal(rows[0].surface, 'answer');
+    assert.equal(rows[0].minor, true);
+    assert.equal((await freeMentor.api(`/bookings/${minorQ.booking.id}/answer`, { method: 'POST', body: { answer: withLink } })).status, 200, 'edited, it goes through');
+  });
+});

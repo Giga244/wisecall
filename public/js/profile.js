@@ -498,6 +498,7 @@
     } catch (e) {
       submitBtn.disabled = false;
       if (e.code === 'emergency') { showEmergencyHelp(); return; }
+      if (e.code === 'contact_blocked') { errorEl.textContent = t('safety.contactBlocked'); document.getElementById('question').focus(); return; }
       if (e.code === 'adult_payer_required') { errorEl.textContent = t('expert.adultPayerRequired'); return; }
       if (e.code === 'age_required') { location.href = `/age-check.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return; }
       const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings', email_not_verified: 'expert.err.freeVerify', free_limit_mentor: 'expert.err.freeMentor', free_limit_total: 'expert.err.freeTotal', free_full: 'expert.freeFull' };

@@ -165,7 +165,7 @@ async function anonymize(userId) {
               work_email_code_expires_at = NULL, verification_note = NULL, suspension_reason = NULL, birth_ym = NULL, age_group = NULL, age_confirmed_at = NULL, parent_permission_at = NULL, deleted_at = now()
         WHERE id = $1`, [userId, `deleted-${userId}@deleted.invalid`]);
     for (const sql of [
-      'DELETE FROM user_photos WHERE user_id = $1', 'DELETE FROM user_identities WHERE user_id = $1', 'DELETE FROM username_history WHERE user_id = $1',
+      'DELETE FROM user_photos WHERE user_id = $1', 'DELETE FROM contact_blocks WHERE user_id = $1', 'DELETE FROM user_identities WHERE user_id = $1', 'DELETE FROM username_history WHERE user_id = $1',
       'DELETE FROM verification_documents WHERE user_id = $1', 'DELETE FROM mentor_credentials WHERE user_id = $1', 'DELETE FROM mentor_evidence WHERE user_id = $1',
       'DELETE FROM verification_reviews WHERE user_id = $1', 'DELETE FROM account_signals WHERE user_id = $1', 'DELETE FROM notifications WHERE user_id = $1',
       'DELETE FROM notification_settings WHERE user_id = $1', 'DELETE FROM admin_two_factor WHERE user_id = $1', 'DELETE FROM sessions WHERE user_id = $1',

@@ -225,8 +225,9 @@ function checkText(text, min, max) {
 }
 
 // Contact details and outside payments are refused in booking threads. Only the kinds found are kept, never the text.
-async function refuseContactDetails(threadId, senderId, body) {
-  const reasons = textSafety.findContactDetails(body);
+// (a thread about a 16-17-year-old's question is checked as strictly as the question: server/textSafety.js)
+async function refuseContactDetails(threadId, senderId, body, minor) {
+  const reasons = [...new Set([...textSafety.findContactDetails(body), ...(minor ? textSafety.findBlockedContact(body, { strict: true }) : [])])];
   if (!reasons.length) return;
   await query('INSERT INTO blocked_messages (thread_id, sender_id, reasons) VALUES ($1, $2, $3)', [threadId, senderId, reasons]);
   throw new InboxError('contact_details', { reasons });
@@ -247,7 +248,7 @@ async function postMessage(user, threadId, text) {
   if (role === 'asker' && !state.canAsk) throw new InboxError(state.asked ? 'follow_up_used' : (state.closed ? 'thread_closed' : 'follow_up_not_open'));
   if (role === 'mentor' && !state.canReply) throw new InboxError(state.replied || state.closed ? 'thread_closed' : 'nothing_to_reply');
   const body = checkText(text, LIMITS.followUpMin, role === 'mentor' ? LIMITS.replyMax : LIMITS.followUpMax);
-  await refuseContactDetails(thread.id, user.id, body);
+  await refuseContactDetails(thread.id, user.id, body, booking.askerMinor);
   if (textSafety.isOffensive(body)) throw new InboxError('offensive');
 
   const kind = role === 'asker' ? 'follow_up_question' : 'follow_up_reply';

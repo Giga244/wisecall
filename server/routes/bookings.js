@@ -13,9 +13,20 @@ const { isListable, asyncHandler, photoUrl } = require('../util');
 const content = require('../content');
 const safety = require('../safety');
 const ageGate = require('../ageGate');
+const textSafety = require('../textSafety');
 const { bookingFromRow, getUserById, getBookingById, updateBooking, claimAnswer } = require('../models');
 
 const router = express.Router();
+
+// Contact details stay off Wisecall, in every question and answer; more strictly when the asker is 16-17 (server/textSafety.js). The person edits
+// and sends again. Only who, where and which kinds are kept, never the text. -> the kinds found
+async function refuseContact(res, userId, surface, text, minor) {
+  const kinds = textSafety.findBlockedContact(text, { strict: minor });
+  if (!kinds.length) return false;
+  await query('INSERT INTO contact_blocks (user_id, surface, kinds, minor) VALUES ($1, $2, $3, $4)', [userId, surface, kinds, minor]);
+  res.status(400).json({ error: 'contact_blocked', kinds });
+  return true;
+}
 
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
   const { mentorId, question, discountCode } = req.body || {};
@@ -42,6 +53,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   if (!seeker.birthYm) return res.status(403).json({ error: 'age_required' });
   if (!isListable(mentor)) return res.status(404).json({ error: 'mentor_not_found' });
   if (mentor.id === seeker.id) return res.status(400).json({ error: 'cannot_book_self' });
+  if (await refuseContact(res, seeker.id, 'question', checked.text, ageGate.isMinor(seeker))) return;
   // Limits per account (one address can be many accounts, one account many addresses): a flood of attempts would open bank orders and
   // fill a mentor's list. An attempt counts as open while the bank could still complete it.
   if (config.BOOKINGS_PER_HOUR || config.MAX_OPEN_UNPAID_BOOKINGS) {
@@ -197,6 +209,8 @@ router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
 
   const checked = content.checkAnswer((req.body || {}).answer);
   if (checked.error) return res.status(400).json({ error: checked.error, ...(checked.min ? { min: checked.min } : {}), ...(checked.max ? { max: checked.max } : {}) });
+
+  if (await refuseContact(res, existing.mentorId, 'answer', checked.text, existing.askerMinor)) return;
 
   // One of a new mentor's first answers? Then it waits for an admin before the buyer sees it.
   const held = await probation.shouldHold(existing.mentorId);

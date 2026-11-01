@@ -1576,6 +1576,7 @@
   "age.parent.required": "Please confirm that your parent or guardian agrees.",
   "expert.adultPayer": "The person paying is 18 or older (for example a parent) and agrees to pay",
   "expert.adultPayerRequired": "Please confirm that the person paying is 18 or older and agrees.",
+  "safety.contactBlocked": "For safety, contact details can’t be shared on Wisecall. Everything stays here, in writing.",
   "auth.mentor18": "You can be a mentor from age 18.",
   "wait.over16": "I am 16 or older",
   "wait.over16Required": "Wisecall is available from age 16. Please confirm your age.",
