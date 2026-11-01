@@ -13,7 +13,9 @@ test.beforeAll(async ({ browser }) => {
   await admin.api('/auth/login', { method: 'POST', body: { email: 'e2e-admin@example.com', password: S.PASSWORD } });
   const m = await S.listedMentor(admin, { name: 'Pia Public', email: 'pia@e2e.test', niche: 'tech', price: 20, roleTitle: 'Frontend developer' });
   const asker = await S.apiUser('Paata Asker', 'paata@e2e.test');
-  const b = await bookAndPay(S.BASE, asker, m.id, 'I am Paata, email paata@e2e.test. How do I get my first frontend job without a degree?');
+  const b = await bookAndPay(S.BASE, asker, m.id, 'I am Paata. How do I get my first frontend job without a degree? I have been learning on my own for a year.');
+  // (a question from before contact details were refused in questions: the draft still takes the email out)
+  await S.sql('UPDATE bookings SET question = $2 WHERE id = $1', [b.id, 'I am Paata, email paata@e2e.test. How do I get my first frontend job without a degree?']);
   expect((await m.client.api(`/bookings/${b.id}/answer`, { method: 'POST', body: { answer: longAnswer('Build three small real projects, put them online and write about what you learned.') } })).status).toBe(200);
   expect((await admin.api(`/admin/answers/${b.id}/approve`, { method: 'POST' })).status).toBe(200);
   await S.sql(`UPDATE bookings SET answered_at = now() - interval '8 days', answer_released_at = now() - interval '8 days' WHERE id = $1`, [b.id]);

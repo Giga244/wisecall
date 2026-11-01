@@ -29,7 +29,9 @@
     return (name || '?').split(' ').map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   }
 
+  let loadNumber = 0;
   async function load() {
+    const mine = ++loadNumber; // (a list that arrives after another filter was chosen is not drawn over it)
     content.innerHTML = `<p class="muted">${t('admin.loading')}</p>`;
     try {
       const qs = tab === 'mentors' && activeStatus === 'pending' ? '?queue=needs_human' : (activeStatus ? `?status=${activeStatus}` : '');
@@ -66,9 +68,11 @@
         await AdminWithdrawals.render(document.getElementById('wdBox'), load);
       } else if (tab === 'bookings') {
         const data = await WisecallAPI.apiFetch(`/admin/bookings${qs}`);
+        if (mine !== loadNumber) return;
         renderBookings(data.bookings);
       } else {
         const data = await WisecallAPI.apiFetch(`/admin/mentors${qs}`);
+        if (mine !== loadNumber) return;
         AdminMentors.render(content, data.mentors, (o) => { if (!(o && o.soft)) load(); });
       }
     } catch (e) {
