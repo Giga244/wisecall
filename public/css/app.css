@@ -916,3 +916,5 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .age-parent { margin-top: 14px; }
 .age-parent .checkbox-row { align-items: flex-start; font-weight: 400; }
 .age-parent .checkbox-row input { flex: none; margin-top: 4px; }
+.ask-payer { align-items: flex-start; font-weight: 400; margin: 12px 0; }
+.ask-payer input { flex: none; margin-top: 4px; }

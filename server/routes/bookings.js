@@ -12,6 +12,7 @@ const ratings = require('../ratings');
 const { isListable, asyncHandler, photoUrl } = require('../util');
 const content = require('../content');
 const safety = require('../safety');
+const ageGate = require('../ageGate');
 const { bookingFromRow, getUserById, getBookingById, updateBooking, claimAnswer } = require('../models');
 
 const router = express.Router();
@@ -68,6 +69,10 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     }
   }
 
+  // A minor can ask a paid mentor when the one paying is an adult who agrees: a box at checkout (docs/CLAUDE-CODE-ASKERS-16-PLUS.md part 3). The time is kept.
+  const minor = ageGate.isMinor(seeker);
+  if (minor && (req.body || {}).adultPayer !== true) return res.status(400).json({ error: 'adult_payer_required' });
+
   // A one-time code from a live session (15 % off a question to the same mentor; server/live/after.js): the price, the fee and the mentor's
   // share are all worked out on what is actually paid.
   const listPrice = Math.round(mentor.price * 100);
@@ -88,11 +93,11 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 
   const { rows } = await query(
     `INSERT INTO bookings (seeker_id, mentor_id, question, amount, currency, platform_fee_percent,
-                           platform_fee_amount, mentor_net_amount, status, provider, source, discount_code_id, list_price)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9, $10, $11, $12) RETURNING *`,
+                           platform_fee_amount, mentor_net_amount, status, provider, source, discount_code_id, list_price, asker_minor, adult_payer_confirmed_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9, $10, $11, $12, $13, CASE WHEN $13 THEN now() END) RETURNING *`,
     [seeker.id, mentor.id, cleanQuestion, amount, config.CURRENCY, config.PLATFORM_FEE_PERCENT,
       feeAmount, amount - feeAmount, providerName, (() => { const src = require('../attribution').read(req); return src ? JSON.stringify(src) : null; })(),
-      code ? code.id : null, code ? listPrice : null]
+      code ? code.id : null, code ? listPrice : null, minor]
   );
   const booking = bookingFromRow(rows[0]);
   // (the question takes the code; if another question took it a moment ago, this one stops here, before the bank)

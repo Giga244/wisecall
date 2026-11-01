@@ -112,6 +112,7 @@ function bookingFromRow(r) {
     answerFlaggedAt: r.answer_flagged_at,
     declinedAt: r.declined_at,
     declineReason: r.decline_reason,
+    askerMinor: Boolean(r.asker_minor), // (the asker was 16-17 when they asked)
     refundedAmount: r.refunded_amount,
     partialRefundStartedAt: r.partial_refund_started_at,
     partialRefundAmount: r.partial_refund_amount, // (sent to the bank, its answer not known yet: docs/REVIEW-2.md #3)

@@ -417,6 +417,7 @@
             <button type="button" class="btn btn-outline btn-sm" id="askCodeApply">${t('expert.code.apply')}</button></div>
           <p class="small" id="askCodeNote" role="status"></p>
         </details>`}
+        ${!free && user.ageGroup === 'minor_16_17' ? `<label class="checkbox-row ask-payer" for="adultPayer"><input type="checkbox" id="adultPayer"> <span>${escapeHtml(t('expert.adultPayer'))}</span></label>` : ''}
         <p class="form-error" id="askError" role="alert"></p>
         <button type="submit" class="btn btn-primary btn-block" id="askBtn">${free ? t('expert.sendFree') : t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
       </form>
@@ -473,12 +474,14 @@
     errorEl.textContent = '';
     const question = document.getElementById('question').value.trim();
     if (WisecallAPI.textLength(question) < MIN_QUESTION) { errorEl.textContent = t('expert.question.tooShort').replace('{n}', MIN_QUESTION); document.getElementById('question').focus(); return; }
+    const payer = document.getElementById('adultPayer');
+    if (payer && !payer.checked) { errorEl.textContent = t('expert.adultPayerRequired'); payer.focus(); return; }
     const submitBtn = document.getElementById('askBtn');
     submitBtn.disabled = true;
     try {
       stored.set(question); // (kept while the buyer is at the bank)
       const form = document.getElementById('askForm');
-      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question, ...(appliedCode ? { discountCode: appliedCode.code } : {}), ...(free ? { turnstileToken: await WisecallTurnstile.token(form) } : {}) } });
+      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question, ...(payer ? { adultPayer: true } : {}), ...(appliedCode ? { discountCode: appliedCode.code } : {}), ...(free ? { turnstileToken: await WisecallTurnstile.token(form) } : {}) } });
       // A free question is sent at once: no bank.
       if (res.free) {
         stored.set(''); draft = '';
@@ -495,6 +498,7 @@
     } catch (e) {
       submitBtn.disabled = false;
       if (e.code === 'emergency') { showEmergencyHelp(); return; }
+      if (e.code === 'adult_payer_required') { errorEl.textContent = t('expert.adultPayerRequired'); return; }
       if (e.code === 'age_required') { location.href = `/age-check.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return; }
       const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings', email_not_verified: 'expert.err.freeVerify', free_limit_mentor: 'expert.err.freeMentor', free_limit_total: 'expert.err.freeTotal', free_full: 'expert.freeFull' };
       if (free) { WisecallTurnstile.reset(document.getElementById('askForm')); const human = WisecallTurnstile.errorText(e.code); if (human) { errorEl.textContent = human; return; } }

@@ -91,9 +91,9 @@ function client(base) {
   return call;
 }
 
-async function signupVerified(base, name, email, password = 'test-pass-12345') {
+async function signupVerified(base, name, email, password = 'test-pass-12345', extra = {}) {
   const c = client(base);
-  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password } });
+  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password, ...extra } });
   if (su.status !== 201) throw new Error('signup failed: ' + su.text);
   const v = await c.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } });
   if (v.status !== 200) throw new Error('verify failed: ' + v.text);
