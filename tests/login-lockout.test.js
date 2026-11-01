@@ -27,7 +27,7 @@ before(async () => {
   srv = await startServer(4733, { RATE_LIMIT_MULTIPLIER: '50', EMAIL_PROVIDER: 'log', EMAIL_LOG_FILE: OUTBOX, EMAIL_FROM: 'Wisecall <hi@example.com>' });
   base = srv.base;
   const c = client(base);
-  assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Lela Locked', email: 'lela@example.com', password: PASSWORD, language: 'ka' } })).status, 201);
+  assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Lela Locked', email: 'lela@example.com', password: PASSWORD, language: 'ka' } })).status, 201);
 });
 after(async () => { if (srv) srv.proc.kill(); await pool.end(); fs.rmSync(OUTBOX, { force: true }); });
 

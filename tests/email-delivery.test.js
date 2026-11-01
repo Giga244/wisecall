@@ -44,7 +44,7 @@ after(async () => { if (srv) srv.proc.kill(); await new Promise((r) => fakeResen
 
 async function signup(name, email, language) {
   const c = client(base);
-  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: 'test-pass-12345', language } });
+  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password: 'test-pass-12345', language } });
   assert.equal(su.status, 201);
   assert.equal(su.emailSent, true);
   assert.equal(su.devVerifyCode, undefined, 'the code is only in the email');
@@ -131,7 +131,7 @@ describe('reliability', () => {
     const before = sent.length;
     behavior.failures = [503];
     const c = client(base);
-    await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Retry Person', email: 'retry@example.com', password: 'test-pass-12345' } });
+    await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Retry Person', email: 'retry@example.com', password: 'test-pass-12345' } });
     await waitFor(() => sent.filter((m) => m.body.to === 'retry@example.com').length >= 2);
     assert.equal(sent.filter((m) => m.body.to === 'retry@example.com').length, 2, 'one failure, one retry');
     assert.ok(sent.length - before >= 2);
@@ -140,7 +140,7 @@ describe('reliability', () => {
   test('a permanent failure (bad key / unverified domain) is not retried, and the user is told', async () => {
     behavior.failures = [403];
     const c = client(base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'No Mail', email: 'nomail@example.com', password: 'test-pass-12345' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'No Mail', email: 'nomail@example.com', password: 'test-pass-12345' } });
     assert.equal(su.status, 201, 'the account is still created');
     assert.equal(su.emailSent, false);
     await wait(1200);
@@ -159,7 +159,7 @@ describe('production never shows codes or links on screen', () => {
     try {
       behavior.failures = [403, 403, 403];
       const c = client(prod.base);
-      const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Prod User', email: 'prod@example.com', password: 'test-pass-12345' } });
+      const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Prod User', email: 'prod@example.com', password: 'test-pass-12345' } });
       assert.equal(su.status, 201);
       assert.equal(su.emailSent, false);
       assert.equal(su.devMode, false);

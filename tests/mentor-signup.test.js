@@ -225,7 +225,7 @@ describe('the way in', () => {
     assert.equal(set.length, 1, 'one source cookie');
     const c = client(base);
     c.setCookie('wc_src', set[0].split(';')[0].slice('wc_src='.length));
-    assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Invited Professor', email: 'invited@example.com', password: 'test-pass-12345' } })).status, 201);
+    assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Invited Professor', email: 'invited@example.com', password: 'test-pass-12345' } })).status, 201);
     const src = (await pool.query(`SELECT signup_source FROM users WHERE email = 'invited@example.com'`)).rows[0].signup_source;
     assert.equal(src.source, 'invite');
     assert.equal(src.campaign, 'tsu');
@@ -235,7 +235,7 @@ describe('the way in', () => {
 
   test('a mentor sign-up needs no username; "forgot password" keeps the mentor path', async () => {
     const c = client(base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Maka Japaridze', email: 'maka@example.com', password: 'test-pass-12345' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Maka Japaridze', email: 'maka@example.com', password: 'test-pass-12345' } });
     assert.equal(su.status, 201);
     assert.ok((await pool.query(`SELECT username FROM users WHERE email = 'maka@example.com'`)).rows[0].username, 'made from the name');
     const f = await client(base).api('/auth/forgot-password', { method: 'POST', body: { email: 'maka@example.com', as: 'mentor' } });
@@ -284,12 +284,12 @@ describe('the waiting list keeps the question', () => {
   test('stored without contact details, at most 300 characters, and shown to admins without the email', async () => {
     const anon = client(base);
     const q = 'Is a master in Germany worth it? write me at nika.private@example.com or +995 555 12 34 56 ' + 'x'.repeat(400);
-    assert.equal((await anon.api('/waitlist', { method: 'POST', body: { email: 'nika-w@example.com', niche: 'study_abroad', language: 'ka', wantedQuestion: q } })).status, 201);
+    assert.equal((await anon.api('/waitlist', { method: 'POST', body: { over16: true, email: 'nika-w@example.com', niche: 'study_abroad', language: 'ka', wantedQuestion: q } })).status, 201);
     const row = (await pool.query(`SELECT wanted_question FROM waitlist WHERE email = 'nika-w@example.com'`)).rows[0];
     assert.ok(row.wanted_question.startsWith('Is a master in Germany worth it?'));
     assert.ok([...row.wanted_question].length <= 300);
     assert.doesNotMatch(row.wanted_question, /nika\.private@example\.com|555 12 34 56/);
-    assert.equal((await anon.api('/waitlist', { method: 'POST', body: { email: 'plain@example.com', niche: 'any' } })).status, 201, 'the question is optional');
+    assert.equal((await anon.api('/waitlist', { method: 'POST', body: { over16: true, email: 'plain@example.com', niche: 'any' } })).status, 201, 'the question is optional');
     const list = await admin.api('/admin/waitlist');
     assert.equal(list.status, 200);
     const d = list.demand.find((x) => x.question.startsWith('Is a master'));

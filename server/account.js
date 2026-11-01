@@ -79,7 +79,7 @@ async function exportData(user) {
     about: 'Everything Wisecall keeps about your account. Other people appear only by the name they show publicly. ID-check images are never kept; the verified name and date of birth are kept encrypted and are not included here.',
     account: {
       ...pick(user, ['id', 'name', 'email', 'emailVerified', 'username', 'language', 'theme', 'role', 'headline', 'currentWork', 'city', 'languages',
-        'linkedinUrl', 'websiteUrl', 'profileVisibility', 'bio', 'createdAt']),
+        'linkedinUrl', 'websiteUrl', 'profileVisibility', 'bio', 'createdAt', 'birthYm', 'ageGroup', 'ageConfirmedAt']),
       hasPhoto: Boolean(user.photoUpdatedAt),
       cameFrom: (await query('SELECT signup_source FROM users WHERE id = $1', [id])).rows[0].signup_source || null
     },
@@ -162,7 +162,7 @@ async function anonymize(userId) {
               city = NULL, languages = '{}', linkedin_url = NULL, website_url = NULL, bio = NULL, photo_updated_at = NULL, profile_visibility = 'contacts',
               role_title = NULL, price = NULL, story = NULL, specialty_tags = '{}', sample_answer = NULL, proof_url = NULL, custom_niche = NULL,
               years_experience = NULL, payout_name = NULL, payout_iban_enc = NULL, payout_iban_last4 = NULL, work_email = NULL, work_email_code_hash = NULL,
-              work_email_code_expires_at = NULL, verification_note = NULL, suspension_reason = NULL, deleted_at = now()
+              work_email_code_expires_at = NULL, verification_note = NULL, suspension_reason = NULL, birth_ym = NULL, age_group = NULL, age_confirmed_at = NULL, deleted_at = now()
         WHERE id = $1`, [userId, `deleted-${userId}@deleted.invalid`]);
     for (const sql of [
       'DELETE FROM user_photos WHERE user_id = $1', 'DELETE FROM user_identities WHERE user_id = $1', 'DELETE FROM username_history WHERE user_id = $1',

@@ -30,7 +30,7 @@ const until = async (fn, ms = 5000) => { const end = Date.now() + ms; while (Dat
 test('a mentor\'s journey sends each goal once, in order, with no personal data; the admin overview counts the same steps', async () => {
   const admin = await signupVerified(base, 'QA Admin', 'qa-admin@example.com');
   const c = client(base);
-  assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Funnel Mentor', email: 'funnel-mentor@example.com', password: 'test-pass-12345', as: 'mentor' } })).status, 201);
+  assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Funnel Mentor', email: 'funnel-mentor@example.com', password: 'test-pass-12345', as: 'mentor' } })).status, 201);
   assert.ok(await until(() => count('signup') === 2)); // (the admin's, then the mentor's)
   assert.equal(seen.filter((e) => e.name === 'signup').pop().props.role, 'mentor');
   const { Pool } = require('pg');

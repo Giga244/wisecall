@@ -113,7 +113,7 @@ async function main() {
       const pays = await Promise.all([0, 1, 2].map(() => askAndPay(nextUser(), mentors[2].id)));
       const payWallMs = Math.round(performance.now() - t0);
       // sign-up sends the verification code by email inside the request
-      const signup = await api(BASE)('/api/auth/signup', { method: 'POST', body: { name: 'Rehearsal Signup', email: `rehearsal.signup.${mode}.${Date.now()}@example.test`, password: 'rehearsal-pass-12345', language: 'en', adult: true }, timeoutMs: 60000 });
+      const signup = await api(BASE)('/api/auth/signup', { method: 'POST', body: { name: 'Rehearsal Signup', email: `rehearsal.signup.${mode}.${Date.now()}@example.test`, password: 'rehearsal-pass-12345', language: 'en', adult: true, birthYm: '1990-01' }, timeoutMs: 60000 });
       const forgot = await api(BASE)('/api/auth/forgot-password', { method: 'POST', body: { email: users[0].email }, timeoutMs: 60000 });
       r[mode] = { paymentsPaid: pays.filter((p) => p.ok).length, payWallMs, signup: { status: signup.status, ms: Math.round(signup.ms), error: signup.json && signup.json.error, emailSent: signup.json && signup.json.emailSent },
         forgotPassword: { status: forgot.status, ms: Math.round(forgot.ms) } };

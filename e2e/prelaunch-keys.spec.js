@@ -18,7 +18,8 @@ test('a mentor applies and sees "ID checks open soon" (English and Georgian); no
   await page.fill('#name', 'Early Mentor');
   await page.fill('#email', 'early.mentor@example.com');
   await page.fill('#password', 'local-test-pass-1');
-  await page.check('#adult');
+  await page.selectOption('#birthYear', '1990');
+  await page.selectOption('#birthMonth', '01');
   await page.click('#signupForm button[type="submit"]');
   await page.waitForURL(/verify-email\.html/);
   await page.fill('#code', (await page.locator('#devCodeBox strong').innerText()).trim());

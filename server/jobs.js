@@ -156,6 +156,12 @@ async function accountHousekeeping() {
   await require('./loginGuard').purgeOld(); // (wrong-password counts and lockouts older than a day)
 }
 
+// Somebody whose 18th birth month has passed is an adult now (server/ageGate.js).
+async function ageGroups() {
+  const n = await require('./ageGate').sweep();
+  if (n) console.log(`[jobs] ${n} person/people turned 18`);
+}
+
 async function safetyHousekeeping() {
   const n = await require('./safety').purgeOld();
   if (n) console.log(`[jobs] deleted the text of ${n} old emergency check(s)`);
@@ -206,6 +212,7 @@ async function runSweep({ wait = false } = {}) {
       await ratingsHousekeeping();
       await verificationHousekeeping();
       await safetyHousekeeping();
+      await ageGroups();
       await accountHousekeeping();
       await require('./verification/reminders').sweep().catch((e) => console.error('[jobs] application reminders failed:', e.message)); // (an unfinished application)
       await require('./live/settle').sweep(); // (live sessions: holds, refunds, minimum, no-shows, endings, reminders, clean-up)

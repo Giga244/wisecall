@@ -18,7 +18,8 @@ class WaitlistError extends Error {
 // wantedQuestion: what they typed on the home page (optional; contact details are taken out, at most 300 characters).
 // -> { position }: how many addresses are on the list now ("You're #N on the list"). It is the same answer whether or not the address was
 // there already, so it says nothing about who is on the list.
-async function add({ email, niche, language, wantedQuestion, source }) {
+async function add({ email, niche, language, wantedQuestion, source, over16 }) {
+  if (over16 !== true) throw new WaitlistError('age_required'); // ("I am 16 or older": a box on the form)
   const address = String(email || '').trim();
   if (!EMAIL_RE.test(address) || address.length > 254) throw new WaitlistError('invalid_email');
   const field = niche === undefined || niche === null || niche === '' ? 'any' : String(niche);

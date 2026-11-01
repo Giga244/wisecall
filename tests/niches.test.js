@@ -39,9 +39,9 @@ describe('the niche list', () => {
   });
 
   test('the waiting list and the Experience form take the new niches; unknown ones are refused', async () => {
-    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { email: 'w1@example.com', niche: 'wine_agriculture', language: 'en' } })).status, 201);
-    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { email: 'w2@example.com', niche: 'other', language: 'en' } })).error, 'invalid_niche');
-    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { email: 'w3@example.com', niche: 'astrology', language: 'en' } })).error, 'invalid_niche');
+    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'w1@example.com', niche: 'wine_agriculture', language: 'en' } })).status, 201);
+    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'w2@example.com', niche: 'other', language: 'en' } })).error, 'invalid_niche');
+    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'w3@example.com', niche: 'astrology', language: 'en' } })).error, 'invalid_niche');
     const m = await mentor('Nana Dentist', 'nana@example.com', { ...FORM, niche: 'dentistry' });
     assert.equal(m.r.status, 200, m.r.text);
     const v = await m.c.api('/verification');
@@ -122,7 +122,7 @@ describe('suggested niches: an admin promotes one, or moves it into an existing 
     assert.equal(audit.rows[0].n, 3);
     const cfg = await client(base).api('/config');
     assert.ok(cfg.niches.some((n) => n.key === 'beekeeping' && n.ka === 'მეფუტკრეობა' && n.icon === 'leaf'), 'offered to everyone at once');
-    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { email: 'bees@example.com', niche: 'beekeeping', language: 'ka' } })).status, 201);
+    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'bees@example.com', niche: 'beekeeping', language: 'ka' } })).status, 201);
   });
 
   test('move a suggestion into an existing niche; edit, hide and the regulated rule', async () => {
@@ -136,7 +136,7 @@ describe('suggested niches: an admin promotes one, or moves it into an existing 
     assert.equal((await admin.api('/admin/niches/law', { method: 'PATCH', body: { regulated: false } })).error, 'regulated_by_law');
     assert.equal((await admin.api('/admin/niches/music', { method: 'PATCH', body: { active: false } })).niche.active, false);
     assert.ok(!(await client(base).api('/config')).niches.some((n) => n.key === 'music'), 'a hidden niche is not offered');
-    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { email: 'music@example.com', niche: 'music', language: 'en' } })).error, 'invalid_niche');
+    assert.equal((await client(base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'music@example.com', niche: 'music', language: 'en' } })).error, 'invalid_niche');
     await admin.api('/admin/niches/music', { method: 'PATCH', body: { active: true } });
 
     // A niche an admin creates as regulated needs a licence and a copy of it (there is no researched register for it).

@@ -33,7 +33,7 @@ before(async () => {
   // With email on, the verification code is only in the email, so read it from the outbox.
   const signupViaOutbox = async (name, email) => {
     const c = client(base);
-    await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: 'test-pass-12345' } });
+    await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password: 'test-pass-12345' } });
     let mail;
     for (let i = 0; i < 60 && !mail; i++) { mail = outbox().find((m) => m.to === email); if (!mail) await wait(100); }
     const code = mail.html.match(/letter-spacing:8px[^>]*>(\d{6})</)[1];

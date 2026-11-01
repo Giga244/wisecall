@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Your age — Wisecall</title>
+<meta name="description" content="Wisecall is for people who are 16 or older.">
+<link rel="canonical" href="{{PUBLIC_URL}}/age-check.html">
+<meta name="robots" content="noindex">
+<link rel="preload" href="/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<script src="/js/header.js"></script>
+
+<main class="auth-page" id="main">
+  <div class="auth-card" id="ageBox">
+    <h1 data-i18n="age.title">One question before you go on</h1>
+    <p class="muted" data-i18n="age.sub">Wisecall is for people who are 16 or older. We keep only your birth year and month.</p>
+    <form id="ageForm" novalidate>
+      <div id="ageFieldsSlot"></div>
+      <p class="form-error" id="formError" role="alert"></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="choose.cta">Continue</button>
+    </form>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/js/i18n.js"></script>
+<script src="/js/footer.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/age-fields.js"></script>
+<script src="/js/age-check.js"></script>
+</body>
+</html>

@@ -33,6 +33,7 @@
           <label for="wl${n}-email"><span>${t('wait.email')}</span><input id="wl${n}-email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" required></label>
           <label for="wl${n}-niche"><span>${t('wait.niche')}</span><select id="wl${n}-niche" name="niche">${options}</select></label>
         </div>
+        <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
         <button class="btn btn-primary waitlist-submit" type="submit">${t('wait.submit')}</button>
         <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
         <p class="form-error waitlist-error" role="alert"></p>
@@ -51,10 +52,11 @@
         error.textContent = '';
         const email = form.email.value.trim();
         if (!form.email.checkValidity() || !email) { error.textContent = t('wait.error'); form.email.focus(); return; }
+        if (!form.over16.checked) { error.textContent = t('wait.over16Required'); form.over16.focus(); return; }
         const button = form.querySelector('button');
         button.disabled = true;
         try {
-          const joined = await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang(), wantedQuestion: question || undefined, turnstileToken: human ? await human.token(form) : undefined } });
+          const joined = await WisecallAPI.apiFetch('/waitlist', { method: 'POST', body: { email, niche: form.niche.value, language: WisecallI18n.getLang(), wantedQuestion: question || undefined, over16: true, turnstileToken: human ? await human.token(form) : undefined } });
           // (the note keeps the form's height: the card around it does not jump)
           const done = document.createElement('div');
           done.className = 'waitlist-done';
@@ -74,7 +76,7 @@
             } catch (e) { /* (closed, or no clipboard) */ }
           });
         } catch (e) {
-          error.textContent = (human && human.errorText(e.code)) || t(e.code === 'invalid_email' ? 'wait.error' : 'toast.error');
+          error.textContent = (human && human.errorText(e.code)) || t({ invalid_email: 'wait.error', age_required: 'wait.over16Required' }[e.code] || 'toast.error');
           if (human) human.reset(form);
           button.disabled = false;
         }

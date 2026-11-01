@@ -14,7 +14,7 @@ const USERNAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const RESERVED = new Set(['admin', 'administrator', 'api', 'u', 'user', 'users', 'me', 'settings', 'dashboard', 'login', 'logout', 'signup', 'register', 'expert', 'experts',
   'mentor', 'mentors', 'asker', 'about', 'contact', 'terms', 'privacy', 'help', 'support', 'wisecall', 'staff', 'team', 'moderator', 'root', 'system', 'null', 'undefined',
   'static', 'css', 'js', 'fonts', 'i18n', 'img', 'assets', 'public', 'robots', 'sitemap', 'favicon', 'healthz', 'verify', 'notifications', 'profile', 'profiles', 'search', 'browse',
-  'faq', 'pricing', 'blog', 'news', 'welcome', 'auth', 'oauth', 'google', 'callback', 'reset-password', 'forgot-password', 'verify-email', 'choose-username', 'mock-bank', 'mock-kyc']);
+  'faq', 'pricing', 'blog', 'news', 'welcome', 'auth', 'oauth', 'google', 'callback', 'reset-password', 'forgot-password', 'verify-email', 'choose-username', 'age-check', 'mock-bank', 'mock-kyc']);
 
 // The Georgian national romanisation, and a plain Russian one (many people write their name either way).
 const MAP = {

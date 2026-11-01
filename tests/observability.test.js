@@ -53,7 +53,7 @@ describe('visitor statistics', () => {
 
   test('events: a sign-up and a waiting-list join, with no personal data', async () => {
     await signupVerified(base, 'Stat Person', 'stat.person@example.com');
-    await client(base).api('/waitlist', { method: 'POST', body: { email: 'wait.person@example.com', niche: 'tech', language: 'en' } });
+    await client(base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'wait.person@example.com', niche: 'tech', language: 'en' } });
     const s = await until(() => seen.plausible.find((e) => e.body.name === 'signup'));
     const w = await until(() => seen.plausible.find((e) => e.body.name === 'waitlist_join'));
     assert.deepEqual(s.body.props, { method: 'email', role: 'asker' }); // (role: docs/ANALYTICS.md)

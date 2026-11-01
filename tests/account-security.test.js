@@ -37,14 +37,14 @@ describe('signing up', () => {
     const c = client(base);
     const r = await c.api('/auth/signup', { method: 'POST', body: { name: 'Young Person', email: 'young@example.com', password: 'fine-password-123' } });
     assert.equal(r.status, 400);
-    assert.equal(r.error, 'adult_required');
-    const ok = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Adult Person', email: 'adult@example.com', password: 'fine-password-123' } });
+    assert.equal(r.error, 'birth_required');
+    const ok = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Adult Person', email: 'adult@example.com', password: 'fine-password-123' } });
     assert.equal(ok.status, 201);
     assert.ok((await pool.query(`SELECT adult_confirmed_at FROM users WHERE email = 'adult@example.com'`)).rows[0].adult_confirmed_at);
   });
 
   test('a password from a data breach is refused; only a 5-character prefix of its hash leaves the server', async () => {
-    const r = await client(base).api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Breached', email: 'breached@example.com', password: BREACHED } });
+    const r = await client(base).api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Breached', email: 'breached@example.com', password: BREACHED } });
     assert.equal(r.error, 'password_breached');
     assert.ok(asked.includes(sha(BREACHED).slice(0, 5)));
     assert.ok(asked.every((p) => p.length === 5), 'never the whole hash, never the password');

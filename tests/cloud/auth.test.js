@@ -60,13 +60,13 @@ describe('email codes and rate limits', () => {
 
   test('the right code verifies the email', async () => {
     const c = client(base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Code Ok', email: 'code-ok@example.com', password: 'test-pass-12345' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Code Ok', email: 'code-ok@example.com', password: 'test-pass-12345' } });
     assert.equal((await c.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } })).user.emailVerified, true);
   });
 
   test('after 5 wrong codes the code stops working (a new one must be requested)', async () => {
     const c = client(base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Brute Force', email: 'brute@example.com', password: 'test-pass-12345' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Brute Force', email: 'brute@example.com', password: 'test-pass-12345' } });
     const wrong = String((Number(su.devVerifyCode) + 1) % 900000 + 100000);
     for (let i = 0; i < 5; i++) assert.equal((await c.api('/auth/verify-email', { method: 'POST', body: { code: wrong } })).status, 400);
     const right = await c.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } });

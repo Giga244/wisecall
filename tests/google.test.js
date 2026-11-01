@@ -39,14 +39,19 @@ class Browser {
     return { status: res.status, ...json };
   }
   // The whole round trip: our start address -> fake Google (the person picks an account) -> our callback. Returns the last redirect.
-  async google(who, { start = '/api/auth/google/start?mode=login', beforeCallback } = {}) {
+  async google(who, { start = '/api/auth/google/start?mode=login', beforeCallback, noAge = false } = {}) {
     fake.auto = who;
     const first = await this.get(start);
     if (first.status !== 302 || !first.location.startsWith(fake.url)) return { first, final: first };
     const atGoogle = await this.get(first.location, { theirs: true });
     if (!atGoogle.location) return { first, atGoogle, final: atGoogle };
     if (beforeCallback) await beforeCallback(atGoogle.location);
-    const final = await this.get(atGoogle.location);
+    let final = await this.get(atGoogle.location);
+    // (a new person answers the age page before an account exists: docs/CLAUDE-CODE-ASKERS-16-PLUS.md)
+    if (final.location && final.location.startsWith('/age-check.html?google=1') && !noAge) {
+      const made = await this.api('/auth/google/new', { method: 'POST', body: { birthYm: '1990-01' } });
+      if (made.status === 201) final = { status: 302, location: made.to };
+    }
     return { first, atGoogle, callback: atGoogle.location, final };
   }
   async me() { return (await this.api('/me')).user; }
@@ -135,6 +140,41 @@ describe('Google sign-in', () => {
         assert.equal(pathOf(final.location), '/choose-username.html', bad);
         await pool.query(`DELETE FROM users WHERE email = 'giorgi.google@e2e.test'`);
       }
+    });
+  });
+
+  describe('a new person is asked their age before an account exists', () => {
+    const NOW = new Date();
+    const ymAgo = (y) => { const d = new Date(Date.UTC(NOW.getUTCFullYear() - y, NOW.getUTCMonth() - 1, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`; };
+    test('Google alone makes no account; under 16 keeps nothing and the waiting details are gone', async () => {
+      const u = new Browser();
+      const n = await userCount();
+      const { final } = await u.google('newcomer', { start: '/api/auth/google/start?mode=signup', noAge: true });
+      assert.ok(final.location.startsWith('/age-check.html?google=1'), final.location);
+      assert.equal(await userCount(), n, 'no account yet');
+      assert.equal((await u.me()), null, 'not signed in');
+      assert.equal((await u.api('/auth/google/new')).name, 'Giorgi Google');
+      assert.equal((await u.api('/auth/google/new', { method: 'POST', body: {} })).error, 'birth_required');
+      const r = await u.api('/auth/google/new', { method: 'POST', body: { birthYm: ymAgo(15) } });
+      assert.equal(r.status, 403);
+      assert.equal(r.error, 'under_16');
+      assert.equal(await userCount(), n, 'still no account');
+      assert.equal((await usersWith('giorgi.google@e2e.test')).length, 0);
+      assert.equal((await u.api('/auth/google/new', { method: 'POST', body: { birthYm: ymAgo(20) } })).error, 'sign_in_again', 'what Google told us was forgotten');
+    });
+    test('16 or 17: the minor group; a made-up cookie is refused', async () => {
+      const u = new Browser();
+      await u.google('newcomer', { start: '/api/auth/google/start?mode=signup', noAge: true });
+      const made = await u.api('/auth/google/new', { method: 'POST', body: { birthYm: ymAgo(16) } });
+      assert.equal(made.status, 201);
+      assert.equal(pathOf(made.to), '/choose-username.html');
+      assert.equal((await u.me()).ageGroup, 'minor_16_17');
+      const row = (await usersWith('giorgi.google@e2e.test'))[0];
+      assert.equal(row.age_group, 'minor_16_17');
+      await pool.query(`DELETE FROM users WHERE email = 'giorgi.google@e2e.test'`);
+      const forged = new Browser();
+      forged.jar.set('wisecall_google_new', 'not.a.token');
+      assert.equal((await forged.api('/auth/google/new', { method: 'POST', body: { birthYm: ymAgo(20) } })).error, 'sign_in_again');
     });
   });
 
@@ -231,7 +271,7 @@ describe('Google sign-in', () => {
     test('NOT verified on our side: nothing is linked and nobody is signed in; they are asked to use their password first', async () => {
       // an account made by email + password whose email was never confirmed (anybody could have typed that address)
       const un = new Browser();
-      assert.equal((await un.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Unverified Here', email: 'unverified.here@e2e.test', password: 'their-own-password-2' } })).status, 201);
+      assert.equal((await un.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Unverified Here', email: 'unverified.here@e2e.test', password: 'their-own-password-2' } })).status, 201);
       const before = { users: await userCount(), ids: await identityCount() };
       const attacker = new Browser();
       const { final } = await attacker.google('existing2');
@@ -485,7 +525,7 @@ describe('Google sign-in', () => {
       const s = await startServer(PORT + 3, { ADMIN_EMAILS: 'squatter@example.com' });
       try {
         const c = new Browser();
-        const squat = await fetch(`${s.base}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: JSON.stringify({ adult: true, name: 'Squatter', email: 'squatter@example.com', password: 'squatter-password-1' }) });
+        const squat = await fetch(`${s.base}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: JSON.stringify({ adult: true, birthYm: '1990-01', name: 'Squatter', email: 'squatter@example.com', password: 'squatter-password-1' }) });
         assert.equal(squat.status, 201);
         const cookie = squat.headers.getSetCookie().map((x) => x.split(';')[0]).join('; ');
         const me = await (await fetch(`${s.base}/api/me`, { headers: { cookie } })).json();

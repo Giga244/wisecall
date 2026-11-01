@@ -92,7 +92,7 @@ describe('R-7: a person waiting for an email is not kept waiting by a hanging em
   test('sign-up answers within a few seconds, the account exists, and the code can be asked for again', async () => {
     const started = Date.now();
     const c = client(mailSrv.base);
-    const r = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Hana Hang', email: 'hana@example.com', password: 'test-pass-12345' } });
+    const r = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Hana Hang', email: 'hana@example.com', password: 'test-pass-12345' } });
     const took = Date.now() - started;
     assert.ok(took < 12000, `sign-up took ${took} ms`);
     assert.ok([201, 502, 503].includes(r.status), r.text);

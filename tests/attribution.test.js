@@ -91,7 +91,7 @@ describe('the real path to a sign-up', () => {
     return c;
   }
   const signUp = async (c, email) => {
-    assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Path Person', email, password: 'test-pass-12345' } })).status, 201);
+    assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Path Person', email, password: 'test-pass-12345' } })).status, 201);
     return (await pool.query('SELECT signup_source FROM users WHERE email = $1', [email])).rows[0].signup_source;
   };
 
@@ -128,7 +128,7 @@ describe('kept on sign-up, questions and applications, and counted for the admin
     // A visitor from the campaign signs up (the cookie goes along with every request, like in a browser) and asks two paid questions.
     const asker = client(base);
     asker.setCookie('wc_src', cookie.slice('wc_src='.length));
-    assert.equal((await asker.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Ana Campaign', email: 'ana-c@example.com', password: 'test-pass-12345' } })).status, 201);
+    assert.equal((await asker.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Ana Campaign', email: 'ana-c@example.com', password: 'test-pass-12345' } })).status, 201);
     const { rows: [u] } = await pool.query(`SELECT signup_source FROM users WHERE email = 'ana-c@example.com'`);
     assert.equal(u.signup_source.source, 'facebook');
     assert.equal(u.signup_source.campaign, 'launch');
@@ -147,7 +147,7 @@ describe('kept on sign-up, questions and applications, and counted for the admin
     // Someone from a LinkedIn link applies to be a mentor.
     const applicant = client(base);
     applicant.setCookie('wc_src', cookieOf(await visit('/?utm_source=linkedin&utm_campaign=mentors')).split(';')[0].slice('wc_src='.length));
-    assert.equal((await applicant.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Nino Applicant', email: 'nino-a@example.com', password: 'test-pass-12345' } })).status, 201);
+    assert.equal((await applicant.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Nino Applicant', email: 'nino-a@example.com', password: 'test-pass-12345' } })).status, 201);
     await pool.query(`UPDATE users SET email_verified = true WHERE email = 'nino-a@example.com'`);
     await applicant.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25, headline: 'Shop owner' } });
     await applicant.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Shop owner', customNiche: 'Running a small shop', niche: 'business', specialtyTags: ['retail'], yearsExperience: 5,
@@ -164,7 +164,7 @@ describe('kept on sign-up, questions and applications, and counted for the admin
     assert.ok(!JSON.stringify(o.sources).includes('@'), 'no emails in the overview');
     // (a question from a visitor with no campaign has no source at all, not a JSON null)
     const direct = client(base);
-    assert.equal((await direct.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Dato Direct', email: 'dato-d@example.com', password: 'test-pass-12345' } })).status, 201);
+    assert.equal((await direct.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Dato Direct', email: 'dato-d@example.com', password: 'test-pass-12345' } })).status, 201);
     await pool.query(`UPDATE users SET email_verified = true WHERE email = 'dato-d@example.com'`);
     await bookAndPay(base, direct, mentorId, 'What is the first thing to learn for a junior developer interview?');
     assert.equal((await pool.query(`SELECT count(*)::int AS n FROM bookings WHERE source IS NOT NULL AND jsonb_typeof(source) <> 'object'`)).rows[0].n, 0);
@@ -175,7 +175,7 @@ describe('kept on sign-up, questions and applications, and counted for the admin
     const forged = Buffer.from(JSON.stringify({ source: '<img src=x onerror=alert(1)>', campaign: 'ana@example.com', referrer: 'javascript:alert(1)' })).toString('base64url');
     const c = client(base);
     c.setCookie('wc_src', forged);
-    assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Forged Cookie', email: 'forged@example.com', password: 'test-pass-12345' } })).status, 201);
+    assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Forged Cookie', email: 'forged@example.com', password: 'test-pass-12345' } })).status, 201);
     const { rows: [u] } = await pool.query(`SELECT signup_source FROM users WHERE email = 'forged@example.com'`);
     const s = JSON.stringify(u.signup_source || {});
     assert.doesNotMatch(s, /[<>@]|javascript/);

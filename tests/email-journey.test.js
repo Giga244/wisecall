@@ -26,7 +26,7 @@ after(async () => { if (srv) srv.proc.kill(); await resend.stop(); await pool.en
 const statusOf = async (email) => (await pool.query('SELECT email_status FROM users WHERE lower(email) = $1', [email])).rows[0].email_status;
 async function signup(name, email, language = 'ka') {
   const c = client(base);
-  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: 'test-pass-12345', language } });
+  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password: 'test-pass-12345', language } });
   assert.equal(su.status, 201, su.text);
   return { c, mail: await resend.waitFor(email) };
 }

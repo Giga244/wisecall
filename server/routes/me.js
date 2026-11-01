@@ -17,6 +17,7 @@ const names = require('../verification/names');
 const experience = require('../verification/experience');
 const { getUserById, updateUser } = require('../models');
 const config = require('../config');
+const ageGate = require('../ageGate');
 
 const router = express.Router();
 
@@ -32,6 +33,20 @@ const EDITABLE_FIELDS = ['name', 'niche', 'roleTitle', 'price', 'freeWeeklyCap',
 // Part of the mentor application (step 2, "Experience"): they cannot change while it is being reviewed or once it is approved (the
 // mentor presses "Edit my application" first). The price is not part of the application and can change at any time.
 const APPLICATION_FIELDS = ['niche', 'roleTitle', 'sampleAnswer'];
+
+// The birth year and month, once: for an account from before the age rule (asked at the next login, and before a first question). Under 16
+// nothing is kept and the account stays as it is, without questions. It cannot be changed afterwards (an admin can clear a mistake).
+router.post('/age', requireAuth, asyncHandler(async (req, res) => {
+  const existing = await getUserById(req.userToken.id);
+  if (!existing) return res.status(404).json({ error: 'not_found' });
+  if (existing.birthYm) return res.status(409).json({ error: 'age_already_set' });
+  const age = ageGate.check((req.body || {}).birthYm);
+  if (age.error) return res.status(age.status).json({ error: age.error });
+  // (a mentor's account is for 18 or older)
+  if (age.group !== ageGate.ADULT && (existing.role === 'mentor' || existing.role === 'both')) return res.status(403).json({ error: 'mentor_18' });
+  await ageGate.save(existing.id, age);
+  res.json({ user: meProfile(await getUserById(existing.id)) });
+}));
 
 router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const updates = req.body || {};
@@ -99,6 +114,10 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   if (profile.error) return res.status(400).json({ error: profile.error, field: profile.field });
   Object.assign(patch, profile.patch);
 
+  // Being a mentor is from 18: whoever told us they are younger stops here. (The ID check decides for everybody else.)
+  if (updates.becomeMentor === true && ageGate.isMinor(existing)) return res.status(403).json({ error: 'mentor_18' });
+  // (a minor's profile stays private: server/profiles.js)
+  if (ageGate.isMinor(existing)) delete patch.profileVisibility;
   if (updates.becomeMentor === true && existing.role === 'seeker') { patch.role = 'mentor'; require('../analytics').event('mentor_application_started', req); }
   // (the price is step 3 of the application: its "done" event, when this save completes it)
   const stepsBefore = updates.price !== undefined ? await require('../verification/experience').stepsDone(existing).catch(() => null) : null;

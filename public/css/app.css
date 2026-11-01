@@ -903,3 +903,13 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 /* (the 5th dot: the ID card instead of "5", until the check has passed: then the green ✓) */
 .apply-step-num .id-icon { width: 18px; height: 18px; }
 @media (max-width: 639px) { .id-card { padding: 18px; } .id-card .btn { width: 100%; } .id-card-head h1 { font-size: 1.35rem; } }
+
+/* The birth year and month (public/js/age-fields.js) */
+.age-fields { border: 0; padding: 0; margin: 0 0 16px; min-width: 0; }
+.age-fields legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
+.age-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.age-row label { display: block; min-width: 0; }
+.age-row select { width: 100%; min-height: 48px; font-size: 16px; }
+.age-under16 { text-align: center; padding: 24px 0; }
+.age-under16 p:first-child { font-size: 1.1rem; font-weight: 700; }
+.waitlist-age { margin: 10px 0; font-weight: 400; }

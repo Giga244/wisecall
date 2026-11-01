@@ -225,7 +225,7 @@ describe('when a free question ends without an answer', () => {
 describe('the limits', () => {
   test('the asker needs a confirmed email', async () => {
     const c = client(base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'New Person', email: 'unconfirmed@example.com', password: 'test-pass-12345' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'New Person', email: 'unconfirmed@example.com', password: 'test-pass-12345' } });
     assert.equal(su.status, 201);
     const r = await ask(c, 'A question before confirming my email');
     assert.equal(r.status, 403);

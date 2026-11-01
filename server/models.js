@@ -1,5 +1,6 @@
 const { query } = require('./db');
 const config = require('./config');
+const ageGate = require('./ageGate');
 
 // The API keeps the camelCase shapes the frontend already uses; these mappers translate
 // between them and the snake_case Postgres columns.
@@ -71,6 +72,9 @@ function userFromRow(r) {
     hasFailedRequiredStep: r.has_failed_required_step === undefined ? undefined : Boolean(r.has_failed_required_step),
     deletionRequestedAt: r.deletion_requested_at || null,
     adultConfirmedAt: r.adult_confirmed_at || null,
+    birthYm: r.birth_ym || null, // (year and month only: server/ageGate.js)
+    ageGroup: r.birth_ym ? ageGate.groupOf(r.birth_ym) : null, // (worked out each time, so it is right on the day somebody turns 18)
+    ageConfirmedAt: r.age_confirmed_at || null,
     deletedAt: r.deleted_at || null,
     createdAt: r.created_at
   };

@@ -34,7 +34,7 @@ describe('platform basics', () => {
 describe('accounts', () => {
   test('signup -> wrong code rejected -> right code verifies', async () => {
     const c = client(base);
-    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Ann Seeker', email: 'Ann@Example.com', password: 'test-pass-12345' } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Ann Seeker', email: 'Ann@Example.com', password: 'test-pass-12345' } });
     assert.equal(su.status, 201);
     assert.match(su.devVerifyCode, /^\d{6}$/);
     assert.equal(su.user.email, 'ann@example.com');
@@ -48,7 +48,7 @@ describe('accounts', () => {
   });
 
   test('duplicate email is rejected case-insensitively', async () => {
-    const r = await client(base).api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Dup', email: 'ANN@example.com', password: 'test-pass-12345' } });
+    const r = await client(base).api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Dup', email: 'ANN@example.com', password: 'test-pass-12345' } });
     assert.equal(r.status, 409);
     assert.equal(r.error, 'email_taken');
   });
@@ -80,7 +80,7 @@ describe('accounts', () => {
 describe('mentor application and approval', () => {
   test('an unverified email cannot apply, and nothing is saved', async () => {
     const c = client(base);
-    await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Unverified', email: 'unverified@example.com', password: 'test-pass-12345' } });
+    await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Unverified', email: 'unverified@example.com', password: 'test-pass-12345' } });
     await c.api('/me', { method: 'PATCH', body: { becomeMentor: true } });
     const r = await c.api('/me', { method: 'PATCH', body: { roleTitle: 'Doctor', niche: 'medicine', price: 20, proofUrl: 'https://linkedin.com/in/x', sampleAnswer: SAMPLE } });
     assert.equal(r.error, 'email_not_verified');
@@ -569,7 +569,7 @@ describe('production safety', () => {
     });
     try {
       const c = client(prod.base);
-      const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Prod User', email: 'prod-user@example.com', password: 'test-pass-12345' } });
+      const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Prod User', email: 'prod-user@example.com', password: 'test-pass-12345' } });
       assert.equal(su.status, 201);
       assert.equal(su.devVerifyCode, undefined);
       assert.equal(su.devMode, false);

@@ -22,7 +22,7 @@ async function until(fn, message, timeout = 15000) {
 }
 async function signup(name, email) {
   const c = client(base);
-  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: 'test-pass-12345' } });
+  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password: 'test-pass-12345' } });
   assert.equal(su.status, 201, su.text);
   const mail = await until(() => outbox().find((m) => m.to === email && /letter-spacing:8px/.test(m.html)), 'sign-up email');
   const code = mail.html.match(/letter-spacing:8px[^>]*>(\d{6})</)[1];

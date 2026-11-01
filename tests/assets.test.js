@@ -162,7 +162,7 @@ describe('how long each thing is kept', () => {
 
   test('the admin scripts are never kept by a shared cache', async () => {
     const admin = client(base);
-    const su = await admin.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Qa Admin', email: 'qa-admin@example.com', password: 'test-pass-12345' } });
+    const su = await admin.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Qa Admin', email: 'qa-admin@example.com', password: 'test-pass-12345' } });
     await admin.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } });
     assert.equal((await admin('/js/admin.js')).headers.get('cache-control'), 'private, no-cache');
   });

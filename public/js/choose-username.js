@@ -6,10 +6,7 @@
   const params = new URLSearchParams(location.search);
   const next = WisecallAPI.safeRedirect(params.get('redirect'), '/dashboard.html');
   if (!user) { location.href = '/login.html'; return; }
-  // (a new account from Google also confirms here that the person is 18 or older; everyone else did on the sign-up form)
-  const needsAdult = !user.adultConfirmedAt && !user.usernameConfirmed; // (only a new account passes through this page)
-  if (user.usernameConfirmed && !needsAdult) { location.href = next; return; } // nothing to choose: they already did
-  document.getElementById('adultRow').hidden = !needsAdult;
+  if (user.usernameConfirmed) { location.href = next; return; } // nothing to choose: they already did
 
   const input = document.getElementById('username');
   const status = document.getElementById('usernameStatus');
@@ -45,10 +42,8 @@
     ev.preventDefault();
     errorEl.textContent = '';
     const button = ev.target.querySelector('button[type="submit"]');
-    if (needsAdult && !document.getElementById('adult').checked) { errorEl.textContent = t('auth.adultRequired'); return; }
     button.disabled = true;
     try {
-      if (needsAdult) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { adultConfirmed: true } });
       // (Saving the very same name is how "keep this one" is recorded.)
       await WisecallAPI.apiFetch('/me/username', { method: 'PUT', body: { username: input.value.trim().toLowerCase() } });
       location.href = next;

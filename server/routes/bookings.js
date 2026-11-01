@@ -37,6 +37,8 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   const mentor = await getUserById(mentorId);
   const seeker = await getUserById(req.userToken.id);
   if (!seeker) return res.status(401).json({ error: 'not_authenticated' });
+  // (an account from before the age rule answers it once: /age-check.html)
+  if (!seeker.birthYm) return res.status(403).json({ error: 'age_required' });
   if (!isListable(mentor)) return res.status(404).json({ error: 'mentor_not_found' });
   if (mentor.id === seeker.id) return res.status(400).json({ error: 'cannot_book_self' });
   // Limits per account (one address can be many accounts, one account many addresses): a flood of attempts would open bank orders and

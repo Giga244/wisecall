@@ -20,6 +20,8 @@ const { getUserById, getUserByEmail, insertUser, updateUser } = require('../mode
 const { fetchGooglePhoto } = require('../images');
 const { setPhoto } = require('../profiles');
 const { sendTemplate } = require('../mail');
+const ageGate = require('../ageGate');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
@@ -42,6 +44,9 @@ function backWith(res, mode, code, redirect) {
   const base = PAGE[mode] || PAGE.login;
   res.redirect(302, withRedirect(`${base}${base.includes('?') ? '&' : '?'}google=${code}`, redirect));
 }
+
+// An account from before the age rule is asked once, at its next login (a mentor's account when they ask a first question).
+const askAge = (user, to) => (!user.birthYm && user.role === 'seeker' && !/^\/apply\.html/.test(to) ? withRedirect('/age-check.html', to) : to);
 
 const randomColor = () => ['#ff6f59', '#3db88e', '#f4a93b', '#5b6b8c', '#8c5b9f', '#3f8fc4', '#d1567e', '#3f6b6b'][crypto.randomInt(8)];
 const oneLine = (v, max) => String(v || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -73,6 +78,17 @@ router.post('/link/start', requireAuth, asyncHandler(async (req, res) => {
     res.status(502).json({ error: 'google_error' });
   }
 }));
+
+// A new person is asked their age before an account exists (docs/CLAUDE-CODE-ASKERS-16-PLUS.md: under 16, nothing may be stored). Until then
+// what Google told us waits in a short-lived signed cookie in their own browser: its own key and audience, so it can never be read as a sign-in.
+const NEW_COOKIE = 'wisecall_google_new';
+const NEW_MINUTES = 30;
+const NEW_KEY = () => `${config.SESSION_SECRET}:google-new`;
+const NEW_AUDIENCE = 'wisecall-google-new';
+const newCookieOptions = () => ({ httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/api/auth/google' });
+const readNew = (req) => {
+  try { return jwt.verify((req.cookies || {})[NEW_COOKIE] || '', NEW_KEY(), { audience: NEW_AUDIENCE }); } catch (e) { return null; }
+};
 
 async function sendVerificationCode(user, lang) {
   const code = String(crypto.randomInt(100000, 1000000));
@@ -135,7 +151,7 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
     const user = await getUserById(known.user_id);
     if (!user) return backWith(res, mode, 'error', redirect);
     await identities.touch(known.id);
-    return signIn(user, redirect || '/dashboard.html');
+    return signIn(user, askAge(user, redirect || '/dashboard.html'));
   }
   if (!email) return backWith(res, mode, 'no_email', redirect);
 
@@ -146,24 +162,52 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
     // account with somebody else's address. (The person signs in with their password and connects Google in Settings.)
     if (!(emailVerified && existing.emailVerified)) return backWith(res, mode, 'link_needed', redirect);
     await identities.linkGoogle(existing.id, claims);
-    return signIn(existing, redirect || '/dashboard.html');
+    return signIn(existing, askAge(existing, redirect || '/dashboard.html'));
   }
 
   // ---- A new person ------------------------------------------------------------------------------------------------
-  const name = oneLine(claims.name || claims.given_name, 100) || email.split('@')[0];
+  res.cookie(NEW_COOKIE, jwt.sign({
+    sub: claims.sub, email, email_verified: emailVerified, name: oneLine(claims.name || claims.given_name, 100) || email.split('@')[0],
+    picture: claims.picture || null, lang: remembered.lang === 'ka' ? 'ka' : 'en', redirect
+  }, NEW_KEY(), { expiresIn: `${NEW_MINUTES}m`, audience: NEW_AUDIENCE }), { ...newCookieOptions(), maxAge: NEW_MINUTES * 60000 });
+  return res.redirect(302, withRedirect('/age-check.html?google=1', redirect));
+}));
+
+// The age page, for a new person from Google: is somebody waiting?
+router.get('/new', (req, res) => {
+  const who = readNew(req);
+  if (!who) return res.status(404).json({ error: 'sign_in_again' });
+  res.json({ name: who.name });
+});
+
+// Their age: now the account is made, and they carry on where a new person goes. Under 16 what Google told us is forgotten.
+router.post('/new', asyncHandler(async (req, res) => {
+  const who = readNew(req);
+  if (!who) return res.status(401).json({ error: 'sign_in_again' });
+  const age = ageGate.check((req.body || {}).birthYm);
+  if (age.error) {
+    if (age.error === 'under_16') res.clearCookie(NEW_COOKIE, newCookieOptions());
+    return res.status(age.status).json({ error: age.error });
+  }
+  const { email, name, redirect } = who;
+  const emailVerified = who.email_verified === true;
+  const claims = { sub: who.sub, email, email_verified: emailVerified };
+  // (the same Google account or address, signed up a moment ago in another tab)
+  if (await identities.findGoogle(who.sub) || await getUserByEmail(email)) { res.clearCookie(NEW_COOKIE, newCookieOptions()); return res.status(409).json({ error: 'sign_in_again' }); }
   let user;
   try {
-    user = await insertUser({ name, email, passwordHash: null, color: randomColor(), language: remembered.lang === 'ka' ? 'ka' : 'en', emailVerified });
-    require('../analytics').event('signup', req, { method: 'google' });
+    user = await insertUser({ name, email, passwordHash: null, color: randomColor(), language: who.lang, emailVerified });
+    require('../analytics').event('signup', req, { method: 'google', age_group: age.group });
     const source = require('../attribution').read(req);
     if (source) await require('../db').query('UPDATE users SET signup_source = $2 WHERE id = $1', [user.id, JSON.stringify(source)]);
   } catch (e) {
-    if (e.code === '23505') return backWith(res, mode, 'error', redirect); // (the same address was registered a moment ago)
+    if (e.code === '23505') { res.clearCookie(NEW_COOKIE, newCookieOptions()); return res.status(409).json({ error: 'sign_in_again' }); } // (the same address was registered a moment ago)
     throw e;
   }
+  await ageGate.save(user.id, age);
   await usernames.assignNew(user.id, user.name, null); // a suggestion from the name; they confirm or change it on the next page
   await identities.linkGoogle(user.id, claims);
-  const photo = await fetchGooglePhoto(claims.picture);
+  const photo = await fetchGooglePhoto(who.picture);
   if (photo) await setPhoto(user.id, photo, 'google');
 
   // The pages a new person passes through: (verify the email if Google did not) -> choose a username -> where they were going.
@@ -172,7 +216,10 @@ router.get('/callback', optionalAuth, asyncHandler(async (req, res) => {
     const sent = await sendVerificationCode(user, user.language);
     to = `/verify-email.html?redirect=${encodeURIComponent(to)}${sent.devCode ? `&devCode=${sent.devCode}` : ''}${!sent.emailSent && !sent.devCode ? '&emailFailed=1' : ''}`;
   }
-  return signIn(await getUserById(user.id), to);
+  res.clearCookie(NEW_COOKIE, newCookieOptions());
+  await startSession(req, res, await getUserById(user.id), null, 'sign_in');
+  await require('../verification/signals').record(req, res, user.id, 'login');
+  res.status(201).json({ to });
 }));
 
 module.exports = router;

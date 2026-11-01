@@ -9,7 +9,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const b = req.body || {};
   try {
     const source = require('../attribution').read(req);
-    const { position } = await waitlist.add({ email: b.email, niche: b.niche, language: b.language, wantedQuestion: b.wantedQuestion, source });
+    const { position } = await waitlist.add({ email: b.email, niche: b.niche, language: b.language, wantedQuestion: b.wantedQuestion, source, over16: b.over16 });
     require('../analytics').event('waitlist_join', req, { field: String(b.niche || 'any').slice(0, 40), source: (source && source.source) || 'unknown' });
     // (the link to pass on: the home page in their language, tagged so a friend's sign-up shows where it came from)
     const share = `${require('../config').PUBLIC_URL}${b.language === 'ka' ? '/ka/' : '/'}?ref=share`;

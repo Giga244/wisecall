@@ -62,7 +62,7 @@ function createFakeResend() {
 // Signs a user up on a server that really sends email: the code is read from the message.
 async function signupByEmail(fake, base, name, email, language = 'en', password = 'test-pass-12345') {
   const c = client(base);
-  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password, language } });
+  const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password, language } });
   if (su.status !== 201) throw new Error('signup failed: ' + su.text);
   const mail = await fake.waitFor(email);
   const v = await c.api('/auth/verify-email', { method: 'POST', body: { code: fake.codeIn(mail) } });

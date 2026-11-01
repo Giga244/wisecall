@@ -42,6 +42,11 @@ test('new person: pick a Google account, land on "choose your username" with the
   await page.goto('/signup.html?redirect=%2Fdashboard.html');
   await page.click('#googleBtn');
   await chooseAccount(page, NEW.pick);
+  // their age first: no account exists until they answer
+  await page.waitForURL((u) => u.pathname === '/age-check.html');
+  await page.selectOption('#birthYear', '1990');
+  await page.selectOption('#birthMonth', '01');
+  await page.click('#ageForm button[type="submit"]');
   await page.waitForURL((u) => u.pathname === '/choose-username.html');
   await expect(page.locator('#chooseWho')).toContainText('Giorgi Google');
   await expect.poll(() => page.locator('#chooseWho img.avatar-photo').evaluate((i) => i.complete && i.naturalWidth)).toBe(512); // the Google picture
@@ -52,10 +57,6 @@ test('new person: pick a Google account, land on "choose your username" with the
   await expect(page.locator('#usernameStatus')).toHaveText(/can.t be used/i);
   await page.fill('#username', 'giorgi-g');
   await expect(page.locator('#usernameStatus')).toHaveText(/free/i);
-  // a new account from Google confirms here that the person is 18 or older
-  await page.click('#chooseForm button[type="submit"]');
-  await expect(page.locator('#formError')).toContainText('18 or older');
-  await page.check('#adult');
   await page.click('#chooseForm button[type="submit"]');
   await page.waitForURL((u) => u.pathname === '/dashboard.html');
 
@@ -123,7 +124,8 @@ test('an existing account whose email is not verified: not linked, and told to l
   await sp.fill('#name', UNVERIFIED_HERE.name);
   await sp.fill('#email', UNVERIFIED_HERE.email);
   await sp.fill('#password', S.PASSWORD);
-  await sp.check('#adult');
+  await sp.selectOption('#birthYear', '1990');
+  await sp.selectOption('#birthMonth', '01');
   await sp.click('#signupForm button[type="submit"]');
   await sp.waitForURL(/verify-email\.html/);
   await setup.close();

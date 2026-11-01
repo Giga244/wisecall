@@ -42,7 +42,7 @@ let srv, base, srv2, admin, asker, mentor, mentorId, n = 0;
 async function signup(name, email, { confirm = true } = {}) {
   const c = client(base);
   const from = outbox().length;
-  assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: PASSWORD } })).status, 201);
+  assert.equal((await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password: PASSWORD } })).status, 201);
   if (!confirm) return c;
   const mail = await mailTo(email, /./, from);
   const code = mail.html.match(/letter-spacing:8px[^>]*>(\d{6})</)[1];

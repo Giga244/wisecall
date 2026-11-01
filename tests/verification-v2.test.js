@@ -43,7 +43,7 @@ async function newMentor(name, email, { price = 30, jar } = {}) {
     // The same browser as another account (their device cookie), for the account-signal test.
     c = client(base);
     c.setCookie('wisecall_device', jar.getCookie('wisecall_device'));
-    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, name, email, password: PASSWORD } });
+    const su = await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name, email, password: PASSWORD } });
     await c.api('/auth/verify-email', { method: 'POST', body: { code: su.devVerifyCode } });
   } else c = await signupVerified(base, name, email);
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price, headline: `${name}, mentor` } });
@@ -132,7 +132,7 @@ describe('server 1: AUTO_APPROVE=on', () => {
     assert.ok(Number(review.ai_cost_usd) > 0 && review.ai_input_tokens > 0, 'tokens and cost are logged');
     assert.equal((await stepOf(anna.id, 'experience')).status, 'passed');
     assert.equal((await stepOf(anna.id, 'age')).status, 'passed');
-    assert.deepEqual((await stepOf(anna.id, 'age')).evidence, { adult: true }, 'only the result is stored, never the date of birth');
+    assert.deepEqual((await stepOf(anna.id, 'age')).evidence, { adult: true, birthYm: '1990-01' }, 'only the result is stored, never the date of birth');
     const ev = (await pool.query('SELECT * FROM mentor_evidence WHERE user_id = $1', [anna.id])).rows[0];
     assert.equal(ev.check_status, 'ok');
     assert.equal(ev.auto_verified, true);

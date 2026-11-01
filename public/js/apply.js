@@ -32,9 +32,14 @@
     return;
   }
   // Somebody who came straight here (an invite, the dashboard, Google) becomes a mentor applicant now: the same as "Become a mentor".
+  // (under 18 the server refuses: being a mentor is from 18)
+  const notYet = () => { head.hidden = true; root.innerHTML = `<div class="apply-step"><p class="apply-lead" role="status">${esc(t('auth.mentor18'))}</p></div>`; };
   if (user.role !== 'mentor' && user.role !== 'both') {
     try { user = (await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { becomeMentor: true } })).user; }
-    catch (e) { root.innerHTML = `<p class="form-error">${esc(t('toast.error'))}</p>`; return; }
+    catch (e) {
+      if (e.code === 'mentor_18') { notYet(); return; }
+      root.innerHTML = `<p class="form-error">${esc(t('toast.error'))}</p>`; return;
+    }
   }
 
   let v = null; // GET /verification

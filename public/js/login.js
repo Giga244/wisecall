@@ -9,6 +9,8 @@
   const params = new URLSearchParams(location.search);
   const redirect = WisecallAPI.safeRedirect(params.get('redirect'), WisecallAPI.asMentor() ? '/apply.html' : '/dashboard.html');
   WisecallAPI.keepMentorPath();
+  // An account from before the age rule answers it once, now. (A mentor's account: when they ask a first question.)
+  const after = (u) => (u && u.needsAge && u.role === 'seeker' && !WisecallAPI.asMentor() ? `/age-check.html?redirect=${encodeURIComponent(redirect)}` : redirect);
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -21,7 +23,7 @@
     try {
       const r = await WisecallAPI.apiFetch('/auth/login', { method: 'POST', body: { email, password, turnstileToken: await WisecallTurnstile.token(form) } });
       if (r.twoFactorRequired) { showCodeStep(); return; }
-      window.location.href = redirect;
+      window.location.href = after(r.user);
     } catch (e) {
       const minutes = String(Math.max(1, Math.ceil(((e.data && e.data.retryAfter) || 300) / 60)));
       errorEl.textContent = WisecallTurnstile.errorText(e.code)
@@ -57,8 +59,8 @@
     const button = codeForm.querySelector('button[type="submit"]');
     button.disabled = true;
     try {
-      await WisecallAPI.apiFetch('/auth/login/second-step', { method: 'POST', body: recovery ? { recoveryCode: value } : { code: value } });
-      window.location.href = redirect;
+      const r = await WisecallAPI.apiFetch('/auth/login/second-step', { method: 'POST', body: recovery ? { recoveryCode: value } : { code: value } });
+      window.location.href = after(r.user);
     } catch (e) {
       err.textContent = t({ invalid_code: 'auth.twoStep.wrong', locked: 'auth.twoStep.locked', sign_in_again: 'auth.twoStep.again' }[e.code] || 'toast.error');
       if (e.code === 'sign_in_again') { codeForm.hidden = true; form.hidden = false; }

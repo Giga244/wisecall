@@ -25,7 +25,7 @@ before(async () => {
   const drafter = await signupVerified(base, 'Dora Draft', 'dora@example.com');
   await drafter.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Writer', niche: 'tech', price: 20, sampleAnswer: SAMPLE } });
   await pool.query(`UPDATE users SET verification_status = 'pending', application_submitted_at = NULL WHERE email = 'dora@example.com'`);
-  for (const email of ['w1@example.com', 'w2@example.com']) await client(base).api('/waitlist', { method: 'POST', body: { email, niche: 'tech', language: 'en' } });
+  for (const email of ['w1@example.com', 'w2@example.com']) await client(base).api('/waitlist', { method: 'POST', body: { over16: true, email, niche: 'tech', language: 'en' } });
 });
 after(async () => { if (srv) srv.proc.kill(); await pool.end(); });
 

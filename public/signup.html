@@ -89,7 +89,9 @@
         <span class="hint" id="pwHint" data-i18n="auth.field.password.hint">At least 8 characters.</span>
         <div class="pw-strength" id="pwStrength" data-for="password" aria-live="polite"></div>
       </div>
-      <label class="checkbox-row adult-row" for="adult"><input type="checkbox" id="adult" required> <span data-i18n="auth.adult">I'm 18 or older</span></label>
+      <!-- (askers: 16 or older, their birth year and month; a mentor: 18 or older, and the ID check) -->
+      <div data-for-as="asker" id="ageFieldsSlot"></div>
+      <label class="checkbox-row adult-row" for="adult" data-for-as="mentor"><input type="checkbox" id="adult"> <span data-i18n="auth.adult">I'm 18 or older</span></label>
       <p class="form-error" id="formError" role="alert"></p>
       <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.signup.cta">Create account</button>
       <p class="consent muted small"><span data-i18n="auth.consent.before">By signing up you agree to the </span><a href="/terms.html" target="_blank" rel="noopener" data-i18n="auth.consent.terms">Terms</a><span data-i18n="auth.consent.and"> and </span><a href="/privacy.html" target="_blank" rel="noopener" data-i18n="auth.consent.privacy">Privacy Policy</a><span data-i18n="auth.consent.after">.</span></p>
@@ -109,6 +111,7 @@
 <script src="/js/nav.js"></script>
 <script src="/js/auth-ui.js"></script>
 <script src="/js/turnstile.js"></script>
+<script src="/js/age-fields.js"></script>
 <script src="/js/signup.js"></script>
 <script src="/js/google-signin.js"></script>
 </body>

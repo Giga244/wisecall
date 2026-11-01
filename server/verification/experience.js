@@ -368,7 +368,8 @@ async function funnel(days = 30) {
 }
 
 async function progressFor(user) {
-  if (!isMentor(user)) return { state: 'asker', step: null };
+  // (being a mentor is from 18: somebody younger has no "Become a mentor" button)
+  if (!isMentor(user)) return { state: require('../ageGate').isMinor(user) ? 'none' : 'asker', step: null };
   if (user.verificationStatus === 'verified' || user.verificationStatus === 'suspended') return { state: 'mentor', step: null };
   const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
   const p = progressOf(missingFor(user, evidence, stepMap), stepMap);

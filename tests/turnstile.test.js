@@ -47,7 +47,7 @@ describe('the forms need a token Cloudflare accepts', () => {
 
   test('sign-up: no token or a refused one is turned away before anything happens; a good one works', async () => {
     const c = client(base);
-    const body = { adult: true, name: 'Tamar Turnstile', email: 'tamar@example.com', password: 'test-pass-12345' };
+    const body = { adult: true, birthYm: '1990-01', name: 'Tamar Turnstile', email: 'tamar@example.com', password: 'test-pass-12345' };
     let r = await c.api('/auth/signup', { method: 'POST', body });
     assert.equal(r.status, 400);
     assert.equal(r.error, 'human_check_failed');
@@ -77,8 +77,8 @@ describe('the forms need a token Cloudflare accepts', () => {
     const contact = { name: 'Nino', email: 'nino@example.com', message: 'Hello, I have a question about how refunds work for a question.' };
     assert.equal((await c.api('/contact', { method: 'POST', body: contact })).error, 'human_check_failed');
     assert.equal((await c.api('/contact', { method: 'POST', body: { ...contact, turnstileToken: token() } })).status, 200);
-    assert.equal((await c.api('/waitlist', { method: 'POST', body: { email: 'wait@example.com', niche: 'any' } })).error, 'human_check_failed');
-    assert.ok([200, 201].includes((await c.api('/waitlist', { method: 'POST', body: { email: 'wait@example.com', niche: 'any', turnstileToken: token() } })).status));
+    assert.equal((await c.api('/waitlist', { method: 'POST', body: { over16: true, email: 'wait@example.com', niche: 'any' } })).error, 'human_check_failed');
+    assert.ok([200, 201].includes((await c.api('/waitlist', { method: 'POST', body: { over16: true, email: 'wait@example.com', niche: 'any', turnstileToken: token() } })).status));
     const request = { email: 'bees@example.com', field: 'Keeping bees', niche: 'other', need: 'I want to start keeping bees next spring and need to know the costs.' };
     assert.equal((await c.api('/requests', { method: 'POST', body: request })).error, 'human_check_failed');
     assert.equal((await c.api('/requests', { method: 'POST', body: { ...request, turnstileToken: token() } })).status, 201);

@@ -179,7 +179,7 @@ describe('launch mode: prelaunch, then live', () => {
 
   test('visitors can join the waiting list, and are marked as having joined before launch', async () => {
     for (const [email, niche] of [['wait-any@example.com', 'any'], ['wait-med@example.com', 'medicine']]) {
-      assert.equal((await client(pre.base).api('/waitlist', { method: 'POST', body: { email, niche, language: 'ka' } })).status, 201);
+      assert.equal((await client(pre.base).api('/waitlist', { method: 'POST', body: { over16: true, email, niche, language: 'ka' } })).status, 201);
     }
     const r = await row('wait-any@example.com');
     assert.equal(r.prelaunch, true);
@@ -237,7 +237,7 @@ describe('launch mode: prelaunch, then live', () => {
     assert.match(live.logs(), /Launch mode: live/);
 
     // Someone who joins after launch is not in the launch-day batch.
-    assert.equal((await client(live.base).api('/waitlist', { method: 'POST', body: { email: 'later@example.com', niche: 'any' } })).status, 201);
+    assert.equal((await client(live.base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'later@example.com', niche: 'any' } })).status, 201);
     assert.equal((await row('later@example.com')).prelaunch, false);
 
     const any = await fake.waitFor('wait-any@example.com', undefined, 12000);

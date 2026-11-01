@@ -30,7 +30,7 @@ async function visitor(landing) {
   if (set) c.setCookie('wc_src', set.split(';')[0].slice('wc_src='.length));
   return c;
 }
-const join = (c, email, niche, language = 'ka') => c.api('/waitlist', { method: 'POST', body: { email, niche, language } });
+const join = (c, email, niche, language = 'ka') => c.api('/waitlist', { method: 'POST', body: { over16: true, email, niche, language } });
 
 describe('joining the list', () => {
   test('"You\'re #N on the list" and a share link in their language', async () => {
@@ -60,7 +60,7 @@ describe('where they came from', () => {
     const src = async (email) => (await pool.query('SELECT source FROM waitlist WHERE email = $1', [email])).rows[0].source;
     assert.equal((await src('tiko-tiktok@example.com')).source, 'tiktok');
     assert.equal((await src('insta-ig@example.com')).source, 'instagram');
-    assert.equal((await ig.api('/auth/signup', { method: 'POST', body: { adult: true, name: 'Insta Person', email: 'insta-signup@example.com', password: 'test-pass-12345' } })).status, 201);
+    assert.equal((await ig.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Insta Person', email: 'insta-signup@example.com', password: 'test-pass-12345' } })).status, 201);
     assert.equal((await pool.query('SELECT signup_source FROM users WHERE email = $1', ['insta-signup@example.com'])).rows[0].signup_source.source, 'instagram');
   });
 

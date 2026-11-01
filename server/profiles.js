@@ -82,9 +82,12 @@ async function haveContact(aId, bId) {
 
 // May `viewer` (a user row, or null for a visitor) see this profile?
 async function canView(owner, viewer) {
-  if (owner.profileVisibility === 'public' || isListable(owner)) return true;
+  // (somebody under 18: only they and the admins, whoever they asked: docs/CLAUDE-CODE-ASKERS-16-PLUS.md)
+  const minor = require('./ageGate').isMinor(owner);
+  if (!minor && (owner.profileVisibility === 'public' || isListable(owner))) return true;
   if (!viewer) return false;
   if (viewer.id === owner.id || require('./adminAuth').isVerifiedAdminViewer(viewer)) return true; // (an admin: after the second step)
+  if (minor) return false;
   return haveContact(owner.id, viewer.id);
 }
 

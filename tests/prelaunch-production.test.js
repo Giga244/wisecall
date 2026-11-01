@@ -88,7 +88,7 @@ describe('production + LAUNCH_MODE=prelaunch, with no bank and no Didit keys', (
   });
 
   test('visitors can join the waiting list', async () => {
-    const r = await client(pre.base).api('/waitlist', { method: 'POST', body: { email: 'waiting@example.com', niche: 'design', language: 'ka' } });
+    const r = await client(pre.base).api('/waitlist', { method: 'POST', body: { over16: true, email: 'waiting@example.com', niche: 'design', language: 'ka' } });
     assert.ok([200, 201].includes(r.status), r.text);
     assert.equal((await pool.query(`SELECT count(*)::int AS n FROM waitlist WHERE email = 'waiting@example.com'`)).rows[0].n, 1);
   });

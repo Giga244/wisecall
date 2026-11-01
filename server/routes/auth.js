@@ -14,6 +14,7 @@ const twoFactor = require('../twoFactor');
 const { isAdminUser } = require('../adminAuth');
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
+const ageGate = require('../ageGate');
 
 const router = express.Router();
 const isStr = (v) => typeof v === 'string';
@@ -37,12 +38,21 @@ async function sendCode(user, to, code) {
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10);
 
 router.post('/signup', asyncHandler(async (req, res) => {
-  const { name, email, password, language, username, adult } = req.body || {};
+  const { name, email, password, language, username, adult, birthYm } = req.body || {};
   if (!isStr(name) || !isStr(email) || !isStr(password) || !name.trim() || !email || !password) return res.status(400).json({ error: 'missing_fields' });
   if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
   if (String(password).length < 8 || String(password).length > 200) return res.status(400).json({ error: 'weak_password' });
-  // "I am 18 or older" (a box on the form).
-  if (adult !== true) return res.status(400).json({ error: 'adult_required' });
+  // A mentor's sign-up: "I am 18 or older" (a box on the form; the ID check decides later). Everybody else: their birth year and month.
+  // Under 16 nothing is created and nothing is kept (server/ageGate.js).
+  const asMentor = (req.body || {}).as === 'mentor';
+  let age = null;
+  if (asMentor) {
+    if (adult !== true) return res.status(400).json({ error: 'adult_required' });
+    if (birthYm !== undefined && birthYm !== null && ageGate.groupOf(ageGate.parseYm(birthYm)) !== ageGate.ADULT) return res.status(403).json({ error: 'mentor_18' });
+  } else {
+    age = ageGate.check(birthYm);
+    if (age.error) return res.status(age.status).json({ error: age.error });
+  }
   if (await hibp.breachCount(password)) return res.status(400).json({ error: 'password_breached' });
   // The username is their choice (checked before anything is created); without one we make one from their name.
   let wantedUsername = null;
@@ -72,7 +82,8 @@ router.post('/signup', asyncHandler(async (req, res) => {
     if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
     throw err;
   }
-  await query('UPDATE users SET adult_confirmed_at = now() WHERE id = $1', [user.id]);
+  if (age) await ageGate.save(user.id, age);
+  else await query('UPDATE users SET adult_confirmed_at = now() WHERE id = $1', [user.id]);
   try {
     await usernames.assignNew(user.id, user.name, wantedUsername);
   } catch (e) {
@@ -86,7 +97,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
 
   await startSession(req, res, user, null, 'sign_in');
   await require('../verification/signals').record(req, res, user.id, 'signup');
-  require('../analytics').event('signup', req, { method: 'email', role: (req.body || {}).as === 'mentor' ? 'mentor' : 'asker' });
+  require('../analytics').event('signup', req, { method: 'email', role: asMentor ? 'mentor' : 'asker', ...(age ? { age_group: age.group } : {}) });
   const source = require('../attribution').read(req);
   if (source) await query('UPDATE users SET signup_source = $2 WHERE id = $1', [user.id, JSON.stringify(source)]);
   res.status(201).json({

@@ -9,7 +9,7 @@ const resend = createFakeResend();
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
 let srv, base, admin, anon;
 
-const join = (body) => anon.api('/waitlist', { method: 'POST', body });
+const join = (body) => anon.api('/waitlist', { method: 'POST', body: { over16: true, ...body } });
 const rowsFor = async (email) => (await pool.query('SELECT * FROM waitlist WHERE lower(email) = lower($1)', [email])).rows;
 
 async function listMentor(name, email, niche) {

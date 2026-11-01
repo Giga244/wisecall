@@ -391,6 +391,12 @@
       area.innerHTML = `${askHeader()}<p class="muted">${t('expert.ownProfile')}</p>`;
       return;
     }
+    // An account from before the age rule answers it once, before a first question (the draft stays in this browser).
+    if (user.needsAge) {
+      const back = encodeURIComponent(location.pathname + location.search);
+      area.innerHTML = `${askHeader()}<p class="muted">${escapeHtml(t('age.beforeAsking'))}</p><a class="btn btn-primary btn-block" href="/age-check.html?redirect=${back}">${escapeHtml(t('age.answerNow'))}</a>${askNotes()}`;
+      return;
+    }
     // This week's free questions are taken: back on Monday.
     if (free && expert.freeFull) {
       area.innerHTML = `${askHeader()}<p class="ask-full" role="status">${escapeHtml(t('expert.freeFull'))}</p>${askNotes()}`;
@@ -489,6 +495,7 @@
     } catch (e) {
       submitBtn.disabled = false;
       if (e.code === 'emergency') { showEmergencyHelp(); return; }
+      if (e.code === 'age_required') { location.href = `/age-check.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return; }
       const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings', email_not_verified: 'expert.err.freeVerify', free_limit_mentor: 'expert.err.freeMentor', free_limit_total: 'expert.err.freeTotal', free_full: 'expert.freeFull' };
       if (free) { WisecallTurnstile.reset(document.getElementById('askForm')); const human = WisecallTurnstile.errorText(e.code); if (human) { errorEl.textContent = human; return; } }
       if (/^(invalid_code|code_)/.test(e.code || '')) { errorEl.textContent = t('live.err.' + e.code); appliedCode = null; return; }
