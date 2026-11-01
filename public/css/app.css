@@ -918,3 +918,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .age-parent .checkbox-row input { flex: none; margin-top: 4px; }
 .ask-payer { align-items: flex-start; font-weight: 400; margin: 12px 0; }
 .ask-payer input { flex: none; margin-top: 4px; }
+.minor-guidance { border-left: 3px solid var(--border); padding: 4px 0 4px 12px; margin: 10px 0; font-size: 0.92rem; }
+.minor-guidance p { margin: 0 0 4px; font-weight: 700; }
+.minor-guidance ul { margin: 0; padding-left: 18px; }
+.ask-minor-hint { border-left: 3px solid var(--border); padding: 4px 0 4px 12px; font-size: 0.92rem; }

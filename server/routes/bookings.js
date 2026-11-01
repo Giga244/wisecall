@@ -138,10 +138,14 @@ router.get('/mine', requireAuth, asyncHandler(async (req, res) => {
         WHERE b.${mine}_id = $1 ${mine === 'mentor' ? `AND b.status NOT IN ('pending_payment', 'expired')` : ''} ORDER BY b.created_at DESC LIMIT 200`,
       [req.userToken.id]
     );
-    return rows.map((r) => ({
-      ...bookingFromRow(r), otherPartyName: r.other_name, otherPartyColor: r.other_color, otherPartyUsername: r.other_username,
-      otherPartyPhotoUrl: photoUrl({ id: r[`${other}_id`], photoUpdatedAt: r.other_photo_at })
-    }));
+    return rows.map((r) => {
+      // (a mentor sees only the first name of somebody under 18, and no way to their profile: docs/CLAUDE-CODE-ASKERS-16-PLUS.md part 5)
+      const hidden = mine === 'mentor' && r.asker_minor;
+      return {
+        ...bookingFromRow(r), otherPartyName: hidden ? ageGate.firstName(r.other_name) : r.other_name, otherPartyColor: r.other_color, otherPartyUsername: hidden ? null : r.other_username,
+        otherPartyPhotoUrl: hidden ? null : photoUrl({ id: r[`${other}_id`], photoUpdatedAt: r.other_photo_at })
+      };
+    });
   };
   const me = req.userToken.id;
   // A buyer never sees an answer that is still being checked (see server/probation.js).

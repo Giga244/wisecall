@@ -406,6 +406,7 @@
       ${askHeader()}
       ${noticeKey ? `<p class="pay-notice ${noticeKey === 'expert.paymentCancelled' ? 'cancelled' : 'failed'}" id="payNotice" role="status" tabindex="-1">${escapeHtml(t(noticeKey))}</p>` : ''}
       <p class="ask-tip">${t('expert.askTip')}</p>
+      ${user.ageGroup === 'minor_16_17' && [expert.niche, ...(expert.extraNiches || [])].some((n) => ['medicine', 'psychology', 'law', 'finance'].includes(n)) ? `<p class="ask-minor-hint" id="askMinorHint">${escapeHtml(t('expert.minorHint'))}</p>` : ''}
       <form id="askForm" novalidate>
         <label for="question"><span>${t('expert.question.label')}</span>
           <textarea id="question" rows="5" maxlength="${MAX_QUESTION}" placeholder="${escapeHtml(t('expert.questionPlaceholder'))}" aria-describedby="qMeta askError" required></textarea>

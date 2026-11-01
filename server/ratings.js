@@ -381,7 +381,9 @@ async function sendReminders() {
         const [person, other] = await Promise.all([getUserById(b[whoCol]), getUserById(b[otherCol])]);
         if (!person || !other) continue;
         const when = timing({ answeredAt: b.answered_at, answerReleasedAt: b.answer_released_at });
-        notify.notifyRateReminder(person, { role: party, name: other.name, revealsAt: when.revealsAt, final: kind === 'd6' });
+        // (a mentor sees only the first name of somebody under 18)
+        const shownName = b.asker_minor && other.id === b.seeker_id ? require('./ageGate').firstName(other.name) : other.name;
+        notify.notifyRateReminder(person, { role: party, name: shownName, revealsAt: when.revealsAt, final: kind === 'd6' });
         sent += 1;
       }
     }

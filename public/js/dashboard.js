@@ -290,14 +290,15 @@
         <div class="booking-top">
           ${WisecallAPI.avatar({ name: b.otherPartyName, color: b.otherPartyColor, photoUrl: b.otherPartyPhotoUrl })}
           <div>
-            <div class="card-name"><a class="plain-link" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${escapeHtml(b.otherPartyName)}</a></div>
-            <span class="badge badge-${b.status}">${statusLabel(b)}</span>
+            <div class="card-name">${b.otherPartyUsername ? `<a class="plain-link" href="/u/${encodeURIComponent(b.otherPartyUsername)}">${escapeHtml(b.otherPartyName)}</a>` : escapeHtml(b.otherPartyName)}</div>
+            <span class="badge badge-${b.status}">${statusLabel(b)}</span>${b.askerMinor ? ` <span class="badge badge-pending_payment minor-tag">${escapeHtml(t('dash.minor.tag'))}</span>` : ''}
           </div>
           <div class="booking-amount">${isFree(b) ? escapeHtml(t('price.free')) : `${money(b.mentorNetAmount)}<span class="muted small block">${t('dash.fee.note')}: ${money(b.platformFeeAmount)}</span>`}</div>
         </div>
         ${['paid', 'answered'].includes(b.status) ? WisecallRatings.askerLineHtml(b.askerRating) : ''}
         ${showsTimeline(b) ? timelineHtml(b, 'mentor') : ''}
         <p class="booking-question">${escapeHtml(b.question)}</p>
+        ${b.askerMinor && b.status === 'paid' ? `<div class="minor-guidance"><p>${escapeHtml(t('dash.minor.title'))}</p><ul>${['study', 'contact', 'sensitive'].map((k) => `<li>${escapeHtml(t('dash.minor.' + k))}</li>`).join('')}</ul></div>` : ''}
         ${b.status === 'paid' && b.answerDeadline ? countdownHtml(b, 'mentor') : ''}
         ${bookingNote(b)}
         ${b.answer

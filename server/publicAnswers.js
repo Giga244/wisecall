@@ -75,7 +75,8 @@ async function forBookings(bookings, viewerId) {
     const r = byBooking[b.id];
     const asker = b.seekerId === viewerId;
     if (r) { out[b.id] = view(r); continue; }
-    if (asker && visibleToAsker(b) && (starsOf[b.id] || 0) >= 4 && prefOf[b.mentorId] !== 'never') {
+    // (a question from somebody under 18 is never offered for publishing)
+    if (asker && !b.askerMinor && visibleToAsker(b) && (starsOf[b.id] || 0) >= 4 && prefOf[b.mentorId] !== 'never') {
       out[b.id] = { status: 'can_offer', canOffer: true, draft: (await draftFor(b)).slice(0, QUESTION_MAX) };
     }
   }
@@ -90,6 +91,7 @@ async function draftFor(b) {
 async function askerAgrees(user, bookingId, { question }) {
   const b = await getBookingById(bookingId);
   if (!b || b.seekerId !== user.id) throw new AnswerError('not_found');
+  if (b.askerMinor) throw new AnswerError('not_found');
   if (!visibleToAsker(b)) throw new AnswerError('not_answered');
   if ((await askerRating(b.id) || 0) < 4) throw new AnswerError('rating_needed');
   const mentor = await getUserById(b.mentorId);

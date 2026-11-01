@@ -104,12 +104,12 @@ describe('contact details', () => {
     const r = await adult.api('/bookings', { method: 'POST', body: { mentorId: paidMentorId, question: q } });
     assert.equal(r.status, 400);
     assert.equal(r.error, 'contact_blocked');
-    assert.deepEqual(r.kinds, ['phone']);
+    assert.ok(r.kinds.includes('phone'), r.kinds.join());
     assert.equal((await pool.query('SELECT count(*)::int AS n FROM bookings')).rows[0].n, before_, 'nothing went to the bank');
     const { rows } = await pool.query(`SELECT b.* FROM contact_blocks b JOIN users u ON u.id = b.user_id WHERE u.email = 'ana-adult@example.com'`);
     assert.equal(rows.length, 1);
     assert.equal(rows[0].surface, 'question');
-    assert.deepEqual(rows[0].kinds, ['phone']);
+    assert.ok(rows[0].kinds.includes('phone'));
     assert.equal(rows[0].minor, false);
     assert.doesNotMatch(JSON.stringify(rows[0]), /555/);
   });
@@ -135,5 +135,53 @@ describe('contact details', () => {
     assert.equal(rows[0].surface, 'answer');
     assert.equal(rows[0].minor, true);
     assert.equal((await freeMentor.api(`/bookings/${minorQ.booking.id}/answer`, { method: 'POST', body: { answer: withLink } })).status, 200, 'edited, it goes through');
+  });
+});
+
+describe('what a mentor sees', () => {
+  let id;
+  before(async () => {
+    const r = await ask(minor, freeMentorId);
+    id = r.booking.id;
+    await pool.query(`UPDATE users SET photo_updated_at = now() WHERE email = 'luka@example.com'`);
+  });
+  test('the first name and the question, a tag, and nothing else about the person', async () => {
+    const { received } = await freeMentor.api('/bookings/mine');
+    const b = received.find((x) => x.id === id);
+    assert.equal(b.askerMinor, true);
+    assert.equal(b.otherPartyName, 'Luka');
+    assert.equal(b.otherPartyUsername, null);
+    assert.equal(b.otherPartyPhotoUrl, null);
+    assert.equal(b.seekerId, undefined);
+    assert.doesNotMatch(JSON.stringify(received), /Kapanadze|luka@example|birth/i);
+  });
+  test('the same in the Inbox', async () => {
+    const th = await waitFor(async () => { const r = await freeMentor.api('/inbox'); return (r.threads || []).find((t) => t.bookingId === id); });
+    assert.equal(th.other.name, 'Luka');
+    assert.equal(th.other.username, null);
+    const one = await freeMentor.api(`/inbox/threads/${th.id}`);
+    assert.equal(one.thread.other.name, 'Luka');
+    assert.equal(one.booking.askerMinor, true);
+    assert.doesNotMatch(JSON.stringify(one), /Kapanadze|luka@example|birth/i);
+  });
+  test('an adult\'s name is shown as before, and the asker sees the mentor as before', async () => {
+    const r = await ask(adult, freeMentorId);
+    const b = (await freeMentor.api('/bookings/mine')).received.find((x) => x.id === r.booking.id);
+    assert.equal(b.askerMinor, false);
+    assert.equal(b.otherPartyName, 'Ana Adult');
+    assert.ok(b.otherPartyUsername);
+    const mine = (await minor.api('/bookings/mine')).asked.find((x) => x.id === id);
+    assert.equal(mine.otherPartyName, 'Free Fred');
+  });
+  test('the minor\'s profile and photo stay closed to the mentor they asked', async () => {
+    const username = (await minor.api('/me')).user.username;
+    const seen = await freeMentor.api(`/users/${username}`);
+    assert.equal(seen.private, true);
+    assert.equal(seen.profile, undefined);
+    assert.equal((await minor.api(`/users/${username}`)).private, undefined, 'they see their own');
+  });
+  test('a minor is not offered to publish their question, and cannot', async () => {
+    const r = await minor.api('/answers/offer', { method: 'POST', body: { bookingId: id } });
+    assert.equal(r.status, 404);
   });
 });

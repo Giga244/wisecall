@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const { query, tx } = require('./db');
 const config = require('./config');
 const textSafety = require('./textSafety');
+const { firstName } = require('./ageGate');
 
 // The mentor replies to the free follow-up within FOLLOW_UP_REPLY_DAYS (a reminder after followUpReminderDays); until the reply, or the
 // deadline, that booking's payout waits (server/ledger.js payableSql). A deadline missed lets the asker report it for followUpDisputeDays.
@@ -126,7 +127,7 @@ async function listThreads(userId) {
        UNION ALL
        SELECT t.* FROM threads t WHERE t.kind IN ('support', 'system') AND t.user_id = $1)
      SELECT m.id, m.kind, m.status, m.subject, m.booking_id, m.last_message_at,
-            b.seeker_id, b.mentor_id, left(b.question, 140) AS question, b.status AS booking_status,
+            b.seeker_id, b.mentor_id, b.asker_minor, left(b.question, 140) AS question, b.status AS booking_status,
             ou.id AS other_id, ou.name AS other_name, ou.username AS other_username, ou.color AS other_color, ou.photo_updated_at AS other_photo_at,
             lm.kind AS last_kind, lm.event AS last_event, left(lm.body, 140) AS last_body, lm.sender_role AS last_role, lm.data AS last_data,
             EXISTS (SELECT 1 FROM messages x WHERE x.thread_id = m.id AND x.kind <> 'internal_note' AND x.sender_id IS DISTINCT FROM $1
@@ -142,7 +143,10 @@ async function listThreads(userId) {
     id: r.id, kind: r.kind, status: r.status, subject: r.subject, bookingId: r.booking_id, lastMessageAt: r.last_message_at, unread: r.unread,
     role: r.kind === 'booking' ? (r.seeker_id === userId ? 'asker' : 'mentor') : 'user',
     question: r.question, bookingStatus: r.booking_status,
-    other: r.other_id ? { name: r.other_name, username: r.other_username, color: r.other_color, photoUrl: photoUrl({ id: r.other_id, photoUpdatedAt: r.other_photo_at }) } : null,
+    // (a mentor sees only the first name of somebody under 18: docs/CLAUDE-CODE-ASKERS-16-PLUS.md part 5)
+    other: !r.other_id ? null : (r.asker_minor && r.mentor_id === userId
+      ? { name: firstName(r.other_name), username: null, color: r.other_color, photoUrl: null }
+      : { name: r.other_name, username: r.other_username, color: r.other_color, photoUrl: photoUrl({ id: r.other_id, photoUpdatedAt: r.other_photo_at }) }),
     last: r.last_kind ? {
       kind: r.last_kind, event: r.last_event, body: r.last_kind === 'event' ? null : r.last_body, role: r.last_role,
       data: r.last_kind === 'event' ? previewData(r.last_data) : {}
@@ -192,7 +196,10 @@ async function threadFor(user, threadId) {
       id: booking.id, status: booking.status, question: booking.question, answer: booking.answer || null, answeredAt: booking.answer ? booking.answeredAt : null,
       paidAt: booking.paidAt, answerDeadline: booking.answerDeadline, amount: booking.amount, answerHeld: role === 'mentor' && booking.answerReview === 'held'
     };
-    out.thread.other = other ? { name: other.name, username: other.username, color: other.color, photoUrl: photoUrl(other) } : null;
+    out.thread.other = !other ? null : (booking.askerMinor && role === 'mentor'
+      ? { name: firstName(other.name), username: null, color: other.color, photoUrl: null }
+      : { name: other.name, username: other.username, color: other.color, photoUrl: photoUrl(other) });
+    out.booking.askerMinor = role === 'mentor' && booking.askerMinor;
     out.followUp = followUpState(thread, booking, rows, role);
   }
   await markThreadRead(user.id, thread.id);
@@ -275,7 +282,7 @@ async function postMessage(user, threadId, text) {
     throw e;
   }
   const to = await getUserById(role === 'asker' ? booking.mentorId : booking.seekerId);
-  require('./notify').notifyFollowUp(to, { kind, from: user.name, body, threadId: thread.id });
+  require('./notify').notifyFollowUp(to, { kind, from: booking.askerMinor && role === 'asker' ? firstName(user.name) : user.name, body, threadId: thread.id });
   return messageView(message, user.id);
 }
 
@@ -488,7 +495,7 @@ async function followUpSweep() {
     await safely('follow-up reminder', async () => {
       const booking = await getBookingById(t.booking_id);
       const [mentor, asker] = await Promise.all([getUserById(booking.mentorId), getUserById(booking.seekerId)]);
-      if (mentor) await notify.notifyFollowUpReminder(mentor, { from: asker ? asker.name : '', dueAt: t.follow_up_due_at, threadId: t.id });
+      if (mentor) await notify.notifyFollowUpReminder(mentor, { from: asker ? (require('./ageGate').isMinor(asker) ? firstName(asker.name) : asker.name) : '', dueAt: t.follow_up_due_at, threadId: t.id });
     });
   }
   const { rows: missed } = await query(
