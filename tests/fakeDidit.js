@@ -18,7 +18,7 @@ const hmac = (data, secret = SECRET) => crypto.createHmac('sha256', secret).upda
 function createFakeDidit() {
   const sessions = new Map(); // id -> { id, vendorData, callback, status, decision }
   const calls = [];
-  const options = { hugeLinks: false }; // (a link too long for a QR code)
+  const options = { hugeLinks: false, alwaysNew: false, forceSessionId: null }; // (a link too long for a QR code; no reuse of unfinished sessions; a chosen id)
   let server, port, counter = 0;
 
   const send = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
@@ -34,7 +34,13 @@ function createFakeDidit() {
 
     if (req.method === 'POST' && req.url === '/v3/session/') {
       if (!body || body.workflow_id !== WORKFLOW || !body.vendor_data) return send(res, 400, { detail: 'bad request' });
-      const id = `didit-session-${++counter}`;
+      // (as Didit documents: an unfinished session for the same person comes back, with a 201, instead of a new one)
+      const unfinished = [...sessions.values()].find((s) => s.vendorData === body.vendor_data && ['Not Started', 'In Progress', 'Resubmitted', 'Awaiting User'].includes(s.status));
+      if (unfinished && !options.alwaysNew) {
+        unfinished.callback = body.callback;
+        return send(res, 201, { session_id: unfinished.id, session_token: 'tok', url: `http://localhost:${port}/verify/${unfinished.id}${options.hugeLinks ? `?x=${'a'.repeat(5000)}` : ''}` });
+      }
+      const id = options.forceSessionId || `didit-session-${++counter}`;
       sessions.set(id, { id, vendorData: body.vendor_data, callback: body.callback, status: 'Not Started', decision: {} });
       return send(res, 201, { session_id: id, session_token: 'tok', url: `http://localhost:${port}/verify/${id}${options.hugeLinks ? `?x=${'a'.repeat(5000)}` : ''}` });
     }
@@ -69,6 +75,7 @@ function createFakeDidit() {
     // The webhook exactly as Didit sends it. Returns { body (string), headers }.
     webhook(id, status, decision, { eventId = `evt-${++counter}`, timestamp = Math.floor(Date.now() / 1000), secret = SECRET, tamper = false, dropV2 = false, rawOnly = false, vendorData } = {}) {
       const s = sessions.get(id);
+      if (s) s.status = status; // (a finished session is not given out again)
       const payload = { event_id: eventId, webhook_type: 'status.updated', timestamp, application_id: 'app', environment: 'sandbox', status, session_id: id, workflow_id: WORKFLOW, vendor_data: vendorData || (s && s.vendorData), decision };
       const raw = JSON.stringify(payload);
       const headers = { 'content-type': 'application/json', 'x-timestamp': String(timestamp) };

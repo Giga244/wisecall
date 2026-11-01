@@ -34,7 +34,15 @@ async function startForMentor(user) {
     userId: user.id,
     callbackUrl: `${config.PUBLIC_URL}/apply.html?step=5&kyc=returned`
   });
-  await query('INSERT INTO kyc_sessions (user_id, provider, provider_session_id) VALUES ($1, $2, $3)', [user.id, provider.name, sessionId]);
+  // Didit gives back the same session while one is unfinished for this person (asking again, or for the QR code after the button): it is already ours.
+  const { rows: saved } = await query(
+    'INSERT INTO kyc_sessions (user_id, provider, provider_session_id) VALUES ($1, $2, $3) ON CONFLICT (provider, provider_session_id) DO NOTHING RETURNING id',
+    [user.id, provider.name, sessionId]);
+  if (!saved[0]) {
+    const { rows: [known] } = await query('SELECT user_id FROM kyc_sessions WHERE provider = $1 AND provider_session_id = $2', [provider.name, sessionId]);
+    // (never somebody else's link)
+    if (!known || known.user_id !== user.id) throw new Error('the provider returned a session of another account');
+  }
   await steps.setStep(user.id, 'id_kyc', 'pending', {
     evidence: { provider: provider.name, state: 'started' }, replaceEvidence: true, actor: steps.mentorActor(user)
   });
