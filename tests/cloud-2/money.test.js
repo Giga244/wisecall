@@ -136,6 +136,8 @@ describe('never the same return twice', () => {
     await pool.query(`UPDATE bookings SET partial_refund_started_at = now() - interval '16 minutes' WHERE id = $1`, [bookingId]);
     for (let i = 0; i < 60 && (await sql('SELECT partial_refund_amount FROM bookings WHERE id = $1', [bookingId]))[0].partial_refund_amount; i++) await new Promise((r) => setTimeout(r, 250));
     assert.equal((await sql('SELECT partial_refund_amount FROM bookings WHERE id = $1', [bookingId]))[0].partial_refund_amount, null);
+    // (the claim is released first and the dispute reopened right after: this waited for the first only)
+    for (let i = 0; i < 40 && (await sql('SELECT status FROM disputes WHERE id = $1', [disputeId]))[0].status !== 'open'; i++) await new Promise((r) => setTimeout(r, 100));
     assert.equal((await sql('SELECT status FROM disputes WHERE id = $1', [disputeId]))[0].status, 'open');
     assert.equal(cancels(payId).length, 0, 'and it was never sent twice');
   });
