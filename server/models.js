@@ -75,6 +75,7 @@ function userFromRow(r) {
     birthYm: r.birth_ym || null, // (year and month only: server/ageGate.js)
     ageGroup: r.birth_ym ? ageGate.groupOf(r.birth_ym) : null, // (worked out each time, so it is right on the day somebody turns 18)
     ageConfirmedAt: r.age_confirmed_at || null,
+    parentPermissionAt: r.parent_permission_at || null, // (16-17: when they confirmed a parent or guardian agrees)
     deletedAt: r.deleted_at || null,
     createdAt: r.created_at
   };

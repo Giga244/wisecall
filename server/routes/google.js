@@ -184,7 +184,7 @@ router.get('/new', (req, res) => {
 router.post('/new', asyncHandler(async (req, res) => {
   const who = readNew(req);
   if (!who) return res.status(401).json({ error: 'sign_in_again' });
-  const age = ageGate.check((req.body || {}).birthYm);
+  const age = ageGate.check((req.body || {}).birthYm, (req.body || {}).parentPermission);
   if (age.error) {
     if (age.error === 'under_16') res.clearCookie(NEW_COOKIE, newCookieOptions());
     return res.status(age.status).json({ error: age.error });

@@ -40,9 +40,10 @@ router.post('/age', requireAuth, asyncHandler(async (req, res) => {
   const existing = await getUserById(req.userToken.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });
   if (existing.birthYm) return res.status(409).json({ error: 'age_already_set' });
-  const age = ageGate.check((req.body || {}).birthYm);
+  const age = ageGate.check((req.body || {}).birthYm, (req.body || {}).parentPermission);
+  // (a mentor's account is for 18 or older: that comes before asking for a parent's permission)
+  if (age.error === 'parent_permission_required' && (existing.role === 'mentor' || existing.role === 'both')) return res.status(403).json({ error: 'mentor_18' });
   if (age.error) return res.status(age.status).json({ error: age.error });
-  // (a mentor's account is for 18 or older)
   if (age.group !== ageGate.ADULT && (existing.role === 'mentor' || existing.role === 'both')) return res.status(403).json({ error: 'mentor_18' });
   await ageGate.save(existing.id, age);
   res.json({ user: meProfile(await getUserById(existing.id)) });

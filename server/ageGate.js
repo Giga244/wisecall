@@ -38,12 +38,14 @@ function groupOf(ym, now = new Date()) {
 
 const isMinor = (user) => Boolean(user) && user.ageGroup === MINOR;
 
-// The answer of an age form: { ym, group }, or { error, status } when nothing may be saved. Under 16 says nothing else and keeps nothing.
-function check(birthYm) {
+// The answer of an age form: { ym, group }, or { error, status } when nothing may be saved. Under 16 says nothing else and keeps nothing;
+// 16-17 must also tick that a parent or guardian agrees (they confirm it themselves: no parent's details are asked for).
+function check(birthYm, parentPermission) {
   const ym = parseYm(birthYm);
   if (!ym) return { error: 'birth_required', status: 400 };
   const group = groupOf(ym);
   if (group === 'under_16') return { error: 'under_16', status: 403 };
+  if (group === MINOR && parentPermission !== true) return { error: 'parent_permission_required', status: 400 };
   return { ym, group };
 }
 
@@ -52,7 +54,8 @@ async function save(userId, { ym, group }, client) {
   const run = client ? client.query.bind(client) : query;
   await run(
     `UPDATE users SET birth_ym = $2, age_group = $3, age_confirmed_at = now(), adult_confirmed_at = CASE WHEN $3 = 'adult' THEN COALESCE(adult_confirmed_at, now()) ELSE adult_confirmed_at END,
-            profile_visibility = CASE WHEN $3 = 'adult' THEN profile_visibility ELSE 'contacts' END
+            profile_visibility = CASE WHEN $3 = 'adult' THEN profile_visibility ELSE 'contacts' END,
+            parent_permission_at = CASE WHEN $3 = 'adult' THEN NULL ELSE now() END
       WHERE id = $1`, [userId, ym, group]);
 }
 

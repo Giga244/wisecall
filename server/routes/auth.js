@@ -50,7 +50,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
     if (adult !== true) return res.status(400).json({ error: 'adult_required' });
     if (birthYm !== undefined && birthYm !== null && ageGate.groupOf(ageGate.parseYm(birthYm)) !== ageGate.ADULT) return res.status(403).json({ error: 'mentor_18' });
   } else {
-    age = ageGate.check(birthYm);
+    age = ageGate.check(birthYm, (req.body || {}).parentPermission);
     if (age.error) return res.status(age.status).json({ error: age.error });
   }
   if (await hibp.breachCount(password)) return res.status(400).json({ error: 'password_breached' });

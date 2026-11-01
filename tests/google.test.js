@@ -165,7 +165,8 @@ describe('Google sign-in', () => {
     test('16 or 17: the minor group; a made-up cookie is refused', async () => {
       const u = new Browser();
       await u.google('newcomer', { start: '/api/auth/google/start?mode=signup', noAge: true });
-      const made = await u.api('/auth/google/new', { method: 'POST', body: { birthYm: ymAgo(16) } });
+      assert.equal((await u.api('/auth/google/new', { method: 'POST', body: { birthYm: ymAgo(16) } })).error, 'parent_permission_required');
+      const made = await u.api('/auth/google/new', { method: 'POST', body: { birthYm: ymAgo(16), parentPermission: true } });
       assert.equal(made.status, 201);
       assert.equal(pathOf(made.to), '/choose-username.html');
       assert.equal((await u.me()).ageGroup, 'minor_16_17');

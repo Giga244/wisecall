@@ -21,18 +21,20 @@
 
   document.getElementById('ageFieldsSlot').innerHTML = WisecallAgeFields.html();
   const form = document.getElementById('ageForm');
+  WisecallAgeFields.wire(form);
   const errorEl = document.getElementById('formError');
-  const TEXT = { birth_required: 'age.required', mentor_18: 'auth.mentor18', sign_in_again: 'auth.google.err.bad_state' };
+  const TEXT = { birth_required: 'age.required', parent_permission_required: 'age.parent.required', mentor_18: 'auth.mentor18', sign_in_again: 'auth.google.err.bad_state' };
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorEl.textContent = '';
     const birthYm = WisecallAgeFields.value(form);
     if (!birthYm) { errorEl.textContent = t('age.required'); return; }
+    if (WisecallAgeFields.needsPermission(form)) { errorEl.textContent = t('age.parent.required'); form.querySelector('#parentPermission').focus(); return; }
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
     try {
-      const r = await WisecallAPI.apiFetch(fromGoogle ? '/auth/google/new' : '/me/age', { method: 'POST', body: { birthYm } });
+      const r = await WisecallAPI.apiFetch(fromGoogle ? '/auth/google/new' : '/me/age', { method: 'POST', body: WisecallAgeFields.answer(form) });
       location.href = fromGoogle ? r.to : next;
     } catch (e) {
       if (e.code === 'under_16') { WisecallAgeFields.under16(box); return; }

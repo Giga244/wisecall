@@ -913,3 +913,6 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .age-under16 { text-align: center; padding: 24px 0; }
 .age-under16 p:first-child { font-size: 1.1rem; font-weight: 700; }
 .waitlist-age { margin: 10px 0; font-weight: 400; }
+.age-parent { margin-top: 14px; }
+.age-parent .checkbox-row { align-items: flex-start; font-weight: 400; }
+.age-parent .checkbox-row input { flex: none; margin-top: 4px; }

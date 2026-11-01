@@ -65,7 +65,11 @@ describe('at sign-up', () => {
     test(`age ${years}: the minor's group, with only the year and month kept, and a private profile`, async () => {
       const email = `minor${years}@example.com`;
       const ym = bornAgo(years);
-      const r = await signup(client(base), { email, birthYm: ym });
+      const without = await signup(client(base), { email, birthYm: ym });
+      assert.equal(without.status, 400);
+      assert.equal(without.error, 'parent_permission_required');
+      assert.equal(await stored(email), undefined, 'a 16-17 sign-up cannot finish without the box');
+      const r = await signup(client(base), { email, birthYm: ym, parentPermission: true });
       assert.equal(r.status, 201, JSON.stringify(r));
       const row = await stored(email);
       assert.equal(row.birth_ym, ym);
@@ -74,6 +78,8 @@ describe('at sign-up', () => {
       assert.equal(row.adult_confirmed_at, null, 'not recorded as an adult');
       assert.equal(row.profile_visibility, 'contacts');
       assert.equal(r.user.ageGroup, 'minor_16_17');
+      assert.ok(r.user.parentPermissionAt, 'the time they confirmed it is kept');
+      assert.doesNotMatch(JSON.stringify(r.user), /parent.?email/i);
     });
   }
 
@@ -84,11 +90,12 @@ describe('at sign-up', () => {
     assert.equal(row.age_group, 'adult');
     assert.ok(row.adult_confirmed_at);
     assert.equal(r.user.ageGroup, 'adult');
+    assert.equal(r.user.parentPermissionAt, null, 'an adult needs none');
   });
 
   test('turning 18 changes the group by itself, in the sweep and when the person is read', async () => {
     const c = client(base);
-    await signup(c, { email: 'birthday@example.com', birthYm: bornAgo(17) });
+    await signup(c, { email: 'birthday@example.com', birthYm: bornAgo(17), parentPermission: true });
     // (time passes: their 18th birth month is over)
     await pool.query(`UPDATE users SET birth_ym = $1 WHERE email = 'birthday@example.com'`, [bornAgo(18)]);
     assert.equal((await stored('birthday@example.com')).age_group, 'minor_16_17');
@@ -113,7 +120,7 @@ describe('at sign-up', () => {
 
   test('somebody under 18 cannot become a mentor, and has no "Become a mentor" button', async () => {
     const c = client(base);
-    await signup(c, { email: 'wants-mentor@example.com', birthYm: bornAgo(17) });
+    await signup(c, { email: 'wants-mentor@example.com', birthYm: bornAgo(17), parentPermission: true });
     const r = await c.api('/me', { method: 'PATCH', body: { becomeMentor: true } });
     assert.equal(r.status, 403);
     assert.equal(r.error, 'mentor_18');
@@ -171,13 +178,13 @@ describe('at sign-up', () => {
 
   test('closing the account removes the birth year and month, and the export shows them', async () => {
     const c = client(base);
-    await signup(c, { email: 'closing@example.com', birthYm: bornAgo(17) });
+    await signup(c, { email: 'closing@example.com', birthYm: bornAgo(17), parentPermission: true });
     const { rows: [u] } = await pool.query(`SELECT id FROM users WHERE email = 'closing@example.com'`);
     const exported = await c.api('/me/export');
     assert.equal(exported.account.birthYm, bornAgo(17));
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     await require('../server/account').anonymize(u.id);
-    const row = (await pool.query('SELECT birth_ym, age_group, age_confirmed_at FROM users WHERE id = $1', [u.id])).rows[0];
-    assert.deepEqual([row.birth_ym, row.age_group, row.age_confirmed_at], [null, null, null]);
+    const row = (await pool.query('SELECT birth_ym, age_group, age_confirmed_at, parent_permission_at FROM users WHERE id = $1', [u.id])).rows[0];
+    assert.deepEqual([row.birth_ym, row.age_group, row.age_confirmed_at, row.parent_permission_at], [null, null, null, null]);
   });
 });

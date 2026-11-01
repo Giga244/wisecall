@@ -20,8 +20,29 @@
           <label for="birthMonth"><span>${esc(t('age.month'))}</span><select id="birthMonth" required><option value="">${esc(t('age.choose'))}</option>${months}</select></label>
         </div>
         <span class="hint">${esc(t('age.why'))}</span>
+        <div class="age-parent" id="ageParent" hidden>
+          <label class="checkbox-row" for="parentPermission"><input type="checkbox" id="parentPermission"> <span>${esc(t('age.parent.confirm'))}</span></label>
+          <p class="hint">${esc(t('age.parent.forParents'))}</p>
+        </div>
       </fieldset>`;
   }
+
+  // 16-17 (the same count as server/ageGate.js; the server decides): a parent's or guardian's agreement, and a short line for the parents.
+  function isMinor(ym) {
+    const [year, month] = ym.split('-').map(Number);
+    const now = new Date();
+    const age = Math.floor(((now.getUTCFullYear() * 12 + now.getUTCMonth() + 1) - (year * 12 + month) - 1) / 12);
+    return age >= 16 && age < 18;
+  }
+  function wire(root) {
+    const box = root.querySelector('#ageParent');
+    const draw = () => { const ym = value(root); box.hidden = !(ym && isMinor(ym)); };
+    root.querySelector('#birthYear').addEventListener('change', draw);
+    root.querySelector('#birthMonth').addEventListener('change', draw);
+  }
+  // What the form sends. The box only counts while it is showing.
+  const answer = (root) => ({ birthYm: value(root), parentPermission: !root.querySelector('#ageParent').hidden && root.querySelector('#parentPermission').checked });
+  const needsPermission = (root) => !root.querySelector('#ageParent').hidden && !root.querySelector('#parentPermission').checked;
 
   // 'YYYY-MM', or null while something is not chosen.
   function value(root) {
@@ -36,5 +57,5 @@
     box.querySelector('.age-under16').focus();
   }
 
-  window.WisecallAgeFields = { html, value, under16 };
+  window.WisecallAgeFields = { html, wire, value, answer, needsPermission, under16 };
 })();

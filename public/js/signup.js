@@ -9,8 +9,7 @@
   // (?as=mentor: the mentor's sign-up, with no username to choose (one is made from the name) and the application next)
   const asMentor = WisecallAPI.asMentor();
   const ageSlot = document.getElementById('ageFieldsSlot');
-  const drawAge = () => { if (!asMentor && !ageSlot.querySelector('select')) ageSlot.innerHTML = WisecallAgeFields.html(); };
-  drawAge();
+  if (!asMentor) { ageSlot.innerHTML = WisecallAgeFields.html(); WisecallAgeFields.wire(ageSlot); }
   const redirect = WisecallAPI.safeRedirect(params.get('redirect'), asMentor ? '/apply.html' : '/dashboard.html');
   WisecallAPI.keepMentorPath();
 
@@ -68,10 +67,11 @@
     adult_required: 'auth.mentor18',
     mentor_18: 'auth.mentor18',
     birth_required: 'age.required',
+    parent_permission_required: 'age.parent.required',
     password_breached: 'auth.error.breached'
   };
   // Which field an error belongs to, so it can be marked and focused.
-  const FIELD_FOR = { invalid_username: 'username', reserved_username: 'username', username_taken: 'username', email_taken: 'email', invalid_email: 'email', weak_password: 'password', missing_fields: 'name', adult_required: 'adult', birth_required: 'birthYear', password_breached: 'password' };
+  const FIELD_FOR = { invalid_username: 'username', reserved_username: 'username', username_taken: 'username', email_taken: 'email', invalid_email: 'email', weak_password: 'password', missing_fields: 'name', adult_required: 'adult', birth_required: 'birthYear', parent_permission_required: 'parentPermission', password_breached: 'password' };
 
   function fail(message, fieldId) {
     errorEl.textContent = message;
@@ -92,12 +92,13 @@
     if (asMentor && !document.getElementById('adult').checked) { fail(t('auth.mentor18'), 'adult'); return; }
     const birthYm = asMentor ? undefined : WisecallAgeFields.value(form);
     if (!asMentor && !birthYm) { fail(t('age.required'), 'birthYear'); return; }
+    if (!asMentor && WisecallAgeFields.needsPermission(form)) { fail(t('age.parent.required'), 'parentPermission'); return; }
     const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
     try {
       const data = await WisecallAPI.apiFetch('/auth/signup', {
         method: 'POST',
-        body: { name, email, password, ...(asMentor ? { adult: true } : { birthYm }), language: WisecallI18n.getLang(), as: asMentor ? 'mentor' : undefined, username: (!asMentor && usernameInput.value.trim().toLowerCase()) || undefined,
+        body: { name, email, password, ...(asMentor ? { adult: true } : WisecallAgeFields.answer(form)), language: WisecallI18n.getLang(), as: asMentor ? 'mentor' : undefined, username: (!asMentor && usernameInput.value.trim().toLowerCase()) || undefined,
           turnstileToken: await WisecallTurnstile.token(form) }
       });
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}${asMentor ? '&as=mentor' : ''}`;
