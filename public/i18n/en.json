@@ -242,7 +242,7 @@
   "auth.consent.and": " and ",
   "auth.consent.privacy": "Privacy Policy",
   "auth.consent.after": ".",
-  "legal.updated": "Last updated: 27 September 2026",
+  "legal.updated": "Last updated: 1 November 2026",
   "legal.back": "Back to home",
   "legal.terms.title": "Terms of Service",
   "legal.terms.intro": "These terms are the agreement between you and Wisecall. Please read them before you use the site. If you do not agree, please do not use it.",
@@ -257,7 +257,8 @@
     {
       "h": "2. Your account",
       "p": [
-        "You must be at least 18 years old to create an account. Give us accurate information and keep your password private. You are responsible for everything that happens under your account.",
+        "You must be at least 16 years old to create an account and ask questions. If you are 16 or 17, you confirm when you sign up that your parent or guardian agrees to your using Wisecall. Mentors must be 18 or older and pass the ID check. Give us accurate information, including your real birth year and month, and keep your password private. You are responsible for everything that happens under your account.",
+        "If you are 16 or 17: you can ask mentors who answer for free. To ask a paid mentor, the person paying must be 18 or older (for example a parent) and agree to pay. Everything stays written, on Wisecall: contact details can’t be shared in either direction. For a time after launch, our team checks answers to people under 18 before they can be read. Mentors see only your first name and your question.",
         "You must confirm your email address before you can apply to become a mentor. One person may have one account."
       ]
     },
@@ -461,9 +462,12 @@
       ]
     },
     {
-      "h": "12. Children",
+      "h": "12. People under 18",
       "p": [
-        "Wisecall is for people 18 and over. We do not knowingly collect data from children. If you think a child has given us data, contact us and we will delete it."
+        "Askers must be 16 or older; mentors must be 18 or older and pass the ID check. We ask for a birth year and month when an account is made. If you are under 16 we do not create an account and do not keep what you entered.",
+        "If you are 16 or 17, you confirm yourself that your parent or guardian agrees. We do not ask for or keep a parent’s name or email.",
+        "What we keep about someone aged 16 or 17, on top of the account data above: their birth year and month (never the day), that they are 16–17, when they confirmed their age and their parent’s or guardian’s agreement, and, for a paid question, when they confirmed that an adult pays. We also keep how many times contact details were stopped in what they wrote, never the words. Their profile can be opened only by them and by our team. Mentors see only their first name and their question, and their questions are never published. We keep this while the account exists, and delete or anonymise it when the account is closed, as in section 9. When someone turns 18 they are treated as an adult from then on.",
+        "A parent or guardian can ask us to close the account of someone aged 16 or 17 and delete their data, by email to our support address. If you think someone under 16 has given us data, contact us the same way and we will delete it."
       ]
     },
     {

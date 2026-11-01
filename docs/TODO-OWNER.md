@@ -40,10 +40,16 @@ them too.
 ## 4. Analytics (docs/ANALYTICS.md)
 
 - [ ] Plausible → Site settings → Goals: add each event in the table in docs/ANALYTICS.md, then the custom properties `field`, `source`,
-      `role` and `method`.
+      `role`, `method` and `age_group`.
 - [ ] Optional (Business plan): the "Mentor journey" funnel. The same funnel from the database is already in Admin → Overview.
 
-## 5. Before launch: content you choose
+## 5. Before launch: askers from age 16
+
+- [ ] **A lawyer must review the minors and data-protection text before launch.** (Terms section 2, Privacy Policy section 12, in Georgian and English:
+      askers 16+, the parent or guardian permission the minor confirms themselves, what is kept and for how long, and how a parent asks for an account to be closed.)
+- [ ] Live sessions have no age rule for 16–17-year-olds yet. They are off in production; decide what minors may do before ever turning them on.
+
+## 6. Before launch: content you choose
 
 - [ ] Admin → Answers → Sample questions: add the questions you want approved mentors to answer (for example "როგორ ავირჩიო
       ფაკულტეტი?"). Each answer comes back to the same screen for your check before it is public.

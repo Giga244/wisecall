@@ -90,6 +90,7 @@ test('before launch every way to Browse leads to the hero\'s form: a field tile 
   await expect(form.locator('input[type=email]')).toBeFocused();
   // (the question goes with the sign-up, and the note says the place on the list)
   await form.locator('input[type=email]').fill(`question-${Date.now()}@example.com`);
+  await form.locator('input[name=over16]').check();
   const sent = page.waitForRequest((r) => r.url().endsWith('/api/waitlist') && r.method() === 'POST');
   await form.locator('.waitlist-submit').click();
   expect((await sent).postDataJSON().wantedQuestion).toBe('Is a bootcamp worth it?');
@@ -222,6 +223,7 @@ test('the hero\'s waiting-list form: no title of its own, its size and columns, 
 
     const before = await page.evaluate(() => [document.getElementById('heroWait').getBoundingClientRect().height, document.getElementById('heroSearch').getBoundingClientRect().top + window.scrollY]);
     await box.locator('input[type=email]').fill(`layout-${width}-${lang}-${Date.now()}@example.com`);
+    await box.locator('input[name=over16]').check();
     await box.locator('.waitlist-submit').click();
     await expect(box.locator('.waitlist-done')).toBeVisible();
     await expect(box.locator('.waitlist-done .waitlist-check')).toBeVisible();

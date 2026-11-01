@@ -24,7 +24,7 @@ Wisecall collects card payments from buyers into **its own bank account** and la
 11. **Liability cap.** Limited to the price of the question. Confirm it is enforceable under Georgian law.
 12. **Personal data.** Check against the Law of Georgia on Personal Data Protection: legal bases, retention, the international-transfer paragraph (the email provider and the host may process data outside Georgia), data subject rights, and whether you must register or appoint anyone. Mentors' **full name and IBAN** are personal data: they are stored encrypted (key: `DATA_ENCRYPTION_KEY`) and shown only to the mentor and admins. If you will have EU users, GDPR may also apply.
 13. **Cookies.** The text says only one essential login cookie and a language setting are used. If you add analytics or ads later, update this and add a consent banner.
-14. **Age limit.** 18+. Confirm.
+14. **Age limit.** Askers 16+, with permission for 16–17 confirmed by the minor themselves and no parent contact details; mentors 18+ with the ID check. Terms section 2, Privacy section 12. Confirm under Georgian law on minors and personal data, including whether a minor’s own confirmation is enough and whether a paid question needs more than the adult-payer box.
 15. **Georgian wording.** Have a native speaker with legal experience review the Georgian text, not only the English.
 
 ## Mentor verification (Privacy Policy section 3, About page) — needs lawyer review

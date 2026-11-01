@@ -7,7 +7,7 @@ Wisecall counts visits and a few events with [Plausible](https://plausible.io). 
 | Event | When | Properties (never personal) |
 |---|---|---|
 | `waitlist_join` | someone joins the waiting list | `field` (category key or `any`), `source` (`tiktok`, `instagram`, `direct`, ... or `unknown`) |
-| `signup` | an account is created | `method` (`email` / `google`), `role` (`mentor` / `asker`, email sign-ups) |
+| `signup` | an account is created | `method` (`email` / `google`), `role` (`mentor` / `asker`, email sign-ups), `age_group` (`minor_16_17` / `adult`; never a birth date) |
 | `email_verified` | the 6-digit code is accepted | none |
 | `apply_step_1_done` … `apply_step_4_done` | the first time each application step is complete (checked on the server after every save) | none |
 | `apply_sent` | "Send for review" | none |

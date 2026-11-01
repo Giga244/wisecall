@@ -188,3 +188,36 @@ describe('at sign-up', () => {
     assert.deepEqual([row.birth_ym, row.age_group, row.age_confirmed_at, row.parent_permission_at], [null, null, null, null]);
   });
 });
+
+describe('analytics and the legal text', () => {
+  test('Terms and Privacy say the same in both languages', () => {
+    const fs = require('fs');
+    const path = require('path');
+    for (const [lang, words] of [['en', [/at least 16/, /18 or older/, /parent or guardian/, /birth year and month/i, /email to our support/]], ['ka', [/მინიმუმ 16/, /18 წლის ან უფროსი/, /მშობელი ან მეურვე/, /დაბადების წელსა და თვეს/, /მხარდაჭერის ელფოსტაზე/]]]) {
+      const d = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'public', 'i18n', lang + '.json'), 'utf8'));
+      const all = ['legal.terms.sections', 'legal.privacy.sections'].flatMap((k) => d[k]).flatMap((s) => s.p).join(' ');
+      for (const w of words) assert.match(all, w, lang);
+      assert.doesNotMatch(all, /18 and over|18 წლის და უფროსი ასაკის/, lang);
+    }
+  });
+  test('the sign-up event carries the coarse group, and never a birth date', async () => {
+    const http = require('http');
+    const seen = [];
+    const fake = http.createServer(async (req, res) => { const c = []; for await (const x of req) c.push(x); seen.push(JSON.parse(Buffer.concat(c).toString('utf8'))); res.writeHead(202); res.end('ok'); });
+    await new Promise((r) => fake.listen(0, r));
+    const s = await startServer(4793, { RATE_LIMIT_MULTIPLIER: '50', PLAUSIBLE_DOMAIN: 'wisecall.test', PLAUSIBLE_API_URL: `http://localhost:${fake.address().port}/api/event` });
+    try {
+      const pg = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+      await pg.query(`DELETE FROM users WHERE email IN ('p-minor@example.com', 'p-adult@example.com')`);
+      await pg.end();
+      const ym = bornAgo(17);
+      await signup(client(s.base), { email: 'p-minor@example.com', birthYm: ym, parentPermission: true });
+      await signup(client(s.base), { email: 'p-adult@example.com', birthYm: bornAgo(30) });
+      for (let i = 0; i < 50 && seen.filter((e) => e.name === 'signup').length < 2; i++) await new Promise((r) => setTimeout(r, 100));
+      const events = seen.filter((e) => e.name === 'signup');
+      assert.deepEqual(events.map((e) => e.props.age_group).sort(), ['adult', 'minor_16_17']);
+      assert.ok(!JSON.stringify(seen).includes(ym), 'no birth date anywhere');
+      assert.ok(seen.filter((e) => e.name !== 'signup').every((e) => !e.props || e.props.age_group === undefined), 'only on signup');
+    } finally { s.proc.kill(); fake.close(); }
+  });
+});
