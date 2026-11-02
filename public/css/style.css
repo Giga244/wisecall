@@ -683,7 +683,7 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 /* Report this mentor */
 .report-section { margin-top: 28px; padding-top: 12px; border-top: 1px dashed var(--border); }
 .report-box { margin-top: 10px; }
-.report-box summary, .report-login a { cursor: pointer; color: var(--ink-soft); font-size: 0.85rem; font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+.report-box summary, .report-login a { cursor: pointer; color: var(--ink-soft); font-size: 0.85rem; font-weight: 700; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; }
 .report-box summary:hover, .report-login a:hover { color: var(--accent-text); }
 .report-box summary:focus-visible, .report-login a:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
 .report-form { display: grid; gap: 0; margin-top: 8px; max-width: 460px; }
