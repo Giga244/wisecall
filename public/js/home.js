@@ -20,12 +20,12 @@
   function drawStrip() {
     const list = document.getElementById('nicheStrip');
     if (!list) return;
-    const all = WisecallI18n.niches();
+    const all = WisecallI18n.fields();
     const placeholder = document.getElementById('fieldsMoreSkeleton');
     if (placeholder) placeholder.remove(); // (the button's skeleton: the button itself comes now)
     list.classList.toggle('is-open', stripOpen);
     list.innerHTML = all.map((n) => `
-      <li><a class="field-tile" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${icon(n.key, 22)}<span>${esc(t('niche.' + n.key))}</span></a></li>`).join('');
+      <li><a class="field-tile" href="/index.html?field=${encodeURIComponent(n.id)}#experts" data-field-link="${esc(n.id)}"><span class="field-emoji" aria-hidden="true">${n.icon}</span><span>${esc(WisecallI18n.nameIn(n))}</span></a></li>`).join('');
     const more = document.getElementById('fieldsMore');
     if (more) {
       more.hidden = all.length <= firstShown();
@@ -42,7 +42,7 @@
     const items = [...list.children];
     items.forEach((li) => li.classList.remove('is-wide'));
     const wide = items.filter((li) => {
-      const node = li.querySelector('.field-tile span');
+      const node = li.querySelector('.field-tile span:last-child'); // (the name, not the icon)
       const text = node && node.firstChild;
       if (!text || !li.offsetWidth) return false; // (hidden until "See all")
       const lines = (range) => new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
@@ -65,7 +65,7 @@
     const more = document.getElementById('fieldsMore');
     const from = list.offsetHeight;
     stripOpen = !stripOpen;
-    more.textContent = stripOpen ? t('home.fields.less') : t('home.fields.more').replace('{n}', WisecallI18n.niches().length);
+    more.textContent = stripOpen ? t('home.fields.less') : t('home.fields.more').replace('{n}', WisecallI18n.fields().length);
     more.setAttribute('aria-expanded', String(stripOpen));
     more.classList.toggle('btn-arrow', !stripOpen);
     // (closing: the tiles stay until the grid has shrunk; opening: they appear, and the grid grows to show them)
@@ -93,17 +93,18 @@
   let fitting = false;
   window.addEventListener('resize', () => {
     const more = document.getElementById('fieldsMore');
-    if (more) more.hidden = WisecallI18n.niches().length <= firstShown();
+    if (more) more.hidden = WisecallI18n.fields().length <= firstShown();
     if (!fitting) { fitting = true; requestAnimationFrame(() => { fitting = false; fitTiles(); }); }
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTiles);
 
   // The hero: the first few fields as chips.
-  const HERO_CHIPS = 5;
+  // (the fields students ask about most: three, so their longer names stay on one line)
+  const HERO_CHIPS = ['edu', 'abroad', 'it'];
   function drawHero() {
-    const all = WisecallI18n.niches();
+    const all = WisecallI18n.fields();
     const chips = document.getElementById('heroChips');
-    if (chips) chips.innerHTML = all.slice(0, HERO_CHIPS).map((n) => `<li><a class="chip" href="/index.html?niche=${encodeURIComponent(n.key)}#experts" data-niche-link="${esc(n.key)}">${esc(t('niche.' + n.key))}</a></li>`).join('');
+    if (chips) chips.innerHTML = HERO_CHIPS.map((id) => all.find((f) => f.id === id)).filter(Boolean).map((n) => `<li><a class="chip" href="/index.html?field=${encodeURIComponent(n.id)}#experts" data-field-link="${esc(n.id)}">${esc(WisecallI18n.nameIn(n.short || n))}</a></li>`).join('');
   }
 
   // ---- The hero's example: a question and its answer --------------------------------------------------------------------------

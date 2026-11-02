@@ -124,6 +124,11 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const stepsBefore = updates.price !== undefined ? await require('../verification/experience').stepsDone(existing).catch(() => null) : null;
   if (updates.becomeMentor === false) patch.role = 'seeker';
 
+  // (a category set here: the field students browse by follows it, server/categories.js)
+  if (patch.niche && patch.niche !== existing.niche) {
+    const hit = require('../categories').fromNiche(patch.niche);
+    if (hit) Object.assign(patch, { fieldId: hit.fieldId, directions: hit.chip ? [hit.chip] : [], extraFields: (existing.extraFields || []).filter((f) => f !== hit.fieldId) });
+  }
   const next = { ...existing, ...patch };
   const isMentor = next.role === 'mentor' || next.role === 'both';
   const changedApplication = APPLICATION_FIELDS.filter((f) => patch[f] !== undefined && patch[f] !== existing[f]);

@@ -31,21 +31,41 @@ async function aboutFor(owner, viewer) {
 }
 
 router.get('/', asyncHandler(async (req, res) => {
-  const { niche, q } = req.query;
+  const { niche, q, field, chip, country, years, price } = req.query;
+  const categories = require('../categories');
+  const search = require('../categorySearch');
   const params = [];
   let where = listableSql();
-  if (req.query.free === '1') where += ' AND price = 0'; // ("Free": mentors who answer for free)
+  if (req.query.free === '1' || price === 'free') where += ' AND price = 0'; // ("Free": mentors who answer for free)
+  if (price === 'paid') where += ' AND price > 0';
+  // (a field, a chip in it, a country, the years of experience: all optional)
+  if (typeof field === 'string' && categories.isField(field)) { params.push(field); where += ` AND (field_id = $${params.length} OR $${params.length} = ANY(extra_fields))`; }
+  if (typeof chip === 'string' && categories.isChip(chip)) { params.push(chip); where += ` AND $${params.length} = ANY(directions)`; }
+  if (typeof country === 'string' && categories.isCountry(country)) { params.push(country); where += ` AND country = $${params.length}`; }
+  const band = { '1-2': 'years_experience <= 2', '3-5': 'years_experience BETWEEN 3 AND 5', '6-10': 'years_experience BETWEEN 6 AND 10', '10+': 'years_experience > 10' }[String(years)];
+  if (band) where += ` AND ${band}`;
   if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND (niche = $${params.length} OR $${params.length} = ANY(extra_niches))`; } // (the main category or an extra one)
-  if (q && String(q).trim()) {
-    params.push('%' + escapeLike(String(q).trim().slice(0, 100)) + '%');
-    const p = `$${params.length}`;
-    where += ` AND (name ILIKE ${p} OR role_title ILIKE ${p}
+  const term = typeof q === 'string' ? q.trim().slice(0, 100) : '';
+  let users;
+  if (term) {
+    // What the plain text match finds (names, titles, the About text...) and what the one search box adds: fields, chips, countries, specializations and universities,
+    // in both languages and with typos (server/categorySearch.js).
+    const textParams = [...params, '%' + escapeLike(term) + '%'];
+    const p = `$${textParams.length}`;
+    const textWhere = `${where} AND (name ILIKE ${p} OR role_title ILIKE ${p}
                 OR (bio ILIKE ${p} AND ${ABOUT_PUBLIC_SQL}) OR custom_niche ILIKE ${p} OR array_to_string(specialty_tags, ' ') ILIKE ${p}
                 OR EXISTS (SELECT 1 FROM niches n WHERE (n.key = users.niche OR n.key = ANY(users.extra_niches)) AND (n.name_en ILIKE ${p} OR n.name_ka ILIKE ${p}))
                 OR EXISTS (SELECT 1 FROM profile_settings ps WHERE ps.user_id = users.id AND ps.hidden_at IS NULL AND ps.search_text ILIKE ${p}))`;
+    const [byText, everyone] = await Promise.all([
+      query(`SELECT id FROM users WHERE ${textWhere} LIMIT 1000`, textParams),
+      query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 2000`, params)
+    ]);
+    const found = new Set(byText.rows.map((r) => r.id));
+    const catalog = search.matchCatalog(term);
+    users = everyone.rows.map(userFromRow).filter((u) => found.has(u.id) || search.matches(term, catalog, u)).slice(0, 200);
+  } else {
+    users = (await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params)).rows.map(userFromRow);
   }
-  const { rows } = await query(`SELECT * FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
-  const users = rows.map(userFromRow);
   // (headline, current position, years of experience and top skills: only what everyone may see)
   const summaries = await require('../profileSections').publicSummaries(users);
   // (a hidden profile has no summary, and so no bio)

@@ -23,7 +23,7 @@ async function add({ email, niche, language, wantedQuestion, source, over16 }) {
   const address = String(email || '').trim();
   if (!EMAIL_RE.test(address) || address.length > 254) throw new WaitlistError('invalid_email');
   const field = niche === undefined || niche === null || niche === '' ? 'any' : String(niche);
-  if (field !== 'any' && !rules.isValidNiche(field)) throw new WaitlistError('invalid_niche');
+  if (field !== 'any' && !rules.isValidNiche(field) && !require('./categories').isField(field)) throw new WaitlistError('invalid_niche');
   const asked = typeof wantedQuestion === 'string' ? [...require('./publicAnswers').redact(wantedQuestion.replace(/\s+/g, ' ').trim())].slice(0, 300).join('') || null : null;
   await query(
     `INSERT INTO waitlist (email, niche, language, token, prelaunch, wanted_question, source) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -80,16 +80,18 @@ const notYetOpen = () => config.LAUNCH_MODE === 'prelaunch';
 async function mentorJoined(mentor) {
   if (!config.EMAIL_ENABLED || notYetOpen()) return 0;
   const { rows } = await query(
-    `UPDATE waitlist SET notified_at = now() WHERE notified_at IS NULL AND (niche = $1 OR niche = 'any') RETURNING email, niche, language, token`, [mentor.niche]
+    `UPDATE waitlist SET notified_at = now() WHERE notified_at IS NULL AND (niche = $1 OR niche = 'any' OR niche = ANY($2::text[])) RETURNING email, niche, language, token`,
+    [mentor.niche, [mentor.fieldId, ...(mentor.extraFields || [])].filter(Boolean)]
   );
-  return sendNotices(rows, () => mentor.niche);
+  // (an entry for one of the 16 fields is told about that field)
+  return sendNotices(rows, (r) => (require('./categories').isField(r.niche) ? r.niche : mentor.niche));
 }
 
 // Runs with the background jobs. When the site is live, everybody who joined the list while it was not open yet
 // and whose field now has a mentor is told, a few hundred per run.
 async function launchDay() {
   if (!config.EMAIL_ENABLED || notYetOpen()) return 0;
-  const fields = (await query(`SELECT DISTINCT niche FROM users WHERE ${listableSql()}`)).rows.map((r) => r.niche);
+  const fields = (await query(`SELECT DISTINCT unnest(ARRAY[niche, field_id] || extra_fields) AS niche FROM users WHERE ${listableSql()}`)).rows.map((r) => r.niche).filter(Boolean);
   if (!fields.length) return 0;
   const { rows } = await query(
     `UPDATE waitlist SET notified_at = now()

@@ -47,6 +47,7 @@ them too.
 
 - [ ] **A lawyer must review the minors and data-protection text before launch.** (Terms section 2, Privacy Policy section 12, in Georgian and English:
       askers 16+, the parent or guardian permission the minor confirms themselves, what is kept and for how long, and how a parent asks for an account to be closed.)
+- [ ] Vets and nutritionists now have their own regulated categories (their own diploma, certificate or licence is accepted, checked by hand). What Georgian law requires for them was not researched: a lawyer should confirm it (server/verification/registries.js, `veterinary` and `nutrition`).
 - [ ] Live sessions have no age rule for 16–17-year-olds yet. They are off in production; decide what minors may do before ever turning them on.
 
 ## 6. Before launch: content you choose

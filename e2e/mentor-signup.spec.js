@@ -67,7 +67,7 @@ async function walk(page, { width, shots, tag }) {
   await expect(page.locator('#applyDoneText')).toHaveText('დასრულებულია 0 / 5');
   await page.fill('#apHeadline', 'ეკონომიკის ასოცირებული პროფესორი თსუ-ში');
   await page.fill('#apField', 'მაკროეკონომიკა');
-  await expect(page.locator('#apCategory [data-cat-name]')).toHaveText('ბიზნესი');
+  await expect(page.locator('[data-field="biz"]')).toHaveAttribute('aria-pressed', 'true');
   await page.selectOption('#apYears', '18');
   await shot('05-step1-about');
   await page.click('.apply-next');

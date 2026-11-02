@@ -10,11 +10,11 @@ test('the home page shows two full rows of fields and the rest behind "See all"'
   await page.goto('/');
   const strip = page.locator('#nicheStrip');
   await expect(strip.locator('a.field-tile:visible')).toHaveCount(10); // (5 columns at 1280px)
-  await expect(page.locator('#fieldsMore')).toHaveText('See all 36 fields');
+  await expect(page.locator('#fieldsMore')).toHaveText('See all 16 fields');
   await page.locator('#fieldsMore').click();
-  await expect(strip.locator('a.field-tile:visible')).toHaveCount(36);
+  await expect(strip.locator('a.field-tile:visible')).toHaveCount(16);
   await expect(page.locator('#fieldsMore')).toHaveText('Show fewer');
-  await expect(strip).toContainText('Wine & agriculture');
+  await expect(strip).toContainText('Services & Other');
   if (process.env.E2E_SHOTS) await strip.screenshot({ path: `${process.env.E2E_SHOTS}/home-strip.png` });
 });
 
@@ -45,7 +45,7 @@ test('the field in the mentor\'s words is on the card, search finds it, and "Oth
   await page.goto('/?niche=other#experts');
   const card = page.locator('.expert-card', { hasText: 'Nodar Nails' });
   await expect(card.locator('.card-role')).toHaveText('Salon owner · Nail artist');
-  await expect(page.locator('#filters .chip[data-niche="other"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#fieldChips .chip[data-field="other"]')).toHaveAttribute('aria-pressed', 'true');
   await page.goto('/#experts');
   await page.fill('#searchInput', 'nail art');
   await expect(page.locator('.expert-card')).toHaveCount(1);
@@ -63,21 +63,18 @@ test('"Your field" and "Other" in the application (step 1 of /apply.html)', asyn
   await page.fill('#apHeadline', 'Beekeeper in Racha');
   await page.selectOption('#apYears', '9');
   await page.fill('#apField', 'www.bees.ge');
-  await expect(page.locator('#apCategory')).toBeVisible(); // (the closest category is suggested; one tap changes it)
-  await page.click('[data-cat-change]');
-  await page.selectOption('#apNiche', 'other');
   await page.click('.apply-next');
   await expect(page.locator('#apFieldErr')).toContainText('without links'); // (under the field it is about)
-  await page.fill('#apField', 'Beekeeping');
+  await page.fill('#apField', 'Falconry');
   await page.click('.apply-next');
   await page.waitForURL(/step=2$/);
-  await expect.poll(async () => (await S.sql(`SELECT niche, custom_niche FROM users WHERE email = 'gio.bees@e2e.test'`))[0]).toMatchObject({ niche: 'other', custom_niche: 'Beekeeping' });
+  await expect.poll(async () => (await S.sql(`SELECT niche, custom_niche FROM users WHERE email = 'gio.bees@e2e.test'`))[0]).toMatchObject({ niche: 'other', custom_niche: 'Falconry' });
 });
 
 test('the admin sees the suggestion under Niches', async ({ page }) => {
   await S.logIn(page, { email: 'e2e-admin@example.com' }, '/admin.html');
   await page.click('#adminTabs [data-tab="niches"]');
-  await expect(page.locator('.nf-suggestion', { hasText: 'Beekeeping' })).toBeVisible();
-  await expect(page.locator('.nf-niche')).toHaveCount(36);
+  await expect(page.locator('.nf-suggestion', { hasText: 'Falconry' })).toBeVisible();
+  await expect(page.locator('.nf-niche')).toHaveCount(39);
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `${process.env.E2E_SHOTS}/admin-niches.png` });
 });

@@ -51,7 +51,7 @@ test('the years: none chosen says so under the field, in view; 25 chosen is save
   const { ctx, page } = await phone(browser, people.nana);
   await page.fill('#apHeadline', 'ფსიქოლოგიის პროფესორი');
   await page.fill('#apField', 'განათლების ფსიქოლოგია, ფსიქოლოგიის ისტორია, პედაგოგი');
-  await expect(page.locator('#apCategory [data-cat-name]')).toHaveText(KA['niche.psychology']); // (not "Other")
+  await expect(page.locator('[data-field="psy"]')).toHaveAttribute('aria-pressed', 'true'); // (not "Other")
   await expect(page.locator('[data-psych-note]')).toBeVisible(); // (academics can choose teaching or science)
   const err = page.locator('#apYearsErr');
   await page.click('.apply-next');
@@ -96,7 +96,7 @@ test('a field left is saved as a draft, with no "Next"', async ({ browser }) => 
 
 test('psychology asks for a diploma or certificate, never a licence; its Georgian name is "ფსიქოლოგია"', async ({ browser }) => {
   const { ctx, page } = await phone(browser, people.psy);
-  await expect(page.locator('#apCategory [data-cat-name]')).toHaveText('ფსიქოლოგია');
+  await expect(page.locator('[data-field="psy"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('[data-licence-note]')).toHaveText(KA['apply.f.licenceNote.dip']);
   await page.goto('/apply.html?step=4');
   const block = page.locator('.apply-licence');

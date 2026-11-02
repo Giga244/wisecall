@@ -216,16 +216,19 @@ test('Browse on a phone: the Filters sheet holds sort and fields, and the list f
   const sheet = page.locator('#filtersSheet');
   await expect(sheet).toBeVisible();
   await expect(sheet.locator('#sortSelect')).toBeVisible();
-  await sheet.locator('.chip[data-niche="law"]').click();
-  await expect(page.locator('#filtersApply')).toContainText('1'); // "Show 1 expert"
+  await sheet.locator('.chip[data-paid]').click();
   await expect(page.locator('#filtersCount')).toHaveText('1');
   await page.keyboard.press('Escape');
   await expect(sheet).toBeHidden();
-  await expect(page.locator('.expert-card')).toHaveCount(1);
-  await expect(page.locator('#resultCount')).toContainText('1');
   await page.locator('#filtersBtn').click();
   await page.locator('#filtersClear').click();
   await page.locator('#filtersApply').click();
+  await expect(page.locator('.expert-card')).toHaveCount(cards);
+  // the fields and chips are on the page, on one line: one tap
+  await page.locator('#fieldChips .chip[data-field="law"]').click();
+  await expect(page.locator('.expert-card')).toHaveCount(1);
+  await expect(page.locator('#resultCount')).toContainText('1');
+  await page.locator('#fieldChips .chip[data-field="all"]').click();
   await expect(page.locator('.expert-card')).toHaveCount(cards);
   await ctx.close();
 

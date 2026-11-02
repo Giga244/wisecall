@@ -48,7 +48,7 @@
       </form>
       <!-- (the other way in, as clear as the first: for experts who want to answer. Signed in it says where they are, public/js/nav.js) -->
       <p class="hero-mentor rise rise-3"><a href="/become-a-mentor.html" class="btn btn-outline btn-lg btn-arrow hero-mentor-btn" data-mentor-cta="hero" data-i18n="hero.mentorCta">I’m an expert – become a mentor</a></p>
-      <ul class="hero-chips rise rise-4" id="heroChips" aria-label="Popular fields" data-i18n-aria="home.chips.label"><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li></ul>
+      <ul class="hero-chips rise rise-4" id="heroChips" aria-label="Popular fields" data-i18n-aria="home.chips.label"><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li></ul>
       <div class="hero-foot rise rise-4">
         <p class="hero-note">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
@@ -198,9 +198,12 @@
         </div>
       </div>
     </div>
+    <p class="browse-note small muted" data-i18n="browse.note">Already have a rough idea of your field? Find an expert in it and ask.</p>
+    <!-- (what the words name, while a student types; then the fields, or the chips of the chosen one: they scroll sideways on a phone) -->
+    <div class="field-chips" id="searchChips" role="group" hidden></div>
+    <div class="field-chips" id="fieldChips" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field"></div>
     <div class="filters-slot" id="filtersSlot">
       <div class="filters" id="filters" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field">
-        <button type="button" class="chip active" data-niche="all" data-i18n="niche.all">All</button>
       </div>
     </div>
     <!-- (while the list is on its way: its skeleton, and one "Loading…" for screen readers; the server keeps the one for the mode) -->

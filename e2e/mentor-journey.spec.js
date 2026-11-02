@@ -54,8 +54,7 @@ for (const width of [360, 1280]) {
     await expect(page.locator('#apYears option[value="0"]')).toHaveText(KA['apply.f.years.lessThanOne']);
     await page.fill('#apHeadline', 'ეკონომიკის პროფესორი');
     await page.fill('#apField', 'მაკროეკონომიკა');
-    await page.click('[data-cat-change]');
-    await page.selectOption('#apNiche', 'business');
+    await S.pickNiche(page, 'business');
     await expect(page.locator('#apHeadline')).toHaveAttribute('placeholder', KA['apply.ex.money.headline']);
     await shot('01-step-1-about-you');
     await page.click('.apply-next');

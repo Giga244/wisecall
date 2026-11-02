@@ -14,6 +14,8 @@ const PROFESSIONS = [
   ['pharmacy', ['pharmacist'], ['ფარმაცევტ']],
   ['nursing', ['nurse', 'midwife'], ['ექთან', 'ბებიაქალ']],
   ['psychology', ['psychologist', 'psychotherapist', 'psychoanalyst'], ['ფსიქოლოგ', 'ფსიქოთერაპევტ']],
+  ['veterinary', ['veterinarian', 'veterinary surgeon', 'vet'], ['ვეტერინარ']],
+  ['nutrition', ['dietitian', 'dietician', 'nutritionist'], ['დიეტოლოგ', 'ნუტრიციოლოგ']],
   ['medicine', ['doctor', 'physician', 'surgeon', 'paediatrician', 'pediatrician', 'cardiologist', 'dermatologist', 'gynaecologist',
     'gynecologist', 'neurologist', 'psychiatrist', 'oncologist', 'radiologist', 'anaesthetist', 'anesthesiologist', 'ophthalmologist',
     'urologist', 'endocrinologist', 'family medicine', 'general practitioner'],

@@ -116,6 +116,18 @@
     </ol>`;
   }
   // The main category first, then the extra ones; and "Lecturer" / "Practitioner" when they said how they mainly work.
+  // What students find this mentor by: the directions, the specializations, where they studied, the country.
+  let catalog = null;
+  const chipOf = (id) => { for (const f of (catalog ? catalog.fields : [])) { const c = f.chips.find((x) => x.id === id); if (c) return c; } return null; };
+  const directionsHtml = () => {
+    if (!isMentor) return '';
+    const names = (expert.directions || []).map((id) => (id.endsWith('.other') ? (expert.directionOther || {})[id.split('.')[0]] : WisecallI18n.nameIn(chipOf(id)))).filter(Boolean);
+    const specs = expert.specializations || [];
+    const country = expert.country && catalog ? catalog.countries.find((c) => c.id === expert.country) : null;
+    const facts = [expert.university ? `${t('profile.studied')}: ${expert.university}` : '', country ? `${t('profile.country')}: ${WisecallI18n.nameIn(country)}` : ''].filter(Boolean);
+    if (!names.length && !specs.length && !facts.length) return '';
+    return `<div class="profile-directions">${[...names, ...specs].map((x) => `<span class="tag">${escapeHtml(x)}</span>`).join(' ')}${facts.length ? `<p class="muted small">${escapeHtml(facts.join(' · '))}</p>` : ''}</div>`;
+  };
   function fieldsHtml() {
     if (!isMentor) return '';
     const extra = (expert.extraNiches || []).filter((k) => k !== expert.niche);
@@ -165,6 +177,7 @@
                 ${isMentor && (expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
               </div>
               ${fieldsHtml()}
+              <div id="profileDirections">${directionsHtml()}</div>
             </div>
           </div>
           ${isMentor && expert.username ? `<p class="profile-share">${WisecallCopy.button(location.origin + location.pathname)}</p>` : ''}
@@ -315,6 +328,17 @@
   const NOTE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>';
 
   const free = expert.price === 0;
+  // The question form: what it is about, the chip the student came from already chosen.
+  const chipParam = new URLSearchParams(location.search).get('chip');
+  const directionPicker = () => {
+    const mine = (expert.directions || []).filter((id) => !id.endsWith('.other') && chipOf(id));
+    if (!mine.length) return '';
+    return `<label for="askDirection"><span>${escapeHtml(t('expert.direction.label'))}</span><select id="askDirection"><option value="">${escapeHtml(t('expert.direction.none'))}</option>${mine.map((id) => `<option value="${escapeHtml(id)}"${id === chipParam ? ' selected' : ''}>${escapeHtml(WisecallI18n.nameIn(chipOf(id)))}</option>`).join('')}</select></label>`;
+  };
+  // (the names of the chips; without them the page simply does not show them)
+  if (isMentor && (expert.directions || []).length) {
+    try { catalog = await WisecallAPI.apiFetch('/categories'); } catch (e) { /* see above */ }
+  }
   const askHeader = () => `
     <h2>${escapeHtml(t('expert.askTitle').replace('{name}', expert.name))}</h2>
     <p class="ask-price${free ? ' is-free' : ''}"><strong>${WisecallAPI.formatPrice(expert.price)}</strong>${free ? '' : `<span>${t('expert.priceLabel')}</span>`}</p>`;
@@ -408,6 +432,7 @@
       <p class="ask-tip">${t('expert.askTip')}</p>
       ${user.ageGroup === 'minor_16_17' && [expert.niche, ...(expert.extraNiches || [])].some((n) => ['medicine', 'psychology', 'law', 'finance'].includes(n)) ? `<p class="ask-minor-hint" id="askMinorHint">${escapeHtml(t('expert.minorHint'))}</p>` : ''}
       <form id="askForm" novalidate>
+        ${directionPicker()}
         <label for="question"><span>${t('expert.question.label')}</span>
           <textarea id="question" rows="5" maxlength="${MAX_QUESTION}" placeholder="${escapeHtml(t('expert.questionPlaceholder'))}" aria-describedby="qMeta askError" required></textarea>
         </label>
@@ -482,7 +507,7 @@
     try {
       stored.set(question); // (kept while the buyer is at the bank)
       const form = document.getElementById('askForm');
-      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question, ...(payer ? { adultPayer: true } : {}), ...(appliedCode ? { discountCode: appliedCode.code } : {}), ...(free ? { turnstileToken: await WisecallTurnstile.token(form) } : {}) } });
+      const res = await WisecallAPI.apiFetch('/bookings', { method: 'POST', body: { mentorId: expert.id, question, ...(document.getElementById('askDirection') && document.getElementById('askDirection').value ? { directionId: document.getElementById('askDirection').value } : {}), ...(payer ? { adultPayer: true } : {}), ...(appliedCode ? { discountCode: appliedCode.code } : {}), ...(free ? { turnstileToken: await WisecallTurnstile.token(form) } : {}) } });
       // A free question is sent at once: no bank.
       if (res.free) {
         stored.set(''); draft = '';

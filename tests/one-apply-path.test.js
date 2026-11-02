@@ -36,7 +36,7 @@ describe('Settings has no application form', () => {
 
   test('/apply.html has every field of the old form: the optional title, tags and sample answer too', () => {
     const js = read('public/js/apply.js');
-    for (const name of ['headline', 'customNiche', 'niche', 'yearsExperience', 'roleTitle', 'specialtyTags', 'story', 'sampleAnswer', 'price', 'url']) {
+    for (const name of ['headline', 'customNiche', 'yearsExperience', 'roleTitle', 'specialtyTags', 'story', 'sampleAnswer', 'price', 'url']) {
       assert.match(js, new RegExp(`name="${name}"`), name);
     }
     // and after "Submit": the ID check, a licence to give again, the video call, "Edit my application"

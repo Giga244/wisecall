@@ -165,7 +165,8 @@ describe('carry-over: an approval never outlives a failed required step', () => 
       const row = (await auditOf(m.id)).find((a) => a.action === 'delisted');
       assert.equal(row.step, 'age');
       assert.equal(row.actor_label, 'system');
-      assert.ok(await openFlag(m.id, 'required_step_failed'));
+      // (the status changes first, the flag right after)
+      await waitFor(() => openFlag(m.id, 'required_step_failed'), 15000);
       const mail = await resend.waitForNew('levan@example.com', 'სიახლე', mails);
       assert.match(mail.body.text, /18 წლამდე/);
     } finally { second.proc.kill(); }

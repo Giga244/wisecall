@@ -35,7 +35,7 @@ async function weekFor(mentors) {
 }
 
 // Asks a free question. -> the booking. Throws FreeError.
-async function ask({ seeker, mentor, question, source }) {
+async function ask({ seeker, mentor, question, source, directionId = null }) {
   if (!seeker.emailVerified) throw new FreeError('email_not_verified');
   const payments = require('./payments');
   const booking = await tx(async (client) => {
@@ -52,9 +52,9 @@ async function ask({ seeker, mentor, question, source }) {
     if (n.total >= config.FREE_OPEN_TOTAL) throw new FreeError('free_limit_total', { max: config.FREE_OPEN_TOTAL });
     const { rows } = await client.query(
       `INSERT INTO bookings (seeker_id, mentor_id, question, amount, currency, platform_fee_percent, platform_fee_amount, mentor_net_amount,
-                             status, provider, source, paid_at, answer_deadline, asker_minor)
-       VALUES ($1, $2, $3, 0, $4, 0, 0, 0, 'paid', 'free', $5, now(), $6, $7) RETURNING *`,
-      [seeker.id, mentor.id, question, config.CURRENCY, source ? JSON.stringify(source) : null, payments.deadlineFromNow(), require('./ageGate').isMinor(seeker)]);
+                             status, provider, source, paid_at, answer_deadline, asker_minor, direction_id)
+       VALUES ($1, $2, $3, 0, $4, 0, 0, 0, 'paid', 'free', $5, now(), $6, $7, $8) RETURNING *`,
+      [seeker.id, mentor.id, question, config.CURRENCY, source ? JSON.stringify(source) : null, payments.deadlineFromNow(), require('./ageGate').isMinor(seeker), directionId]);
     return bookingFromRow(rows[0]);
   });
   require('./notify').notifyMentorNewQuestion(mentor, booking);

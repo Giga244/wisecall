@@ -77,12 +77,21 @@ async function apiUser(name, email) {
 // price, url, licence: { number, body, until }, submit (default true) }. Ends on "Thank you" (or on step 5 when submit is false). The ID
 // check comes before sending (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md): "submit" takes the (fake) ID check with the account's name, and the
 // application is sent by itself once it has passed.
+// Chooses, on step 1, the field and chip that mean this category (server/categories.js).
+async function pickNiche(page, niche) {
+  const hit = require('../server/categories').fromNiche(niche);
+  if (!hit) return;
+  const field = page.locator(`[data-field="${hit.fieldId}"]`);
+  if (await field.getAttribute('aria-pressed') !== 'true') await field.click();
+  if (hit.chip) await page.locator(`[data-direction="${hit.chip}"]`).click();
+}
+
 async function applyAsMentor(page, a) {
   await page.goto('/apply.html');
   await page.waitForURL(/\/apply\.html\?step=1$/);
   await page.fill('#apHeadline', a.headline);
   await page.fill('#apField', a.field);
-  if (a.niche) { await page.click('[data-cat-change]'); await page.selectOption('#apNiche', a.niche); }
+  if (a.niche) await pickNiche(page, a.niche);
   await page.selectOption('#apYears', String(a.years));
   if (a.title || a.tags) {
     await page.locator('form[data-step="0"] .apply-optional > summary').click();
@@ -168,4 +177,4 @@ async function untilBooking(id, predicate, message, timeout = 20000) {
 // Where the fake evidence pages are (e2e/global-setup.js writes it): /p/<name-with-dashes> shows that name.
 const fakeWeb = () => JSON.parse(fs.readFileSync(path.join(__dirname, '.tmp', 'fakes.json'), 'utf8')).web;
 
-module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, passIdCheck, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };
+module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, pickNiche, passIdCheck, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };

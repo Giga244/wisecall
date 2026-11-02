@@ -15,6 +15,8 @@ Wisecall counts visits and a few events with [Plausible](https://plausible.io). 
 | `id_check_passed` | the ID partner reports a pass | none |
 | `mentor_approved` | a mentor is approved (by an admin or automatically) | none |
 
+`question_submit` goes out when a question is sent, with `category` (a field or chip id such as `med.cardiology`, nothing personal). Add it as a goal, and `category` as a custom property.
+
 The older events still go out too: `mentor_application_started`, `mentor_application_submitted`, `question_paid`, `question_free`.
 
 ## Adding them as Goals in Plausible

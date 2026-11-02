@@ -133,6 +133,7 @@ app.use(/^\/api\/ratings\/[^/]+\/(report|reply)$/, rateLimit({ windowMs: 60 * 60
 app.use(/^\/api\/bookings\/[^/]+\/ratings$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.post('/api/bookings', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
+app.use('/api/categories/search', rateLimit({ windowMs: 60 * 1000, max: 120 })); // (asked while a student types)
 app.use('/api/niches/suggest', rateLimit({ windowMs: 60 * 1000, max: 60 })); // (asked while a mentor types their field)
 app.use('/api/me/username', rateLimit({ windowMs: 60 * 60 * 1000, max: 20 }));
 app.use('/api/me/export', rateLimit({ windowMs: 60 * 60 * 1000, max: 10 }));
@@ -209,6 +210,7 @@ app.get(/^\/api\/profile-images\/([0-9a-f-]{36})\.webp$/, require('./auth').opti
 app.use('/api', require('./routes/ratings'));
 const { publicCache } = require('./publicCache'); // (the public lists, for visitors who are not signed in: R-5)
 app.use('/api/experts', publicCache(), require('./routes/experts'));
+app.use('/api/categories', publicCache(), require('./routes/categories'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/answers', publicCache(), require('./routes/answers'));
 app.use('/api/requests', require('./routes/requests'));
@@ -320,6 +322,9 @@ app.get('/api/config', publicCache(), async (req, res) => {
     social: config.SOCIAL_URLS,
     // The niches (fields) the pages offer, with both names and an icon (they live in the database and an admin can add more).
     niches: require('./niches').forClient(),
+    // The 16 fields students browse (their chips and counts: /api/categories), and which field an old category's mentors are in.
+    fields: require('./categories').FIELDS.map((f) => ({ id: f.id, icon: f.icon, ka: f.ka, en: f.en, ...(f.short ? { short: f.short } : {}) })),
+    fieldOfNiche: Object.fromEntries(Object.entries(require('./categories').FROM_NICHE).map(([k, v]) => [k, v[0]])),
     // The 6 fields people wait for most: first in the waiting list's field menu.
     popularFields: await require('./waitlist').popularFields(),
     // Only present on a developer's computer, where pages may show dev-mode helpers. In production the
@@ -363,6 +368,7 @@ app.use((err, req, res, next) => {
 async function start() {
   await db.migrate();
   await require('./niches').load(); // (the niche list lives in the database)
+  await require('./categories').mapExisting().catch((e) => console.error('[categories] could not map existing mentors:', e.message));
   const made = await require('./usernames').backfill(); // people who signed up before profiles existed get a username
   if (made) console.log(`[profiles] gave ${made} existing user(s) a username made from their name`);
   await launch.refresh();

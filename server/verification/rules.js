@@ -51,7 +51,7 @@ const EVIDENCE_KINDS = ['linkedin', 'website', 'portfolio', 'social', 'publicati
 const LIMITS = {
   // The Experience form
   titleMin: 2, titleMax: 100,
-  tagsMax: 8, tagMax: 40,
+  tagsMax: 5, tagMax: 30, // (the specializations, level 3: server/categories.js)
   yearsMax: 70,
   storyMin: 100, storyMax: 1500,
   sampleMin: 150, sampleMax: 3000,

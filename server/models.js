@@ -15,6 +15,8 @@ function userFromRow(r) {
     role: r.role,
     niche: r.niche,
     extraNiches: r.extra_niches || [], // (up to two more categories; niche is the main one)
+    fieldId: r.field_id || null, extraFields: r.extra_fields || [], directions: r.directions || [], directionOther: r.direction_other || null, // (what students browse: server/categories.js)
+    university: r.university || null, country: r.country || null,
     practiceKind: r.practice_kind || null,
     foundingMentorAt: r.founding_mentor_at || null, // (approved before launch: "Founding mentor", for good)
     universityDomain: r.university_domain || null, universityBadge: r.university_badge || null, // (confirmed | removed by an admin)
@@ -113,6 +115,7 @@ function bookingFromRow(r) {
     declinedAt: r.declined_at,
     declineReason: r.decline_reason,
     askerMinor: Boolean(r.asker_minor), // (the asker was 16-17 when they asked)
+    directionId: r.direction_id || null, // (the chip it was asked in)
     answerMinorHoldAt: r.answer_minor_hold_at || null, // (waits for an admin, with no automatic release: server/probation.js)
     refundedAmount: r.refunded_amount,
     partialRefundStartedAt: r.partial_refund_started_at,
@@ -134,7 +137,8 @@ const USER_COLUMNS = {
   profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme',
   specialtyTags: 'specialty_tags', yearsExperience: 'years_experience', story: 'story', applicationSubmittedAt: 'application_submitted_at',
   verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', extraNiches: 'extra_niches', practiceKind: 'practice_kind', foundingMentorAt: 'founding_mentor_at', universityDomain: 'university_domain', universityBadge: 'university_badge', showOnHome: 'show_on_home', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
-  freeWeeklyCap: 'free_weekly_cap', applyTouchedAt: 'apply_touched_at'
+  freeWeeklyCap: 'free_weekly_cap', applyTouchedAt: 'apply_touched_at',
+  fieldId: 'field_id', extraFields: 'extra_fields', directions: 'directions', directionOther: 'direction_other', university: 'university', country: 'country'
 };
 
 const BOOKING_COLUMNS = {

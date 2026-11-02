@@ -51,6 +51,23 @@ const REGULATED = {
     registries: [],
     sources: ['https://rama.moh.gov.ge/']
   },
+  // (until November 2026 these two counted as medicine, which asked for a doctor's state certificate: docs/PLAN-CATEGORIES.md)
+  veterinary: {
+    label: 'Veterinary medicine',
+    licence: 'Veterinary diploma, certificate or licence (not researched yet: a lawyer should confirm what Georgian law requires and whether a register exists)',
+    credential: 'diploma',
+    publicRegister: false,
+    registries: [],
+    sources: []
+  },
+  nutrition: {
+    label: 'Nutrition',
+    licence: 'Nutrition or dietetics diploma or certificate (not researched yet: a lawyer should confirm whether a licence is required)',
+    credential: 'diploma',
+    publicRegister: false,
+    registries: [],
+    sources: []
+  },
   psychology: {
     label: 'Psychology',
     licence: 'Psychology diploma or certificate (no licensing law or public register for psychologists could be confirmed)',

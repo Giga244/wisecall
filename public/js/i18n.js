@@ -107,6 +107,10 @@
   // A niche's name in the current language; "Other" shows the mentor's own words when there are some.
   const nicheName = (key, custom) => (key === 'other' && custom ? custom : t('niche.' + key));
   // "Your field": what a mentor wrote about their field, shown instead of the category (older profiles have only the category).
+  // The 16 fields (their chips and counts come from /api/categories), a name in the page's language, and the field an old category's mentors are in.
+  const fields = () => loadedConfig.fields || [];
+  const nameIn = (x) => (x ? (getLang() === 'ka' ? x.ka : x.en) : '');
+  const fieldOfNiche = (key) => (fields().some((f) => f.id === key) ? key : (loadedConfig.fieldOfNiche || {})[key] || null);
   const fieldName = (m) => (m && m.customNiche) || (m && m.niche ? nicheName(m.niche) : '');
 
   function applyDict(dict) {
@@ -210,5 +214,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { initI18n, kaHref, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, popularFields, nicheName, fieldName, formatDate, path };
+  window.WisecallI18n = { fields, nameIn, fieldOfNiche, initI18n, kaHref, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, popularFields, nicheName, fieldName, formatDate, path };
 })();

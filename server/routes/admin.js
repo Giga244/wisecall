@@ -96,6 +96,11 @@ router.post('/disputes/:id/resolve', requireAuth, requireAdmin, asyncHandler(asy
 }));
 
 // Questions that looked like an emergency (not paid for; the person saw help text). ?open=0 lists the reviewed ones too.
+// The categories (docs/CLAUDE-CODE-CATEGORIES.md): mentors who could not be mapped, the most-used free tags, mentors and questions per chip.
+router.get('/categories', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json(await require('../categories').forAdmin());
+}));
+
 router.get('/safety', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   res.json({ events: await require('../safety').listForAdmin({ open: req.query.open !== '0' }) });
 }));

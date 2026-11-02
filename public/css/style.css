@@ -1255,3 +1255,22 @@ html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; 
 @media (min-width: 640px) { .hero-wait .waitlist-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 html:not([data-launch="prelaunch"]) .hero-wait { display: none !important; }
 .waitlist-share { min-height: 44px; }
+
+/* The fields and chips in Browse: one line that scrolls sideways on a phone, the search box stays in view (docs/CLAUDE-CODE-CATEGORIES.md) */
+.field-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.field-chips .chip { white-space: nowrap; }
+.chip-count { font-weight: 400; opacity: 0.75; }
+.chip-soon { display: inline-block; padding: 0 8px; border-radius: 999px; border: 1px solid currentColor; font-size: 0.78em; font-weight: 700; }
+.field-soon { margin: 0 0 6px; }
+.browse-note { margin: 0 0 10px; }
+.filter-select select { min-height: 44px; max-width: 100%; font-size: 16px; }
+@media (max-width: 639px) {
+  .field-chips { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-left: -16px; margin-right: -16px; padding: 2px 16px; }
+  .field-chips::-webkit-scrollbar { display: none; }
+  .field-chips .chip { flex: 0 0 auto; }
+  /* (only the box stays in view: the rest of the phone's screen is for the results) */
+  .browse-toolbar { display: contents; }
+  .browse-toolbar .search-input { position: sticky; top: 76px; z-index: 5; margin-bottom: 10px; }
+  .browse-toolbar .browse-controls { margin-bottom: 12px; }
+}
+.field-emoji { font-size: 1.25rem; line-height: 1; flex: 0 0 auto; }

@@ -15,6 +15,10 @@ function publicProfile(user) {
     niche: user.niche,
     extraNiches: user.extraNiches || [], practiceKind: user.practiceKind || null,
     customNiche: user.customNiche || null, // "Your field", in the mentor's own words (shown instead of the category)
+    // What students browse and search by (server/categories.js): all of it chosen by the mentor to be found by.
+    fieldId: user.fieldId || null, extraFields: user.extraFields || [], directions: user.directions || [], directionOther: user.directionOther || null,
+    specializations: user.specialtyTags || [], university: user.university || null, country: user.country || null,
+    yearsBand: require('./categories').yearsBand(user.yearsExperience), currentRole: user.currentWork || null,
     bio: user.bio,
     price: user.price,
     color: user.color,

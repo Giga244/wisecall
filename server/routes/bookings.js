@@ -65,6 +65,11 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     if (config.BOOKINGS_PER_HOUR && n.hour >= config.BOOKINGS_PER_HOUR) return res.status(429).json({ error: 'too_many_bookings', max: config.BOOKINGS_PER_HOUR });
   }
 
+  // The chip the question was asked in (it comes filled in from Browse), for the admins' demand per chip. Anything else is simply not kept.
+  const directionId = require('../categories').isChip((req.body || {}).directionId) ? req.body.directionId : null;
+  const askedIn = directionId || mentor.fieldId;
+  const submitted = () => require('../analytics').event('question_submit', req, askedIn ? { category: askedIn } : undefined); // (the category id only)
+
   // A mentor who answers for free (price 0): no bank, no receipt, no fee, no payout (server/freeQuestions.js). The "are you a person?"
   // check is asked here, where paid questions have the bank in the way.
   if (mentor.price === 0) {
@@ -73,7 +78,8 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     if (!human.ok) return res.status(human.code === 'human_check_unavailable' ? 503 : 400).json({ error: human.code });
     const free = require('../freeQuestions');
     try {
-      const booking = await free.ask({ seeker, mentor, question: checked.text, source: require('../attribution').read(req) });
+      const booking = await free.ask({ seeker, mentor, question: checked.text, source: require('../attribution').read(req), directionId });
+      submitted();
       return res.status(201).json({ booking: probation.toClient(booking, seeker.id), free: true });
     } catch (e) {
       if (e instanceof free.FreeError) return res.status(free.STATUS[e.code] || 409).json({ error: e.code, ...e.extra });
@@ -105,11 +111,11 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 
   const { rows } = await query(
     `INSERT INTO bookings (seeker_id, mentor_id, question, amount, currency, platform_fee_percent,
-                           platform_fee_amount, mentor_net_amount, status, provider, source, discount_code_id, list_price, asker_minor, adult_payer_confirmed_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9, $10, $11, $12, $13, CASE WHEN $13 THEN now() END) RETURNING *`,
+                           platform_fee_amount, mentor_net_amount, status, provider, source, discount_code_id, list_price, asker_minor, adult_payer_confirmed_at, direction_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment', $9, $10, $11, $12, $13, CASE WHEN $13 THEN now() END, $14) RETURNING *`,
     [seeker.id, mentor.id, cleanQuestion, amount, config.CURRENCY, config.PLATFORM_FEE_PERCENT,
       feeAmount, amount - feeAmount, providerName, (() => { const src = require('../attribution').read(req); return src ? JSON.stringify(src) : null; })(),
-      code ? code.id : null, code ? listPrice : null, minor]
+      code ? code.id : null, code ? listPrice : null, minor, directionId]
   );
   const booking = bookingFromRow(rows[0]);
   // (the question takes the code; if another question took it a moment ago, this one stops here, before the bank)
@@ -121,6 +127,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   try {
     const order = await payments.startPayment(booking, mentor, seeker);
     const updated = await updateBooking(booking.id, { providerOrderId: order.orderId });
+    submitted();
     // (the bank's order id is part of the checkout address the buyer is sent to anyway)
     res.status(201).json({ booking: { ...probation.toClient(updated, seeker.id), providerOrderId: updated.providerOrderId }, checkoutUrl: order.redirectUrl });
   } catch (err) {

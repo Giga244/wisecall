@@ -34,7 +34,7 @@ function parseTags(input) {
     if (typeof raw !== 'string') return null;
     const tag = oneLine(raw).replace(/^#/, '');
     if (!tag) continue;
-    if (tag.length > LIMITS.tagMax || /[@<>{}]|https?:|www\./i.test(tag)) return null;
+    if ([...tag].length > LIMITS.tagMax || /[@<>{}]|https?:|www\./i.test(tag)) return null;
     const key = tag.toLowerCase();
     if (!seen.has(key)) { seen.add(key); out.push(tag); }
   }
@@ -80,6 +80,50 @@ function parseExperience(input) {
       if (c.error) return { error: c.error, field: 'customNiche' };
       patch.customNiche = c.value;
     }
+  }
+  // What students browse by (server/categories.js): one main field, up to two more, up to five chips in them, and for each field "Other" in the mentor's words.
+  const categories = require('../categories');
+  if (b.fieldId !== undefined) {
+    if (b.fieldId !== null && !categories.isField(b.fieldId)) return { error: 'invalid_field_id', field: 'fieldId' };
+    patch.fieldId = b.fieldId;
+  }
+  if (b.extraFields !== undefined) {
+    if (!Array.isArray(b.extraFields) || b.extraFields.some((f) => !categories.isField(f))) return { error: 'invalid_field_id', field: 'extraFields' };
+    const list = [...new Set(b.extraFields)].filter((f) => f !== (b.fieldId !== undefined ? b.fieldId : null));
+    if (list.length > categories.LIMITS.extraFields) return { error: 'too_many_fields', field: 'extraFields' };
+    patch.extraFields = list;
+  }
+  if (b.directions !== undefined) {
+    if (!Array.isArray(b.directions) || b.directions.some((d) => !categories.isChip(d))) return { error: 'invalid_direction', field: 'directions' };
+    const list = [...new Set(b.directions)];
+    if (list.length > categories.LIMITS.directions) return { error: 'too_many_directions', field: 'directions' };
+    patch.directions = list;
+  }
+  if (b.directionOther !== undefined) {
+    if (b.directionOther !== null && (typeof b.directionOther !== 'object' || Array.isArray(b.directionOther))) return { error: 'invalid_direction', field: 'directionOther' };
+    const out = {};
+    for (const [fieldId, text] of Object.entries(b.directionOther || {})) {
+      if (!categories.isField(fieldId) || typeof text !== 'string') return { error: 'invalid_direction', field: 'directionOther' };
+      if (!text.trim()) continue;
+      const c = require('../customNiche').clean(text);
+      if (c.error) return { error: c.error, field: 'directionOther' };
+      out[fieldId] = c.value;
+    }
+    patch.directionOther = Object.keys(out).length ? out : null;
+  }
+  if (b.university !== undefined) {
+    const v = oneLine(b.university || '');
+    if (typeof (b.university === null ? '' : b.university) !== 'string' || [...v].length > categories.LIMITS.universityMax || /[@<>{}]|https?:|www\./i.test(v)) return { error: 'invalid_university', field: 'university' };
+    patch.university = v || null;
+  }
+  if (b.country !== undefined) {
+    if (b.country !== null && b.country !== '' && !categories.isCountry(b.country)) return { error: 'invalid_country', field: 'country' };
+    patch.country = b.country || null;
+  }
+  if (b.currentRole !== undefined) {
+    const v = oneLine(b.currentRole || '');
+    if (typeof (b.currentRole === null ? '' : b.currentRole) !== 'string' || [...v].length > categories.LIMITS.currentRoleMax || /[@<>{}]|https?:|www\./i.test(v)) return { error: 'invalid_current_role', field: 'currentRole' };
+    patch.currentWork = v || null;
   }
   if (b.specialtyTags !== undefined) {
     const tags = parseTags(b.specialtyTags);
@@ -130,6 +174,43 @@ function extraNicheRules(user, patch) {
   return patch;
 }
 // Every category a mentor is in (the main one first).
+// The field and chips chosen decide the niche (and with it the licence and the review: server/categories.js nicheFor, where a regulated chip always wins). Only
+// when they changed: saving the same choice again leaves an existing mentor's niche as it was. Changes the patch.
+function fieldToNiche(user, patch) {
+  const categories = require('../categories');
+  const same = (a, b) => JSON.stringify([...(a || [])].sort()) === JSON.stringify([...(b || [])].sort());
+  const value = (k) => (patch[k] !== undefined ? patch[k] : user[k]);
+  const main = value('fieldId');
+  const chose = (patch.fieldId !== undefined && patch.fieldId !== user.fieldId) || (patch.extraFields !== undefined && !same(patch.extraFields, user.extraFields))
+    || (patch.directions !== undefined && !same(patch.directions, user.directions));
+  const directions = value('directions') || [];
+  const extras = (value('extraFields') || []).filter((f) => f !== main);
+  if (patch.extraFields !== undefined || patch.fieldId !== undefined) patch.extraFields = extras;
+  // (a chip only stays with a field that stays)
+  const kept = directions.filter((d) => [main, ...extras].includes(categories.fieldOfChip(d)));
+  if (kept.length !== directions.length) patch.directions = kept;
+  if (!chose || !main) return patch;
+  patch.niche = categories.nicheFor(main, kept);
+  patch.extraNiches = [...new Set(extras.map((f) => categories.nicheFor(f, kept)))].filter((n) => n !== patch.niche && n !== 'other');
+  return patch;
+}
+// The other way: a niche set without a field (the words named a licensed profession and moved it, or an older page or an admin set it): the field follows, so the
+// mentor is found where they now count. What they chose before stays as an extra field.
+function nicheToField(user, patch) {
+  const categories = require('../categories');
+  const niche = patch.niche !== undefined ? patch.niche : user.niche;
+  const main = patch.fieldId !== undefined ? patch.fieldId : user.fieldId;
+  if (!niche || (main && categories.nicheFor(main, patch.directions || user.directions || []) === niche)) return patch;
+  if (patch.niche === undefined && main) return patch;
+  const hit = categories.fromNiche(niche);
+  if (!hit || (hit.fieldId === main && !hit.chip)) return patch;
+  const extras = [...new Set([main, ...(patch.extraFields || user.extraFields || [])].filter((f) => f && f !== hit.fieldId))].slice(0, categories.LIMITS.extraFields);
+  const directions = [...new Set([...(hit.chip ? [hit.chip] : []), ...(patch.directions || user.directions || [])])]
+    .filter((d) => [hit.fieldId, ...extras].includes(categories.fieldOfChip(d))).slice(0, categories.LIMITS.directions);
+  Object.assign(patch, { fieldId: hit.fieldId, extraFields: extras, directions });
+  return patch;
+}
+
 const nichesOf = (user) => [user.niche, ...(user.extraNiches || [])].filter(Boolean);
 // Whether any of them is regulated (never approved automatically).
 const anyRegulated = (user) => nichesOf(user).some((k) => rules.isRegulated(k));
@@ -156,12 +237,14 @@ async function saveExperience(user, input) {
   const { patch, error, field } = parseExperience(input);
   if (error) throw new VerificationError(error, { field });
   // The field in their own words with no category yet: the closest one is chosen for them ("Other" when nothing fits); they can change it.
+  fieldToNiche(user, patch);
   const words = patch.customNiche !== undefined ? patch.customNiche : user.customNiche;
   const category = patch.niche !== undefined ? patch.niche : user.niche;
   if (words && !category) patch.niche = require('../fieldSuggest').suggestField(words, patch.roleTitle || user.roleTitle) || 'other';
   extraNicheRules(user, patch); // (what they chose is checked first, then again after the words had their say)
   applyFieldRules(user, patch);
   extraNicheRules(user, patch);
+  nicheToField(user, patch);
   storyToBio(user, patch);
   if (Object.keys(patch).length) patch.applyTouchedAt = new Date(); // (the reminders count from the last change: ./reminders.js)
   // A different niche can need different steps (a licence), so the steps shown are recomputed from it when the page reloads.
@@ -474,6 +557,8 @@ async function applicationFor(user, stepMap) {
   const evidence = await listEvidence(user.id);
   return {
     form: {
+      fieldId: user.fieldId || null, extraFields: user.extraFields || [], directions: user.directions || [], directionOther: user.directionOther || {},
+      university: user.university || '', country: user.country || '', currentRole: user.currentWork || '',
       roleTitle: user.roleTitle || '', niche: user.niche || null, extraNiches: user.extraNiches || [], practiceKind: user.practiceKind || null, customNiche: user.customNiche || '', regulatedByWords: regulatedByWords(user), specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
       story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price === undefined ? null : user.price // (0: answers for free)
     },
@@ -509,7 +594,9 @@ async function setFieldByAdmin({ mentorId, admin, text, niche, notRegulated }) {
     if (missing.length) throw new VerificationError('licence_missing', { missing });
   }
   const before = `"${mentor.customNiche || ''}" (${mentor.niche || '-'})`;
-  const updated = await updateUser(mentor.id, { customNiche: c.value, niche, fieldOverride: override });
+  // (where students find them follows the category: server/categories.js)
+  const hit = niche !== mentor.niche ? require('../categories').fromNiche(niche) : null;
+  const updated = await updateUser(mentor.id, { customNiche: c.value, niche, fieldOverride: override, ...(hit ? { fieldId: hit.fieldId, directions: hit.chip ? [hit.chip] : [], extraFields: (mentor.extraFields || []).filter((f) => f !== hit.fieldId) } : {}) });
   await steps.audit(mentor.id, steps.adminActor(admin), 'niche_changed', {
     reason: `field ${before} -> "${c.value}" (${niche})${override ? '; not a licensed profession (admin decision)' : ''}`
   });

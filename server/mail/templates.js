@@ -826,7 +826,7 @@ const BUILDERS = {
   mentorJoined: (s, d, lang) => {
     const names = NICHE_NAMES[lang] || NICHE_NAMES.en;
     const known = d.niche && d.niche !== 'any' && require('../niches').get(d.niche);
-    const field = known ? require('../niches').nameOf(d.niche, lang) : (names['niche.' + d.niche] || s.mentorJoined.anyField);
+    const field = require('../categories').nameOf(d.niche, lang) || (known ? require('../niches').nameOf(d.niche, lang) : (names['niche.' + d.niche] || s.mentorJoined.anyField));
     return {
       heading: s.mentorJoined.heading,
       blocks: [

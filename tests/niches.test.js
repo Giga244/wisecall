@@ -25,16 +25,16 @@ before(async () => {
 after(async () => { if (srv) srv.proc.kill(); await pool.end(); });
 
 describe('the niche list', () => {
-  test('36 niches in the database, sent to the pages with both names and an icon; 8 are regulated', async () => {
+  test('39 niches in the database, sent to the pages with both names and an icon; 10 are regulated', async () => {
     const { rows } = await pool.query('SELECT key, regulated FROM niches');
-    assert.equal(rows.length, 36);
+    assert.equal(rows.length, 39);
     const cfg = await client(base).api('/config');
-    assert.equal(cfg.niches.length, 36);
+    assert.equal(cfg.niches.length, 39);
     const psych = cfg.niches.find((n) => n.key === 'psychology');
     assert.deepEqual(Object.keys(psych).sort(), ['credential', 'en', 'icon', 'ka', 'key', 'regulated']); // (credential: 'diploma', no licence exists)
     assert.equal(psych.ka, 'ფსიქოლოგია'); // (renamed: docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
     assert.deepEqual(cfg.niches.filter((n) => n.regulated).map((n) => n.key).sort(),
-      ['accounting_tax', 'dentistry', 'finance', 'law', 'medicine', 'nursing', 'pharmacy', 'psychology']);
+      ['accounting_tax', 'dentistry', 'finance', 'law', 'medicine', 'nursing', 'nutrition', 'pharmacy', 'psychology', 'veterinary']);
     assert.equal(cfg.niches[0].key, 'business', 'in their order');
   });
 
@@ -101,7 +101,7 @@ describe('suggested niches: an admin promotes one, or moves it into an existing 
     assert.equal((await outsider.api('/admin/niches')).status, 403);
     const r = await admin.api('/admin/niches');
     assert.equal(r.status, 200);
-    assert.equal(r.niches.length, 36);
+    assert.equal(r.niches.length, 39);
     const bees = r.suggestions.find((s) => s.label.toLowerCase() === 'beekeeping');
     assert.equal(bees.count, 3, 'Beekeeping, beekeeping and the listed mentor');
     assert.ok(r.suggestions.some((s) => s.label === 'Candle making' && s.count === 1));

@@ -78,7 +78,7 @@ test('before launch every way to Browse leads to the hero\'s form: a field tile 
   const { ctx, page } = await open(browser, 390);
   const form = page.locator('#heroWait .waitlist-form');
   const tile = page.locator('#nicheStrip .field-tile').first();
-  const niche = await tile.getAttribute('data-niche-link');
+  const niche = await tile.getAttribute('data-field-link');
   await tile.click();
   await expect(form.locator('select[name=niche]')).toHaveValue(niche);
   await expect(form.locator('input[type=email]')).toBeFocused();
@@ -154,7 +154,7 @@ const tiles = (page) => page.evaluate(() => {
   const shown = [...document.querySelectorAll('#nicheStrip .field-tile')].filter((a) => a.offsetWidth);
   const broken = [];
   for (const a of shown) {
-    const text = a.querySelector('span').firstChild;
+    const text = a.querySelector('span:last-child').firstChild;
     let at = 0;
     for (const word of text.textContent.split(' ')) {
       const range = document.createRange();
@@ -175,7 +175,7 @@ const tiles = (page) => page.evaluate(() => {
 });
 
 for (const [width, count, columns, height] of [[375, 6, 2, 56], [390, 6, 2, 56], [768, 9, 3, 56], [1024, 8, 4, 64], [1440, 10, 5, 64], [1920, 10, 5, 64]]) {
-  test(`fields at ${width}px: ${count} tiles in ${columns} columns, then all 36; no word broken (English and Georgian)`, async ({ browser }) => {
+  test(`fields at ${width}px: ${count} tiles in ${columns} columns, then all 16; no word broken (English and Georgian)`, async ({ browser }) => {
     for (const lang of ['en', 'ka']) {
       const { ctx, page } = await open(browser, width, lang);
       const closed = await tiles(page);
@@ -191,10 +191,10 @@ for (const [width, count, columns, height] of [[375, 6, 2, 56], [390, 6, 2, 56],
       await expect(more).toHaveAttribute('aria-expanded', 'true');
       await expect(more).toHaveText(lang === 'ka' ? 'ნაკლების ჩვენება' : 'Show fewer');
       const all = await tiles(page);
-      expect(all.count, lang).toBe(36);
+      expect(all.count, lang).toBe(16);
       expect(all.broken, lang).toEqual([]);
       await more.click();
-      await expect(more).toHaveText(lang === 'ka' ? 'ყველა 36 სფეროს ნახვა' : 'See all 36 fields');
+      await expect(more).toHaveText(lang === 'ka' ? 'ყველა 16 სფეროს ნახვა' : 'See all 16 fields');
       expect((await tiles(page)).count, lang).toBe(count);
       await ctx.close();
     }

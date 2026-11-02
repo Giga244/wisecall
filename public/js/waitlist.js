@@ -7,7 +7,8 @@
   const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // The fields, in the order shown (the niche list from the server).
-  const fields = () => WisecallI18n.niches().map((n) => n.key);
+  const fields = () => WisecallI18n.fields().map((f) => f.id);
+  const fieldLabel = (id) => WisecallI18n.nameIn(WisecallI18n.fields().find((f) => f.id === id));
   const prelaunch = () => WisecallI18n.launchMode() === 'prelaunch';
 
   const CHECK = '<svg class="waitlist-check" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="22" stroke-width="2.5"/><path d="M14 25l7 7 13-15" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -18,12 +19,13 @@
   let questionField = null;
 
   let counter = 0;
-  function html(niche) {
+  // opts.submit: another word for the button (an empty field: "notify me when a mentor appears").
+  function html(niche, opts = {}) {
     const n = ++counter;
-    const chosen = questionField || niche || 'any';
-    const opt = (k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : t('niche.' + k))}</option>`;
-    // (the 6 fields people wait for most first, then the rest under "Other fields")
-    const top = WisecallI18n.popularFields().filter((k) => fields().includes(k)).slice(0, 6);
+    const chosen = questionField || WisecallI18n.fieldOfNiche(niche) || 'any';
+    const opt = (k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : fieldLabel(k))}</option>`;
+    // (the fields people wait for most first, then the rest under "Other fields")
+    const top = [...new Set(WisecallI18n.popularFields().map(WisecallI18n.fieldOfNiche).filter(Boolean))].slice(0, 6);
     const rest = fields().filter((k) => !top.includes(k));
     const options = opt('any') + (top.length ? top.map(opt).join('') + `<optgroup label="${esc(t('wait.otherFields'))}">${rest.map(opt).join('')}</optgroup>` : fields().map(opt).join(''));
     return `
@@ -34,7 +36,7 @@
           <label for="wl${n}-niche"><span>${t('wait.niche')}</span><select id="wl${n}-niche" name="niche">${options}</select></label>
         </div>
         <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
-        <button class="btn btn-primary waitlist-submit" type="submit">${t('wait.submit')}</button>
+        <button class="btn btn-primary waitlist-submit" type="submit">${esc(opts.submit || t('wait.submit'))}</button>
         <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
         <p class="form-error waitlist-error" role="alert"></p>
       </form>`;
@@ -97,7 +99,8 @@
     if (!question) return;
     try {
       const r = await WisecallAPI.apiFetch('/niches/suggest?q=' + encodeURIComponent(question));
-      if (r.niche && fields().includes(r.niche)) { questionField = r.niche; draw(); }
+      const field = WisecallI18n.fieldOfNiche(r.niche);
+      if (field) { questionField = field; draw(); }
     } catch (e) { /* the visitor chooses the field */ }
   }
 
@@ -117,7 +120,8 @@
   function chooseField(niche) {
     ready.then(() => {
       const form = document.querySelector('#heroWait .waitlist-form');
-      if (form && niche && fields().concat('any').includes(niche)) form.niche.value = niche;
+      const field = niche === 'any' ? 'any' : WisecallI18n.fieldOfNiche(niche);
+      if (form && field) form.niche.value = field;
     }).catch(() => {});
   }
 
