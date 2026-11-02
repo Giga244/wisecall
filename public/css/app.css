@@ -943,3 +943,21 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .cat-list { list-style: none; margin: 8px 0; padding: 0; max-width: 520px; }
 .cat-list li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--border); }
 .profile-directions { margin-top: 10px; }
+
+/* Mentor edit (docs/CLAUDE-CODE-MENTOR-EDIT.md): the price block, "My details", the admin's price change */
+.price-block .price-block-now { margin: 0 0 12px; font-size: 1.05rem; }
+.price-block form { display: grid; gap: 10px; max-width: 420px; }
+.price-block .price-free-toggle input { width: 22px; height: 22px; }
+.note-box { margin: 10px 0 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); color: var(--sun-ink); }
+.note-box p { margin: 6px 0 0; }
+.note-box label { display: block; margin-top: 10px; }
+.details-extra, .details-chips { border: 0; padding: 0; margin: 12px 0; min-width: 0; }
+.details-extra legend, .details-chips legend { font-weight: 700; margin-bottom: 6px; }
+.details-extra { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0 12px; }
+.details-id { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 8px 0 12px; }
+.details-id dt { font-weight: 700; }
+.details-id dd { margin: 0; overflow-wrap: anywhere; }
+.details-links .linklike { padding: 0; }
+.mv-price { margin: 14px 0; padding-top: 12px; border-top: 1px solid var(--border); }
+.mv-price .mv-price-amount { max-width: 120px; }
+.mv-updated .badge { margin-right: 6px; }

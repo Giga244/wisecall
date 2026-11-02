@@ -250,6 +250,33 @@
     const items = oneTapItems(d);
     return d.oneTap && d.oneTap.canApprove && items.length ? `<p class="small mv-onetap">${esc(fill('admin.oneTap.will', { list: items.join(', ') }))}</p>` : '';
   }
+  // "Change price" (docs/CLAUDE-CODE-MENTOR-EDIT.md): ₾ or free, a reason always, and the history. What changed in a sent application ("updated").
+  function priceBlock(d) {
+    const money = (n) => (n === 0 ? t('admin.price.free') : (n === null || n === undefined ? '—' : `${n} ₾`));
+    const h = d.priceHistory || [];
+    return `
+      <div class="mv-price">
+        <p class="small"><strong>${t('admin.price.title')}</strong> · ${esc(t('admin.price.now'))} <strong class="mv-price-now">${esc(money(d.price))}</strong></p>
+        <div class="mv-decide">
+          <label class="checkbox-row"><input type="checkbox" class="mv-price-free"${d.price === 0 ? ' checked' : ''}> <span>${t('admin.price.free')}</span></label>
+          <input type="number" class="mv-price-amount" min="5" max="2000" step="1" inputmode="numeric" value="${d.price > 0 ? esc(d.price) : ''}" aria-label="${esc(t('admin.price.amount'))}" placeholder="₾"${d.price === 0 ? ' hidden' : ''}>
+        </div>
+        <div class="mv-decide">
+          <input type="text" class="mv-price-reason" maxlength="300" placeholder="${esc(t('admin.price.reason'))}" aria-label="${esc(t('admin.price.reason'))}">
+          <button class="btn btn-outline btn-sm mv-price-save">${t('admin.price.save')}</button>
+        </div>
+        <p class="muted small">${esc(t('admin.price.keep'))}${d.price === 0 && !d.mentor.hasPayoutDetails ? ' ' + esc(t('admin.price.payout')) : ''}</p>
+        ${h.length ? `<details class="mv-audit"><summary>${t('admin.price.history')} (${h.length})</summary>
+          <ul class="earn-list mv-price-history">${h.map((x) => `<li><span>${fmt(x.at)}</span><span>${esc(money(x.from))} → ${esc(money(x.to))} · ${esc(x.source === 'admin' ? (x.by || 'admin') : t('admin.price.byMentor'))}</span><span class="muted small">${esc(x.reason || '')}</span></li>`).join('')}</ul>
+        </details>` : ''}
+      </div>`;
+  }
+  function updatedBlock(d) {
+    const c = d.applicationChanges;
+    if (!c) return '';
+    return `<p class="mv-note mv-updated" role="note"><span class="badge badge-pending_payment">${t('admin.updated.badge')}</span> ${esc(fill('admin.updated.what', { date: fmt(c.at), list: (c.fields || []).map((f) => t('admin.updated.f.' + f)).join(', ') }))}</p>`;
+  }
+
   function panelHtml(d) {
     const rows = d.requirements.map(stepRow).join('');
     const optional = (d.optional || []).filter((r) => r.status !== 'todo').map(stepRow).join('');
@@ -258,6 +285,7 @@
     const done = d.requirements.filter((r) => r.status === 'passed').length;
     return `
       <div class="mv-panel">
+        ${updatedBlock(d)}
         ${analysisBlock(d)}
         ${applicationBlock(d)}
         ${evidenceBlock(d)}
@@ -269,6 +297,7 @@
         <div class="mv-steps">${rows}${optional}</div>
         ${legacy ? `<details class="mv-audit"><summary>${t('admin.ai.legacySteps')}</summary><div class="mv-steps">${legacy}</div></details>` : ''}
         ${fieldBlock(d.application)}
+        ${priceBlock(d)}
         <div class="mv-final">
           ${d.standing && d.standing.backInReview ? `<p class="mv-note" role="note"><strong>${t('admin.mv.reinstateNote')}</strong></p>` : ''}
           ${oneTapHtml(d)}
@@ -460,6 +489,24 @@
           ivReq.disabled = true;
           try { await WisecallAPI.apiFetch(`/admin/mentors/${id}/interview/request`, { method: 'POST', body: { reason } }); WisecallNav.showToast(t('toast.saved')); await loadPanel(); onChange({ soft: true }); }
           catch (e) { WisecallNav.showToast(t('toast.error')); ivReq.disabled = false; }
+        });
+        const priceFree = body.querySelector('.mv-price-free');
+        const priceAmount = body.querySelector('.mv-price-amount');
+        if (priceFree) priceFree.addEventListener('change', () => { priceAmount.hidden = priceFree.checked; });
+        const priceSave = body.querySelector('.mv-price-save');
+        if (priceSave) priceSave.addEventListener('click', async () => {
+          const reason = body.querySelector('.mv-price-reason').value.trim();
+          if (reason.length < 5) { WisecallNav.showToast(t('admin.mv.reasonRequired')); return; }
+          const price = priceFree.checked ? 0 : Number(priceAmount.value);
+          priceSave.disabled = true;
+          try {
+            const r = await WisecallAPI.apiFetch(`/admin/mentors/${id}/price`, { method: 'POST', body: { price, reason } });
+            WisecallNav.showToast(t(r.payoutNeeded ? 'admin.price.savedPayout' : 'admin.price.saved'));
+            await loadPanel(); onChange({ soft: true });
+          } catch (e) {
+            WisecallNav.showToast(t({ invalid_price: 'admin.price.invalid', same_price: 'admin.price.same', reason_required: 'admin.mv.reasonRequired' }[e.code] || 'toast.error'));
+            priceSave.disabled = false;
+          }
         });
         const suspendBtn = body.querySelector('.mv-suspend-btn');
         const reinstateBtn = body.querySelector('.mv-reinstate');

@@ -15,6 +15,7 @@ function userFromRow(r) {
     role: r.role,
     niche: r.niche,
     extraNiches: r.extra_niches || [], // (up to two more categories; niche is the main one)
+    applicationChanges: r.application_changes || null, // (what changed in a sent application: server/mentorEdit.js)
     fieldId: r.field_id || null, extraFields: r.extra_fields || [], directions: r.directions || [], directionOther: r.direction_other || null, // (what students browse: server/categories.js)
     university: r.university || null, country: r.country || null,
     practiceKind: r.practice_kind || null,

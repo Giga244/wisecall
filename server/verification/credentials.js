@@ -139,11 +139,12 @@ function safeFilename(name, mime) {
   return /\.(pdf|jpe?g)$/i.test(base) ? base : base + ext;
 }
 
-async function storeDocument(user, step, { filename, buffer }) {
+// opts.evenIfSent: a diploma after sending, which an admin checks (server/mentorEdit.js).
+async function storeDocument(user, step, { filename, buffer }, opts = {}) {
   if (!DOCUMENT_STEPS.includes(step)) throw new VerificationError('unknown_step');
   requireStep(user, step);
-  // A diploma is a piece of evidence: it cannot be added while the application is locked for review.
-  if (step === 'diploma' && require('./experience').isLocked(user)) throw new VerificationError('application_locked');
+  // A diploma is a piece of evidence: it cannot be added while the application is locked for review (except from "My details").
+  if (step === 'diploma' && require('./experience').isLocked(user) && !opts.evenIfSent) throw new VerificationError('application_locked');
   if (!Buffer.isBuffer(buffer) || !buffer.length) throw new VerificationError('empty_file');
   if (buffer.length > rules.LIMITS.maxUploadBytes) throw new VerificationError('file_too_large');
   const mime = detectMime(buffer);

@@ -1,6 +1,6 @@
 // Free answers (docs/CLAUDE-CODE-FREE-ANSWERS.md), in the browser: a mentor chooses "Answer for free" in Settings; Browse shows "Free" on
 // the card and a "Free" filter; the asker sends a question with no payment step and sees "Free" in the dashboard; the mentor's line
-// says "Free" too. Georgian: "უფასო". (Named to run after e2e/full-flow.spec.js in one long run: that spec signs the e2e admin up.)
+// says "Free" too. Georgian: "უფასოდ". (Named to run after e2e/full-flow.spec.js in one long run: that spec signs the e2e admin up.)
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
 const { client } = require('../tests/helpers');
@@ -52,7 +52,7 @@ test('Browse: the card says "Free", and the "Free" filter shows only mentors who
   expect(prices.length).toBeGreaterThan(0);
   expect(prices.every((p) => p.trim() === 'Free')).toBe(true);
   await page.goto('/ka/?free=1');
-  await expect(page.locator('.expert-card', { hasText: 'Nana Giver' }).locator('.price')).toHaveText('უფასო');
+  await expect(page.locator('.expert-card', { hasText: 'Nana Giver' }).locator('.price')).toHaveText('უფასოდ');
 });
 
 test('the asker sends a free question: no payment step, "Free" in the dashboard; the mentor sees it as free', async ({ page, browser }) => {

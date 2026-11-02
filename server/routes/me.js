@@ -143,6 +143,8 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   // (the profile's "About me" and the application's story stay one text while they are the same: server/verification/experience.js)
   if (isMentor && patch.bio !== undefined) experience.bioToStory(existing, patch);
   const user = await updateUser(existing.id, patch);
+  // (every price change is in the history the admin and the mentor see: server/mentorEdit.js)
+  if (isMentor && patch.price !== undefined && patch.price !== existing.price) await require('../mentorEdit').logPrice(existing.id, existing.price, patch.price, { id: existing.id, label: 'mentor' }, 'mentor');
   // (the headline and the price are part of the application: its reminders count from this change)
   if (isMentor && (patch.price !== undefined || patch.headline !== undefined)) await require('../verification/reminders').touch(user.id);
   if (isMentor && changedApplication.length) await verification.syncEmailStep(user);
@@ -157,6 +159,49 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const payoutNeeded = patch.price > 0 && existing.verificationStatus === 'verified' && !existing.payoutIbanEnc;
   res.json({ user: meProfile(user), ...(payoutNeeded ? { payoutNeeded: true } : {}) });
   if (stepsBefore) require('../verification/experience').trackSteps(req, stepsBefore, user.id);
+}));
+
+// "My details" (docs/CLAUDE-CODE-MENTOR-EDIT.md): what a mentor can change after applying, whether or not the application was sent or approved.
+//   GET  /details  what they can change at once, what waits for an admin, and what only support can change (the ID check's name and birth date)
+//   PUT  /details  specializations, current role, university, country, years: saved at once
+//   PUT  /fields   the main field, extra fields and chips: saved, or kept for an admin first when the mentor is approved
+const editFail = (res, e) => {
+  if (!(e instanceof verification.VerificationError)) throw e;
+  const status = { application_locked: 409, nothing_changed: 409, not_a_mentor: 400 }[e.code] || 400;
+  res.status(status).json({ error: e.code, ...(e.field ? { field: e.field } : {}) });
+};
+router.get('/details', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user || !isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
+  res.json(await require('../mentorEdit').detailsFor(user));
+}));
+router.put('/details', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  try { res.json({ user: meProfile(await require('../mentorEdit').saveDetails(user, req.body || {})) }); } catch (e) { editFail(res, e); }
+}));
+router.put('/fields', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (!user.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
+  try {
+    const out = await require('../mentorEdit').saveFields(user, req.body || {});
+    res.json({ user: meProfile(out.user), change: out.change });
+  } catch (e) { editFail(res, e); }
+}));
+
+// New proof from "My details": while the application is sent or approved it is added unchecked and an admin checks it (the apply form's
+// /verification/evidence stays locked then).
+router.post('/evidence', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user || !isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
+  try {
+    const item = await require('../mentorEdit').addEvidence(user, req.body || {});
+    res.json({ evidence: { id: item.id, kind: item.kind, url: item.url } });
+  } catch (e) {
+    if (e instanceof verification.VerificationError && ['duplicate_evidence', 'too_much_evidence', 'application_locked'].includes(e.code)) return res.status(409).json({ error: e.code });
+    editFail(res, e);
+  }
 }));
 
 // The username (the /u/<name> address): once every 30 days; the old one keeps redirecting.

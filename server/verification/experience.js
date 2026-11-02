@@ -232,10 +232,9 @@ function bioToStory(user, patch) {
   return patch;
 }
 
-async function saveExperience(user, input) {
-  if (isLocked(user)) throw new VerificationError('application_locked');
-  const { patch, error, field } = parseExperience(input);
-  if (error) throw new VerificationError(error, { field });
+// What a choice makes of the profile: the field and chips, the words, the extra fields and the rules on them. Changes the patch (and
+// throws what saving would). Also used on a copy for a change an admin checks first (server/mentorEdit.js).
+function applyChoice(user, patch) {
   // The field in their own words with no category yet: the closest one is chosen for them ("Other" when nothing fits); they can change it.
   fieldToNiche(user, patch);
   const words = patch.customNiche !== undefined ? patch.customNiche : user.customNiche;
@@ -245,6 +244,15 @@ async function saveExperience(user, input) {
   applyFieldRules(user, patch);
   extraNicheRules(user, patch);
   nicheToField(user, patch);
+  return patch;
+}
+
+// opts.evenIfSent: an application sent and not decided yet can still be changed from "My details" (the admin sees what changed: server/mentorEdit.js).
+async function saveExperience(user, input, opts = {}) {
+  if (isLocked(user) && !(opts.evenIfSent && submitted(user))) throw new VerificationError('application_locked');
+  const { patch, error, field } = parseExperience(input);
+  if (error) throw new VerificationError(error, { field });
+  applyChoice(user, patch);
   storyToBio(user, patch);
   if (Object.keys(patch).length) patch.applyTouchedAt = new Date(); // (the reminders count from the last change: ./reminders.js)
   // A different niche can need different steps (a licence), so the steps shown are recomputed from it when the page reloads.
@@ -307,8 +315,9 @@ function kindFromUrl(value) {
 
 // input: { kind, url?, registryId?, note? }. A diploma is added by uploading the file (see credentials.storeDocument). Without a kind (or
 // "auto") the kind comes from the address.
-async function addEvidence(user, input) {
-  if (isLocked(user)) throw new VerificationError('application_locked');
+// opts.evenIfSent: new proof after sending (not while suspended); an admin checks it (server/mentorEdit.js).
+async function addEvidence(user, input, opts = {}) {
+  if (isLocked(user) && !(opts.evenIfSent && user.verificationStatus !== 'suspended')) throw new VerificationError('application_locked');
   const b = { ...(input || {}) };
   if ((b.kind === undefined || b.kind === null || b.kind === '' || b.kind === 'auto') && b.url) b.kind = kindFromUrl(b.url) || 'website';
   if (!rules.EVIDENCE_KINDS.includes(b.kind) || b.kind === 'diploma') throw new VerificationError('invalid_kind');
@@ -618,7 +627,7 @@ async function priceRangeFor(niche) {
 
 module.exports = {
   stepsDone, trackSteps, funnel, priceRangeFor, nichesOf, anyRegulated, EXTRA_NICHES_MAX, PRACTICE_KINDS,
-  isLocked, submitted, parseTags, parseExperience, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
+  isLocked, submitted, parseTags, parseExperience, applyChoice, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
   bioToStory, applicationProgress, progressFor, idStatusOf, ID_LEFT, sendAfterIdPassed
 };

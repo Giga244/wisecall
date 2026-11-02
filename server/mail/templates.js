@@ -87,6 +87,20 @@ const S = {
       intro: 'We suspended your mentor profile. It is hidden from Browse experts, and questions that were waiting for your answer were refunded.', reasonLabel: 'Reason:',
       after: 'If you think this is a mistake, please contact us and we will look at it again.', button: 'Contact us'
     },
+    priceChanged: {
+      subject: 'Your Wisecall price was changed', heading: 'Your price was changed',
+      intro: 'Your price was changed: {from} → {to}. If you did not ask for this, write to us.', free: 'free',
+      after: 'Questions already asked keep the price they were asked at. The new price is only for new questions.', button: 'Write to us'
+    },
+    changeApproved: {
+      subject: 'Your change on Wisecall was approved', heading: 'Your change was approved',
+      intro: 'We checked the change to your details and approved it. Your profile now shows it.', reasonLabel: 'Note:', button: 'Open your profile'
+    },
+    changeRejected: {
+      subject: 'Your change on Wisecall was not approved', heading: 'Your change was not approved',
+      intro: 'We checked the change to your details and could not approve it. Your profile stays as it was.', reasonLabel: 'Reason:',
+      after: 'You can change it and send it again from "My details".', button: 'My details'
+    },
     deadlineSoon: {
       subject: 'Answer soon or the question will be refunded', heading: 'A paid question is waiting',
       intro: 'You have a paid question waiting:', after: "If it isn't answered by {date}, the buyer is refunded automatically.", button: 'Answer now'
@@ -413,6 +427,20 @@ const S = {
       subject: 'შენი Wisecall-ის მენტორის პროფილი შეჩერდა', heading: 'შენი პროფილი შეჩერებულია',
       intro: 'შენი მენტორის პროფილი შევაჩერეთ. ის ექსპერტების სიაში დამალულია, ხოლო კითხვები, რომლებიც შენს პასუხს ელოდა, დაბრუნდა.', reasonLabel: 'მიზეზი:',
       after: 'თუ გგონია, რომ ეს შეცდომაა, დაგვიკავშირდი და თავიდან განვიხილავთ.', button: 'დაგვიკავშირდი'
+    },
+    priceChanged: {
+      subject: 'შენი ფასი Wisecall-ზე შეიცვალა', heading: 'შენი ფასი შეიცვალა',
+      intro: 'თქვენი ფასი შეიცვალა: {from} → {to}. თუ ეს თქვენ არ გითხოვიათ, მოგვწერეთ.', free: 'უფასოდ',
+      after: 'უკვე დასმული კითხვები ძველ ფასად რჩება. ახალი ფასი მხოლოდ ახალ კითხვებზეა.', button: 'მოგვწერე'
+    },
+    changeApproved: {
+      subject: 'შენი ცვლილება Wisecall-ზე დადასტურდა', heading: 'ცვლილება დადასტურდა',
+      intro: 'შენი მონაცემების ცვლილება შევამოწმეთ და დავადასტურეთ. პროფილზე უკვე ჩანს.', reasonLabel: 'შენიშვნა:', button: 'პროფილის ნახვა'
+    },
+    changeRejected: {
+      subject: 'შენი ცვლილება Wisecall-ზე ვერ დადასტურდა', heading: 'ცვლილება ვერ დადასტურდა',
+      intro: 'შენი მონაცემების ცვლილება შევამოწმეთ, მაგრამ ვერ დავადასტურეთ. პროფილი ისე რჩება, როგორც იყო.', reasonLabel: 'მიზეზი:',
+      after: 'შეგიძლია შეცვალო და თავიდან გამოგზავნო „ჩემი მონაცემებიდან“.', button: 'ჩემი მონაცემები'
     },
     deadlineSoon: {
       subject: 'უპასუხე მალე, თორემ კითხვის თანხა დაბრუნდება', heading: 'ფასიანი კითხვა გელოდება',
@@ -836,6 +864,18 @@ const BUILDERS = {
       ]
     };
   },
+  priceChanged: (s, d) => {
+    const money = (n) => (Number(n) === 0 ? s.priceChanged.free : `${n} ₾`);
+    return { heading: s.priceChanged.heading, blocks: [{ p: fill(s.priceChanged.intro, { from: money(d.from), to: money(d.to) }) }, { p: s.priceChanged.after }, { button: s.priceChanged.button, url: `${config.PUBLIC_URL}/contact.html` }] };
+  },
+  changeApproved: (s, d) => ({
+    heading: s.changeApproved.heading,
+    blocks: [{ p: s.changeApproved.intro }, ...(d.note ? [{ quote: `${s.changeApproved.reasonLabel} ${d.note}` }] : []), { button: s.changeApproved.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  changeRejected: (s, d) => ({
+    heading: s.changeRejected.heading,
+    blocks: [{ p: s.changeRejected.intro }, ...(d.note ? [{ quote: `${s.changeRejected.reasonLabel} ${d.note}` }] : []), { p: s.changeRejected.after }, { button: s.changeRejected.button, url: `${config.PUBLIC_URL}/settings.html?tab=details` }]
+  }),
   mentorSuspended: (s, d) => ({
     heading: s.mentorSuspended.heading,
     blocks: [{ p: s.mentorSuspended.intro }, ...(d.note ? [{ quote: `${s.mentorSuspended.reasonLabel} ${d.note}` }] : []), { p: s.mentorSuspended.after }, { button: s.mentorSuspended.button, url: `${config.PUBLIC_URL}/contact.html` }]

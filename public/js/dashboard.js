@@ -526,6 +526,19 @@
   drawMentorCard();
   document.addEventListener('wisecall:lang-changed', drawMentorCard);
 
+  // The price, on the mentor's first screen: the switch and Save (docs/CLAUDE-CODE-MENTOR-EDIT.md), and the way to "My details".
+  function drawPrice() {
+    const box = document.getElementById('priceBlock');
+    if (!box || !isMentor || !window.WisecallPriceBlock) return;
+    box.hidden = false;
+    WisecallPriceBlock.mount(box, user).then(() => {
+      const form = box.querySelector('[data-price-form]');
+      if (form) form.insertAdjacentHTML('afterend', `<p class="small"><a href="/settings.html?tab=details">${escapeHtml(t('details.open'))}</a></p>`);
+    });
+  }
+  drawPrice();
+  document.addEventListener('wisecall:lang-changed', drawPrice);
+
   askedList.innerHTML = loadingHtml;
   if (isMentor) {
     receivedList.setAttribute('aria-busy', 'true');

@@ -78,16 +78,49 @@
       </div>`;
   }
 
+  // "Changes to review" (docs/CLAUDE-CODE-MENTOR-EDIT.md): an approved mentor's new field or chips (old against new), or new proof. One tap either way.
+  let cats = { fields: [] };
+  const nameIn = (x) => (x ? WisecallI18n.nameIn(x) : '');
+  const fieldName = (id) => nameIn(cats.fields.find((f) => f.id === id)) || id;
+  const chipName = (id) => { for (const f of cats.fields) { const c = f.chips.find((x) => x.id === id); if (c) return nameIn(c); } return id; };
+  const fieldsText = (p) => p ? [p.fieldId, ...(p.extraFields || [])].filter(Boolean).map(fieldName).join(', ') + ((p.directions || []).length ? ' · ' + p.directions.map(chipName).join(', ') : '') : '—';
+  function changeCard(c) {
+    const body = c.kind === 'fields'
+      ? `<p class="small"><strong>${t('admin.ch.old')}</strong> ${esc(fieldsText(c.current))}</p>
+         <p class="small"><strong>${t('admin.ch.new')}</strong> ${esc(fieldsText(c.proposed))}</p>
+         ${c.missing.length ? `<p class="form-error small">${esc(t('admin.ch.licenceMissing'))}</p>` : (c.regulated ? `<p class="small">${esc(t('admin.ch.licensed'))}</p>` : '')}`
+      : `<p class="small"><strong>${t('admin.ch.proof')}</strong> ${c.evidence && c.evidence.url ? `<a href="${esc(c.evidence.url)}" target="_blank" rel="noopener noreferrer">${esc(c.evidence.url)}</a>` : esc(t('admin.ch.diploma'))}</p>`;
+    return `
+      <div class="booking-card q-card" data-change="${esc(c.id)}">
+        <div class="booking-top">
+          <div>
+            <div class="card-name">${esc(c.mentor.name)}</div>
+            <span class="muted small">${esc(c.mentor.email)} · ${fmt(c.createdAt)}</span>
+          </div>
+          <span class="badge badge-pending_payment">${t(c.kind === 'fields' ? 'admin.ch.kindFields' : 'admin.ch.kindProof')}</span>
+        </div>
+        ${body}
+        <div class="mv-decide">
+          <input type="text" class="ch-reason" maxlength="300" placeholder="${esc(t('admin.ch.reason'))}" aria-label="${esc(t('admin.ch.reason'))}">
+          <button class="btn btn-primary btn-sm ch-approve"${c.missing && c.missing.length ? ' disabled' : ''}>${t('admin.ch.approve')}</button>
+          <button class="btn btn-ghost btn-sm ch-reject">${t('admin.ch.reject')}</button>
+        </div>
+      </div>`;
+  }
+
   async function render(container) {
     container.innerHTML = `<p class="muted">${t('admin.loading')}</p>`;
-    let held, reports, questionReports;
+    let held, reports, questionReports, changes;
     try {
-      [held, reports, questionReports] = await Promise.all([WisecallAPI.apiFetch('/admin/answers'), WisecallAPI.apiFetch('/admin/reports'), WisecallAPI.apiFetch('/admin/question-reports')]);
+      [held, reports, questionReports, changes, cats] = await Promise.all([WisecallAPI.apiFetch('/admin/answers'), WisecallAPI.apiFetch('/admin/reports'), WisecallAPI.apiFetch('/admin/question-reports'),
+        WisecallAPI.apiFetch('/admin/changes'), WisecallAPI.apiFetch('/categories').catch(() => ({ fields: [] }))]);
     } catch (e) { container.innerHTML = `<p class="muted">${t('toast.error')}</p>`; return; }
     const reload = () => render(container);
 
     container.innerHTML = `
-      <h2 class="reviews-title">${t('admin.q.answers')} (${held.answers.length})</h2>
+      <h2 class="reviews-title" id="changesTitle">${t('admin.ch.title')} (${changes.changes.length})</h2>
+      ${changes.changes.length ? changes.changes.map(changeCard).join('') : `<p class="muted">${t('admin.ch.none')}</p>`}
+      <h2 class="reviews-title" style="margin-top:32px">${t('admin.q.answers')} (${held.answers.length})</h2>
       <p class="muted small">${t('admin.q.answersHelp').replace('{hours}', held.holdHours)}</p>
       ${held.answers.length ? held.answers.map(answerCard).join('') : `<p class="muted">${t('admin.q.noAnswers')}</p>`}
       <h2 class="reviews-title" style="margin-top:32px">${t('admin.q.reports')} (${reports.reports.length})</h2>
@@ -95,7 +128,16 @@
       <h2 class="reviews-title" style="margin-top:32px">${t('admin.q.questionReports')} (${questionReports.reports.length})</h2>
       ${questionReports.reports.length ? questionReports.reports.map(questionReportCard).join('') : `<p class="muted">${t('admin.q.noReports')}</p>`}`;
 
-    container.querySelectorAll('.q-card').forEach((card) => {
+    container.querySelectorAll('[data-change]').forEach((card) => {
+      const decide = (decision) => async () => {
+        const reason = card.querySelector('.ch-reason').value.trim();
+        try { await WisecallAPI.apiFetch(`/admin/changes/${card.dataset.change}/${decision}`, { method: 'POST', body: reason ? { reason } : {} }); WisecallNav.showToast(t('toast.saved')); reload(); }
+        catch (e) { WisecallNav.showToast(t(e.code === 'licence_missing' ? 'admin.ch.licenceMissing' : 'toast.error')); }
+      };
+      card.querySelector('.ch-approve').addEventListener('click', decide('approve'));
+      card.querySelector('.ch-reject').addEventListener('click', decide('reject'));
+    });
+    container.querySelectorAll('.q-card:not([data-change])').forEach((card) => {
       const id = card.dataset.id || card.dataset.qr;
       const post = async (path, body, okKey) => {
         try { await WisecallAPI.apiFetch(path, { method: 'POST', body }); WisecallNav.showToast(t(okKey || 'toast.saved')); reload(); } catch (e) { fail(e); }

@@ -49,6 +49,7 @@
 
   <div class="tabs" id="settingsTabs" role="tablist" aria-label="Settings">
     <button class="tab" role="tab" id="tab-profile" aria-controls="panel-profile" data-tab="profile" data-i18n="settings.tab.profile">Profile</button>
+    <button class="tab" role="tab" id="tab-details" aria-controls="panel-details" data-tab="details" data-mentor-only hidden data-i18n="settings.tab.details">My details</button>
     <button class="tab" role="tab" id="tab-mentor" aria-controls="panel-mentor" data-tab="mentor" data-approved-only hidden data-i18n="settings.tab.mentor">Mentor</button>
     <button class="tab" role="tab" id="tab-verification" aria-controls="panel-verification" data-tab="verification" data-approved-only hidden data-i18n="settings.tab.verification">Verification</button>
     <button class="tab" role="tab" id="tab-payouts" aria-controls="panel-payouts" data-tab="payouts" data-mentor-only hidden data-i18n="settings.tab.payouts">Payouts</button>
@@ -202,6 +203,10 @@
     <div class="settings-card bal-card" id="balanceSettings" hidden></div>
   </div>
 
+  <div class="tab-panel" role="tabpanel" id="panel-details" aria-labelledby="tab-details" data-panel="details" hidden>
+    <div id="detailsPanel"><div class="skeleton-card"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w80"></span></div></div>
+  </div>
+
   <div class="tab-panel" role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" data-panel="notifications" hidden>
     <div class="settings-card" id="notificationsPanel"><p class="muted" data-i18n="experts.loading">Loading…</p></div>
   </div>
@@ -291,6 +296,8 @@
 <script src="/js/settings-accounts.js"></script>
 <script src="/js/settings-security.js"></script>
 <script src="/js/balance.js"></script>
+<script src="/js/price-block.js"></script>
+<script src="/js/settings-details.js"></script>
 <script src="/js/settings.js"></script>
 </body>
 </html>

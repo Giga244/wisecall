@@ -26,7 +26,8 @@ const STATUS_FOR_CODE = {
   reason_required: 400, invalid_decision: 400,
   not_manual: 409, not_submitted: 409, invalid_state: 409, steps_incomplete: 409, cannot_approve: 409,
   invalid_slot: 400, invalid_link: 400, not_started: 409, already_passed: 409,
-  invalid_custom_niche: 400, invalid_niche: 400, regulated_words: 409, licence_missing: 409
+  invalid_custom_niche: 400, invalid_niche: 400, regulated_words: 409, licence_missing: 409,
+  invalid_price: 400, same_price: 409
 };
 
 // Turns a VerificationError into a JSON reply; anything else is a real error.
@@ -101,6 +102,10 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
       return { wasApproved: auditRows.rows.some((a) => a.action === 'approved'), backInReview: mentor.verificationStatus === 'pending' && Boolean(last) && last.action === 'reinstated' };
     })(),
     registries: rules.registriesFor(mentor.niche),
+    // (docs/CLAUDE-CODE-MENTOR-EDIT.md: the price and who changed it; what changed in a sent application; a change waiting for a decision)
+    price: mentor.price, priceHistory: await require('../mentorEdit').priceHistory(mentor.id),
+    applicationChanges: experience.submitted(mentor) ? mentor.applicationChanges : null,
+    pendingChange: await require('../mentorEdit').openChange(mentor.id).then((c) => (c ? { id: c.id, proposed: c.proposed, current: c.current, createdAt: c.created_at } : null)),
     audit: auditRows.rows.map((a) => ({
       id: a.id, action: a.action, step: a.step, from: a.from_status, to: a.to_status, reason: a.reason, by: a.actor_label, at: a.created_at
     }))
@@ -226,6 +231,27 @@ router.post('/flags/:id/resolve', requireAuth, requireAdmin, asyncHandler(async 
 }));
 
 // ---- Suspension -----------------------------------------------------------------------------------------
+// The price, by an admin: a reason always, logged, and the mentor is emailed (server/mentorEdit.js). Questions already asked keep theirs.
+router.post('/mentors/:id/price', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const b = req.body || {};
+  try {
+    const out = await require('../mentorEdit').adminSetPrice({ mentorId: req.params.id, price: b.price, reason: b.reason, admin: req.adminUser });
+    res.json({ ok: true, price: out.user.price, payoutNeeded: out.payoutNeeded });
+  } catch (e) { fail(res, e); }
+}));
+
+// "Changes to review": an approved mentor's new field or chips, new proof after sending. One tap to approve or reject, a reason optional.
+router.get('/changes', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json({ changes: await require('../mentorEdit').queue() });
+}));
+router.post('/changes/:id/:decision', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!['approve', 'reject'].includes(req.params.decision)) return res.status(404).json({ error: 'not_found' });
+  try {
+    res.json(await require('../mentorEdit').decide({ changeId: req.params.id, approve: req.params.decision === 'approve', reason: (req.body || {}).reason, admin: req.adminUser }));
+  } catch (e) { fail(res, e); }
+}));
+
 router.post('/mentors/:id/suspend', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
   try { res.json(await review.suspend({ mentorId: req.params.id, reason: (req.body || {}).reason, admin: req.adminUser })); } catch (e) { fail(res, e); }

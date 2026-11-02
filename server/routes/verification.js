@@ -103,7 +103,7 @@ const CODE_STATUS = {
   not_required: 409, invalid_state: 409, no_pending_code: 409, not_found: 404, unknown_step: 404,
   too_many_files: 409, file_too_large: 413, unsupported_file_type: 415,
   slot_unavailable: 409, already_booked: 409, id_check_first: 409, already_passed: 409, too_late: 409,
-  application_locked: 409, already_submitted: 409, incomplete: 400, duplicate_evidence: 409, too_much_evidence: 409
+  application_locked: 409, already_submitted: 409, licence_missing: 409, nothing_changed: 409, same_price: 409, incomplete: 400, duplicate_evidence: 409, too_much_evidence: 409
 };
 
 // Turns a VerificationError into a JSON reply (400 unless mapped above); anything else is a real error.
@@ -163,7 +163,8 @@ router.post('/submit', ...submit(async (user, b, req, res) => {
 router.post('/edit', ...submit(async (user) => ({ user: meProfile(await experience.withdraw(user)) })));
 
 // Regulated niches: the licence or registration. Optional for everyone: a work email (badge).
-router.post('/license', ...submit((user, b) => credentials.submitLicense(user, b)));
+// (an approved mentor moving into a licensed field sends that field's licence before the move is approved: server/mentorEdit.js forLicence)
+router.post('/license', ...submit(async (user, b) => credentials.submitLicense(await require('../mentorEdit').forLicence(user), b)));
 router.post('/work-email', ...submit((user, b) => credentials.startWorkEmail(user, b.email)));
 router.post('/work-email/verify', ...submit((user, b) => credentials.verifyWorkEmail(user, b.code)));
 
@@ -176,7 +177,7 @@ router.post('/documents/:step', requireAuth, asyncHandler(async (req, res) => {
   let filename = String(req.get('x-filename') || 'document');
   try { filename = decodeURIComponent(filename); } catch (e) { /* keep it as sent */ }
   try {
-    const out = await credentials.storeDocument(user, req.params.step, { filename, buffer: Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0) });
+    const out = await require('../mentorEdit').storeDocument(user, req.params.step, { filename, buffer: Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0) });
     res.status(201).json(out);
   } catch (e) { fail(res, e); }
 }));

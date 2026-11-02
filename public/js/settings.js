@@ -89,6 +89,7 @@
     }
     if (o.focus) btn.focus();
     if (activeTab === 'notifications') drawNotificationSettings();
+    if (activeTab === 'details') SettingsDetails.init(document.getElementById('detailsPanel'), { user, goto: (n) => selectTab(n, { focus: true }) });
     if (activeTab === 'verification') SettingsVerification.init(document.getElementById('verificationPanel'), { user, goto: (n) => selectTab(n, { focus: true }) });
   }
 
@@ -169,7 +170,7 @@
   // Show the tabs once the progress box above them is drawn (or after 2 s at most), so nothing jumps down.
   const main = document.getElementById('main');
   Promise.race([loadProgress(), new Promise((r) => setTimeout(r, 2000))]).finally(() => main.removeAttribute('data-loading'));
-  document.addEventListener('wisecall:lang-changed', () => { if (activeTab === 'verification') SettingsVerification.reload(); });
+  document.addEventListener('wisecall:lang-changed', () => { if (activeTab === 'verification') SettingsVerification.reload(); if (activeTab === 'details') SettingsDetails.reload(); });
 
   payoutForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
