@@ -1,3 +1,5 @@
+// (first of all: no secret ever reaches the logs, server/secrets.js)
+require('./secrets').guardConsole();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');

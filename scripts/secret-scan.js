@@ -1,6 +1,7 @@
 // npm run check:secrets: a scan of the WHOLE git history (every branch, every commit, every added line) for keys and passwords, with the
-// main gitleaks rules. For a computer without Docker; CI also runs gitleaks itself (.github/workflows/ci.yml). Findings are printed
-// redacted (the first characters only) and the exit code is 1 when there is any. It never changes history: if a real key is found,
+// main gitleaks rules. For a computer without gitleaks; CI also runs gitleaks itself (.github/workflows/ci.yml). --staged: only what is
+// about to be committed (the pre-commit hook, .githooks/pre-commit). Findings name the rule, the commit, the file and the line, never any
+// part of the value, and the exit code is 1 when there is any. It never changes history: if a real key is found,
 // rotate it at its provider (a key in git history stays readable even after it is deleted from the files).
 const { execFileSync } = require('child_process');
 const path = require('path');
@@ -27,23 +28,30 @@ const RULES = [
 const ALLOW = [/example|placeholder|change-me|dev-secret|dev-only|test[-_]|[-_]test\b|fake|dummy|xxxx|your[-_]/i];
 const isTranslationKey = (v) => /^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9]+){1,}$/.test(v);
 
-const log = execFileSync('git', ['-C', REPO, 'log', '--all', '-p', '--no-color', '--unified=0', '--format=@@COMMIT %H'], { maxBuffer: 1 << 30, encoding: 'utf8' });
-let commit = '', file = '', lines = 0;
+const staged = process.argv.includes('--staged');
+const log = staged
+  ? '@@COMMIT staged\n' + execFileSync('git', ['-C', REPO, 'diff', '--cached', '--no-color', '--unified=0'], { maxBuffer: 1 << 30, encoding: 'utf8' })
+  : execFileSync('git', ['-C', REPO, 'log', '--all', '-p', '--no-color', '--unified=0', '--format=@@COMMIT %H'], { maxBuffer: 1 << 30, encoding: 'utf8' });
+let commit = '', file = '', lines = 0, at = 0;
 const findings = [];
 for (const line of log.split('\n')) {
   if (line.startsWith('@@COMMIT ')) { commit = line.slice(9, 21); continue; }
   if (line.startsWith('+++ b/')) { file = line.slice(6); continue; }
+  const hunk = /^@@ -\S+ \+(\d+)/.exec(line);
+  if (hunk) { at = Number(hunk[1]); continue; }
   if (!line.startsWith('+') || line.startsWith('+++')) continue;
   lines += 1;
+  const lineNo = at;
+  at += 1;
   const text = line.slice(1);
   for (const [rule, re] of RULES) {
     const m = re.exec(text);
     if (!m || ALLOW.some((a) => a.test(m[0]))) continue;
     if (rule === 'generic-secret-assignment' && isTranslationKey(m[2])) continue;
-    findings.push(`${rule}  ${commit}  ${file}  ${m[0].slice(0, 6)}…(redacted)`);
+    findings.push(`${rule}  ${commit}  ${file}:${lineNo}`);
   }
 }
-const commits = execFileSync('git', ['-C', REPO, 'rev-list', '--all', '--count'], { encoding: 'utf8' }).trim();
+const commits = staged ? 'the staged' : execFileSync('git', ['-C', REPO, 'rev-list', '--all', '--count'], { encoding: 'utf8' }).trim();
 console.log(`Scanned ${commits} commits (${lines} added lines).`);
 if (!findings.length) { console.log('No keys or passwords found.'); process.exit(0); }
 console.log(`${findings.length} possible secret(s):`);

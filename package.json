@@ -20,7 +20,8 @@
     "lighthouse": "node scripts/lighthouse.js",
     "backup": "node scripts/backup.js",
     "backup:check": "node scripts/backup.js check",
-    "check:secrets": "node scripts/secret-scan.js"
+    "check:secrets": "node scripts/secret-scan.js",
+    "prepare": "node scripts/install-hooks.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

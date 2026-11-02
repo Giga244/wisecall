@@ -1,0 +1,8 @@
+#!/bin/sh
+# Blocks a commit that adds a key, token or password (docs/SECRETS.md). gitleaks when it is installed, otherwise the project's own scan with
+# the main gitleaks rules. Nothing is printed of the value itself. Installed by `npm install` (scripts/install-hooks.js).
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner --exit-code 1 || { echo "Commit blocked: a secret is in the staged changes. Remove it (and rotate it if it was real)."; exit 1; }
+else
+  node scripts/secret-scan.js --staged || { echo "Commit blocked: a secret is in the staged changes. Remove it (and rotate it if it was real)."; exit 1; }
+fi

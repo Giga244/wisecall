@@ -19,7 +19,7 @@ function parseDsn(dsn) {
 
 // Removes what could identify a person from a text.
 function scrub(text) {
-  return String(text || '')
+  return require('./secrets').redact(String(text || ''))
     .replace(/[\w.%+-]+@[\w.-]+\.[a-z]{2,}/gi, '[email]')
     .replace(/\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{2,4}){3,8}\b/g, '[iban]')
     .replace(/\b\d(?:[ -]?\d){8,}\b/g, '[number]')

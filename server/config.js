@@ -309,6 +309,12 @@ if (IS_PROD) {
   if (config.EMAIL_PROVIDER === 'postmark' && !config.POSTMARK_TOKEN) problems.push('POSTMARK_TOKEN is required (verification codes and password resets are sent by email)');
   if (!env.EMAIL_FROM) problems.push('EMAIL_FROM is required (an address on a domain you verified with your email provider)');
   if (config.ADMIN_EMAILS.length === 0) problems.push('ADMIN_EMAILS is required (who can approve mentors)');
+  // A provider chosen, or one key of a pair set, with the rest missing: refused at start rather than failing later (docs/SECRETS.md).
+  if (config.KYC_PROVIDER === 'didit') {
+    for (const k of ['DIDIT_API_KEY', 'DIDIT_WORKFLOW_ID', 'DIDIT_WEBHOOK_SECRET']) if (!config[k]) problems.push(`${k} is required when KYC_PROVIDER=didit`);
+  }
+  if (Boolean(config.TURNSTILE_SITE_KEY) !== Boolean(config.TURNSTILE_SECRET_KEY)) problems.push('TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY must both be set, or both be empty');
+  if (config.PAYOUT_METHOD === 'flitt_iban' && !config.FLITT_PAYOUT_SECRET_KEY) problems.push('FLITT_PAYOUT_SECRET_KEY is required when PAYOUT_METHOD=flitt_iban');
 
   // The fake providers are never allowed in production, launched or not.
   if (config.KYC_PROVIDER === 'mock') problems.push('KYC_PROVIDER=mock is a fake ID check for development and is not allowed in production');
