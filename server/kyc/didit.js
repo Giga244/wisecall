@@ -19,12 +19,23 @@ const STATUS = {
   'not finished': 'not_finished', 'in progress': 'not_finished', 'not started': 'not_finished'
 };
 
+// Didit refuses to open a session when our balance is empty or its billing failed: a 402, or another refusal that names credit, balance or
+// payment. Such an error gets code 'kyc_no_credit' (the mentor is told the check is off for now, the admin is emailed: verification/kyc.js).
+const NO_CREDIT = /credit|balance|insufficient|payment|billing|top.?up|quota/i;
+const isNoCredit = (e) => e.status === 402 || (e.status >= 400 && e.status < 500 && ![401, 404].includes(e.status) && NO_CREDIT.test(`${JSON.stringify(e.body || '')} ${e.message}`));
+
 async function startVerification({ userId, callbackUrl }) {
-  const res = await requestJson(`${config.DIDIT_API_URL}/v3/session/`, {
-    method: 'POST',
-    headers: { 'x-api-key': config.DIDIT_API_KEY },
-    json: { workflow_id: config.DIDIT_WORKFLOW_ID, vendor_data: userId, callback: callbackUrl }
-  });
+  let res;
+  try {
+    res = await requestJson(`${config.DIDIT_API_URL}/v3/session/`, {
+      method: 'POST',
+      headers: { 'x-api-key': config.DIDIT_API_KEY },
+      json: { workflow_id: config.DIDIT_WORKFLOW_ID, vendor_data: userId, callback: callbackUrl }
+    });
+  } catch (e) {
+    if (e instanceof ProviderError && isNoCredit(e)) e.code = 'kyc_no_credit';
+    throw e;
+  }
   if (!res || !res.session_id || !res.url) throw new ProviderError('Didit did not return a session id and link');
   return { sessionId: res.session_id, url: res.url };
 }

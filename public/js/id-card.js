@@ -41,7 +41,7 @@
   }
 
   const ERRORS = {
-    kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified',
+    kyc_unavailable: 'vt.kyc.unavailable', kyc_no_credit: 'idcard.err.noCredit', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified',
     kyc_error: 'idcard.err.partner', qr_failed: 'idcard.err.qr', too_many_requests: 'idcard.err.tooMany', not_a_mentor: 'idcard.err.notMentor'
   };
   // Why the check did not start, always in words.

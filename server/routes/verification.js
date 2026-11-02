@@ -87,6 +87,10 @@ router.post('/kyc/start', requireAuth, asyncHandler(async (req, res) => {
   } catch (e) {
     if (e instanceof steps.VerificationError) return res.status(409).json({ error: e.code });
     if (e.code === 'kyc_unavailable') return res.status(503).json({ error: 'kyc_unavailable' });
+    if (e.code === 'kyc_no_credit') {
+      await kycService.noCredit(user, e).catch((err) => console.error('[kyc] kyc_no_credit could not be recorded:', err.message));
+      return res.status(503).json({ error: 'kyc_no_credit' });
+    }
     console.error('[kyc] could not start a verification:', e.message);
     res.status(502).json({ error: 'kyc_error' });
   }

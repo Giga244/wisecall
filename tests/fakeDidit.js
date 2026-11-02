@@ -18,7 +18,8 @@ const hmac = (data, secret = SECRET) => crypto.createHmac('sha256', secret).upda
 function createFakeDidit() {
   const sessions = new Map(); // id -> { id, vendorData, callback, status, decision }
   const calls = [];
-  const options = { hugeLinks: false, alwaysNew: false, forceSessionId: null }; // (a link too long for a QR code; no reuse of unfinished sessions; a chosen id)
+  const options = { hugeLinks: false, alwaysNew: false, forceSessionId: null, refuse: null }; // (a link too long for a QR code; no reuse of unfinished sessions; a chosen id;
+  // refuse: { status, body } answers every new session with that error, as Didit does when the balance is empty)
   let server, port, counter = 0;
 
   const send = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
@@ -34,6 +35,7 @@ function createFakeDidit() {
 
     if (req.method === 'POST' && req.url === '/v3/session/') {
       if (!body || body.workflow_id !== WORKFLOW || !body.vendor_data) return send(res, 400, { detail: 'bad request' });
+      if (options.refuse) return send(res, options.refuse.status, options.refuse.body);
       // (as Didit documents: an unfinished session for the same person comes back, with a 201, instead of a new one)
       const unfinished = [...sessions.values()].find((s) => s.vendorData === body.vendor_data && ['Not Started', 'In Progress', 'Resubmitted', 'Awaiting User'].includes(s.status));
       if (unfinished && !options.alwaysNew) {

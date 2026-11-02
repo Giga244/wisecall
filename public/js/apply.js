@@ -825,7 +825,7 @@
         window.location.href = r.url; // (the identity partner's own page, which sends them back to step 5)
       } catch (e) {
         const el = root.querySelector('.apply-kyc-error');
-        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified' }, e);
+        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', kyc_no_credit: 'idcard.err.noCredit', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified' }, e);
         start.disabled = false;
       }
     }));

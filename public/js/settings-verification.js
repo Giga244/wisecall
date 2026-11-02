@@ -264,7 +264,7 @@
         window.location.href = r.url; // the identity partner's own page
       } catch (e) {
         const el = start.parentElement.parentElement.querySelector('.vt-error');
-        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified' }, e);
+        if (el) el.textContent = errText({ kyc_unavailable: 'vt.kyc.unavailable', kyc_no_credit: 'idcard.err.noCredit', already_verified: 'vt.kyc.already', age_final: 'ap.age.failed', email_not_verified: 'settings.mentor.emailNotVerified' }, e);
         start.disabled = false;
       }
     });

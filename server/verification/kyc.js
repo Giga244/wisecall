@@ -49,6 +49,21 @@ async function startForMentor(user) {
   return { url };
 }
 
+// The provider refused to start a check because our balance is empty (or its billing failed). Logged as kyc_no_credit, kept in the
+// verification log for each mentor who tried (so they can be written to once it is back), and the admins are emailed, at most every 6 hours.
+const NO_CREDIT_MAIL_HOURS = 6;
+async function noCredit(user, e) {
+  console.error(`[kyc] kyc_no_credit: the provider refused to start an ID check (no credit or a payment problem; status ${e.status}): ${e.message}`);
+  const { rows: recent } = await query(
+    `SELECT 1 FROM verification_audit WHERE action = 'kyc_no_credit' AND created_at > now() - make_interval(hours => $1) LIMIT 1`, [NO_CREDIT_MAIL_HOURS]);
+  await steps.audit(user.id, steps.mentorActor(user), 'kyc_no_credit', { step: 'id_kyc', reason: `provider refused: status ${e.status}` });
+  if (recent.length) return;
+  await require('../notify').notifyAdmins('Didit balance is empty',
+    `<p>Didit refused to start an ID check: the balance is empty or there is a payment problem (status ${e.status}). Mentors cannot confirm their identity until it is topped up.</p>`
+    + `<p>Top up the balance in the Didit console. Mentors are told the check is temporarily unavailable and that we will write to them; the ones who tried are in the verification log (action "kyc_no_credit").</p>`
+    + `<p>This email is sent at most once every ${NO_CREDIT_MAIL_HOURS} hours.</p>`);
+}
+
 // Records a provider result. Safe to call any number of times with the same result.
 // result: { eventId, sessionId, vendorData, status, person }
 async function applyResult(providerName, result) {
@@ -214,4 +229,4 @@ async function verifiedNameFor(userId) {
   return rows[0] ? decrypt(rows[0].verified_name_enc) : null;
 }
 
-module.exports = { startForMentor, applyResult, handleWebhook, refresh, summaryFor, verifiedNameFor, latestSession, updateAge, adminRerun, ageOn };
+module.exports = { startForMentor, noCredit, applyResult, handleWebhook, refresh, summaryFor, verifiedNameFor, latestSession, updateAge, adminRerun, ageOn };

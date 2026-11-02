@@ -893,6 +893,9 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .id-card-qr { margin: 14px 0 0; }
 .id-card-qr svg { width: 200px; height: 200px; background: var(--white); padding: 8px; border-radius: 12px; } /* (white in both themes: a phone camera reads it) */
 .id-card-error:empty { display: none; }
+/* (below the buttons, clear of the main button's 8px offset shadow: .form-error's -6px top margin put the text under it, worst at 360px
+   where the button is full width) */
+.id-card-error, .apply-kyc-error { margin: 18px 0 0; line-height: 1.45; }
 .id-card-why { margin: 14px 0 0; }
 .id-card-why > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 700; }
 .id-card-why ul { margin: 4px 0 0; padding-left: 1.2em; display: grid; gap: 4px; line-height: 1.5; }
