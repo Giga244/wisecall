@@ -118,6 +118,9 @@ describe('production refuses to start with a key missing', () => {
 });
 
 describe('a commit that adds a key is blocked', () => {
+  test('the hook is stored as executable, or git on Linux and macOS would skip it without a word', () => {
+    assert.match(execFileSync('git', ['-C', ROOT, 'ls-files', '-s', '.githooks/pre-commit'], { encoding: 'utf8' }), /^100755 /);
+  });
   test('the pre-commit hook stops it, and lets a normal commit through', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wisecall-hook-'));
     try {
@@ -128,6 +131,8 @@ describe('a commit that adds a key is blocked', () => {
       fs.mkdirSync(path.join(dir, 'scripts'));
       fs.copyFileSync(path.join(ROOT, 'scripts', 'secret-scan.js'), path.join(dir, 'scripts', 'secret-scan.js'));
       fs.cpSync(path.join(ROOT, '.githooks'), path.join(dir, '.githooks'), { recursive: true });
+      // (git runs a hook only when it may be executed: on Linux and macOS that is the file's mode, which git keeps, see the hook's mode below)
+      fs.chmodSync(path.join(dir, '.githooks', 'pre-commit'), 0o755);
       git('config', 'core.hooksPath', '.githooks');
       // (gitleaks is not installed on every computer: the hook then uses the project's own scan; here it is made sure of)
       const env = { ...process.env, PATH: process.env.PATH.split(path.delimiter).filter((p) => !/gitleaks/i.test(p)).join(path.delimiter) };

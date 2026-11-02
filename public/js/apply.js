@@ -955,8 +955,11 @@
         const d = ev.target.closest('[data-direction]');
         if (f) {
           const id = f.dataset.field;
+          // (a field only suggested from the words, never tapped, is replaced by the one tapped: it becomes the main field, not an extra one)
+          const suggestion = !chosen && pick.main && !pick.extras.length;
           chosen = true;
-          if (id === pick.main) { pick.main = pick.extras.shift() || null; }
+          if (suggestion && id !== pick.main) pick.main = id;
+          else if (id === pick.main) { pick.main = pick.extras.shift() || null; }
           else if (pick.extras.includes(id)) pick.extras = pick.extras.filter((x) => x !== id);
           else if (!pick.main) pick.main = id;
           else if (pick.extras.length < catalog.limits.extraFields) pick.extras.push(id);
@@ -965,6 +968,7 @@
           pick.directions = pick.directions.filter((x) => mine.includes(x.split('.')[0]));
         } else if (d) {
           const id = d.dataset.direction;
+          chosen = true; // (a chip tapped in the suggested field: the field is theirs now)
           if (pick.directions.includes(id)) pick.directions = pick.directions.filter((x) => x !== id);
           else if (pick.directions.length < catalog.limits.directions) pick.directions.push(id);
           else { fieldError(form, 'niche', t('ap.err.too_many_directions')); return; }

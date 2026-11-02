@@ -116,6 +116,7 @@ test('a mentor picks a field and chips on step 1, with "სხვა", specializ
   await page.selectOption('#apYears', '4');
   const preview = page.locator('[data-pick-preview]');
   await page.click('[data-direction="it.frontend"]');
+  // (a tap on another field replaces the suggestion; tapping the suggested one keeps it)
   await expect(preview).toContainText('სტუდენტები შენ ასე გიპოვიან');
   await expect(preview).toContainText('Frontend');
   // the "Other" chip opens its text box
@@ -167,4 +168,21 @@ test('admin: the categories tab shows the most-used tags, the questions per chip
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.click('#adminTabs [data-tab="categories"]');
   await expect(page.locator('#adminContent, main').first()).toContainText('იმპლანტოლოგია');
+});
+
+test('a tapped field replaces the one only suggested from the words: it becomes the main field, not an extra one', async ({ page }) => {
+  const email = `suggested-${stamp}@e2e.test`;
+  await S.apiUser('ლაშა იურისტი', email);
+  await S.logIn(page, { email });
+  await page.goto('/ka/apply.html');
+  await page.fill('#apField', 'Tax law for small businesses');
+  await expect(page.locator('[data-field="biz"]')).toHaveAttribute('aria-pressed', 'true'); // (the suggestion has arrived)
+  await page.click('[data-field="law"]');
+  await expect(page.locator('[data-field="law"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-field="law"] small')).toHaveText('მთავარი');
+  await expect(page.locator('[data-field="biz"]')).toHaveAttribute('aria-pressed', 'false');
+  // a field the mentor tapped themselves stays: the next tap adds an extra one
+  await page.click('[data-field="biz"]');
+  await expect(page.locator('[data-field="biz"] small')).toHaveText('დამატებითი');
+  await expect(page.locator('[data-field="law"] small')).toHaveText('მთავარი');
 });
