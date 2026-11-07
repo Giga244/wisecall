@@ -306,6 +306,8 @@ router.get('/earnings', requireAuth, asyncHandler(async (req, res) => {
   res.json({
     currency: config.CURRENCY,
     holdDays: config.PAYOUT_HOLD_DAYS,
+    // (the share and the withdrawal minimum, said in words on the tab: docs/FLOW-REVIEW.md 6)
+    sharePercent: 100 - config.PLATFORM_FEE_PERCENT, payoutMin: config.PAYOUT_MIN_GEL,
     balance,
     items: items.rows.map((r) => ({
       bookingId: r.booking_id, amount: r.amount, status: r.status, payableAt: r.payable_at, paidAt: r.paid_at, reference: r.reference,

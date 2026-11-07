@@ -188,7 +188,7 @@ describe('earnings ledger and manual payouts', () => {
     const mail = outbox().find((m) => m.to === 'nino@example.com' && /BOG-TR-0001/.test(m.html));
     assert.ok(mail, 'payout email was sent');
     assert.match(mail.subject, /ანაზღაურება/, 'Georgian, the mentor’s language');
-    assert.match(mail.html, /20\.00 GEL/);
+    assert.match(mail.html, /20\.00 ₾/);
     assert.match(mail.html, /4917/);
     assert.doesNotMatch(mail.html, /GE29NB/, 'the full IBAN is never emailed');
 

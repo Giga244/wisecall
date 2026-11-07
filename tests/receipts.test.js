@@ -40,7 +40,7 @@ describe('receipts', () => {
     assert.equal(r[0].amount, 2500);
     const mail = await resend.waitFor('nino@example.com', 'ქვითარი');
     assert.match(mail.body.text, /R-\d{6}/);
-    assert.match(mail.body.text, /25\.00 GEL/);
+    assert.match(mail.body.text, /25\.00 ₾/);
     const mine = await asker.api('/bookings/mine');
     assert.equal(mine.asked[0].receipts[0].kind, 'payment');
   });

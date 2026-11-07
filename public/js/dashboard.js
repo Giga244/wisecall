@@ -109,7 +109,9 @@
       // (an answer to somebody under 18 is checked whoever the mentor is)
       text = t(b.__role === 'mentor' ? (b.askerMinor ? 'dash.answer.held.mentorMinor' : 'dash.answer.held.mentor') : (b.askerMinor ? 'dash.answer.held.minor' : 'dash.answer.held.buyer'));
     } else if (b.status === 'pending_payment') text = t('dash.pending.note');
-    return text ? `<p class="booking-note">${escapeHtml(text)}</p>` : '';
+    const next = b.status === 'refunded' && b.__role !== 'mentor'
+      ? ` <a class="plain-link" href="/index.html#experts">${escapeHtml(t('dash.refund.next'))}</a>` : '';
+    return text ? `<p class="booking-note">${escapeHtml(text)}${next}</p>` : '';
   }
   const statusLabel = (b) => (isFree(b) && ['paid', 'refunded'].includes(b.status) ? t('dash.status.free.' + b.status) : (t('dash.status.' + b.status) || b.status));
   const showsTimeline = (b) => ['paid', 'answered'].includes(b.status);
@@ -237,7 +239,7 @@
 
   // The asker's receipts (payment, refunds) as PDFs, in the page's language.
   const receiptLinks = (b) => ((b.receipts || []).length
-    ? `<p class="booking-receipts small">${b.receipts.map((r) => `<a class="plain-link" href="/api/receipts/${encodeURIComponent(r.id)}.pdf?lang=${WisecallI18n.getLang()}">${t('dash.receipt.' + r.kind)} ${escapeHtml(r.number)}</a>`).join(' · ')}</p>` : '');
+    ? `<p class="booking-receipts small">${b.receipts.map((r) => `<a class="plain-link" href="/api/receipts/${encodeURIComponent(r.id)}.pdf?lang=${WisecallI18n.getLang()}">${t('dash.receipt.' + r.kind)} ${escapeHtml(r.number)}</a>`).join('<br>')}</p>` : '');
 
   // The booking's conversation in the Inbox (the follow-up question and its reply, what happened), once it is paid.
   const conversationLink = (b) => (['paid', 'answered', 'refund_pending', 'refunded'].includes(b.status)
@@ -427,7 +429,7 @@
       // (the Balance card: available, on hold, requested, paid out, owed back, "Withdraw" and the withdrawals: public/js/balance.js)
       earningsBox.innerHTML = `
         <div class="settings-card bal-card" id="balanceCard">${loadingText()}<div aria-hidden="true"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-btn"></span></div></div>
-        <p class="muted small">${t('dash.earnings.note').replace('{days}', e.holdDays)}</p>
+        <p class="muted small">${escapeHtml(t('dash.earnings.note').replace('{days}', e.holdDays).replace('{share}', e.sharePercent).replace('{example}', WisecallAPI.formatPrice(15 * e.sharePercent / 100)).replace('{min}', WisecallAPI.formatPrice(e.payoutMin)))}</p>
         ${e.items.length ? `
           <h2 class="earn-h">${t('dash.earnings.items')}</h2>
           <ul class="earn-list">${e.items.map((i) => `<li><span>${escapeHtml(i.question)}</span><span class="muted small">${escapeHtml(itemNote(i))}</span><strong>${money(i.amount)}</strong></li>`).join('')}</ul>`

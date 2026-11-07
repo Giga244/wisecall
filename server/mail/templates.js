@@ -54,7 +54,7 @@ const S = {
     refundSeeker: {
       subject: 'Your Wisecall payment was refunded', heading: 'Your payment was refunded',
       intro: 'We refunded {amount} for your question to {mentor} because {reason}.',
-      after: 'It can take 5–10 business days to appear on your statement.',
+      after: 'It can take 5–10 business days to appear on your statement.', button: 'Ask another mentor',
       reasons: { no_answer_deadline: 'they did not answer within {days} days', refunded_at_bank: 'the payment was refunded by our payment provider', mentor_suspended: "the mentor's profile was suspended", answer_rejected: 'the answer did not meet our standards', declined_not_qualified: 'the mentor declined it: it is outside what they can answer well', declined_against_rules: "the mentor declined it: the question is against Wisecall's rules", dispute: 'our team agreed with your report about the answer', other: 'our team refunded it' }
     },
     newFreeQuestion: {
@@ -153,7 +153,7 @@ const S = {
       whole: 'all', section: 'one part ("{section}")', button: 'Open Settings'
     },
     receipt: {
-      subject: 'Your Wisecall receipt {number}', heading: 'Your receipt',
+      subject: 'Your Wisecall receipt {number}', subjectRefund: 'Your Wisecall refund receipt {number}', heading: 'Your receipt',
       payment: 'Thank you for your payment for a question to {mentor}.', refund: 'We returned money for your question to {mentor}.',
       paymentLive: 'Thank you for your ticket to the live session "{title}" with {mentor}.', refundLive: 'We returned the money for your ticket to "{title}".',
       lines: 'Receipt {number} · {date} · {amount}', button: 'Download the receipt (PDF)', after: 'You need to be signed in to open it.'
@@ -394,8 +394,8 @@ const S = {
     },
     refundSeeker: {
       subject: 'შენი Wisecall-ის გადახდა დაგიბრუნდა', heading: 'თანხა დაგიბრუნდა',
-      intro: '{mentor}-სთვის დასმულ კითხვაზე {amount} დაგიბრუნეთ, რადგან {reason}.',
-      after: 'თანხა ბანკის ამონაწერში 5–10 სამუშაო დღეში გამოჩნდება.',
+      intro: 'შენს კითხვაზე (მენტორი: {mentor}) {amount} დაგიბრუნეთ, რადგან {reason}.',
+      after: 'თანხა ბანკის ამონაწერში 5–10 სამუშაო დღეში გამოჩნდება.', button: 'სხვა მენტორის პოვნა',
       reasons: { no_answer_deadline: 'მან არ უპასუხა {days} დღის განმავლობაში', refunded_at_bank: 'გადახდა დაბრუნდა გადახდის სისტემიდან', mentor_suspended: 'მენტორის პროფილი შეჩერდა', answer_rejected: 'პასუხი ჩვენს სტანდარტებს არ შეესაბამებოდა', declined_not_qualified: 'მენტორმა კითხვა უარყო: ეს სცდება იმას, რაზეც კარგად უპასუხებს', declined_against_rules: 'მენტორმა კითხვა უარყო: კითხვა Wisecall-ის წესებს ეწინააღმდეგება', dispute: 'ჩვენმა გუნდმა გაიზიარა შენი საჩივარი პასუხზე', other: 'ჩვენმა გუნდმა დააბრუნა თანხა' }
     },
     newFreeQuestion: {
@@ -494,8 +494,8 @@ const S = {
       whole: 'მთელი გვერდი', section: 'ერთი ნაწილი („{section}“)', button: 'პარამეტრების გახსნა'
     },
     receipt: {
-      subject: 'შენი Wisecall-ის ქვითარი {number}', heading: 'შენი ქვითარი',
-      payment: 'მადლობა გადახდისთვის: კითხვა {mentor}-სთვის.', refund: 'შენი კითხვისთვის ({mentor}) თანხა დაგიბრუნეთ.',
+      subject: 'შენი Wisecall-ის ქვითარი {number}', subjectRefund: 'თანხის დაბრუნების ქვითარი {number} — Wisecall', heading: 'შენი ქვითარი',
+      payment: 'მადლობა გადახდისთვის: კითხვა მენტორთან ({mentor}).', refund: 'შენი კითხვისთვის ({mentor}) თანხა დაგიბრუნეთ.',
       paymentLive: 'მადლობა ბილეთისთვის: ცოცხალი სესია „{title}“ ({mentor}).', refundLive: 'ბილეთის თანხა („{title}“) დაგიბრუნეთ.',
       lines: 'ქვითარი {number} · {date} · {amount}', button: 'ქვითრის ჩამოტვირთვა (PDF)', after: 'გასახსნელად სისტემაში უნდა იყო შესული.'
     },
@@ -734,7 +734,8 @@ const BUILDERS = {
   }),
   refundSeeker: (s, d) => ({
     heading: s.refundSeeker.heading,
-    blocks: [{ p: fill(s.refundSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.refundSeeker.after }]
+    blocks: [{ p: fill(s.refundSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.refundSeeker.after },
+      { button: s.refundSeeker.button, url: `${config.PUBLIC_URL}/index.html#experts` }]
   }),
   newFreeQuestion: (s, d) => ({
     heading: s.newFreeQuestion.heading,
@@ -743,7 +744,8 @@ const BUILDERS = {
   // A free question that ended without an answer (or was taken back): nothing to refund. The reasons are the refund emails' own.
   freeClosedSeeker: (s, d) => ({
     heading: s.freeClosedSeeker.heading,
-    blocks: [{ p: fill(s.freeClosedSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.freeClosedSeeker.after }]
+    blocks: [{ p: fill(s.freeClosedSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.freeClosedSeeker.after },
+      { button: s.refundSeeker.button, url: `${config.PUBLIC_URL}/index.html#experts` }]
   }),
   freeClosedMentor: (s, d) => ({
     heading: s.freeClosedMentor.heading,
@@ -809,7 +811,7 @@ const BUILDERS = {
       { button: s.profileHidden.button, url: `${config.PUBLIC_URL}/settings.html?tab=profile` }]
   }),
   receipt: (s, d) => ({
-    heading: s.receipt.heading,
+    heading: s.receipt.heading, subject: d.kind === 'refund' ? s.receipt.subjectRefund : undefined,
     blocks: [{ p: fill(d.title ? (d.kind === 'refund' ? s.receipt.refundLive : s.receipt.paymentLive) : (d.kind === 'refund' ? s.receipt.refund : s.receipt.payment), d), raw: true }, { p: fill(s.receipt.lines, d), raw: true },
       { button: s.receipt.button, url: d.url }, { small: s.receipt.after }]
   }),
@@ -1058,8 +1060,10 @@ function render(name, lang, data = {}) {
   const build = BUILDERS[name];
   if (!build) throw new Error(`Unknown email template: ${name}`);
   const d = { days: config.ANSWER_DEADLINE_DAYS, ...data };
-  const { heading, blocks, plain } = build(s, d, l);
-  const subject = fill(s[name].subject, d, false).replace(/[<>]/g, '');
+  // (Georgian emails show lari as ₾, like the site: docs/FLOW-REVIEW.md 9. The PDF receipts and the bank files keep "GEL".)
+  if (l === 'ka') for (const [k, v] of Object.entries(d)) if (typeof v === 'string') d[k] = v.replace(/(\d[\d.,]*) GEL\b/g, '$1 ₾');
+  const { heading, blocks, plain, subject: own } = build(s, d, l);
+  const subject = fill(own || s[name].subject, d, false).replace(/[<>]/g, '');
   return { subject, ...layout(l, heading, blocks, { plain: Boolean(plain) }) };
 }
 

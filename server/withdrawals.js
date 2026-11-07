@@ -55,7 +55,8 @@ async function holdsOf(mentorId) {
   let disputed = 0;
   for (const r of rows) {
     if (r.disputed) { disputed += r.amount; continue; }
-    const day = new Date(r.until).toISOString().slice(0, 10);
+    // (the day in Tbilisi, as the per-question list shows it: by the UTC day, money free just after midnight showed a day early)
+    const day = new Date(r.until).toLocaleDateString('en-CA', { timeZone: 'Asia/Tbilisi' });
     byDay.set(day, (byDay.get(day) || 0) + r.amount);
   }
   return { until: [...byDay].map(([date, amount]) => ({ date, amount })), disputed };

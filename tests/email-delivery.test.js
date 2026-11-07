@@ -112,7 +112,7 @@ describe('every email goes out through the Resend API', () => {
     const refund = await admin.api(`/admin/bookings/${paid.id}/refund`, { method: 'POST' });
     assert.equal(refund.status, 200);
     const toBuyer = await waitFor(() => mailTo('seeker@example.com', 'დაგიბრუნდა')[0]);
-    assert.match(toBuyer.body.html, /25\.00 GEL/);
+    assert.match(toBuyer.body.html, /25\.00 ₾/, 'a Georgian email says ₾, like the site');
     const toMentor = await waitFor(() => mailTo('approved@example.com', 'refunded')[0]);
     assert.match(toMentor.body.html, /will not receive a payout|not receive a payout/i);
   });
