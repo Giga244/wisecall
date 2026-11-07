@@ -1,7 +1,7 @@
 // "Get notified when mentors in your field join". Stores an email and a field; when a mentor in that
 // field (or any mentor, for 'any') is listed, each person waiting gets one email and is marked notified.
 const crypto = require('crypto');
-const { query } = require('./db');
+const { query, tx } = require('./db');
 const config = require('./config');
 const rules = require('./verification/rules');
 const { sendTemplate } = require('./mail');
@@ -35,11 +35,31 @@ async function add({ email, niche, language, wantedQuestion, source, over16 }) {
   return { position: n.n };
 }
 
-// The link in every email removes that person from the list.
+// The link in every email removes that person from the list: the address, for every field it waited for (another field would mean another email).
 async function unsubscribe(token) {
   if (!/^[0-9a-f]{48}$/.test(String(token || ''))) throw new WaitlistError('not_found');
-  const { rowCount } = await query('DELETE FROM waitlist WHERE token = $1', [token]);
+  const { rowCount } = await query('DELETE FROM waitlist WHERE lower(email) = (SELECT lower(email) FROM waitlist WHERE token = $1)', [token]);
   if (!rowCount) throw new WaitlistError('not_found');
+}
+
+// An admin deletes an address (Admin > Waitlist, "წაშლა"): every entry of that address (one per field), and its open "find me a mentor"
+// requests are closed, so nothing more is sent to it. The log keeps who, when and how much, never the address. -> { entries, requests }
+async function removeForAdmin(id, admin) {
+  return tx(async (c) => {
+    const { rows: [entry] } = await c.query('SELECT email FROM waitlist WHERE id = $1', [id]);
+    if (!entry) throw new WaitlistError('not_found');
+    const { rows: gone } = await c.query('DELETE FROM waitlist WHERE lower(email) = lower($1) RETURNING niche', [entry.email]);
+    const { rowCount: requests } = await c.query(
+      `UPDATE mentor_requests SET status = 'removed' WHERE lower(email) = lower($1) AND status IN ('unconfirmed', 'active')`, [entry.email]);
+    await c.query('INSERT INTO waitlist_deletions (by_id, by_label, entries, fields, requests) VALUES ($1, $2, $3, $4, $5)',
+      [admin.id, admin.email, gone.length, gone.map((r) => r.niche), requests]);
+    return { entries: gone.length, requests };
+  });
+}
+
+async function deletionsForAdmin() {
+  const { rows } = await query('SELECT by_label, entries, fields, requests, created_at FROM waitlist_deletions ORDER BY created_at DESC LIMIT 200');
+  return rows.map((r) => ({ by: r.by_label, entries: r.entries, fields: r.fields, requests: r.requests, at: r.created_at }));
 }
 
 // Anonymous demand for the admins: the typed questions and their fields, newest first, never with an email.
@@ -64,7 +84,9 @@ async function sendNotices(rows, mentorFieldFor) {
     try {
       await sendTemplate('mentorJoined', {
         to: r.email, lang: r.language,
-        data: { niche: mentorField === r.niche ? r.niche : 'any', mentorField, unsubscribeUrl: `${config.PUBLIC_URL}/waitlist-unsubscribe.html?token=${r.token}` }
+        data: { niche: mentorField === r.niche ? r.niche : 'any', mentorField, unsubscribeUrl: `${config.PUBLIC_URL}/waitlist-unsubscribe.html?token=${r.token}` },
+        // (the mail app's own "Unsubscribe" button, one click: RFC 8058, answered in server/index.js)
+        headers: { 'List-Unsubscribe': `<${config.PUBLIC_URL}/api/waitlist-one-click?token=${r.token}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
       });
     } catch (e) {
       console.error('[email] waitlist notice failed:', e.message);
@@ -140,4 +162,4 @@ async function afterMaybeListed(userId) {
   return 0;
 }
 
-module.exports = { WaitlistError, add, unsubscribe, listForAdmin, demandForAdmin, popularFields, mentorJoined, launchDay, afterMaybeListed };
+module.exports = { WaitlistError, add, unsubscribe, listForAdmin, demandForAdmin, removeForAdmin, deletionsForAdmin, popularFields, mentorJoined, launchDay, afterMaybeListed };

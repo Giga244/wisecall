@@ -964,3 +964,14 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .mv-price { margin: 14px 0; padding-top: 12px; border-top: 1px solid var(--border); }
 .mv-price .mv-price-amount { max-width: 120px; }
 .mv-updated .badge { margin-right: 6px; }
+/* Admin > Waitlist: each address with its "წაშლა" button (public/js/admin-waitlist.js) */
+.wl-list li { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) auto auto; }
+.wl-list li > span:first-child { overflow-wrap: anywhere; }
+.wl-deletions { margin-top: 18px; }
+@media (max-width: 639px) {
+  .wl-list li { grid-template-columns: minmax(0, 1fr) auto; }
+  .wl-list li > :nth-child(1) { grid-area: 1 / 1; }
+  .wl-list li > :nth-child(3) { grid-area: 1 / 2; justify-self: end; }
+  .wl-list li > :nth-child(2) { grid-area: 2 / 1; }
+  .wl-list li > :nth-child(4) { grid-area: 2 / 2; justify-self: end; }
+}

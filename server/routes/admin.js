@@ -470,7 +470,17 @@ router.get('/waitlist', requireAuth, requireAdmin, asyncHandler(async (req, res)
   const rows = await waitlist.listForAdmin();
   const byNiche = {};
   rows.forEach((r) => { byNiche[r.niche] = (byNiche[r.niche] || 0) + 1; });
-  res.json({ signups: rows, total: rows.length, byNiche, demand: await waitlist.demandForAdmin() });
+  res.json({ signups: rows, total: rows.length, byNiche, demand: await waitlist.demandForAdmin(), deletions: await waitlist.deletionsForAdmin() });
+}));
+// "წაშლა": the address leaves the list (all its fields) and its open "find me a mentor" requests; logged without the address.
+router.delete('/waitlist/:id', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!/^[0-9a-f-]{36}$/i.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  try {
+    res.json({ ok: true, ...(await waitlist.removeForAdmin(req.params.id, req.adminUser)) });
+  } catch (e) {
+    if (e instanceof waitlist.WaitlistError) return res.status(404).json({ error: e.code });
+    throw e;
+  }
 }));
 router.get('/waitlist.csv', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   const rows = await waitlist.listForAdmin();

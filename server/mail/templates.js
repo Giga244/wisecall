@@ -80,7 +80,7 @@ const S = {
     mentorJoined: {
       subject: 'A new mentor just joined Wisecall', heading: 'A new mentor just joined',
       intro: 'You asked us to tell you when mentors in {field} join. A mentor has just been listed on Wisecall.',
-      after: 'This is the only email you will get about it.', button: 'Browse experts', unsubscribe: 'Changed your mind? Remove your address:', anyField: 'the fields you follow'
+      after: 'This is the only email you will get about it.', button: 'Browse experts', unsubscribe: 'Leave the waiting list (your address is deleted):', anyField: 'the fields you follow'
     },
     mentorSuspended: {
       subject: 'Your Wisecall mentor profile was suspended', heading: 'Your profile is suspended',
@@ -421,7 +421,7 @@ const S = {
     mentorJoined: {
       subject: 'Wisecall-ზე ახალი მენტორი გამოჩნდა', heading: 'ახალი მენტორი გამოჩნდა',
       intro: 'გვთხოვე, გაცნობებინა, როცა {field} სფეროში მენტორები შემოვლენ. Wisecall-ზე ახლახან გამოჩნდა მენტორი.',
-      after: 'ამ თემაზე მხოლოდ ეს ერთი წერილი მოგივა.', button: 'ექსპერტების ნახვა', unsubscribe: 'გადაიფიქრე? წაშალე შენი მისამართი:', anyField: 'შენთვის საინტერესო სფეროები'
+      after: 'ამ თემაზე მხოლოდ ეს ერთი წერილი მოგივა.', button: 'ექსპერტების ნახვა', unsubscribe: 'მოლოდინის სიიდან გასვლა (შენი მისამართი წაიშლება):', anyField: 'შენთვის საინტერესო სფეროები'
     },
     mentorSuspended: {
       subject: 'შენი Wisecall-ის მენტორის პროფილი შეჩერდა', heading: 'შენი პროფილი შეჩერებულია',

@@ -105,6 +105,11 @@ describe('telling the people waiting', () => {
     assert.equal(resend.sent.slice(before).filter((m) => m.body.subject.includes('mentor') && m.body.to === 'weird@example.com').length, 1, 'the "any" subscriber too');
     token = (ann.body.html.match(/waitlist-unsubscribe\.html\?token=([0-9a-f]{48})/) || [])[1];
     assert.ok(token, 'the email carries an unsubscribe link');
+    assert.match(ann.body.text, /Leave the waiting list/);
+    assert.match(gio.body.text, /მოლოდინის სიიდან გასვლა/);
+    // (and the mail app's own one-click "Unsubscribe")
+    assert.equal(ann.body.headers['List-Unsubscribe'], `<${base}/api/waitlist-one-click?token=${token}>`);
+    assert.equal(ann.body.headers['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');
   });
 
   test('a second mentor does not email the same people again', async () => {
@@ -127,7 +132,58 @@ describe('telling the people waiting', () => {
     assert.equal((await anon.api('/waitlist/unsubscribe', { method: 'POST', body: { token: 'nonsense' } })).status, 404);
     assert.equal((await anon.api('/waitlist/unsubscribe', { method: 'POST', body: { token: '0'.repeat(48) } })).status, 404);
     assert.equal((await anon.api('/waitlist/unsubscribe', { method: 'POST', body: { token } })).status, 200);
-    assert.equal((await rowsFor('ann@example.com')).filter((r) => r.niche === 'design').length, 0);
+    assert.equal((await rowsFor('ann@example.com')).length, 0, 'the address leaves the list: the design entry and the medicine one');
     assert.equal((await anon.api('/waitlist/unsubscribe', { method: 'POST', body: { token } })).status, 404, 'a link works once');
+  });
+
+  test('the one-click "Unsubscribe" of the mail app: a plain form post from the mail provider, no CSRF header, the token decides', async () => {
+    await join({ email: 'oneclick@example.com', niche: 'design' });
+    await join({ email: 'oneclick@example.com', niche: 'tech' });
+    const [row] = await rowsFor('oneclick@example.com');
+    const post = (token) => fetch(`${base}/api/waitlist-one-click?token=${token}`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click' });
+    assert.equal((await post('0'.repeat(48))).status, 200, 'a wrong token says nothing either');
+    assert.equal((await rowsFor('oneclick@example.com')).length, 2);
+    assert.equal((await post(row.token)).status, 200);
+    assert.equal((await rowsFor('oneclick@example.com')).length, 0);
+  });
+});
+
+describe('an admin deletes an address ("წაშლა")', () => {
+  test('only an admin; every field of the address goes, its open "find me a mentor" requests close, others stay; logged without the address', async () => {
+    // (straight into the table: the sign-up form allows 12 an hour, used up above)
+    await pool.query(`INSERT INTO waitlist (email, niche, token) VALUES ('Sesili.Delete@example.com', 'design', md5(random()::text) || md5(random()::text)),
+      ('sesili.delete@example.com', 'medicine', md5(random()::text) || md5(random()::text)), ('stays@example.com', 'design', md5(random()::text) || md5(random()::text))`);
+    await pool.query(`INSERT INTO mentor_requests (email, field_text, field_key, niche, need, status, token, expires_at) VALUES
+      ('sesili.delete@example.com', 'Dentistry', 'dentistry', 'medicine', 'I need advice about studying dentistry abroad.', 'active', 'tok-del-1', now() + interval '30 days'),
+      ('stays@example.com', 'Dentistry', 'dentistry', 'medicine', 'I need advice about studying dentistry abroad.', 'active', 'tok-del-2', now() + interval '30 days')`);
+    const [entry] = await rowsFor('sesili.delete@example.com');
+
+    const seeker = await signupByEmail(resend, base, 'Not Admin', 'not-admin-wl@example.com');
+    assert.equal((await seeker.api(`/admin/waitlist/${entry.id}`, { method: 'DELETE' })).status, 403);
+    assert.equal((await anon.api(`/admin/waitlist/${entry.id}`, { method: 'DELETE' })).status, 401);
+    assert.equal((await rowsFor('sesili.delete@example.com')).length, 2);
+
+    const r = await admin.api(`/admin/waitlist/${entry.id}`, { method: 'DELETE' });
+    assert.equal(r.status, 200, r.text);
+    assert.equal(r.entries, 2);
+    assert.equal(r.requests, 1);
+    assert.equal((await rowsFor('sesili.delete@example.com')).length, 0);
+    assert.equal((await rowsFor('stays@example.com')).length, 1);
+    const reqs = (await pool.query(`SELECT email, status FROM mentor_requests WHERE token IN ('tok-del-1', 'tok-del-2') ORDER BY token`)).rows;
+    assert.deepEqual(reqs.map((x) => x.status), ['removed', 'active']);
+
+    const log = (await pool.query('SELECT * FROM waitlist_deletions')).rows;
+    assert.equal(log.length, 1);
+    assert.equal(log[0].by_label, 'qa-admin@example.com');
+    assert.equal(log[0].entries, 2);
+    assert.deepEqual([...log[0].fields].sort(), ['design', 'medicine']);
+    assert.ok(!JSON.stringify(log).toLowerCase().includes('sesili'), 'the address is not in the log');
+    const list = await admin.api('/admin/waitlist');
+    assert.equal(list.deletions.length, 1);
+    assert.ok(!list.signups.some((x) => /sesili/i.test(x.email)));
+    assert.ok(!JSON.stringify(list.deletions).toLowerCase().includes('sesili'));
+
+    assert.equal((await admin.api(`/admin/waitlist/${entry.id}`, { method: 'DELETE' })).status, 404, 'already gone');
+    assert.equal((await admin.api('/admin/waitlist/not-an-id', { method: 'DELETE' })).status, 404);
   });
 });

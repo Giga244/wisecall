@@ -64,6 +64,12 @@ app.use('/api/kyc', express.raw({ type: '*/*', limit: '200kb' }), require('./rou
 // The email provider's delivery results (Resend, signed with Svix): raw body, exempt from the CSRF header, rate limited.
 app.use('/api/email/webhook', rateLimit({ windowMs: 60 * 1000, max: 300 }), express.raw({ type: '*/*', limit: '64kb' }), require('./routes/emailWebhook'));
 
+// The mail app's one-click "Unsubscribe" for the waiting list (List-Unsubscribe-Post, RFC 8058): the mail provider posts here from its own
+// servers, so it is exempt from the CSRF header; the token in the address is the only thing that counts. Always 200 (nothing to learn from it).
+app.post('/api/waitlist-one-click', rateLimit({ windowMs: 60 * 1000, max: 60 }), express.urlencoded({ extended: false, limit: '2kb' }), (req, res) => {
+  require('./waitlist').unsubscribe(req.query.token).catch(() => {}).then(() => res.json({ ok: true }));
+});
+
 // Development only: the fake ID-check page. Never exists in production.
 const useMockKyc = config.KYC_PROVIDER === 'mock' && !config.IS_PROD;
 if (!useMockKyc) {
