@@ -986,3 +986,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 @media (max-width: 639px) {
   #panel-details .settings-card form > button[type="submit"], .price-block form > button[type="submit"] { position: static; }
 }
+/* "Question sent": what happens next (docs/FLOW-REVIEW.md 4); the 16-17 note on the ask form (3) */
+.booking-result-title { font-weight: 800; font-size: 1.15rem; margin: 6px 0 10px; }
+.sent-next { text-align: left; margin: 0 auto 16px; padding-left: 1.2em; max-width: 440px; display: grid; gap: 6px; line-height: 1.5; }
+.ask-minor-check { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--sun-tint); font-weight: 600; line-height: 1.5; }

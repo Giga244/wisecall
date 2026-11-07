@@ -92,7 +92,8 @@ test('the whole journey of a 16-year-old', async ({ page, browser }) => {
   await page.click('#askOpen');
   await page.fill('#question', `${QUESTION} დამირეკე 555 12 34 56`);
   await page.click('#askBtn');
-  await expect(page.locator('#askError')).toHaveText('უსაფრთხოების მიზნით, კონტაქტის გაზიარება Wisecall-ზე არ შეიძლება. ყველაფერი წერილობით, აქ რჩება.');
+  await expect(page.locator('#askError')).toContainText('უსაფრთხოების მიზნით, კონტაქტის გაზიარება Wisecall-ზე არ შეიძლება.');
+  await expect(page.locator('#askError')).toContainText('ნაპოვნია: ტელეფონის ნომერი'); // (what was found, so it is clear what to take out)
   await expect(page.locator('#question')).toHaveValue(/555 12 34 56/);
   await page.fill('#question', QUESTION);
   expect(await fits(page)).toBe(true);
@@ -112,9 +113,9 @@ test('the whole journey of a 16-year-old', async ({ page, browser }) => {
   await expect(card).not.toContainText('კაპანაძე');
   await card.locator('.answer-form textarea').fill(`${ANSWER} მეტი აქ: https://www.instagram.com/tamar`);
   await card.locator('.answer-form button[type="submit"]').click();
-  await card.locator('.answer-send').click();
-  await expect(card.locator('.answer-send-error')).toContainText('კონტაქტის გაზიარება');
-  await card.locator('.answer-back').click();
+  await expect(card.locator('.answer-form [id^="answer-error-"]')).toContainText('კონტაქტის გაზიარება');
+  await expect(card.locator('.answer-form [id^="answer-error-"]')).toContainText('სოციალური ქსელის ბმული');
+  await expect(card.locator('.answer-send')).toBeHidden(); // (still writing: the review step does not open)
   await card.locator('.answer-form textarea').fill(ANSWER);
   await card.locator('.answer-form button[type="submit"]').click();
   await card.locator('.answer-send').click();

@@ -140,6 +140,7 @@ app.use('/api/me/photo', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use(/^\/api\/ratings\/[^/]+\/(report|reply)$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
 app.use(/^\/api\/bookings\/[^/]+\/ratings$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 60 }));
 app.post('/api/bookings', rateLimit({ windowMs: 60 * 60 * 1000, max: 30 }));
+app.use(/^\/api\/bookings\/[^/]+\/answer\/check$/, rateLimit({ windowMs: 60 * 60 * 1000, max: 120 }));
 app.use('/api/username', rateLimit({ windowMs: 60 * 1000, max: 60 }));
 app.use('/api/categories/search', rateLimit({ windowMs: 60 * 1000, max: 120 })); // (asked while a student types)
 app.use('/api/niches/suggest', rateLimit({ windowMs: 60 * 1000, max: 60 })); // (asked while a mentor types their field)

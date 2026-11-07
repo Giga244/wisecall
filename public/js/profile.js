@@ -350,6 +350,19 @@
     </ul>
     <p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
 
+  // "Question sent", with what happens next (docs/FLOW-REVIEW.md 4): the deadline, the email when the answer comes, the money for a paid
+  // question, the team's check for a 16-17-year-old, and the way to the dashboard.
+  function sentHtml(b) {
+    const lines = [];
+    if (b && b.answerDeadline) lines.push(t('sent.deadline').replace('{date}', WisecallI18n.formatDate(b.answerDeadline, { dateStyle: 'long' })));
+    lines.push(t('sent.email'));
+    if (b && b.amount > 0) lines.push(t('sent.paid').replace('{amount}', WisecallAPI.formatAmount(b.amount)));
+    if (user && user.ageGroup === 'minor_16_17') lines.push(t('sent.minor'));
+    return `<div class="booking-result success"><div class="success-icon" aria-hidden="true">✓</div><p class="booking-result-title">${escapeHtml(t('toast.questionSent'))}</p>
+      <ul class="sent-next">${lines.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>
+      <a class="btn btn-primary" href="/dashboard.html">${escapeHtml(t('sent.toQuestions'))}</a></div>`;
+  }
+
   // Ask our server to check the payment with the bank; only its answer decides what we show.
   async function confirmPayment() {
     checking = true;
@@ -361,7 +374,7 @@
         last = booking;
         if (booking.status === 'paid' || booking.status === 'answered') {
           stored.set(''); draft = ''; // it was sent: nothing to keep
-          askState = `<div class="booking-result success"><div class="success-icon" aria-hidden="true">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+          askState = sentHtml(booking);
           askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
           return;
         }
@@ -430,6 +443,7 @@
       ${askHeader()}
       ${noticeKey ? `<p class="pay-notice ${noticeKey === 'expert.paymentCancelled' ? 'cancelled' : 'failed'}" id="payNotice" role="status" tabindex="-1">${escapeHtml(t(noticeKey))}</p>` : ''}
       <p class="ask-tip">${t('expert.askTip')}</p>
+      ${user.ageGroup === 'minor_16_17' ? `<p class="ask-minor-check" id="askMinorCheck">${escapeHtml(t('expert.minorCheck'))}</p>` : ''}
       ${user.ageGroup === 'minor_16_17' && [expert.niche, ...(expert.extraNiches || [])].some((n) => ['medicine', 'psychology', 'law', 'finance'].includes(n)) ? `<p class="ask-minor-hint" id="askMinorHint">${escapeHtml(t('expert.minorHint'))}</p>` : ''}
       <form id="askForm" novalidate>
         ${directionPicker()}
@@ -511,7 +525,7 @@
       // A free question is sent at once: no bank.
       if (res.free) {
         stored.set(''); draft = '';
-        askState = `<div class="booking-result success"><div class="success-icon" aria-hidden="true">✓</div><p>${t('toast.questionSent')}</p><p class="muted small"><a href="/dashboard.html">${t('nav.dashboard')}</a></p></div>`;
+        askState = sentHtml(res.booking);
         askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
         return;
       }
@@ -524,7 +538,7 @@
     } catch (e) {
       submitBtn.disabled = false;
       if (e.code === 'emergency') { showEmergencyHelp(); return; }
-      if (e.code === 'contact_blocked') { errorEl.textContent = t('safety.contactBlocked'); document.getElementById('question').focus(); return; }
+      if (e.code === 'contact_blocked') { errorEl.textContent = WisecallAPI.contactBlockedText(e.data && e.data.kinds); document.getElementById('question').focus(); return; }
       if (e.code === 'adult_payer_required') { errorEl.textContent = t('expert.adultPayerRequired'); return; }
       if (e.code === 'age_required') { location.href = `/age-check.html?redirect=${encodeURIComponent(location.pathname + location.search)}`; return; }
       const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings', email_not_verified: 'expert.err.freeVerify', free_limit_mentor: 'expert.err.freeMentor', free_limit_total: 'expert.err.freeTotal', free_full: 'expert.freeFull' };

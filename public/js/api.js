@@ -119,5 +119,13 @@
   scheduleLinking();
   new MutationObserver(scheduleLinking).observe(document.documentElement, { childList: true, subtree: true });
 
-  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, asMentor, keepMentorPath, formatPrice, formatAmount, textLength, avatarStyle, avatar, initialsOf, linkLabels };
+  // "For safety, contact details can't be shared…" and what was found (a phone number, a Telegram name…), so the person knows what to take out
+  // (docs/FLOW-REVIEW.md 5). kinds: what the server's contact check found (server/textSafety.js).
+  function contactBlockedText(kinds) {
+    const t = (k) => (window.WisecallI18n ? WisecallI18n.t(k) : k);
+    const found = [...new Set((kinds || []).map((k) => t('safety.kind.' + k)).filter((x) => x && !/^safety\.kind\./.test(x)))];
+    return t('safety.contactBlocked') + (found.length ? ' ' + t('safety.found').replace('{what}', found.join(', ')) : '');
+  }
+
+  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, asMentor, keepMentorPath, formatPrice, formatAmount, textLength, avatarStyle, avatar, initialsOf, linkLabels, contactBlockedText };
 })();

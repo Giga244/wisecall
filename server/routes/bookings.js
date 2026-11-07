@@ -205,6 +205,15 @@ router.post('/:id/sync', requireAuth, asyncHandler(async (req, res) => {
 // A mentor answers ONCE. There is no way to change an answer afterwards, held for a check or not: a second request gets 409
 // "already_answered" and the first answer stays exactly as it was (a wrong answer is dealt with by an admin: reject it, and the buyer is
 // refunded). The answer must be a real one (server/content.js: at least 150 characters, not the same few characters over and over).
+// The contact check alone, for the mentor's "check before sending" step (docs/FLOW-REVIEW.md 5): the same rules as sending, nothing stored
+// or logged (sending checks again). -> { kinds }: what was found, empty when nothing was.
+router.post('/:id/answer/check', requireAuth, asyncHandler(async (req, res) => {
+  const existing = await getBookingById(req.params.id);
+  if (!existing || existing.mentorId !== req.userToken.id) return res.status(404).json({ error: 'not_found' });
+  const text = textSafety.cleanText(String((req.body || {}).answer || '').slice(0, 20000));
+  res.json({ kinds: textSafety.findBlockedContact(text, { strict: existing.askerMinor }) });
+}));
+
 router.post('/:id/answer', requireAuth, asyncHandler(async (req, res) => {
   const existing = await getBookingById(req.params.id);
   if (!existing) return res.status(404).json({ error: 'not_found' });

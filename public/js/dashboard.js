@@ -379,10 +379,15 @@
       textarea.addEventListener('input', () => { errorEl.textContent = ''; count(); });
       count();
 
-      form.addEventListener('submit', (ev) => {
+      form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         errorEl.textContent = '';
         if (WisecallAPI.textLength(textarea.value) < answerMin) { errorEl.textContent = t('dash.answer.tooShort'); textarea.focus(); return; }
+        // Contact details are found here, before the review step, and named (docs/FLOW-REVIEW.md 5). Sending checks again.
+        try {
+          const c = await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/answer/check`, { method: 'POST', body: { answer: textarea.value.trim() } });
+          if (c.kinds && c.kinds.length) { errorEl.textContent = WisecallAPI.contactBlockedText(c.kinds); textarea.focus(); return; }
+        } catch (e) { /* (sending checks it anyway) */ }
         form.querySelector('.answer-preview').textContent = textarea.value.trim();
         edit.hidden = true; review.hidden = false;
         form.querySelector('.answer-review-title').focus();
@@ -398,7 +403,7 @@
           load();
         } catch (e) {
           const map = { answer_too_short: 'dash.answer.tooShort', answer_repetitive: 'dash.answer.err.repetitive', answer_too_long: 'dash.answer.err.long', already_answered: 'dash.answer.err.already', deadline_passed: 'dash.answer.err.deadline', declined: 'dash.answer.err.declined', contact_blocked: 'safety.contactBlocked' };
-          sendError.textContent = t(map[e.code] || 'toast.error');
+          sendError.textContent = e.code === 'contact_blocked' ? WisecallAPI.contactBlockedText(e.data && e.data.kinds) : t(map[e.code] || 'toast.error');
           btn.disabled = false;
           if (e.code === 'already_answered' || e.code === 'declined') load();
         }
