@@ -975,3 +975,14 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
   .wl-list li > :nth-child(2) { grid-area: 2 / 1; }
   .wl-list li > :nth-child(4) { grid-area: 2 / 2; justify-self: end; }
 }
+/* The dashboard's order (docs/FLOW-REVIEW.md 1, 14): the questions first; the price, the share card and the plain "become a mentor"
+   invitation come after them */
+#receivedList + .great-answer-link { margin: 16px 0 12px; }
+#panel-received .share-card { margin-top: 8px; }
+#priceBlock { margin-top: 28px; }
+.mentor-card-below { margin: 28px 0 0; }
+/* "My details" and the price block hold several short forms, one after another: their Save buttons stay where they are. Sticky, each
+   one floated over the next form's fields on a phone (docs/FLOW-REVIEW.md 2). */
+@media (max-width: 639px) {
+  #panel-details .settings-card form > button[type="submit"], .price-block form > button[type="submit"] { position: static; }
+}

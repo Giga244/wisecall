@@ -47,7 +47,6 @@
 
   <!-- (the way to the mentor application, for someone who is not a mentor yet: public/js/dashboard.js) -->
   <div id="mentorCard"></div>
-  <div id="priceBlock" hidden></div>
 
   <div class="tabs" id="dashTabs" role="tablist" data-i18n-aria="dash.tabsLabel" aria-label="Dashboard sections">
     <button type="button" class="tab" role="tab" id="tab-asked" aria-controls="panel-asked" data-tab="asked" data-i18n="dash.tab.asked">My questions</button>
@@ -75,9 +74,10 @@
     </div>
   </div>
   <div class="tab-panel" role="tabpanel" id="panel-received" aria-labelledby="tab-received" data-panel="received" hidden>
-    <div id="shareCard" hidden></div>
-    <p class="small great-answer-link"><a class="plain-link" href="/help/write-a-great-answer" data-i18n="help.greatAnswer">How to write a great answer</a></p>
     <div id="receivedList" aria-live="polite"></div>
+    <!-- (below the questions: a mentor comes here to answer, docs/FLOW-REVIEW.md 1) -->
+    <p class="small great-answer-link"><a class="plain-link" href="/help/write-a-great-answer" data-i18n="help.greatAnswer">How to write a great answer</a></p>
+    <div id="shareCard" hidden></div>
   </div>
   <div class="tab-panel" role="tabpanel" id="panel-earnings" aria-labelledby="tab-earnings" data-panel="earnings" hidden>
     <div id="earnings"></div>
@@ -87,6 +87,8 @@
     <div id="liveBox" aria-live="polite"></div>
   </div>
   <!-- /live -->
+  <!-- (the price: on every tab, below what the mentor came for) -->
+  <div id="priceBlock" hidden></div>
   <!-- Sample answers: the team's questions an approved mentor can answer before launch (public/js/dashboard-samples.js) -->
   <section class="settings-card dash-samples" id="sampleAnswers" aria-labelledby="sampleAnswersTitle" hidden></section>
 </main>
