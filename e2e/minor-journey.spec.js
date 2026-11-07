@@ -138,9 +138,9 @@ test('the whole journey of a 16-year-old', async ({ page, browser }) => {
   await page.goto('/ka/dashboard.html');
   await expect(page.locator('.booking-card').first().locator('.booking-answer')).toContainText('კურსდამთავრებულები');
   const report = page.locator('.booking-card').first().locator('.report-button');
-  await expect(report.locator('summary')).toHaveText('შეტყობინება');
+  await expect(report.locator('summary')).toHaveText('წესების დარღვევის შეტყობინება');
   await report.locator('summary').click();
-  await report.locator('select').selectOption('contact_request');
+  await report.locator('input[name="reason"][value="contact_request"]').check();
   await report.locator('textarea').fill('მომწერა, სხვაგან დამიკავშირდიო');
   await report.locator('button[type="submit"]').click();
   await expect(report).toContainText('გმადლობთ');

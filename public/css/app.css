@@ -39,8 +39,6 @@ main[data-loading] .app-progress, main[data-loading] .tabs, main[data-loading] .
 .app-card-reason { margin: 10px 0 0; }
 .app-card-action { margin: 14px 0 0; }
 @media (max-width: 639px) { .app-card-action .btn { width: 100%; } }
-.linklike { background: none; border: none; padding: 0; min-height: 44px; font: inherit; font-weight: 700; color: var(--accent-text); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-.linklike:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
 
 /* Sign up and log in: a benefits panel next to the form ------------------------------------------------- */
 .auth-split {
@@ -990,3 +988,15 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .booking-result-title { font-weight: 800; font-size: 1.15rem; margin: 6px 0 10px; }
 .sent-next { text-align: left; margin: 0 auto 16px; padding-left: 1.2em; max-width: 440px; display: grid; gap: 6px; line-height: 1.5; }
 .ask-minor-check { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--sun-tint); font-weight: 600; line-height: 1.5; }
+/* Sign-up: the month's name has room ("ოქტომბერი" was cut at 375px) (docs/FLOW-REVIEW.md 10) */
+.age-row { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+/* The report's reasons, one per line (docs/FLOW-REVIEW.md 11) */
+.report-reasons { border: 0; margin: 0 0 12px; padding: 0; display: grid; gap: 2px; }
+.report-reasons legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+.report-reasons .radio-row { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 0; line-height: 1.4; }
+.report-reasons .radio-row input { width: 20px; height: 20px; margin: 1px 0 0; flex: 0 0 auto; }
+/* Small things from docs/FLOW-REVIEW.md 15 */
+.star-btn { color: var(--ink-soft); opacity: 0.55; }
+.star-btn.filled { opacity: 1; }
+.ask-code summary { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
+.q-meta .a-count { white-space: nowrap; }

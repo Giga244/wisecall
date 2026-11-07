@@ -50,6 +50,7 @@
       young.hidden = !tooYoung;
       box.hidden = !(age !== null && age >= 16 && age < 18);
       button.disabled = tooYoung;
+      root.closest('form').dispatchEvent(new CustomEvent('wisecall:age', { detail: { minor: age !== null && age >= 16 && age < 18 } }));
     };
     root.querySelector('#birthYear').addEventListener('change', draw);
     root.querySelector('#birthMonth').addEventListener('change', draw);

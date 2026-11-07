@@ -11,7 +11,7 @@ window.WisecallFollow = (function () {
     const hint = document.createElement('p');
     hint.className = 'muted small follow-hint';
     const draw = () => {
-      b.className = st.following ? 'btn btn-outline btn-sm' : 'btn btn-primary btn-sm';
+      b.className = 'btn btn-outline btn-sm'; // (quiet, both ways: the profile's one strong button is "Ask a question", docs/FLOW-REVIEW.md 15)
       b.setAttribute('aria-pressed', String(Boolean(st.following)));
       b.textContent = t(st.following ? 'follow.following' : 'follow.follow');
       n.textContent = st.followers ? t(st.followers === 1 ? 'follow.count.one' : 'follow.count').replace('{n}', st.followers) : '';

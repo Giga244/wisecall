@@ -38,9 +38,9 @@
         <summary>${t('report.button')}</summary>
         <form class="report-form" novalidate>
           <p class="muted small">${t(question ? 'report.question.intro' : 'report.answer.intro')}</p>
-          <label for="rp-reason-${id}"><span>${t('report.reason')}</span>
-            <select id="rp-reason-${id}" name="reason" required>${reasons.map((r) => `<option value="${r}">${t('report.reasons.' + r)}</option>`).join('')}</select>
-          </label>
+          <fieldset class="report-reasons"><legend>${t('report.reason')}</legend>
+            ${reasons.map((r, i) => `<label class="radio-row"><input type="radio" name="reason" value="${r}"${i === 0 ? ' checked' : ''}> <span>${t('report.reasons.' + r)}</span></label>`).join('')}
+          </fieldset>
           <label for="rp-details-${id}"><span>${t('report.details')}</span><textarea id="rp-details-${id}" name="details" rows="3" maxlength="1000"></textarea></label>
           <p class="form-error report-error" role="alert"></p>
           <button class="btn btn-outline btn-sm" type="submit">${t('report.send')}</button>

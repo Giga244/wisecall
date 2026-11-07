@@ -57,6 +57,14 @@
   const knownField = (id) => id === 'other' || WisecallI18n.fields().some((f) => f.id === id);
   // What the list shows apart from the field and the chip: free or paid, a country, the years of experience.
   const passesFilters = (e) => (!freeOnly || e.price === 0) && (!paidOnly || e.price > 0) && (!activeCountry || e.country === activeCountry) && (!activeYears || e.yearsBand === activeYears);
+  // What the search box asks for (the list and the field chips' counts both use it).
+  const matchesSearch = (e) => {
+    if (!searchTerm) return true;
+    const needle = searchTerm.toLowerCase();
+    const has = (s) => Boolean(s) && String(s).toLowerCase().includes(needle);
+    return has(e.name) || has(e.roleTitle) || has(e.bio) || has(e.customNiche)
+      || [e.niche, ...(e.extraNiches || [])].some((k) => k && has(t('niche.' + k))) || Boolean(serverMatches && serverMatches.has(e.id));
+  };
 
   function drawChips() {
     const options = (list, chosen, none) => `<option value="">${escapeHtml(none)}</option>${list.map((x) => `<option value="${escapeHtml(x.id)}"${x.id === chosen ? ' selected' : ''}>${escapeHtml(nameIn(x))}</option>`).join('')}`;
@@ -65,11 +73,12 @@
       <button type="button" class="chip${paidOnly ? ' active' : ''}" data-paid aria-pressed="${paidOnly}">${escapeHtml(t('browse.filter.paid'))}</button>
       <label class="filter-select"><span class="sr-only">${escapeHtml(t('browse.filter.country'))}</span><select id="filterCountry" data-filter="country">${options(catalog ? catalog.countries : [], activeCountry, t('browse.filter.country'))}</select></label>
       <label class="filter-select"><span class="sr-only">${escapeHtml(t('browse.filter.years'))}</span><select id="filterYears" data-filter="years">${options(catalog ? catalog.years : [], activeYears, t('browse.filter.years'))}</select></label>`;
-    const count = (test) => allExperts.filter(test).length;
+    const count = (test) => allExperts.filter((e) => matchesSearch(e) && test(e)).length;
     const button = (attrs, label, n, on) => `<button type="button" class="chip${on ? ' active' : ''}" ${attrs} aria-pressed="${Boolean(on)}">${label}${n === null ? '' : ` <span class="chip-count">${n}</span>`}</button>`;
     if (activeField === 'all') {
       // The 16 fields: one with nobody yet says "soon".
-      const list = WisecallI18n.fields().map((f) => { const n = count((e) => inField(e, f.id)); return button(`data-field="${escapeHtml(f.id)}"`, `<span aria-hidden="true">${f.icon}</span> ${escapeHtml(nameIn(f))}`, n || null, false) .replace('</button>', n ? '</button>' : ` <span class="chip-soon">${escapeHtml(t('browse.soon'))}</span></button>`); });
+      // ("soon": nobody in the field at all, whatever is typed in the search)
+      const list = WisecallI18n.fields().map((f) => { const n = count((e) => inField(e, f.id)); const any = allExperts.some((e) => inField(e, f.id)); return button(`data-field="${escapeHtml(f.id)}"`, `<span aria-hidden="true">${f.icon}</span> ${escapeHtml(nameIn(f))}`, any ? n : null, false) .replace('</button>', any ? '</button>' : ` <span class="chip-soon">${escapeHtml(t('browse.soon'))}</span></button>`); });
       if (allExperts.some((e) => !e.fieldId)) list.push(button('data-field="other"', escapeHtml(t('niche.other')), count((e) => !e.fieldId), false));
       fieldChips.innerHTML = list.join('');
     } else {
@@ -152,12 +161,7 @@
     let list = activeField === 'all' ? allExperts : allExperts.filter((e) => inField(e, activeField));
     if (activeChip) list = list.filter((e) => inChip(e, activeChip));
     list = list.filter(passesFilters);
-    if (searchTerm) {
-      const needle = searchTerm.toLowerCase();
-      const has = (s) => Boolean(s) && String(s).toLowerCase().includes(needle);
-      list = list.filter(e => has(e.name) || has(e.roleTitle) || has(e.bio) || has(e.customNiche)
-        || [e.niche, ...(e.extraNiches || [])].some((k) => k && has(t('niche.' + k))) || Boolean(serverMatches && serverMatches.has(e.id)));
-    }
+    list = list.filter(matchesSearch);
     list = sortList(list);
     shown = list.length;
     summary();
@@ -287,6 +291,7 @@
     searchTimer = setTimeout(async () => {
       searchTerm = searchInput.value.trim();
       serverMatches = null;
+      drawChips();
       render();
       if (!searchTerm) drawSearchChips(null);
       if (!searchTerm || prelaunch) return;
@@ -296,6 +301,7 @@
         if (asked !== searchTerm) return; // (the visitor typed on meanwhile)
         serverMatches = new Set(data.experts.map((e) => e.id));
         drawSearchChips(found);
+        drawChips();
         render();
       } catch (e) { /* the page's own matching still works */ }
     }, 150);

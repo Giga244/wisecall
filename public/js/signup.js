@@ -19,9 +19,12 @@
   const usernameStatus = document.getElementById('usernameStatus');
   let usernameEdited = false, suggestTimer = null, checkTimer = null, checkSeq = 0;
   const USERNAME_TEXT = { username_taken: 'profile.username.taken', reserved_username: 'profile.username.reserved', invalid_username: 'profile.username.invalid' };
+  let minorChosen = false;
   function drawUsernameHint() {
-    document.getElementById('usernameHint').textContent = `${location.origin}/u/${usernameInput.value.trim().toLowerCase() || '…'} — ${t('auth.field.username.hint')}`;
+    document.getElementById('usernameHint').textContent = minorChosen ? t('auth.field.username.hintMinor')
+      : `${location.origin}/u/${usernameInput.value.trim().toLowerCase() || '…'} — ${t('auth.field.username.hint')}`;
   }
+  document.getElementById('signupForm').addEventListener('wisecall:age', (ev) => { minorChosen = ev.detail.minor; drawUsernameHint(); });
   function setUsernameStatus(key, tone) {
     usernameStatus.textContent = key ? t(key) : '';
     usernameStatus.className = 'hint username-status' + (tone ? ' is-' + tone : '');

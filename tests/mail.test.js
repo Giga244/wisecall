@@ -140,7 +140,7 @@ describe('delivery through the email provider', () => {
     assert.match(q.html, /within 7 days/);
 
     await mentor.api(`/bookings/${b.booking.id}/answer`, { method: 'POST', body: { answer: longAnswer('Yes, it is safe.') } });
-    const a = await waitFor(() => mailTo('ka-seeker@example.com', 'უპასუხა')[0]);
+    const a = await waitFor(() => mailTo('ka-seeker@example.com', 'პასუხი შენს კითხვაზე')[0]);
     assert.match(a.subject, /Dr English/);
     assert.match(a.html, /Yes, it is safe\./);
   });

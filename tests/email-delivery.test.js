@@ -106,7 +106,7 @@ describe('every email goes out through the Resend API', () => {
     assert.match(q.body.html, /&lt;b&gt;safe&lt;\/b&gt;/, 'user text is escaped');
 
     await mentor.api(`/bookings/${paid.id}/answer`, { method: 'POST', body: { answer: longAnswer('It is safe.') } });
-    const a = await waitFor(() => mailTo('seeker@example.com', 'უპასუხა')[0]);
+    const a = await waitFor(() => mailTo('seeker@example.com', 'პასუხი შენს კითხვაზე')[0]);
     assert.match(a.body.subject, /Dr English/);
 
     const refund = await admin.api(`/admin/bookings/${paid.id}/refund`, { method: 'POST' });

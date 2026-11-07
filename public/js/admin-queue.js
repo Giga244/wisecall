@@ -126,7 +126,7 @@
       <h2 class="reviews-title" style="margin-top:32px">${t('admin.q.reports')} (${reports.reports.length})</h2>
       ${reports.reports.length ? reports.reports.map(reportCard).join('') : `<p class="muted">${t('admin.q.noReports')}</p>`}
       <h2 class="reviews-title" style="margin-top:32px">${t('admin.q.questionReports')} (${questionReports.reports.length})</h2>
-      ${questionReports.reports.length ? questionReports.reports.map(questionReportCard).join('') : `<p class="muted">${t('admin.q.noReports')}</p>`}`;
+      ${questionReports.reports.length ? questionReports.reports.map(questionReportCard).join('') : `<p class="muted">${t('admin.q.noQuestionReports')}</p>`}`;
 
     container.querySelectorAll('[data-change]').forEach((card) => {
       const decide = (decision) => async () => {
