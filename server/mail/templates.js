@@ -43,6 +43,7 @@ const S = {
     },
     newQuestion: {
       subject: 'You have a new paid question on Wisecall', heading: 'New paid question',
+      minor: 'This question is from someone aged 16–17: answer about study, careers and next steps; no personal contact details. Our team checks the answer before they see it.',
       intro: '{amount} was paid to ask you:',
       after: "Answer within {days} days. If you don't, the buyer is refunded automatically and you won't be paid for it.",
       button: 'Answer the question'
@@ -384,6 +385,7 @@ const S = {
     },
     newQuestion: {
       subject: 'Wisecall-ზე ახალი ფასიანი კითხვა გაქვს', heading: 'ახალი ფასიანი კითხვა',
+      minor: 'ეს კითხვა 16–17 წლის ადამიანისგანაა: უპასუხე სწავლაზე, კარიერასა და შემდეგ ნაბიჯებზე; პირადი კონტაქტი არ შეიძლება. პასუხს მის ნახვამდე ჩვენი გუნდი შეამოწმებს.',
       intro: '{amount} გადაიხადეს შენთვის კითხვის დასასმელად:',
       after: 'უპასუხე {days} დღის განმავლობაში. თუ არ უპასუხე, თანხა ავტომატურად დაუბრუნდება მყიდველს და ამ კითხვაზე ანაზღაურებას ვერ მიიღებ.',
       button: 'კითხვაზე პასუხი'
@@ -726,7 +728,8 @@ const BUILDERS = {
   }),
   newQuestion: (s, d) => ({
     heading: s.newQuestion.heading,
-    blocks: [{ p: fill(s.newQuestion.intro, d), raw: true }, { quote: d.question }, { p: fill(s.newQuestion.after, d), raw: true }, { button: s.newQuestion.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+    blocks: [{ p: fill(s.newQuestion.intro, d), raw: true }, { quote: d.question }, ...(d.minor ? [{ p: s.newQuestion.minor }] : []), { p: fill(s.newQuestion.after, d), raw: true },
+      { button: s.newQuestion.button, url: `${config.PUBLIC_URL}/dashboard.html?tab=received` }]
   }),
   answered: (s, d) => ({
     heading: s.answered.heading,
@@ -739,7 +742,8 @@ const BUILDERS = {
   }),
   newFreeQuestion: (s, d) => ({
     heading: s.newFreeQuestion.heading,
-    blocks: [{ p: s.newFreeQuestion.intro }, { quote: d.question }, { p: fill(s.newFreeQuestion.after, d), raw: true }, { button: s.newFreeQuestion.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+    blocks: [{ p: s.newFreeQuestion.intro }, { quote: d.question }, ...(d.minor ? [{ p: s.newQuestion.minor }] : []), { p: fill(s.newFreeQuestion.after, d), raw: true },
+      { button: s.newFreeQuestion.button, url: `${config.PUBLIC_URL}/dashboard.html?tab=received` }]
   }),
   // A free question that ended without an answer (or was taken back): nothing to refund. The reasons are the refund emails' own.
   freeClosedSeeker: (s, d) => ({

@@ -26,8 +26,8 @@ async function safeSend(label, name, user, data, { category } = {}) {
 const notifyMentorNewQuestion = (mentor, booking) => Promise.all([
   inbox().onPaid(booking),
   booking.amount === 0 // (a free question: docs/CLAUDE-CODE-FREE-ANSWERS.md)
-    ? safeSend('new-question notify', 'newFreeQuestion', mentor, { question: booking.question })
-    : safeSend('new-question notify', 'newQuestion', mentor, { amount: money(booking), question: booking.question })
+    ? safeSend('new-question notify', 'newFreeQuestion', mentor, { question: booking.question, minor: booking.askerMinor })
+    : safeSend('new-question notify', 'newQuestion', mentor, { amount: money(booking), question: booking.question, minor: booking.askerMinor })
 ]);
 
 const notifySeekerAnswered = (seeker, mentor, booking) => Promise.all([

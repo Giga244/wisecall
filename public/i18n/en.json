@@ -1184,6 +1184,7 @@
   "rate.tags.label": "What stood out? (optional)",
   "rate.review.label": "Write a short review (optional)",
   "rate.review.hint": "Your review becomes public on the mentor’s profile once the ratings are revealed, with your name and photo (or as “Anonymous asker” if your profile is private).",
+  "rate.review.hintMinor": "Your review becomes public on the mentor's profile when the ratings are revealed — with your first name only: no surname, photo or profile link.",
   "rate.review.placeholder": "What did you find helpful? What could be better?",
   "rate.note.label": "A private note to the Wisecall team (optional)",
   "rate.note.hint": "Only the Wisecall team can read this. The asker never sees it.",

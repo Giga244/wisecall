@@ -31,7 +31,7 @@ window.WisecallRatings = (function () {
         </fieldset>
         <label for="rate-text-${id}"><span>${t(asker ? 'rate.review.label' : 'rate.note.label')}</span>
           <textarea id="rate-text-${id}" rows="3" maxlength="1000" placeholder="${esc(t(asker ? 'rate.review.placeholder' : 'rate.note.placeholder'))}">${esc(mine ? (asker ? mine.review : mine.privateNote) : '')}</textarea>
-          <span class="hint">${t(asker ? 'rate.review.hint' : 'rate.note.hint')}</span>
+          <span class="hint">${t(asker ? (b.askerMinor ? 'rate.review.hintMinor' : 'rate.review.hint') : 'rate.note.hint')}</span>
         </label>
         <p class="form-error rate-error" role="alert"></p>
         <div class="rate-actions">
@@ -228,7 +228,9 @@ window.WisecallRatings = (function () {
   }
 
   function reviewCardHtml(r, { owner, loggedIn, mentorName }) {
-    const who = r.reviewer
+    const who = r.reviewer && !r.reviewer.username
+      ? `<span class="reviewer">${WisecallAPI.avatar(r.reviewer, { cls: 'avatar-sm', size: 36 })}<span>${esc(r.reviewer.name)}</span></span>`
+      : r.reviewer
       ? `<a class="reviewer" href="/u/${encodeURIComponent(r.reviewer.username)}">${WisecallAPI.avatar(r.reviewer, { cls: 'avatar-sm', size: 36 })}<span>${esc(r.reviewer.name)}</span></a>`
       : `<span class="reviewer"><span class="avatar avatar-sm avatar-anon" aria-hidden="true">?</span><span>${t('rate.reviews.anonymous')}</span></span>`;
     return `

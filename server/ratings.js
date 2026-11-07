@@ -237,7 +237,7 @@ async function afterAskerRating(askerId) {
 async function reviewsForMentor(mentorId, limit = 100) {
   await revealDue();
   const { rows } = await query(
-    `SELECT r.id, r.stars, r.tags, r.review, r.submitted_at, u.id AS uid, u.name, u.color, u.username, u.photo_updated_at, u.profile_visibility,
+    `SELECT r.id, r.stars, r.tags, r.review, r.submitted_at, u.id AS uid, u.name, u.color, u.username, u.photo_updated_at, u.profile_visibility, b.asker_minor,
             rp.body AS reply, rp.created_at AS reply_at
        FROM ratings r JOIN bookings b ON b.id = r.booking_id JOIN users u ON u.id = r.rater_id
        LEFT JOIN review_replies rp ON rp.rating_id = r.id AND rp.hidden_at IS NULL
@@ -246,9 +246,11 @@ async function reviewsForMentor(mentorId, limit = 100) {
   );
   return rows.map((r) => ({
     id: r.id, stars: r.stars, tags: r.tags, review: r.review, at: r.submitted_at,
+    // an asker who was 16-17 when they asked: the first name only (no photo, no surname, no link to a profile), whatever their profile says;
     // an asker whose profile is private is shown as "Anonymous asker"
-    reviewer: r.profile_visibility === 'public' && r.username
-      ? { name: r.name, username: r.username, color: r.color, photoUrl: photoUrl({ id: r.uid, photoUpdatedAt: r.photo_updated_at }) } : null,
+    reviewer: r.asker_minor ? { name: require('./ageGate').firstName(r.name), color: r.color }
+      : (r.profile_visibility === 'public' && r.username
+        ? { name: r.name, username: r.username, color: r.color, photoUrl: photoUrl({ id: r.uid, photoUpdatedAt: r.photo_updated_at }) } : null),
     reply: r.reply ? { body: r.reply, at: r.reply_at } : null
   }));
 }
