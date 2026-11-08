@@ -95,3 +95,27 @@ Brief: `docs/CLAUDE-CODE-FLOW-SCREENS.md`. Screens: `docs/flow-screens/` (`01`�
 - **No English left in the Georgian UI on these screens.** "Senior", "IELTS" and "Python" are the users' own words. "GEL" is listed above.
 - **Every step of the journey could be completed** (the capture script ran all 16 steps without a failure). Links and horizontal scrolling were not measured separately.
 - **The empty states have text and a next step:** the empty dashboard, a profile with no reviews, and the admin's empty sections (except the wrong text noted above).
+
+## After the fixes (2026-11-08)
+
+Every problem above was fixed, in the commits "Flow review 1" to "Flow review 5" plus one follow-up. The same journey was taken again on
+the fixed code, on its own fresh database, in `docs/flow-screens/after/` (`01`–`36` and `sheet.jpg`). `docs/flow-screens/compare.jpg`
+shows 19 before/after pairs side by side.
+
+| # | What changed | Before → after |
+|---|---|---|
+| 1 | The mentor's new question comes right under the tabs. The price block, the profile-link card and "how to write a great answer" come after the questions. The email's button opens "Questions for me". | 18 → after/18 |
+| 2 | On "ჩემი მონაცემები" and in the price block the Save buttons stay in place: they no longer float over the next form on a phone. | 31 → after/31 |
+| 3 | A 16–17-year-old reads before asking that our team checks the answer first and that it can take more than 7 days. The "sent" screen repeats it. | 09, 11 → after/09, after/11 |
+| 4 | "Question sent" says the due date and that we'll email them. For a paid question it adds the amount, the emailed receipt and the full refund if nobody answers. A "ჩემი კითხვები" button follows. | 11, 14 → after/11, after/14 |
+| 5 | A contact detail is named ("ნაპოვნია: @სახელი…, მესენჯერი…"). A mentor's answer is checked at "შეამოწმე პასუხი", before the review step. | 21 → after/20 |
+| 6 | Earnings say the 80% share ("15 ₾-იან კითხვაზე 12 ₾") and the 100 ₾ withdrawal minimum. The balance box and the list now give the same date (Tbilisi day). | 30 → after/30 |
+| 7 | A refunded question links to other mentors, on the card and in the email. The refund receipt's subject says it's a refund. Receipts are one per line, with no stray "·". | 28, 29 → after/28, after/29 |
+| 8 | A 16–17-year-old's review shows the first name only (no surname, photo or profile link), and the rating form says so. | 26 → after/26 |
+| 9 | Georgian emails don't glue a case ending to a name ("პასუხი შენს კითხვაზე — გიორგი ხარაზი"), and they show amounts in ₾. | 25, 29 → after/25, after/29 |
+| 10 | The month's name fits. Fields being typed in have a dark focus ring. A minor sees no "profile link". The code page's "change email" is styled, and its help line clears the button. | 06, 07 → after/06, after/07 |
+| 11 | "წესების დარღვევის შეტყობინება" and "პასუხის ხარისხის პრობლემა" are clearly two different things. The report reasons are a list to tap, which wraps. | 27 → after/27 |
+| 12 | The admin's held-answer note says answers to minors are never released automatically. Reports about questions have their own empty text, and the placeholder fits. | 23 → after/23 |
+| 13 | The mentor's new-question email says when the asker is 16–17 and what that means. | 16 → after/16 |
+| 14 | "გახდი მენტორი" sits below the student's own questions, placed before anything loads, so nothing jumps. | 15 → after/15 |
+| 15 | Visible empty stars, a tappable "ფასდაკლების კოდი", chip counts that follow the search, a quiet "გამოწერა" button, and the answer counter on one line. | 03, 05, 12, 26 → after/… |
