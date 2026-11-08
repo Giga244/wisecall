@@ -16,7 +16,6 @@
   const receivedList = document.getElementById('receivedList');
   const earningsBox = document.getElementById('earnings');
   const tabList = document.getElementById('dashTabs');
-  let hasOwnQuestions = false; // (has this person asked questions of their own: placeMentorCard below)
   const tabButtons = Array.from(tabList.querySelectorAll('.tab'));
   const panels = Array.from(document.querySelectorAll('.tab-panel'));
 
@@ -488,7 +487,6 @@
     try {
       const data = await WisecallAPI.apiFetch('/bookings/mine');
       renderAsked(data.asked);
-      placeMentorCard((data.asked || []).length > 0);
       if (isMentor) renderReceived(data.received);
       startTicker();
     } catch (e) {
@@ -499,13 +497,12 @@
     receivedList.setAttribute('aria-busy', 'false');
   }
 
-  // The plain invitation ("Want to share your experience?") stays on top for a new account; once there are questions of their own it moves
-  // below them, so it never pushes a question down (docs/FLOW-REVIEW.md 14). Every other state (an application, the ID check) stays on top.
-  function placeMentorCard(has) {
-    if (has !== undefined) hasOwnQuestions = has;
+  // The plain invitation ("Want to share your experience?") sits below the questions, so it never pushes one down (docs/FLOW-REVIEW.md 14);
+  // it is placed before anything loads, so nothing moves under the reader. Every other state (an application, the ID check) stays on top.
+  function placeMentorCard() {
     const box = document.getElementById('mentorCard');
     const m = WisecallNav.mentorPath() || { state: 'none' };
-    const below = hasOwnQuestions && m.state === 'asker';
+    const below = m.state === 'asker';
     const anchor = below ? document.getElementById('priceBlock') : tabList;
     if (box && anchor && box.nextElementSibling !== anchor) anchor.before(box);
     if (box) box.classList.toggle('mentor-card-below', below);
@@ -545,6 +542,7 @@
     } else box.innerHTML = '';
   }
   drawMentorCard();
+  placeMentorCard();
   document.addEventListener('wisecall:lang-changed', () => { drawMentorCard(); placeMentorCard(); });
 
   // The price, on the mentor's first screen: the switch and Save (docs/CLAUDE-CODE-MENTOR-EDIT.md), and the way to "My details".

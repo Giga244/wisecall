@@ -58,7 +58,8 @@ describe('the Georgian texts', () => {
   });
 
   test('the earnings note says the money waits for the refund window (its meaning was once inverted)', () => {
-    assert.equal(read('ka')['dash.earnings.note'], 'ყოველი პასუხგაცემული კითხვიდან შენი წილი (Wisecall-ის საკომისიოს გამოკლებით) გადასარიცხი ხდება პასუხიდან {days} დღის შემდეგ — ეს დრო საჭიროა, თუ მყიდველმა თანხის დაბრუნება მოითხოვა. შემდეგ Wisecall თანხას შენს საბანკო ანგარიშზე გადმოგირიცხავს.');
+    assert.match(read('ka')['dash.earnings.note'], /შენი წილი გადასარიცხი ხდება პასუხიდან \{days\} დღის შემდეგ — ეს დრო საჭიროა, თუ მყიდველმა თანხის დაბრუნება მოითხოვა\./);
+    assert.match(read('ka')['dash.earnings.note'], /\{share\}%.*\{min\}/, 'the share and the withdrawal minimum too (docs/FLOW-REVIEW.md 6)');
   });
 });
 

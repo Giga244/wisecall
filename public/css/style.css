@@ -1239,7 +1239,7 @@ html.motion details.faq-item[open]::details-content { height: auto; opacity: 1; 
 /* the code screen: where the code went, and correcting the address (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 1) */
 .verify-to { margin: 0 0 14px; overflow-wrap: anywhere; }
 .verify-change { margin: 0 0 16px; }
-.verify-spam { margin: 20px 0 0; }
+.auth-card > .verify-spam { margin: 20px 0 0; } /* (more specific than .auth-card > .muted, which set no top margin) */
 /* become-a-mentor: the application step by step (docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 2) */
 .apply-preview { margin: 0 0 28px; }
 .apply-preview-steps { margin: 0 0 18px; padding-left: 1.4em; display: grid; gap: 6px; }
