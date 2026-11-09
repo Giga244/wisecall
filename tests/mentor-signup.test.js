@@ -321,7 +321,8 @@ describe('Settings on a phone', () => {
     assert.ok(more > 0);
     for (const id of ['photoFile', 'name', 'headline', 'bio']) assert.ok(html.indexOf(`id="${id}"`) < more, `${id} comes first`);
     for (const id of ['username', 'currentWork', 'city', 'languageChecks', 'linkedinUrl', 'websiteUrl', 'profileVisibility']) assert.ok(html.indexOf(`id="${id}"`) > more, `${id} is under "More profile details"`);
-    assert.match(html, /<textarea id="bio" rows="4" maxlength="2000"/);
+    // (no maxlength: a browser would cut a pasted story without a word; too long is said and refused: tests/never-cut.test.js)
+    assert.match(html, /<textarea id="bio" rows="4" aria-describedby="bioCount bioSync"><\/textarea>/);
   });
 });
 

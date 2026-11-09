@@ -27,7 +27,8 @@ window.WisecallProfileSections = (function () {
   const yearInput = (name, value, label) => `<input type="number" name="${name}" min="1950" max="${new Date().getFullYear() + 10}" step="1" inputmode="numeric" value="${esc(value || '')}" placeholder="${esc(t('ps.f.year'))}" aria-label="${esc(label || t('ps.f.year'))}">`;
   const field = (label, html, hint) => `<label><span>${esc(label)}</span>${html}${hint ? `<span class="hint">${esc(hint)}</span>` : ''}</label>`;
   const input = (name, value, max, type = 'text') => `<input type="${type}" name="${name}" maxlength="${max}" value="${esc(value || '')}"${type === 'url' ? ' inputmode="url" placeholder="https://"' : ''}>`;
-  const area = (name, value, max, rows = 3) => `<textarea name="${name}" maxlength="${max}" rows="${rows}">${esc(value || '')}</textarea>`;
+  // (no maxlength on a text box: a browser would cut a pasted text without a word; the server says when it is too long, with the limit)
+  const area = (name, value, max, rows = 3) => `<textarea name="${name}" data-max="${max}" rows="${rows}">${esc(value || '')}</textarea>`;
 
   // ---- One item, shown in its list ----------------------------------------------------------------------------------------------------
   function itemLine(section, it) {

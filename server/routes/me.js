@@ -139,6 +139,14 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     if (experience.isLocked(existing)) return res.status(409).json({ error: 'application_locked' });
   }
 
+  // "About me" is only replaced by someone who saw the current one: a form opened earlier (another tab, or before the application's
+  // story was copied into it) sends the text it started from as bioWas, and an older start is refused with the current text, never
+  // written over it (a mentor's card once showed half his story that way: docs/CLAUDE-CODE-FINISH.md part 2).
+  if (patch.bio !== undefined && updates.bioWas !== undefined) {
+    const { tidy } = require('../content');
+    const now = tidy(existing.bio || '');
+    if (tidy(typeof updates.bioWas === 'string' ? updates.bioWas : '') !== now && tidy(patch.bio || '') !== now) return res.status(409).json({ error: 'bio_changed', bio: existing.bio || '' });
+  }
   if (isMentor && changedApplication.length) experience.applyFieldRules(existing, patch);
   // (the profile's "About me" and the application's story stay one text while they are the same: server/verification/experience.js)
   if (isMentor && patch.bio !== undefined) experience.bioToStory(existing, patch);

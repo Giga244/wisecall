@@ -24,12 +24,14 @@
         ${WisecallAPI.avatar(m, { cls: 'lexpert-avatar', size: 56 })}
         <h3 class="lexpert-name"><a href="${href}">${esc(m.name)}</a></h3>
         ${m.roleTitle ? `<p class="lexpert-role">${esc(m.roleTitle)}</p>` : ''}
+        ${m.bio ? `<div class="lexpert-about"><p class="lexpert-bio" data-clamp>${esc(m.bio)}</p><a class="lmore lexpert-more" href="${href}" data-clamp-more hidden>${esc(t('experts.card.more'))}</a></div>` : ''}
         <p class="lexpert-tags">${f.name ? `<span class="chip-tag">${f.icon ? `<span aria-hidden="true">${f.icon}</span> ` : ''}${esc(f.name)}</span>` : ''}${m.founding ? `<span class="chip-tag">${esc(t('badge.founding'))}</span>` : ''}</p>
         <p class="lexpert-verified">✓ ${esc(t('home2.qa.verified'))}</p>
         <p class="lexpert-foot"><strong>${esc(WisecallAPI.formatPrice(m.price))}</strong><a class="lmore" href="${href}" aria-label="${esc(t('home2.experts.profileOf').replace('{name}', m.name))}">${esc(t('home2.experts.profile'))}</a></p>
       </li>`;
     }).join('');
     document.getElementById('homeMentorsList').removeAttribute('aria-busy');
+    if (window.WisecallClamp) WisecallClamp.watch(section);
     section.hidden = false;
   }
   WisecallAPI.apiFetch('/home-mentors').then((r) => {

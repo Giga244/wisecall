@@ -172,6 +172,9 @@ window.SettingsProfile = (function () {
     view.hidden = !user.username;
   }
 
+  // What the form showed when it was filled: a save sends only the fields changed since then, so a field nobody touched (above all
+  // "About me", which the application's story can change meanwhile) is never written back from an older copy.
+  let loaded = null;
   function fillForm() {
     $('username').value = user.username || '';
     $('name').value = user.name || '';
@@ -191,6 +194,7 @@ window.SettingsProfile = (function () {
     drawVisibilityHint();
     drawUsernameHint();
     drawPreview();
+    loaded = values();
   }
 
   async function save(ev) {
@@ -202,14 +206,24 @@ window.SettingsProfile = (function () {
     if (v.bio.length > 2000) { error.textContent = t('profile.err.bioLong'); return; }
     if (v.languages.length > MAX_LANGUAGES) { $('profileMore').open = true; error.textContent = fill(t('profile.err.languages'), { n: MAX_LANGUAGES }); return; }
     try {
-      const body = { ...v };
+      const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+      const body = Object.fromEntries(Object.entries(v).filter(([k, val]) => !loaded || !same(val, loaded[k])));
+      if (body.bio !== undefined && loaded) body.bioWas = loaded.bio; // (the server refuses it if "About me" changed since: server/routes/me.js)
       if (isListedMentor()) delete body.profileVisibility;
+      if (!Object.keys(body).length) { WisecallNav.showToast(t('toast.saved')); return; }
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body });
       Object.assign(user, data.user);
       // What was saved may differ a little from what was typed (spaces removed, links completed): show what is stored.
       fillForm();
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
+      // "About me" changed elsewhere since this page was opened: what was typed stays in the box; the next save replaces the newer text,
+      // knowingly (or a reload shows it)
+      if (e.code === 'bio_changed') {
+        if (e.data && typeof e.data.bio === 'string') { user.bio = e.data.bio; loaded.bio = e.data.bio.trim(); }
+        error.textContent = t('profile.err.bioChanged');
+        return;
+      }
       const map = { invalid_linkedin_url: 'profile.err.linkedin', invalid_website_url: 'profile.err.website', bio_too_long: 'profile.err.bioLong', invalid_language: 'profile.err.language', missing_fields: 'profile.err.name', mentor_profile_must_be_public: 'profile.visibility.lockedMentor' };
       error.textContent = t(map[e.code] || 'toast.error');
       if (['invalid_linkedin_url', 'invalid_website_url', 'invalid_language', 'mentor_profile_must_be_public'].includes(e.code)) $('profileMore').open = true; // (the field is under "More profile details")

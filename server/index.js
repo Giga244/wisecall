@@ -285,7 +285,9 @@ app.get('/api/home-mentors', publicCache(), require('./util').asyncHandler(async
     return { id: p.id, name: p.name, username: p.username, photoUrl: p.photoUrl, color: p.color, niche: p.niche, customNiche: p.customNiche,
       founding: Boolean(u.foundingMentorAt), university: uni ? uni.university : null, organisation: work ? work.organisation : null,
       // (the new home page's cards: the role, the field and the price, docs/CLAUDE-CODE-NEW-HOME.md 2.3)
-      roleTitle: u.roleTitle || null, fieldId: u.fieldId || null, price: u.price };
+      roleTitle: u.roleTitle || null, fieldId: u.fieldId || null, price: u.price,
+      // (the whole bio: the card shows its first lines, the profile all of it; only when the mentor shows "About" to everyone)
+      bio: summaries[u.id] && summaries[u.id].showAbout ? u.bio || null : null };
   });
   const n = count.rows[0].n;
   res.json({ mentors, verifiedCount: n >= 5 ? n : null });

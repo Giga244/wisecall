@@ -270,7 +270,7 @@
         <p class="apply-lead">${esc(t('apply.story.lead'))}</p>
         <div class="apply-field">
           <label for="apStory">${esc(t('apply.f.story'))}</label>
-          <textarea id="apStory" name="story" rows="9" maxlength="${L.storyMax}" aria-describedby="apStoryCount apStoryNote" required>${esc(f.story)}</textarea>
+          <textarea id="apStory" name="story" rows="9" data-max="${L.storyMax}" aria-describedby="apStoryCount apStoryNote" required>${esc(f.story)}</textarea>
           <p class="apply-count" id="apStoryCount" aria-live="polite"></p>
           <p class="hint" id="apStoryNote">${esc(t('apply.story.about'))}</p>
         </div>
@@ -284,7 +284,7 @@
           <summary>${esc(t('apply.story.more'))}</summary>
           <div class="apply-field">
             <label for="apSample">${esc(t('ap.f.sample'))}</label>
-            <textarea id="apSample" name="sampleAnswer" rows="6" maxlength="${v.limits.sampleMax}" aria-describedby="apSampleHint">${esc(f.sampleAnswer || '')}</textarea>
+            <textarea id="apSample" name="sampleAnswer" rows="6" data-max="${v.limits.sampleMax}" aria-describedby="apSampleHint">${esc(f.sampleAnswer || '')}</textarea>
             <span class="hint" id="apSampleHint">${esc(t('ap.f.sample.hint'))}</span>
           </div>
         </details>
@@ -1039,9 +1039,12 @@
       const draw = () => {
         const verdict = WisecallTextRules.storyVerdict(area.value, v.limits.storyMin);
         const n = verdict.n;
-        const key = verdict.ok ? 'apply.story.countOk' : (verdict.reason === 'repeated' ? 'apply.story.countRepeated' : 'apply.story.count');
+        // (too long: said here and refused on saving, never cut: what was pasted stays whole in the box)
+        const over = n > v.limits.storyMax;
+        const key = over ? 'apply.story.countOver' : verdict.ok ? 'apply.story.countOk' : (verdict.reason === 'repeated' ? 'apply.story.countRepeated' : 'apply.story.count');
         out.textContent = fill(key, { n, min: v.limits.storyMin, max: v.limits.storyMax });
-        out.classList.toggle('is-ok', verdict.ok);
+        out.classList.toggle('is-ok', verdict.ok && !over);
+        out.classList.toggle('is-over', over);
       };
       area.addEventListener('input', draw);
       draw();

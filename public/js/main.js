@@ -190,7 +190,7 @@
           </div>
         </div>
         ${e.profile && e.profile.headline ? `<div class="card-headline">${escapeHtml(e.profile.headline)}</div>` : ''}
-        <div class="card-bio">${escapeHtml(e.bio || '')}</div>
+        <div class="card-bio">${e.bio ? `<p class="card-bio-text" data-clamp>${escapeHtml(e.bio)}</p><span class="card-more" data-clamp-more hidden>${escapeHtml(t('experts.card.more'))}</span>` : ''}</div>
         ${e.profile && (e.profile.topSkills || []).length ? `<div class="card-skills">${e.profile.topSkills.map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join(' ')}</div>` : ''}
         ${(e.directions || []).length ? `<div class="card-skills">${e.directions.slice(0, 3).map(chipById).filter((c) => c && !c.other).map((c) => `<span class="tag">${escapeHtml(nameIn(c))}</span>`).join(' ')}</div>` : ''}
         ${WisecallBadges.row(e.badges)}
@@ -201,6 +201,8 @@
         <span class="btn btn-primary btn-sm btn-block">${askLabel}</span>
       </a>
     `).join('');
+    // ("Read more →" only under a bio that the card really cuts: public/js/clamp.js)
+    if (window.WisecallClamp) WisecallClamp.watch(grid);
   }
 
   filters.addEventListener('click', ev => {

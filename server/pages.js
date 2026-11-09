@@ -818,7 +818,8 @@ async function sendPage(res, file, vars, status = 200) {
 
 // One "Meet our experts" card while it loads: the same lines as the real card (public/js/home-mentors.js)
 const HOME_CARD_SKELETON = '<li class="lexpert lexpert-skeleton" aria-hidden="true"><span class="skeleton skeleton-avatar md lexpert-avatar"></span>' +
-  '<span class="skeleton skeleton-line w60 strong"></span><span class="skeleton skeleton-line w90"></span><span class="skeleton skeleton-pill"></span>' +
+  '<span class="skeleton skeleton-line w60 strong"></span><span class="skeleton skeleton-line w90"></span>' +
+  '<span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-pill"></span>' +
   '<span class="skeleton skeleton-line w40"></span><span class="lexpert-foot"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></span></li>';
 
 function pageRoutes() {

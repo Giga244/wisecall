@@ -328,6 +328,12 @@ html.motion .wc-dialog:not([open])::backdrop { opacity: 0; }
 .card-role { font-size: 0.88rem; color: var(--ink-soft); font-weight: 500; }
 .card-headline { font-weight: 600; }
 .card-bio { font-size: 0.93rem; color: var(--ink-soft); flex-grow: 1; line-height: 1.5; }
+/* A short bio on a card: 3 lines (2 on a small phone) ending in "…", at a word (lines break between words); the profile shows it all.
+   "Read more →" only when it is cut (public/js/clamp.js). The stored text is never shortened. */
+.card-bio-text, .lexpert-bio { margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; overflow-wrap: break-word; }
+@media (max-width: 360px) { .card-bio-text, .lexpert-bio { -webkit-line-clamp: 2; line-clamp: 2; } }
+.card-more { display: inline-block; margin-top: 4px; color: var(--accent-text); font-weight: 700; font-size: 0.9rem; }
+.card-more[hidden], .lexpert-more[hidden] { display: none; }
 .card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 14px; border-top: var(--chip-w) dashed var(--border); }
 .rating { font-size: 0.85rem; color: var(--gold-text); font-weight: 700; }
 .price { font-family: var(--font-display); font-weight: 800; color: var(--ink); font-size: 1.3rem; }
