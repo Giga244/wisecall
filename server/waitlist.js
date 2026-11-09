@@ -62,6 +62,13 @@ async function deletionsForAdmin() {
   return rows.map((r) => ({ by: r.by_label, entries: r.entries, fields: r.fields, requests: r.requests, at: r.created_at }));
 }
 
+// The number of addresses on the list for the home page: rounded down to 10, and null under 50 (docs/CLAUDE-CODE-NEW-HOME.md 4).
+const COUNT_FROM = 50;
+async function approxCount() {
+  const { rows: [r] } = await query('SELECT count(DISTINCT lower(email))::int AS n FROM waitlist');
+  return r.n >= COUNT_FROM ? Math.floor(r.n / 10) * 10 : null;
+}
+
 // Anonymous demand for the admins: the typed questions and their fields, newest first, never with an email.
 async function demandForAdmin() {
   const { rows } = await query('SELECT niche, wanted_question, created_at FROM waitlist WHERE wanted_question IS NOT NULL ORDER BY created_at DESC LIMIT 500');
@@ -162,4 +169,4 @@ async function afterMaybeListed(userId) {
   return 0;
 }
 
-module.exports = { WaitlistError, add, unsubscribe, listForAdmin, demandForAdmin, removeForAdmin, deletionsForAdmin, popularFields, mentorJoined, launchDay, afterMaybeListed };
+module.exports = { WaitlistError, add, unsubscribe, approxCount, listForAdmin, demandForAdmin, removeForAdmin, deletionsForAdmin, popularFields, mentorJoined, launchDay, afterMaybeListed };

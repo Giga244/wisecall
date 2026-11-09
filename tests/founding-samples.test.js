@@ -80,14 +80,14 @@ describe('the home page\'s "our mentors"', () => {
     assert.equal(r.verifiedCount, null, 'fewer than 5');
   });
 
-  test('the section is on the home page, hidden until there is one, with the prelaunch heading', () => {
+  test('the section is on the home page, hidden until there is one', () => {
     const html = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
-    assert.match(html, /<section class="home-mentors" id="homeMentors"[^>]*hidden>/);
-    assert.match(html, /data-i18n-prelaunch="home\.mentors\.prelaunch"/);
+    assert.match(html, /<section class="lsection lexperts" id="homeMentors"[^>]*hidden>/);
+    assert.match(html, /<ul class="lexpert-grid" id="homeMentorsList">/);
     assert.equal(dict('ka')['home.mentors.prelaunch'], 'პირველი მენტორები, რომლებიც უკვე შემოგვიერთდნენ');
     assert.equal(dict('ka')['home.mentors.count'], '{n} გადამოწმებული მენტორი');
     assert.equal(dict('ka')['settings.mentor.showOnHome'], 'ჩემი პროფილი მთავარ გვერდზე გამოჩნდეს');
-    assert.equal(dict('ka')['badge.founding'], 'დამფუძნებელი მენტორი');
+    assert.equal(dict('ka')['badge.founding'], 'პირველი მენტორი');
   });
 });
 

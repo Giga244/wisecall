@@ -63,10 +63,10 @@ before(async () => {
 after(async () => { for (const s of [on, off]) if (s) s.proc.kill(); await pool.end(); fs.rmSync(OUTBOX, { force: true }); });
 
 describe('switched on (LIVE_SESSIONS=on, the default outside production)', () => {
-  test('the pages, the home section, the dashboard tab, the help article and the sitemap are there; the follower was emailed', async () => {
+  test('the pages, the dashboard tab, the help article and the sitemap are there; the follower was emailed', async () => {
     assert.equal((await client(on.base).api('/config')).liveSessions, true);
     for (const p of ['/live', '/ka/live', `/live/${session.slug}`, `/ka/live/${session.slug}`]) assert.equal((await page(on.base, p)).status, 200, p);
-    assert.match((await page(on.base, '/')).html, /id="liveHome"/);
+    assert.doesNotMatch((await page(on.base, '/')).html, /id="liveHome"/, 'not on the new home page (docs/CLAUDE-CODE-NEW-HOME.md)');
     const dash = (await page(on.base, '/dashboard.html')).html;
     assert.match(dash, /id="tab-live"/);
     assert.match(dash, /live-dashboard\.js/);

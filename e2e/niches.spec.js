@@ -7,7 +7,7 @@ const S = require('./support');
 const { client } = require('../tests/helpers');
 
 test('the home page shows two full rows of fields and the rest behind "See all"', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/experts.html');
   const strip = page.locator('#nicheStrip');
   await expect(strip.locator('a.field-tile:visible')).toHaveCount(10); // (5 columns at 1280px)
   await expect(page.locator('#fieldsMore')).toHaveText('See all 16 fields');

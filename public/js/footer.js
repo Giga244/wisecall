@@ -19,7 +19,7 @@
         <nav class="footer-col" aria-labelledby="footProduct">
           <h2 id="footProduct" data-i18n="footer.product">Product</h2>
           <ul>
-            <li><a href="/index.html#experts" data-i18n="nav.browse">Browse experts</a></li>
+            <li><a href="/experts.html" data-i18n="nav.browse">Browse experts</a></li>
             <li><a href="/index.html#how" data-i18n="nav.how">How it works</a></li>
             <li><a href="/faq.html#faq-payments" data-i18n="footer.pricing">Pricing</a></li>
             <li><a href="/become-a-mentor.html" data-i18n="footer.forMentors">For mentors</a></li>
@@ -72,7 +72,7 @@
     instagram: ['Instagram', '<rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/>'],
     linkedin: ['LinkedIn', '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>'],
     x: ['X', '<path d="M4 4l16 16M20 4L4 20"/>'],
-    tiktok: ['TikTok', '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'],
+    tiktok: ['TikTok', '<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.4 2.7 2.4 4.6 5 5"/>'],
     youtube: ['YouTube', '<path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><path d="M9.75 15.02l5.75-3.27-5.75-3.27z"/>']
   };
 
@@ -90,14 +90,21 @@
       link.textContent = cfg.contactEmail;
       f.querySelector('#footerContact').hidden = false;
     }
-    const entries = Object.entries(cfg.social || {}).filter(([name, url]) => SOCIAL[name] && /^https:\/\//i.test(url));
-    if (entries.length) {
+    const html = socialHtml(cfg.social);
+    if (html) {
       const list = f.querySelector('#footerSocial');
-      list.innerHTML = entries.map(([name, url]) => `
-        <li><a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" aria-label="${SOCIAL[name][0]}">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SOCIAL[name][1]}</svg></a></li>`).join('');
+      list.innerHTML = html;
       list.hidden = false;
     }
   }
+  // The social links as icons in one colour, each opening in a new tab: Instagram, TikTok, Facebook first (docs/CLAUDE-CODE-NEW-HOME.md 2.7).
+  // Also used by the waiting list's thank-you (waitlist.js). '' when none is set.
+  const ORDER = ['instagram', 'tiktok', 'facebook', 'linkedin', 'x', 'youtube'];
+  function socialHtml(social) {
+    return ORDER.filter((name) => social && /^https:\/\//i.test(social[name] || '')).map((name) => `
+        <li><a href="${social[name].replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" aria-label="${SOCIAL[name][0]}">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SOCIAL[name][1]}</svg></a></li>`).join('');
+  }
+  window.WisecallSocial = { html: socialHtml };
   if (window.WisecallI18n && WisecallI18n.getConfig) WisecallI18n.getConfig().then(fromConfig);
 })();

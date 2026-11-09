@@ -19,7 +19,7 @@
 
   function showMessage(key, extra) {
     page.setAttribute('aria-busy', 'false');
-    page.innerHTML = `<div class="empty-state"><h1 style="font-size:1.4rem">${t(key)}</h1>${extra || ''}<a class="btn btn-primary" href="/index.html#experts">${t('nav.browse')}</a></div>`;
+    page.innerHTML = `<div class="empty-state"><h1 style="font-size:1.4rem">${t(key)}</h1>${extra || ''}<a class="btn btn-primary" href="/experts.html">${t('nav.browse')}</a></div>`;
   }
 
   let answer = await profileRequest;
@@ -92,7 +92,7 @@
     sheetEl.querySelector('.sheet-close').setAttribute('aria-label', t('sheet.close'));
     bar.innerHTML = `
       <div class="ask-bar-price"><strong>${WisecallAPI.formatPrice(expert.price)}</strong>${expert.price === 0 ? '' : `<span>${t('expert.priceLabel')}</span>`}</div>
-      <button type="button" class="btn btn-primary btn-lg" id="askOpen" aria-haspopup="dialog" aria-expanded="false" aria-controls="askSheet">${t(prelaunch ? 'wait.join' : 'expert.askCta')}</button>`;
+      <button type="button" class="btn btn-primary btn-lg" id="askOpen" aria-haspopup="dialog" aria-expanded="false" aria-controls="askSheet">${t('expert.askCta')}</button>`;
     const open = bar.querySelector('#askOpen');
     open.addEventListener('click', () => sheet.open(open));
   }
@@ -110,7 +110,7 @@
   function crumbsHtml() {
     return `<ol>
       <li><a href="/index.html">${t('expert.crumb.home')}</a></li>
-      ${isMentor ? `<li><a href="/index.html#experts">${t('nav.browse')}</a></li>
+      ${isMentor ? `<li><a href="/experts.html">${t('nav.browse')}</a></li>
       ${expert.niche ? (expert.niche === 'other' ? `<li><span>${escapeHtml(WisecallI18n.nicheName('other', expert.customNiche))}</span></li>` : `<li><a href="/advice/${encodeURIComponent(expert.niche)}">${escapeHtml(t('niche.' + expert.niche))}</a></li>`) : ''}` : ''}
       <li><span aria-current="page">${escapeHtml(expert.name)}</span></li>
     </ol>`;
@@ -241,6 +241,55 @@
     const follow = document.getElementById('profileFollow');
     if (follow && window.WisecallFollow) WisecallFollow.mount(follow, expert.id, user);
     if (!checking && (!returnedFromBank || formBack)) renderAskForm(); else if (askState) askArea().innerHTML = askState + `<p class="need-help small"><a class="plain-link" href="/contact.html">${t('help.need')}</a></p>`;
+    sendKeptQuestion();
+  }
+  // Back from signing up (or logging in) with ?send=1 and a kept question: send it, once.
+  let keptTried = false;
+  function sendKeptQuestion() {
+    if (keptTried || params.get('send') !== '1') return;
+    keptTried = true;
+    const url = new URL(location.href);
+    url.searchParams.delete('send');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+    const form = document.getElementById('askForm');
+    if (!user || !form || !draft) return;
+    if (phone.matches) sheet.open(document.getElementById('askOpen')); // (on a phone the form is in its sheet)
+    WisecallNav.showToast(t('ask.sending'));
+    if (typeof form.requestSubmit === 'function') form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true }));
+  }
+
+  // ---- Sign up to ask (docs/CLAUDE-CODE-NEW-HOME.md 3): a sheet on a phone, a dialog on a computer, with Google and email ------------
+  // Every check of a normal sign-up still applies on the way (16 and over, a parent's agreement at 16-17, the email code, "are you a person").
+  const GOOGLE_G = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+  async function openSignup(from) {
+    let d = document.getElementById('askSignup');
+    if (!d) {
+      d = document.createElement('dialog');
+      d.id = 'askSignup';
+      d.className = 'ask-signup';
+      d.setAttribute('aria-labelledby', 'askSignupTitle');
+      document.body.appendChild(d);
+      d.addEventListener('click', (ev) => { if (ev.target === d || ev.target.closest('[data-signup-close]')) d.close(); }); // (outside the panel, or ×)
+      d.addEventListener('close', () => { if (d.returnTo && d.returnTo.isConnected) d.returnTo.focus(); });
+    }
+    d.returnTo = from || null;
+    const url = new URL(location.href);
+    url.searchParams.set('send', '1');
+    const back = encodeURIComponent(url.pathname + url.search);
+    const cfg = await WisecallI18n.getConfig().catch(() => ({}));
+    const lang = WisecallI18n.getLang();
+    d.innerHTML = `<div class="ask-signup-panel">
+      <button type="button" class="sheet-close" data-signup-close aria-label="${escapeHtml(t('sheet.close'))}"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h2 id="askSignupTitle">${escapeHtml(t('ask.signup.title'))}</h2>
+      <p class="ask-signup-body">${escapeHtml(t('ask.signup.body'))}</p>
+      ${cfg && cfg.googleEnabled ? `<a class="btn-google" href="/api/auth/google/start?mode=signup&amp;lang=${lang}&amp;redirect=${back}"><span class="btn-google-logo">${GOOGLE_G}</span><span>${escapeHtml(t('ask.signup.google'))}</span></a>` : ''}
+      <a class="btn btn-primary btn-lg btn-block" href="/signup.html?redirect=${back}">${escapeHtml(t('ask.signup.email'))}</a>
+      <p class="ask-signup-login"><a class="plain-link" href="/login.html?redirect=${back}">${escapeHtml(t('ask.signup.login'))}</a></p>
+      <p class="hint">${escapeHtml(t('ask.signup.age'))}</p>
+    </div>`;
+    if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
+    const first = d.querySelector('.btn-google, .btn-primary');
+    if (first) first.focus();
   }
   const askArea = () => document.getElementById('askArea');
   // "Report this profile" (everyone signed in, any profile): a reason and a few words; an admin looks at it (server/profileSections.js).
@@ -406,30 +455,18 @@
     if (WisecallI18n.launchMode() === 'prelaunch' && !(user && user.id === expert.id)) {
       area.innerHTML = `
         <h2>${t('expert.prelaunch.title')}</h2>
-        <p class="ask-tip">${escapeHtml(t('expert.prelaunch.body').replace('{name}', expert.name))}</p>
+        <p class="ask-tip">${escapeHtml(t('expert.prelaunch.wait'))}</p>
         <div class="empty-wait">${WisecallWaitlist.html(expert.niche)}</div>`;
       WisecallWaitlist.wire(area);
       return;
     }
-    if (!user) {
-      const back = encodeURIComponent(location.pathname + location.search);
-      area.innerHTML = `
-        ${askHeader()}
-        <p class="ask-tip">${t('expert.askTip')}</p>
-        <div class="ask-login">
-          <p class="muted" style="margin:0">${escapeHtml(t('expert.loginToAsk').replace('{name}', expert.name))}</p>
-          <a class="btn btn-primary btn-block" href="/login.html?redirect=${back}">${t('nav.login')}</a>
-          <a class="btn btn-outline btn-block" href="/signup.html?redirect=${back}">${t('nav.signup')}</a>
-        </div>
-        ${askNotes()}`;
-      return;
-    }
-    if (user.id === expert.id) {
+    // (a visitor sees the same form as everybody: they sign up only when they send it, and the question waits for them, see onAsk)
+    if (user && user.id === expert.id) {
       area.innerHTML = `${askHeader()}<p class="muted">${t('expert.ownProfile')}</p>`;
       return;
     }
     // An account from before the age rule answers it once, before a first question (the draft stays in this browser).
-    if (user.needsAge) {
+    if (user && user.needsAge) {
       const back = encodeURIComponent(location.pathname + location.search);
       area.innerHTML = `${askHeader()}<p class="muted">${escapeHtml(t('age.beforeAsking'))}</p><a class="btn btn-primary btn-block" href="/age-check.html?redirect=${back}">${escapeHtml(t('age.answerNow'))}</a>${askNotes()}`;
       return;
@@ -443,8 +480,8 @@
       ${askHeader()}
       ${noticeKey ? `<p class="pay-notice ${noticeKey === 'expert.paymentCancelled' ? 'cancelled' : 'failed'}" id="payNotice" role="status" tabindex="-1">${escapeHtml(t(noticeKey))}</p>` : ''}
       <p class="ask-tip">${t('expert.askTip')}</p>
-      ${user.ageGroup === 'minor_16_17' ? `<p class="ask-minor-check" id="askMinorCheck">${escapeHtml(t('expert.minorCheck'))}</p>` : ''}
-      ${user.ageGroup === 'minor_16_17' && [expert.niche, ...(expert.extraNiches || [])].some((n) => ['medicine', 'psychology', 'law', 'finance'].includes(n)) ? `<p class="ask-minor-hint" id="askMinorHint">${escapeHtml(t('expert.minorHint'))}</p>` : ''}
+      ${user && user.ageGroup === 'minor_16_17' ? `<p class="ask-minor-check" id="askMinorCheck">${escapeHtml(t('expert.minorCheck'))}</p>` : ''}
+      ${user && user.ageGroup === 'minor_16_17' && [expert.niche, ...(expert.extraNiches || [])].some((n) => ['medicine', 'psychology', 'law', 'finance'].includes(n)) ? `<p class="ask-minor-hint" id="askMinorHint">${escapeHtml(t('expert.minorHint'))}</p>` : ''}
       <form id="askForm" novalidate>
         ${directionPicker()}
         <label for="question"><span>${t('expert.question.label')}</span>
@@ -457,7 +494,7 @@
             <button type="button" class="btn btn-outline btn-sm" id="askCodeApply">${t('expert.code.apply')}</button></div>
           <p class="small" id="askCodeNote" role="status"></p>
         </details>`}
-        ${!free && user.ageGroup === 'minor_16_17' ? `<label class="checkbox-row ask-payer" for="adultPayer"><input type="checkbox" id="adultPayer"> <span>${escapeHtml(t('expert.adultPayer'))}</span></label>` : ''}
+        ${!free && user && user.ageGroup === 'minor_16_17' ? `<label class="checkbox-row ask-payer" for="adultPayer"><input type="checkbox" id="adultPayer"> <span>${escapeHtml(t('expert.adultPayer'))}</span></label>` : ''}
         <p class="form-error" id="askError" role="alert"></p>
         <button type="submit" class="btn btn-primary btn-block" id="askBtn">${free ? t('expert.sendFree') : t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
       </form>
@@ -514,6 +551,8 @@
     errorEl.textContent = '';
     const question = document.getElementById('question').value.trim();
     if (WisecallAPI.textLength(question) < MIN_QUESTION) { errorEl.textContent = t('expert.question.tooShort').replace('{n}', MIN_QUESTION); document.getElementById('question').focus(); return; }
+    // Not signed in: the question is kept (this tab, this mentor) and the sign-up opens; it is sent when they come back signed in (?send=1).
+    if (!user) { draft = question; stored.set(question); openSignup(document.getElementById('askBtn')); return; }
     const payer = document.getElementById('adultPayer');
     if (payer && !payer.checked) { errorEl.textContent = t('expert.adultPayerRequired'); payer.focus(); return; }
     const submitBtn = document.getElementById('askBtn');

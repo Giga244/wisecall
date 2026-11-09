@@ -73,12 +73,12 @@ async function check(page, url, shown) {
 }
 
 test('the public pages: Browse, the mentor and asker profiles, a search, the field page', async ({ page }) => {
-  await check(page, '/#experts', 'Engineer <script>alert(1)</script>');
+  await check(page, '/experts.html', 'Engineer <script>alert(1)</script>');
   await check(page, `/u/${mentorUsername}`, 'About me <script>alert(1)</script> <img src=x onerror=alert(1)>');
   await expect(page.locator('body')).toContainText('Review <script>alert(1)</script>');
   await expect(page.locator('body')).toContainText('Reply <script>alert(1)</script>');
   await check(page, `/u/${askerUsername}`, 'Asker bio <script>alert(1)</script>');
-  await check(page, '/?q=Engineer#experts');
+  await check(page, '/experts.html?q=Engineer');
   await check(page, '/advice/tech', 'Engineer <script>alert(1)</script>');
 });
 

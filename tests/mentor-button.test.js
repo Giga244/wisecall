@@ -155,12 +155,10 @@ describe('what the pages show', () => {
     assert.equal(ka['nav.inReview'], 'განაცხადი განხილვაშია');
   });
 
-  test('the home page keeps its second button for everybody, and it never jumps (its state is on <html> from the first frame)', () => {
-    assert.match(read('public/index.html'), /class="btn btn-outline btn-lg btn-arrow hero-mentor-btn" data-mentor-cta="hero" data-i18n="hero\.mentorCta"/);
-    const css = read('public/css/home.css');
-    assert.match(css, /html\[data-mentor-state="draft"\] \.hero-mentor-btn:not\(\[data-ready\]\), html\[data-mentor-state="sent"\] \.hero-mentor-btn:not\(\[data-ready\]\) \{ visibility: hidden; \}/);
-    assert.match(css, /html\[data-mentor-state="none"\] \.hero-mentor, \.hero-mentor\[hidden\] \{ display: none; \}/);
-    assert.match(read('public/js/nav.js'), /document\.querySelectorAll\('\[data-mentor-cta="hero"\]'\)/);
+  test('the home page\'s mentor banner: "Become a mentor" for everybody, to the mentors\' page (docs/CLAUDE-CODE-NEW-HOME.md 2.6)', () => {
+    assert.match(read('public/index.html'), /<a href="\/become-a-mentor\.html" class="btn btn-primary btn-lg btn-arrow lmentor-btn" data-mentor-cta="hero" data-i18n="nav\.becomeMentor">/);
+    // (the mentors' page sends someone signed in on to the application)
+    assert.match(read('public/js/info-page.js'), /'\/apply\.html' : '\/signup\.html\?as=mentor'/);
   });
 
   test('the dashboard: a card at the top for an asker (also right after signing up), an application started, or one sent', () => {

@@ -54,11 +54,39 @@
     }));
   }
 
+  // The home page's phone (docs/CLAUDE-CODE-NEW-HOME.md 2.2): which published answer it shows, or none (then it is hidden). Only real
+  // questions whose asker and mentor both agreed are offered (server/homeQa.js); the answer is cut to about 300 characters there.
+  async function homeQa(box) {
+    let d;
+    try { d = await WisecallAPI.apiFetch('/admin/home-qa'); } catch (e) { box.innerHTML = ''; return; }
+    const row = (a) => `<li><label class="radio-row hq-row"><input type="radio" name="homeQa" value="${esc(a.id)}"${a.id === d.chosen ? ' checked' : ''}>
+      <span><strong>${esc(a.mentor)}</strong> · ${esc(a.niche ? t('niche.' + a.niche) : '—')}<br><span class="muted small">${esc(a.question)}</span></span></label></li>`;
+    box.innerHTML = `<section class="settings-card hq-box" aria-labelledby="hqTitle">
+      <h2 id="hqTitle">${esc(t('admin.hq.title'))}</h2>
+      <p class="muted small">${esc(t('admin.hq.help'))}</p>
+      ${d.answers.length ? `<ul class="hq-list">
+        <li><label class="radio-row hq-row"><input type="radio" name="homeQa" value=""${d.chosen ? '' : ' checked'}> <span>${esc(t('admin.hq.none'))}</span></label></li>
+        ${d.answers.map(row).join('')}</ul>
+        <button type="button" class="btn btn-primary btn-sm" data-hq-save>${esc(t('admin.hq.save'))}</button>` : `<p class="muted">${esc(t('admin.hq.empty'))}</p>`}
+    </section>`;
+    const save = box.querySelector('[data-hq-save]');
+    if (save) save.addEventListener('click', async () => {
+      const picked = box.querySelector('input[name="homeQa"]:checked');
+      save.disabled = true;
+      try {
+        await WisecallAPI.apiFetch('/admin/home-qa', { method: 'POST', body: { id: picked && picked.value ? picked.value : null } });
+        WisecallNav.showToast(t('toast.saved'));
+      } catch (e) { WisecallNav.showToast(t('toast.error')); }
+      save.disabled = false;
+    });
+  }
+
   async function render(container) {
     container.innerHTML = `<p class="muted">${esc(t('admin.loading'))}</p>`;
     let d;
     try { d = await WisecallAPI.apiFetch('/admin/public-answers'); } catch (e) { container.innerHTML = `<p class="muted">${esc(t('toast.error'))}</p>`; return; }
-    container.innerHTML = `<div class="pa-samples-box"></div><p class="muted small">${esc(t('admin.pa.help'))}</p>${d.queue.length ? d.queue.map(card).join('') : `<p class="muted">${esc(t('admin.pa.empty'))}</p>`}`;
+    container.innerHTML = `<div class="hq-box-slot"></div><div class="pa-samples-box"></div><p class="muted small">${esc(t('admin.pa.help'))}</p>${d.queue.length ? d.queue.map(card).join('') : `<p class="muted">${esc(t('admin.pa.empty'))}</p>`}`;
+    homeQa(container.querySelector('.hq-box-slot'));
     samples(container.querySelector('.pa-samples-box'));
     container.querySelectorAll('.pa-review').forEach((el) => {
       const id = el.dataset.id;

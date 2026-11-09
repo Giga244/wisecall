@@ -14,7 +14,7 @@ const FIRST = 'e2e/full-flow.spec.js';
 // Seconds each file took on GitHub Actions (run of 2026-10-19, Playwright list reporter).
 const SECONDS = {
   'e2e/responsive.spec.js': 274, 'e2e/smoke.a11y.spec.js': 183, 'e2e/theme.spec.js': 124, 'e2e/redesign.spec.js': 83, 'e2e/home-layout.spec.js': 48,
-  'e2e/home-examples.spec.js': 34, 'e2e/smoke.spec.js': 32, 'e2e/xss.spec.js': 30, 'e2e/mentor-button.spec.js': 29, 'e2e/profiles.spec.js': 28,
+  'e2e/smoke.spec.js': 32, 'e2e/xss.spec.js': 30, 'e2e/mentor-button.spec.js': 29, 'e2e/profiles.spec.js': 28,
   'e2e/google.spec.js': 23, 'e2e/header-auth.spec.js': 17, 'e2e/ratings.spec.js': 16, 'e2e/mentor-signup.spec.js': 14, 'e2e/dev-setup.spec.js': 13,
   'e2e/live-sessions.spec.js': 10, 'e2e/skeletons.spec.js': 9, 'e2e/live-switch.spec.js': 9, 'e2e/local-flow.spec.js': 9, 'e2e/refunds.spec.js': 9,
   'e2e/niches.spec.js': 9, 'e2e/admin-prelaunch.spec.js': 9, 'e2e/motion.spec.js': 8, 'e2e/pay-and-answer.spec.js': 7, 'e2e/security.spec.js': 6,

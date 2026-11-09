@@ -128,14 +128,17 @@ describe('loading skeletons', () => {
   });
 
   test('each loading place: the skeleton hidden from screen readers and one "Loading…" status', () => {
-    const home = read('public/index.html');
-    const grid = /<div class="expert-grid" id="expertGrid" aria-live="polite" aria-busy="true">([\s\S]*?)\n {4}<\/div>\n/.exec(home)[1];
+    // Browse (public/experts.html): open before and after launch, so its skeleton is the same in both
+    const browse = read('public/experts.html');
+    const grid = /<div class="expert-grid" id="expertGrid" aria-live="polite" aria-busy="true">([\s\S]*?)\n {4}<\/div>\n/.exec(browse)[1];
     assert.equal(count(grid, /role="status"/g), 1);
     assert.equal(count(grid, /<div class="expert-card skeleton-expert" aria-hidden="true">/g), 8, '8 cards (6 below 1024px)');
-    assert.match(grid, /<!-- after launch -->[\s\S]*skeleton-expert[\s\S]*<!-- \/after launch -->/);
-    assert.doesNotMatch(grid, /<!-- before launch -->/, 'before launch Browse is hidden: the hero has the waiting list');
-    assert.match(home, /<div class="hero-wait" id="heroWait"><!-- before launch --><div class="hero-wait-skeleton" aria-hidden="true">[\s\S]*?<!-- \/before launch --><\/div>/);
-    assert.equal(count(home, /<li class="skeleton-tile" aria-hidden="true">/g), 10);
+    assert.doesNotMatch(grid, /<!-- (before|after) launch -->/);
+    assert.equal(count(browse, /<li class="skeleton-tile" aria-hidden="true">/g), 10);
+    // the home page: the hero's waiting list (before launch) has the form's height while it is drawn; the popular fields too
+    const home = read('public/index.html');
+    assert.match(home, /<!-- before launch -->[\s\S]*<div class="lhero-wait" id="heroWait"><div class="lhero-wait-skeleton" aria-hidden="true">[\s\S]*?<!-- \/before launch -->/);
+    assert.equal(count(home, /<li aria-hidden="true"><span class="skeleton skeleton-chip"><\/span><\/li>/g), 3);
     const dash = read('public/dashboard.html');
     assert.match(dash, /<div id="askedList" aria-live="polite" aria-busy="true">\s*<p class="sr-only" role="status" data-i18n="experts\.loading">Loading…<\/p>/);
     assert.equal(count(dash, /<div class="booking-card skeleton-booking" aria-hidden="true">/g), 2);

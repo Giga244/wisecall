@@ -816,17 +816,39 @@ async function sendPage(res, file, vars, status = 200) {
   return true;
 }
 
+// One "Meet our experts" card while it loads: the same lines as the real card (public/js/home-mentors.js)
+const HOME_CARD_SKELETON = '<li class="lexpert lexpert-skeleton" aria-hidden="true"><span class="skeleton skeleton-avatar md lexpert-avatar"></span>' +
+  '<span class="skeleton skeleton-line w60 strong"></span><span class="skeleton skeleton-line w90"></span><span class="skeleton skeleton-pill"></span>' +
+  '<span class="skeleton skeleton-line w40"></span><span class="lexpert-foot"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></span></li>';
+
 function pageRoutes() {
   const router = express.Router();
 
   router.get(['/', '/index.html'], async (req, res, next) => {
     try {
+      // Browse experts is its own page now (/experts.html, docs/CLAUDE-CODE-NEW-HOME.md): an old link to the home page with Browse's filters
+      // (?field=, ?niche= from earlier emails, ?q=...) goes there with them. (A bare /#experts is moved by the page itself: the server never
+      // sees the part after #.)
+      const BROWSE = ['field', 'niche', 'chip', 'q', 'free', 'paid', 'country', 'years'];
+      if (BROWSE.some((k) => req.query[k] !== undefined)) {
+        const qs = new URLSearchParams();
+        for (const k of BROWSE) if (typeof req.query[k] === 'string') qs.set(k, req.query[k].slice(0, 200));
+        return res.redirect(302, `${langOf(res) === 'ka' ? '/ka' : ''}/experts.html?${qs}`);
+      }
       let html = readPage('index.html');
       if (html === null) return next();
       // (before launch the last call to action and the experts' skeleton are left out: the hero's waiting-list form already asks for the
       // email; after launch, the hero form's skeleton)
       const gone = config.LAUNCH_MODE === 'prelaunch' ? 'after launch' : 'before launch';
       html = html.replace(new RegExp(`[ \\t]*<!-- ${gone} -->[\\s\\S]*?<!-- /${gone} -->\\r?\\n?`, 'g'), '');
+      // "Meet our experts" and the phone arrive open when they will have something (with the cards' skeletons), so nothing below them
+      // moves once the script fills them in (public/js/home-mentors.js, landing.js); otherwise they stay hidden
+      const [mentors, qa] = await Promise.all([require('./homeMentors').anyShown(), require('./homeQa').current()]);
+      if (mentors) {
+        html = html.replace('id="homeMentors" aria-labelledby="homeMentorsTitle" hidden>', 'id="homeMentors" aria-labelledby="homeMentorsTitle">')
+          .replace('<ul class="lexpert-grid" id="homeMentorsList"></ul>', `<ul class="lexpert-grid" id="homeMentorsList" aria-busy="true">${HOME_CARD_SKELETON.repeat(3)}</ul>`);
+      }
+      if (qa) html = html.replace('<div class="lhero-phone" id="homeQa" hidden>', '<div class="lhero-phone" id="homeQa">');
       sendHtml(res, 200, addToHead(fill(html, baseVars('/')), homeJsonLd(langOf(res))));
     } catch (e) { next(e); }
   });

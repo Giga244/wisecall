@@ -354,6 +354,16 @@ router.post('/public-answers/:id/approve', requireAuth, requireAdmin, asyncHandl
   try { res.json({ publicAnswer: await require('../publicAnswers').approve(req.adminUser, req.params.id, { question: b.question, answer: b.answer, allowRegulated: b.allowRegulated === true }) }); }
   catch (e) { paFail(res, e); }
 }));
+// The home page's phone: which published answer it shows (or none). Only real ones both people agreed to show (server/homeQa.js).
+router.get('/home-qa', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(await require('../homeQa').forAdmin());
+}));
+router.post('/home-qa', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const id = (req.body || {}).id;
+  try { res.json(await require('../homeQa').choose(req.adminUser, id === null || id === undefined || id === '' ? null : String(id))); }
+  catch (e) { if (e instanceof require('../homeQa').HomeQaError) return res.status(404).json({ error: e.code }); throw e; }
+}));
 router.post('/public-answers/:id/reject', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   try { res.json({ publicAnswer: await require('../publicAnswers').reject(req.adminUser, req.params.id, (req.body || {}).reason) }); }
   catch (e) { paFail(res, e); }

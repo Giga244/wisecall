@@ -127,6 +127,11 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --rise: 0.9s;
   font-size: 16px;
+  /* the home page's phone (public/css/landing.css): a drawing of a phone's light screen, the same in both themes */
+  --phone-frame: #1d1a2e; --phone-screen: #fbf6f1; --phone-ink: #25213b; --phone-card: #ffffff; --phone-line: #f0eae3;
+  --phone-soft: #8e89a3; --phone-placeholder: #9a95ad; --phone-back: #6d6880; --phone-ok: #1f7a55; --phone-coral: #ff6f59;
+  --phone-on-coral: #ffffff; --phone-on-coral-rgb: 255, 255, 255; --phone-dot: #b9b4c8; --phone-star: #f5b301; --phone-star-off: #d8d3e3;
+  --phone-shadow-rgb: 37, 33, 59;
 }
 @media (max-width: 639px) { :root { --gutter: 18px; } }
 

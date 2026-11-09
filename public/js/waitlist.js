@@ -20,9 +20,24 @@
 
   let counter = 0;
   // opts.submit: another word for the button (an empty field: "notify me when a mentor appears").
+  // opts.compact: the home page's hero before launch (docs/CLAUDE-CODE-NEW-HOME.md 4): the email and "ჩაეწერე სიაში" on one line; the field is
+  // chosen with the hero's chips (a hidden field, "any field" until one is tapped), and the "16 or older" box under them.
   function html(niche, opts = {}) {
     const n = ++counter;
     const chosen = questionField || WisecallI18n.fieldOfNiche(niche) || 'any';
+    if (opts.compact) {
+      return `
+      <form class="waitlist-form waitlist-compact" novalidate>
+        <div class="wlc-row">
+          <label for="wl${n}-email" class="wlc-email"><span class="sr-only">${t('wait.email')}</span><input id="wl${n}-email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="${esc(t('home2.wait.placeholder'))}" required></label>
+          <button class="btn btn-primary waitlist-submit" type="submit">${esc(t('home2.wait.button'))}</button>
+        </div>
+        <input type="hidden" name="niche" value="${esc(chosen)}">
+        <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
+        <p class="form-error waitlist-error" role="alert"></p>
+        <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
+      </form>`;
+    }
     const opt = (k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : fieldLabel(k))}</option>`;
     // (the fields people wait for most first, then the rest under "Other fields")
     const top = [...new Set(WisecallI18n.popularFields().map(WisecallI18n.fieldOfNiche).filter(Boolean))].slice(0, 6);
@@ -66,9 +81,14 @@
           // ("You're #N on the list" and a link to pass on: docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 5)
           const place = joined && joined.position ? `<strong class="waitlist-place">${esc(t('wait.position').replace('{n}', joined.position))}.</strong> ` : '';
           const share = joined && joined.share ? ` <button type="button" class="linklike waitlist-share" data-share="${esc(joined.share)}">${esc(t('wait.share'))}</button>` : '';
-          done.innerHTML = `${CHECK}<p>${place}${esc(t(prelaunch() ? 'wait.prelaunch.done' : 'wait.done'))}${share}</p>`;
+          done.innerHTML = `${CHECK}<p>${place}${esc(t(prelaunch() ? 'wait.thanks' : 'wait.done'))}${share}</p>`;
           done.style.minHeight = `${form.offsetHeight}px`;
           form.replaceWith(done);
+          // (follow us meanwhile: Instagram, TikTok, Facebook, as set on the server; docs/CLAUDE-CODE-NEW-HOME.md 4)
+          if (window.WisecallSocial && WisecallI18n.getConfig) WisecallI18n.getConfig().then((cfg) => {
+            const icons = WisecallSocial.html(cfg && cfg.social);
+            if (icons) done.insertAdjacentHTML('beforeend', `<div class="waitlist-follow"><span>${esc(t('wait.follow'))}</span><ul class="footer-social social-inline">${icons}</ul></div>`);
+          }).catch(() => {});
           const sb = done.querySelector('[data-share]');
           if (sb) sb.addEventListener('click', async () => {
             const url = sb.dataset.share;
@@ -105,12 +125,12 @@
   }
 
   // Before launch the form is in the hero, above the fold at every width: the home page's one waiting list
-  // (docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md; it takes the place of the skeleton the page arrives with).
+  // (docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md, docs/CLAUDE-CODE-NEW-HOME.md 4; it takes the place of the skeleton the page arrives with).
   function hero() {
     const box = document.getElementById('heroWait');
     if (!box || !prelaunch() || box.dataset.ready) return;
     box.dataset.ready = '1';
-    box.innerHTML = `<p class="hero-wait-lead">${esc(t('wait.hero'))}</p>${html()}`;
+    box.innerHTML = html(undefined, { compact: true });
     wire(box);
   }
   const ready = WisecallI18n.ready.then(hero);

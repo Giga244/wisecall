@@ -13,7 +13,7 @@ test.beforeAll(async () => {
 });
 
 test('Browse: a search that finds nobody leads to the request form, with the words already filled in', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/experts.html');
   await page.fill('#searchInput', 'Beekeeping in Kakheti');
   const cta = page.locator('#expertGrid a[href^="/find-a-mentor.html"]');
   await expect(cta).toBeVisible();

@@ -148,7 +148,7 @@ test('the mentor adds payout details and appears in Browse experts', async () =>
   await mentorPage.click('#payoutForm button[type="submit"]');
   await expect.poll(async () => (await S.sql('SELECT payout_iban_enc IS NOT NULL AS has FROM users WHERE id = $1', [mentorId]))[0].has).toBe(true);
 
-  await seekerPage.goto('/');
+  await seekerPage.goto('/experts.html');
   await seekerPage.fill('#searchInput', 'Lomidze');
   const cardLink = seekerPage.locator('.expert-card').filter({ hasText: mentor.name });
   await expect(cardLink).toBeVisible();

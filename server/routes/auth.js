@@ -263,6 +263,7 @@ router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
 
   const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null, emailCodeAttempts: 0 });
   if (updated.role === 'mentor' || updated.role === 'both') await verification.syncEmailStep(updated);
+  require('../notify').notifyWelcome(updated); // (once: an address already verified returned above)
   require('../analytics').event('email_verified', req);
   res.json({ user: meProfile(updated) });
 }));

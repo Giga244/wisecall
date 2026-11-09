@@ -200,7 +200,7 @@ test('the header hides while reading down a phone and returns on the way up; not
 
 test('Browse on a phone: the Filters sheet holds sort and fields, and the list follows', async ({ browser }) => {
   const { ctx, page } = await newPage(browser, 390);
-  await page.goto('/');
+  await page.goto('/experts.html');
   await page.waitForLoadState('networkidle');
   await expect(page.locator('#filtersBtn')).toBeVisible();
   await expect(page.locator('#sortSelect')).toBeHidden(); // moved into the sheet
@@ -234,7 +234,7 @@ test('Browse on a phone: the Filters sheet holds sort and fields, and the list f
 
   // a tablet shows the controls on the page: two cards across, no Filters button
   const tablet = await newPage(browser, 768);
-  await tablet.page.goto('/');
+  await tablet.page.goto('/experts.html');
   await tablet.page.waitForLoadState('networkidle');
   await expect(tablet.page.locator('#filtersBtn')).toBeHidden();
   await expect(tablet.page.locator('#sortSelect')).toBeVisible();
@@ -277,29 +277,6 @@ test('the expert profile on a phone: a bar with the price and Ask, opening the q
   await tablet.ctx.close();
 });
 
-test('the last call to action: its speech bubble never covers the words or the buttons (hidden below 1100px)', async ({ browser }) => {
-  for (const width of [390, 768, 1024, 1099, 1100, 1180, 1280, 1440, 1920]) {
-    for (const lang of ['en', 'ka']) {
-      const { ctx, page } = await newPage(browser, width, { lang });
-      await page.goto(lang === 'ka' ? '/ka/' : '/');
-      await page.waitForLoadState('networkidle');
-      const r = await page.evaluate(() => {
-        const bubble = document.querySelector('.cta-bubble');
-        if (getComputedStyle(bubble).display === 'none') return { shown: false, hits: [] };
-        const b = bubble.querySelector('path').getBoundingClientRect(); // (the drawn bubble, not its empty box)
-        const hits = [...document.querySelectorAll('.cta-inner h2, .cta-inner p, .cta-inner .btn')].filter((el) => {
-          const e = el.getBoundingClientRect();
-          return Math.min(e.right, b.right) - Math.max(e.left, b.left) > 0 && Math.min(e.bottom, b.bottom) - Math.max(e.top, b.top) > 0;
-        }).map((el) => el.textContent.trim());
-        return { shown: true, hits };
-      });
-      expect(r.shown, `${width}px ${lang}: the bubble is shown`).toBe(width >= 1100);
-      expect(r.hits, `${width}px ${lang}: what the bubble covers`).toEqual([]);
-      await ctx.close();
-    }
-  }
-});
-
 test('card groups fill their rows: no lone card on a tablet', async ({ browser }) => {
   const { ctx, page } = await newPage(browser, 768);
   await page.goto('/');
@@ -310,7 +287,7 @@ test('card groups fill their rows: no lone card on a tablet', async ({ browser }
     items.forEach((el) => { const top = Math.round(el.getBoundingClientRect().top / 10); byRow.set(top, (byRow.get(top) || []).concat(el.getBoundingClientRect().width)); });
     return Array.from(byRow.values()).map((r) => r.length);
   }, sel);
-  expect(await rows('.how-step'), 'How it works: stacked').toEqual([1, 1, 1]);
+  expect(await rows('.lstep'), 'How it works: three in a row').toEqual([3]);
   await page.goto('/become-a-mentor.html');
   await page.waitForLoadState('networkidle');
   expect(await rows('.perk'), "the mentors' page: three perks in a row").toEqual([3]);

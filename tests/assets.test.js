@@ -52,7 +52,7 @@ describe('addresses carry the version of the file', () => {
   test('a script or stylesheet that names another file names it with its version (the logo in header.js, the fonts in tokens.css, the icons in the manifest)', async () => {
     const header = (await visitor('/js/header.js')).text;
     assert.match(header, /src="\/brand\/wisecall-logo\.svg\?v=[0-9a-f]{10}"/);
-    assert.match(header, /srcset="\/brand\/wisecall-mark\.svg\?v=[0-9a-f]{10}"/);
+    assert.match(header, /href="\/brand\/jikhva-head\.webp\?v=[0-9a-f]{10}"/, 'the head in the header\'s Jikhva logo');
     assert.match(header, /src="\/brand\/wisecall-logo-on-dark-transparent\.svg\?v=[0-9a-f]{10}"/);
     const css = (await visitor('/css/tokens.css')).text;
     assert.equal((css.match(/url\('\/fonts\/[\w-]+\.woff2\?v=[0-9a-f]{10}'\)/g) || []).length, 4, 'all four font files');

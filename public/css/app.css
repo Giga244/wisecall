@@ -1000,3 +1000,22 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .star-btn.filled { opacity: 1; }
 .ask-code summary { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
 .q-meta .a-count { white-space: nowrap; }
+/* "Sign up to send your question" (docs/CLAUDE-CODE-NEW-HOME.md 3; public/js/profile.js): a dialog on a computer, a bottom sheet on a phone */
+.ask-signup { border: 0; padding: 0; background: transparent; max-width: 440px; width: calc(100% - 32px); color: var(--ink); }
+.ask-signup::backdrop { background: var(--scrim); }
+.ask-signup-panel { position: relative; display: grid; gap: 12px; background: var(--raised); border: var(--line-w) solid var(--line); border-radius: var(--r-card); padding: 28px 24px 24px; }
+.ask-signup-panel h2 { margin: 0 36px 0 0; font-size: 1.35rem; line-height: 1.3; }
+.ask-signup-body { margin: 0 0 4px; line-height: 1.5; color: var(--ink-soft); }
+.ask-signup-panel .sheet-close { position: absolute; top: 12px; right: 12px; }
+.ask-signup-panel .btn-google { justify-content: center; }
+.ask-signup-login { margin: 4px 0 0; text-align: center; }
+.ask-signup-panel .hint { margin: 0; text-align: center; }
+@media (max-width: 639px) {
+  .ask-signup { margin: auto 0 0; width: 100%; max-width: none; }
+  .ask-signup-panel { border-radius: var(--r-card) var(--r-card) 0 0; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}
+/* Admin > Public answers: the home page's phone (public/js/admin-public-answers.js) */
+.hq-box { margin-bottom: 20px; }
+.hq-list { list-style: none; margin: 8px 0 14px; padding: 0; display: grid; gap: 6px; max-height: 420px; overflow: auto; }
+.hq-row { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 0; line-height: 1.45; }
+.hq-row input { width: 20px; height: 20px; margin: 2px 0 0; flex: 0 0 auto; }

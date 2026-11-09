@@ -802,5 +802,10 @@
   "admin.mv.waitingForId": "Waiting for ID",
   "admin.mv.idReminder": "Send ID reminder",
   "admin.mv.idReminderSent": "ID reminder sent.",
-  "admin.mv.idReminderSoon": "A reminder was sent in the last 48 hours: the next one is possible from {date}."
+  "admin.mv.idReminderSoon": "A reminder was sent in the last 48 hours: the next one is possible from {date}.",
+  "admin.hq.title": "The home page's phone",
+  "admin.hq.help": "Which question and answer the home page shows. Only real, published answers whose student and mentor both agreed to show them are listed. The student is never named; the answer is cut to about 300 characters.",
+  "admin.hq.none": "None (the phone is hidden)",
+  "admin.hq.save": "Save",
+  "admin.hq.empty": "No published answer that both people agreed to show yet. The phone is hidden."
 }

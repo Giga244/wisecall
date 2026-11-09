@@ -94,24 +94,18 @@ test('the keyboard focus is a 2px coral outline with an offset (light and dark)'
   }
 });
 
-test('with reduced motion nothing moves; with motion the hero rises, the conversation loops and sections reveal once', async ({ browser }) => {
+test('with reduced motion nothing moves on the home page; with motion allowed the page is marked for it', async ({ browser }) => {
+  // (the phone's own loop, its pause off screen and its still final state: e2e/new-home.spec.js and tests/new-home.test.js)
   const calm = await open(browser, { width: 1280, motion: 'reduce' });
   await settle(calm.page, '/');
   await calm.page.waitForTimeout(500);
   expect(await calm.page.evaluate(() => document.documentElement.classList.contains('motion'))).toBe(false);
-  expect(await calm.page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length)).toBe(0);
-  await expect(calm.page.locator('.stage-example.is-active .bubble-a')).toHaveCSS('opacity', '1'); // (the whole conversation is shown, still)
+  expect(await calm.page.evaluate(() => document.getAnimations().filter((x) => x.playState === 'running').length)).toBe(0);
   await calm.ctx.close();
 
   const lively = await open(browser, { width: 1280, motion: 'no-preference' });
   await settle(lively.page, '/');
   expect(await lively.page.evaluate(() => document.documentElement.classList.contains('motion'))).toBe(true);
-  const names = await lively.page.evaluate(() => [...new Set(document.getAnimations().map((a) => a.animationName))]);
-  for (const n of ['q-in', 'a-in', 'typing', 'float']) expect(names, n).toContain(n);
-  const grid = lively.page.locator('.how-row');
-  await expect(grid).not.toHaveClass(/is-in/);
-  await grid.scrollIntoViewIfNeeded();
-  await expect(grid).toHaveClass(/is-in/);
   await lively.ctx.close();
 });
 

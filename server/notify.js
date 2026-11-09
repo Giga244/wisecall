@@ -148,6 +148,10 @@ const notifyAdmins = (subject, html) => {
   }));
 };
 
+// Welcome (docs/CLAUDE-CODE-NEW-HOME.md 2.7): once, when the address is verified (the emailed code, or Google at sign-up), with Wisecall's
+// social links. Before launch it says the site opens soon.
+const notifyWelcome = (user) => safeSend('welcome', 'welcome', user, { name: require('./ageGate').firstName(user.name), prelaunch: config.LAUNCH_MODE === 'prelaunch' });
+
 // The application was sent: what happens next. Reminders for one left unfinished (server/verification/reminders.js), which the footer
 // switches off.
 const notifyApplicationReceived = (mentor) => safeSend('application received', 'applicationReceived', mentor, { days: config.MENTOR_REVIEW_DAYS, prelaunch: config.LAUNCH_MODE === 'prelaunch' });
@@ -157,4 +161,4 @@ const notifyIdReminder = (mentor, d = {}) => safeSend('ID check reminder', 'idRe
 // Right after sending without the ID check (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 4): once, see verification/reminders.js oneStepLeft.
 const notifyIdOneStep = (mentor) => safeSend('ID check: one step left', 'idOneStep', mentor, {});
 
-module.exports = { notifyApplicationReceived, notifyApplyReminder, notifyIdReminder, notifyIdOneStep, notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifyFollowUpReminder, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins, notifyPriceChanged, notifyChangeDecided };
+module.exports = { notifyApplicationReceived, notifyWelcome, notifyApplyReminder, notifyIdReminder, notifyIdOneStep, notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifyFollowUpReminder, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins, notifyPriceChanged, notifyChangeDecided };

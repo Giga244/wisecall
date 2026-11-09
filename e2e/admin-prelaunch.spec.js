@@ -80,10 +80,10 @@ test('a link opens a status directly: ?tab=mentors&status=verified and &status=a
   await expect(page.locator('#statusFilters .chip.active')).toHaveAttribute('data-status', 'pending');
 });
 
-test('the home page still hides its expert search and field filters before launch; no other page loses a .filters row', async ({ page }) => {
-  await page.goto(`${srv.base}/`);
-  await expect(page.locator('#filters')).toBeHidden();
-  await expect(page.locator('#experts .browse-toolbar')).toBeHidden();
+test('Browse keeps its expert search and field filters before launch (docs/CLAUDE-CODE-NEW-HOME.md 4); no page loses a .filters row', async ({ page }) => {
+  await page.goto(`${srv.base}/experts.html`);
+  await expect(page.locator('#experts .browse-toolbar')).toBeVisible();
+  await expect(page.locator('#filters .chip').first()).toBeVisible();
   await signIn(page);
   for (const p of ['/dashboard.html', '/settings.html', '/inbox.html', '/help.html', '/admin.html']) {
     await page.goto(srv.base + p);

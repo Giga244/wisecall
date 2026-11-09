@@ -54,7 +54,7 @@ test('Browse experts: 8 skeleton cards on a desktop, 6 on a phone; the real card
   for (const [width, count] of [[1280, 8], [390, 6]]) {
     const { ctx, page } = await open(browser, width);
     const experts = await hold(page, '**/api/experts');
-    await page.goto('/');
+    await page.goto('/experts.html');
     await experts.arrived;
     await expect(page.locator('#expertGrid')).toHaveAttribute('aria-busy', 'true');
     await expectLoading(page, '#expertGrid', '.skeleton-expert', count);
@@ -69,7 +69,7 @@ test('Browse experts: 8 skeleton cards on a desktop, 6 on a phone; the real card
   }
   const { ctx, page } = await open(browser, 1280);
   const experts = await hold(page, '**/api/experts');
-  await page.goto('/');
+  await page.goto('/experts.html');
   await experts.fail();
   await expect(page.locator('#expertGrid')).toHaveText('Could not load experts right now.');
   await expect(page.locator('#expertGrid')).toHaveAttribute('aria-busy', 'false');
@@ -79,7 +79,7 @@ test('Browse experts: 8 skeleton cards on a desktop, 6 on a phone; the real card
 test('the field tiles: skeleton tiles in the same full rows until the fields arrive, and the section keeps its height', async ({ browser }) => {
   const { ctx, page } = await open(browser, 1280);
   const config = await hold(page, '**/api/config');
-  await page.goto('/');
+  await page.goto('/experts.html');
   await config.arrived;
   await expect(page.locator('#nicheStrip .skeleton-tile:visible')).toHaveCount(10); // (5 columns, 2 rows)
   const before = await page.locator('.strip').evaluate((e) => e.getBoundingClientRect().height);
@@ -101,7 +101,7 @@ test('a profile: the name at once, skeletons for the rest, the cards stay in pla
   await api.release();
   await expect(page.locator('#askCard')).toBeVisible();
   expect(await box(page.locator('#expertPage .profile-card'))).toEqual(card);
-  await expect(page.locator('#expertPage [data-skeleton], #expertPage [role="status"]')).toHaveCount(0);
+  await expect(page.locator('#expertPage [data-skeleton], #expertPage [role="status"]:not(#askCodeNote)')).toHaveCount(0); // (the question form's own live note stays)
   await page.unroute(`**/api/users/${mentorUsername}`);
 
   api = await hold(page, `**/api/users/${mentorUsername}`);
@@ -186,7 +186,7 @@ test('the shimmer moves only when motion is allowed; with reduced motion the blo
   for (const motion of ['no-preference', 'reduce']) {
     const { ctx, page } = await open(browser, 1280, { motion });
     const experts = await hold(page, '**/api/experts');
-    await page.goto('/');
+    await page.goto('/experts.html');
     await experts.arrived;
     await expect(page.locator('#expertGrid .skeleton-expert').first()).toBeVisible();
     const shining = await page.evaluate(() => document.getAnimations().filter((a) => a.animationName === 'skeleton-shine' && a.playState === 'running').length);

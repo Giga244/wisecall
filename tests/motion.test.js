@@ -30,11 +30,7 @@ describe('page transitions', () => {
     assert.match(read('public/js/theme-init.js'), /if \(!calm && !\('CSSViewTransitionRule' in window\)\) root\.classList\.add\('page-fade'\);/);
   });
 
-  test('the home page\'s answers fade in and out (0.2s), the FAQ page\'s and the confirmation dialog too, all only with motion', () => {
-    const home = read('public/css/home.css');
-    assert.match(home, /html\.motion \.faq-a:not\(\[hidden\]\) \{ animation: faq-open 0\.2s var\(--ease-out\); \}/);
-    assert.match(home, /html\.motion \.faq-a\.is-closing \{ animation: faq-close 0\.16s ease-in forwards; \}/);
-    assert.match(read('public/js/home.js'), /panel\.classList\.add\('is-closing'\);\n\s*setTimeout\(\(\) => \{/);
+  test('the FAQ page\'s answers open and close (0.2s), and the confirmation dialog fades in, all only with motion', () => {
     const s = read('public/css/style.css');
     assert.match(s, /html\.motion details\.faq-item::details-content \{ height: 0; opacity: 0;[^}]*transition: height 0\.2s/);
     assert.match(s, /@starting-style \{\n  html\.motion \.wc-dialog\[open\] \{ opacity: 0; transform: translateY\(8px\) scale\(0\.98\); \}/);

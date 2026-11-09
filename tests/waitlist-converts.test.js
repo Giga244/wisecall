@@ -91,15 +91,11 @@ test('one email per address when it is time to tell them (two fields, one email)
   assert.equal(rows[0].n, 2, 'both entries count as told');
 });
 
-test('the page: the form in the hero before launch, the only one (Browse is hidden); real sample answers in the hero once there are some', () => {
+test('the page: before launch the hero has the waiting list instead of the search (the server keeps one of the two); Browse stays open', () => {
   const html = fs.readFileSync(path.join(ROOT, 'public/index.html'), 'utf8');
-  assert.ok(html.indexOf('id="heroWait"') < html.indexOf('id="heroSearch"'), 'above the search');
+  assert.match(html, /<!-- after launch -->\s*<form class="lhero-search" id="heroSearch"[\s\S]*?<!-- \/after launch -->\s*<!-- before launch -->[\s\S]*?id="heroWait"[\s\S]*?<!-- \/before launch -->/);
   const css = fs.readFileSync(path.join(ROOT, 'public/css/style.css'), 'utf8');
-  // (at every width, docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md)
-  assert.doesNotMatch(css, /@media \(min-width: \d+px\) \{ \.hero-wait \{ display: none/);
-  assert.match(css, /\[data-launch="prelaunch"\] #experts \{ display: none; \}/);
-  assert.match(css, /html:not\(\[data-launch="prelaunch"\]\) \.hero-wait \{ display: none !important; \}/);
+  assert.doesNotMatch(css, /\[data-launch="prelaunch"\] #experts \{ display: none; \}/, 'Browse is open before launch (docs/CLAUDE-CODE-NEW-HOME.md 4)');
   const ka = JSON.parse(fs.readFileSync(path.join(ROOT, 'public/i18n/ka.json'), 'utf8'));
   assert.equal(ka['wait.position'], 'შენ ხარ #{n} სიაში');
-  assert.match(fs.readFileSync(path.join(ROOT, 'public/js/home.js'), 'utf8'), /filter\(\(a\) => a\.sample\)/);
 });

@@ -31,9 +31,9 @@ async function walk(page, { width, shots, tag }) {
   };
 
   await page.goto('/ka/');
-  await expect(page.locator('.hero-mentor-btn')).toHaveText('ექსპერტი ვარ – გავხდე მენტორი');
+  await expect(page.locator('[data-mentor-cta="hero"]')).toHaveText('გახდი მენტორი'); // (the home page's mentor banner)
   await shot('01-home');
-  await click(page.locator('.hero-mentor-btn'));
+  await click(page.locator('[data-mentor-cta="hero"]'));
   await page.waitForURL(/become-a-mentor\.html/);
   await expect(page.locator('.become-link').first()).toBeVisible();
   await shot('02-become-a-mentor');

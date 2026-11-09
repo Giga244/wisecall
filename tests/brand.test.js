@@ -139,10 +139,12 @@ describe('every page carries the icons, the manifest and the theme colour', () =
 describe('the logo in the header, the menu, the footer and the emails', () => {
   const read = (f) => fs.readFileSync(path.join(PUB, f), 'utf8');
 
-  test('the header, menu and footer draw the logo image (with its size), not text; the symbol alone under 360px', () => {
+  test('the header and menu draw the Jikhva logo, the footer the logo image (with its size); never text', () => {
     const header = read('js/header.js'), footer = read('js/footer.js');
     assert.match(header, /src="\/brand\/wisecall-logo\.svg" alt="Wisecall" width="149" height="36"/);
-    assert.match(header, /<source media="\(max-width: 359px\)" srcset="\/brand\/wisecall-mark\.svg">/);
+    // the header: Jikhva peeking out from behind the "ll", room above for the horns (docs/CLAUDE-CODE-NEW-HOME.md)
+    assert.match(header, /<svg class="jlogo" viewBox="[^"]+" width="157" height="72" role="img" aria-label="Wisecall"[^>]*>/);
+    assert.match(header, /<image class="jlogo-head" href="\/brand\/jikhva-head\.webp"/);
     assert.match(header, /wisecall-logo-on-dark-transparent\.svg/, 'the logo for dark backgrounds is there');
     assert.equal((header.match(/WisecallBrand\.logoHtml\(\)/g) || []).length, 2, 'the header and the menu use it');
     assert.match(footer, /WisecallBrand\.logoHtml\(\{ full: true \}\)/, 'the footer has room for the whole logo');

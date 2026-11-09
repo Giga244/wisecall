@@ -92,7 +92,7 @@ describe('Georgian emails', () => {
     const refund = render('refundSeeker', { mentor: 'ნინო გელაშვილი', amount: '15.00 GEL', reason: 'no_answer_deadline' });
     assert.match(refund.text, /15\.00 ₾/);
     assert.doesNotMatch(refund.text, /GEL|გელაშვილი-სთვის/);
-    assert.match(refund.html, /index\.html#experts/);
+    assert.match(refund.html, /\/experts\.html/);
     assert.match(render('receipt', { kind: 'refund', mentor: 'ნინო', number: 'R-3', date: 'x', amount: '15.00 GEL', url: 'u' }).subject, /დაბრუნების ქვითარი R-3/);
     assert.match(render('receipt', { kind: 'payment', mentor: 'ნინო', number: 'R-2', date: 'x', amount: '15.00 GEL', url: 'u' }).subject, /^შენი Wisecall-ის ქვითარი R-2$/);
   });

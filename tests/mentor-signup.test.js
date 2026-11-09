@@ -244,10 +244,10 @@ describe('the way in', () => {
     assert.doesNotMatch(g.resetUrl, /as=/);
   });
 
-  test('the pages: the header link, the hero button, the mentor sign-up and the links to the application', () => {
+  test('the pages: the header link, the home page\'s mentor banner, the mentor sign-up and the links to the application', () => {
     const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
     assert.match(read('public/js/header.js'), /key: 'nav\.becomeMentor', mentor: true/);
-    assert.match(read('public/index.html'), /class="[^"]*hero-mentor-btn[^"]*" data-mentor-cta="hero" data-i18n="hero\.mentorCta"/);
+    assert.match(read('public/index.html'), /<a href="\/become-a-mentor\.html" class="[^"]*lmentor-btn" data-mentor-cta="hero" data-i18n="nav\.becomeMentor"/);
     assert.match(read('public/become-a-mentor.html'), /<a href="\/signup\.html\?as=mentor" class="btn btn-ink btn-lg btn-arrow become-link" data-i18n="mentors\.start">/);
     assert.match(read('public/js/info-page.js'), /'\/apply\.html' : '\/signup\.html\?as=mentor'/);
     const signup = read('public/signup.html');
@@ -299,14 +299,12 @@ describe('the waiting list keeps the question', () => {
     assert.equal((await anon.api('/admin/waitlist')).status, 401);
   });
 
-  test('the home page: a short placeholder, the question kept, the six common fields first, and a named inbox link', () => {
+  test('the waiting list: the question kept, the six common fields first, and a named inbox link', () => {
     const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
     for (const lang of ['en', 'ka']) {
       const d = JSON.parse(read(`public/i18n/${lang}.json`));
-      assert.ok([...d['home.search.placeholder']].length <= 28, `${lang}: ${d['home.search.placeholder']}`);
       assert.ok(d['wait.otherFields'] && d['wait.question'] && d['wait.questionNote']);
     }
-    assert.match(read('public/js/home.js'), /WisecallWaitlist\.ask\(q\)/);
     assert.match(read('public/js/waitlist.js'), /<optgroup label="\$\{esc\(t\('wait\.otherFields'\)\)\}">/);
     assert.match(read('public/js/waitlist.js'), /wantedQuestion: question \|\| undefined/);
     assert.match(read('public/js/header.js'), /class="btn btn-outline btn-lg btn-block mm-inbox" data-inbox-link aria-label="\$\{w\('nav\.inbox'\)\}"/);

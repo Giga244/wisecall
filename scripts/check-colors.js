@@ -11,7 +11,7 @@ const COLOR = /#[0-9a-fA-F]{3,8}\b|rgba?\((?!var\()[^)]*\)|hsla?\([^)]*\)/g; // 
 // [file pattern, line pattern, why it is allowed]
 const ALLOWED = [
   [/\.css$/, /mask-image/, 'an alpha mask: only the transparency counts, not the colour'],
-  [/(login|signup|settings)\.html$/, /fill="#(EA4335|4285F4|FBBC05|34A853)"/, 'the colours of Google\'s logo (a brand mark, used as Google publishes it)'],
+  [/(login|signup|settings)\.html$|profile\.js$/, /fill="#(EA4335|4285F4|FBBC05|34A853)"/, 'the colours of Google\'s logo (a brand mark, used as Google publishes it; profile.js: the "sign up to ask" sheet)'],
   [/api\.js$/, /avatarStyle|#6d4de0|#fff'|const ink|hex\.slice|toString\(16\)/, 'the badge colour a person gets and its readable text colour, worked out from that colour'],
   [/theme-init\.js$/, /var BAR =/, 'the browser\'s address-bar colour is a <meta> tag: it cannot use a CSS variable'],
   [/mail[\\/]templates\.js$/, /COLORS =|COLORS\./, 'emails are always light, and mail apps do not know our CSS variables']

@@ -95,7 +95,7 @@ describe('telling the people waiting', () => {
     const ann = await resend.waitFor('ann@example.com', 'mentor');
     const gio = await resend.waitFor('gio@example.com', 'მენტორი');
     assert.match(ann.body.text, /mentors in Design join/);
-    assert.match(ann.body.html, /index\.html\?niche=design#experts/);
+    assert.match(ann.body.html, /\/experts\.html\?niche=design"/);
     assert.match(gio.body.text, /მენტორი/);
     assert.equal(resend.to('ann@example.com', 'mentor').length, 1, 'one email, not one per event');
     // The medicine subscription (same person) is still waiting, and nothing went to other fields.

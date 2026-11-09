@@ -42,7 +42,7 @@ test('the mentor switches to "Answer for free" in Settings -> Mentor, with a wee
 });
 
 test('Browse: the card says "Free", and the "Free" filter shows only mentors who answer for free', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/experts.html');
   const card = page.locator('.expert-card', { hasText: 'Nana Giver' });
   await expect(card.locator('.price')).toHaveText('Free');
   await page.locator('#filters [data-free]').click();

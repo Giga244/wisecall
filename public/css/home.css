@@ -279,3 +279,10 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
   .expert-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .experts h2 { margin-bottom: 18px; }
 }
+/* Browse experts as its own page (/experts.html, docs/CLAUDE-CODE-NEW-HOME.md): its title, then the field tiles (their own title is the
+   page's now) and the list */
+.browse-head { padding-top: 32px; }
+.browse-title { font-family: var(--font-display); letter-spacing: var(--tracking-display); font-size: clamp(1.9rem, 3vw + 1rem, 3rem); margin: 0 0 8px; }
+.browse-head .section-sub { margin: 0; }
+.browse-page .strip-title { display: none; }
+.browse-page .strip { padding-top: 20px; }

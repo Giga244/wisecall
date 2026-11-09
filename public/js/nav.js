@@ -136,16 +136,17 @@
     });
     // (signed in: the visitor's "Become a mentor" among the main links goes; their own button is next to Dashboard)
     if (now.state !== 'out') document.querySelectorAll('.nl-mentor').forEach((a) => a.remove());
-    // the home page's second button: kept for everybody, saying where they are (and nothing extra for a mentor or an admin)
+    // the home page's mentor banner (docs/CLAUDE-CODE-NEW-HOME.md 2.6): its button kept for everybody, saying where they are; the whole
+    // banner hidden for a mentor or an admin. (It keeps its own words, "Become a mentor", for a visitor and an asker.)
     document.querySelectorAll('[data-mentor-cta="hero"]').forEach((a) => {
-      const wrap = a.closest('.hero-mentor') || a;
+      const wrap = a.closest('.lmentor') || a;
       wrap.hidden = now.state === 'none';
       if (now.state === 'out') { a.setAttribute('href', '/become-a-mentor.html'); a.dataset.ready = '1'; return; }
       if (now.state === 'none') return;
       a.setAttribute('href', B.href(now));
-      if (now.state === 'asker') { a.setAttribute('data-i18n', 'hero.mentorCta'); a.textContent = t('hero.mentorCta'); }
+      if (now.state === 'asker') { a.setAttribute('data-i18n', 'nav.becomeMentor'); a.textContent = t('nav.becomeMentor'); }
       else { a.removeAttribute('data-i18n'); a.textContent = B.text(now, t, false); }
-      a.className = now.state === 'sent' ? 'hero-mentor-btn mentor-status' : `btn ${now.state === 'idleft' ? 'btn-primary' : 'btn-outline'} btn-lg btn-arrow hero-mentor-btn`;
+      a.className = now.state === 'sent' ? 'lmentor-btn mentor-status' : 'btn btn-primary btn-lg btn-arrow lmentor-btn';
       a.dataset.ready = '1';
     });
   }
@@ -239,7 +240,7 @@
     bar.className = 'launch-banner';
     bar.innerHTML = mentor
       ? `<span data-i18n="launch.banner.mentor">${t('launch.banner.mentor')}</span>`
-      : `<span data-i18n="launch.banner">${t('launch.banner')}</span> <a href="/index.html#experts" data-i18n="wait.join">${t('wait.join')}</a>`;
+      : `<span data-i18n="launch.banner">${t('launch.banner')}</span> <a href="/index.html#join" data-i18n="wait.join">${t('wait.join')}</a>`;
     const after = header.nextElementSibling && header.nextElementSibling.classList.contains('verify-banner') ? header.nextElementSibling : header;
     after.insertAdjacentElement('afterend', bar);
   }

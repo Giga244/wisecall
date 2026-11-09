@@ -109,7 +109,7 @@
       text = t(b.__role === 'mentor' ? (b.askerMinor ? 'dash.answer.held.mentorMinor' : 'dash.answer.held.mentor') : (b.askerMinor ? 'dash.answer.held.minor' : 'dash.answer.held.buyer'));
     } else if (b.status === 'pending_payment') text = t('dash.pending.note');
     const next = b.status === 'refunded' && b.__role !== 'mentor'
-      ? ` <a class="plain-link" href="/index.html#experts">${escapeHtml(t('dash.refund.next'))}</a>` : '';
+      ? ` <a class="plain-link" href="/experts.html">${escapeHtml(t('dash.refund.next'))}</a>` : '';
     return text ? `<p class="booking-note">${escapeHtml(text)}${next}</p>` : '';
   }
   const statusLabel = (b) => (isFree(b) && ['paid', 'refunded'].includes(b.status) ? t('dash.status.free.' + b.status) : (t('dash.status.' + b.status) || b.status));
@@ -133,7 +133,7 @@
       </div>` : '';
     askedList.innerHTML = (real.length
       ? real.map(askedCard).join('')
-      : emptyState('dash.asked.empty.title', 'dash.asked.empty.body', `<a class="btn btn-primary" href="/index.html#experts">${t('nav.browse')}</a>`)) + unfinishedHtml;
+      : emptyState('dash.asked.empty.title', 'dash.asked.empty.body', `<a class="btn btn-primary" href="/experts.html">${t('nav.browse')}</a>`)) + unfinishedHtml;
     const toggle = askedList.querySelector('.unfinished-toggle');
     if (toggle) {
       toggle.addEventListener('click', () => {

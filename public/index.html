@@ -24,390 +24,115 @@
 <link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/tokens.css">
 <link rel="stylesheet" href="/css/style.css">
-<link rel="stylesheet" href="/css/home.css">
+<link rel="stylesheet" href="/css/landing.css">
 </head>
 <body>
 
 <script src="/js/header.js"></script>
 
-<main id="main">
+<main id="main" class="landing">
 
-<!-- 1. Hero: the promise, a search, a few fields, and an example conversation -->
-<section class="hero" aria-labelledby="heroTitle">
-  <div class="container hero-inner">
-    <div class="hero-text">
-      <p class="hero-pill rise"><span class="hero-pill-dot" aria-hidden="true"></span><span data-i18n="home.pill">Verified people. Real answers. Made in Georgia.</span></p>
-      <h1 id="heroTitle" class="rise rise-1"><span data-i18n="hero.title1">Get advice from people</span> <em class="hero-accent"><span data-i18n="hero.title2">who've already done it.</span><svg class="squiggle" viewBox="0 0 420 24" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M4 16 C 70 4, 120 22, 190 12 S 320 4, 416 14"/></svg></em></h1>
-      <p class="hero-sub rise rise-2" data-i18n="hero.sub">Doctors, founders, teachers, engineers, and more — book a real answer from someone who's lived the path you want to walk.</p>
-      <!-- (before launch: the page's one waiting-list form, above the fold on a phone; its skeleton until public/js/waitlist.js draws it) -->
-      <div class="hero-wait" id="heroWait"><!-- before launch --><div class="hero-wait-skeleton" aria-hidden="true"><p class="hero-wait-lead" data-i18n="wait.hero">Wisecall opens soon. Get one email when it does:</p><form class="waitlist-form" action="#"><div class="waitlist-row"><label><span data-i18n="wait.email">Your email</span><span class="skeleton skeleton-input"></span></label><label><span data-i18n="wait.niche">Your field</span><span class="skeleton skeleton-input"></span></label></div><span class="skeleton skeleton-input"></span><p class="hint waitlist-hint"><span data-i18n="wait.consent">We will email you once when a mentor in your field joins, and never share your address. You can unsubscribe from that email.</span> <strong data-i18n="footer.privacy">Privacy</strong></p></form></div><!-- /before launch --></div>
-      <form class="hero-search rise rise-3" id="heroSearch" role="search" action="/" method="get">
-        <label for="heroQ" class="sr-only" data-i18n="home.search.label">What are you trying to figure out?</label>
-        <input type="search" id="heroQ" name="q" data-i18n-placeholder="home.search.placeholder" placeholder="e.g. Is a bootcamp worth it?" autocomplete="off" enterkeyhint="search">
-        <button type="submit" class="btn btn-ink btn-arrow" data-i18n="home.search.button" data-i18n-prelaunch="hero.prelaunch.cta">Find my person</button>
-      </form>
-      <!-- (the other way in, as clear as the first: for experts who want to answer. Signed in it says where they are, public/js/nav.js) -->
-      <p class="hero-mentor rise rise-3"><a href="/become-a-mentor.html" class="btn btn-outline btn-lg btn-arrow hero-mentor-btn" data-mentor-cta="hero" data-i18n="hero.mentorCta">I’m an expert – become a mentor</a></p>
-      <ul class="hero-chips rise rise-4" id="heroChips" aria-label="Popular fields" data-i18n-aria="home.chips.label"><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li></ul>
-      <div class="hero-foot rise rise-4">
-        <p class="hero-note">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
-          <span data-i18n="hero.note" data-i18n-prelaunch="hero.prelaunch.note">Pay per question · Answer within 7 days or full refund</span>
-        </p>
-      </div>
-    </div>
-
-    <!-- The conversation: a question, typing dots, the answer (it plays again every 12 seconds with the next example; still, one example, with reduced motion) -->
-    <div class="hero-stage rise rise-2" role="img" data-i18n-aria="mock.aria" aria-label="An example of a question and an answer on Wisecall">
-      <div class="stage-shadow" aria-hidden="true"></div>
-      <div class="stage" aria-hidden="true">
-        <div class="stage-head"><span data-i18n="home.stage.title">How an answer looks</span><span class="stage-tag" data-i18n="mock.example">Example</span></div>
-        <!-- Six examples in the same place (the card is as tall as the longest): home.js shows one, chosen before any is shown, and the next
-             each time the conversation plays again -->
-        <div class="stage-examples">
-          <div class="stage-example">
-            <div class="bubble bubble-q">
-              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
-              <p data-i18n="mock.examples.1.q">I'm a marketing manager who wants to move into product design. Should I start with a course, or build projects first?</p>
-            </div>
-            <div class="stage-reply">
-              <div class="bubble-typing"><span></span><span></span><span></span></div>
-              <div class="bubble bubble-a">
-                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.1.role">Product designer</span></p>
-                <p data-i18n="mock.examples.1.a">Build first. Pick one real problem, design a small fix for it, and write down your thinking. Two solid case studies beat any certificate. A course helps once you know which gaps you have.</p>
-              </div>
-            </div>
-          </div>
-          <div class="stage-example">
-            <div class="bubble bubble-q">
-              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
-              <p data-i18n="mock.examples.2.q">I want to do a master's in Germany but my IELTS is 6.0. Should I retake it or apply anyway?</p>
-            </div>
-            <div class="stage-reply">
-              <div class="bubble-typing"><span></span><span></span><span></span></div>
-              <div class="bubble bubble-a">
-                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.2.role">Studied in Munich</span></p>
-                <p data-i18n="mock.examples.2.a">Check each program's minimum first: many accept 6.0 or 6.5, and some technical programs take English B2 without IELTS. If your dream program needs 6.5, retake it; one focused month on writing usually adds half a band.</p>
-              </div>
-            </div>
-          </div>
-          <div class="stage-example">
-            <div class="bubble bubble-q">
-              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
-              <p data-i18n="mock.examples.3.q">I got my first offer as a junior developer in Tbilisi. Is 1,800 ₾ fair, and can I ask for more?</p>
-            </div>
-            <div class="stage-reply">
-              <div class="bubble-typing"><span></span><span></span><span></span></div>
-              <div class="bubble bubble-a">
-                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.3.role">Tech lead, 9 years</span></p>
-                <p data-i18n="mock.examples.3.a">For a junior role that is the lower-middle range. Ask politely for 10–15% more and give one reason, like a project you built. The worst answer is 'no', and offers are almost never withdrawn for asking once.</p>
-              </div>
-            </div>
-          </div>
-          <div class="stage-example">
-            <div class="bubble bubble-q">
-              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
-              <p data-i18n="mock.examples.4.q">I'm a 5th-year medical student. How do I choose between cardiology and family medicine?</p>
-            </div>
-            <div class="stage-reply">
-              <div class="bubble-typing"><span></span><span></span><span></span></div>
-              <div class="bubble bubble-a">
-                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.4.role">Cardiologist</span></p>
-                <p data-i18n="mock.examples.4.a">Spend one week in each before deciding: the daily rhythm matters more than the subject. Cardiology means long training and night shifts; family medicine means more continuity with patients and a calmer schedule.</p>
-              </div>
-            </div>
-          </div>
-          <div class="stage-example">
-            <div class="bubble bubble-q">
-              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
-              <p data-i18n="mock.examples.5.q">I want to open a small coffee stand. What should I test before spending my savings?</p>
-            </div>
-            <div class="stage-reply">
-              <div class="bubble-typing"><span></span><span></span><span></span></div>
-              <div class="bubble bubble-a">
-                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.5.role">Café owner, Tbilisi</span></p>
-                <p data-i18n="mock.examples.5.a">Count people walking past your spot at the hours you'd open, on three different days. Then sell coffee from a table for one weekend before you sign a lease. Real sales will tell you more than any plan.</p>
-              </div>
-            </div>
-          </div>
-          <div class="stage-example">
-            <div class="bubble bubble-q">
-              <p class="bubble-who" data-i18n="mock.q.label">A question</p>
-              <p data-i18n="mock.examples.6.q">I'm a freelance designer. How do I price a logo for a small local business?</p>
-            </div>
-            <div class="stage-reply">
-              <div class="bubble-typing"><span></span><span></span><span></span></div>
-              <div class="bubble bubble-a">
-                <p class="bubble-who"><span class="bubble-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span data-i18n="mock.examples.6.role">Brand designer</span></p>
-                <p data-i18n="mock.examples.6.a">Price the result, not your hours: offer a basic package and a fuller one with a mini brand guide. Most small clients pick the middle option, so always offer three.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="stage-meta"><span class="meta-chip" data-i18n="hero.note">Pay per question · Answer within 7 days or full refund</span></div>
-      </div>
-      <span class="stage-sticker" aria-hidden="true" data-i18n="badge.id">ID verified</span>
-    </div>
-  </div>
-</section>
-
-<!-- 2. Fields: tiles in full rows, the rest behind "See all" -->
-<section class="strip" aria-labelledby="stripTitle">
-  <div class="container" data-reveal>
-    <h2 id="stripTitle" class="strip-title" data-i18n="strip.title">Find someone in your field</h2>
-    <!-- (until the fields arrive: tiles and the "See all" button as skeletons, in the same full rows) -->
-    <ul class="field-grid" id="nicheStrip">
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-      <li class="skeleton-tile" aria-hidden="true"><span class="skeleton"></span></li>
-    </ul>
-    <span class="skeleton skeleton-more" id="fieldsMoreSkeleton" aria-hidden="true"></span>
-    <button type="button" class="btn btn-outline field-more" id="fieldsMore" aria-controls="nicheStrip" aria-expanded="false" hidden></button>
-  </div>
-</section>
-
-<!-- 3. Browse experts: people, not profiles (before launch the section is not shown: the hero has the one waiting-list form, and a link
-     here takes the visitor to it; public/js/main.js) -->
-<section class="experts" id="experts" aria-labelledby="expertsTitle">
-  <div class="container">
-    <h2 id="expertsTitle" data-i18n="experts.title">Browse experts</h2>
-    <div class="browse-toolbar">
-      <label for="searchInput" class="sr-only" data-i18n="experts.searchPlaceholder">Search by name or specialty…</label>
-      <input type="search" id="searchInput" class="search-input" data-i18n-placeholder="experts.searchPlaceholder" data-i18n-aria="experts.searchPlaceholder" aria-label="Search by name or specialty" placeholder="Search by name or specialty…" autocomplete="off" enterkeyhint="search">
-      <div class="browse-controls">
-        <button type="button" class="btn btn-outline filters-btn" id="filtersBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="filtersSheet">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
-          <span data-i18n="experts.filters">Filters</span><span class="filters-count" id="filtersCount" hidden></span>
-        </button>
-        <p class="result-count" id="resultCount" role="status"></p>
-        <div class="sort-slot" id="sortSlot">
-          <label for="sortSelect" class="sr-only" data-i18n="experts.sort.label">Sort</label>
-          <select id="sortSelect" class="sort-select" data-i18n-aria="experts.sort.label" aria-label="Sort">
-            <option value="rating" data-i18n="experts.sort.rating">Top rated</option>
-            <option value="priceAsc" data-i18n="experts.sort.priceAsc">Price: low to high</option>
-            <option value="priceDesc" data-i18n="experts.sort.priceDesc">Price: high to low</option>
-            <option value="newest" data-i18n="experts.sort.newest">Newest</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <p class="browse-note small muted" data-i18n="browse.note">Already have a rough idea of your field? Find an expert in it and ask.</p>
-    <!-- (what the words name, while a student types; then the fields, or the chips of the chosen one: they scroll sideways on a phone) -->
-    <div class="field-chips" id="searchChips" role="group" hidden></div>
-    <div class="field-chips" id="fieldChips" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field"></div>
-    <div class="filters-slot" id="filtersSlot">
-      <div class="filters" id="filters" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field">
-      </div>
-    </div>
-    <!-- (while the list is on its way: its skeleton, and one "Loading…" for screen readers; the server keeps the one for the mode) -->
-    <div class="expert-grid" id="expertGrid" aria-live="polite" aria-busy="true">
-      <p class="sr-only" role="status" data-i18n="experts.loading">Loading…</p>
+<!-- 1. Hero (docs/CLAUDE-CODE-NEW-HOME.md 2.1): the promise, one search (before launch: the waiting list), up to five popular fields, and the phone -->
+<section class="lhero" aria-labelledby="heroTitle">
+  <div class="container lhero-inner">
+    <div class="lhero-text">
+      <p class="lhero-pill" data-i18n="home2.pill" data-i18n-prelaunch="home2.pill.prelaunch">✓ Verified experts · Written answers</p>
+      <h1 id="heroTitle" class="lhero-title"><span data-i18n="home2.title1">Ask someone who has already</span> <em data-i18n="home2.title2">walked that path</em></h1>
+      <p class="lhero-sub" data-i18n="home2.sub">Chose your field but still have questions? An expert in it answers you in writing within 7 days.</p>
       <!-- after launch -->
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
-      <div class="expert-card skeleton-expert" aria-hidden="true">
-        <div class="card-top"><span class="skeleton skeleton-avatar md"></span><div class="skeleton-stack"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-line w80"></span><span class="skeleton skeleton-line w40"></span></div></div>
-        <div><span class="skeleton skeleton-line w90 strong"></span><span class="skeleton skeleton-line w60 strong"></span></div>
-        <div><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line w70"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line sk-more"></span><span class="skeleton skeleton-line w60 sk-more"></span><span class="skeleton skeleton-line sk-ka"></span><span class="skeleton skeleton-line w80 sk-ka"></span></div>
-        <div class="skeleton-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-        <div class="card-bottom"><span class="skeleton skeleton-line w40"></span><span class="skeleton skeleton-price"></span></div>
-        <span class="skeleton skeleton-btn"></span>
-      </div>
+      <form class="lhero-search" id="heroSearch" role="search" action="/experts.html" method="get">
+        <label for="heroQ" class="sr-only" data-i18n="home2.search.label">Which field do you need advice in?</label>
+        <svg class="lhero-search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" id="heroQ" name="q" data-i18n-placeholder="home2.search.placeholder" placeholder="e.g. medicine, IT, IELTS, law..." autocomplete="off" enterkeyhint="search" maxlength="200">
+        <button type="submit" class="btn btn-primary" data-i18n="home2.search.button">Search</button>
+      </form>
       <!-- /after launch -->
+      <!-- before launch -->
+      <!-- (the waiting list instead of the search: drawn by public/js/waitlist.js into its skeleton, the same height) -->
+      <div class="lhero-wait" id="heroWait"><div class="lhero-wait-skeleton" aria-hidden="true"><span class="skeleton skeleton-input"></span><span class="skeleton skeleton-line w60"></span></div></div>
+      <p class="lhero-count" id="waitCount" hidden></p>
+      <!-- /before launch -->
+      <div class="lhero-popular">
+        <span class="lhero-popular-label" data-i18n="home2.popular">Popular:</span>
+        <ul class="lhero-chips" id="heroChips" aria-label="Popular fields" data-i18n-aria="home.chips.label"><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li></ul>
+      </div>
     </div>
-    <p class="rq-cta"><a href="/find-a-mentor.html" data-i18n="rq.cta">Can't find the right person? Tell us who you need.</a></p>
-  </div>
-</section>
 
-<!-- 3b. Our mentors: only approved mentors who chose "show my profile on the home page" (public/js/home-mentors.js) -->
-<section class="home-mentors" id="homeMentors" aria-labelledby="homeMentorsTitle" hidden>
-  <div class="container">
-    <h2 id="homeMentorsTitle" data-i18n="home.mentors.title" data-i18n-prelaunch="home.mentors.prelaunch">Our mentors</h2>
-    <p class="section-sub" id="homeMentorsCount" hidden></p>
-    <ul class="home-mentor-grid" id="homeMentorsList"></ul>
-  </div>
-</section>
-
-<!-- live -->
-<!-- Live sessions coming up (only when there are any): an ink band -->
-<section class="live-home" id="liveHome" aria-labelledby="liveHomeTitle" hidden>
-  <div class="container live-home-inner">
-    <div class="live-home-head" data-reveal>
-      <p class="eyebrow live-eyebrow"><span class="live-dot" aria-hidden="true"></span><span data-i18n="live.title">Live sessions</span></p>
-      <h2 id="liveHomeTitle" data-i18n="live.home.title">Live sessions coming up</h2>
-      <p class="section-sub" data-i18n="live.home.sub">Join a verified mentor live: ask in writing, hear the answers, learn from what others ask.</p>
-      <p class="live-home-more"><a class="btn btn-primary btn-arrow" href="/live" data-i18n="live.home.all">All live sessions</a></p>
+    <!-- 2. The phone (2.2): one real question and answer that the student and the mentor agreed to show, chosen by an admin (server/homeQa.js);
+         hidden when none is chosen. Drawn and played by public/js/landing.js; the words for screen readers are in its caption. -->
+    <div class="lhero-phone" id="homeQa" hidden>
+      <figure class="qa-phone">
+        <figcaption class="sr-only" id="qaCaption"></figcaption>
+        <div class="qa-screen" aria-hidden="true">
+          <div class="qa-status"><span>9:41</span><span class="qa-bars"><i></i><i></i><i></i><b></b></span></div>
+          <div class="qa-head"><span class="qa-back">←</span><span class="qa-avatar"></span><span class="qa-who"><b class="qa-name"></b><small class="qa-meta"></small></span></div>
+          <div class="qa-chat">
+            <p class="qa-day qa-d1"></p>
+            <div class="qa-q"><span class="qa-qtext"></span><em class="qa-sent"></em></div>
+            <p class="qa-day qa-d2"></p>
+            <div class="qa-typing"><i></i><i></i><i></i></div>
+            <div class="qa-a"><b class="qa-aname"></b><span class="qa-atext"></span><em class="qa-adays"></em></div>
+            <div class="qa-rate"><span class="qa-stars"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span><span class="qa-ratelabel"></span></div>
+          </div>
+          <div class="qa-input"><span class="qa-inp"></span><span class="qa-send">➤</span></div>
+        </div>
+      </figure>
     </div>
-    <div class="live-grid" id="liveHomeGrid" data-reveal data-reveal-stagger></div>
   </div>
 </section>
-<!-- /live -->
 
-<!-- 4. How it works: three short steps, and one line on how mentors are checked (the details: /how-we-verify.html) -->
-<section class="how" id="how" aria-labelledby="howTitle">
+<!-- 3. Meet our experts (2.3): up to three approved mentors who chose to be shown on the home page (public/js/home-mentors.js); hidden when none -->
+<section class="lsection lexperts" id="homeMentors" aria-labelledby="homeMentorsTitle" hidden>
   <div class="container">
-    <h2 id="howTitle" data-i18n="how.title" data-reveal>How it works</h2>
-    <ol class="how-row" data-reveal data-reveal-stagger>
-      <li class="how-step">
-        <span class="how-num" aria-hidden="true">1</span>
-        <div class="how-text">
-          <h3 data-i18n="how.short.1.title">Ask your question</h3>
-          <p data-i18n="how.short.1.body">Pick a mentor in your field and write what you're stuck on.</p>
-        </div>
-      </li>
-      <li class="how-step">
-        <span class="how-num" aria-hidden="true">2</span>
-        <div class="how-text">
-          <h3 data-i18n="how.short.2.title">Pay once</h3>
-          <p data-i18n="how.short.2.body">The mentor's own price, in lari, through a Georgian bank. No subscription. Some mentors answer for free.</p>
-        </div>
-      </li>
-      <li class="how-step">
-        <span class="how-num" aria-hidden="true">3</span>
-        <div class="how-text">
-          <h3 data-i18n="how.short.3.title">Answer within 7 days or full refund</h3>
-          <p data-i18n="how.short.3.body">Read it in your dashboard and by email. No answer in time? Your money comes back automatically.</p>
-        </div>
-      </li>
+    <div class="lsection-head">
+      <h2 id="homeMentorsTitle" data-i18n="home2.experts.title">Meet our experts</h2>
+      <a class="lmore" href="/experts.html" data-i18n="home2.experts.all">All experts →</a>
+    </div>
+    <ul class="lexpert-grid" id="homeMentorsList"></ul>
+  </div>
+</section>
+
+<!-- 4. How it works (2.4): three steps, and Jikhva waving next to the title -->
+<section class="lsection lhow" id="how" aria-labelledby="howTitle">
+  <div class="container">
+    <div class="lhow-head">
+      <img class="lhow-jikhva" src="/brand/jikhva-wave.webp" alt="" width="64" height="125" loading="lazy" decoding="async">
+      <h2 id="howTitle" data-i18n="home2.how.title">How it works</h2>
+    </div>
+    <ol class="lsteps">
+      <li class="lstep"><span class="lstep-num" aria-hidden="true">1</span><h3 data-i18n="home2.how.1.title">Choose an expert</h3><p data-i18n="home2.how.1.body">Find your field and see who will answer you.</p></li>
+      <li class="lstep"><span class="lstep-num" aria-hidden="true">2</span><h3 data-i18n="home2.how.2.title">Write your question</h3><p data-i18n="home2.how.2.body">The more detail you give, the better the answer.</p></li>
+      <li class="lstep"><span class="lstep-num" aria-hidden="true">3</span><h3 data-i18n="home2.how.3.title">Get your answer</h3><p data-i18n="home2.how.3.body">In writing, within 7 days. If not, you get all your money back.</p></li>
     </ol>
-    <p class="how-verify" data-reveal>
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
-      <span data-i18n="how.verify">Every mentor is verified by our team —</span>
-      <a class="arrow-link" href="/how-we-verify.html" data-i18n="how.verify.link">how we verify</a>
-    </p>
   </div>
 </section>
 
-<!-- 5. Questions: the four that matter most before paying; all of them are on /faq.html -->
-<section class="faq" id="faq" aria-labelledby="faqTitle">
-  <div class="container">
-    <h2 id="faqTitle" data-i18n="faq.title" data-reveal>Questions and answers</h2>
-    <div class="faq-list" id="faqList">
-      <div class="faq-item">
-        <h3><button type="button" class="faq-q" id="faq-q2" aria-expanded="false" aria-controls="faq-a2" data-i18n="faq.2.q">How much does it cost?</button></h3>
-        <div class="faq-a" id="faq-a2" role="region" aria-labelledby="faq-q2" hidden><p data-i18n="faq.2.a">Each mentor sets their own price per question, between 5 and 2000 ₾. You pay once per question. There are no subscriptions or hidden fees. Some mentors answer for free.</p></div>
-      </div>
-      <div class="faq-item">
-        <h3><button type="button" class="faq-q" id="faq-q3" aria-expanded="false" aria-controls="faq-a3" data-i18n="faq.3.q">What if the mentor doesn't answer?</button></h3>
-        <div class="faq-a" id="faq-a3" role="region" aria-labelledby="faq-q3" hidden><p data-i18n="faq.3.a">Mentors have 7 days to answer. If they don't, your payment is refunded in full automatically. You don't need to contact us.</p></div>
-      </div>
-      <div class="faq-item">
-        <h3><button type="button" class="faq-q" id="faq-q4" aria-expanded="false" aria-controls="faq-a4" data-i18n="faq.4.q">Is my payment safe?</button></h3>
-        <div class="faq-a" id="faq-a4" role="region" aria-labelledby="faq-q4" hidden><p data-i18n="faq.4.a">Yes. You pay on your Georgian bank's secure page, in lari. Wisecall never sees or stores your card number.</p></div>
-      </div>
-      <div class="faq-item">
-        <h3><button type="button" class="faq-q" id="faq-q6" aria-expanded="false" aria-controls="faq-a6" data-i18n="faq.6.q">Can I get a refund if I don't like the answer?</button></h3>
-        <div class="faq-a" id="faq-a6" role="region" aria-labelledby="faq-q6" hidden><p data-i18n="faq.6.a">After an answer is delivered, payments are generally not refundable. We refund in full if the answer is spam, empty, off-topic or breaks our terms; contact us within 7 days. Disliking an answer is not a reason for a refund, but you can leave an honest review.</p></div>
-      </div>
-    </div>
-    <p class="faq-more"><a href="/faq.html" class="arrow-link" data-i18n="home.faq.more">All questions</a></p>
-  </div>
+<!-- 5. Trust (2.5) -->
+<section class="ltrust" aria-label="Why it's safe" data-i18n-aria="home2.trust.label">
+  <ul class="container ltrust-row">
+    <li><span aria-hidden="true">🪪</span> <span><b data-i18n="home2.trust.1.b">ID-verified</b> <span data-i18n="home2.trust.1.rest">every mentor</span></span></li>
+    <li><span aria-hidden="true">⏱</span> <span><b data-i18n="home2.trust.2.b">Within 7 days</b> <span data-i18n="home2.trust.2.rest">or your money back</span></span></li>
+    <li><span aria-hidden="true">✍️</span> <span><b data-i18n="home2.trust.3.b">In writing,</b> <span data-i18n="home2.trust.3.rest">in your own time</span></span></li>
+    <li><span aria-hidden="true">🔒</span> <span><b data-i18n="home2.trust.4.b">Private:</b> <span data-i18n="home2.trust.4.rest">contacts stay protected</span></span></li>
+  </ul>
+  <p class="container ltrust-more"><a class="arrow-link" href="/how-we-verify.html" data-i18n="how.verify.link">how we verify</a></p>
 </section>
 
-<!-- after launch -->
-<!-- 6. Final call to action: an ink panel (only after launch: before it, the waiting-list card above already asks for the email) -->
-<section class="cta-band" aria-labelledby="ctaTitle">
+<!-- 6. For experts (2.6): Jikhva presents; no phone here -->
+<section class="lsection lmentor" aria-labelledby="mentorTitle">
   <div class="container">
-    <div class="cta-inner" data-reveal>
-      <svg class="cta-bubble" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path d="M42 36h44a12 12 0 0 1 12 12v22a12 12 0 0 1-12 12h-2v11l-13-11H42a12 12 0 0 1-12-12V48a12 12 0 0 1 12-12z"/></svg>
-      <div>
-        <h2 id="ctaTitle" data-i18n="cta.title">Ready to ask your question?</h2>
-        <p data-i18n="cta.sub">Get a real answer from someone who has already done it.</p>
+    <div class="lmentor-card">
+      <img class="lmentor-jikhva" src="/brand/jikhva-present.webp" alt="" width="150" height="258" loading="lazy" decoding="async">
+      <div class="lmentor-text">
+        <h2 id="mentorTitle" data-i18n="home2.mentor.title">Are you an expert?</h2>
+        <p id="mentorBody" data-i18n="home2.mentor.body">Answer students in writing when you have time. You set the price, and 80% is yours.</p>
       </div>
-      <div class="cta-actions">
-        <a href="#experts" class="btn btn-primary btn-lg btn-arrow cta-primary" data-i18n="hero.browse">Browse experts</a>
-        <a href="/become-a-mentor.html" class="btn btn-lg cta-secondary" data-i18n="mentors.cta">Apply as a mentor</a>
-      </div>
+      <a href="/become-a-mentor.html" class="btn btn-primary btn-lg btn-arrow lmentor-btn" data-mentor-cta="hero" data-i18n="nav.becomeMentor">Become a mentor</a>
     </div>
   </div>
 </section>
-<!-- /after launch -->
 
 </main>
-
-<!-- Filters (phones): the sort and field controls move in here below 640px -->
-<div class="sheet" id="filtersSheet" hidden>
-  <div class="sheet-backdrop" data-sheet-close></div>
-  <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="filtersTitle" tabindex="-1">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <div class="sheet-head">
-      <h2 id="filtersTitle" data-i18n="experts.filters">Filters</h2>
-      <button type="button" class="sheet-close" data-sheet-close aria-label="Close" data-i18n-aria="sheet.close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    </div>
-    <div class="sheet-body">
-      <p class="sheet-label" id="sortLabel" data-i18n="experts.sort.label">Sort</p>
-      <div id="sheetSort"></div>
-      <p class="sheet-label" data-i18n="experts.fieldLabel">Field</p>
-      <div id="sheetFilters"></div>
-    </div>
-    <div class="sheet-foot">
-      <button type="button" class="btn btn-outline btn-lg" id="filtersClear" data-i18n="experts.filtersClear">Clear</button>
-      <button type="button" class="btn btn-primary btn-lg" id="filtersApply" data-sheet-close data-sheet-focus>Show experts</button>
-    </div>
-  </div>
-</div>
-
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -416,13 +141,9 @@
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
 <script src="/js/back-to-top.js"></script>
-<script src="/js/badges.js"></script>
-<script src="/js/sheet.js"></script>
 <script src="/js/turnstile.js"></script>
 <script src="/js/waitlist.js"></script>
-<script src="/js/niche-icons.js"></script>
-<script src="/js/home.js"></script>
-<script src="/js/main.js"></script>
+<script src="/js/landing.js"></script>
 <script src="/js/home-mentors.js"></script>
 </body>
 </html>

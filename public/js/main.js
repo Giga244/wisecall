@@ -1,5 +1,6 @@
-// The home page: the expert list with search, sort and field filters, and what it shows when nobody
-// is listed yet. (The other sections are static markup; see home.js for the strip, FAQ and waiting list.)
+// Browse experts (/experts.html, docs/CLAUDE-CODE-NEW-HOME.md): the expert list with search, sort and field filters, and what it shows when
+// nobody is listed yet. Open to everybody, signed in or not, before launch too (asking is what waits for the launch, on the profile).
+// (The field tiles are drawn by home.js; the waiting-list form, for a field with nobody yet, by waitlist.js.)
 (async function () {
   await WisecallI18n.initI18n();
   await WisecallNav.initNav();
@@ -134,13 +135,6 @@
       <p class="wl-mentor"><a class="arrow-link" href="${becomeHref}">${t('wait.mentorCta')}</a></p>`;
   }
 
-  // Before launch nobody can ask a question, so Browse is not shown: the hero's form is the page's one waiting list
-  // (docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md). A field chosen in the tiles becomes that form's field.
-  const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
-  function launchingSoon() {
-    grid.innerHTML = '';
-    WisecallWaitlist.chooseField(activeField === 'all' ? 'any' : activeField);
-  }
 
   // "8 experts" under the search, the number of filters in use on the Filters button, and the sheet's own button.
   let shown = 0;
@@ -155,8 +149,7 @@
 
   let loaded = false;
   function render() {
-    grid.setAttribute('aria-busy', String(!prelaunch && !loaded));
-    if (prelaunch) { launchingSoon(); return; }
+    grid.setAttribute('aria-busy', String(!loaded));
     if (!loaded) { grid.innerHTML = loadingHtml; summary(); return; }
     let list = activeField === 'all' ? allExperts : allExperts.filter((e) => inField(e, activeField));
     if (activeChip) list = list.filter((e) => inChip(e, activeChip));
@@ -239,25 +232,14 @@
     searchChips.innerHTML = list.join('');
   }
 
-  // The strip under the hero: choose the field without reloading the page, then scroll to the list (before launch, to the hero's form).
+  // The field tiles: choose the field without reloading the page, then scroll to the list.
   document.addEventListener('click', ev => {
     const link = ev.target.closest('[data-field-link]');
     if (!link || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) return;
     ev.preventDefault();
     setField(link.dataset.fieldLink, null);
-    if (prelaunch) { WisecallWaitlist.goToHero(); return; }
     document.getElementById('experts').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
-  // (before launch, "Browse experts" in the header and links from other pages, /#experts, lead to the hero's form too)
-  if (prelaunch) {
-    document.addEventListener('click', (ev) => {
-      const a = ev.target.closest('a[href$="#experts"]');
-      if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button || new URL(a.href).pathname.replace(/^\/ka(?=\/|$)/, '').replace(/^\/index\.html$/, '/') !== '/') return;
-      ev.preventDefault();
-      WisecallWaitlist.goToHero();
-    });
-    if (window.location.hash === '#experts') WisecallWaitlist.goToHero({ focus: false });
-  }
 
   // Phones: the sort and field controls live in a bottom sheet behind a Filters button. From 640px they sit on the page.
   const sheet = WisecallSheet.create(document.getElementById('filtersSheet'));
@@ -294,7 +276,7 @@
       drawChips();
       render();
       if (!searchTerm) drawSearchChips(null);
-      if (!searchTerm || prelaunch) return;
+      if (!searchTerm) return;
       const asked = searchTerm;
       try {
         const [data, found] = await Promise.all([WisecallAPI.apiFetch('/experts?q=' + encodeURIComponent(asked)), WisecallAPI.apiFetch('/categories/search?q=' + encodeURIComponent(asked))]);
@@ -316,16 +298,17 @@
 
   const oldLink = startParams.get('niche');
   setField(startParams.get('field') || (oldLink === 'other' ? 'other' : WisecallI18n.fieldOfNiche(oldLink)) || 'all', startParams.get('chip'), { push: false });
-  if (!prelaunch) {
-    try {
-      const [data, list] = await Promise.all([WisecallAPI.apiFetch('/experts'), WisecallAPI.apiFetch('/categories')]);
-      allExperts = data.experts;
-      catalog = list;
-      loaded = true;
-      setField(activeField, activeChip, { push: false }); // (the chips now know which fields have mentors)
-    } catch (e) {
-      grid.setAttribute('aria-busy', 'false');
-      grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
-    }
+  try {
+    const [data, list] = await Promise.all([WisecallAPI.apiFetch('/experts'), WisecallAPI.apiFetch('/categories')]);
+    allExperts = data.experts;
+    catalog = list;
+    loaded = true;
+    setField(activeField, activeChip, { push: false }); // (the chips now know which fields have mentors)
+  } catch (e) {
+    grid.setAttribute('aria-busy', 'false');
+    grid.innerHTML = `<p class="muted">${t('experts.loadError')}</p>`;
   }
+  // The home page's search sends its words here (?q=): they go into the search box, as if typed.
+  const asked = (startParams.get('q') || '').trim().slice(0, 200);
+  if (asked) { searchInput.value = asked; searchInput.dispatchEvent(new Event('input', { bubbles: true })); }
 })();

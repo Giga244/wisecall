@@ -55,39 +55,43 @@ describe('the "How we verify mentors" page', () => {
   });
 });
 
-describe('the short home page: nothing lost, everything else one click away', () => {
-  test('hero, fields, Browse experts, how it works, four questions, the last word; the long sections are gone', async () => {
+describe('the new home page (docs/CLAUDE-CODE-NEW-HOME.md): short, and everything else one click away', () => {
+  test('hero, the phone, our experts, how it works, trust and the mentor banner, in this order; the old sections are gone', async () => {
     const h = await html('/');
-    const order = ['class="hero"', 'id="nicheStrip"', 'id="experts"', 'id="how"', 'id="faq"', 'class="cta-band"'].map((m) => h.indexOf(m));
+    const order = ['class="lhero"', 'id="homeQa"', 'id="homeMentors"', 'id="how"', 'class="ltrust"', 'class="lsection lmentor"'].map((m) => h.indexOf(m));
     assert.ok(order.every((at) => at > 0), 'every section is there');
     assert.deepEqual([...order].sort((a, b) => a - b), order, 'in this order');
-    for (const gone of ['class="marquee"', 'id="trust"', 'id="verify"', 'id="examples"', 'id="pricing"', 'id="for-mentors"']) assert.ok(!h.includes(gone), gone);
-    assert.equal((h.match(/<button type="button" class="faq-q"/g) || []).length, 4);
-    for (const n of [2, 3, 4, 6]) assert.match(h, new RegExp(`data-i18n="faq\\.${n}\\.q"`));
-    assert.equal((h.match(/<li class="how-step">/g) || []).length, 3);
+    for (const gone of ['id="nicheStrip"', 'id="experts"', 'id="faq"', 'class="cta-band"', 'id="filters"', 'id="liveHome"', 'class="faq-q"', 'class="marquee"', 'id="examples"']) assert.ok(!h.includes(gone), gone);
+    assert.equal((h.match(/<li class="lstep">/g) || []).length, 3);
     assert.match(h, /<a class="arrow-link" href="\/how-we-verify\.html" data-i18n="how\.verify\.link">how we verify<\/a>/);
-    assert.match(h, /<a href="\/faq\.html" class="arrow-link" data-i18n="home\.faq\.more">All questions<\/a>/);
-    assert.match(h, /data-i18n="how\.short\.3\.title">Answer within 7 days or full refund</); // ({answerDays} filled in)
-    // "Become a mentor" and "Apply as a mentor" open the mentors' page
-    // (the hero's second button, next to the waiting list: docs/CLAUDE-CODE-MENTOR-SIGNUP.md #1)
-    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-outline btn-lg btn-arrow hero-mentor-btn" data-mentor-cta="hero" data-i18n="hero\.mentorCta">I’m an expert – become a mentor<\/a>/);
-    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-lg cta-secondary"/);
+    assert.match(h, /<a class="lmore" href="\/experts\.html" data-i18n="home2\.experts\.all">/);
+    // the search goes to Browse; "Become a mentor" opens the mentors' page
+    assert.match(h, /<form class="lhero-search" id="heroSearch" role="search" action="\/experts\.html" method="get">/);
+    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-primary btn-lg btn-arrow lmentor-btn" data-mentor-cta="hero"/);
     assert.doesNotMatch(h, /redirect=\/settings\.html/);
+    // the FAQ is one click away, in the footer
+    assert.match(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'js', 'footer.js'), 'utf8'), /\/faq\.html/);
   });
 
-  test('the Georgian home has the same short sections in Georgian', async () => {
+  test('the Georgian home has the same sections in Georgian', async () => {
     const h = await html('/ka/');
-    assert.match(h, /data-i18n="how\.short\.1\.title">დასვი კითხვა</);
+    assert.match(h, /data-i18n="home2\.title1">ჰკითხე მას, ვინც ეს გზა</);
+    assert.match(h, /data-i18n="home2\.search\.button">ძებნა</);
     assert.match(h, /data-i18n="how\.verify\.link">როგორ ვამოწმებთ</);
-    assert.match(h, /data-i18n="home\.faq\.more">ყველა კითხვა</);
+    assert.match(h, /data-i18n="home2\.experts\.all">ყველა ექსპერტი →</);
   });
 
-  test('after launch the list loads as 8 skeleton cards (the hero form\'s skeleton is left out), with "Loading…" in the page\'s language', async () => {
+  test('after launch the search is there and nothing from before launch is left', async () => {
     const h = await html('/');
-    assert.equal((h.match(/class="expert-card skeleton-expert"/g) || []).length, 8);
-    assert.doesNotMatch(h, /hero-wait-skeleton|<!-- before launch -->/);
+    assert.match(h, /id="heroSearch"/);
+    assert.doesNotMatch(h, /id="heroWait"|lhero-wait-skeleton|<!-- before launch -->/);
     assert.match(h, /<html lang="en">/, 'not marked as before launch');
-    assert.match(await html('/ka/'), /<p class="sr-only" role="status" data-i18n="experts\.loading">იტვირთება…<\/p>/);
+  });
+
+  test('Browse (/experts.html): the list loads as 8 skeleton cards, with "Loading…" in the page\'s language', async () => {
+    const h = await html('/experts.html');
+    assert.equal((h.match(/class="expert-card skeleton-expert"/g) || []).length, 8);
+    assert.match(await html('/ka/experts.html'), /<p class="sr-only" role="status" data-i18n="experts\.loading">იტვირთება…<\/p>/);
   });
 });
 
@@ -141,15 +145,15 @@ describe('every page arrives in its language (nothing is swapped after the first
 
   test('the Georgian home: its texts and placeholder in Georgian, the Georgian font preloaded', async () => {
     const h = await html('/ka/');
-    assert.match(h, new RegExp(`<span data-i18n="hero.title1">${esc(ka['hero.title1'])}</span>`));
-    assert.match(h, new RegExp(`data-i18n-placeholder="home.search.placeholder" placeholder="${esc(ka['home.search.placeholder'])}"`));
+    assert.match(h, new RegExp(`<span data-i18n="home2.title1">${esc(ka['home2.title1'])}</span>`));
+    assert.match(h, new RegExp(`data-i18n-placeholder="home2.search.placeholder" placeholder="${esc(ka['home2.search.placeholder'])}"`));
     assert.match(h, /<link rel="preload" href="\/fonts\/noto-sans-georgian\.woff2\?v=[0-9a-f]+" as="font" type="font\/woff2" crossorigin>/);
     assert.doesNotMatch(await html('/'), /noto-sans-georgian/);
   });
 
   test('numbers from the settings are filled in; a text with a date or a name keeps the page\'s own words', async () => {
-    const note = esc(ka['hero.note']).replace('\\{answerDays\\}', '\\d+');
-    assert.match(await html('/ka/'), new RegExp(`data-i18n="hero.note">${note}</span>`));
+    const days = esc(ka['home2.how.3.body']).replace('\\{answerDays\\}', '\\d+');
+    assert.match(await html('/ka/'), new RegExp(`data-i18n="home2.how.3.body">${days}</p>`));
     const h = await html('/ka/how-we-verify.html');
     assert.doesNotMatch(h, /\{[A-Za-z]+\}/);
     assert.match(h, /<span data-i18n="badge.id.tip">[^<{]+<\/span>/);

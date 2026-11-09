@@ -65,10 +65,14 @@ for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']])
       }
     });
 
-    test('the open menus and dialogs pass too: language switch, FAQ, waiting-list form', async () => {
-      await audit('visitor', '/', async (p) => {
-        await p.locator('.faq-q').first().click();
-        await p.locator('#experts').scrollIntoViewIfNeeded();
+    test('the open menus and dialogs pass too: Browse, the FAQ page with an answer open, a profile\'s sign-up sheet', async () => {
+      await audit('visitor', '/experts.html');
+      await audit('visitor', '/faq.html', async (p) => { await p.locator('details.faq-item summary').first().click(); });
+      await audit('visitor', `/u/${mentorUsername}`, async (p) => {
+        // (on a desktop the question form is on the page; #askOpen is the phone's button)
+        await p.fill('#question', 'I am in my last year of school and want to study medicine. Which subjects should I focus on now?');
+        await p.click('#askBtn');
+        await p.locator('dialog#askSignup[open]').waitFor();
       });
     });
 

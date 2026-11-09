@@ -68,7 +68,7 @@ test('an admin suspends a mentor: the open question is refunded, the buyer is em
   const bookingId = await S.askAndPay(buyerPage, suspended, 'How should I split my ad budget between two channels?', 'pay');
   await S.untilBooking(bookingId, (x) => x.status === 'paid', 'the payment was not confirmed');
 
-  await buyerPage.goto('/');
+  await buyerPage.goto('/experts.html');
   await expect(buyerPage.locator('.expert-card').filter({ hasText: 'Risky Mentor' })).toBeVisible();
 
   await adminPage.goto('/admin.html');
@@ -87,7 +87,7 @@ test('an admin suspends a mentor: the open question is refunded, the buyer is em
   await S.waitForMail(suspended.email, 'profile was suspended');
 
   // The mentor is gone from Browse and cannot be asked.
-  await buyerPage.goto('/');
+  await buyerPage.goto('/experts.html');
   await expect(buyerPage.locator('#expertGrid')).toBeVisible();
   await expect(buyerPage.locator('.expert-card').filter({ hasText: 'Risky Mentor' })).toHaveCount(0);
   const ask = await client(S.BASE).api('/experts/' + suspended.id);
@@ -107,7 +107,7 @@ test('the admin reinstates the mentor: the panel says they go back to review, an
   await expect(adminPage.locator('#toast')).toContainText('Reinstated and approved again: the mentor is listed.');
 
   await expect.poll(async () => (await S.sql('SELECT verification_status FROM users WHERE id = $1', [suspended.id]))[0].verification_status).toBe('verified');
-  await buyerPage.goto('/');
+  await buyerPage.goto('/experts.html');
   await expect(buyerPage.locator('.expert-card').filter({ hasText: 'Risky Mentor' })).toBeVisible();
   const log = (await S.sql(`SELECT action FROM verification_audit WHERE mentor_id = $1 ORDER BY created_at`, [suspended.id])).map((r) => r.action);
   expect(log.slice(-3)).toEqual(['suspended', 'reinstated', 'approved']);

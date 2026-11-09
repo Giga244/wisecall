@@ -12,21 +12,20 @@ let srv, base;
 before(async () => { await resetDatabase(); srv = await startServer(4773, { LAUNCH_MODE: 'prelaunch', RATE_LIMIT_MULTIPLIER: '30' }); base = srv.base; });
 after(() => { if (srv) srv.proc.kill(); });
 
-test('the prelaunch rule hides only the home page\'s expert search and field filters, never another .filters row', () => {
+test('no prelaunch rule hides a .filters row, Browse\'s search or its field filters (Browse is open before launch)', () => {
   const css = read('public/css/style.css');
   const rules = [...css.matchAll(/([^{}]*data-launch="prelaunch"[^{}]*)\{([^}]*)\}/g)].map((m) => m[1].replace(/\/\*[\s\S]*?\*\//g, '').trim());
-  assert.ok(rules.length >= 1);
   for (const selector of rules) {
     for (const part of selector.split(',').map((s) => s.trim())) {
       assert.doesNotMatch(part, /\.filters\b(?!-)/, `"${part}" would hide every .filters row (the admin's tabs among them)`);
     }
   }
-  assert.match(css, /\[data-launch="prelaunch"\] #experts \.browse-toolbar,\n\[data-launch="prelaunch"\] #filters \{ display: none; \}/);
+  for (const selector of rules) assert.doesNotMatch(selector, /#experts|#filters|browse-toolbar/, `"${selector}" hides Browse before launch`);
   // the rows that must stay: the admin's tabs and status chips (and the support and dispute chips inside the admin page)
   assert.match(read('public/admin.html'), /<div class="filters" id="adminTabs"/);
   assert.match(read('public/admin.html'), /<div class="filters" id="statusFilters"/);
-  // and the home page's own: the field filters have the id the rule names (also once a phone moves them into the Filters sheet)
-  assert.match(read('public/index.html'), /<div class="filters" id="filters"/);
+  // and Browse's own field filters (public/experts.html since the new home page)
+  assert.match(read('public/experts.html'), /<div class="filters" id="filters"/);
 });
 
 test('the pages are served with data-launch="prelaunch" before launch (what the stylesheet reads)', async () => {

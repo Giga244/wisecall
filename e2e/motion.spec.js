@@ -13,7 +13,7 @@ async function open(browser, motion, width = 1280) {
 test('a page change is a view transition, with the header and footer standing still; with reduced motion an instant switch', async ({ browser }) => {
   for (const [motion, expected] of [['no-preference', true], ['reduce', false]]) {
     const { ctx, page } = await open(browser, motion);
-    await page.goto('/');
+    await page.goto('/experts.html');
     await page.waitForLoadState('networkidle');
     expect(await page.evaluate(() => [getComputedStyle(document.getElementById('siteHeader')).viewTransitionName, getComputedStyle(document.querySelector('.footer')).viewTransitionName]))
       .toEqual(['site-header', 'site-footer']);
@@ -32,7 +32,7 @@ test('a link the pointer rests on is fetched ahead (not counted then); the page 
     if (r.headers()['sec-purpose']) ahead.push(r.url());
     if (r.url().endsWith('/api/stats/pageview')) counted.push(JSON.parse(r.postData()).path);
   });
-  await page.goto('/');
+  await page.goto('/experts.html');
   await page.waitForLoadState('networkidle');
   const card = page.locator('#expertGrid a.expert-card').first();
   const href = await card.getAttribute('href');
@@ -45,31 +45,12 @@ test('a link the pointer rests on is fetched ahead (not counted then); the page 
   await ctx.close();
 });
 
-test('the home page\'s answers fade in and out; with reduced motion they open and close at once', async ({ browser }) => {
-  for (const motion of ['no-preference', 'reduce']) {
-    const { ctx, page } = await open(browser, motion);
-    await page.goto('/');
-    const q = page.locator('#faqList .faq-q').first();
-    const a = page.locator('#faqList .faq-a').first();
-    await q.scrollIntoViewIfNeeded();
-    await q.click();
-    await expect(a).toBeVisible();
-    const fading = await page.evaluate(() => document.getAnimations().filter((x) => x.animationName === 'faq-open').length);
-    expect(fading, `${motion}: the answer fades in`).toBe(motion === 'reduce' ? 0 : 1);
-    await q.click();
-    await expect(q).toHaveAttribute('aria-expanded', 'false');
-    if (motion === 'reduce') expect(await a.isHidden(), 'closed at once').toBe(true);
-    else expect(await a.evaluate((el) => !el.hidden && el.classList.contains('is-closing')), 'still fading out').toBe(true);
-    await expect(a).toBeHidden();
-    await ctx.close();
-  }
-});
-
+// (the home page has no questions of its own any more: they are on the FAQ page, docs/CLAUDE-CODE-NEW-HOME.md)
 test('the FAQ page\'s answers open and close (and the page arrives without a hard cut from the home page)', async ({ browser }) => {
   const { ctx, page } = await open(browser, 'no-preference');
   await page.goto('/');
   await page.waitForLoadState('networkidle');
-  await page.locator('#faq .faq-more a').click();
+  await page.locator('footer a[href$="/faq.html"]').first().click(); // (the FAQ link in the footer)
   await page.waitForURL(/\/faq\.html$/);
   await expect.poll(() => page.evaluate(() => window.__vt)).toBe(true);
   const item = page.locator('details.faq-item').first();

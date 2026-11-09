@@ -209,6 +209,8 @@ router.post('/new', asyncHandler(async (req, res) => {
   await identities.linkGoogle(user.id, claims);
   const photo = await fetchGooglePhoto(who.picture);
   if (photo) await setPhoto(user.id, photo, 'google');
+  // (Google already confirmed the address: the welcome now; otherwise it comes when the emailed code is entered)
+  if (emailVerified) require('../notify').notifyWelcome(user);
 
   // The pages a new person passes through: (verify the email if Google did not) -> choose a username -> where they were going.
   let to = withRedirect('/choose-username.html', redirect);

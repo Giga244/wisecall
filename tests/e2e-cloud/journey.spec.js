@@ -91,7 +91,7 @@ test('the mentor saves payout details and becomes visible', async () => {
 
 test('the buyer finds the mentor with the search box, asks a question and pays at the (fake) bank', async () => {
   const page = pages.buyer;
-  await page.goto('/');
+  await page.goto('/experts.html');
   await page.fill('#searchInput', people.mentor.name.split(' ')[1]);
   const cardLink = page.locator('.expert-card').filter({ hasText: people.mentor.name });
   await expect(cardLink).toBeVisible();

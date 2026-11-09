@@ -260,8 +260,8 @@ describe('launch mode: prelaunch, then live', () => {
     const pub = (f) => fs.readFileSync(path.join(ROOT, 'public', f), 'utf8');
     // (the admin panel's texts live in their own dictionaries, which the server only sends to admins)
     const en = { ...JSON.parse(pub('i18n/en.json')), ...JSON.parse(pub('i18n/admin-en.json')) }, ka = { ...JSON.parse(pub('i18n/ka.json')), ...JSON.parse(pub('i18n/admin-ka.json')) };
-    const wanted = new Set(['hero.prelaunch.cta', 'hero.prelaunch.note', 'wait.hero', 'wait.prelaunch.title', 'wait.join',
-      'cta.prelaunch.title', 'cta.prelaunch.sub', 'launch.banner', 'launch.banner.mentor', 'expert.prelaunch.title', 'expert.prelaunch.body', 'vt.status.verifiedPrelaunch',
+    const wanted = new Set(['home2.pill.prelaunch', 'home2.wait.count', 'wait.thanks', 'wait.follow', 'expert.prelaunch.wait', 'wait.hero', 'wait.prelaunch.title', 'wait.join',
+      'launch.banner', 'launch.banner.mentor', 'expert.prelaunch.title', 'expert.prelaunch.body', 'vt.status.verifiedPrelaunch',
       'dash.received.prelaunch.title', 'dash.received.prelaunch.body', 'admin.launch.banner']);
     for (const f of fs.readdirSync(path.join(ROOT, 'public')).filter((n) => n.endsWith('.html'))) {
       for (const m of pub(f).matchAll(/data-i18n-prelaunch="([^"]+)"/g)) wanted.add(m[1]);
@@ -271,9 +271,10 @@ describe('launch mode: prelaunch, then live', () => {
       assert.match(ka[key] || '', /[ა-ჿ]/, `${key} in Georgian`);
     }
     const home = pub('index.html');
-    assert.match(home, /data-i18n-prelaunch="hero\.prelaunch\.cta"/);
-    assert.match(home, /class="[^"]*hero-mentor-btn" data-mentor-cta="hero" data-i18n="hero\.mentorCta"/); // (the experts' way in, before and after launch)
-    for (const f of ['js/main.js', 'js/profile.js','js/nav.js', 'js/dashboard.js', 'js/settings-verification.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
+    assert.match(home, /data-i18n-prelaunch="home2\.pill\.prelaunch"/);
+    assert.match(home, /class="[^"]*lmentor-btn" data-mentor-cta="hero" data-i18n="nav\.becomeMentor"/); // (the experts' way in, before and after launch)
+    // (Browse, public/js/main.js, is open before launch too: docs/CLAUDE-CODE-NEW-HOME.md 4)
+    for (const f of ['js/landing.js', 'js/waitlist.js', 'js/profile.js','js/nav.js', 'js/dashboard.js', 'js/settings-verification.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);
   });
 });
 

@@ -48,6 +48,12 @@ const S = {
       after: "Answer within {days} days. If you don't, the buyer is refunded automatically and you won't be paid for it.",
       button: 'Answer the question'
     },
+    welcome: {
+      subject: 'Welcome to Wisecall', heading: 'Welcome, {name}!',
+      intro: 'Your email is confirmed. Find a verified expert in your field and ask your question: a written answer within 7 days, or your money back.',
+      introPrelaunch: "Your email is confirmed. Wisecall opens soon: we'll write to you on the day you can ask your first question.",
+      button: 'Browse experts', follow: 'Follow us:'
+    },
     answered: {
       subject: '{mentor} answered your question', heading: 'You got an answer', intro: '{mentor} answered your question:',
       after: 'Rating the answer helps others find great mentors.', button: 'Read it in your dashboard'
@@ -389,6 +395,12 @@ const S = {
       intro: '{amount} გადაიხადეს შენთვის კითხვის დასასმელად:',
       after: 'უპასუხე {days} დღის განმავლობაში. თუ არ უპასუხე, თანხა ავტომატურად დაუბრუნდება მყიდველს და ამ კითხვაზე ანაზღაურებას ვერ მიიღებ.',
       button: 'კითხვაზე პასუხი'
+    },
+    welcome: {
+      subject: 'მოგესალმებით Wisecall-ზე', heading: 'მოგესალმებით, {name}!',
+      intro: 'შენი ელფოსტა დადასტურებულია. იპოვე გადამოწმებული ექსპერტი შენს სფეროში და დაუსვი კითხვა: წერილობით გიპასუხებს 7 დღეში, ან თანხა დაგიბრუნდება.',
+      introPrelaunch: 'შენი ელფოსტა დადასტურებულია. Wisecall მალე იხსნება: მოგწერთ იმ დღეს, როცა პირველი კითხვის დასმა შეგეძლება.',
+      button: 'ექსპერტების ნახვა', follow: 'გამოგვყევი:'
     },
     answered: {
       subject: 'პასუხი შენს კითხვაზე — {mentor}', heading: 'პასუხი მიიღე', intro: 'შენს კითხვას უპასუხა მენტორმა. პასუხის ავტორი: {mentor}.',
@@ -733,12 +745,21 @@ const BUILDERS = {
   }),
   answered: (s, d) => ({
     heading: s.answered.heading,
-    blocks: [{ p: fill(s.answered.intro, d), raw: true }, { quote: d.answer }, { p: s.answered.after }, { button: s.answered.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+    blocks: [{ p: fill(s.answered.intro, d), raw: true }, { quote: d.answer }, { p: s.answered.after }, { button: s.answered.button, url: `${config.PUBLIC_URL}/dashboard.html` },
+      { social: s.welcome.follow }]
+  }),
+  // Once, when the address is verified (by the emailed code, or by Google at sign-up): what Wisecall is for, and where to follow it. Before
+  // launch it says the site opens soon instead of sending them to ask.
+  welcome: (s, d) => ({
+    heading: fill(s.welcome.heading, d, false),
+    blocks: [{ p: d.prelaunch ? s.welcome.introPrelaunch : s.welcome.intro },
+      ...(d.prelaunch ? [] : [{ button: s.welcome.button, url: `${config.PUBLIC_URL}/experts.html` }]),
+      { social: s.welcome.follow }]
   }),
   refundSeeker: (s, d) => ({
     heading: s.refundSeeker.heading,
     blocks: [{ p: fill(s.refundSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.refundSeeker.after },
-      { button: s.refundSeeker.button, url: `${config.PUBLIC_URL}/index.html#experts` }]
+      { button: s.refundSeeker.button, url: `${config.PUBLIC_URL}/experts.html` }]
   }),
   newFreeQuestion: (s, d) => ({
     heading: s.newFreeQuestion.heading,
@@ -749,7 +770,7 @@ const BUILDERS = {
   freeClosedSeeker: (s, d) => ({
     heading: s.freeClosedSeeker.heading,
     blocks: [{ p: fill(s.freeClosedSeeker.intro, { ...d, reason: fill(s.refundSeeker.reasons[d.reason] || s.refundSeeker.reasons.other, d, false) }), raw: true }, { small: s.freeClosedSeeker.after },
-      { button: s.refundSeeker.button, url: `${config.PUBLIC_URL}/index.html#experts` }]
+      { button: s.refundSeeker.button, url: `${config.PUBLIC_URL}/experts.html` }]
   }),
   freeClosedMentor: (s, d) => ({
     heading: s.freeClosedMentor.heading,
@@ -865,7 +886,7 @@ const BUILDERS = {
       heading: s.mentorJoined.heading,
       blocks: [
         { p: fill(s.mentorJoined.intro, { field }), raw: true }, { p: s.mentorJoined.after },
-        { button: s.mentorJoined.button, url: `${config.PUBLIC_URL}/index.html${d.mentorField ? '?niche=' + encodeURIComponent(d.mentorField) : ''}#experts` },
+        { button: s.mentorJoined.button, url: `${config.PUBLIC_URL}/experts.html${d.mentorField ? '?niche=' + encodeURIComponent(d.mentorField) : ''}` },
         { small: s.mentorJoined.unsubscribe }, { link: d.unsubscribeUrl }
       ]
     };
@@ -1031,6 +1052,12 @@ function layout(lang, heading, blocks, { plain = false } = {}) {
     if (b.button) return `<p style="margin:8px 0 20px"><a href="${escapeHtml(b.url)}" style="display:inline-block;padding:12px 24px;background:${COLORS.accent};color:${COLORS.ink};border:2px solid ${COLORS.ink};text-decoration:none;font-weight:700;font-size:16px;border-radius:14px;font-family:${FONT}">${escapeHtml(b.button)}</a></p>`;
     if (b.link) return `<p style="margin:0 0 16px;font-size:13px;word-break:break-all"><a href="${escapeHtml(b.link)}" class="wc-link" style="color:${COLORS.link}">${escapeHtml(b.label || b.link)}</a></p>`;
     if (b.small) return `<p class="wc-soft" style="margin:0 0 12px;font-size:13px;line-height:1.5;color:${COLORS.soft}">${escapeHtml(b.small)}</p>`;
+    if (b.social) {
+      const links = socialLinks();
+      if (!links.length) return '';
+      const icons = links.map(([name, label, url]) => `<a href="${escapeHtml(url)}" style="display:inline-block;margin:0 8px 0 0;text-decoration:none"><img src="${escapeHtml(config.PUBLIC_URL)}/brand/social-${name}.png" width="28" height="28" alt="${label}" style="display:block;border:0;outline:none"></a>`).join('');
+      return `<p class="wc-soft" style="margin:8px 0 12px;font-size:13px;line-height:28px;color:${COLORS.soft}"><span style="vertical-align:middle;margin-right:10px">${escapeHtml(b.social)}</span>${icons}</p>`;
+    }
     return '';
   }).join('');
 
@@ -1053,9 +1080,16 @@ ${rows}
     if (b.quote) return `"${b.quote}"`;
     if (b.button) return `${b.button}: ${b.url}`;
     if (b.link) return b.label ? `${b.label}: ${b.link}` : b.link;
+    if (b.social) return socialLinks().length ? `${b.social} ${socialLinks().map(([, label, url]) => `${label} ${url}`).join(' · ')}` : '';
     return b.small || '';
   }), '', s.tagline].join('\n');
   return { html, text };
+}
+
+// Wisecall's own social accounts for the emails, in this order, only those set (server/config.js SOCIAL_URLS): [name, label, url]
+function socialLinks() {
+  const urls = config.SOCIAL_URLS || {};
+  return [['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['facebook', 'Facebook']].filter(([name]) => urls[name]).map(([name, label]) => [name, label, urls[name]]);
 }
 
 function render(name, lang, data = {}) {

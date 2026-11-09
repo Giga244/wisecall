@@ -1,0 +1,182 @@
+/* The home page (docs/CLAUDE-CODE-NEW-HOME.md; public/index.html, public/js/landing.js): the hero with its search (before launch, the waiting
+   list) and the phone, "Meet our experts", how it works, the trust row and the mentor banner. Phones first; works from 360px. */
+
+.landing { overflow-x: clip; }
+.lsection { padding: 56px 0; }
+.lsection h2 { font-family: var(--font-display); letter-spacing: var(--tracking-display); font-size: clamp(1.6rem, 2.4vw + 0.8rem, 2.4rem); margin: 0; }
+
+/* ---- 1. Hero ---------------------------------------------------------------------------------------------------------------------- */
+.lhero { padding: 28px 0 40px; }
+.lhero-inner { display: grid; gap: 32px; align-items: center; }
+@media (min-width: 960px) {
+  .lhero { padding: 56px 0 72px; }
+  .lhero-inner { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 48px; }
+  .lhero-inner:has(> .lhero-phone[hidden]) { grid-template-columns: minmax(0, 760px); justify-content: start; }
+}
+.lhero-pill { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 18px; padding: 8px 16px; border-radius: 999px; background: var(--mint-soft);
+  color: var(--mint-banner-ink); font-size: 0.92rem; font-weight: 600; line-height: 1.4; }
+html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color: var(--accent-text); }
+.lhero-title { font-family: var(--font-display); letter-spacing: var(--tracking-display); font-size: clamp(2.1rem, 4.4vw + 0.8rem, 4.2rem); line-height: 1.1;
+  margin: 0 0 18px; overflow-wrap: break-word; }
+.lhero-title em { display: block; font-style: normal; color: var(--headline-accent); }
+.lhero-sub { font-size: clamp(1.02rem, 0.6vw + 0.9rem, 1.3rem); line-height: 1.6; color: var(--ink-soft); margin: 0 0 24px; max-width: 34em; }
+
+/* the search: one rounded box, the button inside it */
+.lhero-search { display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 22px; padding: 8px 8px 8px 18px; max-width: 640px;
+  box-shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.08); border: var(--line-w, 1.5px) solid transparent; }
+.lhero-search:focus-within { border-color: var(--ink); }
+.lhero-search-icon { flex: 0 0 auto; color: var(--ink-soft); }
+.lhero-search input { flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 16px; padding: 12px 4px; min-height: 48px; box-shadow: none; outline: none; }
+.lhero-search .btn { flex: 0 0 auto; min-height: 48px; padding: 0 24px; border-radius: 16px; }
+
+/* before launch: the waiting list, the same box */
+.lhero-wait { max-width: 640px; min-height: 120px; }
+.lhero-wait-skeleton { display: grid; gap: 10px; }
+.waitlist-compact { display: grid; gap: 10px; }
+.wlc-row { display: flex; gap: 8px; align-items: center; background: var(--card); border-radius: 22px; padding: 8px 8px 8px 18px;
+  box-shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.08); border: var(--line-w, 1.5px) solid transparent; }
+.wlc-row:focus-within { border-color: var(--ink); }
+.wlc-email { flex: 1 1 auto; min-width: 0; margin: 0; }
+.wlc-email input { width: 100%; border: 0; background: transparent; font: inherit; font-size: 16px; padding: 12px 4px; min-height: 48px; box-shadow: none; outline: none; margin: 0; }
+.wlc-row .btn { flex: 0 0 auto; min-height: 48px; padding: 0 22px; border-radius: 16px; white-space: nowrap; }
+.waitlist-compact .waitlist-age { margin: 4px 0 0; }
+.waitlist-compact .waitlist-hint { margin: 0; }
+.waitlist-compact .form-error:empty { display: none; }
+.lhero-count { margin: 12px 0 0; font-weight: 600; color: var(--ink-soft); }
+.waitlist-follow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; font-weight: 600; }
+.social-inline { display: flex; gap: 8px; list-style: none; margin: 0; padding: 0; }
+@media (max-width: 479px) {
+  .lhero-search { padding-left: 14px; }
+  .lhero-search .btn { padding: 0 16px; }
+  .wlc-row { flex-wrap: wrap; padding: 8px; }
+  .wlc-email input { padding-left: 10px; }
+  .wlc-row .btn { flex: 1 1 100%; }
+}
+
+/* the popular fields */
+.lhero-popular { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; }
+.lhero-popular-label { color: var(--ink-soft); font-size: 0.95rem; }
+.lhero-chips { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.lchip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--card);
+  color: var(--ink); text-decoration: none; font-weight: 500; border: var(--line-w, 1.5px) solid transparent; cursor: pointer; font: inherit; }
+.lchip:hover { border-color: var(--line); }
+.lchip[aria-pressed="true"] { background: var(--inverse); color: var(--on-inverse); }
+
+/* ---- 2. The phone ------------------------------------------------------------------------------------------------------------------ */
+/* (a drawing of a phone: its own light colours in both themes) */
+.lhero-phone { display: flex; justify-content: center; }
+.qa-phone { margin: 0; width: min(320px, 100%); height: 640px; background: var(--phone-screen); border: 10px solid var(--phone-frame); border-radius: 44px; overflow: hidden; position: relative;
+  box-shadow: 0 24px 60px rgba(var(--phone-shadow-rgb), 0.18); color: var(--phone-ink); font-family: var(--font-body); }
+.qa-screen { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.qa-status { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; padding: 10px 20px 4px; }
+.qa-bars { display: inline-flex; gap: 2px; align-items: center; }
+.qa-bars i { width: 4px; height: 4px; border-radius: 50%; background: var(--phone-ink); }
+.qa-bars b { width: 3px; height: 9px; border-radius: 1px; background: var(--phone-ink); margin-left: 2px; }
+.qa-head { display: flex; align-items: center; gap: 10px; padding: 8px 14px 10px; background: var(--phone-card); border-bottom: 1px solid var(--phone-line); }
+.qa-back { color: var(--phone-back); }
+.qa-avatar .avatar { width: 34px; height: 34px; font-size: 0.9rem; }
+.qa-who { display: grid; min-width: 0; }
+.qa-name { font-size: 13px; }
+.qa-meta { font-size: 10.5px; color: var(--phone-ok); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qa-chat { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; padding: 8px 10px 62px; overflow: hidden; }
+.qa-day { text-align: center; font-size: 10.5px; color: var(--phone-soft); margin: 4px 0; }
+.qa-q { align-self: flex-end; max-width: 88%; background: var(--phone-coral); color: var(--phone-on-coral); border-radius: 16px 16px 4px 16px; padding: 9px 12px; font-size: 12px; line-height: 1.42;
+  transform-origin: 100% 100%; overflow-wrap: anywhere; }
+.qa-a { align-self: flex-start; max-width: 95%; background: var(--phone-card); border-radius: 16px 16px 16px 4px; padding: 9px 12px; font-size: 12px; line-height: 1.42;
+  box-shadow: 0 3px 10px rgba(var(--phone-shadow-rgb), 0.06); transform-origin: 0 100%; overflow-wrap: anywhere; }
+.qa-a b { display: block; margin-bottom: 2px; }
+.qa-q em, .qa-a em { display: block; font-style: normal; font-size: 10px; margin-top: 5px; text-align: right; }
+.qa-q em { color: rgba(var(--phone-on-coral-rgb), 0.92); }
+.qa-a em { color: var(--phone-ok); }
+.qa-typing { display: inline-flex; gap: 4px; align-self: flex-start; background: var(--phone-card); border-radius: 14px; padding: 10px 12px; box-shadow: 0 3px 10px rgba(var(--phone-shadow-rgb), 0.06); }
+.qa-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--phone-dot); animation: qa-dot 1s infinite ease-in-out; }
+.qa-typing i:nth-child(2) { animation-delay: 0.15s; }
+.qa-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes qa-dot { 0%, 80%, 100% { transform: translateY(0); opacity: 0.5; } 40% { transform: translateY(-4px); opacity: 1; } }
+.qa-rate { text-align: center; margin-top: 6px; }
+.qa-stars { display: inline-flex; gap: 2px; font-size: 17px; line-height: 1; }
+.qa-stars i { font-style: normal; color: var(--phone-star-off); transition: color 0.2s, transform 0.2s; }
+.qa-stars i.is-on { color: var(--phone-star); transform: scale(1.12); }
+.qa-ratelabel { display: block; font-size: 10.5px; color: var(--phone-soft); margin-top: 3px; }
+.qa-input { position: absolute; left: 10px; right: 10px; bottom: 12px; min-height: 42px; display: flex; align-items: flex-end; gap: 8px; background: var(--phone-card);
+  border-radius: 20px; padding: 6px 6px 6px 14px; box-shadow: 0 2px 8px rgba(var(--phone-shadow-rgb), 0.06); font-size: 12px; line-height: 1.45; }
+.qa-inp { flex: 1; padding: 5px 0; overflow-wrap: anywhere; max-height: 7.5em; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+.qa-ph { color: var(--phone-placeholder); }
+.qa-cur { display: inline-block; width: 1.5px; height: 13px; background: var(--phone-coral); vertical-align: -2px; margin-left: 1px; }
+.qa-send { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--phone-coral); color: var(--phone-on-coral); display: grid; place-items: center; font-size: 13px; transition: transform 0.15s; }
+.qa-send.is-tap { transform: scale(0.82); }
+@media (max-width: 479px) { .qa-phone { height: 620px; border-width: 9px; border-radius: 40px; } }
+/* (still: everything shown, nothing moves) */
+@media (prefers-reduced-motion: reduce) { .qa-typing { display: none !important; } .qa-typing i { animation: none; } .qa-stars i { transition: none; } }
+
+/* ---- 3. Meet our experts ----------------------------------------------------------------------------------------------------------- */
+.lsection-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; margin-bottom: 24px; }
+.lmore { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-text); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.lmore:hover { text-decoration: underline; }
+.lexpert-grid { display: grid; gap: 16px; list-style: none; margin: 0; padding: 0; }
+@media (min-width: 720px) { .lexpert-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; } }
+.lexpert { display: flex; flex-direction: column; gap: 6px; background: var(--card); border-radius: var(--r-card); padding: 24px; box-shadow: 0 6px 24px rgba(var(--shadow-rgb), 0.06); }
+.lexpert-avatar, .lexpert .avatar { width: 56px; height: 56px; font-size: 1.3rem; margin-bottom: 6px; }
+.lexpert-name { margin: 0; font-size: 1.12rem; }
+.lexpert-name a { color: inherit; text-decoration: none; }
+.lexpert-name a:hover { text-decoration: underline; }
+.lexpert-role { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+.lexpert-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; }
+.lexpert-verified { margin: 2px 0 0; color: var(--mint-banner-ink); font-size: 0.9rem; font-weight: 600; }
+.lexpert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: auto 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+@media (max-width: 719px) {
+  .lexpert { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 14px; row-gap: 2px; padding: 18px; }
+  .lexpert > * { grid-column: 2; }
+  .lexpert > .avatar, .lexpert > .lexpert-avatar { grid-column: 1; grid-row: 1 / span 3; margin: 0; }
+  .lexpert-tags, .lexpert-verified { display: none; }
+  .lexpert-foot { border-top: 0; padding-top: 6px; }
+}
+
+/* ---- 4. How it works --------------------------------------------------------------------------------------------------------------- */
+.lhow-head { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin-bottom: 24px; }
+.lhow-jikhva { width: 64px; height: auto; flex: 0 0 auto; }
+.lsteps { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; }
+@media (min-width: 720px) { .lsteps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; } }
+.lstep { background: var(--card); border-radius: var(--r-card); padding: 24px; box-shadow: 0 6px 24px rgba(var(--shadow-rgb), 0.05); }
+.lstep-num { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--coral-soft); color: var(--accent-text);
+  font-weight: 700; margin-bottom: 14px; }
+.lstep h3 { margin: 0 0 6px; font-size: 1.15rem; }
+.lstep p { margin: 0; color: var(--ink-soft); line-height: 1.55; }
+@media (max-width: 719px) {
+  .lstep { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; padding: 18px; }
+  .lstep-num { grid-row: 1 / span 2; margin: 0; }
+}
+
+/* ---- 5. Trust row ------------------------------------------------------------------------------------------------------------------ */
+.ltrust { padding: 8px 0 24px; }
+.ltrust-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0 auto; }
+@media (min-width: 900px) { .ltrust-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } }
+.ltrust-row li { display: flex; gap: 8px; align-items: flex-start; background: rgba(var(--shadow-rgb), 0.04); border-radius: 18px; padding: 16px 18px; line-height: 1.5; font-size: 0.95rem; }
+.ltrust-more { margin: 14px auto 0; text-align: center; font-weight: 700; }
+
+/* ---- 6. For experts ---------------------------------------------------------------------------------------------------------------- */
+.lmentor { padding-top: 64px; }
+.lmentor-card { position: relative; display: grid; gap: 18px; align-items: center; background: var(--navy); color: var(--on-navy); border-radius: var(--r-card-lg);
+  padding: 32px 24px 28px 128px; min-height: 200px; }
+.lmentor-jikhva { position: absolute; left: 14px; bottom: 0; width: 104px; height: auto; }
+.lmentor-text h2 { color: var(--on-navy); margin-bottom: 8px; }
+.lmentor-text p { margin: 0; color: var(--on-navy-soft); line-height: 1.6; }
+.lmentor-btn { justify-self: start; }
+/* (the button says where someone is once nav.js knows: until then an applicant's is kept invisible, so it never jumps; no banner for a mentor) */
+html[data-mentor-state="draft"] .lmentor-btn:not([data-ready]), html[data-mentor-state="sent"] .lmentor-btn:not([data-ready]) { visibility: hidden; }
+html[data-mentor-state="none"] .lmentor, .lmentor[hidden] { display: none; }
+.lmentor-btn.mentor-status { white-space: normal; }
+@media (min-width: 860px) {
+  .lmentor-card { grid-template-columns: minmax(0, 1fr) auto; padding: 40px 48px 40px 220px; }
+  .lmentor-jikhva { left: 40px; width: 140px; }
+}
+@media (max-width: 479px) {
+  .lmentor-card { padding: 28px 20px 24px 104px; }
+  .lmentor-jikhva { width: 88px; left: 8px; }
+  .lmentor-btn { justify-self: stretch; }
+}
+/* (the compact form against the waiting list's general rules in style.css: the button keeps its own width beside the email, the note is
+   left-aligned under the box) */
+.waitlist-compact .wlc-row .waitlist-submit, .waitlist-compact .wlc-row .waitlist-submit:hover { width: auto; min-height: 48px; }
+.waitlist-compact .waitlist-hint { text-align: left; font-size: 0.82rem; }
+@media (max-width: 479px) { .waitlist-compact .wlc-row .waitlist-submit, .waitlist-compact .wlc-row .waitlist-submit:hover { width: 100%; } }

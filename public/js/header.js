@@ -2,20 +2,31 @@
 // 1024px a menu button that opens a full-height panel (built here, opened by nav.js).
 // Loaded as the first script inside <body>, so it puts the header exactly where the script tag is.
 (function () {
-  // The Wisecall logo, as the brand files in /brand (never redrawn here). Light pages use the navy + coral logo, dark pages the
-  // one made for dark backgrounds. Under 360px wide the light logo becomes just the symbol, so the header never overflows.
-  // (Ratio 446 : 108, so 36px high is 149px wide; the size attributes keep the page from jumping while the logo loads.)
+  // The header's logo (docs/CLAUDE-CODE-NEW-HOME.md 1): Jikhva peeks out from behind the "ll" of "Wisecall.". The letters are the brand
+  // wordmark's own outlines (public/brand/wisecall-logo.svg, never redrawn), drawn over Jikhva's head with a thin outline in the page's
+  // colour, so only the letters cover him and no box does. Ink letters on paper in light mode, light letters on the dark page in dark mode
+  // (style.css .jlogo): one drawing for both. The viewBox leaves room above the letters for the horns.
+  // The footer, emails, the payment page, receipts and the favicon keep the plain "Wisecall." logo.
+  const JIKHVA = '<svg class="jlogo" viewBox="112 -84 362 166" width="157" height="72" role="img" aria-label="Wisecall" focusable="false">'
+    + '<title>Wisecall</title>'
+    + '<image class="jlogo-head" href="/brand/jikhva-head.webp" x="318" y="-81" width="144" height="122.4" preserveAspectRatio="xMidYMid meet"/>'
+    + '<path class="jlogo-word" d="M147.17 76L130.17 76L119.48 27.01L132.55 27.01L139.00 65.91L139.82 65.91L147.91 27.01L162.98 27.01L171.22 65.91L172.03 65.91L178.49 27.01L190.81 27.01L180.05 76L163.42 76L155.63 37.18L154.89 37.18L147.17 76ZM207.36 76L195.41 76L195.41 36.81L207.36 36.81L207.36 76ZM201.43 31.32L201.43 31.32Q198.01 31.32 196.19 29.87Q194.37 28.42 194.37 25.75L194.37 25.75Q194.37 22.93 196.19 21.48Q198.01 20.04 201.43 20.04L201.43 20.04Q204.91 20.04 206.73 21.48Q208.55 22.93 208.55 25.68L208.55 25.68Q208.55 28.42 206.73 29.87Q204.91 31.32 201.43 31.32ZM231.19 77.04L231.19 77.04Q227.25 77.04 224.06 76.33Q220.87 75.63 218.50 74.29Q216.12 72.96 214.60 71.06Q213.08 69.17 212.48 66.87L212.48 66.87L221.39 62.94Q221.91 64.20 223.21 65.50Q224.51 66.80 226.70 67.61Q228.89 68.43 232.00 68.43L232.00 68.43Q234.97 68.43 236.64 67.58Q238.31 66.72 238.31 65.09L238.31 65.09Q238.31 63.90 237.39 63.20Q236.46 62.49 234.60 61.93Q232.75 61.38 230.00 60.86L230.00 60.86Q227.18 60.27 224.29 59.49Q221.39 58.71 218.87 57.33Q216.34 55.96 214.82 53.70Q213.30 51.43 213.30 47.94L213.30 47.94Q213.30 44.31 215.23 41.60Q217.16 38.89 220.98 37.33Q224.80 35.77 230.30 35.77L230.30 35.77Q235.20 35.77 238.91 37.03Q242.62 38.30 245.10 40.63Q247.59 42.97 248.56 46.24L248.56 46.24L238.98 49.65Q238.61 48.02 237.46 46.83Q236.31 45.64 234.57 45.01Q232.82 44.38 230.45 44.38L230.45 44.38Q227.55 44.38 225.96 45.27Q224.36 46.16 224.36 47.65L224.36 47.65Q224.36 48.83 225.44 49.61Q226.51 50.39 228.52 50.91Q230.52 51.43 233.27 52.03L233.27 52.03Q236.16 52.62 239.02 53.40Q241.88 54.18 244.21 55.48Q246.55 56.78 247.93 58.89Q249.30 61.01 249.30 64.35L249.30 64.35Q249.30 68.28 247.22 71.14Q245.14 74.00 241.10 75.52Q237.05 77.04 231.19 77.04ZM273.05 77.04L273.05 77.04Q268.15 77.04 264.29 75.74Q260.43 74.44 257.72 71.92Q255.01 69.39 253.60 65.68Q252.19 61.97 252.19 57.15L252.19 57.15Q252.19 52.47 253.57 48.54Q254.94 44.60 257.50 41.75Q260.06 38.89 263.81 37.33Q267.56 35.77 272.23 35.77L272.23 35.77Q276.98 35.77 280.58 37.29Q284.18 38.81 286.52 41.78Q288.86 44.75 289.97 49.02Q291.08 53.29 290.71 58.78L290.71 58.78L263.70 59.00Q264.07 63.53 266.29 65.76L266.29 65.76Q268.89 68.50 272.97 68.50L272.97 68.50Q274.98 68.50 276.31 67.95Q277.65 67.39 278.50 66.54Q279.36 65.68 279.84 64.64Q280.32 63.60 280.62 62.64L280.62 62.64L291.01 64.87Q290.42 67.61 289.12 69.84Q287.82 72.07 285.63 73.70Q283.44 75.33 280.36 76.19Q277.28 77.04 273.05 77.04ZM263.99 52.77L263.99 52.77L279.80 52.62Q279.80 50.76 279.21 49.35L279.21 49.35Q278.24 47.05 276.39 45.98Q274.53 44.90 272.38 44.90L272.38 44.90Q269.78 44.90 267.82 46.31Q265.85 47.72 264.74 50.39L264.74 50.39Q264.29 51.43 263.99 52.77ZM314.98 77.04L314.98 77.04Q309.94 77.04 306.08 75.63Q302.22 74.22 299.62 71.58Q297.02 68.95 295.65 65.24Q294.28 61.53 294.28 56.93L294.28 56.93Q294.28 52.17 295.65 48.32Q297.02 44.46 299.62 41.64Q302.22 38.81 306.00 37.29Q309.79 35.77 314.69 35.77L314.69 35.77Q319.59 35.77 323.15 37.33Q326.71 38.89 328.98 41.71Q331.24 44.53 332.06 48.24L332.06 48.24L321.00 51.95Q320.77 49.50 319.81 47.94Q318.84 46.39 317.32 45.68Q315.80 44.98 314.02 44.98L314.02 44.98Q312.16 44.98 310.75 45.72Q309.34 46.46 308.38 47.94Q307.41 49.43 306.89 51.54Q306.37 53.66 306.37 56.41L306.37 56.41Q306.37 60.34 307.38 62.97Q308.38 65.61 310.35 66.94Q312.31 68.28 315.13 68.28L315.13 68.28Q318.03 68.28 319.66 67.09Q321.29 65.91 322.04 64.16Q322.78 62.42 322.93 60.71L322.93 60.71L333.32 63.01Q333.02 65.76 331.87 68.32Q330.72 70.88 328.49 72.85Q326.27 74.81 322.96 75.93Q319.66 77.04 314.98 77.04ZM346.60 77.04L346.60 77.04Q343.34 77.04 340.81 75.74Q338.29 74.44 336.88 71.95Q335.47 69.47 335.47 65.91L335.47 65.91Q335.47 62.57 336.77 60.38Q338.07 58.19 340.55 56.89Q343.04 55.59 346.53 54.74Q350.02 53.88 354.47 53.21L354.47 53.21Q356.62 52.84 358.07 52.51Q359.52 52.17 360.26 51.43Q361.00 50.69 361.00 49.28L361.00 49.28Q361.00 47.42 359.67 46.09Q358.33 44.75 355.36 44.75L355.36 44.75Q353.28 44.75 351.61 45.49Q349.94 46.24 348.76 47.65Q347.57 49.06 346.97 51.06L346.97 51.06L336.43 47.94Q337.40 44.83 339.14 42.53Q340.89 40.23 343.34 38.70Q345.79 37.18 348.94 36.48Q352.10 35.77 355.66 35.77L355.66 35.77Q361.60 35.77 365.34 37.66Q369.09 39.56 370.91 43.53Q372.73 47.50 372.73 53.73L372.73 53.73L372.73 59.75Q372.73 62.42 372.84 65.13Q372.95 67.84 373.14 70.54Q373.32 73.25 373.62 76L373.62 76L363.08 76Q362.78 74.29 362.49 71.88Q362.19 69.47 362.04 66.94L362.04 66.94L360.63 66.94Q359.59 69.77 357.62 72.10Q355.66 74.44 352.87 75.74Q350.09 77.04 346.60 77.04ZM352.02 68.58L352.02 68.58Q353.36 68.58 354.73 68.10Q356.10 67.61 357.36 66.76Q358.63 65.91 359.67 64.64Q360.70 63.38 361.22 61.90L361.22 61.90L361.08 57.22Q360.41 57.59 359.59 57.82L359.59 57.82Q357.88 58.34 356.14 58.63Q354.40 58.93 352.73 59.26Q351.06 59.60 349.76 60.12Q348.46 60.64 347.72 61.53Q346.97 62.42 346.97 63.98L346.97 63.98Q346.97 66.05 348.38 67.32Q349.79 68.58 352.02 68.58ZM391.80 76L380.08 76L380.08 22.56L391.80 22.56L391.80 76ZM411.32 76L399.60 76L399.60 22.56L411.32 22.56L411.32 76Z"/>'
+    + '<circle class="jlogo-dot" cx="424.1" cy="69.4" r="6.6"/></svg>';
   window.WisecallBrand = window.WisecallBrand || {
     logoHtml(opts) {
-      const dark = document.documentElement.dataset.theme === 'dark';
-      if (dark) return '<img class="logo-img" src="/brand/wisecall-logo-on-dark-transparent.svg" alt="Wisecall" width="149" height="36" decoding="async">';
-      if (opts && opts.full) return '<img class="logo-img" src="/brand/wisecall-logo.svg" alt="Wisecall" width="149" height="36" decoding="async">'; // (the footer has room for the whole logo)
-      return '<picture class="logo-pic" data-mark><source media="(max-width: 359px)" srcset="/brand/wisecall-mark.svg"><img class="logo-img" src="/brand/wisecall-logo.svg" alt="Wisecall" width="149" height="36" decoding="async"></picture>';
+      if (opts && opts.full) {
+        // (the footer: the plain logo, the one made for dark backgrounds on a dark page)
+        const dark = document.documentElement.dataset.theme === 'dark';
+        // (the addresses written out, so the server adds their version: server/assets.js)
+        if (dark) return '<img class="logo-img" src="/brand/wisecall-logo-on-dark-transparent.svg" alt="Wisecall" width="149" height="36" decoding="async">';
+        return '<img class="logo-img" src="/brand/wisecall-logo.svg" alt="Wisecall" width="149" height="36" decoding="async">';
+      }
+      return JIKHVA;
     }
   };
   const here = window.location.pathname.replace(/^\/ka(?=\/|$)/, '') || '/'; // (the Georgian address /ka/... is the same page)
   const onHome = here === '/' || here === '/index.html';
-  const link = (l) => l.href || (onHome ? '' : '/index.html') + l.hash; // on the home page the links just scroll (the mentors' page is its own)
+  const link = (l) => l.href || (onHome ? '' : '/index.html') + l.hash; // on the home page "How it works" just scrolls; Browse and the mentors' page are their own
 
   // The header's own words, in the page's language from its first frame (the page's dictionary arrives a moment later and writes the
   // same words; tests/header-hint.test.js keeps these equal to public/i18n/en.json and ka.json). The language as i18n.js finds it.
@@ -46,9 +57,9 @@
   // their own button next to Dashboard and Settings instead (the mentor button, below).
   const LINKS = [
     { hash: '#how', key: 'nav.how', extra: true },
-    { hash: '#experts', key: 'nav.browse' },
+    { href: '/experts.html', key: 'nav.browse' },
     { href: '/become-a-mentor.html', key: 'nav.becomeMentor', mentor: true },
-    { hash: '#faq', key: 'footer.faq', extra: true, faq: true }
+    { href: '/faq.html', key: 'footer.faq', extra: true, faq: true }
   ];
   // (a page opened for a mentor, /signup.html?as=mentor and the rest of the way: its mentor words from the first frame, see style.css)
   try { if (new URLSearchParams(window.location.search).get('as') === 'mentor') document.documentElement.dataset.as = 'mentor'; } catch (e) { /* no URL API */ }

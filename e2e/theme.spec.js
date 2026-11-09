@@ -8,7 +8,9 @@ const DARK_BG = 'rgb(22, 19, 31)'; // #16131F
 const LIGHT_BG = 'rgb(244, 242, 238)'; // #F4F2EE, paper
 const theme = (page) => page.evaluate(() => ({ theme: document.documentElement.dataset.theme, pref: document.documentElement.dataset.themePref }));
 const bodyBg = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-const logo = (page) => page.locator('.nav .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0]);
+// (the header's Jikhva logo is an SVG: light letters mean the version for dark pages, as the footer's image file says it)
+const letters = (loc) => loc.evaluate((p) => { const [r, g, b] = getComputedStyle(p).fill.match(/\d+/g).map(Number); return (r + g + b) / 3 > 128 ? 'wisecall-logo-on-dark-transparent.svg' : 'wisecall-logo.svg'; });
+const logo = (page) => letters(page.locator('.nav .logo .jlogo-word'));
 const barColor = (page) => page.evaluate(() => { const el = document.getElementById('themeColorOverride'); return el ? el.content : null; });
 
 test.describe('System follows the device', () => {
@@ -101,7 +103,7 @@ test.describe('a choice made by hand', () => {
     await toggle.click();
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
     await expect(toggle).toHaveText('Switch to light mode');
-    expect(await page.locator('#mmTitle img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
+    expect(await letters(page.locator('#mmTitle .jlogo-word'))).toBe('wisecall-logo-on-dark-transparent.svg');
     await ctx.close();
   });
 
@@ -201,7 +203,7 @@ test.describe('the header with the theme button', () => {
             const right = document.querySelector('.nav-right').getBoundingClientRect();
             const lastLink = links.length ? links[links.length - 1].getBoundingClientRect().right : document.querySelector('.nav .logo').getBoundingClientRect().right;
             const tooTall = [...document.querySelectorAll('.nav-links a, .nav-right a, .nav-right button')].filter((e) => e.offsetParent && e.getBoundingClientRect().height > 50).length;
-            return { logo: Math.round(document.querySelector('.nav .logo img').getBoundingClientRect().width), overflow: inner.scrollWidth - inner.clientWidth, gap: Math.round(right.left - lastLink), page: document.documentElement.scrollWidth - innerWidth, tooTall };
+            return { logo: Math.round(document.querySelector('.nav .logo .jlogo').getBoundingClientRect().width), overflow: inner.scrollWidth - inner.clientWidth, gap: Math.round(right.left - lastLink), page: document.documentElement.scrollWidth - innerWidth, tooTall };
           });
           if (m.logo < 140 || m.overflow > 0 || m.gap < 12 || m.page > 0 || m.tooTall) problems.push(`${who} ${w}px: ${JSON.stringify(m)}`);
           await ctx.close();
@@ -284,7 +286,7 @@ test.describe('the pieces that appear on top of a page, in dark', () => {
     // phone: the filters sheet and the menu panel
     const phone = await browser.newContext({ colorScheme: 'dark', viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
     const p = await phone.newPage();
-    await p.goto('/');
+    await p.goto('/experts.html');
     await p.waitForLoadState('networkidle');
     await p.click('#filtersBtn');
     await expect(p.locator('#filtersSheet .sheet-panel')).toBeVisible();

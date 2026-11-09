@@ -130,13 +130,19 @@ html.motion.page-fade #main { animation: page-fade 0.2s var(--ease-out); }
   transition: transform 0.25s var(--ease-out);
 }
 .nav.nav-hidden { transform: translateY(-100%); }
-.nav-inner { display: flex; align-items: center; gap: 28px; padding: 14px var(--gutter); min-height: 74px; }
-/* The logo is the image from /brand (see public/js/header.js): 36px high, 30px on tablets, 28px on phones. */
+.nav-inner { display: flex; align-items: center; gap: 28px; padding: 12px var(--gutter); min-height: 74px; }
+/* The header's logo is Jikhva behind "Wisecall." (public/js/header.js): 64px high with his horns, 56px on phones; the letters are the ink,
+   with a thin outline in the header's own colour, so only the letters cover him (docs/CLAUDE-CODE-NEW-HOME.md 1). The footer's is the
+   plain image from /brand. */
 .logo { display: inline-flex; align-items: center; flex: 0 0 auto; min-height: 44px; line-height: 0; text-decoration: none; white-space: nowrap; }
 .logo img { display: block; height: 36px; width: auto; }
+.logo .jlogo { display: block; height: 64px; width: auto; overflow: visible; }
+.jlogo-word, .jlogo-dot { stroke: var(--header-bg); stroke-width: 7; stroke-linejoin: round; paint-order: stroke fill; }
+.jlogo-word { fill: var(--ink); }
+.jlogo-dot { fill: var(--accent); }
 @media (max-width: 1023px) { .logo img { height: 30px; } }
 @media (max-width: 639px) { .logo img { height: 28px; } }
-@media (max-width: 359px) { .logo-pic[data-mark] img { aspect-ratio: 1 / 1; } } /* the symbol on its own is square */
+@media (max-width: 639px) { .logo .jlogo { height: 56px; } }
 .nav-links { display: flex; gap: 26px; flex: 1; white-space: nowrap; }
 /* (a coral line grows under a link from the left) */
 .nav-links a { position: relative; color: var(--ink); text-decoration: none; font-weight: 500; font-size: 1rem; display: inline-flex; align-items: center; min-height: 44px; }
@@ -588,12 +594,8 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 }
 .launch-banner a { color: var(--accent-text); font-weight: 800; margin-left: 6px; }
 .launch-banner-admin { border: 1px solid var(--mint-line); border-radius: var(--radius-sm); text-align: left; margin: 0 0 18px; }
-/* (only the home page's expert search and field filters: #filters keeps its id when a phone moves it into the Filters sheet. Never a
-   .filters row anywhere else: the admin's tabs and status chips are one, docs/CLAUDE-CODE-ADMIN-TABS-BUG.md) */
-[data-launch="prelaunch"] #experts .browse-toolbar,
-[data-launch="prelaunch"] #filters { display: none; }
-/* (and Browse itself: before launch the hero's form is the only waiting list on the page, docs/CLAUDE-CODE-HOME-ONE-WAITLIST.md) */
-[data-launch="prelaunch"] #experts { display: none; }
+/* (Browse, its search and its field filters stay open before launch: docs/CLAUDE-CODE-NEW-HOME.md 4. No prelaunch rule may hide a
+   .filters row: the admin's tabs and status chips are one, docs/CLAUDE-CODE-ADMIN-TABS-BUG.md) */
 
 /* The waiting-list card (the empty list after launch, a field's page). One clean card: on a phone a small picture and
    one short line above the form; from a tablet up two columns (the picture and the text on the left, the form on the right), never wider

@@ -135,11 +135,11 @@ test.beforeAll(async () => {
 });
 
 test('signed out: "Become a mentor" among the main links, to the mentors\' page; the home button as before', async ({ browser }) => {
-  await check(browser, 'signed-out', null, { nav: null, hero: [KA.hero, '/become-a-mentor.html'], card: null });
+  await check(browser, 'signed-out', null, { nav: null, hero: [KA.become, '/become-a-mentor.html'], card: null });
 });
 
 test('an asker: "გახდი მენტორი" next to Dashboard, to /apply.html; the home button to /apply.html; the dashboard card', async ({ browser }) => {
-  await check(browser, 'asker', people.asker, { nav: [KA.become, '/apply.html'], hero: [KA.hero, '/apply.html'], card: KA.askerCard });
+  await check(browser, 'asker', people.asker, { nav: [KA.become, '/apply.html'], hero: [KA.become, '/apply.html'], card: KA.askerCard });
 });
 
 // (the words count the steps done, 1 of 5; the link goes to the first unfinished step, 2: docs/CLAUDE-CODE-APPLY-PROGRESS.md)

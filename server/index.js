@@ -272,9 +272,7 @@ app.get('/api/home-mentors', publicCache(), require('./util').asyncHandler(async
   const { userFromRow } = require('./models');
   const { publicProfile } = require('./util');
   const [picked, count] = await Promise.all([
-    query(`SELECT u.* FROM users u WHERE u.role IN ('mentor', 'both') AND u.verification_status = 'verified' AND u.show_on_home AND u.username IS NOT NULL
-             AND u.deleted_at IS NULL AND u.deletion_requested_at IS NULL
-             AND NOT EXISTS (SELECT 1 FROM profile_settings ps WHERE ps.user_id = u.id AND ps.hidden_at IS NOT NULL)
+    query(`SELECT u.* FROM users u WHERE ${require('./homeMentors').WHERE}
            ORDER BY u.founding_mentor_at NULLS LAST, u.verification_decided_at LIMIT 12`),
     query(`SELECT count(*)::int AS n FROM users WHERE role IN ('mentor', 'both') AND verification_status = 'verified' AND deleted_at IS NULL AND deletion_requested_at IS NULL`)
   ]);
@@ -285,10 +283,24 @@ app.get('/api/home-mentors', publicCache(), require('./util').asyncHandler(async
     const uni = (badges[u.id] || []).find((b) => b.key === 'university');
     const work = summaries[u.id] && summaries[u.id].currentPosition;
     return { id: p.id, name: p.name, username: p.username, photoUrl: p.photoUrl, color: p.color, niche: p.niche, customNiche: p.customNiche,
-      founding: Boolean(u.foundingMentorAt), university: uni ? uni.university : null, organisation: work ? work.organisation : null };
+      founding: Boolean(u.foundingMentorAt), university: uni ? uni.university : null, organisation: work ? work.organisation : null,
+      // (the new home page's cards: the role, the field and the price, docs/CLAUDE-CODE-NEW-HOME.md 2.3)
+      roleTitle: u.roleTitle || null, fieldId: u.fieldId || null, price: u.price };
   });
   const n = count.rows[0].n;
   res.json({ mentors, verifiedCount: n >= 5 ? n : null });
+}));
+
+// The home page's phone (docs/CLAUDE-CODE-NEW-HOME.md 2.2): the one question and answer an admin chose, both people having agreed to show it,
+// or null (the phone is then not shown). server/homeQa.js
+app.get('/api/home-qa', publicCache(), require('./util').asyncHandler(async (req, res) => {
+  res.json({ qa: await require('./homeQa').current() });
+}));
+
+// "90+ people are already on the waiting list" on the home page before launch (docs/CLAUDE-CODE-NEW-HOME.md 4): the number of addresses,
+// rounded down to ten, and only from 50 (null below). Nothing else about the list is said. (Its own path: /api/waitlist's limit is for sign-ups.)
+app.get('/api/waitlist-count', publicCache(), require('./util').asyncHandler(async (req, res) => {
+  res.json({ approx: await require('./waitlist').approxCount() });
 }));
 
 app.get('/api/config', publicCache(), async (req, res) => {

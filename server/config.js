@@ -6,6 +6,12 @@ const JWT_DEFAULT = 'dev-secret-change-me-before-production';
 
 const list = (v) => String(v || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const int = (v, fallback) => (Number.isFinite(Number(v)) && v !== undefined && v !== '' ? Number(v) : fallback);
+// Wisecall's own accounts, used while SOCIAL_INSTAGRAM / SOCIAL_TIKTOK / SOCIAL_FACEBOOK are not set (see SOCIAL_URLS below).
+const SOCIAL_DEFAULTS = {
+  instagram: 'https://www.instagram.com/wisecallge/',
+  tiktok: 'https://www.tiktok.com/@wisecall.ge',
+  facebook: 'https://www.facebook.com/Wisecall.ge'
+};
 
 const config = {
   IS_PROD,
@@ -214,10 +220,15 @@ const config = {
   // Only outside production: tests point the check at a fake server. Production always asks Cloudflare itself.
   TURNSTILE_VERIFY_URL: (IS_PROD ? '' : (env.TURNSTILE_VERIFY_URL || '').trim()) || 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
 
-  // Public social links shown in the footer. An empty one is not shown; a value must be an https address.
+  // Public social links: the footer, the waiting list's thank-you, two emails and the structured data (sameAs). Instagram, TikTok and Facebook
+  // have Wisecall's own accounts as defaults (docs/CLAUDE-CODE-NEW-HOME.md 2.7); SOCIAL_INSTAGRAM etc. change one, and set to an empty value hide
+  // it. A value must be an https address.
   SOCIAL_URLS: Object.fromEntries(
     ['facebook', 'instagram', 'linkedin', 'x', 'tiktok', 'youtube']
-      .map((name) => [name, String(env[`SOCIAL_${name.toUpperCase()}`] || '').trim()])
+      .map((name) => {
+        const set = env[`SOCIAL_${name.toUpperCase()}`];
+        return [name, String(set === undefined ? (SOCIAL_DEFAULTS[name] || '') : set).trim()];
+      })
       .filter(([, url]) => /^https:\/\/[^\s]+$/i.test(url))
   )
 };
