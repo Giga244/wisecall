@@ -54,18 +54,20 @@
     }));
   }
 
-  // The home page's phone (docs/CLAUDE-CODE-NEW-HOME.md 2.2): which published answer it shows, or none (then it is hidden). Only real
-  // questions whose asker and mentor both agreed are offered (server/homeQa.js); the answer is cut to about 300 characters there.
+  // The home page's phone (docs/CLAUDE-CODE-RANDOM-PHONE.md): it plays the published answers in a random order. Here an admin pins one to
+  // come first, and keeps any of them off the phone. Only real questions whose asker and mentor both agreed are listed (server/homeQa.js).
   async function homeQa(box) {
     let d;
     try { d = await WisecallAPI.apiFetch('/admin/home-qa'); } catch (e) { box.innerHTML = ''; return; }
-    const row = (a) => `<li><label class="radio-row hq-row"><input type="radio" name="homeQa" value="${esc(a.id)}"${a.id === d.chosen ? ' checked' : ''}>
-      <span><strong>${esc(a.mentor)}</strong> · ${esc(a.niche ? t('niche.' + a.niche) : '—')}<br><span class="muted small">${esc(a.question)}</span></span></label></li>`;
+    const row = (a) => `<li class="hq-item${a.hidden ? ' is-hidden' : ''}"><label class="radio-row hq-row"><input type="radio" name="homeQa" value="${esc(a.id)}"${a.id === d.pinned ? ' checked' : ''}${a.hidden ? ' disabled' : ''}>
+      <span><strong>${esc(a.mentor)}</strong> · ${esc(a.niche ? t('niche.' + a.niche) : '—')}${a.hidden ? ` · <em>${esc(t('admin.hq.hiddenTag'))}</em>` : ''}<br><span class="muted small">${esc(a.question)}</span></span></label>
+      <button type="button" class="btn btn-outline btn-sm" data-hq-hide="${esc(a.id)}" data-hidden="${a.hidden ? '1' : ''}">${esc(t(a.hidden ? 'admin.hq.show' : 'admin.hq.hide'))}</button></li>`;
     box.innerHTML = `<section class="settings-card hq-box" aria-labelledby="hqTitle">
       <h2 id="hqTitle">${esc(t('admin.hq.title'))}</h2>
       <p class="muted small">${esc(t('admin.hq.help'))}</p>
+      <p class="small">${esc(t(d.shown >= 3 ? 'admin.hq.real' : 'admin.hq.withExamples').replace('{n}', d.shown))}</p>
       ${d.answers.length ? `<ul class="hq-list">
-        <li><label class="radio-row hq-row"><input type="radio" name="homeQa" value=""${d.chosen ? '' : ' checked'}> <span>${esc(t('admin.hq.none'))}</span></label></li>
+        <li><label class="radio-row hq-row"><input type="radio" name="homeQa" value=""${d.pinned ? '' : ' checked'}> <span>${esc(t('admin.hq.none'))}</span></label></li>
         ${d.answers.map(row).join('')}</ul>
         <button type="button" class="btn btn-primary btn-sm" data-hq-save>${esc(t('admin.hq.save'))}</button>` : `<p class="muted">${esc(t('admin.hq.empty'))}</p>`}
     </section>`;
@@ -79,6 +81,14 @@
       } catch (e) { WisecallNav.showToast(t('toast.error')); }
       save.disabled = false;
     });
+    box.querySelectorAll('[data-hq-hide]').forEach((btn) => btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        await WisecallAPI.apiFetch(`/admin/home-qa/${encodeURIComponent(btn.dataset.hqHide)}/hide`, { method: 'POST', body: { hidden: !btn.dataset.hidden } });
+        WisecallNav.showToast(t('toast.saved'));
+        homeQa(box);
+      } catch (e) { WisecallNav.showToast(t('toast.error')); btn.disabled = false; }
+    }));
   }
 
   async function render(container) {

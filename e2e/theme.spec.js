@@ -234,7 +234,7 @@ test.describe('both themes, every main page', () => {
       if (!r.width || !r.height || cs.visibility === 'hidden' || cs.display === 'none') continue;
       if (isDark) {
         const [R, G, B, A = 1] = rgb(cs.backgroundColor);
-        if (A > 0.5 && R > 235 && G > 235 && B > 235 && !el.closest('.btn-google, .theme-item, .lang-btn.active, .ms-num, .cta-primary, .ex-tag, .tag, .toast, .mock-tag, .skip-link, .chip.active, .tab.active, .tab-count, .check-chip, [class*="inverse"], .btn-ink, .badge-answered, input[type="radio"]') && r.width * r.height > 900) {
+        if (A > 0.5 && R > 235 && G > 235 && B > 235 && !el.closest('.qa-phone, .btn-google, .theme-item, .lang-btn.active, .ms-num, .cta-primary, .ex-tag, .tag, .toast, .mock-tag, .skip-link, .chip.active, .tab.active, .tab-count, .check-chip, [class*="inverse"], .btn-ink, .badge-answered, input[type="radio"]') && r.width * r.height > 900) {
           bad.push(`${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} has a white background`);
         }
       }

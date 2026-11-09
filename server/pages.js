@@ -841,14 +841,13 @@ function pageRoutes() {
       // email; after launch, the hero form's skeleton)
       const gone = config.LAUNCH_MODE === 'prelaunch' ? 'after launch' : 'before launch';
       html = html.replace(new RegExp(`[ \\t]*<!-- ${gone} -->[\\s\\S]*?<!-- /${gone} -->\\r?\\n?`, 'g'), '');
-      // "Meet our experts" and the phone arrive open when they will have something (with the cards' skeletons), so nothing below them
-      // moves once the script fills them in (public/js/home-mentors.js, landing.js); otherwise they stay hidden
-      const [mentors, qa] = await Promise.all([require('./homeMentors').anyShown(), require('./homeQa').current()]);
+      // "Meet our experts" arrives open when it will have someone (with the cards' skeletons), so nothing below it moves once the script
+      // fills it in (public/js/home-mentors.js); otherwise it stays hidden. (The phone is always there: real answers or marked examples.)
+      const mentors = await require('./homeMentors').anyShown();
       if (mentors) {
         html = html.replace('id="homeMentors" aria-labelledby="homeMentorsTitle" hidden>', 'id="homeMentors" aria-labelledby="homeMentorsTitle">')
           .replace('<ul class="lexpert-grid" id="homeMentorsList"></ul>', `<ul class="lexpert-grid" id="homeMentorsList" aria-busy="true">${HOME_CARD_SKELETON.repeat(3)}</ul>`);
       }
-      if (qa) html = html.replace('<div class="lhero-phone" id="homeQa" hidden>', '<div class="lhero-phone" id="homeQa">');
       sendHtml(res, 200, addToHead(fill(html, baseVars('/')), homeJsonLd(langOf(res))));
     } catch (e) { next(e); }
   });

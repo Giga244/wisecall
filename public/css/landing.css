@@ -79,6 +79,17 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
 .qa-name { font-size: 13px; }
 .qa-meta { font-size: 10.5px; color: var(--phone-ok); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .qa-chat { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; padding: 8px 10px 62px; overflow: hidden; }
+.qa-screen [hidden], .lhero-phone > [hidden] { display: none !important; }
+/* The example video (docs/CLAUDE-CODE-RANDOM-PHONE.md): 800 x 1320 with the phone at 80,60 (640 x 1200, corners about 88px). The video is
+   scaled so its phone is --ph tall, centred in a box as tall as the drawn phone and exactly as wide as the video's phone, and cut to the
+   phone's outline: its paper background goes, and nothing of the video reaches past the box (the page never gets wider on a phone).
+   "Example" sits on the phone's status bar, between the time and the signal, above the chat. */
+.qa-video { --ph: 640px; --box: var(--ph); position: relative; display: flex; justify-content: center; align-items: center; width: calc(var(--ph) * 0.534);
+  height: var(--box); overflow: clip; filter: drop-shadow(0 20px 40px rgba(var(--phone-shadow-rgb), 0.18)); }
+.qa-video video { flex: 0 0 auto; display: block; height: calc(var(--ph) * 1.1); width: auto; max-width: none; aspect-ratio: 800 / 1320; background: transparent;
+  clip-path: inset(4.55% 10% 4.55% 10% round calc(var(--ph) * 0.073)); }
+.qa-video-tag { position: absolute; top: calc(50% - var(--ph) * 0.465); left: 50%; transform: translateX(-50%); margin: 0; padding: 2px 10px; border-radius: 999px;
+  background: var(--phone-line); color: var(--phone-ink); font-size: 11px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
 .qa-day { text-align: center; font-size: 10.5px; color: var(--phone-soft); margin: 4px 0; }
 .qa-q { align-self: flex-end; max-width: 88%; background: var(--phone-coral); color: var(--phone-on-coral); border-radius: 16px 16px 4px 16px; padding: 9px 12px; font-size: 12px; line-height: 1.42;
   transform-origin: 100% 100%; overflow-wrap: anywhere; }
@@ -105,7 +116,8 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
 .qa-cur { display: inline-block; width: 1.5px; height: 13px; background: var(--phone-coral); vertical-align: -2px; margin-left: 1px; }
 .qa-send { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--phone-coral); color: var(--phone-on-coral); display: grid; place-items: center; font-size: 13px; transition: transform 0.15s; }
 .qa-send.is-tap { transform: scale(0.82); }
-@media (max-width: 479px) { .qa-phone { height: 620px; border-width: 9px; border-radius: 40px; } }
+@media (max-width: 479px) { .qa-phone { height: 620px; border-width: 9px; border-radius: 40px; } .qa-video { --ph: 620px; } }
+@media (max-width: 359px) { .qa-video { --ph: 540px; --box: 620px; } }
 /* (still: everything shown, nothing moves) */
 @media (prefers-reduced-motion: reduce) { .qa-typing { display: none !important; } .qa-typing i { animation: none; } .qa-stars i { transition: none; } }
 

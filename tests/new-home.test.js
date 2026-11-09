@@ -1,5 +1,5 @@
-// The new home page, Browse without login and the Jikhva logo (docs/CLAUDE-CODE-NEW-HOME.md): the phone's question and answer (only a real
-// one both people agreed to show, chosen by an admin, hidden otherwise), the experts on the home page (approved and opted in), the waiting
+// The new home page, Browse without login and the Jikhva logo (docs/CLAUDE-CODE-NEW-HOME.md): the experts on the home page (approved and
+// opted in), the waiting
 // list's count (rounded, from 50), the welcome email, the social links, old Browse links, the "პირველი მენტორი" badge and the logo.
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
@@ -23,16 +23,6 @@ async function makeMentor(name, email, price, show = true) {
   if (show) await pool.query('UPDATE users SET show_on_home = true WHERE id = $1', [id]);
   return { c, id };
 }
-// A published public answer: the asker and the mentor said yes (the database refuses "published" otherwise).
-async function publish(bId, { sample = false } = {}) {
-  const b = (await pool.query('SELECT seeker_id, mentor_id, question, answer FROM bookings WHERE id = $1', [bId])).rows[0];
-  const { rows: [r] } = await pool.query(
-    `INSERT INTO public_answers (booking_id, mentor_id, asker_id, niche, status, asker_consent, asker_decided_at, mentor_consent, mentor_decided_at, question_public, answer_public, slug, published_at, is_sample)
-     VALUES ($1, $2, $3, 'medicine', 'published', true, now(), true, now(), $4, $5, 'home-' || substr(md5(random()::text), 1, 8), now(), $6) RETURNING id`,
-    [sample ? null : bId, b.mentor_id, sample ? null : b.seeker_id, b.question, b.answer, sample]);
-  return r.id;
-}
-
 before(async () => {
   await resetDatabase();
   srv = await startServer(4856, { RATE_LIMIT_MULTIPLIER: '50', PUBLIC_CACHE_SECONDS: '0' });
@@ -47,42 +37,7 @@ before(async () => {
 });
 after(async () => { if (srv) srv.proc.kill(); await pool.end(); });
 
-describe("the home page's phone", () => {
-  test('hidden until an admin chooses one; then the real question and answer, the answer cut to about 300 characters, the student not named', async () => {
-    assert.equal((await client(base).api('/home-qa')).qa, null);
-    assert.match(await (await fetch(base + '/')).text(), /<div class="lhero-phone" id="homeQa" hidden>/, 'the page arrives with the phone hidden');
-    const id = await publish(bookingId);
-    assert.equal((await seeker.api('/admin/home-qa', { method: 'POST', body: { id } })).status, 403);
-    const list = await admin.api('/admin/home-qa');
-    assert.ok(list.answers.some((a) => a.id === id));
-    assert.equal(list.chosen, null);
-    assert.equal((await admin.api('/admin/home-qa', { method: 'POST', body: { id } })).status, 200);
-    const { qa } = await client(base).api('/home-qa');
-    assert.equal(qa.id, id);
-    assert.match(qa.question, /weak subject/);
-    assert.ok([...qa.answer].length <= 303, `cut: ${[...qa.answer].length}`);
-    assert.match(qa.answer, /\.\.\.$/);
-    assert.equal(qa.mentor.name, 'Nino Beridze');
-    assert.ok(qa.days >= 1);
-    assert.ok(!JSON.stringify(qa).includes('Studentashvili'), 'the student is never named');
-    assert.equal(qa.niche, 'medicine');
-    // (the page arrives with the phone open, so the hero does not change size when the script fills it in)
-    assert.match(await (await fetch(base + '/')).text(), /<div class="lhero-phone" id="homeQa">/);
-  });
-
-  test('a sample answer (a question our team wrote) or an unknown id cannot be chosen; "none" hides the phone; a withdrawn one disappears', async () => {
-    const sample = await publish(bookingId, { sample: true }).catch(() => null);
-    if (sample) assert.equal((await admin.api('/admin/home-qa', { method: 'POST', body: { id: sample } })).status, 404);
-    assert.equal((await admin.api('/admin/home-qa', { method: 'POST', body: { id: '00000000-0000-4000-8000-000000000000' } })).status, 404);
-    assert.equal((await admin.api('/admin/home-qa', { method: 'POST', body: { id: null } })).status, 200);
-    assert.equal((await client(base).api('/home-qa')).qa, null);
-    const { answers } = await admin.api('/admin/home-qa');
-    await admin.api('/admin/home-qa', { method: 'POST', body: { id: answers[0].id } });
-    assert.ok((await client(base).api('/home-qa')).qa);
-    await pool.query(`UPDATE public_answers SET status = 'withdrawn', withdrawn_at = now(), withdrawn_by = 'asker' WHERE id = $1`, [answers[0].id]);
-    assert.equal((await client(base).api('/home-qa')).qa, null, 'withdrawn: the phone is hidden');
-  });
-});
+// (the phone: tests/random-phone.test.js)
 
 describe("the home page's experts", () => {
   test('only approved mentors who chose to be shown, with their role, field and price', async () => {
@@ -126,7 +81,7 @@ describe('pages', () => {
     const home = await (await fetch(`${base}/`)).text();
     assert.match(home, /id="heroSearch"/);
     assert.doesNotMatch(home, /id="heroWait"/);
-    assert.match(home, /id="homeQa" hidden/);
+    assert.match(home, /<div class="lhero-phone" id="homeQa">/); // (always there: real answers or marked examples)
   });
 
   test('an old link with Browse filters on the home page goes to Browse, in its language', async () => {

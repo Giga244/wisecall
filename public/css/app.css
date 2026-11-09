@@ -1017,5 +1017,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 /* Admin > Public answers: the home page's phone (public/js/admin-public-answers.js) */
 .hq-box { margin-bottom: 20px; }
 .hq-list { list-style: none; margin: 8px 0 14px; padding: 0; display: grid; gap: 6px; max-height: 420px; overflow: auto; }
-.hq-row { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 0; line-height: 1.45; }
+.hq-row { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 0; line-height: 1.45; flex: 1 1 auto; min-width: 0; }
+.hq-item { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hq-item.is-hidden .hq-row { opacity: 0.6; }
 .hq-row input { width: 20px; height: 20px; margin: 2px 0 0; flex: 0 0 auto; }

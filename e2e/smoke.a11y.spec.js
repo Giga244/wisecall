@@ -37,7 +37,9 @@ for (const [lang, scheme] of [['en', 'light'], ['ka', 'light'], ['en', 'dark']])
       await page.goto(url);
       await page.waitForLoadState('networkidle');
       if (prepare) { await prepare(page); await page.waitForTimeout(250); } // let a chosen tab finish changing colour
-      const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+      // (the home page's phone is a picture of a conversation, hidden from screen readers, its words in a caption that is read out, like
+      // the example video, which axe cannot look into either: docs/CLAUDE-CODE-RANDOM-PHONE.md)
+      const { violations } = await new AxeBuilder({ page }).withTags(TAGS).exclude('#homeQa .qa-screen').analyze();
       expect(violations.map(describeViolation), `${who} ${url}`).toEqual([]);
     }
 

@@ -291,10 +291,10 @@ app.get('/api/home-mentors', publicCache(), require('./util').asyncHandler(async
   res.json({ mentors, verifiedCount: n >= 5 ? n : null });
 }));
 
-// The home page's phone (docs/CLAUDE-CODE-NEW-HOME.md 2.2): the one question and answer an admin chose, both people having agreed to show it,
-// or null (the phone is then not shown). server/homeQa.js
+// The home page's phone (docs/CLAUDE-CODE-RANDOM-PHONE.md): the real questions and answers it may play, both people having agreed to show
+// them, the pinned one first; the page plays them in a random order and adds marked examples while there are fewer than three. server/homeQa.js
 app.get('/api/home-qa', publicCache(), require('./util').asyncHandler(async (req, res) => {
-  res.json({ qa: await require('./homeQa').current() });
+  res.json(await require('./homeQa').rotation());
 }));
 
 // "90+ people are already on the waiting list" on the home page before launch (docs/CLAUDE-CODE-NEW-HOME.md 4): the number of addresses,

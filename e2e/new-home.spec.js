@@ -62,43 +62,24 @@ test('"დასვი კითხვა" signed out: the sign-up sheet; after 
   await ctx.close();
 });
 
-test('the home page: only approved mentors who chose to be shown; the phone hidden until an admin chooses a Q&A, then the real one', async ({ browser }) => {
+test('the home page: only approved mentors who chose to be shown; the search, at most five fields, and the phone', async ({ browser }) => {
   // an approved mentor who chose it, and someone who is not approved (also "shown"): only the first appears
   await S.sql('UPDATE users SET show_on_home = true WHERE id = $1', [free.id]);
   const pending = await S.apiUser('არა დამტკიცებული', `home-pending-${stamp}@e2e.test`);
   await pending.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'იურისტი', niche: 'law', price: 20 } });
   await S.sql("UPDATE users SET show_on_home = true WHERE email = $1", [`home-pending-${stamp}@e2e.test`]);
-  await admin.api('/admin/home-qa', { method: 'POST', body: { id: null } });
 
   const { ctx, page } = await ka(browser);
   await page.goto('/ka/');
   await expect(page.locator('#homeMentorsList')).toContainText('ნინო ჰომი');
   await expect(page.locator('#homeMentorsList')).not.toContainText('არა დამტკიცებული');
-  await expect(page.locator('#homeQa')).toBeHidden();
   await expect(page.locator('#heroSearch')).toBeVisible();
   await expect(page.locator('#heroWait')).toHaveCount(0);
   expect(await page.locator('#heroChips li').count()).toBeLessThanOrEqual(5);
+  // (the phone is always there: real answers, or examples marked as such; e2e/random-phone.spec.js)
+  await expect(page.locator('#homeQa')).toHaveAttribute('data-item', /.+/); // (the drawn phone or the example video)
+  await expect(page.locator('#homeQa')).toBeVisible();
   expect(await fits(page)).toBe(true);
-
-  // a real question and answer, both agreed and published: the admin chooses it, the phone shows it (the student is not named)
-  const asker = (await S.sql('SELECT b.id, b.seeker_id FROM bookings b JOIN users u ON u.id = b.seeker_id WHERE b.mentor_id = $1 ORDER BY b.created_at DESC LIMIT 1', [free.id]))[0];
-  const answer = 'დაიწყე ბიოლოგიითა და ქიმიით: ყოველდღე ერთი საათი, სასკოლო სახელმძღვანელოთი. ყოველ კვირა გააკეთე ერთი ტესტი და ჩაწერე, სად შეცდი. '.repeat(3);
-  await S.sql("UPDATE bookings SET status = 'answered', answer = $2, answered_at = now(), answer_review = 'none' WHERE id = $1", [asker.id, answer]);
-  const [pa] = await S.sql(`INSERT INTO public_answers (booking_id, mentor_id, asker_id, niche, status, asker_consent, asker_decided_at, mentor_consent, mentor_decided_at, question_public, answer_public, slug, published_at)
-    VALUES ($1, $2, $3, 'medicine', 'published', true, now(), true, now(), $4, $5, $6, now()) RETURNING id`, [asker.id, free.id, asker.seeker_id, QUESTION, answer, `home-e2e-${stamp}`]);
-  expect((await admin.api('/admin/home-qa', { method: 'POST', body: { id: pa.id } })).status).toBe(200);
-  await page.emulateMedia({ reducedMotion: 'reduce' }); // (the finished conversation, still)
-  await page.reload();
-  const phone = page.locator('#homeQa');
-  await expect(phone).toBeVisible();
-  await expect(phone.locator('.qa-qtext')).toHaveText(QUESTION);
-  await expect(phone.locator('.qa-name')).toHaveText('ნინო ჰომი');
-  await expect(phone.locator('.qa-atext')).toContainText('დაიწყე ბიოლოგიითა');
-  expect([...(await phone.locator('.qa-atext').innerText())].length).toBeLessThanOrEqual(303);
-  await expect(phone).not.toContainText('ლუკა');
-  await admin.api('/admin/home-qa', { method: 'POST', body: { id: null } });
-  // (the library's own tests count its answers: this one leaves again)
-  await S.sql('DELETE FROM public_answers WHERE id = $1', [pa.id]);
   await ctx.close();
 });
 
