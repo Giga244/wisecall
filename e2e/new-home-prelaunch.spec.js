@@ -85,3 +85,45 @@ test('the launch: the same page in launch mode has the search instead', async ()
   expect(pre).not.toMatch(/id="heroSearch"/);
   expect((await client(srv.base).api('/config')).launchMode).toBe('prelaunch');
 });
+
+// docs/CLAUDE-CODE-FINISH.md part 1: the logo's horns have room, the headline is 2-3 lines (3-4 on a phone), the form is one row with the count
+// right under it and the age box and privacy note as one small block, the email is readable in dark, and the fields are one row on a phone.
+for (const [width, scheme] of [[360, 'dark'], [360, 'light'], [768, 'dark'], [1280, 'light'], [1280, 'dark']]) {
+  test(`the hero at ${width}px ${scheme}: logo, headline, form, count, fields`, async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: scheme });
+    await ctx.addInitScript(() => { try { localStorage.setItem('wisecall_lang', 'ka'); } catch (e) { /* none */ } });
+    const page = await ctx.newPage();
+    await page.goto(`${srv.base}/ka/`);
+    await expect(page.locator('#heroWait .wlc-row')).toBeVisible();
+    await expect(page.locator('#heroChips .lchip').first()).toBeVisible();
+    const m = await page.evaluate(() => {
+      const box = (el) => el.getBoundingClientRect();
+      const head = box(document.querySelector('#siteHeader .jlogo-head'));
+      const header = box(document.getElementById('siteHeader'));
+      const title = document.querySelector('.lhero-title');
+      const lines = Math.round(box(title).height / parseFloat(getComputedStyle(title).lineHeight));
+      const row = document.querySelector('#heroWait .wlc-row');
+      const input = box(row.querySelector('input')), button = box(row.querySelector('button'));
+      const chips = [...document.querySelectorAll('#heroChips .lchip')].map((c) => Math.round(box(c).top));
+      const count = document.getElementById('waitCount');
+      return {
+        headTop: Math.round(head.top), headInside: head.bottom <= header.bottom,
+        lines, oneRow: Math.abs(input.top - button.top) < 12 && Math.abs(input.bottom - button.bottom) < 12,
+        countAfterRow: count.hidden || row.nextElementSibling === count,
+        consent: Boolean(document.querySelector('#heroWait .wlc-consent input[name="over16"]') && document.querySelector('#heroWait .wlc-consent .waitlist-hint')),
+        inputInk: getComputedStyle(row.querySelector('input')).color === getComputedStyle(document.body).color,
+        chipRows: new Set(chips).size, sideways: document.documentElement.scrollWidth - window.innerWidth
+      };
+    });
+    expect(m.headTop, 'room above the horns').toBeGreaterThanOrEqual(12);
+    expect(m.headInside).toBe(true);
+    expect(m.lines, 'headline lines').toBeLessThanOrEqual(width >= 1024 ? 3 : 4);
+    expect(m.oneRow, 'the email and its button on one row').toBe(true);
+    expect(m.countAfterRow, 'the count right under the form').toBe(true);
+    expect(m.consent, 'the age box and the privacy note in one block').toBe(true);
+    expect(m.inputInk, 'the email is written in the page\'s text colour').toBe(true);
+    if (width < 640) expect(m.chipRows, 'the fields: one row on a phone').toBe(1);
+    expect(m.sideways, 'nothing runs off the side').toBeLessThanOrEqual(0);
+    await ctx.close();
+  });
+}

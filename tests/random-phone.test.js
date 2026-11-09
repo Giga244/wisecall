@@ -1,4 +1,5 @@
-// The home page's phone plays random real answers, with the example video (marked) while there are fewer than three (docs/CLAUDE-CODE-RANDOM-PHONE.md):
+// The home page's phone plays random real answers, with an honest example (marked, no name, no badge, no rating) while there are fewer than three
+// (docs/CLAUDE-CODE-RANDOM-PHONE.md, docs/CLAUDE-CODE-FINISH.md part 1):
 // what /api/home-qa sends (only published answers both people agreed to show, the pinned one first, none an admin hid, answers cut to about
 // 300 characters), the admin's pin and hide, the order the page plays them in (public/js/phone-rotation.js: real ones first, the example only
 // under three, never two of the same field in a row, the pin first), and the example's words. The page itself: e2e/random-phone.spec.js.
@@ -59,33 +60,38 @@ before(async () => {
 });
 after(async () => { if (srv) srv.proc.kill(); await pool.end(); });
 
-describe('with no published answer: the example video', () => {
-  test('the server has none to send; the page plays the example video, again and again; the phone is on the page', async () => {
+describe('with no published answer: the example', () => {
+  test('the server has none to send; the page plays the example, again and again; the phone is on the page', async () => {
     const none = await phone();
     assert.equal(none.pinned, null);
     assert.deepEqual(none.answers, []);
     const r = Rotation.create(await phone(), seeded(7));
     assert.equal(r.examples, true);
     const played = Array.from({ length: 4 }, () => r.next());
-    assert.ok(played.every((x) => x.example && x.video), 'only the example video');
+    assert.ok(played.every((x) => x.example && x.n === 1 && x.niche === 'medicine'), 'only the example');
     assert.match(await (await fetch(base + '/')).text(), /<div class="lhero-phone" id="homeQa">/, 'never hidden now');
     // (a failed request: the example alone)
     assert.equal(Rotation.create(null).examples, true);
   });
 
-  test('the page has the video (its poster for reduced motion), marked "Example", hidden until it plays; both files are served with a version', async () => {
+  test('the example\'s words: "Example" on the phone, "Expert · <field>", the deadline ("პასუხი 7 დღეში"), no name, no badge, no stars (docs/CLAUDE-CODE-FINISH.md part 1)', async () => {
     const html = await (await fetch(base + '/ka/')).text();
-    assert.match(html, /<div class="qa-video" hidden>\s*<video muted playsinline preload="none" width="800" height="1320" poster="\/brand\/phone-example-poster\.webp\?v=[0-9a-f]{10}" aria-hidden="true" tabindex="-1"><source src="\/brand\/phone-example\.mp4\?v=[0-9a-f]{10}" type="video\/mp4"><\/video>/);
-    assert.match(html, /<p class="qa-video-tag" data-i18n="home2\.qa\.example">მაგალითი<\/p>/);
-    for (const file of ['/brand/phone-example.mp4', '/brand/phone-example-poster.webp']) {
-      const r = await fetch(base + file);
-      assert.equal(r.status, 200, file);
-      assert.match(r.headers.get('content-type'), file.endsWith('.mp4') ? /video\/mp4/ : /image\/webp/);
-    }
+    assert.match(html, /<div class="qa-status"><span>9:41<\/span><span class="qa-example" hidden><\/span>/);
+    assert.doesNotMatch(html, /qa-video|phone-example/, 'no video: an example is drawn, honestly');
+    const js = fs.readFileSync(path.join(ROOT, 'public/js/landing.js'), 'utf8');
+    assert.match(js, /\$\('\.qa-name'\)\.textContent = ex \? \[t\('home2\.qa\.expert'\), field\]\.filter\(Boolean\)\.join\(' · '\)/, 'no name');
+    assert.match(js, /\$\('\.qa-meta'\)\.hidden = ex;/, 'no "verified"');
+    assert.match(js, /\$\('\.qa-avatar'\)\.innerHTML = ex \? PERSON :/, 'a neutral picture, not a letter');
+    assert.match(js, /const stars = !ex && Number\.isInteger\(item\.stars\)/, 'no stars');
+    assert.match(js, /\$\('\.qa-adays'\)\.textContent = ex \? t\('home2\.qa\.exampleDays'\)/);
+    assert.match(js, /if \(ex\) \$\('\.qa-d2'\)\.style\.display = 'none';/, 'no "2 days later"');
     const ka = dict('ka'), en = dict('en');
     assert.equal(ka['home2.qa.example'], 'მაგალითი');
     assert.equal(en['home2.qa.example'], 'Example');
-    // (the words for screen readers: the video's own question and answer)
+    assert.equal(ka['home2.qa.expert'], 'ექსპერტი');
+    assert.equal(ka['home2.qa.exampleDays'], '✓ პასუხი {answerDays} დღეში');
+    assert.equal(ka['home2.qa.thanks'], 'მადლობა! ⭐ {n}.0');
+    // (the example's question and answer)
     assert.equal(ka['home2.ex.1.q'], 'ბიოლოგია სუსტად მაქვს. ღირს თუ არა სამედიცინოზე ჩაბარება და საიდან დავიწყო?');
     assert.match(ka['home2.ex.1.a'], /^ღირს, თუ მედიცინა ნამდვილად გაინტერესებს/);
     assert.ok(en['home2.ex.1.q'] && en['home2.ex.1.a']);
@@ -98,15 +104,15 @@ describe('with no published answer: the example video', () => {
       const html = await (await fetch(base + p)).text();
       assert.ok(!html.includes(ka['home2.ex.1.q'].slice(0, 30)), p);
       const ld = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => m[1]).join(' ');
-      assert.doesNotMatch(ld, /phone-example|ბიოლოგია/);
+      assert.doesNotMatch(ld, /ბიოლოგია/);
     }
     const js = fs.readFileSync(path.join(ROOT, 'public/js/landing.js'), 'utf8');
-    assert.match(js, /box\.querySelector\('#qaCaption'\)\.textContent = t\('home2\.qa\.exampleCaption'\)/);
+    assert.match(js, /\$\('#qaCaption'\)\.textContent = \(ex \? t\('home2\.qa\.exampleCaption'\)/);
   });
 });
 
 describe('fewer than three real answers', () => {
-  test('the real one first, then the example video takes its turn', async () => {
+  test('the real one first, then the example takes its turn', async () => {
     const id = await published('tech');
     const data = await phone();
     assert.deepEqual(data.answers.map((a) => a.id), [id]);
@@ -114,7 +120,7 @@ describe('fewer than three real answers', () => {
     assert.equal(r.examples, true);
     const played = Array.from({ length: 6 }, () => r.next());
     assert.equal(played[0].id, id);
-    assert.deepEqual(played.map((x) => (x.video ? 'video' : x.id)), [id, 'video', id, 'video', id, 'video']);
+    assert.deepEqual(played.map((x) => (x.example ? 'example' : x.id)), [id, 'example', id, 'example', id, 'example']);
   });
 });
 
@@ -212,10 +218,14 @@ describe('the order, with any answers', () => {
     }
   });
 
-  test('reduced motion: one finished conversation (the video: its poster), no rotation; otherwise the next one after each loop or the video\'s end (public/js/landing.js)', () => {
-    const js = fs.readFileSync(path.join(ROOT, 'public/js/landing.js'), 'utf8');
-    assert.match(js, /set\(rotation\.next\(\)\);\n\s*\/\/ \(still: one finished conversation; the video shows its poster, the last frame\)\n\s*if \(reduceMotion\(\)\) \{ if \(!current\.video\) render\(T\.loop - 0\.01\); return; \}/);
-    assert.match(js, /if \(elapsed >= T\.loop\) \{ advance\(\); return; \}/);
-    assert.match(js, /video\.addEventListener\('ended', \(\) => \{ if \(current\.video\) advance\(\); \}\);/);
+  test('live texting, as in docs/new-home/phone-animation.html: letters with pauses after punctuation, the dots, the answer letter by letter, the stars one by one; reduced motion: one finished conversation, no rotation (public/js/landing.js)', () => {
+    const js = fs.readFileSync(path.join(ROOT, 'public/js/landing.js'), 'utf8').replace(/\r\n/g, '\n');
+    assert.match(js, /if \(',\.\?!:'\.includes\(ch\)\) t \+= 0\.25; else if \(ch === ' '\) t \+= 0\.03;/);
+    assert.match(js, /const TT = typedTimes\(qChars, 0\.4, 30\);/);
+    assert.match(js, /translateY\(\$\{-Math\.max\(0, Math\.sin\(time \* 7 - i\)\) \* 4\}px\)/);
+    assert.match(js, /aChars\.slice\(0, Math\.floor\(clamp\(\(time - S - 3\.2\) \/ 1\.6\) \* aChars\.length\)\)/);
+    assert.match(js, /const p = i < stars \? clamp\(\(time - S - 5\.3 - i \* 0\.15\) \/ 0\.2\) : 0;/);
+    assert.match(js, /set\(rotation\.next\(\)\);\n\s*\/\/ \(still: one finished conversation\)\n\s*if \(reduceMotion\(\)\) \{ render\(cur\.T\.loop - 0\.6\); screen\.style\.opacity = '1'; return; \}/);
+    assert.match(js, /if \(elapsed >= cur\.T\.loop\) \{ elapsed = 0; set\(rotation\.next\(\)\); \}/);
   });
 });

@@ -59,13 +59,14 @@
     </div>
 
     <!-- 2. The phone (docs/CLAUDE-CODE-RANDOM-PHONE.md): real questions and answers that the student and the mentor agreed to show, a random
-         one on each loop, drawn here (server/homeQa.js, public/js/phone-rotation.js); with fewer than three real ones, the example video,
-         marked "Example". Played by public/js/landing.js; the words for screen readers are in the caption. -->
+         one on each loop (server/homeQa.js, public/js/phone-rotation.js); with fewer than three real ones, an example marked "Example", with
+         no name, no badge and no rating (docs/CLAUDE-CODE-FINISH.md part 1). Played like live texting by public/js/landing.js (the timeline of
+         docs/new-home/phone-animation.html); the words for screen readers are in the caption. -->
     <div class="lhero-phone" id="homeQa">
       <p class="sr-only" id="qaCaption"></p>
       <figure class="qa-phone">
         <div class="qa-screen" aria-hidden="true">
-          <div class="qa-status"><span>9:41</span><span class="qa-bars"><i></i><i></i><i></i><b></b></span></div>
+          <div class="qa-status"><span>9:41</span><span class="qa-example" hidden></span><span class="qa-bars"><i></i><i></i><i></i><b></b></span></div>
           <div class="qa-head"><span class="qa-back">←</span><span class="qa-avatar"></span><span class="qa-who"><b class="qa-name"></b><small class="qa-meta"></small></span></div>
           <div class="qa-chat">
             <p class="qa-day qa-d1"></p>
@@ -73,15 +74,11 @@
             <p class="qa-day qa-d2"></p>
             <div class="qa-typing"><i></i><i></i><i></i></div>
             <div class="qa-a"><b class="qa-aname"></b><span class="qa-atext"></span><em class="qa-adays"></em></div>
-            <div class="qa-rate"><span class="qa-stars"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span><span class="qa-ratelabel"></span></div>
+            <div class="qa-rate"><span class="qa-stars"><i>⭐</i><i>⭐</i><i>⭐</i><i>⭐</i><i>⭐</i></span><span class="qa-ratelabel"></span></div>
           </div>
           <div class="qa-input"><span class="qa-inp"></span><span class="qa-send">➤</span></div>
         </div>
       </figure>
-      <div class="qa-video" hidden>
-        <video muted playsinline preload="none" width="800" height="1320" poster="/brand/phone-example-poster.webp" aria-hidden="true" tabindex="-1"><source src="/brand/phone-example.mp4" type="video/mp4"></video>
-        <p class="qa-video-tag" data-i18n="home2.qa.example">Example</p>
-      </div>
     </div>
   </div>
 </section>

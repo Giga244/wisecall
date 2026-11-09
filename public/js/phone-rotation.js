@@ -1,15 +1,14 @@
 // The order the home page's phone plays its questions and answers in (docs/CLAUDE-CODE-RANDOM-PHONE.md), kept apart from the drawing so the
 // unit tests can run it (tests/random-phone.test.js):
 // - real answers first (the server sends those both people agreed to show, the pinned one first), in a random order;
-// - with fewer than three real ones, the example video fills the rotation (the page marks it "Example"); from three on, no example;
+// - with fewer than three real ones, an example fills the rotation (the page marks it "Example": no name, no badge, no rating); from three on, none;
 // - never two of the same field in a row (as far as the answers allow), also from the end of one round to the start of the next: when the
 //   rest of a round would only bring the same field again, a new round starts;
 // - a pinned answer comes first, on the first round only.
 (function (root) {
   const MIN_REAL = 3;
-  // The example: the owner's video (public/brand/phone-example.mp4), a medicine question; its words for screen readers are in the
-  // dictionaries (home2.ex.1.q / .a).
-  const EXAMPLES = [{ n: 1, niche: 'medicine', example: true, video: true }];
+  // The example: a medicine question and its answer (their words: home2.ex.1.q / .a in the dictionaries).
+  const EXAMPLES = [{ n: 1, niche: 'medicine', example: true }];
 
   // One round: every item once. Groups in order of preference (the real ones, then the examples): the next item is from the first group
   // that has one of another field than the one before; among those, any one at random, as long as the rest can still be laid out with no

@@ -8,6 +8,7 @@
 /* ---- 1. Hero ---------------------------------------------------------------------------------------------------------------------- */
 .lhero { padding: 28px 0 40px; }
 .lhero-inner { display: grid; gap: 32px; align-items: center; }
+.lhero-inner > * { min-width: 0; } /* (a row that scrolls sideways never widens the page) */
 @media (min-width: 960px) {
   .lhero { padding: 56px 0 72px; }
   .lhero-inner { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 48px; }
@@ -16,7 +17,7 @@
 .lhero-pill { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 18px; padding: 8px 16px; border-radius: 999px; background: var(--mint-soft);
   color: var(--mint-banner-ink); font-size: 0.92rem; font-weight: 600; line-height: 1.4; }
 html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color: var(--accent-text); }
-.lhero-title { font-family: var(--font-display); letter-spacing: var(--tracking-display); font-size: clamp(2.1rem, 4.4vw + 0.8rem, 4.2rem); line-height: 1.1;
+.lhero-title { font-family: var(--font-display); letter-spacing: var(--tracking-display); font-size: clamp(1.9rem, 2.6vw + 1.2rem, 3.3rem); line-height: 1.12;
   margin: 0 0 18px; overflow-wrap: break-word; }
 .lhero-title em { display: block; font-style: normal; color: var(--headline-accent); }
 .lhero-sub { font-size: clamp(1.02rem, 0.6vw + 0.9rem, 1.3rem); line-height: 1.6; color: var(--ink-soft); margin: 0 0 24px; max-width: 34em; }
@@ -37,10 +38,13 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
   box-shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.08); border: var(--line-w, 1.5px) solid transparent; }
 .wlc-row:focus-within { border-color: var(--ink); }
 .wlc-email { flex: 1 1 auto; min-width: 0; margin: 0; }
-.wlc-email input { width: 100%; border: 0; background: transparent; font: inherit; font-size: 16px; padding: 12px 4px; min-height: 48px; box-shadow: none; outline: none; margin: 0; }
+.wlc-email input { width: 100%; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; padding: 12px 4px; min-height: 48px; box-shadow: none; outline: none; margin: 0; }
+.wlc-email input::placeholder { color: var(--ink-soft); opacity: 1; }
 .wlc-row .btn { flex: 0 0 auto; min-height: 48px; padding: 0 22px; border-radius: 16px; white-space: nowrap; }
-.waitlist-compact .waitlist-age { margin: 4px 0 0; }
-.waitlist-compact .waitlist-hint { margin: 0; }
+.wlc-consent { display: grid; gap: 4px; margin: 2px 0 0; padding: 0 4px; font-size: 0.85rem; line-height: 1.5; color: var(--ink-soft); }
+.wlc-consent .waitlist-age { margin: 0; font-size: 0.9rem; font-weight: 500; color: var(--ink); min-height: 44px; }
+.wlc-consent .waitlist-hint { margin: 0; font-size: 0.8rem; }
+.waitlist-compact .lhero-count { margin: 4px 0 0; padding: 0 4px; }
 .waitlist-compact .form-error:empty { display: none; }
 .lhero-count { margin: 12px 0 0; font-weight: 600; color: var(--ink-soft); }
 .waitlist-follow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; font-weight: 600; }
@@ -48,15 +52,22 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
 @media (max-width: 479px) {
   .lhero-search { padding-left: 14px; }
   .lhero-search .btn { padding: 0 16px; }
-  .wlc-row { flex-wrap: wrap; padding: 8px; }
-  .wlc-email input { padding-left: 10px; }
-  .wlc-row .btn { flex: 1 1 100%; }
+  .wlc-row { padding: 6px 6px 6px 12px; gap: 6px; }
+  .wlc-row .btn { padding: 0 14px; }
 }
 
 /* the popular fields */
-.lhero-popular { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; }
+.lhero-popular { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; min-width: 0; }
 .lhero-popular-label { color: var(--ink-soft); font-size: 0.95rem; }
-.lhero-chips { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.lhero-chips { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; margin: 0; padding: 2px 0; min-width: 0; }
+.lhero-chips::-webkit-scrollbar { display: none; }
+.lhero-chips > li { flex: 0 0 auto; }
+.lhero-popular-label { flex: 0 0 auto; }
+/* (on a phone: one row that scrolls sideways, reaching the screen's edge; never two lines) */
+@media (max-width: 639px) {
+  .lhero-popular { flex-wrap: nowrap; margin-right: calc(var(--gutter) * -1); }
+  .lhero-chips { flex: 1 1 auto; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-right: var(--gutter); }
+}
 .lchip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px; background: var(--card);
   color: var(--ink); text-decoration: none; font-weight: 500; border: var(--line-w, 1.5px) solid transparent; cursor: pointer; font: inherit; }
 .lchip:hover { border-color: var(--line); }
@@ -78,37 +89,29 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
 .qa-who { display: grid; min-width: 0; }
 .qa-name { font-size: 13px; }
 .qa-meta { font-size: 10.5px; color: var(--phone-ok); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.qa-chat { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; padding: 8px 10px 62px; overflow: hidden; }
+/* The chat as in docs/new-home/phone-animation.html: it starts under the header and grows down; a long one is kept to the bottom (is-tall). */
+.qa-chat { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start; padding: 10px 12px 66px; overflow: hidden; }
+.qa-chat.is-tall { justify-content: flex-end; }
 .qa-screen [hidden], .lhero-phone > [hidden] { display: none !important; }
-/* The example video (docs/CLAUDE-CODE-RANDOM-PHONE.md): 800 x 1320 with the phone at 80,60 (640 x 1200, corners about 88px). The video is
-   scaled so its phone is --ph tall, centred in a box as tall as the drawn phone and exactly as wide as the video's phone, and cut to the
-   phone's outline: its paper background goes, and nothing of the video reaches past the box (the page never gets wider on a phone).
-   "Example" sits on the phone's status bar, between the time and the signal, above the chat. */
-.qa-video { --ph: 640px; --box: var(--ph); position: relative; display: flex; justify-content: center; align-items: center; width: calc(var(--ph) * 0.534);
-  height: var(--box); overflow: clip; filter: drop-shadow(0 20px 40px rgba(var(--phone-shadow-rgb), 0.18)); }
-.qa-video video { flex: 0 0 auto; display: block; height: calc(var(--ph) * 1.1); width: auto; max-width: none; aspect-ratio: 800 / 1320; background: transparent;
-  clip-path: inset(4.55% 10% 4.55% 10% round calc(var(--ph) * 0.073)); }
-.qa-video-tag { position: absolute; top: calc(50% - var(--ph) * 0.465); left: 50%; transform: translateX(-50%); margin: 0; padding: 2px 10px; border-radius: 999px;
-  background: var(--phone-line); color: var(--phone-ink); font-size: 11px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
-.qa-day { text-align: center; font-size: 10.5px; color: var(--phone-soft); margin: 4px 0; }
-.qa-q { align-self: flex-end; max-width: 88%; background: var(--phone-coral); color: var(--phone-on-coral); border-radius: 16px 16px 4px 16px; padding: 9px 12px; font-size: 12px; line-height: 1.42;
+/* "Example": an example is never a real conversation (no name, no badge, no rating), and says so on the status bar */
+.qa-example { padding: 2px 9px; border-radius: 999px; background: var(--phone-line); color: var(--phone-ink); font-size: 10.5px; font-weight: 700; line-height: 1.4; }
+.qa-avatar-ex { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--phone-line); color: var(--phone-back); }
+.qa-avatar-ex svg { width: 18px; height: 18px; }
+.qa-day { text-align: center; font-size: 10.5px; color: var(--phone-soft); margin: 8px 0; }
+.qa-q { margin-left: 34px; background: var(--phone-coral); color: var(--phone-on-coral); border-radius: 16px 16px 4px 16px; padding: 11px 13px; font-size: 12.5px; line-height: 1.5;
   transform-origin: 100% 100%; overflow-wrap: anywhere; }
-.qa-a { align-self: flex-start; max-width: 95%; background: var(--phone-card); border-radius: 16px 16px 16px 4px; padding: 9px 12px; font-size: 12px; line-height: 1.42;
+.qa-a { margin-right: 20px; background: var(--phone-card); border-radius: 16px 16px 16px 4px; padding: 11px 13px; font-size: 12.5px; line-height: 1.5;
   box-shadow: 0 3px 10px rgba(var(--phone-shadow-rgb), 0.06); transform-origin: 0 100%; overflow-wrap: anywhere; }
-.qa-a b { display: block; margin-bottom: 2px; }
+.qa-a b { display: block; font-size: 12px; margin-bottom: 3px; }
 .qa-q em, .qa-a em { display: block; font-style: normal; font-size: 10px; margin-top: 5px; text-align: right; }
 .qa-q em { color: rgba(var(--phone-on-coral-rgb), 0.92); }
 .qa-a em { color: var(--phone-ok); }
 .qa-typing { display: inline-flex; gap: 4px; align-self: flex-start; background: var(--phone-card); border-radius: 14px; padding: 10px 12px; box-shadow: 0 3px 10px rgba(var(--phone-shadow-rgb), 0.06); }
-.qa-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--phone-dot); animation: qa-dot 1s infinite ease-in-out; }
-.qa-typing i:nth-child(2) { animation-delay: 0.15s; }
-.qa-typing i:nth-child(3) { animation-delay: 0.3s; }
-@keyframes qa-dot { 0%, 80%, 100% { transform: translateY(0); opacity: 0.5; } 40% { transform: translateY(-4px); opacity: 1; } }
-.qa-rate { text-align: center; margin-top: 6px; }
-.qa-stars { display: inline-flex; gap: 2px; font-size: 17px; line-height: 1; }
-.qa-stars i { font-style: normal; color: var(--phone-star-off); transition: color 0.2s, transform 0.2s; }
-.qa-stars i.is-on { color: var(--phone-star); transform: scale(1.12); }
-.qa-ratelabel { display: block; font-size: 10.5px; color: var(--phone-soft); margin-top: 3px; }
+.qa-typing i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--phone-dot); }
+.qa-rate { text-align: center; font-size: 15px; margin-top: 12px; }
+.qa-stars { display: inline-flex; justify-content: center; gap: 2px; line-height: 1; }
+.qa-stars i { font-style: normal; display: inline-block; opacity: 0.2; }
+.qa-ratelabel { display: block; font-size: 10.5px; color: var(--phone-soft); margin-top: 2px; }
 .qa-input { position: absolute; left: 10px; right: 10px; bottom: 12px; min-height: 42px; display: flex; align-items: flex-end; gap: 8px; background: var(--phone-card);
   border-radius: 20px; padding: 6px 6px 6px 14px; box-shadow: 0 2px 8px rgba(var(--phone-shadow-rgb), 0.06); font-size: 12px; line-height: 1.45; }
 .qa-inp { flex: 1; padding: 5px 0; overflow-wrap: anywhere; max-height: 7.5em; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
@@ -116,8 +119,7 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
 .qa-cur { display: inline-block; width: 1.5px; height: 13px; background: var(--phone-coral); vertical-align: -2px; margin-left: 1px; }
 .qa-send { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--phone-coral); color: var(--phone-on-coral); display: grid; place-items: center; font-size: 13px; transition: transform 0.15s; }
 .qa-send.is-tap { transform: scale(0.82); }
-@media (max-width: 479px) { .qa-phone { height: 620px; border-width: 9px; border-radius: 40px; } .qa-video { --ph: 620px; } }
-@media (max-width: 359px) { .qa-video { --ph: 540px; --box: 620px; } }
+@media (max-width: 479px) { .qa-phone { height: 620px; border-width: 9px; border-radius: 40px; } }
 /* (still: everything shown, nothing moves) */
 @media (prefers-reduced-motion: reduce) { .qa-typing { display: none !important; } .qa-typing i { animation: none; } .qa-stars i { transition: none; } }
 
@@ -193,4 +195,4 @@ html[data-mentor-state="none"] .lmentor, .lmentor[hidden] { display: none; }
    left-aligned under the box) */
 .waitlist-compact .wlc-row .waitlist-submit, .waitlist-compact .wlc-row .waitlist-submit:hover { width: auto; min-height: 48px; }
 .waitlist-compact .waitlist-hint { text-align: left; font-size: 0.82rem; }
-@media (max-width: 479px) { .waitlist-compact .wlc-row .waitlist-submit, .waitlist-compact .wlc-row .waitlist-submit:hover { width: 100%; } }
+@media (max-width: 479px) { .waitlist-compact .wlc-row .waitlist-submit, .waitlist-compact .wlc-row .waitlist-submit:hover { width: auto; } }

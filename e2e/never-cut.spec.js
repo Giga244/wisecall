@@ -7,7 +7,7 @@ const S = require('./support');
 const { client } = require('../tests/helpers');
 
 const stamp = Date.now();
-const PARA = 'ვმუშაობდი ბრიუსელში და ვკითხულობ ლექციებს რამდენიმე უნივერსიტეტში, ვეხმარები სტუდენტებს სწორი გზის არჩევაში. ';
+const PARA = 'ვასწავლი მათემატიკას სკოლაში და ვეხმარები მოსწავლეებს ეროვნული გამოცდებისთვის მზადებაში, ვწერ სავარჯიშოებს. ';
 const FULL = Array.from({ length: 9 }, (x, i) => `${i + 1}. ${PARA}`).join('\n\n');
 const HALF = [...FULL].slice(0, 525).join('');
 let mentor;
@@ -15,7 +15,7 @@ let mentor;
 test.beforeAll(async () => {
   const admin = client(S.BASE);
   await admin.api('/auth/login', { method: 'POST', body: { email: 'e2e-admin@example.com', password: S.PASSWORD } });
-  mentor = await S.listedMentor(admin, { name: 'ირაკლი ტექსტი', email: `never-cut-${stamp}@e2e.test`, niche: 'teaching', roleTitle: 'ასისტენტ-პროფესორი' });
+  mentor = await S.listedMentor(admin, { name: 'დავით ქავთარაძე', email: `never-cut-${stamp}@e2e.test`, niche: 'teaching', roleTitle: 'მათემატიკის მასწავლებელი' });
   // "About me" holds only the first part of the story, as it did while the story was being written
   await S.sql('UPDATE users SET bio = $2, story = $3 WHERE id = $1', [mentor.id, HALF, FULL]);
 });
@@ -72,8 +72,8 @@ for (const [width, lang, want] of [[1280, 'ka', 3], [360, 'ka', 2], [1280, 'en',
     const page = await ctx.newPage();
     const more = lang === 'ka' ? 'სრულად ნახვა →' : 'Read more →';
     // Browse
-    await page.goto(`${lang === 'ka' ? '/ka' : ''}/experts.html?q=${encodeURIComponent('ირაკლი ტექსტი')}`);
-    const card = page.locator('.expert-card', { hasText: 'ირაკლი ტექსტი' });
+    await page.goto(`${lang === 'ka' ? '/ka' : ''}/experts.html?q=${encodeURIComponent('დავით ქავთარაძე')}`);
+    const card = page.locator('.expert-card', { hasText: 'დავით ქავთარაძე' });
     await expect(card).toBeVisible();
     const text = card.locator('.card-bio-text');
     expect(await lines(text)).toBe(want);
@@ -87,7 +87,7 @@ for (const [width, lang, want] of [[1280, 'ka', 3], [360, 'ka', 2], [1280, 'en',
       const s = page.locator('.expert-card', { hasText: short.name });
       await expect(s.locator('.card-bio-text')).toHaveText('მოკლე ტექსტი.');
       await expect(s.locator('.card-more')).toBeHidden();
-      await page.goto(`${lang === 'ka' ? '/ka' : ''}/experts.html?q=${encodeURIComponent('ირაკლი ტექსტი')}`);
+      await page.goto(`${lang === 'ka' ? '/ka' : ''}/experts.html?q=${encodeURIComponent('დავით ქავთარაძე')}`);
     }
     // "Read more" (the card) opens the profile: the whole text, its paragraphs kept
     await card.locator('.card-more').click();
@@ -101,7 +101,7 @@ for (const [width, lang, want] of [[1280, 'ka', 3], [360, 'ka', 2], [1280, 'en',
     await S.sql('UPDATE users SET show_on_home = true WHERE id = $1', [mentor.id]);
     try {
       await page.goto(lang === 'ka' ? '/ka/' : '/');
-      const home = page.locator('#homeMentorsList .lexpert', { hasText: 'ირაკლი ტექსტი' });
+      const home = page.locator('#homeMentorsList .lexpert', { hasText: 'დავით ქავთარაძე' });
       await expect(home).toBeVisible();
       expect(await lines(home.locator('.lexpert-bio'))).toBe(want);
       await expect(home.locator('.lexpert-more')).toBeVisible();

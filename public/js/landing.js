@@ -1,5 +1,5 @@
 // The home page (docs/CLAUDE-CODE-NEW-HOME.md): the hero's search (before launch, the waiting list and how many are on it), the popular fields,
-// the phone (real questions and answers in a random order; the example video, marked as such, while there are fewer than three: docs/CLAUDE-CODE-RANDOM-PHONE.md). "Meet our experts" is public/js/home-mentors.js; Browse experts
+// the phone (real questions and answers in a random order; an example, marked as such, while there are fewer than three: docs/CLAUDE-CODE-RANDOM-PHONE.md). "Meet our experts" is public/js/home-mentors.js; Browse experts
 // is its own page, /experts.html.
 (function () {
   const t = (k) => WisecallI18n.t(k);
@@ -61,148 +61,144 @@
     if (!r || !Number.isInteger(r.approx)) { el.hidden = true; return; }
     el.textContent = t('home2.wait.count').replace('{n}', r.approx);
     el.hidden = false;
+    // (right under the email and its button, above the age box and the privacy note: docs/CLAUDE-CODE-FINISH.md part 1)
+    const box = document.getElementById('heroWait');
+    const place = () => { const row = box && box.querySelector('.wlc-row'); if (row && row.nextElementSibling !== el) row.after(el); };
+    place();
+    if (box && 'MutationObserver' in window) new MutationObserver(place).observe(box, { childList: true, subtree: true });
   }
 
-  // ---- The phone (2.2) --------------------------------------------------------------------------------------------------------------------
-  // One real question and answer (server/homeQa.js), played in a loop of about 11 seconds: the question is typed and sent ("გაგზავნილია ✓"),
-  // "2 days later" and the typing dots, the answer slides in and its words appear, "✓ answered in 2 days", and the stars fill one by one (as
-  // many as the student really gave). It pauses while off screen or in a hidden tab; with reduced motion it shows the finished state, still.
+  // ---- The phone: live texting, as in docs/new-home/phone-animation.html (its render(t) timeline, with the questions from /api/home-qa) --
   const clamp = (x) => Math.max(0, Math.min(1, x));
   const back = (x) => { x = clamp(x); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
-  function timeline(q, a, stars) {
-    const typeEnd = 0.4 + Math.min(2.6, Math.max(1.2, [...q].length / 32));
-    const send = typeEnd + 0.3;
-    const later = send + 0.8;
-    const dots = [later + 0.3, later + 1.3];
-    const ans = dots[1];
-    const ansEnd = ans + 0.15 + Math.min(2.2, Math.max(1.2, [...a].length / 130));
-    const days = ansEnd + 0.2;
-    const star0 = days + 0.4;
-    const end = star0 + 0.2 * (stars || 0) + 0.4;
-    return { typeEnd, send, later, dots, ans, ansEnd, days, star0, loop: Math.max(11, end + 1.6) };
+  // When each letter of the question is typed: a little uneven, with short pauses after punctuation and spaces (as a person types).
+  function typedTimes(chars, t0, cps) {
+    let t = t0;
+    return chars.map((ch, i) => { t += (1 / cps) * (0.7 + (0.6 * ((i * 37) % 10)) / 10); if (',.?!:'.includes(ch)) t += 0.25; else if (ch === ' ') t += 0.03; return t; });
   }
-  // One real answer on the drawn phone: the mentor's name, "verified", their days and the student's rating; the student is never named, only
-  // the question's field. Returns what the animation needs.
+  // S: the moment it is sent. The answer comes 3.1 s later, its stars (a real, rated one) after it; the loop is at least 12 s.
+  function timeline(qChars, stars) {
+    const TT = typedTimes(qChars, 0.4, 30);
+    const S = (TT.length ? TT[TT.length - 1] : 0.4) + 0.35;
+    const end = S + (stars ? 6.6 : 5.4);
+    return { TT, S, loop: Math.max(12, end + 1.4) };
+  }
+  // (an example's picture: a person, not a letter or a face)
+  const PERSON = '<span class="qa-avatar-ex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>';
+
+  // One item on the phone. A real answer: the mentor's name, "verified", their days and, when the student rated it, the stars. An example
+  // (fewer than three real ones): "Example" on the status bar, "Expert · <field>" with a neutral picture, no badge, no rating, and the
+  // deadline ("Answer within 7 days"), never a number of days that did not happen (docs/CLAUDE-CODE-FINISH.md part 1).
   function fill(box, item) {
+    const ex = Boolean(item.example);
+    const q = ex ? t(`home2.ex.${item.n}.q`) : item.question;
+    const a = ex ? t(`home2.ex.${item.n}.a`) : item.answer;
     const field = WisecallI18n.fieldName({ niche: item.niche }) || '';
-    const m = item.mentor || {};
-    const days = item.days || 1;
-    const stars = Number.isInteger(item.stars) ? item.stars : null;
-    box.querySelector('.qa-avatar').innerHTML = WisecallAPI.avatar({ name: m.name, color: m.color }, { cls: 'avatar-sm', size: 34 });
-    box.querySelector('.qa-name').textContent = m.name || '';
-    box.querySelector('.qa-meta').textContent = [`✓ ${t('home2.qa.verified')}`, m.roleTitle].filter(Boolean).join(' · ');
-    box.querySelector('.qa-d1').textContent = field ? t('home2.qa.question').replace('{field}', field) : t('home2.qa.questionPlain');
-    box.querySelector('.qa-qtext').textContent = item.question;
-    box.querySelector('.qa-sent').textContent = t('home2.qa.sent');
-    box.querySelector('.qa-d2').textContent = t(days === 1 ? 'home2.qa.later1' : 'home2.qa.later').replace('{n}', days);
-    box.querySelector('.qa-aname').textContent = m.name || '';
-    box.querySelector('.qa-adays').textContent = t(days === 1 ? 'home2.qa.days1' : 'home2.qa.days').replace('{n}', days);
-    box.querySelector('.qa-ratelabel').textContent = stars !== null ? t('home2.qa.rated') : t('home2.qa.rate');
-    box.querySelector('.qa-stars').classList.toggle('is-empty', stars === null);
-    box.querySelector('#qaCaption').textContent = t('home2.qa.caption').replace('{mentor}', m.name || '').replace('{question}', item.question).replace('{answer}', item.answer);
-    return { question: item.question, answer: item.answer, stars: stars || 0 };
+    const m = ex ? {} : (item.mentor || {});
+    const days = ex ? null : (item.days || 1);
+    const stars = !ex && Number.isInteger(item.stars) && item.stars > 0 ? item.stars : 0;
+    const $ = (sel) => box.querySelector(sel);
+    $('.qa-example').hidden = !ex;
+    $('.qa-example').textContent = ex ? t('home2.qa.example') : '';
+    $('.qa-avatar').innerHTML = ex ? PERSON : WisecallAPI.avatar({ name: m.name, color: m.color }, { cls: 'avatar-sm', size: 34 });
+    $('.qa-name').textContent = ex ? [t('home2.qa.expert'), field].filter(Boolean).join(' · ') : (m.name || '');
+    $('.qa-meta').hidden = ex;
+    $('.qa-meta').textContent = ex ? '' : [`✓ ${t('home2.qa.verified')}`, m.roleTitle].filter(Boolean).join(' · ');
+    // (the student, never named: only the question's field)
+    $('.qa-d1').textContent = field ? t('home2.qa.question').replace('{field}', field) : t('home2.qa.questionPlain');
+    $('.qa-qtext').textContent = q;
+    $('.qa-sent').textContent = t('home2.qa.sent');
+    $('.qa-d2').textContent = ex ? '' : t(days === 1 ? 'home2.qa.later1' : 'home2.qa.later').replace('{n}', days);
+    $('.qa-aname').textContent = ex ? t('home2.qa.expert') : (m.name || '');
+    $('.qa-adays').textContent = ex ? t('home2.qa.exampleDays') : t(days === 1 ? 'home2.qa.days1' : 'home2.qa.days').replace('{n}', days);
+    $('#qaCaption').textContent = (ex ? t('home2.qa.exampleCaption').replace('{field}', field) : t('home2.qa.caption').replace('{mentor}', m.name || ''))
+      .replace('{question}', q).replace('{answer}', a);
+    box.dataset.item = ex ? `example-${item.n}` : item.id;
+    return { q, a, stars, ex };
   }
 
-  // Plays the rotation: a different item on each loop, either a real answer on the drawn phone or the example video (marked "Example"),
-  // which plays once and then makes way; everything still while off screen or in a hidden tab. With reduced motion, one item in its
-  // finished state (the video: its last frame, the poster), and no rotation.
+  // Plays the rotation: a different question and answer on each loop, the phone's screen fading between them; still while off screen or in
+  // a hidden tab. With reduced motion: one of them, finished, and no rotation.
   function playPhone(box, rotation) {
     const root = box.querySelector('.qa-phone');
-    const vbox = box.querySelector('.qa-video');
-    const video = vbox.querySelector('video');
     const $ = (sel) => root.querySelector(sel);
-    const starEls = [...root.querySelectorAll('.qa-stars i')];
+    const screen = $('.qa-screen');
+    const chat = $('.qa-chat');
     const inp = $('.qa-inp');
-    let current, q, a, stars, T, qChars, aWords;
-    let on = false;
-    let fallback = null;
-    const VIDEO_SECONDS = 12;
-    const set = (item) => {
-      current = item;
-      root.hidden = Boolean(item.video);
-      vbox.hidden = !item.video;
-      clearTimeout(fallback);
-      if (item.video) {
-        box.dataset.item = 'example-video';
-        box.querySelector('#qaCaption').textContent = t('home2.qa.exampleCaption').replace('{field}', WisecallI18n.fieldName({ niche: item.niche }) || '')
-          .replace('{question}', t(`home2.ex.${item.n}.q`)).replace('{answer}', t(`home2.ex.${item.n}.a`));
-        return;
-      }
-      box.dataset.item = item.id;
-      ({ question: q, answer: a, stars } = fill(box, item));
-      T = timeline(q, a, stars);
-      qChars = [...q];
-      aWords = a.split(/(\s+)/);
+    const dots = [...root.querySelectorAll('.qa-typing i')];
+    const starEls = [...root.querySelectorAll('.qa-stars i')];
+    let cur; // { q, a, stars, ex, qChars, aChars, T }
+    // (a bubble pops in: it grows from its corner, and is not there at all before)
+    const show = (el, p, dy = 10) => {
+      el.style.display = p <= 0 ? 'none' : '';
+      el.style.opacity = String(clamp(p * 1.5));
+      el.style.transform = `translateY(${(1 - back(p)) * dy}px) scale(${0.9 + 0.1 * back(p)})`;
     };
-    const show = (el, p, dy = 10) => { el.style.opacity = String(clamp(p * 1.5)); el.style.transform = `translateY(${(1 - back(p)) * dy}px) scale(${0.92 + 0.08 * back(p)})`; el.style.visibility = p <= 0 ? 'hidden' : 'visible'; };
     function render(time) {
-      const placeholder = `<span class="qa-ph">${esc(t('home2.qa.input'))}</span>`;
-      // the question, typed into the input, then sent
-      if (time < T.typeEnd) {
-        const n = Math.floor(qChars.length * clamp((time - 0.4) / (T.typeEnd - 0.4)));
-        inp.innerHTML = n ? `${esc(qChars.slice(0, n).join(''))}<span class="qa-cur"></span>` : placeholder;
-      } else if (time < T.send) inp.innerHTML = `${esc(q)}<span class="qa-cur"></span>`;
-      else inp.innerHTML = placeholder;
-      $('.qa-send').classList.toggle('is-tap', time >= T.send - 0.15 && time < T.send + 0.15);
-      show($('.qa-q'), clamp((time - T.send) / 0.35));
-      $('.qa-sent').style.opacity = String(clamp((time - T.send - 0.35) / 0.3));
-      show($('.qa-d2'), clamp((time - T.later) / 0.3), 4);
-      const typing = time >= T.dots[0] && time < T.dots[1];
-      $('.qa-typing').style.display = typing ? '' : 'none';
-      const ap = clamp((time - T.ans) / 0.4);
-      $('.qa-a').style.display = time >= T.ans ? '' : 'none';
-      show($('.qa-a'), ap, 14);
-      const shown = Math.ceil(aWords.length * clamp((time - T.ans - 0.15) / (T.ansEnd - T.ans - 0.15)));
-      $('.qa-atext').textContent = aWords.slice(0, shown).join('');
-      $('.qa-adays').style.opacity = String(clamp((time - T.days) / 0.3));
-      $('.qa-rate').style.opacity = String(clamp((time - T.days) / 0.3));
-      starEls.forEach((s, i) => s.classList.toggle('is-on', i < stars && time >= T.star0 + 0.2 * i));
+      const { qChars, aChars, T, stars, ex } = cur;
+      const S = T.S;
+      const ph = `<span class="qa-ph">${esc(t('home2.qa.input'))}</span>`;
+      const caret = '<span class="qa-cur"></span>';
+      // the question, letter by letter in the input (which grows), the cursor after it; before the first letter the cursor blinks
+      if (time < S) {
+        const n = T.TT.filter((x) => x <= time).length;
+        // (one span: the input is a column that grows upward, and the cursor stays at the end of the last line)
+        inp.innerHTML = `<span>${n ? esc(qChars.slice(0, n).join('')) + caret : ph + (Math.floor(time * 2.2) % 2 ? '' : caret)}</span>`;
+      } else inp.innerHTML = `<span>${ph}</span>`;
+      $('.qa-send').classList.toggle('is-tap', time > S - 0.2 && time < S + 0.15);
+      show($('.qa-d1'), (time - S) / 0.3, 6);
+      show($('.qa-q'), (time - S) / 0.45, 20);
+      $('.qa-sent').style.opacity = String(clamp((time - S - 0.6) / 0.3));
+      if (ex) $('.qa-d2').style.display = 'none'; else show($('.qa-d2'), (time - S - 1.4) / 0.3, 6);
+      // the typing dots, bouncing one after the other
+      $('.qa-typing').style.display = time > S + 1.7 && time < S + 3.1 ? '' : 'none';
+      dots.forEach((d, i) => { d.style.transform = `translateY(${-Math.max(0, Math.sin(time * 7 - i)) * 4}px)`; });
+      // the answer, letter by letter
+      show($('.qa-a'), (time - S - 3.1) / 0.45, 20);
+      $('.qa-atext').textContent = aChars.slice(0, Math.floor(clamp((time - S - 3.2) / 1.6) * aChars.length)).join('');
+      $('.qa-adays').style.opacity = String(clamp((time - S - 4.8) / 0.3));
+      // the stars, one by one: only a real answer the student rated
+      if (stars) {
+        show($('.qa-rate'), (time - S - 5.0) / 0.3, 6);
+        starEls.forEach((el, i) => {
+          const p = i < stars ? clamp((time - S - 5.3 - i * 0.15) / 0.2) : 0;
+          el.style.opacity = String(0.2 + 0.8 * p);
+          el.style.transform = `scale(${1 + 0.4 * Math.sin(Math.PI * p)})`;
+        });
+        $('.qa-ratelabel').textContent = time > S + 6.2 ? t('home2.qa.thanks').replace('{n}', stars) : t('home2.qa.rate');
+      } else $('.qa-rate').style.display = 'none';
+      // the screen fades out at the end of the loop and in at its start
+      const L = T.loop;
+      screen.style.opacity = String(time > L - 0.4 ? clamp((L - time) / 0.4) : time < 0.3 ? clamp(time / 0.3) : 1);
+      // (the chat starts under the header; once it no longer fits, it keeps to the bottom, as a chat app scrolls)
+      chat.classList.remove('is-tall');
+      if (chat.scrollHeight > chat.clientHeight + 1) chat.classList.add('is-tall');
     }
+    const set = (item) => {
+      const f = fill(box, item);
+      const qChars = [...f.q];
+      cur = { ...f, qChars, aChars: [...f.a], T: timeline(qChars, f.stars) };
+    };
     set(rotation.next());
-    // (still: one finished conversation; the video shows its poster, the last frame)
-    if (reduceMotion()) { if (!current.video) render(T.loop - 0.01); return; }
+    // (still: one finished conversation)
+    if (reduceMotion()) { render(cur.T.loop - 0.6); screen.style.opacity = '1'; return; }
     let visible = false;
     let elapsed = 0;
     let last = null;
     let frame = null;
-    const advance = () => {
-      elapsed = 0;
-      last = null;
-      const was = current;
-      set(rotation.next());
-      if (current.video) startVideo(was && was.video);
-      else if (on && frame === null) frame = requestAnimationFrame(tick);
-      if (!current.video) render(0);
-    };
-    // The video plays from its start; if it cannot (an old browser, a failed load), the next item comes after the video's length anyway.
-    function startVideo(again) {
-      if (!on) return;
-      if (again || video.ended) { try { video.currentTime = 0; } catch (e) { /* not loaded yet */ } }
-      const p = video.play();
-      if (p && p.catch) p.catch(() => { clearTimeout(fallback); fallback = setTimeout(() => { if (on) advance(); }, VIDEO_SECONDS * 1000); });
-    }
-    video.addEventListener('ended', () => { if (current.video) advance(); });
-    video.addEventListener('error', () => { clearTimeout(fallback); fallback = setTimeout(() => { if (on && current.video) advance(); }, VIDEO_SECONDS * 1000); }, true);
     const tick = (now) => {
-      frame = null;
-      if (current.video) return;
       if (last !== null) elapsed += (now - last) / 1000;
       last = now;
-      if (elapsed >= T.loop) { advance(); return; } // (the next loop: the next question)
+      if (elapsed >= cur.T.loop) { elapsed = 0; set(rotation.next()); } // (the next loop: the next question)
       render(elapsed);
       frame = requestAnimationFrame(tick);
     };
     const run = () => {
-      on = visible && document.visibilityState === 'visible';
-      if (current.video) {
-        if (on) startVideo(false);
-        else { video.pause(); clearTimeout(fallback); }
-        return;
-      }
+      const on = visible && document.visibilityState === 'visible';
       if (on && frame === null) { last = null; frame = requestAnimationFrame(tick); }
       if (!on && frame !== null) { cancelAnimationFrame(frame); frame = null; }
     };
-    if (!current.video) render(0);
+    render(0);
     if ('IntersectionObserver' in window) new IntersectionObserver((entries) => { visible = entries.some((e) => e.isIntersecting); run(); }).observe(box);
     else { visible = true; run(); }
     document.addEventListener('visibilitychange', run);
@@ -210,7 +206,7 @@
   async function drawPhone() {
     const box = document.getElementById('homeQa');
     if (!box || !window.WisecallPhoneRotation) return;
-    // (the real ones from the server; if they cannot be had, the examples alone)
+    // (the real ones from the server; if they cannot be had, the example alone)
     let data = null;
     try { data = await WisecallAPI.apiFetch('/home-qa'); } catch (e) { data = null; }
     playPhone(box, WisecallPhoneRotation.create(data));

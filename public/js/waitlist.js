@@ -33,9 +33,11 @@
           <button class="btn btn-primary waitlist-submit" type="submit">${esc(t('home2.wait.button'))}</button>
         </div>
         <input type="hidden" name="niche" value="${esc(chosen)}">
-        <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
         <p class="form-error waitlist-error" role="alert"></p>
-        <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
+        <div class="wlc-consent">
+          <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
+          <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
+        </div>
       </form>`;
     }
     const opt = (k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(k === 'any' ? t('wait.any') : fieldLabel(k))}</option>`;

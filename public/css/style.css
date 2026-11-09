@@ -130,7 +130,8 @@ html.motion.page-fade #main { animation: page-fade 0.2s var(--ease-out); }
   transition: transform 0.25s var(--ease-out);
 }
 .nav.nav-hidden { transform: translateY(-100%); }
-.nav-inner { display: flex; align-items: center; gap: 28px; padding: 12px var(--gutter); min-height: 74px; }
+/* (more room above than below: Jikhva's horns reach up from the logo, docs/CLAUDE-CODE-FINISH.md part 1) */
+.nav-inner { display: flex; align-items: center; gap: 28px; padding: 16px var(--gutter) 8px; min-height: 74px; }
 /* The header's logo is Jikhva behind "Wisecall." (public/js/header.js): 64px high with his horns, 56px on phones; the letters are the ink,
    with a thin outline in the header's own colour, so only the letters cover him (docs/CLAUDE-CODE-NEW-HOME.md 1). The footer's is the
    plain image from /brand. */
@@ -886,7 +887,7 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
 .mm-actions { display: grid; gap: 10px; margin-top: auto; padding-top: 24px; }
 html.menu-open, html.menu-open body { overflow: hidden; }
 @media (max-width: 1023px) {
-  .nav-inner { padding: 8px 16px; gap: 12px; min-height: 60px; }
+  .nav-inner { padding: 14px 16px 6px; gap: 12px; min-height: 60px; } /* (room above Jikhva's horns) */
   .nav-links, .nav-right .nav-actions { display: none !important; }
   .nav-right { margin-left: auto; }
   .nav-toggle { display: inline-flex; margin-left: 0; }

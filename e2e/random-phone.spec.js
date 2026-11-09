@@ -1,4 +1,5 @@
-// The home page's phone in a browser (docs/CLAUDE-CODE-RANDOM-PHONE.md): with no published answer the example video, marked "მაგალითი";
+// The home page's phone in a browser (docs/CLAUDE-CODE-RANDOM-PHONE.md, docs/CLAUDE-CODE-FINISH.md part 1): with no published answer an honest
+// example, marked "მაგალითი" (no name, no badge, no stars), played like live texting;
 // with one real answer the two take turns; with three or more only real ones, a different one on each loop (the page's clock is run forward); the pinned one
 // first; one an admin hid never; with reduced motion one finished conversation that does not change. Runs after full-flow.spec.js (the admin
 // account). The answers other tests published are kept off the phone while this file runs, and let back at the end.
@@ -62,37 +63,63 @@ async function nextItem(page) {
   return was;
 }
 
-test('no published answer: the example video, marked "მაგალითი", in place of the drawn phone; its caption says it is an example', async ({ browser }) => {
+test('no published answer: the example, marked "მაგალითი": "ექსპერტი · მედიცინა", a neutral picture, no badge, no stars, "პასუხი 7 დღეში"', async ({ browser }) => {
   const { ctx, page } = await open(browser, { reduce: true });
   const phone = page.locator('#homeQa');
-  expect(await item(page)).toBe('example-video');
-  await expect(phone.locator('.qa-phone')).toBeHidden();
-  await expect(phone.locator('.qa-video video')).toBeVisible();
-  await expect(phone.locator('.qa-video-tag')).toBeVisible();
-  await expect(phone.locator('.qa-video-tag')).toHaveText('მაგალითი');
+  expect(await item(page)).toBe('example-1');
+  await expect(phone.locator('.qa-example')).toBeVisible();
+  await expect(phone.locator('.qa-example')).toHaveText('მაგალითი');
+  await expect(phone.locator('.qa-name')).toHaveText('ექსპერტი · მედიცინა');
+  await expect(phone.locator('.qa-meta')).toBeHidden(); // (no "verified")
+  await expect(phone.locator('.qa-avatar svg')).toHaveCount(1); // (a neutral picture, no letter, no photo)
+  await expect(phone.locator('.qa-avatar img, .qa-avatar .avatar')).toHaveCount(0);
+  await expect(phone.locator('.qa-aname')).toHaveText('ექსპერტი');
+  await expect(phone.locator('.qa-rate')).toBeHidden(); // (no stars, no "მადლობა! ⭐ 5.0")
+  await expect(phone.locator('.qa-d2')).toBeHidden(); // (no "2 დღის შემდეგ")
+  await expect(phone.locator('.qa-adays')).toHaveText(`✓ პასუხი ${days} დღეში`);
+  await expect(phone.locator('.qa-atext')).toHaveText(/^ღირს, თუ მედიცინა/);
   await expect(page.locator('#qaCaption')).toContainText('მაგალითი (არა ნამდვილი საუბარი)');
-  // (reduced motion: the poster, still; the video is not played)
-  expect(await phone.locator('.qa-video video').evaluate((v) => v.paused)).toBe(true);
-  // the video's phone takes the drawn phone's place: the same height, nothing moves around it
-  const box = await phone.locator('.qa-video').boundingBox();
-  expect(Math.round(box.height)).toBe(640);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await ctx.close();
 });
 
-test('one real answer: it comes first, then the example video takes its turn, then the real one again', async ({ browser }) => {
+test('the example is played like live texting: typed letter by letter with the cursor, sent, the dots, the answer, then the next loop', async ({ browser }) => {
+  const { ctx, page } = await open(browser, { clock: true });
+  const phone = page.locator('#homeQa');
+  await page.clock.runFor(1200);
+  const typing = await phone.locator('.qa-inp').innerText();
+  expect(typing.length).toBeGreaterThan(3);
+  expect('ბიოლოგია სუსტად მაქვს. ღირს თუ არა სამედიცინოზე ჩაბარება და საიდან დავიწყო?'.startsWith(typing.trim())).toBe(true);
+  await expect(phone.locator('.qa-inp .qa-cur')).toHaveCount(1);
+  await expect(phone.locator('.qa-q')).toBeHidden(); // (not sent yet)
+  await page.clock.runFor(3500);
+  await expect(phone.locator('.qa-q')).toBeVisible();
+  await expect(phone.locator('.qa-sent')).toHaveText('გაგზავნილია ✓');
+  await page.clock.runFor(1500);
+  await expect(phone.locator('.qa-typing')).toBeVisible();
+  await page.clock.runFor(1500);
+  const part = await phone.locator('.qa-atext').innerText();
+  await page.clock.runFor(1500);
+  const whole = await phone.locator('.qa-atext').innerText();
+  expect(whole.length).toBeGreaterThan(part.length); // (the answer appears letter by letter)
+  await expect(phone.locator('.qa-rate')).toBeHidden();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.clock.runFor(6000); // (the next loop starts again from the input)
+  await expect(phone.locator('.qa-q')).toBeHidden();
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+test('one real answer: it comes first, then the example takes its turn, then the real one again', async ({ browser }) => {
   await publish('tech', 1);
   const { ctx, page } = await open(browser, { clock: true });
   expect(await item(page)).toBe(ids[0]);
-  await expect(page.locator('#homeQa .qa-video')).toBeHidden();
-  await nextItem(page); // (one loop of the drawn phone)
-  await expect(page.locator('#homeQa')).toHaveAttribute('data-item', 'example-video');
-  await expect(page.locator('#homeQa .qa-video-tag')).toBeVisible();
-  // (a video plays in real time, not on the page's clock: here it ends at once; a browser that cannot play it waits the video's length)
-  const playable = await page.locator('#homeQa .qa-video video').evaluate((v) => v.canPlayType('video/mp4; codecs="avc1.42E01E"') !== '');
-  if (playable) await page.locator('#homeQa .qa-video video').evaluate((v) => v.dispatchEvent(new Event('ended')));
-  else { await page.waitForTimeout(500); await page.clock.runFor(13000); }
-  await expect(page.locator('#homeQa')).toHaveAttribute('data-item', ids[0]);
+  await expect(page.locator('#homeQa .qa-example')).toBeHidden();
+  await expect(page.locator('#homeQa .qa-name')).toHaveText('ლევან ტელეფონი');
+  expect(await nextItem(page)).toBe('example-1');
+  await expect(page.locator('#homeQa .qa-example')).toBeVisible();
+  expect(await nextItem(page)).toBe(ids[0]);
   await ctx.close();
 });
 
@@ -103,7 +130,7 @@ test('three or more real ones: only real answers, another one on each loop, neve
   const phone = page.locator('#homeQa');
   const seen = [await item(page)];
   for (let loop = 0; loop < 6; loop++) {
-    await expect(phone.locator('.qa-video')).toBeHidden();
+    await expect(phone.locator('.qa-example')).toBeHidden();
     await expect(phone.locator('.qa-name')).toHaveText('ლევან ტელეფონი');
     seen.push(await nextItem(page));
   }
