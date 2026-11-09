@@ -565,7 +565,8 @@
     document.getElementById('tab-received').hidden = false;
     document.getElementById('tab-earnings').hidden = false;
   }
-  selectTab(new URLSearchParams(window.location.search).get('tab') || 'asked', { push: false });
+  // (a mentor starts on the questions for them; an asker on their own questions)
+  selectTab(new URLSearchParams(window.location.search).get('tab') || (isMentor ? 'received' : 'asked'), { push: false });
   document.addEventListener('wisecall:lang-changed', () => { load(); if (activeTab === 'earnings') loadEarnings(); });
   load();
 })();

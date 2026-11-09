@@ -45,7 +45,7 @@ function deviceLabel(ua) {
   const s = String(ua || '');
   const browser = /Edg\//.test(s) ? 'Edge' : /OPR\//.test(s) ? 'Opera' : /Firefox\//.test(s) ? 'Firefox' : /Chrome\//.test(s) ? 'Chrome' : /Safari\//.test(s) ? 'Safari' : 'Browser';
   const os = /iPhone/.test(s) ? 'iPhone' : /iPad/.test(s) ? 'iPad' : /Android/.test(s) ? 'Android' : /Windows/.test(s) ? 'Windows' : /Mac OS X|Macintosh/.test(s) ? 'Mac' : /Linux/.test(s) ? 'Linux' : '';
-  return os ? `${browser} on ${os}` : browser;
+  return os ? `${browser} · ${os}` : browser; // (no English word: the same label reads right on the Georgian page)
 }
 
 const db = () => require('./db');

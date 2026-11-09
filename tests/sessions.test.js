@@ -28,8 +28,8 @@ describe('sessions', () => {
     const list = (await laptop.api('/me/sessions')).sessions;
     assert.ok(list.length >= 3);
     const current = list.find((s) => s.current);
-    assert.equal(current.device, 'Chrome on Windows');
-    assert.ok(list.some((s) => s.device === 'Safari on iPhone'));
+    assert.equal(current.device, 'Chrome · Windows');
+    assert.ok(list.some((s) => s.device === 'Safari · iPhone'));
     assert.ok(await signedIn(phone));
   });
 

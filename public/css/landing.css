@@ -27,7 +27,8 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
   box-shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.08); border: var(--line-w, 1.5px) solid transparent; }
 .lhero-search:focus-within { border-color: var(--ink); }
 .lhero-search-icon { flex: 0 0 auto; color: var(--ink-soft); }
-.lhero-search input { flex: 1 1 auto; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 16px; padding: 12px 4px; min-height: 48px; box-shadow: none; outline: none; }
+.lhero-search input { flex: 1 1 auto; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; padding: 12px 4px; min-height: 48px; box-shadow: none; outline: none; text-overflow: ellipsis; }
+.lhero-search input::placeholder { color: var(--ink-soft); opacity: 1; }
 .lhero-search .btn { flex: 0 0 auto; min-height: 48px; padding: 0 24px; border-radius: 16px; }
 
 /* before launch: the waiting list, the same box */
@@ -167,6 +168,7 @@ html[data-launch="prelaunch"] .lhero-pill { background: var(--coral-tint); color
 .ltrust { padding: 8px 0 24px; }
 .ltrust-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0 auto; }
 @media (min-width: 900px) { .ltrust-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } }
+@media (max-width: 439px) { .ltrust-row { grid-template-columns: minmax(0, 1fr); gap: 10px; } .ltrust-row li { padding: 14px 16px; } }
 .ltrust-row li { display: flex; gap: 8px; align-items: flex-start; background: rgba(var(--shadow-rgb), 0.04); border-radius: 18px; padding: 16px 18px; line-height: 1.5; font-size: 0.95rem; }
 .ltrust-more { margin: 14px auto 0; text-align: center; font-weight: 700; }
 
@@ -187,9 +189,10 @@ html[data-mentor-state="none"] .lmentor, .lmentor[hidden] { display: none; }
   .lmentor-jikhva { left: 40px; width: 140px; }
 }
 @media (max-width: 479px) {
-  .lmentor-card { padding: 28px 20px 24px 104px; }
-  .lmentor-jikhva { width: 88px; left: 8px; }
-  .lmentor-btn { justify-self: stretch; }
+  .lmentor { padding-top: 88px; }
+  .lmentor-card { padding: 26px 20px 22px; }
+  .lmentor-jikhva { width: 70px; left: auto; right: 14px; bottom: auto; top: -78px; }
+  .lmentor-btn { justify-self: stretch; justify-content: center; white-space: nowrap; }
 }
 /* (the compact form against the waiting list's general rules in style.css: the button keeps its own width beside the email, the note is
    left-aligned under the box) */
