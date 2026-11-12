@@ -10,6 +10,7 @@ const config = require('./config');
 const pool = new Pool({
   connectionString: config.DATABASE_URL, max: Number(process.env.DB_POOL_MAX) || 15,
   connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000,
+  application_name: 'wisecall-site', // (so the history of "About me" changes, migrations/063, tells the site from a script or a manual query)
   options: '-c statement_timeout=15000 -c lock_timeout=10000 -c idle_in_transaction_session_timeout=60000'
 });
 pool.on('error', (e) => console.error('[db] idle client error:', e.message));
