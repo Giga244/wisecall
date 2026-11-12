@@ -61,7 +61,8 @@ test('the count line: the real number rounded down to ten, hidden under 50', asy
 });
 
 test('Browse and profiles stay open; "დასვი კითხვა" opens the waiting list with the new words', async ({ browser }) => {
-  const [m] = await S.sql(`SELECT username FROM users WHERE role IN ('mentor', 'both') AND verification_status = 'verified' AND username IS NOT NULL AND deleted_at IS NULL LIMIT 1`);
+  // (a mentor Browse lists, so their profile is public and has the button: one picked from the database at random could be hidden)
+  const [m] = ((await (await fetch(`${srv.base}/api/experts`)).json()).experts || []).filter((e) => e.username);
   const { ctx, page } = await ka(browser);
   await page.goto(`${srv.base}/ka/experts.html`);
   await expect(page.locator('#expertGrid')).toBeVisible();

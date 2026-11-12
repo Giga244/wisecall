@@ -51,3 +51,11 @@
 1. **The switch:** `MENTOR_SUMMARY` off by default, so you turn it on in Render once the Anthropic key is in. OK?
 2. **The model:** `claude-haiku-5-5` (cheapest), counted in the same $20 monthly AI budget. OK, or a separate budget?
 3. **The cards:** should Browse and home show the approved summary (shorter and cleaner), with the full original only on the profile? Or the summary everywhere once it is approved?
+
+## Decision (owner, 2026-11-13): not built for now
+- The feature is **not built for now**. Nothing of it is in the code.
+- If it is built later:
+  - The switch is **off by default** (`MENTOR_SUMMARY=on` turns it on, with the API key).
+  - The **profile always shows the mentor's own full text**. The approved summary would only be the short text on the Browse and home cards, with "სრულად ნახვა →" leading to the profile.
+  - The model and budget are still to be decided then.
+- Meanwhile the cards show the first lines of the mentor's own text (3 lines, 2 at 360px) and the profile shows all of it.
