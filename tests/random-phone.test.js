@@ -69,14 +69,16 @@ describe('with no published answer: the example', () => {
     assert.equal(r.examples, true);
     const played = Array.from({ length: 4 }, () => r.next());
     assert.ok(played.every((x) => x.example && x.n === 1 && x.niche === 'medicine'), 'only the example');
-    assert.match(await (await fetch(base + '/')).text(), /<div class="lhero-phone" id="homeQa">/, 'never hidden now');
+    assert.match(await (await fetch(base + '/')).text(), /<div class="lhero-chat" id="homeQa">/, 'never hidden now');
     // (a failed request: the example alone)
     assert.equal(Rotation.create(null).examples, true);
   });
 
   test('the example\'s words: "Example" on the phone, "Expert · <field>", the deadline ("პასუხი 7 დღეში"), no name, no badge, no stars (docs/CLAUDE-CODE-FINISH.md part 1)', async () => {
     const html = await (await fetch(base + '/ka/')).text();
-    assert.match(html, /<div class="qa-status"><span>9:41<\/span><span class="qa-example" hidden><\/span>/);
+    // ("მაგალითი": in the label above the chat on a phone, next to the dots on a computer; docs/CLAUDE-CODE-COMPACT-HOME.md)
+    assert.match(html, /<p class="qa-label"><span data-i18n="home2.qa.label">[^<]+<\/span><span class="qa-example" hidden><\/span><\/p>/);
+    assert.match(html, /<div class="qa-foot"><em class="qa-adays"><\/em><span class="qa-example-foot" hidden><\/span><span class="qa-dots"><\/span><\/div>/);
     assert.doesNotMatch(html, /qa-video|phone-example/, 'no video: an example is drawn, honestly');
     const js = fs.readFileSync(path.join(ROOT, 'public/js/landing.js'), 'utf8');
     assert.match(js, /\$\('\.qa-name'\)\.textContent = ex \? \[t\('home2\.qa\.expert'\), field\]\.filter\(Boolean\)\.join\(' · '\)/, 'no name');
@@ -84,7 +86,8 @@ describe('with no published answer: the example', () => {
     assert.match(js, /\$\('\.qa-avatar'\)\.innerHTML = ex \? PERSON :/, 'a neutral picture, not a letter');
     assert.match(js, /const stars = !ex && Number\.isInteger\(item\.stars\)/, 'no stars');
     assert.match(js, /\$\('\.qa-adays'\)\.textContent = ex \? t\('home2\.qa\.exampleDays'\)/);
-    assert.match(js, /if \(ex\) \$\('\.qa-d2'\)\.style\.display = 'none';/, 'no "2 days later"');
+    assert.doesNotMatch(html, /qa-d2/, 'no "2 days later"');
+    assert.match(js, /for \(const sel of \['\.qa-example', '\.qa-example-foot'\]\) \{ \$\(sel\)\.hidden = !ex; \$\(sel\)\.textContent = ex \? t\('home2\.qa\.example'\) : ''; \}/);
     const ka = dict('ka'), en = dict('en');
     assert.equal(ka['home2.qa.example'], 'მაგალითი');
     assert.equal(en['home2.qa.example'], 'Example');
@@ -223,9 +226,51 @@ describe('the order, with any answers', () => {
     assert.match(js, /if \(',\.\?!:'\.includes\(ch\)\) t \+= 0\.25; else if \(ch === ' '\) t \+= 0\.03;/);
     assert.match(js, /const TT = typedTimes\(qChars, 0\.4, 30\);/);
     assert.match(js, /translateY\(\$\{-Math\.max\(0, Math\.sin\(time \* 7 - i\)\) \* 4\}px\)/);
-    assert.match(js, /aChars\.slice\(0, Math\.floor\(clamp\(\(time - S - 3\.2\) \/ 1\.6\) \* aChars\.length\)\)/);
-    assert.match(js, /const p = i < stars \? clamp\(\(time - S - 5\.3 - i \* 0\.15\) \/ 0\.2\) : 0;/);
-    assert.match(js, /set\(rotation\.next\(\)\);\n\s*\/\/ \(still: one finished conversation\)\n\s*if \(reduceMotion\(\)\) \{ render\(cur\.T\.loop - 0\.6\); screen\.style\.opacity = '1'; return; \}/);
+    // (the question is typed inside its bubble, with the cursor after it: docs/CLAUDE-CODE-COMPACT-HOME.md)
+    assert.match(js, /\$\('\.qa-qtext'\)\.innerHTML = esc\(qChars\.slice\(0, n\)\.join\(''\)\) \+ \(time < S \? '<span class="qa-cur"><\/span>' : ''\);/);
+    assert.match(js, /aChars\.slice\(0, Math\.floor\(clamp\(\(time - S - 2\.0\) \/ 1\.6\) \* aChars\.length\)\)/);
+    assert.match(js, /const p = i < stars \? clamp\(\(time - S - 4\.0 - i \* 0\.15\) \/ 0\.2\) : 0;/);
+    assert.match(js, /set\(rotation\.next\(\)\);\n\s*const still = reduceMotion\(\);[\s\S]*?if \(still\) \{ render\(cur\.T\.loop - 1\); screen\.style\.opacity = '1'; return; \}/);
     assert.match(js, /if \(elapsed >= cur\.T\.loop\) \{ elapsed = 0; set\(rotation\.next\(\)\); \}/);
+  });
+});
+
+// docs/CLAUDE-CODE-COMPACT-HOME.md: a field chip chosen above the chat switches it to that field.
+describe('a field chosen on the page', () => {
+  test('jump(): one of that field now, not again this round; null when there is none; the rotation goes on', () => {
+    const items = [{ id: 'a', niche: 'medicine' }, { id: 'b', niche: 'law' }, { id: 'c', niche: 'tech' }, { id: 'd', niche: 'law' }];
+    const r = Rotation.create({ pinned: null, answers: items.map((x) => ({ ...x, question: 'q', answer: 'a' })) }, seeded(3));
+    assert.equal(r.size, 4);
+    const law = r.jump((x) => x.niche === 'law');
+    assert.equal(law.niche, 'law');
+    assert.equal(r.jump((x) => x.niche === 'cooking'), null);
+    const next = r.next();
+    assert.notEqual(next.niche, 'law', 'not the same field right after');
+    // (an example rotation: the example is the medicine one)
+    const ex = Rotation.create(null, seeded(5));
+    assert.equal(ex.jump((x) => x.niche === 'medicine').example, true);
+    const js = fs.readFileSync(path.join(ROOT, 'public/js/landing.js'), 'utf8');
+    assert.match(js, /rotation\.jump\(\(x\) => WisecallI18n\.fieldOfNiche\(x\.niche\) === fieldId\)/);
+  });
+
+  test('the page: no "Popular:" label, the pinned button with its words in both modes, the short footer on the home page only', async () => {
+    const html = await (await fetch(base + '/ka/')).text();
+    assert.doesNotMatch(html, /პოპულარული:|home2\.popular/);
+    assert.match(html, /<a class="home-pin" id="homePin" href="#heroTitle" hidden><span data-i18n="home2\.pin\.search" data-i18n-prelaunch="home2\.pin\.join">/);
+    assert.match(html, /<body class="home"/);
+    const ka = dict('ka'), en = dict('en');
+    assert.equal(ka['home2.pin.join'], '🚀 ჩაეწერე სიაში');
+    assert.equal(ka['home2.pin.search'], '🔍 იპოვე ექსპერტი');
+    assert.ok(en['home2.pin.join'] && en['home2.pin.search']);
+    const footer = fs.readFileSync(path.join(ROOT, 'public/js/footer.js'), 'utf8');
+    assert.match(footer, /const compact = document\.body\.classList\.contains\('home'\);/);
+    for (const href of ['/experts.html', '/faq.html#faq-payments', '/faq.html', '/about.html', '/contact.html', '/terms.html']) assert.ok(footer.includes(`<a href="${href}"`), href);
+    // (the other links stay in the menu)
+    const header = fs.readFileSync(path.join(ROOT, 'public/js/header.js'), 'utf8');
+    for (const href of ['/how-we-verify.html', '/help.html', '/answers', '/privacy.html']) assert.ok(header.includes(`'${href}'`), href);
+    // (the header's own button is in its first frame, for visitors not signed in: "join" before launch, "find an expert" after)
+    assert.match(header, /const homeCtaKey = document\.getElementById\('homePrelaunch'\) \? 'nav\.cta\.join' : 'nav\.cta\.search';/);
+    assert.match(header, /id="navLoggedOut"\$\{off\(signedIn\)\}>\s*\$\{homeCta\}/);
+    assert.doesNotMatch(html, /id="homePrelaunch"/, 'after launch the marker is left out');
   });
 });

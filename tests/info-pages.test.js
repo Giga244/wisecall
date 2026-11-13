@@ -153,7 +153,7 @@ describe('every page arrives in its language (nothing is swapped after the first
 
   test('numbers from the settings are filled in; a text with a date or a name keeps the page\'s own words', async () => {
     const days = esc(ka['home2.how.3.body']).replace('\\{answerDays\\}', '\\d+');
-    assert.match(await html('/ka/'), new RegExp(`data-i18n="home2.how.3.body">${days}</p>`));
+    assert.match(await html('/ka/'), new RegExp(`data-i18n="home2.how.3.body">${days}</span>`));
     const h = await html('/ka/how-we-verify.html');
     assert.doesNotMatch(h, /\{[A-Za-z]+\}/);
     assert.match(h, /<span data-i18n="badge.id.tip">[^<{]+<\/span>/);

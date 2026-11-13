@@ -3,7 +3,8 @@
 const { test, expect } = require('@playwright/test');
 
 test('the second page view reuses the scripts, stylesheet, logo and icons from the cache and only asks for the page again', async ({ page }) => {
-  await page.goto('/');
+  // (Browse: the home page's short footer has no logo: docs/CLAUDE-CODE-COMPACT-HOME.md)
+  await page.goto('/experts.html');
   await page.waitForLoadState('networkidle');
   const first = await page.evaluate(() => performance.getEntriesByType('resource').map((r) => r.name).filter((n) => /\/(css|js|brand|fonts)\/|\/favicon|\/icon-|site\.webmanifest/.test(n)));
   expect(first.length).toBeGreaterThan(10);

@@ -38,14 +38,14 @@
   const WORDS = {
     en: {
       'a11y.skip': 'Skip to content', 'nav.how': 'How it works', 'nav.browse': 'Browse experts', 'nav.becomeMentor': 'Become a mentor', 'footer.faq': 'FAQ',
-      'nav.language': 'Language', 'nav.login': 'Log in', 'nav.signup': 'Sign up', 'nav.inbox': 'Inbox', 'nav.dashboard': 'Dashboard', 'nav.settings': 'Settings',
+      'nav.language': 'Language', 'nav.login': 'Log in', 'nav.signup': 'Sign up', 'nav.cta.join': 'Join the list', 'nav.cta.search': 'Find an expert', 'nav.inbox': 'Inbox', 'nav.dashboard': 'Dashboard', 'nav.settings': 'Settings',
       'nav.logout': 'Log out', 'nav.admin': 'Admin', 'nav.menu': 'Menu', 'nav.menuClose': 'Close menu', 'theme.toDark': 'Switch to dark mode', 'theme.toLight': 'Switch to light mode',
       'nav.continueApp': 'Continue your application', 'nav.continueStep': 'Continue your application · {n} of 5 done', 'nav.continueShort': 'Application · {n}/5',
       'nav.inReview': 'Application in review', 'nav.inReviewShort': 'In review', 'nav.idLeft': 'Application · 4/5 · ID left', 'nav.idLeftShort': '4/5 · ID left'
     },
     ka: {
       'a11y.skip': 'გადასვლა შინაარსზე', 'nav.how': 'როგორ მუშაობს', 'nav.browse': 'ექსპერტები', 'nav.becomeMentor': 'გახდი მენტორი', 'footer.faq': 'კითხვები',
-      'nav.language': 'ენა', 'nav.login': 'შესვლა', 'nav.signup': 'რეგისტრაცია', 'nav.inbox': 'შემოსულები', 'nav.dashboard': 'პირადი კაბინეტი', 'nav.settings': 'პარამეტრები',
+      'nav.language': 'ენა', 'nav.login': 'შესვლა', 'nav.signup': 'რეგისტრაცია', 'nav.cta.join': 'ჩაეწერე სიაში', 'nav.cta.search': 'იპოვე ექსპერტი', 'nav.inbox': 'შემოსულები', 'nav.dashboard': 'პირადი კაბინეტი', 'nav.settings': 'პარამეტრები',
       'nav.logout': 'გასვლა', 'nav.admin': 'ადმინი', 'nav.menu': 'მენიუ', 'nav.menuClose': 'მენიუს დახურვა', 'theme.toDark': 'მუქ რეჟიმზე გადართვა', 'theme.toLight': 'ღია რეჟიმზე გადართვა',
       'nav.continueApp': 'განაცხადის გაგრძელება', 'nav.continueStep': 'განაცხადის გაგრძელება · დასრულებულია {n} / 5', 'nav.continueShort': 'განაცხადი · {n}/5',
       'nav.inReview': 'განაცხადი განხილვაშია', 'nav.inReviewShort': 'განხილვაშია', 'nav.idLeft': 'განაცხადი · 4/5 · დარჩა პირადობა', 'nav.idLeftShort': '4/5 · დარჩა პირადობა'
@@ -55,6 +55,9 @@
 
   // "Become a mentor" for a visitor, among the main links (to the mentors' page, which explains it and leads on). A signed-in person gets
   // their own button next to Dashboard and Settings instead (the mentor button, below).
+  // The rest of the site's links, at the bottom of the menu panel (the home page's footer is short: docs/CLAUDE-CODE-COMPACT-HOME.md).
+  const MORE = [['/faq.html#faq-payments', 'footer.pricing'], ['/about.html', 'footer.about'], ['/contact.html', 'footer.contact'], ['/how-we-verify.html', 'hv.title'],
+    ['/help.html', 'help.title'], ['/answers', 'answers.title'], ['/terms.html', 'footer.terms'], ['/privacy.html', 'footer.privacy']];
   const LINKS = [
     { hash: '#how', key: 'nav.how', extra: true },
     { href: '/experts.html', key: 'nav.browse' },
@@ -135,6 +138,10 @@
   const cls = (l, extra) => [l.extra && extra ? `nl-extra${l.faq ? ' nl-faq' : ''}` : '', l.mentor ? 'nl-mentor' : ''].filter(Boolean).join(' ');
   const adminLink = (cls) => (signedIn === 'admin' ? `<a href="/admin.html" class="${cls} admin-link" data-i18n="nav.admin">${w('nav.admin')}</a>` : '');
 
+  // The home page's own button, from 768px (docs/CLAUDE-CODE-COMPACT-HOME.md): to the waiting list before launch (the server leaves
+  // #homePrelaunch in the page then), to the search after; in the first frame, so nothing moves. Only for visitors who are not signed in.
+  const homeCtaKey = document.getElementById('homePrelaunch') ? 'nav.cta.join' : 'nav.cta.search';
+  const homeCta = document.body.classList.contains('home') ? `<a href="#heroTitle" class="btn btn-primary nav-cta" data-i18n="${homeCtaKey}">${w(homeCtaKey)}</a>` : '';
   const html = `
     <a class="skip-link" href="#main" data-i18n="a11y.skip">${w('a11y.skip')}</a>
     <header class="nav${signedIn ? ' is-authed' : ''}" id="siteHeader">
@@ -147,6 +154,7 @@
           ${langSwitch('nav-lang')}
           ${themeToggle}
           <div class="nav-actions" id="navLoggedOut"${off(signedIn)}>
+            ${homeCta}
             <a href="/login.html" class="btn btn-ghost" data-i18n="nav.login">${w('nav.login')}</a>
             <a href="/signup.html" class="btn btn-primary" data-i18n="nav.signup">${w('nav.signup')}</a>
           </div>
@@ -172,6 +180,9 @@
         </div>
         <nav class="mm-links" aria-label="Main">
           ${shown.map((l) => `<a href="${link(l)}"${cls(l, false) ? ` class="${cls(l, false)}"` : ''} data-i18n="${l.key}">${w(l.key)}</a>`).join('\n          ')}
+        </nav>
+        <nav class="mm-more" aria-label="More" data-i18n-aria="nav.more">
+          ${MORE.map(([href, key]) => `<a href="${href}" data-i18n="${key}">${w(key) || ''}</a>`).join('')}
         </nav>
         <div class="mm-lang">${langSwitch('mm-lang-toggle')}</div>
         ${themeRow}

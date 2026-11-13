@@ -44,7 +44,7 @@
     const bar = document.querySelector('.footer-bottom');
     const top = bar ? bar.getBoundingClientRect().top : Infinity;
     if (top < window.innerHeight) lift = Math.round(window.innerHeight - top) + 12;
-    const askBar = document.querySelector('.ask-bar:not([hidden])');
+    const askBar = document.querySelector('.ask-bar:not([hidden]), .home-pin:not([hidden])');
     if (askBar) lift = Math.max(lift, Math.round(window.innerHeight - askBar.getBoundingClientRect().top) + 12);
     btn.style.bottom = lift ? `${lift}px` : '';
     btn.classList.toggle('is-aside', covers());

@@ -95,7 +95,7 @@ for (const width of [360, 1280]) {
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.y + box.height).toBeLessThanOrEqual(header.y + header.height);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
-    expect(box.height).toBeGreaterThanOrEqual(50);
+    expect(box.height).toBeGreaterThanOrEqual(width < 768 ? 36 : 50); // (a phone's header is about 56px: docs/CLAUDE-CODE-COMPACT-HOME.md)
     // the head has loaded, and it sits inside the logo's own box (the viewBox leaves room for the horns)
     expect(await page.evaluate(() => fetch('/brand/jikhva-head.webp').then((r) => r.ok))).toBe(true);
     expect(await fits(page)).toBe(true);

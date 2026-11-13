@@ -184,7 +184,7 @@ test('the header hides while reading down a phone and returns on the way up; not
   await page.evaluate(() => window.scrollTo(0, 1200));
   await page.waitForTimeout(300);
   await expect(header).toHaveClass(/nav-hidden/);
-  await page.evaluate(() => window.scrollTo(0, 900));
+  await page.evaluate(() => window.scrollBy(0, -300)); // (up again; the short home page may end before 1200px)
   await page.waitForTimeout(300);
   await expect(header).not.toHaveClass(/nav-hidden/);
   await ctx.close();

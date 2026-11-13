@@ -132,6 +132,13 @@
   --phone-soft: #6d6880; --phone-placeholder: #9a95ad; --phone-back: #6d6880; --phone-ok: #1f7a55; --phone-coral: #ff6f59;
   --phone-on-coral: #ffffff; --phone-on-coral-rgb: 255, 255, 255; --phone-dot: #b9b4c8; --phone-star: #f5b301; --phone-star-off: #d8d3e3;
   --phone-shadow-rgb: 37, 33, 59;
+  /* the home page's top card (docs/CLAUDE-CODE-COMPACT-HOME.md): one dark purple card in both themes, and what is written on it */
+  --hero-a: #332b63; --hero-b: #221d40; --hero-line: #3a3366; --on-hero: #ffffff; --on-hero-soft: #c9c4de;
+  --hero-pill: #ffb3a6; --hero-pill-bg-rgb: 255, 111, 89; --hero-count: #ffc3b8; --hero-chip-rgb: 255, 255, 255;
+  /* the example chat's answer bubble, and the mentor banner's coral */
+  --bubble-a: #f3efe8; --bubble-a-ink: #25213b; --banner-a: #ff6f59; --banner-b: #f2654e;
+  /* the home card's email / search field and the mentor banner's button: white in light, dark in dark (no white surfaces in dark) */
+  --hero-field: #ffffff; --hero-field-ink: #25213b; --hero-field-hint: #6b6680; --banner-btn: #ffffff; --banner-btn-ink: #b5361f;
 }
 @media (max-width: 639px) { :root { --gutter: 18px; } }
 
@@ -182,6 +189,8 @@
   --shadow-rgb: 0, 0, 0;
   --on-navy-rgb: 244, 242, 238;
   --gbtn-bg: #131314; --gbtn-border: #8e918f; --gbtn-ink: #e3e3e3; --gbtn-hover: #1f1f20; --gbtn-active: #2a2a2b; --gbtn-shadow: rgba(0, 0, 0, 0.5);
+  --bubble-a: #ffffff; --bubble-a-ink: #25213b;
+  --hero-field: #181428; --hero-field-ink: #f4f2ee; --hero-field-hint: #a9a3c2; --banner-btn: #1e1a31; --banner-btn-ink: #ffc3b8;
 }
 
 /* Georgian: Noto Sans Georgian for headings and text (Latin letters and numbers keep the brand fonts), no negative tracking, no capitals

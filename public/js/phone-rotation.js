@@ -65,7 +65,20 @@
       last = queue.shift();
       return last;
     }
-    return { next, examples };
+    // A field chosen on the page (docs/CLAUDE-CODE-COMPACT-HOME.md): one of its items now, if there is one (else null); the rotation goes on
+    // after it without playing it again this round.
+    function jump(matches) {
+      const found = groups.flat().filter((x) => matches(x));
+      if (!found.length) return null;
+      const pick = found[Math.floor(random() * found.length)];
+      queue = queue.filter((x) => x !== pick);
+      first = false;
+      last = pick;
+      return pick;
+    }
+    // (how many items one round plays: the chat's dots)
+    const size = groups.reduce((n, g) => n + g.length, 0);
+    return { next, jump, size, examples };
   }
 
   const api = { create, arrange, EXAMPLES, MIN_REAL };

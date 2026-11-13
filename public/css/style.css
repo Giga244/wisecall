@@ -143,7 +143,8 @@ html.motion.page-fade #main { animation: page-fade 0.2s var(--ease-out); }
 .jlogo-dot { fill: var(--accent); }
 @media (max-width: 1023px) { .logo img { height: 30px; } }
 @media (max-width: 639px) { .logo img { height: 28px; } }
-@media (max-width: 639px) { .logo .jlogo { height: 56px; } }
+/* (a phone: a smaller header, about 56px, the logo about 40px with Jikhva's horns whole: docs/CLAUDE-CODE-COMPACT-HOME.md) */
+@media (max-width: 767px) { .logo .jlogo { height: 40px; } }
 .nav-links { display: flex; gap: 26px; flex: 1; white-space: nowrap; }
 /* (a coral line grows under a link from the left) */
 .nav-links a { position: relative; color: var(--ink); text-decoration: none; font-weight: 500; font-size: 1rem; display: inline-flex; align-items: center; min-height: 44px; }
@@ -883,6 +884,10 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
   font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: var(--tracking-display); border-bottom: var(--chip-w) solid var(--line);
 }
 .mm-links a:hover, .mm-links a:focus-visible { color: var(--accent-text); }
+/* (the rest of the site's links, small, two to a row) */
+.mm-more { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; margin: 0 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.mm-more a { display: flex; align-items: center; min-height: 44px; color: var(--ink-soft); font-size: 0.92rem; text-decoration: none; }
+.mm-more a:hover, .mm-more a:focus-visible { color: var(--accent-text); }
 .mm-links a::after { content: "→"; content: "→" / ""; margin-left: auto; font-size: 1.2rem; transition: transform 0.25s var(--ease-out); }
 .mm-links a:hover::after { transform: translateX(4px); }
 .mm-lang { margin: 20px 0 8px; }
@@ -1292,3 +1297,6 @@ html:not([data-launch="prelaunch"]) .hero-wait { display: none !important; }
   .browse-toolbar .browse-controls { margin-bottom: 12px; }
 }
 .field-emoji { font-size: 1.25rem; line-height: 1; flex: 0 0 auto; }
+
+/* (a phone: the header about 56px tall; after the menu rules above, which set its padding up to 1023px) */
+@media (max-width: 767px) { .nav-inner { min-height: 56px; padding-top: 4px; padding-bottom: 4px; } }

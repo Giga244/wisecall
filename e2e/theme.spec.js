@@ -43,7 +43,7 @@ test.describe('a choice made by hand', () => {
   test('the header button: one click switches light <-> dark, says where it goes, works from the keyboard, and the choice stays', async ({ browser }) => {
     const ctx = await browser.newContext({ colorScheme: 'light', viewport: { width: 1280, height: 800 } });
     const page = await ctx.newPage();
-    await page.goto('/');
+    await page.goto('/about.html'); // (a page with the full footer and its logo; the home page has the short one)
     const button = page.locator('#themeBtn');
     // a first visit follows the device; the button offers the other one (a moon on a light page)
     expect(await theme(page)).toEqual({ theme: 'light', pref: 'system' });

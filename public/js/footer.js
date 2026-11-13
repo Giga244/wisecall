@@ -7,7 +7,29 @@
 
   const f = document.createElement('footer');
   f.className = 'footer';
-  f.innerHTML = `
+  // The home page (docs/CLAUDE-CODE-COMPACT-HOME.md): a short footer, the social icons, one line of links, © and the email. Every other link
+  // is in the menu (public/js/header.js) and on every other page's footer.
+  const compact = document.body.classList.contains('home');
+  if (compact) {
+    f.className = 'footer footer-compact';
+    f.innerHTML = `
+    <div class="container footer-compact-inner">
+      <ul class="footer-social" id="footerSocial" hidden></ul>
+      <nav class="fc-links" aria-label="Site links" data-i18n-aria="footer.nav">
+        <a href="/experts.html" data-i18n="nav.browse">Browse experts</a>
+        <a href="/faq.html#faq-payments" data-i18n="footer.pricing">Pricing</a>
+        <a href="/faq.html" data-i18n="footer.faq">FAQ</a>
+        <a href="/about.html" data-i18n="footer.about">About</a>
+        <a href="/contact.html" data-i18n="footer.contact">Contact</a>
+        <a href="/terms.html" data-i18n="footer.terms">Terms</a>
+      </nav>
+      <div class="fc-copy">
+        <p>© <span id="footerYear"></span> Wisecall<span id="footerContact" hidden> · <a href="" id="footerContactLink"></a></span></p>
+        <p class="fc-legal muted" id="footerLegal" hidden></p>
+      </div>
+      <div id="footerPay" hidden></div>
+    </div>`;
+  } else f.innerHTML = `
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
@@ -83,7 +105,7 @@
     const parts = [legal.name, legal.id && `ID ${legal.id}`, legal.address].filter(Boolean);
     if (parts.length) { const el = f.querySelector('#footerLegal'); el.textContent = parts.join(' · '); el.hidden = false; }
     // Card logos only once real payments are open.
-    f.querySelector('#footerPay').hidden = !cfg.paymentsLive;
+    f.querySelector('#footerPay').hidden = !cfg.paymentsLive || compact;
     if (cfg.contactEmail) {
       const link = f.querySelector('#footerContactLink');
       link.href = 'mailto:' + cfg.contactEmail;

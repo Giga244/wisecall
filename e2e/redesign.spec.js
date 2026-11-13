@@ -68,7 +68,7 @@ test('Georgian text fits: no button, chip, tab, badge, card or heading runs out 
         const out = [];
         for (const el of document.querySelectorAll('.btn, .chip, .tab, .badge, .tag, .lang-btn, .niche-chip, .field-tile, .trust-badge, .meta-chip, .hero-pill, .stage-sticker, .expert-card, .live-card, .settings-card, .booking-card, .faq-q, .how-step, .perk, .example-card, h1, h2, h3')) {
           const s = getComputedStyle(el), b = el.getBoundingClientRect();
-          if (s.display === 'none' || s.visibility === 'hidden' || !b.width || el.closest('.sr-only, .niche-strip, .tabs, .field-chips, .profile-checks, .file-btn, .lhero-chips')) continue; // (rows that scroll sideways on a phone)
+          if (s.display === 'none' || s.visibility === 'hidden' || !b.width || el.closest('.sr-only, .niche-strip, .tabs, .field-chips, .profile-checks, .file-btn, .lhero-chips, .lsteps, .lexpert-grid')) continue; // (rows that scroll sideways on a phone)
           if (el.scrollWidth > el.clientWidth + 1 && s.overflowX === 'visible') out.push(`${el.className || el.tagName} "${el.textContent.trim().slice(0, 30)}" ${el.scrollWidth}>${el.clientWidth}`);
           else if (b.right > window.innerWidth + 1) out.push(`${el.className || el.tagName} "${el.textContent.trim().slice(0, 30)}" ends at ${Math.round(b.right)}`);
         }

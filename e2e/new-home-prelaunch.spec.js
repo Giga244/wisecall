@@ -21,7 +21,9 @@ const listCount = async () => (await S.sql('SELECT count(DISTINCT lower(email)):
 test('the hero has the waiting list (no search); joining saves the address; a repeated address gets the same friendly thank-you', async ({ browser }) => {
   const { ctx, page } = await ka(browser);
   await page.goto(`${srv.base}/ka/`);
-  await expect(page.locator('.lhero-pill')).toHaveText('🚀 მალე იხსნება · ჩაეწერე პირველებში');
+  // (a phone shows the short pill, a computer the long one: docs/CLAUDE-CODE-COMPACT-HOME.md)
+  await expect(page.locator('.lhero-pill .only-narrow')).toHaveText('🚀 მალე იხსნება');
+  await expect(page.locator('.lhero-pill .only-wide')).toHaveText('🚀 მალე იხსნება · ჩაეწერე პირველებში');
   await expect(page.locator('#heroSearch')).toHaveCount(0);
   const form = page.locator('#heroWait .waitlist-form');
   await expect(form.locator('button[type="submit"]')).toHaveText('ჩაეწერე სიაში');
@@ -56,7 +58,8 @@ test('the count line: the real number rounded down to ten, hidden under 50', asy
   }
   const now = await listCount();
   await page.goto(`${srv.base}/ka/`);
-  await expect(page.locator('#waitCount')).toHaveText(`🔥 ${Math.floor(now / 10) * 10}+ ადამიანი უკვე მოლოდინის სიაშია · Wisecall მალე იხსნება`);
+  await expect(page.locator('#waitCount .only-wide')).toHaveText(`🔥 ${Math.floor(now / 10) * 10}+ ადამიანი უკვე მოლოდინის სიაშია`);
+  await expect(page.locator('#waitCount .only-narrow')).toHaveText(`🔥 ${Math.floor(now / 10) * 10}+ ადამიანი უკვე სიაშია`);
   await ctx.close();
 });
 
@@ -87,8 +90,9 @@ test('the launch: the same page in launch mode has the search instead', async ()
   expect((await client(srv.base).api('/config')).launchMode).toBe('prelaunch');
 });
 
-// docs/CLAUDE-CODE-FINISH.md part 1: the logo's horns have room, the headline is 2-3 lines (3-4 on a phone), the form is one row with the count
-// right under it and the age box and privacy note as one small block, the email is readable in dark, and the fields are one row on a phone.
+// docs/CLAUDE-CODE-FINISH.md part 1 and docs/CLAUDE-CODE-COMPACT-HOME.md: the logo's horns have room, the headline is 2-3 lines (3-4 on a
+// phone), the form is one row on a computer (on a phone the email over a full-width button) with the count right under it, the age box and
+// privacy note as one small block, the email is readable in both themes, and the fields are one row on a phone.
 for (const [width, scheme] of [[360, 'dark'], [360, 'light'], [768, 'dark'], [1280, 'light'], [1280, 'dark']]) {
   test(`the hero at ${width}px ${scheme}: logo, headline, form, count, fields`, async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: scheme });
@@ -105,24 +109,32 @@ for (const [width, scheme] of [[360, 'dark'], [360, 'light'], [768, 'dark'], [12
       const lines = Math.round(box(title).height / parseFloat(getComputedStyle(title).lineHeight));
       const row = document.querySelector('#heroWait .wlc-row');
       const input = box(row.querySelector('input')), button = box(row.querySelector('button'));
+      // (the email's text against its own field: the contrast ratio)
+      const rgb = (c) => c.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number);
+      const lum = (c) => { const [r, g, b] = rgb(c).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      const ics = getComputedStyle(row.querySelector('input'));
+      const [hi, lo] = [lum(ics.color), lum(ics.backgroundColor)].sort((a, b) => b - a);
       const chips = [...document.querySelectorAll('#heroChips .lchip')].map((c) => Math.round(box(c).top));
       const count = document.getElementById('waitCount');
       return {
-        headTop: Math.round(head.top), headInside: head.bottom <= header.bottom,
+        headTop: Math.round(head.top), headInside: head.bottom <= header.bottom, logoTop: Math.round(box(document.querySelector('#siteHeader .jlogo')).top),
+        stacked: button.top >= input.bottom - 1 && Math.abs(button.width - input.width) < 4,
         lines, oneRow: Math.abs(input.top - button.top) < 12 && Math.abs(input.bottom - button.bottom) < 12,
-        countAfterRow: count.hidden || row.nextElementSibling === count,
+        countAfterRow: count.hidden || document.getElementById('heroWait').nextElementSibling === count,
         consent: Boolean(document.querySelector('#heroWait .wlc-consent input[name="over16"]') && document.querySelector('#heroWait .wlc-consent .waitlist-hint')),
-        inputInk: getComputedStyle(row.querySelector('input')).color === getComputedStyle(document.body).color,
+        inputContrast: (hi + 0.05) / (lo + 0.05),
         chipRows: new Set(chips).size, sideways: document.documentElement.scrollWidth - window.innerWidth
       };
     });
-    expect(m.headTop, 'room above the horns').toBeGreaterThanOrEqual(12);
+    expect(m.logoTop, 'the horns are not cut off').toBeGreaterThanOrEqual(0);
+    expect(m.headTop, 'room above the horns').toBeGreaterThanOrEqual(width < 768 ? 8 : 12);
     expect(m.headInside).toBe(true);
     expect(m.lines, 'headline lines').toBeLessThanOrEqual(width >= 1024 ? 3 : 4);
-    expect(m.oneRow, 'the email and its button on one row').toBe(true);
+    if (width >= 768) expect(m.oneRow, 'the email and its button on one row').toBe(true);
+    else expect(m.stacked, 'on a phone: the email over a full-width button').toBe(true);
     expect(m.countAfterRow, 'the count right under the form').toBe(true);
     expect(m.consent, 'the age box and the privacy note in one block').toBe(true);
-    expect(m.inputInk, 'the email is written in the page\'s text colour').toBe(true);
+    expect(m.inputContrast, 'the email is readable in its field').toBeGreaterThanOrEqual(4.5);
     if (width < 640) expect(m.chipRows, 'the fields: one row on a phone').toBe(1);
     expect(m.sideways, 'nothing runs off the side').toBeLessThanOrEqual(0);
     await ctx.close();

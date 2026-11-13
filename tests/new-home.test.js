@@ -81,7 +81,7 @@ describe('pages', () => {
     const home = await (await fetch(`${base}/`)).text();
     assert.match(home, /id="heroSearch"/);
     assert.doesNotMatch(home, /id="heroWait"/);
-    assert.match(home, /<div class="lhero-phone" id="homeQa">/); // (always there: real answers or marked examples)
+    assert.match(home, /<div class="lhero-chat" id="homeQa">/); // (always there: real answers or marked examples)
   });
 
   test('an old link with Browse filters on the home page goes to Browse, in its language', async () => {

@@ -37,7 +37,9 @@
         <p class="form-error waitlist-error" role="alert"></p>
         <div class="wlc-consent">
           <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
-          <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
+          <span class="wlc-sep" aria-hidden="true">·</span>
+          <a class="wlc-privacy" href="/privacy.html">${t('footer.privacy')}</a>
+          <details class="wlc-why"><summary aria-label="${esc(t('wait.consentMore'))}">?</summary><p class="hint waitlist-hint">${t('wait.consent')}</p></details>
         </div>
       </form>`;
     }

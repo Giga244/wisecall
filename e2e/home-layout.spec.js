@@ -16,13 +16,15 @@ async function open(browser, width, lang = 'en', height = 900, where = '/') {
   await page.goto(`${srv.base}${lang === 'ka' ? '/ka' : ''}${where}`);
   await page.waitForLoadState('networkidle');
   if (where === '/experts.html') await expect(page.locator('#nicheStrip .field-tile').first()).toBeVisible();
-  else await expect(page.locator('#heroWait .waitlist-form')).toBeVisible();
+  else if (where === '/') await expect(page.locator('#heroWait .waitlist-form')).toBeVisible();
+  else await expect(page.locator('footer.footer')).toBeAttached();
   return { ctx, page };
 }
 
 test('the footer on a phone: the link groups two by two (English and Georgian)', async ({ browser }) => {
   for (const [width, lang] of [[375, 'en'], [375, 'ka'], [390, 'ka']]) {
-    const { ctx, page } = await open(browser, width, lang);
+    // (every page but the home page: the home page has the short footer, below)
+    const { ctx, page } = await open(browser, width, lang, 900, '/about.html');
     const cols = await page.evaluate(() => [...document.querySelectorAll('footer .footer-col')].map((c) => {
       const r = c.getBoundingClientRect();
       return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right) };
@@ -32,6 +34,41 @@ test('the footer on a phone: the link groups two by two (English and Georgian)',
     expect(cols[1].left).toBeGreaterThan(cols[0].right);
     expect(cols[2].left, 'Legal under Product').toBe(cols[0].left);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await ctx.close();
+  }
+});
+
+// The home page's short footer (docs/CLAUDE-CODE-COMPACT-HOME.md): the social icons, one block of links, then © and the email; on a computer
+// all on one line. The other links stay in the menu.
+test('the short footer on the home page: icons, six links, ©; one line on a computer; the rest in the menu', async ({ browser }) => {
+  for (const [width, lang] of [[375, 'ka'], [360, 'en'], [1280, 'ka']]) {
+    const { ctx, page } = await open(browser, width, lang);
+    const m = await page.evaluate(() => {
+      const box = (sel) => { const el = document.querySelector(sel); return el && el.offsetWidth ? el.getBoundingClientRect() : null; };
+      return {
+        groups: document.querySelectorAll('footer .footer-col').length,
+        links: [...document.querySelectorAll('footer .fc-links a')].map((a) => a.getAttribute('href').replace(/^\/ka(?=\/)/, '')), // (the Georgian page's links start with /ka)
+        social: box('footer #footerSocial'), links1: box('footer .fc-links'), copy: box('footer .fc-copy'),
+        sideways: document.documentElement.scrollWidth - window.innerWidth
+      };
+    });
+    expect(m.groups).toBe(0);
+    expect(m.links).toEqual(['/experts.html', '/faq.html#faq-payments', '/faq.html', '/about.html', '/contact.html', '/terms.html']);
+    if (width < 768) {
+      if (m.social) expect(m.social.bottom, 'the icons first').toBeLessThanOrEqual(m.links1.top + 1);
+      expect(m.links1.bottom, '© last').toBeLessThanOrEqual(m.copy.top + 1);
+    } else {
+      expect(m.copy.right, '© on the left').toBeLessThanOrEqual(m.links1.left + 1);
+      if (m.social) expect(m.links1.right, 'the icons on the right').toBeLessThanOrEqual(m.social.left + 1);
+    }
+    expect(m.sideways).toBeLessThanOrEqual(0);
+    // the menu still has every other link
+    if (width < 1024) {
+      await page.locator('.nav-toggle').click();
+      for (const href of ['/how-we-verify.html', '/help.html', '/answers', '/privacy.html']) {
+        await expect(page.locator(`.mobile-menu a[href$="${href}"]`).first()).toBeAttached();
+      }
+    }
     await ctx.close();
   }
 });
