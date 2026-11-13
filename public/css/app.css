@@ -1049,3 +1049,30 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 /* (the checks wrap onto as many lines as they need, on a phone too) */
 .profile-checks .trust-list { flex-wrap: wrap; overflow: visible; margin: 0 0 12px; padding: 0; -webkit-mask-image: none; mask-image: none; gap: 6px 18px; }
 @media (max-width: 767px) { .profile-stats { grid-template-columns: 1fr 1fr; } }
+
+/* ==== Sign-up, log-in, the email code and the password pages in the calm design (docs/CLAUDE-CODE-REDESIGN-CALM.md; mockup: phone-pages.png 4):
+   no dark panel and no box: the form sits on the page; on sign-up Jikhva waves above it. ============================================== */
+.auth-card, .auth-split .auth-card { background: none; border: 0; border-radius: 0; box-shadow: none; }
+.auth-page .auth-card { padding: 0; max-width: 420px; }
+.auth-card h1 { font-size: clamp(1.75rem, 1.6vw + 1.2rem, 2.25rem); }
+.auth-split { background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; align-items: center; }
+.auth-panel { background: none; color: var(--ink); padding: 0 40px 0 0; justify-content: center; }
+.auth-panel h2 { color: var(--ink); font-size: clamp(1.5rem, 1.4vw + 1rem, 2rem); line-height: 1.2; }
+/* (Jikhva waves on sign-up: above the benefits on a computer, above the form on a phone) */
+.auth-panel::before, .auth-split .auth-card::before { content: ""; display: block; width: 110px; height: 170px; background: url('/brand/jikhva-wave.webp') center / contain no-repeat; }
+.auth-split .auth-card::before { display: none; margin: 0 auto 8px; height: 130px; }
+.auth-benefits li { color: var(--ink-soft); }
+.auth-benefits svg, .auth-benefits li:nth-child(2) svg, .auth-benefits li:nth-child(3) svg { padding: 0; margin-top: 2px; background: none; color: var(--accent2-text); border-radius: 0; }
+.auth-split .auth-card { padding: 0; }
+.auth-switch a { color: var(--accent-text); text-decoration: none; }
+form input, form textarea, form select { border-width: 1px; background: var(--card); }
+form input:focus, form textarea:focus, form select:focus { box-shadow: none; }
+.btn-google { border: 1.5px solid var(--border-strong); border-radius: var(--r-btn); box-shadow: none; }
+.or-divider { text-transform: none; letter-spacing: 0; font-weight: 400; }
+@media (max-width: 860px) {
+  .auth-split .auth-card::before { display: block; }
+  .auth-split .auth-card { padding: 0; }
+  .auth-split { width: auto; margin: 20px var(--gutter) 40px; }
+}
+/* (Jikhva is on sign-up only) */
+.auth-split:has(#loginForm) .auth-panel::before, .auth-split:has(#loginForm) .auth-card::before { display: none; }
