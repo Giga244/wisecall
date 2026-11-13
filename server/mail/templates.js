@@ -8,12 +8,12 @@ const { escapeHtml } = require('../email');
 const NICHE_NAMES = { en: require('../../public/i18n/en.json'), ka: require('../../public/i18n/ka.json') };
 
 // (the site's "Ink & Paper" colours, public/css/tokens.css: ink text on the coral button; links in the deeper coral that reads on white)
-const COLORS = { ink: '#1e1a31', soft: '#4e4963', bg: '#f4f2ee', card: '#ffffff', accent: '#ff6f59', link: '#b5361f', quote: '#fff6dc' };
+const COLORS = { ink: '#1e1a31', soft: '#6a6580', bg: '#fbfaf7', card: '#ffffff', accent: '#ff6f59', link: '#c9432b', quote: '#f6f3ee' };
 const FONT = "Onest,'Noto Sans Georgian',Arial,Helvetica,sans-serif";
 const DISPLAY = "'Bricolage Grotesque','Noto Sans Georgian',Arial,Helvetica,sans-serif";
 // Dark mode: mail apps that follow the reader's setting (Apple Mail, iOS Mail, Outlook for Mac and Outlook.com, several Android apps)
 // switch to these colours and to the logo made for dark backgrounds; the others show the light version (the inline colours).
-const DARK = { ink: '#f4f2ee', soft: '#c9c5d6', bg: '#16131f', card: '#221e31', quote: '#2b2643', line: '#d9d5e6', link: '#ff8f7d' };
+const DARK = { ink: '#f4f2ee', soft: '#aaa5bb', bg: '#15121e', card: '#1e1a2b', quote: '#262138', line: '#2c2840', link: '#ff8f7d' };
 const DARK_CSS = `:root{color-scheme:light dark;supported-color-schemes:light dark}
 @media (prefers-color-scheme:dark){.wc-bg{background:${DARK.bg}!important}.wc-card{background:${DARK.card}!important;border-color:${DARK.line}!important}.wc-link{color:${DARK.link}!important}.wc-ink{color:${DARK.ink}!important}.wc-soft,.wc-soft a{color:${DARK.soft}!important}.wc-quote{background:${DARK.quote}!important;color:${DARK.ink}!important}.wc-light{display:none!important}.wc-dark{display:block!important;max-height:none!important;overflow:visible!important}}
 [data-ogsc] .wc-light{display:none!important}[data-ogsc] .wc-dark{display:block!important;max-height:none!important;overflow:visible!important}`;

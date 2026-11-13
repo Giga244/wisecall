@@ -71,7 +71,7 @@ describe('templates', () => {
         // (the code email has no pictures at all, the name as text instead: mail filters like short plain mail best)
         if (name === 'verify') assert.doesNotMatch(html, /<img/, 'verify: no pictures');
         else assert.match(html, /\/brand\/wisecall-logo-email\.png"/, `${name} ${lang}: the logo`);
-        assert.match(html, /background:#f4f2ee/, `${name} ${lang}: the brand colours`);
+        assert.match(html, /background:#fbfaf7/, `${name} ${lang}: the brand colours`);
         assert.match(html, /<meta name="color-scheme" content="light dark">/, `${name} ${lang}: tells mail apps it has a dark version`);
         assert.match(html, /@media \(prefers-color-scheme:dark\)/);
         if (name !== 'verify') assert.match(html, /\/brand\/wisecall-logo-email-dark\.png"/, `${name} ${lang}: the logo for dark backgrounds`);

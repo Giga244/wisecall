@@ -1405,3 +1405,34 @@ a:not([class]) { text-decoration-thickness: 1px; }
 .nav-right .btn { padding-left: 14px; padding-right: 14px; font-size: 0.88rem; }
 @media (max-width: 1180px) { .nav-links { gap: 20px; } .nav-inner { gap: 16px; } }
 @media (min-width: 1024px) and (max-width: 1179px) { html[lang="ka"] .nav.is-authed .nav-links { margin-right: 6px; } }
+
+/* ==== The information pages in the calm design (docs/CLAUDE-CODE-REDESIGN-CALM.md): become a mentor, how it works, FAQ, about, contact,
+   how we verify, the legal pages. No coral panel: the words sit on the page; one coral button; thin lines. =========================== */
+.mentors-panel { background: none; border: 0; border-radius: 0; padding: 0; color: var(--ink); box-shadow: none; overflow: visible; }
+.mentors-bubble { display: none; }
+.mentors-panel h1, .mentors-panel h2 { color: var(--ink); }
+.mentors-head p, .mentor-steps p, .perk p, .become-start-note { color: var(--ink-soft); }
+.mentors-panel .btn-ink { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); }
+.mentors-panel :focus-visible { outline-color: var(--focus); }
+.perk { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: none; }
+.ms-num { background: var(--card); color: var(--ink); border: 1.5px solid var(--border-strong); }
+.legal-page h1, .info-page h1 { font-size: var(--fs-h1); }
+.faq-item { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
+.faq-item.open { box-shadow: none; }
+.faq-q { padding-left: 0; min-height: 56px; }
+.faq-q::after { right: 8px; width: 9px; height: 9px; border-right-width: 2px; border-bottom-width: 2px; border-color: var(--ink-soft); }
+.faq-a { padding-left: 0; }
+.faq-list { gap: 0; }
+.founder { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
+.help-article blockquote { background: var(--gray-soft); border: 0; border-left: 2px solid var(--accent); }
+
+/* ==== Empty states and the error pages (docs/CLAUDE-CODE-REDESIGN-CALM.md; mockup: phone-pages.png 5, 8): Jikhva in front of the tint circle,
+   in place of the old drawing and of the big outlined number. ========================================================================= */
+.empty-art, .wl-intro .empty-art { width: 150px; max-width: 60%; height: 150px;
+  background: url('/brand/jikhva-present.webp') center bottom / auto 96% no-repeat, radial-gradient(circle at 50% 54%, var(--tint) 0 47%, transparent 48%); }
+.empty-art > * { display: none; }
+.error-code { width: 220px; height: 220px; margin: 0 auto 18px; font-size: 0; -webkit-text-stroke: 0; color: transparent;
+  background: url('/brand/jikhva-present.webp') center bottom / auto 96% no-repeat, radial-gradient(circle at 50% 54%, var(--tint) 0 47%, transparent 48%); }
+.error-page h1 { font-size: clamp(1.6rem, 1.6vw + 1.2rem, 2.1rem); }
+.empty-state { border: 0; background: none; box-shadow: none; }
+.empty-state h3 { font-size: 1.2rem; }
