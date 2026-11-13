@@ -204,6 +204,13 @@
   const me = document.currentScript;
   me.insertAdjacentHTML('beforebegin', html);
   me.remove();
+  // The link to the page in view says so (aria-current): the header and the menu underline it in coral, and only it
+  // (docs/CLAUDE-CODE-REDESIGN-CALM.md). A link to a part of a page ("#how") is never the current page.
+  document.querySelectorAll('#siteHeader a[href], #mobileMenu a[href]').forEach((a) => {
+    const u = new URL(a.getAttribute('href'), location.href);
+    const path = u.pathname.replace(/^\/ka(?=\/|$)/, '') || '/';
+    if (!u.hash && path === here && !a.classList.contains('logo')) a.setAttribute('aria-current', 'page');
+  });
 
   // ---- The theme toggle ------------------------------------------------------------------------------------------
   // (the page's dictionary once it is there, which follows a language switch; until then the header's own words)

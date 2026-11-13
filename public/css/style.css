@@ -883,11 +883,9 @@ form .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size
   display: flex; align-items: center; min-height: 60px; padding: 0 4px; color: var(--ink); text-decoration: none;
   font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: var(--tracking-display); border-bottom: var(--chip-w) solid var(--line);
 }
-.mm-links a:hover, .mm-links a:focus-visible { color: var(--accent-text); }
 /* (the rest of the site's links, small, two to a row) */
 .mm-more { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; margin: 0 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
 .mm-more a { display: flex; align-items: center; min-height: 44px; color: var(--ink-soft); font-size: 0.92rem; text-decoration: none; }
-.mm-more a:hover, .mm-more a:focus-visible { color: var(--accent-text); }
 .mm-links a::after { content: "→"; content: "→" / ""; margin-left: auto; font-size: 1.2rem; transition: transform 0.25s var(--ease-out); }
 .mm-links a:hover::after { transform: translateX(4px); }
 .mm-lang { margin: 20px 0 8px; }
@@ -1315,8 +1313,6 @@ a:not([class]) { text-decoration-thickness: 1px; }
 .nav-inner { min-height: 76px; padding-top: 12px; padding-bottom: 12px; }
 .nav-links { justify-content: flex-end; gap: 30px; }
 .nav-links a { color: var(--ink-soft); font-weight: 400; font-size: 0.94rem; }
-.nav-links a:hover, .nav-links a.active, .nav-links a[aria-current] { color: var(--ink); }
-.nav-links a.active, .nav-links a[aria-current] { font-weight: 700; }
 .nav-links a::after { display: none; }
 .nav .nav-lang { border: 0; padding: 0; }
 .nav .nav-lang .lang-btn { min-height: 44px; padding: 0 8px; background: none; color: var(--ink-soft); font-size: 0.94rem; font-weight: 400; }
@@ -1343,7 +1339,7 @@ a:not([class]) { text-decoration-thickness: 1px; }
 .btn-primary { border-color: var(--accent-strong); box-shadow: none; }
 .btn-primary:hover { border-color: var(--accent-strong-hover); box-shadow: none; }
 .btn-ghost { border-color: transparent; font-weight: 600; }
-.btn-ghost:hover { border-color: transparent; color: var(--accent-text); }
+.btn-ghost:hover { border-color: transparent; color: var(--ink); }
 .btn-outline { border: 1.5px solid var(--border-strong); }
 .btn-outline:hover { background: var(--card); box-shadow: none; }
 .btn-ink:hover { box-shadow: none; }
@@ -1436,3 +1432,14 @@ a:not([class]) { text-decoration-thickness: 1px; }
 .error-page h1 { font-size: clamp(1.6rem, 1.6vw + 1.2rem, 2.1rem); }
 .empty-state { border: 0; background: none; box-shadow: none; }
 .empty-state h3 { font-size: 1.2rem; }
+
+/* ==== Every link in the header and the menu panel, one look in both themes (the header's words, "ადმინი", "შესვლა", "პირადი კაბინეტი",
+   the language, the menu's links): soft text, full text colour on hover and focus, and a coral underline only under the page in view
+   (header.js marks it with aria-current). No link has a colour of its own. ======================================================== */
+.nav-links a, .nav-right .btn-ghost, .nav .nav-lang .lang-btn, .mm-links a, .mm-more a { color: var(--ink-soft); }
+.nav-links a:hover, .nav-links a:focus-visible, .nav-right .btn-ghost:hover, .nav-right .btn-ghost:focus-visible,
+.nav .nav-lang .lang-btn:hover, .nav .nav-lang .lang-btn:focus-visible,
+.mm-links a:hover, .mm-links a:focus-visible, .mm-more a:hover, .mm-more a:focus-visible { color: var(--ink); background: none; }
+.nav-links a[aria-current], .nav-right .btn-ghost[aria-current], .mm-links a[aria-current], .mm-more a[aria-current] {
+  color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+.nav-right .btn-ghost { font-weight: 400; }

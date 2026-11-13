@@ -297,7 +297,11 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
 .browse-page .strip { order: 3; margin-top: 40px; }
 .browse-page .strip-title { font-size: 1.2rem; }
 .browse-page .field-emoji { display: none; }
-.browse-page .field-tile, .browse-page .field-grid > li .field-tile { background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; }
+/* (a field tile is a white card in light and a dark card in dark: its name and icon in the theme's text colour, never the fixed ink of the old
+   pastel tiles, which was invisible on a dark card) */
+.field-tile, .field-grid > li .field-tile, .browse-page .field-tile, .browse-page .field-grid > li .field-tile { background: var(--card); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; }
+.field-tile svg, .field-tile .field-emoji { color: var(--ink-soft); }
+.field-tile:hover { box-shadow: inset 0 0 0 1px var(--border-strong); }
 .browse-page .experts { padding-top: 24px; }
 .browse-page #expertsTitle { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .browse-page .search-input { width: 100%; max-width: 680px; min-height: 60px; padding: 0 22px; border: 1px solid var(--field-border); border-radius: 18px; background: var(--card); font-size: 1rem; box-shadow: none; margin-bottom: 12px; }
