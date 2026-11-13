@@ -32,6 +32,7 @@
           <label for="wl${n}-email" class="wlc-email"><span class="sr-only">${t('wait.email')}</span><input id="wl${n}-email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="${esc(t('home2.wait.placeholder'))}" required></label>
           <button class="btn btn-primary waitlist-submit" type="submit">${esc(t('home2.wait.button'))}</button>
         </div>
+        <div class="turnstile-slot"></div>
         <input type="hidden" name="niche" value="${esc(chosen)}">
         <p class="form-error waitlist-error" role="alert"></p>
         <div class="wlc-consent">
@@ -52,6 +53,7 @@
           <label for="wl${n}-email"><span>${t('wait.email')}</span><input id="wl${n}-email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" required></label>
           <label for="wl${n}-niche"><span>${t('wait.niche')}</span><select id="wl${n}-niche" name="niche">${options}</select></label>
         </div>
+        <div class="turnstile-slot"></div>
         <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
         <button class="btn btn-primary waitlist-submit" type="submit">${esc(opts.submit || t('wait.submit'))}</button>
         <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>

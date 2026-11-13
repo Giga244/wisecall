@@ -28,17 +28,27 @@
     if (state.has(form)) return state.get(form);
     const st = { id: null, token: '', waiters: [] };
     state.set(form, st);
+    // Where the box goes (docs/CLAUDE-CODE-TURNSTILE-FIX.md): the form's own slot under its input row, else after the waiting list's row, else
+    // the end of the form. Never inside a row next to the button: it covered the email the person was typing.
     const box = document.createElement('div');
     box.className = 'turnstile-box';
-    const button = form.querySelector('button[type="submit"]');
-    const row = button && button.closest('.waitlist-row');
-    if (row) row.after(box); else if (button) button.before(box); else form.append(box);
+    let slot = form.querySelector('.turnstile-slot');
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.className = 'turnstile-slot';
+      const row = form.querySelector('.waitlist-row, .wlc-row');
+      if (row) row.after(slot); else form.append(slot);
+    }
+    slot.append(box);
+    const asking = (on) => slot.classList.toggle('is-asking', on);
     const done = (t) => { st.token = t || ''; st.waiters.splice(0).forEach((w) => w(st.token)); };
     try {
       const ts = await load();
       const pref = document.documentElement.getAttribute('data-theme');
       st.id = ts.render(box, {
         sitekey: key, language: WisecallI18n.getLang(), theme: pref === 'dark' || pref === 'light' ? pref : 'auto', size: 'flexible',
+        // (shown only when Cloudflare needs the person to do something; usually it passes without a word)
+        appearance: 'interaction-only', 'before-interactive-callback': () => asking(true), 'after-interactive-callback': () => asking(false),
         callback: done, 'expired-callback': () => { st.token = ''; }, 'error-callback': () => { done(''); return true; }
       });
     } catch (e) { done(''); }

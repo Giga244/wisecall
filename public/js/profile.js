@@ -495,6 +495,7 @@
           <p class="small" id="askCodeNote" role="status"></p>
         </details>`}
         ${!free && user && user.ageGroup === 'minor_16_17' ? `<label class="checkbox-row ask-payer" for="adultPayer"><input type="checkbox" id="adultPayer"> <span>${escapeHtml(t('expert.adultPayer'))}</span></label>` : ''}
+        <div class="turnstile-slot"></div>
         <p class="form-error" id="askError" role="alert"></p>
         <button type="submit" class="btn btn-primary btn-block" id="askBtn">${free ? t('expert.sendFree') : t('expert.pay').replace('{price}', WisecallAPI.formatPrice(expert.price))}</button>
       </form>
