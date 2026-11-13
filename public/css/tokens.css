@@ -16,31 +16,31 @@
   color-scheme: light;
   /* ---- The palette (the same in both themes: decoration, pastel "stickers", the coral) ---- */
   --c-ink: #1e1a31;
-  --c-paper: #f4f2ee;
+  --c-paper: #fbfaf7;
   --c-white: #ffffff;
   --c-coral: #ff6f59;
   --c-coral-text: #e04a33;     /* a large headline accent only (3:1 is enough from 24px) */
-  --c-mint: #ddf3ea;
-  --c-sun: #ffe7a3;
-  --c-blush: #ffd3cb;
-  --c-lav: #e6e1f7;
+  --c-mint: #f1eee8;
+  --c-sun: #f1eee8;
+  --c-blush: #ffe9e4;
+  --c-lav: #f1eee8;
   --c-green: #1b7f5f;          /* the small "verified" dot on a mint pill */
-  --c-mint-ink: #2e4a40;       /* small labels on mint */
-  --c-muted: #4e4963;
-  --c-muted-2: #6b6680;        /* only at 14px bold or larger */
+  --c-mint-ink: #17694f;       /* small labels on mint */
+  --c-muted: #6a6580;
+  --c-muted-2: #6a6580;        /* only at 14px bold or larger */
   --on-pastel: #1e1a31;        /* text on coral, mint, sun, blush and lavender: always ink */
   --sticker: #ffffff;          /* the white "sticker" among the pastels (pale lavender in the dark) */
 
   /* ---- Roles ---- */
   --ink: #1e1a31;              /* text */
-  --ink-soft: #4e4963;         /* muted text */
-  --bg: #f4f2ee;               /* the page: paper */
+  --ink-soft: #6a6580;         /* muted text */
+  --bg: #fbfaf7;               /* the page: paper */
   --card: #ffffff;             /* cards and panels */
   --raised: #ffffff;           /* menus, sheets, popovers */
   --field: #ffffff;            /* the inside of form fields */
-  --line: #1e1a31;             /* the signature 2px outline of cards, buttons and fields */
-  --border: #d8d3c8;           /* quiet dividers inside a card */
-  --field-border: #1e1a31;     /* the outline of a form field (3:1 against the surface, WCAG 1.4.11) */
+  --line: #ebe7e0;             /* the signature 2px outline of cards, buttons and fields */
+  --border: #ebe7e0;           /* quiet dividers inside a card */
+  --field-border: #8f8a9e;     /* the outline of a form field (3:1 against the surface, WCAG 1.4.11) */
   --border-strong: #1e1a31;    /* emphasised outlines */
   --navy: #1e1a31;             /* the ink bands (Live sessions, the waitlist panel) */
   --on-navy: #f4f2ee;
@@ -48,23 +48,25 @@
   --navy-card: #2b2643;        /* a card on an ink band */
   --inverse: #1e1a31;          /* small "reversed" pieces: the active chip or tab, tooltips, toasts */
   --on-inverse: #f4f2ee;
+  --tint: #ffe9e4;             /* avatar circles, the circle behind Jikhva */
+  --band: #1e1a31; --on-band: #ffffff; --on-band-soft: #c9c5d6;  /* the dark "are you an expert?" block */
   --white: #ffffff;            /* white that stays white in both themes (avatar initials) */
   --accent: #ff6f59;           /* coral (fills and decoration) */
   --accent-dark: #e04a33;
-  --mint: #ddf3ea;
-  --sun: #ffe7a3;
-  --blush: #ffd3cb;
+  --mint: #f1eee8;
+  --sun: #f1eee8;
+  --blush: #ffe9e4;
   --on-sun: #1e1a31;
   --accent-strong: #ff6f59;    /* the primary button: a coral fill with ink text */
   --accent-strong-hover: #ff8471;
   --on-accent: #1e1a31;
-  --accent-text: #b5361f;      /* coral text and links at body size */
-  --headline-accent: #e04a33;  /* the coral words of a big headline */
+  --accent-text: #c9432b;      /* coral text and links at body size */
+  --headline-accent: #d9482f;  /* the coral words of a big headline */
   --focus: #d43f28;            /* the focus ring: coral, 3:1 against paper and white */
   --accent2: #3db88e;
   --accent2-strong: #1b7f5f;   /* green fills that carry --on-accent2 text */
   --on-accent2: #ffffff;
-  --accent2-text: #1f6f56;     /* green text */
+  --accent2-text: #1b7f5f;     /* green text */
   --accent2-light: #6fd4b0;
   --live: #ff6f59;             /* the pulsing "live" dot */
   --gold: #f4a93b;
@@ -74,15 +76,15 @@
   --danger-bg: #a12f52;  --on-danger: #ffffff;  /* a button for an action that cannot be undone */
   --print-ink: #000000;  --print-paper: #ffffff;  /* what is printed on paper (both themes) */
   /* Soft fills for badges, banners and icon tiles, each with the text colour that goes on it */
-  --mint-soft: #ddf3ea;  --mint-line: #9fd6c0;  --mint-banner-ink: #17563f;
-  --sun-soft: #ffe7a3;   --sun-tint: #fff6dc;   --sun-ink: #6b430a;
-  --pink-soft: #ffd3cb;  --pink-ink: #7f1f3d;
-  --lav-soft: #e6e1f7;   --gray-soft: #e9e5dc;
-  --coral-soft: #ffd3cb; --coral-tint: #fff4f1;
-  --skeleton-a: #e9e5dc; --skeleton-b: #f7f5f1;
-  --connector: #1e1a31;  --dot: #b9b3c6;        --grip: #c9c4d4;
+  --mint-soft: #f8f6f2;  --mint-line: #ebe7e0;  --mint-banner-ink: #17694f;
+  --sun-soft: #f1eee8;   --sun-tint: #f6f3ee;   --sun-ink: #4e4963;
+  --pink-soft: #ffe9e4;  --pink-ink: #7f1f3d;
+  --lav-soft: #f1eee8;   --gray-soft: #f1eee8;
+  --coral-soft: #ffe9e4; --coral-tint: #fff4f1;
+  --skeleton-a: #f1eee8; --skeleton-b: #f8f6f2;
+  --connector: #ebe7e0;  --dot: #b9b3c6;        --grip: #c9c4d4;
   --pw-2: #d9822b;       --pw-3: #b39a1a;
-  --header-bg: #f4f2ee;
+  --header-bg: #fbfaf7;
   --scrim: rgba(30, 26, 49, 0.55);
   --shadow-rgb: 30, 26, 49;
   --accent-rgb: 255, 111, 89;
@@ -97,31 +99,31 @@
   --font-body: 'Onest', 'Noto Sans Georgian', ui-sans-serif, system-ui, sans-serif;
   --tracking-display: -0.02em;
   --tracking-label: 0.08em;
-  --fs-hero: clamp(2.6rem, 5.6vw + 0.6rem, 5.4rem);
-  --fs-h1: clamp(2.1rem, 3.2vw + 0.9rem, 3.4rem);
-  --fs-h2: clamp(1.9rem, 2.8vw + 0.8rem, 3.6rem);
+  --fs-hero: clamp(2.25rem, 2.6vw + 1.4rem, 3.5rem);
+  --fs-h1: clamp(1.75rem, 2.4vw + 1rem, 3rem);
+  --fs-h2: clamp(1.6rem, 1vw + 1.3rem, 1.9rem);
   --fs-h3: 1.35rem;
 
   /* ---- Space: 4 8 12 16 24 32 48 72 110 ---- */
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 72px; --s-9: 110px;
-  --container: 1280px;
+  --container: 1064px;
   --gutter: 32px;
 
   /* ---- Shape ---- */
-  --line-w: 2px;
-  --chip-w: 1.5px;
+  --line-w: 1px;
+  --chip-w: 1px;
   --r-btn: 14px;
   --r-field: 14px;
-  --r-card: 24px;
-  --r-card-lg: 28px;
-  --r-panel: 38px;
+  --r-card: 22px;
+  --r-card-lg: 22px;
+  --r-panel: 28px;
   --r-pill: 999px;
-  --radius: 24px;              /* (the names the older rules use) */
+  --radius: 22px;              /* (the names the older rules use) */
   --radius-sm: 14px;
-  --offset-shadow: 0 8px 0 -2px var(--line);
-  --offset-shadow-sm: 0 5px 0 -1px var(--line);
-  --offset-shadow-hover: 0 11px 0 -3px var(--line);
-  --lift-shadow: 0 18px 40px -18px rgba(var(--shadow-rgb), 0.45);
+  --offset-shadow: 0 0 0 0 transparent;
+  --offset-shadow-sm: 0 0 0 0 transparent;
+  --offset-shadow-hover: 0 0 0 0 transparent;
+  --lift-shadow: 0 20px 50px rgba(var(--shadow-rgb), 0.1);
 
   /* ---- Motion ---- */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -140,33 +142,35 @@
   /* the home card's email / search field and the mentor banner's button: white in light, dark in dark (no white surfaces in dark) */
   --hero-field: #ffffff; --hero-field-ink: #25213b; --hero-field-hint: #6b6680; --banner-btn: #ffffff; --banner-btn-ink: #b5361f;
 }
-@media (max-width: 639px) { :root { --gutter: 18px; } }
+@media (max-width: 767px) { :root { --gutter: 24px; } }
 
 /* Dark: a deep ink ground and surfaces, paper text, the same accents. Outlines turn light so they still draw the shapes. */
 [data-theme="dark"] {
   color-scheme: dark;
   --ink: #f4f2ee;
-  --ink-soft: #c9c5d6;
-  --bg: #16131f;
-  --card: #221e31;
-  --raised: #2b2643;
-  --field: #1a1726;
-  --line: #d9d5e6;
-  --border: #3a3452;
-  --field-border: #a39dba;
+  --ink-soft: #aaa5bb;
+  --bg: #15121e;
+  --card: #1e1a2b;
+  --raised: #262138;
+  --field: #1e1a2b;
+  --line: #2c2840;
+  --border: #2c2840;
+  --field-border: #7d7896;
   --border-strong: #d9d5e6;
   --navy: #0f0d18;
   --on-navy: #f4f2ee;
   --on-navy-soft: #c9c5d6;
-  --navy-card: #221e31;
+  --navy-card: #1e1a2b;
+  --tint: #2b2029;
+  --band: #262138;
   --inverse: #f4f2ee;
   --on-inverse: #16131f;
   --accent-dark: #ff8a78;
-  --mint: #1e3a33;             /* (a soft fill in the app; the pastel "sticker" is --c-mint) */
-  --sticker: #e6e1f7;
+  --mint: #262236;             /* (a soft fill in the app; the pastel "sticker" is --c-mint) */
+  --sticker: #f1eee8;
   --accent-strong-hover: #ff8a78;
   --accent-text: #ff8f7d;
-  --headline-accent: #ff7a66;
+  --headline-accent: #ff8f7d;
   --focus: #ff6f59;
   --accent2-strong: #3db88e;
   --on-accent2: #0f0d18;
@@ -176,15 +180,15 @@
   --red: #e0698f;
   --red-strong: #ff93b0;
   --danger-bg: #ff93b0;  --on-danger: #2a1320;
-  --mint-soft: #1e3a33;  --mint-line: #2c5a4d;  --mint-banner-ink: #a6e6cb;
-  --sun-soft: #4d4119;   --sun-tint: #2d2818;   --sun-ink: #ffe7a3;
-  --pink-soft: #4a2436;  --pink-ink: #ffb3c7;
-  --lav-soft: #38334f;   --gray-soft: #2b2840;
-  --coral-soft: #3f2530; --coral-tint: #2b2029;
-  --skeleton-a: #29253b; --skeleton-b: #34304a;
-  --connector: #d9d5e6;  --dot: #4b4666;        --grip: #4b4666;
+  --mint-soft: #262236;  --mint-line: #2c2840;  --mint-banner-ink: #7fd9b8;
+  --sun-soft: #262236;   --sun-tint: #221e30;   --sun-ink: #d9d5e6;
+  --pink-soft: #2b2029;  --pink-ink: #ffb3c7;
+  --lav-soft: #262236;   --gray-soft: #262236;
+  --coral-soft: #2b2029; --coral-tint: #2b2029;
+  --skeleton-a: #262236; --skeleton-b: #2f2a42;
+  --connector: #2c2840;  --dot: #4b4666;        --grip: #4b4666;
   --pw-2: #e0913f;       --pw-3: #c9b02a;
-  --header-bg: #16131f;
+  --header-bg: #15121e;
   --scrim: rgba(0, 0, 0, 0.62);
   --shadow-rgb: 0, 0, 0;
   --on-navy-rgb: 244, 242, 238;
@@ -200,7 +204,7 @@
   --font-body: 'Noto Sans Georgian', 'Onest', ui-sans-serif, system-ui, sans-serif;
   --tracking-display: 0;
   --tracking-label: 0.02em;
-  --fs-hero: clamp(2.1rem, 3.9vw + 0.7rem, 3.9rem);
-  --fs-h1: clamp(1.5rem, 2.8vw + 0.7rem, 2.8rem);
-  --fs-h2: clamp(1.6rem, 2vw + 0.8rem, 2.8rem);
+  --fs-hero: clamp(2.19rem, 2.2vw + 1.5rem, 3.25rem);
+  --fs-h1: clamp(1.6rem, 2.2vw + 0.95rem, 2.75rem);
+  --fs-h2: clamp(1.55rem, 0.8vw + 1.3rem, 1.875rem);
 }

@@ -30,6 +30,8 @@ test('Georgian chosen earlier: the English address of the help centre and of the
   // and back to English: the English page, with English links
   await page.locator('.lang-btn[data-lang="en"]').first().click();
   await page.waitForURL((u) => u.pathname === '/answers');
-  await expect(page.locator('footer a[data-i18n="help.title"]')).toHaveAttribute('href', '/help.html');
+  // (the help centre's link is in the menu: the footer is one short line, docs/CLAUDE-CODE-REDESIGN-CALM.md)
+  await expect(page.locator('.mm-more a[data-i18n="help.title"]')).toHaveAttribute('href', '/help.html');
+  await expect(page.locator('footer a[data-i18n="footer.faq"]')).toHaveAttribute('href', '/faq.html');
   await ctx.close();
 });

@@ -7,82 +7,26 @@
 
   const f = document.createElement('footer');
   f.className = 'footer';
-  // The home page (docs/CLAUDE-CODE-COMPACT-HOME.md): a short footer, the social icons, one line of links, © and the email. Every other link
-  // is in the menu (public/js/header.js) and on every other page's footer.
-  const compact = document.body.classList.contains('home');
-  if (compact) {
-    f.className = 'footer footer-compact';
-    f.innerHTML = `
+  // One line (docs/CLAUDE-CODE-REDESIGN-CALM.md): © and the contact email, a few links, the social icons; under it, only when set, the
+  // seller's legal details and (once payments are live) the card logos. Every other link is in the menu (public/js/header.js).
+  f.className = 'footer footer-compact';
+  f.innerHTML = `
     <div class="container footer-compact-inner">
-      <ul class="footer-social" id="footerSocial" hidden></ul>
+      <div class="fc-copy"><p>© <span id="footerYear"></span> Wisecall<span id="footerContact" hidden> · <a href="" id="footerContactLink"></a></span></p></div>
       <nav class="fc-links" aria-label="Site links" data-i18n-aria="footer.nav">
-        <a href="/experts.html" data-i18n="nav.browse">Browse experts</a>
         <a href="/faq.html#faq-payments" data-i18n="footer.pricing">Pricing</a>
         <a href="/faq.html" data-i18n="footer.faq">FAQ</a>
         <a href="/about.html" data-i18n="footer.about">About</a>
         <a href="/contact.html" data-i18n="footer.contact">Contact</a>
         <a href="/terms.html" data-i18n="footer.terms">Terms</a>
+        <a href="/privacy.html" data-i18n="footer.privacy">Privacy</a>
       </nav>
-      <div class="fc-copy">
-        <p>© <span id="footerYear"></span> Wisecall<span id="footerContact" hidden> · <a href="" id="footerContactLink"></a></span></p>
-        <p class="fc-legal muted" id="footerLegal" hidden></p>
-      </div>
-      <div id="footerPay" hidden></div>
-    </div>`;
-  } else f.innerHTML = `
-    <div class="container">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a class="logo" href="/index.html">${window.WisecallBrand ? WisecallBrand.logoHtml({ full: true }) : 'Wisecall'}</a>
-          <p data-i18n="footer.tagline">Real advice, from people who've done it.</p>
-          <p class="footer-contact" id="footerContact" hidden><a href="" id="footerContactLink"></a></p>
-          <ul class="footer-social" id="footerSocial" hidden></ul>
-        </div>
-        <nav class="footer-col" aria-labelledby="footProduct">
-          <h2 id="footProduct" data-i18n="footer.product">Product</h2>
-          <ul>
-            <li><a href="/experts.html" data-i18n="nav.browse">Browse experts</a></li>
-            <li><a href="/index.html#how" data-i18n="nav.how">How it works</a></li>
-            <li><a href="/faq.html#faq-payments" data-i18n="footer.pricing">Pricing</a></li>
-            <li><a href="/become-a-mentor.html" data-i18n="footer.forMentors">For mentors</a></li>
-          </ul>
-        </nav>
-        <nav class="footer-col" aria-labelledby="footCompany">
-          <h2 id="footCompany" data-i18n="footer.company">Company</h2>
-          <ul>
-            <li><a href="/about.html" data-i18n="footer.about">About</a></li>
-            <li><a href="/contact.html" data-i18n="footer.contact">Contact</a></li>
-            <li><a href="/faq.html" data-i18n="footer.faq">FAQ</a></li>
-            <li><a href="/how-we-verify.html" data-i18n="hv.title">How we verify mentors</a></li>
-            <li><a href="/help.html" data-i18n="help.title">Help centre</a></li>
-            <li><a href="/answers" data-i18n="answers.title">Real answers</a></li>
-          </ul>
-        </nav>
-        <nav class="footer-col" aria-labelledby="footLegal">
-          <h2 id="footLegal" data-i18n="footer.legalNav">Legal</h2>
-          <ul>
-            <li><a href="/terms.html" data-i18n="footer.terms">Terms</a></li>
-            <li><a href="/privacy.html" data-i18n="footer.privacy">Privacy</a></li>
-          </ul>
-        </nav>
-      </div>
+      <ul class="footer-social" id="footerSocial" hidden></ul>
+      <p class="fc-legal muted" id="footerLegal" hidden></p>
       <div class="footer-pay" id="footerPay" hidden>
         <span class="muted small" data-i18n="footer.weAccept">We accept</span>
         <span class="pay-mark" aria-label="Visa">VISA</span>
         <span class="pay-mark pay-mark-mc" aria-label="Mastercard"><span class="mc-dot" aria-hidden="true"></span><span class="mc-dot" aria-hidden="true"></span>Mastercard</span>
-      </div>
-      <div class="footer-bottom">
-        <div>
-          <p>© <span id="footerYear"></span> Wisecall</p>
-          <p class="footer-legal muted small" id="footerLegal" hidden></p>
-        </div>
-        <div class="footer-lang">
-          <span class="muted small" data-i18n="footer.lang">Language</span>
-          <div class="lang-toggle" role="group" data-i18n-aria="footer.lang" aria-label="Language">
-            <button type="button" class="lang-btn" data-lang="en">EN</button>
-            <button type="button" class="lang-btn" data-lang="ka">KA</button>
-          </div>
-        </div>
       </div>
     </div>`;
   document.body.appendChild(f);
@@ -105,7 +49,7 @@
     const parts = [legal.name, legal.id && `ID ${legal.id}`, legal.address].filter(Boolean);
     if (parts.length) { const el = f.querySelector('#footerLegal'); el.textContent = parts.join(' · '); el.hidden = false; }
     // Card logos only once real payments are open.
-    f.querySelector('#footerPay').hidden = !cfg.paymentsLive || compact;
+    f.querySelector('#footerPay').hidden = !cfg.paymentsLive;
     if (cfg.contactEmail) {
       const link = f.querySelector('#footerContactLink');
       link.href = 'mailto:' + cfg.contactEmail;

@@ -21,7 +21,7 @@ async function open(browser, width, lang = 'en', height = 900, where = '/') {
   return { ctx, page };
 }
 
-test('the footer on a phone: the link groups two by two (English and Georgian)', async ({ browser }) => {
+test('the footer on every other page is the same one line: no link groups, its links wrap cleanly on a phone (English and Georgian)', async ({ browser }) => {
   for (const [width, lang] of [[375, 'en'], [375, 'ka'], [390, 'ka']]) {
     // (every page but the home page: the home page has the short footer, below)
     const { ctx, page } = await open(browser, width, lang, 900, '/about.html');
@@ -29,10 +29,10 @@ test('the footer on a phone: the link groups two by two (English and Georgian)',
       const r = c.getBoundingClientRect();
       return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right) };
     }));
-    expect(cols.length).toBe(3);
-    expect(cols[0].top, `${width}px ${lang}: Product and Company side by side`).toBe(cols[1].top);
-    expect(cols[1].left).toBeGreaterThan(cols[0].right);
-    expect(cols[2].left, 'Legal under Product').toBe(cols[0].left);
+    expect(cols.length).toBe(0);
+    const links = await page.evaluate(() => [...document.querySelectorAll('footer .fc-links a')].map((a) => { const b = a.getBoundingClientRect(); return { h: Math.round(b.height), right: Math.round(b.right) }; }));
+    expect(links.length, `${width}px ${lang}`).toBe(6);
+    for (const l of links) { expect(l.h).toBeGreaterThanOrEqual(44); expect(l.right).toBeLessThanOrEqual(width); }
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
     await ctx.close();
   }
@@ -40,7 +40,7 @@ test('the footer on a phone: the link groups two by two (English and Georgian)',
 
 // The home page's short footer (docs/CLAUDE-CODE-COMPACT-HOME.md): the social icons, one block of links, then © and the email; on a computer
 // all on one line. The other links stay in the menu.
-test('the short footer on the home page: icons, six links, ©; one line on a computer; the rest in the menu', async ({ browser }) => {
+test('the footer on the home page: ©, six links, icons; one line on a computer; the rest in the menu', async ({ browser }) => {
   for (const [width, lang] of [[375, 'ka'], [360, 'en'], [1280, 'ka']]) {
     const { ctx, page } = await open(browser, width, lang);
     const m = await page.evaluate(() => {
@@ -53,10 +53,10 @@ test('the short footer on the home page: icons, six links, ©; one line on a com
       };
     });
     expect(m.groups).toBe(0);
-    expect(m.links).toEqual(['/experts.html', '/faq.html#faq-payments', '/faq.html', '/about.html', '/contact.html', '/terms.html']);
+    expect(m.links).toEqual(['/faq.html#faq-payments', '/faq.html', '/about.html', '/contact.html', '/terms.html', '/privacy.html']);
     if (width < 768) {
-      if (m.social) expect(m.social.bottom, 'the icons first').toBeLessThanOrEqual(m.links1.top + 1);
-      expect(m.links1.bottom, '© last').toBeLessThanOrEqual(m.copy.top + 1);
+      expect(m.copy.bottom, '© first').toBeLessThanOrEqual(m.links1.top + 1);
+      if (m.social) expect(m.links1.bottom, 'the icons last').toBeLessThanOrEqual(m.social.top + 1);
     } else {
       expect(m.copy.right, '© on the left').toBeLessThanOrEqual(m.links1.left + 1);
       if (m.social) expect(m.links1.right, 'the icons on the right').toBeLessThanOrEqual(m.social.left + 1);
@@ -65,7 +65,7 @@ test('the short footer on the home page: icons, six links, ©; one line on a com
     // the menu still has every other link
     if (width < 1024) {
       await page.locator('.nav-toggle').click();
-      for (const href of ['/how-we-verify.html', '/help.html', '/answers', '/privacy.html']) {
+      for (const href of ['/how-we-verify.html', '/help.html', '/answers']) {
         await expect(page.locator(`.mobile-menu a[href$="${href}"]`).first()).toBeAttached();
       }
     }

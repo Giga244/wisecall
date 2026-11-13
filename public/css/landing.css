@@ -1,289 +1,203 @@
-/* The home page (docs/CLAUDE-CODE-COMPACT-HOME.md; public/index.html, public/js/landing.js): one dark purple top card with the promise, the
-   waiting list (after launch: the search), the popular fields and the example chat; "Meet our experts"; 3 steps; the trust card; the coral
-   mentor banner; a short footer; on a phone a join button pinned to the bottom. Phones first (about 1.5 screens at 375px); from 768px two
-   columns. Every colour is a token (public/css/tokens.css); the top card is the same dark purple in both themes. */
-
-.landing { overflow-x: clip; }
-.lsection { padding: 14px 0; }
-.lsection h2 { font-family: var(--font-display); letter-spacing: var(--tracking-display); font-size: 1.15rem; margin: 0 0 10px; }
-@media (min-width: 768px) { .lsection { padding: 36px 0; } .lsection h2 { font-size: clamp(1.4rem, 1.2vw + 0.9rem, 1.75rem); margin-bottom: 16px; } }
-/* (two wordings: a short one on a phone, the whole sentence from 768px) */
+/* The home page in the calm design (docs/CLAUDE-CODE-REDESIGN-CALM.md, mockups: docs/redesign/calm/home-1280.png, home-375.png). Loaded only
+   by index.html, after tokens.css and style.css. Top to bottom: the promise and the waiting list (after launch: the search) beside Jikhva and
+   the example card, the popular fields, how it works (one white panel), our experts, a few questions, the dark block for experts.
+   A phone is the base; a computer starts at 768px. Colours are tokens only. */
+.landing { overflow-x: clip; padding-bottom: 8px; }
+.lsection { margin-top: 56px; }
+.lsection h2 { font-size: var(--fs-h2); margin: 0 0 22px; }
 .only-wide { display: none; }
-@media (min-width: 768px) { .only-wide { display: inline; } .only-narrow { display: none; } }
-
-/* ---- 1. The top card ----------------------------------------------------------------------------------------------------------------- */
-.lhero { padding: 6px 0 0; }
-@media (max-width: 767px) { .lhero > .container { padding-inline: 12px; } }
-.lhero-card { display: grid; grid-template-areas: "text" "chips" "chat"; gap: 0; }
-.lhero-text { grid-area: text; position: relative; overflow: hidden; background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); border: 1px solid var(--hero-line);
-  color: var(--on-hero); border-radius: 24px; padding: 18px 16px 16px; }
-.lhero-jikhva { position: absolute; right: -6px; top: 10px; width: auto; height: 118px; pointer-events: none; }
-.lhero-pill { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px; padding: 3px 10px; border-radius: 999px; background: rgba(var(--hero-pill-bg-rgb), 0.2);
-  color: var(--hero-pill); font-size: 0.75rem; font-weight: 600; line-height: 1.5; }
-.lhero-title { font-family: var(--font-display); letter-spacing: var(--tracking-display); font-size: 1.56rem; line-height: 1.2; margin: 0 0 6px; max-width: 13em;
-  color: var(--on-hero); overflow-wrap: break-word; }
-.lhero-title em { font-style: normal; color: var(--accent); }
-.lhero-sub { margin: 0 0 14px; color: var(--on-hero-soft); font-size: 0.85rem; line-height: 1.5; }
-/* the form: on a phone the email and the button one under the other, full width */
-.lhero-wait { min-height: 132px; }
-.lhero-wait-skeleton { display: grid; gap: 10px; }
-.waitlist-compact { display: grid; gap: 8px; }
-.wlc-row { display: grid; gap: 8px; }
-.wlc-email { margin: 0; min-width: 0; }
-.wlc-email input, .lhero-search input { width: 100%; margin: 0; border: 0; border-radius: 12px; background: var(--hero-field); color: var(--hero-field-ink); font: inherit; font-size: 16px;
-  padding: 0 14px; min-height: 48px; box-shadow: none; outline: none; text-overflow: ellipsis; }
-.wlc-email input::placeholder, .lhero-search input::placeholder { color: var(--hero-field-hint); opacity: 1; }
-.wlc-email input:focus-visible, .lhero-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.waitlist-compact .wlc-row .waitlist-submit, .waitlist-compact .wlc-row .waitlist-submit:hover,
-.lhero-search .btn { width: 100%; min-height: 48px; margin: 0; border-radius: 12px; white-space: nowrap; }
-.lhero-search { display: grid; gap: 8px; }
-/* "16 or older · Privacy" in one line, the long note behind "?" (it is also on the privacy page) */
-.wlc-consent { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; margin: 2px 0 0; color: var(--on-hero-soft); font-size: 0.7rem; line-height: 1.4; white-space: nowrap; }
-.wlc-consent .waitlist-hint { white-space: normal; }
-@media (max-width: 339px) { .wlc-consent { flex-wrap: wrap; white-space: normal; } }
-.wlc-consent .waitlist-age { display: inline-flex; align-items: center; gap: 6px; margin: 0; min-height: 44px; font-size: 0.7rem; font-weight: 500; color: var(--on-hero-soft); }
-.wlc-consent .waitlist-age input { width: 18px; height: 18px; margin: 0; flex: 0 0 auto; accent-color: var(--accent); }
-.wlc-sep { opacity: 0.7; }
-.wlc-privacy { display: inline-flex; align-items: center; min-height: 44px; color: var(--on-hero-soft); text-decoration: underline; text-underline-offset: 2px; }
-.wlc-why { display: inline-block; position: relative; }
-/* (a 44px target that takes the room of the 20px ring drawn inside it) */
-.wlc-why summary { list-style: none; display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 0 -12px; border-radius: 50%;
-  background: radial-gradient(circle, transparent 9px, var(--on-hero-soft) 9.5px, var(--on-hero-soft) 10.5px, transparent 11px);
-  color: var(--on-hero-soft); font-size: 0.72rem; font-weight: 700; cursor: pointer; }
-.wlc-why summary::-webkit-details-marker { display: none; }
-.wlc-why[open] .waitlist-hint { position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 8px); transform: translateX(-60%); width: min(270px, 80vw); margin: 0;
-  padding: 10px 12px; border-radius: 12px; background: var(--card); color: var(--ink); font-size: 0.78rem; line-height: 1.5; text-align: left; box-shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.25); }
-.waitlist-compact .form-error:empty { display: none; }
-.waitlist-compact .form-error { color: var(--hero-count); margin: 0; font-size: 0.85rem; }
-.lhero-count { margin: 6px 0 0; color: var(--hero-count); font-size: 0.78rem; font-weight: 600; }
-.waitlist-compact .lhero-count { margin: 0; }
-.lhero .waitlist-done { color: var(--on-hero); }
-.lhero .waitlist-done a { color: var(--on-hero); }
-.waitlist-follow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; font-weight: 600; }
-.social-inline { display: flex; gap: 8px; list-style: none; margin: 0; padding: 0; }
-
-/* the popular fields: one row that scrolls sideways on a phone; the chosen one coral */
-.lhero-chips { grid-area: chips; display: flex; flex-wrap: nowrap; gap: 6px; list-style: none; margin: 12px -12px 0; padding: 2px 12px; overflow-x: auto;
-  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.lhero-chips::-webkit-scrollbar { display: none; }
-.lhero-chips > li { flex: 0 0 auto; }
-.lchip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--line);
-  color: var(--ink); font: inherit; font-size: 0.85rem; font-weight: 500; white-space: nowrap; cursor: pointer; text-decoration: none; }
-.lchip:hover { border-color: var(--ink-soft); }
-.lchip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-
-/* ---- 2. The example chat ------------------------------------------------------------------------------------------------------------- */
-.lhero-chat { grid-area: chat; position: relative; margin-top: 12px; }
-.lhero-chat-jikhva { display: none; }
-.qa-label { display: flex; justify-content: space-between; gap: 8px; margin: 0 4px 6px; color: var(--ink-soft); font-size: 0.75rem; }
-.qa-phone { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 12px; color: var(--ink); font-family: var(--font-body); }
-.qa-screen [hidden], .lhero-chat [hidden] { display: none !important; }
-.qa-head { display: none; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.8rem; }
-.qa-avatar .avatar { width: 28px; height: 28px; font-size: 0.75rem; }
-.qa-avatar-ex { display: inline-grid; place-items: center; width: 24px; height: 24px; color: var(--ink-soft); }
-.qa-avatar-ex svg { width: 18px; height: 18px; }
-.qa-who { display: grid; min-width: 0; line-height: 1.35; }
-.qa-name { font-size: 0.82rem; }
-.qa-meta { font-size: 0.72rem; color: var(--mint-banner-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.qa-chat { display: flex; flex-direction: column; }
-.qa-q { margin-left: 34px; background: var(--accent); color: var(--phone-on-coral); border-radius: 14px 14px 4px 14px; padding: 9px 12px; font-size: 0.82rem; line-height: 1.5;
-  transform-origin: 100% 100%; overflow-wrap: anywhere; }
-.qa-sent { display: block; font-style: normal; font-size: 0.7rem; color: var(--ink-soft); text-align: right; margin: 3px 2px 0; }
-.qa-a { margin: 8px 34px 0 0; background: var(--bubble-a); color: var(--bubble-a-ink); border-radius: 14px 14px 14px 4px; padding: 9px 12px; font-size: 0.82rem; line-height: 1.5;
-  transform-origin: 0 100%; overflow-wrap: anywhere; box-shadow: 0 3px 10px rgba(var(--phone-shadow-rgb), 0.06); }
-.qa-a b { display: block; font-size: 0.75rem; margin-bottom: 2px; }
-.qa-typing { display: inline-flex; gap: 4px; align-self: flex-start; margin-top: 8px; background: var(--bubble-a); border-radius: 14px; padding: 9px 11px; }
-.qa-typing i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--phone-dot); }
-.qa-rate { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.85rem; margin-top: 6px; }
-.qa-stars { display: inline-flex; justify-content: center; gap: 2px; line-height: 1; }
-.qa-stars i { font-style: normal; display: inline-block; opacity: 0.2; }
-.qa-ratelabel { font-size: 0.7rem; color: var(--ink-soft); }
-.qa-cur { display: inline-block; width: 1.5px; height: 1em; background: currentColor; vertical-align: -2px; margin-left: 1px; }
-.qa-foot { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.72rem; }
-.qa-adays { display: none; font-style: normal; color: var(--mint-banner-ink); }
-.qa-example-foot { display: none; }
-.qa-dots { display: flex; gap: 4px; }
-.qa-dots i { display: block; width: 6px; height: 6px; border-radius: 3px; background: var(--line); transition: width 0.2s; }
-.qa-dots i.is-on { width: 16px; background: var(--accent); }
-@media (prefers-reduced-motion: reduce) { .qa-typing { display: none !important; } .qa-dots i { transition: none; } }
-
+.tick { flex: 0 0 auto; fill: none; stroke: var(--accent2-text); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 @media (min-width: 768px) {
-  .lhero { padding-top: 8px; }
-  .lhero-card { grid-template-areas: "text chat" "chips chat"; grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); grid-template-rows: auto 1fr;
-    column-gap: 28px; align-items: start; background: linear-gradient(150deg, var(--hero-a), var(--hero-b)); border: 1px solid var(--hero-line); border-radius: 32px;
-    padding: 40px 40px 36px; color: var(--on-hero); }
-  .lhero-text { background: none; border: 0; border-radius: 0; padding: 0; overflow: visible; }
-  .lhero-jikhva { display: none; }
-  .lhero-pill { font-size: 0.82rem; padding: 5px 12px; margin-bottom: 14px; }
-  .lhero-title { font-size: clamp(2.2rem, 2.6vw + 0.6rem, 2.9rem); line-height: 1.15; max-width: none; margin-bottom: 12px; }
-  .lhero-sub { font-size: 1.05rem; max-width: 28em; margin-bottom: 22px; }
-  .lhero-wait { min-height: 0; }
-  .wlc-row, .lhero-search { display: flex; align-items: center; gap: 8px; background: var(--hero-field); border-radius: 16px; padding: 6px; max-width: 520px; }
-  .wlc-email { flex: 1 1 auto; }
-  .wlc-email input, .lhero-search input { border-radius: 10px; min-height: 48px; }
-  .wlc-email input:focus-visible, .lhero-search input:focus-visible { outline-offset: 0; }
-  .waitlist-compact .wlc-row .waitlist-submit, .waitlist-compact .wlc-row .waitlist-submit:hover, .lhero-search .btn { width: auto; flex: 0 0 auto; padding: 0 22px; }
-  .wlc-consent, .wlc-consent .waitlist-age { font-size: 0.85rem; }
-  .lhero-count { font-size: 0.9rem; margin-top: 8px; }
-  .lhero-chips { flex-wrap: wrap; overflow: visible; margin: 18px 0 0; padding: 0; align-self: start; }
-  .lchip { background: rgba(var(--hero-chip-rgb), 0.06); border-color: var(--hero-line); color: var(--on-hero); padding: 0 11px; font-size: 0.8rem; gap: 4px; }
-  .lchip:hover { border-color: var(--on-hero-soft); }
-  /* the chat in the right column; Jikhva stands on its top edge, at the right (clear of its text and of the header) */
-  .lhero-chat { margin-top: 64px; align-self: start; }
-  .lhero-chat-jikhva { display: block; position: absolute; right: 8px; top: -112px; width: auto; height: 128px; z-index: 1; pointer-events: none; }
-  .qa-label { display: none; }
-  .qa-phone { position: relative; z-index: 2; background: var(--hero-b); border-color: var(--hero-line); border-radius: 22px; padding: 18px; color: var(--on-hero); }
-  .qa-head { display: flex; }
-  .qa-name { color: var(--on-hero); }
-  .qa-meta { color: var(--hero-pill); }
-  .qa-avatar-ex { color: var(--on-hero-soft); }
-  .qa-q { margin-left: 48px; font-size: 0.92rem; padding: 11px 14px; }
-  .qa-sent { color: var(--on-hero-soft); }
-  .qa-a { margin-right: 36px; font-size: 0.92rem; padding: 11px 14px; }
-  .qa-ratelabel { color: var(--on-hero-soft); }
-  .qa-foot { margin-top: 12px; }
-  .qa-adays { display: inline; margin-right: auto; color: var(--hero-pill); }
-  .qa-example-foot { display: inline-block; padding: 0 10px; border: 1px solid var(--hero-line); border-radius: 10px; color: var(--on-hero-soft); }
-  .qa-dots i { background: var(--hero-line); }
+  .lsection { margin-top: 88px; }
+  .lsection h2 { margin-bottom: 32px; }
+  .only-wide { display: inline; }
+  .only-narrow { display: none; }
 }
-@media (min-width: 1024px) { .lhero-card { padding: 44px 44px 40px; } }
 
-/* ---- 3. Meet our experts ----------------------------------------------------------------------------------------------------------- */
-.lsection-head { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin-bottom: 6px; }
-.lsection-head .lmore { font-size: 0.85rem; }
-.lsection-head h2 { margin: 0; }
-@media (max-width: 767px) { .lsection-head h2 { font-size: 1rem; } .lsection-head .lmore { font-size: 0.8rem; } }
-.lmore { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-text); font-weight: 600; text-decoration: none; white-space: nowrap; }
+/* ---- 1. The top: text and form; Jikhva and the example card -------------------------------------------------------------------------- */
+.lhero-top { display: grid; gap: 36px; padding-top: 28px; }
+.lhero-top > * { min-width: 0; }
+.lhero-text { text-align: center; }
+.lhero-pill { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 5px 14px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--card);
+  color: var(--ink-soft); font-size: 0.82rem; font-weight: 700; }
+.lhero-pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.lhero-title { font-size: var(--fs-hero); line-height: 1.12; margin: 14px 0; }
+.lhero-title em { font-style: normal; color: var(--headline-accent); }
+.lhero-sub { margin: 0 auto; max-width: 30em; color: var(--ink-soft); font-size: 1.06rem; }
+
+/* the form: on a phone the email over a full-width button; on a computer one white row */
+.lhero-wait, .lhero-search { margin-top: 28px; text-align: left; }
+.wlc-row, .lhero-search { display: grid; gap: 10px; }
+.wlc-email { display: block; margin: 0; min-width: 0; }
+.wlc-email input, .lhero-search input { width: 100%; min-height: 52px; margin: 0; padding: 0 16px; border: 1px solid var(--field-border); border-radius: var(--r-field); background: var(--card);
+  color: var(--ink); font: inherit; font-size: 16px; }
+.wlc-email input::placeholder, .lhero-search input::placeholder { color: var(--ink-soft); opacity: 1; }
+.wlc-row .btn, .lhero-search .btn { min-height: 52px; font-size: 1rem; white-space: nowrap; }
+.waitlist-compact .form-error { margin: 6px 0 0; min-height: 0; }
+.waitlist-compact .form-error:empty { display: none; }
+.wlc-consent { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin-top: 8px; color: var(--ink-soft); font-size: 0.88rem; }
+/* (a phone: the age box on its own line, the privacy link and its "?" on the next) */
+@media (max-width: 767px) { .wlc-consent .waitlist-age { flex: 1 0 100%; } .wlc-consent .wlc-privacy { margin-top: -8px; } .wlc-consent .wlc-why { margin-top: -8px; } }
+.wlc-consent .waitlist-age { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; font-size: 0.88rem; font-weight: 400; color: var(--ink-soft); cursor: pointer; }
+.wlc-consent .waitlist-age input { width: 18px; height: 18px; margin: 0; flex: 0 0 auto; accent-color: var(--accent); }
+.wlc-sep { display: none; color: var(--ink-soft); }
+.wlc-privacy { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; }
+.wlc-why { position: relative; display: inline-block; }
+/* (a 44px target around a 20px ring) */
+.wlc-why summary { list-style: none; display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 0 -12px; border-radius: 50%; color: var(--ink-soft); font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  background: radial-gradient(circle, transparent 9px, var(--ink-soft) 9.5px, var(--ink-soft) 10.5px, transparent 11px); }
+.wlc-why summary::-webkit-details-marker { display: none; }
+.wlc-why[open] .waitlist-hint { position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 4px); transform: translateX(-70%); width: min(280px, 80vw); margin: 0; padding: 12px 14px;
+  background: var(--raised); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--lift-shadow); font-size: 0.85rem; line-height: 1.5; }
+.lhero-count { margin: 2px 0 0; color: var(--ink-soft); font-size: 0.88rem; text-align: left; }
+.lhero-count b { color: var(--ink); }
+.lhero-wait-skeleton { display: grid; gap: 10px; }
+.waitlist-compact + .waitlist-done, .lhero-wait .waitlist-done { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 18px; }
+@media (min-width: 768px) {
+  .lhero-top { grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; padding-top: 56px; }
+  .lhero-text { text-align: left; }
+  .lhero-title { margin: 18px 0; }
+  .lhero-sub { margin: 0; font-size: 1.19rem; }
+  .lhero-wait, .lhero-search { margin-top: 30px; }
+  .wlc-row, .lhero-search { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; max-width: 520px; padding: 6px; background: var(--card); border: 1px solid var(--field-border);
+    border-radius: 18px; }
+  .wlc-sep { display: inline; }
+  .wlc-email input, .lhero-search input { border: 0; background: none; min-height: 48px; }
+  .wlc-row .btn, .lhero-search .btn { min-height: 48px; padding: 0 24px; }
+}
+
+/* the example card: Jikhva in front of the tint circle, the card beside him (on a phone under him) */
+.lhero-chat { position: relative; display: flex; flex-direction: column; align-items: center; }
+.lhero-chat::before { content: ""; position: absolute; left: 50%; top: 0; width: 220px; height: 170px; margin-left: -110px; border-radius: 50%; background: var(--tint); }
+.lhero-jikhva { position: relative; width: auto; height: 160px; margin-bottom: -8px; pointer-events: none; }
+.qa-phone { position: relative; width: 100%; margin: 0; padding: 20px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); color: var(--ink); text-align: left;
+  min-height: 286px; }
+.qa-label { margin: 0; color: var(--ink-soft); font-size: 0.75rem; font-weight: 700; }
+.qa-example-foot { display: none; }
+.qa-label .qa-name { display: none; }
+.qa-example:not([hidden]) ~ .qa-field::before { content: " · "; }
+.qa-q { margin: 8px 0 12px; font-weight: 700; font-size: 1.04rem; line-height: 1.45; }
+.qa-qtext { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
+.qa-cur { display: inline-block; width: 2px; height: 1em; margin-left: 2px; background: var(--accent); vertical-align: -2px; }
+.qa-sent { display: none; }
+.qa-typing { display: flex; gap: 4px; padding: 4px 0 4px 16px; }
+.qa-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-soft); }
+.qa-a { padding-left: 14px; border-left: 2px solid var(--accent); color: var(--ink-soft); font-size: 0.94rem; }
+.qa-aname { display: block; margin-bottom: 2px; color: var(--accent2-text); font-size: 0.82rem; font-weight: 700; }
+.qa-atext { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; line-clamp: 5; overflow: hidden; }
+.qa-rate { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--ink-soft); font-size: 0.8rem; }
+.qa-stars { display: inline-flex; gap: 1px; color: var(--gold-text); }
+.qa-stars i { font-style: normal; }
+.qa-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 12px; }
+.qa-adays { font-style: normal; color: var(--accent2-text); font-size: 0.82rem; }
+.qa-dots { display: inline-flex; gap: 4px; }
+.qa-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.qa-dots i.is-on { width: 14px; border-radius: 3px; background: var(--accent); }
+@media (max-width: 359px) { .qa-phone { min-height: 312px; } }
+@media (min-width: 768px) {
+  .lhero-chat { display: block; height: 400px; }
+  .lhero-chat::before { left: auto; right: -20px; top: 20px; width: 300px; height: 300px; margin: 0; }
+  .lhero-jikhva { position: absolute; right: 6px; top: 26px; height: 320px; margin: 0; }
+  /* (anchored at the top: a longer answer grows the card downwards inside this fixed-height box, and nothing on the page moves) */
+  .qa-phone { position: absolute; left: 0; top: 44px; width: min(290px, 62%); min-height: 0 !important; padding: 22px; box-shadow: var(--lift-shadow); }
+  .qa-example { display: none; }
+  .qa-example-foot:not([hidden]) { display: inline; }
+  .qa-qtext { -webkit-line-clamp: 3; line-clamp: 3; }
+  .qa-atext { -webkit-line-clamp: 4; line-clamp: 4; }
+}
+
+/* ---- 4. The popular fields: one swipe row on a phone ----------------------------------------------------------------------------------- */
+.lhero-fields { margin-top: 28px; }
+.lhero-fields-label { display: none; color: var(--ink-soft); font-size: 0.82rem; }
+.lhero-chips { display: flex; gap: 8px; list-style: none; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); overflow-x: auto; scrollbar-width: none; }
+.lhero-chips::-webkit-scrollbar { display: none; }
+.lhero-chips li { flex: 0 0 auto; }
+.lhero-chips .skeleton-chip { display: block; height: 44px; }
+.lchip { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 0.88rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.lchip:hover { border-color: var(--ink-soft); }
+.lchip[aria-pressed="true"] { border-color: var(--border-strong); background: var(--tint); }
+@media (min-width: 768px) {
+  .lhero-fields { display: flex; align-items: center; gap: 10px; margin-top: 40px; }
+  .lhero-fields-label { display: inline; }
+  .lhero-chips { flex-wrap: wrap; margin: 0; padding: 0; overflow: visible; }
+}
+
+/* ---- 5. How it works: one white panel ---------------------------------------------------------------------------------------------- */
+.lband { margin: 0 -8px; padding: 32px 22px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; }
+.lsection .lband h2 { text-align: center; margin-bottom: 26px; }
+.lsteps { position: relative; list-style: none; margin: 0; padding: 0; display: grid; gap: 24px; }
+.lstep { display: grid; grid-template-columns: 36px 1fr; column-gap: 16px; }
+.lstep-n { grid-row: span 2; display: inline-grid; place-items: center; width: 36px; height: 36px; margin-top: 2px; border: 1.5px solid var(--border-strong); border-radius: 50%; background: var(--card);
+  font-family: var(--font-display); font-weight: 700; font-size: 0.94rem; }
+.lstep h3 { margin: 0; font-family: var(--font-body); font-size: 1.1rem; letter-spacing: 0; line-height: 1.35; }
+.lstep p { margin: 0; color: var(--ink-soft); font-size: 0.94rem; }
+.lticks { list-style: none; margin: 28px 0 0; padding: 22px 0 0; border-top: 1px solid var(--line); display: grid; gap: 12px; color: var(--ink-soft); font-size: 0.9rem; }
+.lticks li { display: flex; align-items: center; gap: 6px; }
+.lband-more { margin: 10px 0 0; font-size: 0.9rem; }
+.lband-more .arrow-link { display: inline-flex; align-items: center; min-height: 44px; }
+@media (min-width: 768px) {
+  .lband { margin: 0; padding: 48px 40px 36px; border-radius: var(--r-panel); }
+  .lsection .lband h2 { margin-bottom: 36px; }
+  .lsteps { grid-template-columns: repeat(3, 1fr); gap: 40px; text-align: center; }
+  .lsteps::before { content: ""; position: absolute; left: 17%; right: 17%; top: 18px; border-top: 1.5px dashed var(--line); }
+  .lstep { display: block; position: relative; }
+  .lstep-n { margin: 0 0 14px; }
+  .lticks { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 28px; margin-top: 40px; padding-top: 28px; }
+  .lband-more { text-align: center; }
+}
+
+/* ---- 6. Meet our experts ----------------------------------------------------------------------------------------------------------- */
+.lsection-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+.lsection .lsection-head h2 { margin: 0; }
+.lmore { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-text); font-weight: 700; text-decoration: none; white-space: nowrap; }
 .lmore:hover { text-decoration: underline; }
-.lexpert-grid { display: flex; gap: 10px; list-style: none; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter) 4px; overflow-x: auto; scrollbar-width: none; }
-.lexpert-grid::-webkit-scrollbar { display: none; }
-.lexpert { flex: 0 0 min(300px, 84vw); display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 12px; row-gap: 2px; align-content: start; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; }
-.lexpert > * { grid-column: 2; }
-.lexpert > .avatar, .lexpert > .lexpert-avatar { grid-column: 1; grid-row: 1 / span 3; margin: 0; }
-.lexpert .lexpert-bio { -webkit-line-clamp: 2; line-clamp: 2; }
-.lexpert .lexpert-more { min-height: 44px; font-size: 0.85rem; }
-.lexpert-avatar, .lexpert .avatar { width: 44px; height: 44px; font-size: 1rem; margin-bottom: 4px; }
-.lexpert-name { margin: 0; font-size: 1rem; }
+.lexpert-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.lexpert { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 14px; align-items: center; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); }
+.lexpert > .avatar, .lexpert > .lexpert-avatar { grid-column: 1; grid-row: 1 / span 3; width: 56px; height: 56px; margin: 0; font-size: 1.1rem; }
+.lexpert-name { grid-column: 2; grid-row: 1; margin: 0; font-size: 1.1rem; }
 .lexpert-name a { color: inherit; text-decoration: none; }
 .lexpert-name a:hover { text-decoration: underline; }
-.lexpert-role { margin: 0; color: var(--ink-soft); font-size: 0.88rem; }
-.lexpert-about { margin: 4px 0 0; }
-.lexpert-bio { color: var(--ink-soft); font-size: 0.88rem; line-height: 1.5; }
-.lexpert-tags { display: none; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; }
-.lexpert-verified { display: none; margin: 2px 0 0; color: var(--mint-banner-ink); font-size: 0.9rem; font-weight: 600; }
-.lexpert-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: auto 0 0; padding-top: 2px; }
-.lexpert-foot .lmore { min-height: 44px; }
+.lexpert-role { grid-column: 2; grid-row: 2; margin: 0; color: var(--ink-soft); font-size: 0.88rem; }
+.lexpert-verified { grid-column: 2; grid-row: 3; margin: 0; color: var(--accent2-text); font-size: 0.82rem; }
+.lexpert-about { grid-column: 1 / -1; grid-row: 4; margin: 12px 0 0; }
+.lexpert-bio { margin: 0; color: var(--ink-soft); font-size: 0.94rem; line-height: 1.5; }
+.lexpert .lexpert-more { font-size: 0.88rem; }
+.lexpert-tags { display: none; }
+.lexpert-foot { grid-column: 1 / -1; grid-row: 5; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 12px 0 0; padding-top: 6px; border-top: 1px solid var(--line); }
+.lexpert-foot strong { font-family: var(--font-display); font-size: 1.06rem; }
 @media (min-width: 768px) {
-  .lexpert-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; overflow: visible; }
-  .lexpert { display: flex; flex-direction: column; gap: 4px; padding: 22px; }
-  .lexpert > * { grid-column: auto; }
-  .lexpert .lexpert-bio { -webkit-line-clamp: 3; line-clamp: 3; }
-  .lexpert-foot .lmore, .lexpert .lexpert-more { min-height: 44px; }
-  .lsection-head { flex-wrap: wrap; }
-  .lexpert-tags { display: flex; }
-  .lexpert-verified { display: block; }
-  .lexpert-foot { padding-top: 12px; border-top: 1px solid var(--line); }
+  .lsection-head { margin-bottom: 28px; }
+  /* (one or two mentors: their cards keep a third of the row each, in the middle) */
+  .lexpert-grid { display: flex; justify-content: center; gap: 20px; }
+  .lexpert { flex: 0 1 calc((100% - 40px) / 3); }
+  .lexpert { padding: 24px; align-content: start; }
 }
 
-/* ---- 4. 3 steps -------------------------------------------------------------------------------------------------------------------- */
-.lsteps { display: flex; gap: 8px; list-style: none; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter) 4px; overflow-x: auto; scrollbar-width: none; }
-.lsteps::-webkit-scrollbar { display: none; }
-.lstep { flex: 0 0 150px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
-.lstep-icon { display: block; font-size: 1.35rem; line-height: 1.2; }
-.lstep h3 { margin: 4px 0 2px; font-size: 0.9rem; line-height: 1.35; }
-.lstep p { margin: 0; color: var(--ink-soft); font-size: 0.78rem; line-height: 1.45; }
+/* ---- 7. A few questions ------------------------------------------------------------------------------------------------------------- */
+.lfaq h2 { text-align: center; }
+.lfaq-list { max-width: 680px; margin: 0 auto; }
+.lfaq-list h3 { margin: 0; font-family: var(--font-body); font-size: 1rem; letter-spacing: 0; }
+.lfaq-more { max-width: 680px; margin: 8px auto 0; }
+.lfaq-more .arrow-link { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* ---- 8. For experts: the dark block --------------------------------------------------------------------------------------------------- */
+.lmentor-card { position: relative; overflow: hidden; padding: 28px 24px 26px; background: var(--band); color: var(--on-band); border-radius: var(--r-card); }
+.lsection .lmentor-card h2 { margin: 0; font-size: 1.38rem; color: var(--on-band); }
+.lmentor-text p { margin: 6px 0 20px; max-width: 13.5em; color: var(--on-band-soft); font-size: 0.94rem; }
+.lmentor-jikhva { position: absolute; right: 6px; bottom: -8px; width: auto; height: 110px; pointer-events: none; }
 @media (min-width: 768px) {
-  .lsteps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; overflow: visible; }
-  .lstep { padding: 20px; border-radius: 20px; }
-  .lstep-icon { font-size: 1.75rem; }
-  .lstep h3 { font-size: 1.1rem; margin: 6px 0 4px; }
-  .lstep p { font-size: 0.95rem; }
+  .lmentor-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 40px 44px; }
+  .lmentor-text p { max-width: none; }
+  .lmentor-jikhva { position: static; height: 190px; margin: -40px 10px -60px 0; }
 }
 
-/* ---- 5. Trust: one card, four in a row ----------------------------------------------------------------------------------------------- */
-.ltrust { padding: 0 0 4px; }
-.ltrust-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; list-style: none; margin: 0; padding: 12px 6px; background: var(--card);
-  border: 1px solid var(--line); border-radius: 16px; text-align: center; }
-.ltrust-row li { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ink-soft); font-size: 0.7rem; line-height: 1.35; overflow-wrap: anywhere; }
-.ltrust-icon { font-size: 1.25rem; line-height: 1.2; }
-.ltrust-more .arrow-link { display: inline-flex; align-items: center; min-height: 44px; }
-.ltrust-more { margin: 4px 0 0; text-align: center; font-size: 0.82rem; font-weight: 700; }
-@media (min-width: 768px) {
-  .ltrust-row { gap: 16px; padding: 18px 20px; border-radius: 20px; text-align: left; }
-  .ltrust-row li { flex-direction: row; gap: 10px; font-size: 0.92rem; color: var(--ink); overflow-wrap: normal; }
-  .ltrust-row li b { font-weight: 600; }
-  .ltrust-icon { font-size: 1.4rem; }
-}
-
-/* ---- 6. For experts: the coral banner ---------------------------------------------------------------------------------------------- */
-.lmentor { padding-top: 10px; }
-.lmentor-card { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: linear-gradient(135deg, var(--banner-a), var(--banner-b));
-  color: var(--on-accent); border-radius: 20px; padding: 14px; }
-.lmentor-jikhva { display: none; }
-.lmentor-text { min-width: 0; }
-.lmentor-text h2 { margin: 0; color: var(--on-accent); font-size: 1rem; }
-.lmentor-text p { margin: 2px 0 0; font-size: 0.78rem; line-height: 1.45; opacity: 0.95; }
-.lmentor-card .lmentor-btn, .lmentor-card .lmentor-btn:hover { flex: 0 0 auto; background: var(--banner-btn); color: var(--banner-btn-ink); border-color: var(--banner-btn);
-  box-shadow: none; min-height: 44px; padding: 0 14px; font-size: 0.85rem; white-space: nowrap; }
-.lmentor-card .lmentor-btn.btn-arrow::after { display: none; }
-/* (the button says where someone is once nav.js knows: until then an applicant's is kept invisible, so it never jumps; no banner for a mentor) */
-html[data-mentor-state="draft"] .lmentor-btn:not([data-ready]), html[data-mentor-state="sent"] .lmentor-btn:not([data-ready]) { visibility: hidden; }
-html[data-mentor-state="none"] .lmentor, .lmentor[hidden] { display: none; }
-.lmentor-btn.mentor-status { white-space: normal; }
-@media (min-width: 768px) {
-  .lmentor { padding-top: 28px; }
-  .lmentor-card { gap: 22px; padding: 22px 32px; border-radius: 26px; }
-  .lmentor-jikhva { display: block; flex: 0 0 auto; width: auto; height: 108px; margin: -34px 0 -22px; }
-  .lmentor-text { margin-right: auto; }
-  .lmentor-text h2 { font-size: 1.45rem; }
-  .lmentor-text p { font-size: 1rem; }
-  .lmentor-card .lmentor-btn, .lmentor-card .lmentor-btn:hover { padding: 0 24px; font-size: 1rem; min-height: 52px; }
-  .lmentor-card .lmentor-btn.btn-arrow::after { display: inline; }
-}
-
-/* ---- The pinned join button (phones) ----------------------------------------------------------------------------------------------- */
+/* ---- The pinned button (a phone): "ჩაეწერე სიაში" (after launch: "იპოვე ექსპერტი"), hidden while the top form is on screen ------------- */
 .home-pin { position: fixed; z-index: 40; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; justify-content: center;
-  min-height: 52px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-weight: 700; text-decoration: none; box-shadow: 0 10px 24px rgba(var(--shadow-rgb), 0.35); }
+  min-height: 52px; border-radius: var(--r-btn); background: var(--accent-strong); color: var(--on-accent); font-weight: 700; text-decoration: none; box-shadow: 0 10px 24px rgba(var(--shadow-rgb), 0.25); }
 .home-pin[hidden] { display: none; }
 @media (max-width: 767px) { body.home { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); } }
 @media (min-width: 768px) { .home-pin { display: none !important; } }
 
-/* ---- The header's join button (from 768px; the home page only) and the answer's field on a phone ------------------------------------- */
-.nav-cta { display: none; }
-@media (min-width: 768px) {
-  .nav-right .nav-cta { display: inline-flex; white-space: nowrap; }
-  body.home #navLoggedOut .btn-primary:not(.nav-cta) { display: none; } /* (one coral button in the header: this one) */
-  .qa-afield { display: none; }
-}
-
-/* ---- The short footer (the home page): the social icons, one line of links, © and the email; every other link is in the menu ---------- */
-.footer.footer-compact { padding: 14px 0 12px; margin-top: 8px; }
-.footer-compact-inner { display: grid; grid-template-areas: "social" "links" "copy"; justify-items: center; gap: 6px; text-align: center; font-size: 0.82rem; color: var(--ink-soft); }
-.footer-compact .footer-social { grid-area: social; margin: 0; }
-.fc-links { grid-area: links; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 14px; }
-.fc-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); text-decoration: none; }
-.fc-links a:hover { text-decoration: underline; }
-.fc-copy { grid-area: copy; margin: 0; }
-.fc-copy a { color: var(--ink-soft); }
-.fc-legal { margin: 2px 0 0; font-size: 0.75rem; }
-@media (min-width: 768px) {
-  .footer.footer-compact { border-top: 1px solid var(--line); padding: 22px 0 28px; margin-top: 32px; }
-  .footer-compact-inner { grid-template-areas: "copy links social"; grid-template-columns: auto 1fr auto; align-items: center; text-align: left; font-size: 0.9rem; }
-  .fc-copy { justify-self: start; }
-  .fc-links { justify-content: center; gap: 0 22px; }
-  .footer-compact .footer-social { justify-self: end; }
-}
-.fc-copy p { margin: 0; }
-.footer-compact .footer-social a { border-radius: 50%; }
-
-/* ---- The chat keeps one height while it loads and plays (no layout shift: e2e/redesign.spec.js): its texts are cut in public/js/landing.js
-   and clamped here, and the card reserves the room of the longest finished conversation. -------------------------------------------- */
-.qa-qtext, .qa-atext { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
-.qa-qtext { -webkit-line-clamp: 4; line-clamp: 4; }
-.qa-atext { -webkit-line-clamp: 6; line-clamp: 6; }
-.qa-phone { min-height: 332px; }
-@media (max-width: 359px) { .qa-phone { min-height: 352px; } }
-@media (min-width: 768px) {
-  .qa-atext { -webkit-line-clamp: 8; line-clamp: 8; }
-  .qa-phone { min-height: 500px; }
-}
+/* ---- The header's own button on the home page: "ჩაეწერე" before launch ("იპოვე ექსპერტი" after), instead of "Sign up" ----------------- */
+body.home #navLoggedOut .btn-primary:not(.nav-cta) { display: none; }

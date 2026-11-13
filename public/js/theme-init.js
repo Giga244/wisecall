@@ -8,7 +8,7 @@
   var KEY = 'wisecall_theme';
   var root = document.documentElement;
   var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  var BAR = { light: '#F4F2EE', dark: '#16131F' }; // the colour of the browser's address bar on a phone
+  var BAR = { light: '#FBFAF7', dark: '#15121E' }; // the colour of the browser's address bar on a phone
   var account = null; // the signed-in person, once the header knows who they are
 
   function read() {

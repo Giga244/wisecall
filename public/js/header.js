@@ -38,14 +38,14 @@
   const WORDS = {
     en: {
       'a11y.skip': 'Skip to content', 'nav.how': 'How it works', 'nav.browse': 'Browse experts', 'nav.becomeMentor': 'Become a mentor', 'footer.faq': 'FAQ',
-      'nav.language': 'Language', 'nav.login': 'Log in', 'nav.signup': 'Sign up', 'nav.cta.join': 'Join the list', 'nav.cta.search': 'Find an expert', 'nav.inbox': 'Inbox', 'nav.dashboard': 'Dashboard', 'nav.settings': 'Settings',
+      'nav.language': 'Language', 'nav.login': 'Log in', 'nav.signup': 'Sign up', 'nav.cta.join': 'Join', 'nav.cta.search': 'Find an expert', 'nav.inbox': 'Inbox', 'nav.dashboard': 'Dashboard', 'nav.settings': 'Settings',
       'nav.logout': 'Log out', 'nav.admin': 'Admin', 'nav.menu': 'Menu', 'nav.menuClose': 'Close menu', 'theme.toDark': 'Switch to dark mode', 'theme.toLight': 'Switch to light mode',
       'nav.continueApp': 'Continue your application', 'nav.continueStep': 'Continue your application · {n} of 5 done', 'nav.continueShort': 'Application · {n}/5',
       'nav.inReview': 'Application in review', 'nav.inReviewShort': 'In review', 'nav.idLeft': 'Application · 4/5 · ID left', 'nav.idLeftShort': '4/5 · ID left'
     },
     ka: {
       'a11y.skip': 'გადასვლა შინაარსზე', 'nav.how': 'როგორ მუშაობს', 'nav.browse': 'ექსპერტები', 'nav.becomeMentor': 'გახდი მენტორი', 'footer.faq': 'კითხვები',
-      'nav.language': 'ენა', 'nav.login': 'შესვლა', 'nav.signup': 'რეგისტრაცია', 'nav.cta.join': 'ჩაეწერე სიაში', 'nav.cta.search': 'იპოვე ექსპერტი', 'nav.inbox': 'შემოსულები', 'nav.dashboard': 'პირადი კაბინეტი', 'nav.settings': 'პარამეტრები',
+      'nav.language': 'ენა', 'nav.login': 'შესვლა', 'nav.signup': 'რეგისტრაცია', 'nav.cta.join': 'ჩაეწერე', 'nav.cta.search': 'იპოვე ექსპერტი', 'nav.inbox': 'შემოსულები', 'nav.dashboard': 'პირადი კაბინეტი', 'nav.settings': 'პარამეტრები',
       'nav.logout': 'გასვლა', 'nav.admin': 'ადმინი', 'nav.menu': 'მენიუ', 'nav.menuClose': 'მენიუს დახურვა', 'theme.toDark': 'მუქ რეჟიმზე გადართვა', 'theme.toLight': 'ღია რეჟიმზე გადართვა',
       'nav.continueApp': 'განაცხადის გაგრძელება', 'nav.continueStep': 'განაცხადის გაგრძელება · დასრულებულია {n} / 5', 'nav.continueShort': 'განაცხადი · {n}/5',
       'nav.inReview': 'განაცხადი განხილვაშია', 'nav.inReviewShort': 'განხილვაშია', 'nav.idLeft': 'განაცხადი · 4/5 · დარჩა პირადობა', 'nav.idLeftShort': '4/5 · დარჩა პირადობა'

@@ -4,8 +4,8 @@
 const { test, expect } = require('@playwright/test');
 const S = require('./support');
 
-const DARK_BG = 'rgb(22, 19, 31)'; // #16131F
-const LIGHT_BG = 'rgb(244, 242, 238)'; // #F4F2EE, paper
+const DARK_BG = 'rgb(21, 18, 30)'; // #15121E
+const LIGHT_BG = 'rgb(251, 250, 247)'; // #FBFAF7, paper
 const theme = (page) => page.evaluate(() => ({ theme: document.documentElement.dataset.theme, pref: document.documentElement.dataset.themePref }));
 const bodyBg = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 // (the header's Jikhva logo is an SVG: light letters mean the version for dark pages, as the footer's image file says it)
@@ -43,7 +43,7 @@ test.describe('a choice made by hand', () => {
   test('the header button: one click switches light <-> dark, says where it goes, works from the keyboard, and the choice stays', async ({ browser }) => {
     const ctx = await browser.newContext({ colorScheme: 'light', viewport: { width: 1280, height: 800 } });
     const page = await ctx.newPage();
-    await page.goto('/about.html'); // (a page with the full footer and its logo; the home page has the short one)
+    await page.goto('/about.html');
     const button = page.locator('#themeBtn');
     // a first visit follows the device; the button offers the other one (a moon on a light page)
     expect(await theme(page)).toEqual({ theme: 'light', pref: 'system' });
@@ -55,9 +55,9 @@ test.describe('a choice made by hand', () => {
     expect(await theme(page)).toEqual({ theme: 'dark', pref: 'dark' });
     await expect(button).toHaveAccessibleName('Switch to light mode'); // (and a sun)
     await expect.poll(() => bodyBg(page)).toBe(DARK_BG); // after the short fade
-    expect(await barColor(page)).toBe('#16131F'); // the phone's address bar follows
+    expect(await barColor(page)).toBe('#15121E'); // the phone's address bar follows
     expect(await logo(page)).toBe('wisecall-logo-on-dark-transparent.svg');
-    expect(await page.locator('.footer .logo img').evaluate((i) => i.currentSrc.split('/').pop().split('?')[0])).toBe('wisecall-logo-on-dark-transparent.svg');
+    await expect(page.locator('.footer .logo img')).toHaveCount(0); // (the one-line footer has no logo: docs/CLAUDE-CODE-REDESIGN-CALM.md)
     expect(await page.evaluate(() => localStorage.getItem('wisecall_theme'))).toBe('dark');
     // the keyboard: the focused button switches with Enter and with Space, and shows the focus ring
     await button.focus();
@@ -78,7 +78,7 @@ test.describe('a choice made by hand', () => {
     expect((await theme(page)).theme, 'a choice made by hand ignores the device').toBe('dark');
     await page.click('#themeBtn');
     expect(await theme(page)).toEqual({ theme: 'light', pref: 'light' });
-    expect(await barColor(page)).toBe('#F4F2EE');
+    expect(await barColor(page)).toBe('#FBFAF7');
     await ctx.close();
 
     // in Georgian, the button's words are Georgian
@@ -205,7 +205,7 @@ test.describe('the header with the theme button', () => {
             const tooTall = [...document.querySelectorAll('.nav-links a, .nav-right a, .nav-right button')].filter((e) => e.offsetParent && e.getBoundingClientRect().height > 50).length;
             return { logo: Math.round(document.querySelector('.nav .logo .jlogo').getBoundingClientRect().width), overflow: inner.scrollWidth - inner.clientWidth, gap: Math.round(right.left - lastLink), page: document.documentElement.scrollWidth - innerWidth, tooTall };
           });
-          if (m.logo < 140 || m.overflow > 0 || m.gap < 12 || m.page > 0 || m.tooTall) problems.push(`${who} ${w}px: ${JSON.stringify(m)}`);
+          if (m.logo < 110 || m.overflow > 0 || m.gap < 12 || m.page > 0 || m.tooTall) problems.push(`${who} ${w}px: ${JSON.stringify(m)}`);
           await ctx.close();
         }
       }

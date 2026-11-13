@@ -287,3 +287,14 @@
   function setUser(user) { const m = mentorOf(user); setHint(hintOf(user, m)); drawMentor(m); }
   window.WisecallNav = { initNav, showToast, setUnread, setUser, mentorPath: () => mentorNow };
 })();
+
+// A section that opens (docs/CLAUDE-CODE-REDESIGN-CALM.md): <button class="open-row" aria-expanded aria-controls="id"> shows or hides its panel.
+document.addEventListener('click', (ev) => {
+  const row = ev.target.closest && ev.target.closest('.open-row[aria-controls]');
+  if (!row) return;
+  const panel = document.getElementById(row.getAttribute('aria-controls'));
+  if (!panel) return;
+  const open = row.getAttribute('aria-expanded') !== 'true';
+  row.setAttribute('aria-expanded', String(open));
+  panel.hidden = !open;
+});

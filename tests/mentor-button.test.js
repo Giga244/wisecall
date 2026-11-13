@@ -156,7 +156,7 @@ describe('what the pages show', () => {
   });
 
   test('the home page\'s mentor banner: "Become a mentor" for everybody, to the mentors\' page (docs/CLAUDE-CODE-NEW-HOME.md 2.6)', () => {
-    assert.match(read('public/index.html'), /<a href="\/become-a-mentor\.html" class="btn btn-primary btn-lg btn-arrow lmentor-btn" data-mentor-cta="hero" data-i18n="nav\.becomeMentor">/);
+    assert.match(read('public/index.html'), /<a href="\/become-a-mentor\.html" class="btn btn-primary lmentor-btn" data-mentor-cta="hero" data-i18n="nav\.becomeMentor">/);
     // (the mentors' page sends someone signed in on to the application)
     assert.match(read('public/js/info-page.js'), /'\/apply\.html' : '\/signup\.html\?as=mentor'/);
   });

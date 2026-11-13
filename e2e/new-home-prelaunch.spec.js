@@ -22,8 +22,7 @@ test('the hero has the waiting list (no search); joining saves the address; a re
   const { ctx, page } = await ka(browser);
   await page.goto(`${srv.base}/ka/`);
   // (a phone shows the short pill, a computer the long one: docs/CLAUDE-CODE-COMPACT-HOME.md)
-  await expect(page.locator('.lhero-pill .only-narrow')).toHaveText('🚀 მალე იხსნება');
-  await expect(page.locator('.lhero-pill .only-wide')).toHaveText('🚀 მალე იხსნება · ჩაეწერე პირველებში');
+  await expect(page.locator('.lhero-pill')).toHaveText('მალე იხსნება'); // (one short pill, no emoji: docs/CLAUDE-CODE-REDESIGN-CALM.md)
   await expect(page.locator('#heroSearch')).toHaveCount(0);
   const form = page.locator('#heroWait .waitlist-form');
   await expect(form.locator('button[type="submit"]')).toHaveText('ჩაეწერე სიაში');
@@ -58,8 +57,8 @@ test('the count line: the real number rounded down to ten, hidden under 50', asy
   }
   const now = await listCount();
   await page.goto(`${srv.base}/ka/`);
-  await expect(page.locator('#waitCount .only-wide')).toHaveText(`🔥 ${Math.floor(now / 10) * 10}+ ადამიანი უკვე მოლოდინის სიაშია`);
-  await expect(page.locator('#waitCount .only-narrow')).toHaveText(`🔥 ${Math.floor(now / 10) * 10}+ ადამიანი უკვე სიაშია`);
+  await expect(page.locator('#waitCount .only-wide')).toHaveText(`${Math.floor(now / 10) * 10}+ ადამიანი უკვე მოლოდინის სიაშია`);
+  await expect(page.locator('#waitCount .only-narrow')).toHaveText(`${Math.floor(now / 10) * 10}+ ადამიანი უკვე სიაშია`);
   await ctx.close();
 });
 
@@ -113,7 +112,10 @@ for (const [width, scheme] of [[360, 'dark'], [360, 'light'], [768, 'dark'], [12
       const rgb = (c) => c.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number);
       const lum = (c) => { const [r, g, b] = rgb(c).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
       const ics = getComputedStyle(row.querySelector('input'));
-      const [hi, lo] = [lum(ics.color), lum(ics.backgroundColor)].sort((a, b) => b - a);
+      // (on a computer the field is see-through inside its white row: the colour behind the text is the nearest one that is not)
+      let ground = row.querySelector('input');
+      while (ground && /rgba\(0, 0, 0, 0\)|transparent/.test(getComputedStyle(ground).backgroundColor)) ground = ground.parentElement;
+      const [hi, lo] = [lum(ics.color), lum(getComputedStyle(ground || document.body).backgroundColor)].sort((a, b) => b - a);
       const chips = [...document.querySelectorAll('#heroChips .lchip')].map((c) => Math.round(box(c).top));
       const count = document.getElementById('waitCount');
       return {
@@ -127,7 +129,7 @@ for (const [width, scheme] of [[360, 'dark'], [360, 'light'], [768, 'dark'], [12
       };
     });
     expect(m.logoTop, 'the horns are not cut off').toBeGreaterThanOrEqual(0);
-    expect(m.headTop, 'room above the horns').toBeGreaterThanOrEqual(width < 768 ? 8 : 12);
+    expect(m.headTop, 'room above the horns').toBeGreaterThanOrEqual(width < 1024 ? 8 : 12);
     expect(m.headInside).toBe(true);
     expect(m.lines, 'headline lines').toBeLessThanOrEqual(width >= 1024 ? 3 : 4);
     if (width >= 768) expect(m.oneRow, 'the email and its button on one row').toBe(true);

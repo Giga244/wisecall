@@ -35,59 +35,79 @@
 
 <main id="main" class="landing">
 
-<!-- 1. The top card (docs/CLAUDE-CODE-COMPACT-HOME.md): the promise, the waiting list (after launch: the search), the fields and the example
-     chat. One grid: on a phone the card holds the text and form, the fields and the chat follow it; from 768px the card holds both columns. -->
+<!-- 1-3. The top (docs/CLAUDE-CODE-REDESIGN-CALM.md): the promise and the waiting list (after launch: the search); beside it (on a phone: under
+     it) Jikhva in front of the tint circle and the example card. -->
 <section class="lhero" aria-labelledby="heroTitle">
-  <div class="container">
-    <div class="lhero-card">
-      <div class="lhero-text">
-        <img class="lhero-jikhva" src="/brand/jikhva-present.webp" alt="" width="150" height="258" decoding="async">
-        <p class="lhero-pill"><span class="only-narrow" data-i18n="home2.pill.short" data-i18n-prelaunch="home2.pill.prelaunchShort">✓ Verified experts</span><span class="only-wide" data-i18n="home2.pill" data-i18n-prelaunch="home2.pill.prelaunch">✓ Verified experts · Written answers</span></p>
-        <h1 id="heroTitle" class="lhero-title"><span data-i18n="home2.title1">Ask someone who has already</span> <em data-i18n="home2.title2">walked that path</em></h1>
-        <p class="lhero-sub"><span class="only-wide" data-i18n="home2.subLead">Chose your field but still have questions?</span> <span data-i18n="home2.subMain">An expert in your field answers you in writing within 7 days.</span></p>
-        <!-- after launch -->
-        <form class="lhero-search" id="heroSearch" role="search" action="/experts.html" method="get">
-          <label for="heroQ" class="sr-only" data-i18n="home2.search.label">Which field do you need advice in?</label>
-          <input type="search" id="heroQ" name="q" data-i18n-placeholder="home2.search.placeholder" placeholder="e.g. medicine, IT, IELTS, law..." autocomplete="off" enterkeyhint="search" maxlength="200">
-          <button type="submit" class="btn btn-primary" data-i18n="home2.search.button">Search</button>
-        </form>
-        <!-- /after launch -->
-        <!-- before launch -->
-        <!-- (the waiting list instead of the search: drawn by public/js/waitlist.js into its skeleton, the same height) -->
-        <div class="lhero-wait" id="heroWait"><div class="lhero-wait-skeleton" aria-hidden="true"><span class="skeleton skeleton-input"></span><span class="skeleton skeleton-line w60"></span></div></div>
-        <p class="lhero-count" id="waitCount" hidden></p>
-        <!-- /before launch -->
-      </div>
-      <!-- the popular fields: choosing one shows that field's example in the chat (and is the field of the waiting list) -->
-      <ul class="lhero-chips" id="heroChips" aria-label="Popular fields" data-i18n-aria="home.chips.label"><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li></ul>
+  <div class="container lhero-top">
+    <div class="lhero-text">
+      <p class="lhero-pill"><i aria-hidden="true"></i><span data-i18n="home2.pill.short" data-i18n-prelaunch="home2.pill.prelaunchShort">Verified experts</span></p>
+      <h1 id="heroTitle" class="lhero-title"><span data-i18n="home2.title1">Ask someone who has already</span> <em data-i18n="home2.title2">walked that path</em></h1>
+      <p class="lhero-sub" data-i18n="home2.subMain">An expert in your field answers you in writing within 7 days.</p>
+      <!-- after launch -->
+      <form class="lhero-search" id="heroSearch" role="search" action="/experts.html" method="get">
+        <label for="heroQ" class="sr-only" data-i18n="home2.search.label">Which field do you need advice in?</label>
+        <input type="search" id="heroQ" name="q" data-i18n-placeholder="home2.search.placeholder" placeholder="e.g. medicine, IT, IELTS, law..." autocomplete="off" enterkeyhint="search" maxlength="200">
+        <button type="submit" class="btn btn-primary" data-i18n="home2.search.button">Search</button>
+      </form>
+      <!-- /after launch -->
+      <!-- before launch -->
+      <!-- (the waiting list instead of the search: drawn by public/js/waitlist.js into its skeleton, the same height) -->
+      <div class="lhero-wait" id="heroWait"><div class="lhero-wait-skeleton" aria-hidden="true"><span class="skeleton skeleton-input"></span><span class="skeleton skeleton-line w60"></span></div></div>
+      <p class="lhero-count" id="waitCount" hidden></p>
+      <!-- /before launch -->
+    </div>
 
-      <!-- 2. The example chat (docs/CLAUDE-CODE-RANDOM-PHONE.md): real questions and answers that the student and the mentor agreed to show,
-           a random one on each loop (server/homeQa.js, public/js/phone-rotation.js); with fewer than three real ones, an example marked
-           "Example", with no name, no badge and no rating. Typed like live texting by public/js/landing.js; read out from the caption. -->
-      <div class="lhero-chat" id="homeQa">
-        <p class="sr-only" id="qaCaption"></p>
-        <img class="lhero-chat-jikhva" src="/brand/jikhva-present.webp" alt="" width="150" height="258" loading="lazy" decoding="async">
-        <p class="qa-label"><span data-i18n="home2.qa.label">How an answer looks</span><span class="qa-example" hidden></span></p>
-        <figure class="qa-phone" aria-hidden="true">
-          <div class="qa-screen">
-            <div class="qa-head"><span class="qa-avatar"></span><span class="qa-who"><b class="qa-name"></b><small class="qa-meta"></small></span></div>
-            <div class="qa-chat">
-              <div class="qa-q"><span class="qa-qtext"></span></div>
-              <em class="qa-sent"></em>
-              <div class="qa-typing"><i></i><i></i><i></i></div>
-              <div class="qa-a"><b class="qa-aname"></b><span class="qa-atext"></span></div>
-              <div class="qa-rate"><span class="qa-stars"><i>⭐</i><i>⭐</i><i>⭐</i><i>⭐</i><i>⭐</i></span><span class="qa-ratelabel"></span></div>
-            </div>
-            <div class="qa-foot"><em class="qa-adays"></em><span class="qa-example-foot" hidden></span><span class="qa-dots"></span></div>
+    <!-- The example card (docs/CLAUDE-CODE-RANDOM-PHONE.md): real questions and answers that the student and the mentor agreed to show, a
+         random one on each loop (server/homeQa.js, public/js/phone-rotation.js); with fewer than three real ones, an example marked
+         "Example", with no name, no badge and no rating. Typed like live texting by public/js/landing.js; read out from the caption. -->
+    <div class="lhero-chat" id="homeQa">
+      <p class="sr-only" id="qaCaption"></p>
+      <img class="lhero-jikhva" src="/brand/jikhva-present.webp" alt="" width="186" height="320" decoding="async">
+      <figure class="qa-phone" aria-hidden="true">
+        <div class="qa-screen">
+          <p class="qa-label"><span class="qa-example" hidden></span><span class="qa-example-foot" hidden></span><span class="qa-name"></span><span class="qa-field"></span></p>
+          <div class="qa-head" hidden><span class="qa-avatar"></span><small class="qa-meta"></small></div>
+          <div class="qa-chat">
+            <div class="qa-q"><span class="qa-qtext"></span></div>
+            <em class="qa-sent"></em>
+            <div class="qa-typing"><i></i><i></i><i></i></div>
+            <div class="qa-a"><b class="qa-aname"></b><span class="qa-atext"></span></div>
+            <div class="qa-rate"><span class="qa-stars"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span><span class="qa-ratelabel"></span></div>
           </div>
-        </figure>
-      </div>
+          <div class="qa-foot"><em class="qa-adays"></em><span class="qa-dots"></span></div>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <!-- 4. The popular fields: choosing one shows that field's example in the card (and is the field of the waiting list) -->
+  <div class="container lhero-fields">
+    <span class="lhero-fields-label" id="heroChipsLabel" data-i18n="home2.popular">Popular:</span>
+    <ul class="lhero-chips" id="heroChips" aria-labelledby="heroChipsLabel"><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li><li aria-hidden="true"><span class="skeleton skeleton-chip"></span></li></ul>
+  </div>
+</section>
+
+<!-- 5. How it works: one white panel, three numbered steps, then the three trust ticks -->
+<section class="lsection lhow" id="how" aria-labelledby="howTitle">
+  <div class="container">
+    <div class="lband">
+      <h2 id="howTitle" data-i18n="home2.how.title">How it works</h2>
+      <ol class="lsteps">
+        <li class="lstep"><span class="lstep-n" aria-hidden="true">1</span><h3 data-i18n="home2.how.1.title">Choose an expert</h3><p data-i18n="home2.how.1.short">From your field</p></li>
+        <li class="lstep"><span class="lstep-n" aria-hidden="true">2</span><h3 data-i18n="home2.how.2.title">Write your question</h3><p data-i18n="home2.how.2.short">In detail, no calls</p></li>
+        <li class="lstep"><span class="lstep-n" aria-hidden="true">3</span><h3 data-i18n="home2.how.3.title">Get your answer</h3><p data-i18n="home2.how.3.short">Within 7 days, or your money back</p></li>
+      </ol>
+      <ul class="lticks">
+        <li><svg class="tick" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span data-i18n="home2.tick.1">ID-verified mentors</span></li>
+        <li><svg class="tick" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span data-i18n="home2.tick.2">In writing only</span></li>
+        <li><svg class="tick" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span data-i18n="home2.tick.3">Contacts stay protected</span></li>
+      </ul>
+      <p class="lband-more"><a class="arrow-link" href="/how-we-verify.html" data-i18n="how.verify.link">how we verify</a></p>
     </div>
   </div>
 </section>
 
-<!-- 3. Meet our experts (2.3): up to three approved mentors who chose to be shown on the home page (public/js/home-mentors.js); hidden when none.
-     On a phone one row that scrolls sideways. -->
+<!-- 6. Meet our experts: up to three approved mentors who chose to be shown on the home page (public/js/home-mentors.js); hidden when none -->
 <section class="lsection lexperts" id="homeMentors" aria-labelledby="homeMentorsTitle" hidden>
   <div class="container">
     <div class="lsection-head">
@@ -98,47 +118,38 @@
   </div>
 </section>
 
-<!-- 4. Three steps: in a row on a computer; on a phone a row that scrolls sideways, each with one short line -->
-<section class="lsection lhow" id="how" aria-labelledby="howTitle">
+<!-- 7. A few questions, closed (the rest: /faq.html) -->
+<section class="lsection lfaq" aria-labelledby="faqTitle">
   <div class="container">
-    <h2 id="howTitle" data-i18n="home2.how.steps">3 steps</h2>
-    <ol class="lsteps">
-      <li class="lstep"><span class="lstep-icon" aria-hidden="true">🔍</span><h3 data-i18n="home2.how.1.title">Choose an expert</h3><p><span class="only-wide" data-i18n="home2.how.1.body">Find your field and see who will answer you.</span><span class="only-narrow" data-i18n="home2.how.1.short">From your field</span></p></li>
-      <li class="lstep"><span class="lstep-icon" aria-hidden="true">✍️</span><h3 data-i18n="home2.how.2.title">Write your question</h3><p><span class="only-wide" data-i18n="home2.how.2.body">The more detail you give, the better the answer.</span><span class="only-narrow" data-i18n="home2.how.2.short">More detail, a better answer</span></p></li>
-      <li class="lstep"><span class="lstep-icon" aria-hidden="true">📩</span><h3 data-i18n="home2.how.3.title">Get your answer</h3><p><span class="only-wide" data-i18n="home2.how.3.body">In writing, within 7 days. If not, you get all your money back.</span><span class="only-narrow" data-i18n="home2.how.3.short">Within 7 days, or your money back</span></p></li>
-    </ol>
+    <h2 id="faqTitle" data-i18n="home2.faq.title">Common questions</h2>
+    <div class="lfaq-list">
+      <h3><button type="button" class="open-row" aria-expanded="false" aria-controls="hfaq1"><span data-i18n="faq.2.q">What does it cost?</span></button></h3>
+      <div class="open-panel" id="hfaq1" hidden><p data-i18n="faq.2.a"></p></div>
+      <h3><button type="button" class="open-row" aria-expanded="false" aria-controls="hfaq2"><span data-i18n="faq.3.q">What happens if the mentor doesn't answer?</span></button></h3>
+      <div class="open-panel" id="hfaq2" hidden><p data-i18n="faq.3.a"></p></div>
+      <h3><button type="button" class="open-row" aria-expanded="false" aria-controls="hfaq3"><span data-i18n="home2.faq.minor.q">Is it safe for 16-17 year olds?</span></button></h3>
+      <div class="open-panel" id="hfaq3" hidden><p data-i18n="home2.faq.minor.a"></p></div>
+    </div>
+    <p class="lfaq-more"><a class="arrow-link" href="/faq.html" data-i18n="home2.faq.all">All questions</a></p>
   </div>
 </section>
 
-<!-- 5. Trust: one card, four in a row -->
-<section class="ltrust" aria-label="Why it's safe" data-i18n-aria="home2.trust.label">
-  <div class="container">
-    <ul class="ltrust-row">
-      <li><span class="ltrust-icon" aria-hidden="true">🪪</span><span class="only-narrow" data-i18n="home2.trust.1.short">ID-verified</span><span class="only-wide"><b data-i18n="home2.trust.1.b">ID-verified</b> <span data-i18n="home2.trust.1.rest">every mentor</span></span></li>
-      <li><span class="ltrust-icon" aria-hidden="true">⏱</span><span class="only-narrow" data-i18n="home2.trust.2.short">7 days or a refund</span><span class="only-wide"><b data-i18n="home2.trust.2.b">Within 7 days</b> <span data-i18n="home2.trust.2.rest">or your money back</span></span></li>
-      <li><span class="ltrust-icon" aria-hidden="true">✍️</span><span class="only-narrow" data-i18n="home2.trust.3.short">In writing</span><span class="only-wide"><b data-i18n="home2.trust.3.b">In writing,</b> <span data-i18n="home2.trust.3.rest">in your own time</span></span></li>
-      <li><span class="ltrust-icon" aria-hidden="true">🔒</span><span class="only-narrow" data-i18n="home2.trust.4.short">Contacts protected</span><span class="only-wide"><b data-i18n="home2.trust.4.b">Private:</b> <span data-i18n="home2.trust.4.rest">contacts stay protected</span></span></li>
-    </ul>
-    <p class="ltrust-more"><a class="arrow-link" href="/how-we-verify.html" data-i18n="how.verify.link">how we verify</a></p>
-  </div>
-</section>
-
-<!-- 6. For experts: a coral banner; on a computer Jikhva waves on its left -->
+<!-- 8. For experts: the dark block, Jikhva waving -->
 <section class="lsection lmentor" aria-labelledby="mentorTitle">
   <div class="container">
     <div class="lmentor-card">
-      <img class="lmentor-jikhva" src="/brand/jikhva-wave.webp" alt="" width="64" height="125" loading="lazy" decoding="async">
       <div class="lmentor-text">
         <h2 id="mentorTitle" data-i18n="home2.mentor.title">Are you an expert?</h2>
-        <p id="mentorBody"><span class="only-wide" data-i18n="home2.mentor.body">Answer students in writing when you have time. You set the price, and 80% is yours.</span><span class="only-narrow" data-i18n="home2.mentor.short">Answer when you have time · 80% is yours</span></p>
+        <p id="mentorBody" data-i18n="home2.mentor.short">Answer when you have time. You set the price, and 80% is yours.</p>
+        <a href="/become-a-mentor.html" class="btn btn-primary lmentor-btn" data-mentor-cta="hero" data-i18n="nav.becomeMentor">Become a mentor</a>
       </div>
-      <a href="/become-a-mentor.html" class="btn btn-primary btn-lg btn-arrow lmentor-btn" data-mentor-cta="hero" data-i18n="nav.becomeMentor">Become a mentor</a>
+      <img class="lmentor-jikhva" src="/brand/jikhva-wave.webp" alt="" width="98" height="190" loading="lazy" decoding="async">
     </div>
   </div>
 </section>
 
-<!-- On a phone: one join button pinned to the bottom (after launch: "Find an expert"), hidden while the top card's form is on screen -->
-<a class="home-pin" id="homePin" href="#heroTitle" hidden><span data-i18n="home2.pin.search" data-i18n-prelaunch="home2.pin.join">🔍 Find an expert</span></a>
+<!-- On a phone: one join button pinned to the bottom (after launch: "Find an expert"), hidden while the top form is on screen -->
+<a class="home-pin" id="homePin" href="#heroTitle" hidden><span data-i18n="home2.pin.search" data-i18n-prelaunch="home2.pin.join">Find an expert</span></a>
 
 </main>
 

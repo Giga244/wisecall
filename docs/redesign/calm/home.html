@@ -1,0 +1,97 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:G;src:url(noto-sans-georgian-georgian-400-normal.woff)}@font-face{font-family:G;font-weight:700;src:url(noto-sans-georgian-georgian-700-normal.woff)}
+@font-face{font-family:Br;src:url(bricolage-grotesque-latin.woff2);font-weight:200 800}@font-face{font-family:On;src:url(onest-latin.woff2);font-weight:100 900}
+:root{--bg:#fbfaf7;--card:#fff;--ink:#1e1a31;--soft:#6a6580;--line:#ebe7e0;--co:#ff6f59;--cot:#d9482f;--ok:#1b7f5f}
+[data-theme=dark]{--bg:#15121e;--card:#1e1a2b;--ink:#f4f2ee;--soft:#aaa5bb;--line:#2c2840;--cot:#ff8f7d;--ok:#7fd9b8}
+*{box-sizing:border-box;margin:0;padding:0}html{background:var(--bg)}body{background:var(--bg);color:var(--ink);font-family:On,G,sans-serif;font-size:16px;line-height:1.55}
+a{color:inherit;text-decoration:none}h1,h2{font-family:Br,G,sans-serif;font-weight:700;letter-spacing:-.4px}
+.w{max-width:1000px;margin:0 auto;padding:0 32px}
+header{display:flex;align-items:center;justify-content:space-between;height:76px}
+.logo{font-family:Br,G,sans-serif;font-weight:800;font-size:22px;letter-spacing:-.4px;position:relative;padding-top:8px;line-height:1}
+.logo span{position:relative;z-index:1;-webkit-text-stroke:5px var(--bg);paint-order:stroke fill}.logo img{position:absolute;height:31px;left:47px;top:-9px}.logo b{color:var(--co)}
+nav{display:flex;gap:30px;align-items:center;font-size:15px;color:var(--soft)}nav .on{color:var(--ink);font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;background:var(--co);color:#1e1a31;font-weight:700;padding:14px 24px;border-radius:14px;white-space:nowrap;font-size:16px}
+.btn.sm{padding:9px 16px;font-size:14px;border-radius:12px}.btn.line{background:none;border:1.5px solid var(--ink);color:var(--ink)}
+.mn{display:none}
+footer{border-top:1px solid var(--line);margin-top:80px;padding:28px 0 36px;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--soft)}
+footer .l{display:flex;gap:24px}footer .s{display:flex;gap:16px;color:var(--ink)}
+@media(max-width:700px){.w{padding:0 24px}header{height:64px}nav a.nl{display:none}nav{gap:14px;color:var(--ink)}.mn{display:block}
+footer{flex-direction:column;align-items:flex-start;gap:16px;margin-top:56px}footer .l{flex-wrap:wrap;gap:8px 20px}}
+
+.hero{text-align:center;padding:64px 0 0;max-width:680px;margin:0 auto}
+.eye{font-size:13px;color:var(--soft);font-weight:700}
+h1{font-size:56px;line-height:1.12;margin:18px 0 18px}h1 em{font-style:normal;color:var(--cot)}
+.sub{font-size:19px;color:var(--soft);max-width:480px;margin:0 auto}
+.form{display:flex;gap:8px;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:6px;margin:36px auto 0;max-width:480px;box-shadow:0 10px 40px rgba(30,26,49,.06)}.form input{flex:1;min-width:0;border:0;background:none;font:inherit;padding:0 16px;outline:0;color:var(--ink)}
+.ok{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--soft);margin-top:18px}.ok i{width:18px;height:18px;border:1.5px solid var(--soft);border-radius:5px}
+.cnt{font-size:14px;color:var(--soft);margin-top:6px}.cnt b{color:var(--ink)}.cnt a{text-decoration:underline}
+.show{display:flex;align-items:flex-end;justify-content:center;gap:24px;margin:64px auto 0;max-width:640px}
+.show img{height:230px;flex:none}
+.chat{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;text-align:left;margin-bottom:20px}
+.tag{font-size:12px;color:var(--soft);font-weight:700}
+.q{font-weight:700;font-size:17px;margin:8px 0 12px}
+.a{color:var(--soft);font-size:15px;padding-left:14px;border-left:2px solid var(--co)}.a b{display:flex;align-items:center;gap:5px;color:var(--ok);font-size:13px}
+.caret{display:inline-block;width:2px;height:15px;background:var(--co);vertical-align:-2px;margin-left:2px}
+section{margin-top:96px}h2{font-size:30px;text-align:center;margin-bottom:40px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;text-align:center}.n{font-family:Br;font-weight:700;font-size:15px;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--ink);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px}.steps b{display:block;font-size:18px}.steps p{color:var(--soft);font-size:15px}
+.trust{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:56px;font-size:14.5px;color:var(--soft)}.trust span{display:flex;align-items:center;gap:6px}.trust svg{color:var(--ok)}
+.ment{display:flex;align-items:center;justify-content:space-between;gap:24px;border:1px solid var(--line);background:var(--card);border-radius:22px;padding:30px 34px;margin-top:96px}.ment h3{font-family:Br,G;font-size:22px}.ment p{color:var(--soft);font-size:15px}
+@media(max-width:700px){.hero{padding:36px 0 0}h1{font-size:36px;margin:14px 0 14px}.sub{font-size:17px}
+.form{flex-direction:column;border:0;background:none;box-shadow:none;padding:0;gap:10px;margin-top:28px}.form input{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:15px 16px}.form .btn{padding:16px}
+.show{flex-direction:column;align-items:center;gap:0;margin-top:44px}.show img{height:170px;margin-bottom:-6px}.chat{margin:0;width:100%}
+section{margin-top:64px}h2{font-size:26px;margin-bottom:28px}.steps{grid-template-columns:1fr;gap:26px;text-align:left}.steps div{display:grid;grid-template-columns:36px 1fr;column-gap:16px}.n{grid-row:span 2;margin:2px 0 0}
+.trust{display:grid;grid-template-columns:1fr;gap:12px;justify-content:start;margin-top:44px}
+.ment{flex-direction:column;align-items:flex-start;padding:26px 24px;margin-top:64px}.ment .btn{width:100%}}
+
+.chips{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:26px}.chips span{font-size:13px;color:var(--soft);align-self:center}.chips a{border:1.5px solid var(--line);background:var(--card);border-radius:30px;padding:7px 15px;font-size:14px;font-weight:700}
+.show{position:relative}.show:before{content:"";position:absolute;left:-10px;bottom:0;width:250px;height:190px;border-radius:50%;background:var(--tint);z-index:0}.show>*{position:relative;z-index:1}
+:root{--tint:#ffe9e4}[data-theme=dark]{--tint:#2b2029}
+.ms{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.mc{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;text-align:center}
+.mc .av{width:64px;height:64px;border-radius:50%;background:var(--tint);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:19px;margin-bottom:12px}
+.mc b{display:block;font-family:Br,G;font-size:18px}.mc span{font-size:14px;color:var(--soft)}.mc em{font-style:normal;display:flex;justify-content:center;align-items:center;gap:4px;color:var(--ok);font-size:13px;margin:8px 0 14px}.mc a{font-weight:700;color:var(--cot);font-size:15px;white-space:nowrap}
+.more{text-align:center;margin-top:28px}.more a{font-weight:700;border-bottom:2px solid var(--co);padding-bottom:2px}
+.faq{max-width:680px;margin:0 auto}.fq{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;border-bottom:1px solid var(--line);font-weight:700;font-size:16.5px}.fq i{font-style:normal;font-size:22px;color:var(--soft);font-weight:400}
+.fa{color:var(--soft);font-size:15px;padding:0 0 20px;border-bottom:1px solid var(--line);margin-top:-8px}
+@media(max-width:700px){.chips{justify-content:flex-start;flex-wrap:nowrap;overflow:hidden;margin:22px -24px 0;padding:0 24px}.chips a{flex:none}.chips span{display:none}
+.show:before{left:50%;margin-left:-125px;top:10px;bottom:auto;width:250px;height:170px}
+.ms{grid-template-columns:1fr;gap:12px}.mc{display:grid;grid-template-columns:56px 1fr auto;text-align:left;align-items:center;column-gap:14px;padding:16px}.mc .av{width:56px;height:56px;margin:0;grid-row:span 2}.mc em{justify-content:flex-start;margin:0;grid-column:2}.mc b{font-size:16.5px}.mc span{display:none}.mc a{grid-column:3;grid-row:1/span 2}}
+
+.top{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:56px 0 0}
+.hero{text-align:left;padding:0;margin:0;max-width:none}.sub{margin:0}.form{margin:30px 0 0}h1{font-size:52px}
+.eye{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:30px;padding:5px 14px}.eye i{width:7px;height:7px;border-radius:50%;background:var(--co)}
+.show{margin:0;display:block;max-width:none;height:380px}.show:before{left:auto;right:-20px;top:10px;bottom:auto;width:300px;height:300px}
+.show img{position:absolute;right:6px;top:16px;height:320px}.chat{position:absolute;left:0;bottom:10px;width:268px;margin:0;box-shadow:0 20px 50px rgba(30,26,49,.10)}
+.dl{display:flex;align-items:center;gap:5px;color:var(--ok);font-size:13px;margin-top:12px}
+.chips{justify-content:flex-start;margin-top:40px}
+.band{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:48px 40px;margin-top:72px}.band h2{margin-bottom:36px}
+.steps{position:relative}.steps:before{content:"";position:absolute;left:17%;right:17%;top:18px;border-top:1.5px dashed var(--line)}.n{background:var(--card);position:relative}
+.trust{margin-top:40px;padding-top:28px;border-top:1px solid var(--line)}
+section{margin-top:80px}.sh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:28px}.sh h2{margin:0;text-align:left}.sh a{font-weight:700;color:var(--cot);white-space:nowrap}
+.mc{text-align:left;display:grid;grid-template-columns:56px 1fr;gap:6px 14px;align-items:center}.mc .av{width:56px;height:56px;margin:0;font-size:18px}.mc em{justify-content:flex-start;margin:2px 0 0}.mc span{display:block}
+.mc p{grid-column:1/-1;font-size:15px;color:var(--soft);margin-top:8px}.mf{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:14px;margin-top:8px}.mf span{font-family:Br,G;font-weight:700;color:var(--ink);font-size:17px}
+.ment{background:#1e1a31;border:0;color:#fff;position:relative;overflow:hidden;padding:40px 44px;margin-top:80px}.ment p{color:#c9c5d6;margin:6px 0 20px}.ment img{height:190px;margin:-40px 10px -60px 0}
+[data-theme=dark] .ment{background:#262138}
+@media(max-width:700px){.top{grid-template-columns:1fr;gap:36px;padding:28px 0 0}.hero{text-align:center}h1{font-size:35px}.eye{margin:0 auto}
+.show{height:auto;display:flex;flex-direction:column;align-items:center}.show:before{left:50%;right:auto;margin-left:-110px;top:0;width:220px;height:170px}.show img{position:relative;right:auto;top:auto;height:160px;margin-bottom:-8px}.chat{position:relative;width:100%;bottom:auto}
+.chips{margin:28px -24px 0}.band{padding:32px 22px;margin:52px -8px 0;border-radius:24px}.band h2{margin-bottom:26px}.steps:before{display:none}.trust{margin-top:28px;padding-top:22px}
+section{margin-top:56px}.sh{margin-bottom:18px}.mc{padding:18px}.mc a{grid-column:auto;grid-row:auto}.mc span{display:block}
+.ment{padding:28px 24px 26px;margin-top:56px}.ment .btn{width:auto}.ment img{position:absolute;right:6px;bottom:-8px;height:110px;margin:0}.ment p{max-width:210px}}
+</style></head><body><div class="w"><header><a class="logo"><img src="jikhva-head.png" alt=""><span>Wisecall</span><b>.</b></a><nav><a class="nl">ექსპერტები</a><a class="nl">როგორ მუშაობს</a><a class="nl">გახდი მენტორი</a><a class="nl">EN</a><a class="btn sm">ჩაეწერე</a><span class="mn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg></span></nav></header>
+<div class="top"><div class="hero"><div class="eye"><i></i>მალე იხსნება</div>
+<h1>ჰკითხე მას, ვინც ეს გზა <em>უკვე გაიარა</em></h1>
+<p class="sub">შენი სფეროს ექსპერტი წერილობით გიპასუხებს 7 დღეში.</p>
+<div class="form"><input placeholder="შენი ელფოსტა"><a class="btn">ჩაეწერე სიაში</a></div>
+<div class="ok"><i></i>16 წლის ან უფროსი ვარ</div>
+<div class="cnt"><b>90+</b> ადამიანი უკვე სიაშია · <a>კონფიდენციალურობა</a></div></div>
+<div class="show"><img src="jikhva-present.png" alt=""><div class="chat"><div class="tag">მაგალითი · მედიცინა</div><div class="q">ბიოლოგია სუსტად მაქვს. ღირს სამედიცინოზე ჩაბარება?</div><div class="a"><b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ექსპერტი პასუხობს</b>ღირს, თუ ნამდვილად გაინტერესებს. დაიწყე დღეში ერთი საათით<span class="caret"></span></div><div class="dl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>პასუხი 7 დღეში</div></div></div></div>
+<div class="chips"><span>პოპულარული:</span><a>მედიცინა</a><a>IT</a><a>სამართალი</a><a>IELTS</a><a>საზღვარგარეთ</a><a>ბიზნესი</a></div>
+<div class="band"><h2>როგორ მუშაობს</h2><div class="steps"><div><span class="n">1</span><b>აირჩიე ექსპერტი</b><p>შენი სფეროდან</p></div><div><span class="n">2</span><b>დაწერე კითხვა</b><p>დეტალურად, ზარების გარეშე</p></div><div><span class="n">3</span><b>მიიღე პასუხი</b><p>7 დღეში ან თანხა გიბრუნდება</p></div></div>
+<div class="trust"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ID-ით გადამოწმებული მენტორები</span><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>მხოლოდ წერილობით</span><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>კონტაქტები დაცულია</span></div></div>
+<section><div class="sh"><h2>გაიცანი ექსპერტები</h2><a>ყველა →</a></div><div class="ms">
+<div class="mc"><span class="av">ი</span><div><b>ირაკლი</b><span>ფსიქოლოგი</span><em><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>გადამოწმებული</em></div><p>გიპასუხებ პროფესიის არჩევასა და გამოცდების სტრესზე.</p><div class="mf"><span>უფასო</span><a>პროფილი →</a></div></div>
+<div class="mc"><span class="av">ნ</span><div><b>ნინო</b><span>იურისტი</span><em><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>გადამოწმებული</em></div><p>გიპასუხებ, როგორ დაიწყო იურისტის კარიერა.</p><div class="mf"><span>20 ₾</span><a>პროფილი →</a></div></div>
+<div class="mc"><span class="av">ლ</span><div><b>ლევანი</b><span>დეველოპერი</span><em><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>გადამოწმებული</em></div><p>გიპასუხებ, საიდან დაიწყო პროგრამირება.</p><div class="mf"><span>15 ₾</span><a>პროფილი →</a></div></div></div></section>
+<section><h2 style="text-align:center">ხშირი კითხვები</h2><div class="faq">
+<div class="fq">რა ღირს კითხვის დასმა?<i>+</i></div><div class="fq">რა ხდება, თუ პასუხი არ მოვა?<i>+</i></div><div class="fq">უსაფრთხოა 16–17 წლისთვის?<i>+</i></div></div></section>
+<div class="ment"><div><h3>ექსპერტი ხარ?</h3><p>უპასუხე როცა გცალია. ფასს შენ აწესებ, 80% შენია.</p><a class="btn">გახდი მენტორი</a></div><img src="jikhva-wave.png" alt=""></div>
+<footer><span>© 2026 Wisecall</span><div class="l"><a>ფასები</a><a>კითხვები</a><a>ჩვენ შესახებ</a><a>პირობები</a></div><div class="s"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 3h3c.2 1.9 1.5 3.4 3.5 3.6v3c-1.3 0-2.5-.4-3.5-1v6.2A5.8 5.8 0 1 1 11.2 9v3.1a2.8 2.8 0 1 0 2.8 2.8V3z"/></svg><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.6-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H8v3h2.6V21h2.9z"/></svg></div></footer></div></body></html>

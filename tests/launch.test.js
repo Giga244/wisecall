@@ -271,7 +271,7 @@ describe('launch mode: prelaunch, then live', () => {
       assert.match(ka[key] || '', /[ა-ჿ]/, `${key} in Georgian`);
     }
     const home = pub('index.html');
-    assert.match(home, /data-i18n-prelaunch="home2\.pill\.prelaunch"/);
+    assert.match(home, /data-i18n-prelaunch="home2\.pill\.prelaunchShort"/);
     assert.match(home, /class="[^"]*lmentor-btn" data-mentor-cta="hero" data-i18n="nav\.becomeMentor"/); // (the experts' way in, before and after launch)
     // (Browse, public/js/main.js, is open before launch too: docs/CLAUDE-CODE-NEW-HOME.md 4)
     for (const f of ['js/landing.js', 'js/waitlist.js', 'js/profile.js','js/nav.js', 'js/dashboard.js', 'js/settings-verification.js']) assert.match(pub(f), /launchMode\(\)/, `${f} checks the mode`);

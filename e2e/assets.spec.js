@@ -14,7 +14,7 @@ test('the second page view reuses the scripts, stylesheet, logo and icons from t
   await page.waitForLoadState('networkidle');
   // the files the two pages share come from the browser's cache: nothing was transferred for them
   const transferred = await page.evaluate(() => Object.fromEntries(performance.getEntriesByType('resource').map((r) => [r.name.replace(location.origin, ''), r.transferSize])));
-  for (const shared of ['/css/style.css', '/js/header.js', '/js/i18n.js', '/js/theme-init.js', '/js/footer.js', '/brand/wisecall-logo.svg']) {
+  for (const shared of ['/css/style.css', '/js/header.js', '/js/i18n.js', '/js/theme-init.js', '/js/footer.js', '/brand/jikhva-head.webp']) {
     const entry = Object.keys(transferred).find((u) => u.startsWith(shared));
     expect(entry, `${shared} was loaded`).toBeTruthy();
     expect(transferred[entry], `${shared} came from the cache`).toBe(0);

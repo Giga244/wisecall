@@ -47,7 +47,9 @@ const PAIRS = [
   // outlines of things you have to find and use
   ['--field-border', '--field', UI, 'the outline of a form field, from the inside'], ['--field-border', '--card', UI, 'the outline of a form field, from the card around it'], ['--field-border', '--bg', UI, 'the outline of a form field on the page'],
   ['--focus', '--bg', UI, 'the focus ring on the page'], ['--focus', '--card', UI, 'the focus ring on a card'], ['--focus', '--raised', UI, 'the focus ring in a menu'], ['--border-strong', '--card', UI, 'emphasised outlines'],
-  ['--line', '--bg', UI, 'the outline of a card or button on the page'], ['--line', '--card', UI, 'an outline inside a card'],
+  // (the calm design, docs/CLAUDE-CODE-REDESIGN-CALM.md: --line is the thin, quiet line around cards and between rows, a decoration that
+  // carries no meaning, so it has no minimum; an outlined button uses --border-strong and a form field --field-border, both checked above)
+  ['--border-strong', '--bg', UI, 'the outline of a secondary button on the page'],
   // the redesign: ink on coral (every primary button), ink on the pastel "stickers" in both themes, the coral words of a big headline
   ['--on-pastel', '--c-coral', TEXT, 'ink text on coral'], ['--on-pastel', '--c-mint', TEXT, 'ink text on mint'], ['--on-pastel', '--c-sun', TEXT, 'ink text on sun'],
   ['--on-pastel', '--c-blush', TEXT, 'ink text on blush'], ['--on-pastel', '--c-lav', TEXT, 'ink text on lavender'], ['--on-pastel', '--sticker', TEXT, 'ink text on a white or lavender sticker'], ['--c-muted', '--c-mint', TEXT, 'muted ink on mint'],

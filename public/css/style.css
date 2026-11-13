@@ -1300,3 +1300,108 @@ html:not([data-launch="prelaunch"]) .hero-wait { display: none !important; }
 
 /* (a phone: the header about 56px tall; after the menu rules above, which set its padding up to 1023px) */
 @media (max-width: 767px) { .nav-inner { min-height: 56px; padding-top: 4px; padding-bottom: 4px; } }
+
+/* ==== The calm design (docs/CLAUDE-CODE-REDESIGN-CALM.md): the shared pieces. Light, lots of room, one accent, thin 1px lines, few boxes.
+   These rules come last and restate the pieces above in the new look; the tokens (tokens.css) carry the colours. ====================== */
+body { line-height: 1.5; font-size: 1rem; }
+@media (max-width: 767px) { body { font-size: 0.9375rem; } }
+h1, h2, h3 { font-weight: 700; line-height: 1.18; }
+h1 { line-height: 1.12; }
+.price, .num, .display { font-weight: 700; }
+a:not([class]) { text-decoration-thickness: 1px; }
+
+/* The header: no line under it; quiet links, the page in use in ink; the language as one word; the theme button without a box */
+.nav { border-bottom: 0; }
+.nav-inner { min-height: 76px; padding-top: 12px; padding-bottom: 12px; }
+.nav-links { justify-content: flex-end; gap: 30px; }
+.nav-links a { color: var(--ink-soft); font-weight: 400; font-size: 0.94rem; }
+.nav-links a:hover, .nav-links a.active, .nav-links a[aria-current] { color: var(--ink); }
+.nav-links a.active, .nav-links a[aria-current] { font-weight: 700; }
+.nav-links a::after { display: none; }
+.nav .nav-lang { border: 0; padding: 0; }
+.nav .nav-lang .lang-btn { min-height: 44px; padding: 0 8px; background: none; color: var(--ink-soft); font-size: 0.94rem; font-weight: 400; }
+.nav .nav-lang .lang-btn:hover { color: var(--ink); background: none; }
+.nav .nav-lang .lang-btn.active { display: none; }
+.theme-btn { border-color: transparent; color: var(--ink-soft); }
+.theme-btn:hover { background: none; color: var(--ink); }
+.nav-toggle { border-color: transparent; background: none; }
+.logo .jlogo { height: 56px; }
+@media (max-width: 1023px) { .nav-inner { min-height: 64px; padding: 8px var(--gutter); } }
+@media (max-width: 767px) { .logo .jlogo { height: 44px; } .nav-inner { min-height: 64px; padding-top: 6px; padding-bottom: 6px; } }
+/* (the home page's own coral button is in the header at every width; on a phone it is the only account button there) */
+.nav-right #navLoggedOut .nav-cta { order: 2; }
+@media (max-width: 767px) { body.home .nav .nav-lang { display: none; } }
+.nav-right .nav-cta { display: inline-flex; min-height: 44px; padding: 0 16px; font-size: 0.88rem; border-radius: 12px; white-space: nowrap; }
+@media (max-width: 1023px) {
+  body.home .nav-right #navLoggedOut:not([hidden]) { display: flex !important; }
+  body.home .nav-right #navLoggedOut > :not(.nav-cta) { display: none; }
+}
+
+/* Buttons: one coral primary (dark text on it), the secondary outlined in ink, no offset shadows, no jump on hover */
+.btn { border: 1.5px solid var(--border-strong); border-radius: var(--r-btn); padding: 12px 22px; }
+.btn:hover, .btn:active { transform: none; }
+.btn-primary { border-color: var(--accent-strong); box-shadow: none; }
+.btn-primary:hover { border-color: var(--accent-strong-hover); box-shadow: none; }
+.btn-ghost { border-color: transparent; font-weight: 600; }
+.btn-ghost:hover { border-color: transparent; color: var(--accent-text); }
+.btn-outline { border: 1.5px solid var(--border-strong); }
+.btn-outline:hover { background: var(--card); box-shadow: none; }
+.btn-ink:hover { box-shadow: none; }
+.btn-lg { border-radius: var(--r-btn); padding: 15px 26px; font-size: 1rem; }
+.btn-sm { border-radius: 12px; }
+.arrow-link { color: var(--accent-text); font-weight: 700; text-decoration: none; }
+
+/* Avatars without a photo: the tint circle, the initials in ink (the same for everyone) */
+.avatar:not(.avatar-photo) { background: var(--tint) !important; color: var(--ink) !important; }
+
+/* Chips: a thin line; the chosen one outlined in ink on the tint */
+.chip:hover { background: var(--card); border-color: var(--ink-soft); color: var(--ink); }
+.chip.active, .chip[aria-pressed="true"] { background: var(--tint); border-color: var(--border-strong); color: var(--ink); }
+
+/* A section that opens (FAQ rows, "more options"): a full-width row at least 56px tall with its title, an optional grey chip and a one-line
+   hint, and a chevron that turns when it is open. <button class="open-row" aria-expanded> + <div class="open-panel" hidden> (nav.js). */
+.open-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 14px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink);
+  font: 700 1.03rem var(--font-body); text-align: left; cursor: pointer; }
+.open-row::after { content: ""; flex: 0 0 auto; width: 9px; height: 9px; margin: 0 6px 4px auto; border-right: 2px solid var(--ink-soft); border-bottom: 2px solid var(--ink-soft); transform: rotate(45deg);
+  transition: transform 0.2s var(--ease-out); }
+.open-row[aria-expanded="true"]::after { transform: rotate(225deg); margin-bottom: -4px; }
+.open-row[aria-expanded="true"] { border-bottom-color: transparent; }
+.open-row .open-chip { padding: 2px 10px; border-radius: var(--r-pill); background: var(--gray-soft); color: var(--ink-soft); font-size: 0.75rem; font-weight: 600; }
+.open-row .open-hint { display: block; color: var(--ink-soft); font-size: 0.85rem; font-weight: 400; }
+.open-row.is-boxed { padding: 14px 18px; border: 1px solid var(--line); border-radius: var(--r-btn); }
+.open-panel { padding: 0 0 18px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
+.open-panel p { margin: 0; }
+
+/* The footer: one line on a computer (© and the email, the links, the social icons), stacked on a phone */
+.footer { margin-top: 56px; padding: 24px 0 calc(32px + env(safe-area-inset-bottom)); border-top: 0; background: none; }
+.footer-compact-inner { display: grid; gap: 12px; color: var(--ink-soft); font-size: 0.88rem; }
+.footer-compact-inner::before { content: ""; grid-column: 1 / -1; border-top: 1px solid var(--line); margin-bottom: 12px; }
+.footer .fc-copy p, .footer .fc-legal { margin: 0; color: var(--ink-soft); font-size: 0.88rem; font-weight: 400; overflow-wrap: anywhere; }
+.fc-copy a { color: inherit; }
+.fc-links { display: flex; flex-wrap: wrap; gap: 0 14px; font-size: 0.84rem; }
+.fc-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-soft); text-decoration: none; }
+.fc-links a:hover { color: var(--ink); }
+.footer-compact .footer-social { margin: 0 0 0 -12px; gap: 0; }
+.footer-compact .footer-social a { border: 0; border-radius: 50%; color: var(--ink); }
+.footer-compact .footer-social a:hover { background: none; color: var(--accent-text); }
+.footer-compact .footer-pay { margin: 0; padding: 0; border: 0; }
+@media (min-width: 900px) {
+  .footer { margin-top: 88px; }
+  .footer-compact-inner { grid-template-columns: auto 1fr auto; align-items: center; column-gap: 24px; }
+  .fc-links { justify-content: center; flex-wrap: nowrap; white-space: nowrap; }
+  .footer-compact .footer-social { margin: 0 -12px 0 0; }
+  .fc-legal, .footer-compact .footer-pay { grid-column: 1 / -1; }
+}
+/* (the note before launch: quiet, in the page's own colours) */
+.launch-banner { background: none; color: var(--ink-soft); border: 0; border-bottom: 1px solid var(--line); padding: 2px 16px; font-weight: 400; font-size: 0.82rem; line-height: 1.4; }
+.launch-banner a { display: inline-flex; align-items: center; min-height: 44px; }
+.launch-banner a { font-weight: 700; }
+/* (the count beside a field's name: quiet, and readable) */
+.chip-count { opacity: 1; color: var(--ink-soft); }
+/* (signed in, the header has more to hold: Dashboard, Settings, the mentor button, Log out. It may be wider than the page's 1000px, and its
+   buttons are a little tighter, so nothing runs off the side at 1024-1280px in Georgian) */
+.nav.is-authed .nav-inner { max-width: 1280px; gap: 16px; }
+.nav.is-authed .nav-links { gap: 20px; }
+.nav-right .btn { padding-left: 14px; padding-right: 14px; font-size: 0.88rem; }
+@media (max-width: 1180px) { .nav-links { gap: 20px; } .nav-inner { gap: 16px; } }
+@media (min-width: 1024px) and (max-width: 1179px) { html[lang="ka"] .nav.is-authed .nav-links { margin-right: 6px; } }

@@ -24,10 +24,10 @@ describe('colours are tokens', () => {
     const { light, dark } = contrast.load();
     assert.match(css, /:root \{[^}]*color-scheme: light;/s);
     assert.match(css, /\[data-theme="dark"\] \{[^}]*color-scheme: dark;/s);
-    for (const [token, value] of [['--bg', '#16131f'], ['--card', '#221e31'], ['--raised', '#2b2643'], ['--border', '#3a3452'], ['--ink', '#f4f2ee'], ['--ink-soft', '#c9c5d6'], ['--accent', '#ff6f59'], ['--navy', '#0f0d18'], ['--mint-soft', '#1e3a33'], ['--sun-soft', '#4d4119']]) {
+    for (const [token, value] of [['--bg', '#15121e'], ['--card', '#1e1a2b'], ['--raised', '#262138'], ['--border', '#2c2840'], ['--ink', '#f4f2ee'], ['--ink-soft', '#aaa5bb'], ['--accent', '#ff6f59'], ['--navy', '#0f0d18'], ['--mint-soft', '#262236'], ['--sun-soft', '#262236'], ['--tint', '#2b2029']]) {
       assert.equal(dark[token], value, `dark ${token}`);
     }
-    assert.equal(light['--bg'], '#f4f2ee');
+    assert.equal(light['--bg'], '#fbfaf7');
     assert.equal(light['--ink'], '#1e1a31');
     assert.equal(light['--accent'], '#ff6f59');
     // the tokens that make the two themes different are really different

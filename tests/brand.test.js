@@ -70,9 +70,9 @@ describe('the brand files are used as they are', () => {
     assert.deepEqual(offenders, [], 'old brand references');
   });
 
-  test('the brand colours in the design tokens are the logo\'s: coral #FF6F59, ink #1E1A31, paper #F4F2EE, mint #DDF3EA, sun #FFE7A3', () => {
+  test('the brand colours in the design tokens: coral #FF6F59 and ink #1E1A31 are the logo\'s; the page is the calm design\'s paper #FBFAF7, and the pastels are gone (docs/CLAUDE-CODE-REDESIGN-CALM.md)', () => {
     const css = fs.readFileSync(path.join(PUB, 'css', 'tokens.css'), 'utf8');
-    for (const [token, hex] of [['--accent', '#ff6f59'], ['--ink', '#1e1a31'], ['--bg', '#f4f2ee'], ['--mint', '#ddf3ea'], ['--sun', '#ffe7a3']]) {
+    for (const [token, hex] of [['--accent', '#ff6f59'], ['--ink', '#1e1a31'], ['--bg', '#fbfaf7'], ['--tint', '#ffe9e4']]) {
       assert.match(css, new RegExp(`${token}:\\s*${hex}\\b`, 'i'), `${token} should be ${hex}`);
     }
   });
@@ -147,7 +147,7 @@ describe('the logo in the header, the menu, the footer and the emails', () => {
     assert.match(header, /<image class="jlogo-head" href="\/brand\/jikhva-head\.webp"/);
     assert.match(header, /wisecall-logo-on-dark-transparent\.svg/, 'the logo for dark backgrounds is there');
     assert.equal((header.match(/WisecallBrand\.logoHtml\(\)/g) || []).length, 2, 'the header and the menu use it');
-    assert.match(footer, /WisecallBrand\.logoHtml\(\{ full: true \}\)/, 'the footer has room for the whole logo');
+    assert.doesNotMatch(footer, /logoHtml/, 'the footer is one line, without a logo (docs/CLAUDE-CODE-REDESIGN-CALM.md)');
     for (const t of [header, footer]) assert.doesNotMatch(t, /Wisecall<span class="dot">/);
     const css = read('css/style.css');
     assert.match(css, /\.logo img \{ display: block; height: 36px; width: auto; \}/);

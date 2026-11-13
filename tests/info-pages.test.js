@@ -56,9 +56,9 @@ describe('the "How we verify mentors" page', () => {
 });
 
 describe('the new home page (docs/CLAUDE-CODE-NEW-HOME.md): short, and everything else one click away', () => {
-  test('hero, the phone, our experts, how it works, trust and the mentor banner, in this order; the old sections are gone', async () => {
+  test('the top with the example card, how it works with its ticks, our experts, a few questions and the block for experts, in this order (docs/CLAUDE-CODE-REDESIGN-CALM.md); the old sections are gone', async () => {
     const h = await html('/');
-    const order = ['class="lhero"', 'id="homeQa"', 'id="homeMentors"', 'id="how"', 'class="ltrust"', 'class="lsection lmentor"'].map((m) => h.indexOf(m));
+    const order = ['class="lhero"', 'id="homeQa"', 'id="heroChips"', 'id="how"', 'class="lticks"', 'id="homeMentors"', 'class="lsection lfaq"', 'class="lsection lmentor"'].map((m) => h.indexOf(m));
     assert.ok(order.every((at) => at > 0), 'every section is there');
     assert.deepEqual([...order].sort((a, b) => a - b), order, 'in this order');
     for (const gone of ['id="nicheStrip"', 'id="experts"', 'id="faq"', 'class="cta-band"', 'id="filters"', 'id="liveHome"', 'class="faq-q"', 'class="marquee"', 'id="examples"']) assert.ok(!h.includes(gone), gone);
@@ -67,7 +67,10 @@ describe('the new home page (docs/CLAUDE-CODE-NEW-HOME.md): short, and everythin
     assert.match(h, /<a class="lmore" href="\/experts\.html" data-i18n="home2\.experts\.all">/);
     // the search goes to Browse; "Become a mentor" opens the mentors' page
     assert.match(h, /<form class="lhero-search" id="heroSearch" role="search" action="\/experts\.html" method="get">/);
-    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-primary btn-lg btn-arrow lmentor-btn" data-mentor-cta="hero"/);
+    assert.match(h, /<a href="\/become-a-mentor\.html" class="btn btn-primary lmentor-btn" data-mentor-cta="hero"/);
+    // three questions, closed, each a button that opens its answer; the rest on the FAQ page
+    assert.equal((h.match(/<button type="button" class="open-row" aria-expanded="false" aria-controls="hfaq\d">/g) || []).length, 3);
+    assert.equal((h.match(/<div class="open-panel" id="hfaq\d" hidden>/g) || []).length, 3);
     assert.doesNotMatch(h, /redirect=\/settings\.html/);
     // the FAQ is one click away, in the footer
     assert.match(require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'js', 'footer.js'), 'utf8'), /\/faq\.html/);
@@ -78,7 +81,7 @@ describe('the new home page (docs/CLAUDE-CODE-NEW-HOME.md): short, and everythin
     assert.match(h, /data-i18n="home2\.title1">ჰკითხე მას, ვინც ეს გზა</);
     assert.match(h, /data-i18n="home2\.search\.button">ძებნა</);
     assert.match(h, /data-i18n="how\.verify\.link">როგორ ვამოწმებთ</);
-    assert.match(h, /data-i18n="home2\.experts\.all">ყველა ექსპერტი →</);
+    assert.match(h, /data-i18n="home2\.experts\.all">ყველა →</);
   });
 
   test('after launch the search is there and nothing from before launch is left', async () => {
@@ -120,7 +123,8 @@ describe('the mentors\' page (/become-a-mentor.html, the coral panel that was on
     assert.match(x, /<loc>http:\/\/localhost:4716\/ka\/become-a-mentor\.html<\/loc>/);
     const read = (f) => require('fs').readFileSync(require('path').join(__dirname, '..', 'public', f), 'utf8');
     assert.match(read('js/header.js'), /\{ href: '\/become-a-mentor\.html', key: 'nav\.becomeMentor', mentor: true \}/);
-    assert.match(read('js/footer.js'), /<a href="\/become-a-mentor\.html" data-i18n="footer\.forMentors">/);
+    // (the one-line footer has no "For mentors": the header and the menu have "Become a mentor", and the home page its own block)
+    assert.match(read('index.html'), /<a href="\/become-a-mentor\.html" class="btn btn-primary lmentor-btn"/);
     assert.match(read('about.html'), /<a href="\/become-a-mentor\.html" class="btn btn-outline" data-i18n="about\.become">/);
     assert.doesNotMatch(read('js/footer.js') + read('js/header.js') + read('advice.html'), /#for-mentors|#pricing|index\.html#verify/);
   });
@@ -152,8 +156,8 @@ describe('every page arrives in its language (nothing is swapped after the first
   });
 
   test('numbers from the settings are filled in; a text with a date or a name keeps the page\'s own words', async () => {
-    const days = esc(ka['home2.how.3.body']).replace('\\{answerDays\\}', '\\d+');
-    assert.match(await html('/ka/'), new RegExp(`data-i18n="home2.how.3.body">${days}</span>`));
+    const days = esc(ka['home2.how.3.short']).replace('\\{answerDays\\}', '\\d+');
+    assert.match(await html('/ka/'), new RegExp(`data-i18n="home2.how.3.short">${days}</p>`));
     const h = await html('/ka/how-we-verify.html');
     assert.doesNotMatch(h, /\{[A-Za-z]+\}/);
     assert.match(h, /<span data-i18n="badge.id.tip">[^<{]+<\/span>/);

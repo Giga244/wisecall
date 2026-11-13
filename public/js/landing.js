@@ -30,9 +30,8 @@
     const all = WisecallI18n.fields();
     const items = POPULAR.map((p) => ({ ...p, f: all.find((x) => x.id === p.field) })).filter((p) => p.f).slice(0, 5);
     const label = (p) => (p.word ? t(p.word) : WisecallI18n.nameIn(p.f.short || p.f));
-    const icon = (p) => (p.chip ? '📚' : p.f.icon);
     const pre = prelaunch();
-    box.innerHTML = items.map((p) => `<li><button type="button" class="chip lchip" data-field="${esc(p.field)}"${p.chip ? ` data-chip="${esc(p.chip)}"` : ''}${pre ? ` data-wait-field="${esc(p.field)}"` : ''} aria-pressed="${p.field === chosenField}"><span aria-hidden="true">${icon(p)}</span> ${esc(label(p))}</button></li>`).join('');
+    box.innerHTML = items.map((p) => `<li><button type="button" class="chip lchip" data-field="${esc(p.field)}"${p.chip ? ` data-chip="${esc(p.chip)}"` : ''}${pre ? ` data-wait-field="${esc(p.field)}"` : ''} aria-pressed="${p.field === chosenField}">${esc(label(p))}</button></li>`).join('');
   }
   document.addEventListener('click', (ev) => {
     const b = ev.target.closest('#heroChips [data-field]');
@@ -67,7 +66,8 @@
     let r = null;
     try { r = await WisecallAPI.apiFetch('/waitlist-count'); } catch (e) { return; }
     if (!r || !Number.isInteger(r.approx)) { el.hidden = true; return; }
-    el.innerHTML = `<span class="only-narrow">${esc(t('home2.wait.countShort').replace('{n}', r.approx))}</span><span class="only-wide">${esc(t('home2.wait.count').replace('{n}', r.approx))}</span>`;
+    const line = (key) => esc(t(key).replace('{n}', r.approx)).replace(`${r.approx}+`, `<b>${r.approx}+</b>`);
+    el.innerHTML = `<span class="only-narrow">${line('home2.wait.countShort')}</span><span class="only-wide">${line('home2.wait.count')}</span>`;
     el.hidden = false;
   }
 
@@ -143,6 +143,7 @@
     for (const sel of ['.qa-example', '.qa-example-foot']) { $(sel).hidden = !ex; $(sel).textContent = ex ? t('home2.qa.example') : ''; }
     $('.qa-avatar').innerHTML = ex ? PERSON : WisecallAPI.avatar({ name: m.name, color: m.color }, { cls: 'avatar-sm', size: 28 });
     $('.qa-name').textContent = ex ? [t('home2.qa.expert'), field].filter(Boolean).join(' · ') : (m.name || '');
+    $('.qa-field').textContent = field;
     $('.qa-meta').hidden = ex;
     $('.qa-meta').textContent = ex ? '' : [`✓ ${t('home2.qa.verified')}`, m.roleTitle].filter(Boolean).join(' · ');
     $('.qa-qtext').textContent = q;

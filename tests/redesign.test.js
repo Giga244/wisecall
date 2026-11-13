@@ -11,13 +11,15 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g,
 const css = () => ['public/css/tokens.css', 'public/css/style.css', 'public/css/app.css', 'public/css/home.css'].map((f) => [f, read(f)]);
 
 describe('the palette and type', () => {
-  test('the approved colours: ink, paper, white, coral (fills), coral-text (headlines), mint, sun, blush, muted; dark ground and surface', () => {
+  test('the approved colours (docs/CLAUDE-CODE-REDESIGN-CALM.md): ink, paper, white, coral (fills), the tint, soft text, the line; no pastels; dark ground and surface', () => {
     const { light, dark } = contrast.load();
-    for (const [token, hex] of [['--c-ink', '#1e1a31'], ['--c-paper', '#f4f2ee'], ['--c-white', '#ffffff'], ['--c-coral', '#ff6f59'], ['--c-coral-text', '#e04a33'],
-      ['--c-mint', '#ddf3ea'], ['--c-sun', '#ffe7a3'], ['--c-blush', '#ffd3cb'], ['--c-muted', '#4e4963'], ['--c-muted-2', '#6b6680'], ['--ink', '#1e1a31'], ['--bg', '#f4f2ee']]) {
+    for (const [token, hex] of [['--c-ink', '#1e1a31'], ['--c-paper', '#fbfaf7'], ['--c-white', '#ffffff'], ['--c-coral', '#ff6f59'], ['--headline-accent', '#d9482f'], ['--tint', '#ffe9e4'],
+      ['--ink-soft', '#6a6580'], ['--line', '#ebe7e0'], ['--accent2-text', '#1b7f5f'], ['--ink', '#1e1a31'], ['--bg', '#fbfaf7'], ['--card', '#ffffff'],
+      // (the pastel yellow, mint, lavender and blush fills are gone: those tokens are a quiet neutral, or the tint)
+      ['--c-mint', '#f1eee8'], ['--c-sun', '#f1eee8'], ['--c-lav', '#f1eee8'], ['--c-blush', '#ffe9e4']]) {
       assert.equal(light[token], hex, token);
     }
-    assert.deepEqual([dark['--bg'], dark['--card'], dark['--ink']], ['#16131f', '#221e31', '#f4f2ee']);
+    assert.deepEqual([dark['--bg'], dark['--card'], dark['--ink'], dark['--ink-soft'], dark['--line'], dark['--tint']], ['#15121e', '#1e1a2b', '#f4f2ee', '#aaa5bb', '#2c2840', '#2b2029']);
     assert.equal(dark['--c-coral'], '#ff6f59', 'the same accents in the dark');
   });
 
@@ -94,12 +96,16 @@ describe('the signature, without the generic look', () => {
     }
   });
 
-  test('2px outlines, 14px buttons, 22-28px cards, 36-40px panels, the offset shadow on the primary action, 1.5px pill chips, dashed rules', () => {
+  test('thin 1px lines, 14px buttons and fields, 22px cards, no offset shadow under buttons (docs/CLAUDE-CODE-REDESIGN-CALM.md)', () => {
     const t = read('public/css/tokens.css'), s = read('public/css/style.css'), h = read('public/css/home.css');
-    assert.match(t, /--line-w: 2px;/);
-    assert.match(t, /--chip-w: 1\.5px;/);
+    assert.match(t, /--line-w: 1px;/);
+    assert.match(t, /--chip-w: 1px;/);
     assert.match(t, /--r-btn: 14px;/);
-    assert.match(t, /--offset-shadow: 0 8px 0 -2px var\(--line\);/);
+    assert.match(t, /--r-field: 14px;/);
+    assert.match(t, /--r-card: 22px;/);
+    assert.match(t, /--offset-shadow: 0 0 0 0 transparent;/);
+    assert.match(s, /\.btn-primary \{ border-color: var\(--accent-strong\); box-shadow: none; \}/);
+    assert.match(s, /\.btn-outline \{ border: 1\.5px solid var\(--border-strong\); \}/);
     assert.match(s, /\.btn-primary \{ background: var\(--accent-strong\); color: var\(--on-accent\); border-color: var\(--line\); box-shadow: var\(--offset-shadow\); \}/);
     assert.match(s, /\.chip \{\n  border: var\(--chip-w\) solid var\(--line\);[^}]*border-radius: var\(--r-pill\)/);
     assert.match(s, /\.ex-who \{[^}]*border-top: var\(--chip-w\) dashed var\(--line\)/);
@@ -108,12 +114,12 @@ describe('the signature, without the generic look', () => {
     assert.match(s, /:focus-visible \{ outline: 2px solid var\(--focus\); outline-offset: 3px; \}/);
   });
 
-  test('the spacing scale and the container: 4 8 12 16 24 32 48 72 110, 1280 wide with 32px gutters (18px on phones)', () => {
+  test('the spacing scale and the container: 4 8 12 16 24 32 48 72 110, 1000 wide inside 32px gutters (24px on phones)', () => {
     const t = read('public/css/tokens.css');
     assert.match(t, /--s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 72px; --s-9: 110px;/);
-    assert.match(t, /--container: 1280px;/);
+    assert.match(t, /--container: 1064px;/); // (1000 + two 32px gutters)
     assert.match(t, /--gutter: 32px;/);
-    assert.match(t, /@media \(max-width: 639px\) \{ :root \{ --gutter: 18px; \} \}/);
+    assert.match(t, /@media \(max-width: 767px\) \{ :root \{ --gutter: 24px; \} \}/);
   });
 });
 

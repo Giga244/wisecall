@@ -286,3 +286,68 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
 .browse-head .section-sub { margin: 0; }
 .browse-page .strip-title { display: none; }
 .browse-page .strip { padding-top: 20px; }
+
+/* ==== Browse experts in the calm design (docs/CLAUDE-CODE-REDESIGN-CALM.md, mockup docs/redesign/calm/experts-1280.png): the title, one
+   search box, the fields as a row of quiet tabs, and the mentors as rows separated by thin lines (no card grid). ====================== */
+.browse-page .browse-head { padding-top: 40px; }
+.browse-page .browse-title { font-size: var(--fs-h1); margin: 0; }
+.browse-page .section-sub { margin: 8px 0 0; color: var(--ink-soft); }
+/* (the field tiles, each a link to its field's page, come after the list: the tabs above already choose a field) */
+.browse-page { display: flex; flex-direction: column; }
+.browse-page .strip { order: 3; margin-top: 40px; }
+.browse-page .strip-title { font-size: 1.2rem; }
+.browse-page .field-emoji { display: none; }
+.browse-page .field-tile, .browse-page .field-grid > li .field-tile { background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; }
+.browse-page .experts { padding-top: 24px; }
+.browse-page #expertsTitle { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.browse-page .search-input { width: 100%; max-width: 680px; min-height: 60px; padding: 0 22px; border: 1px solid var(--field-border); border-radius: 18px; background: var(--card); font-size: 1rem; box-shadow: none; margin-bottom: 12px; }
+.browse-page .browse-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.browse-page .result-count { margin: 0 auto 0 0; color: var(--ink-soft); font-size: 0.9rem; }
+.browse-page .sort-select { border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--card); box-shadow: none; }
+.browse-page .browse-note { display: none; }
+/* the fields: tabs in one row that scrolls sideways; the chosen one in ink with a coral line under it */
+.browse-page .field-chips { display: flex; flex-wrap: nowrap; gap: 0 26px; margin: 18px calc(var(--gutter) * -1) 0; padding: 0 var(--gutter); overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.browse-page .field-chips::-webkit-scrollbar { display: none; }
+.browse-page .field-chips .chip { flex: 0 0 auto; min-height: 48px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--ink-soft); font-size: 0.97rem; font-weight: 400; white-space: nowrap; box-shadow: none; }
+.browse-page .field-chips .chip:hover { background: none; color: var(--ink); }
+.browse-page .field-chips .chip.active, .browse-page .field-chips .chip[aria-pressed="true"] { background: none; color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--accent); }
+.browse-page .field-chips .chip > [aria-hidden="true"], .browse-page .field-chips .chip .chip-icon { display: none; }
+.browse-page .filters { margin-top: 14px; }
+.browse-page .filters select { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--card); color: var(--ink); font: inherit; font-size: 0.88rem; }
+.browse-page .field-chips .chip .badge, .browse-page .field-chips .chip small { font-size: 0.7rem; padding: 1px 7px; border: 0; background: var(--gray-soft); color: var(--ink-soft); }
+/* the mentors: rows */
+.browse-page .expert-grid { display: block; margin-top: 6px; }
+.browse-page .expert-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 22px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none;
+  box-shadow: none; transform: none; color: var(--ink); text-decoration: none; }
+.browse-page .expert-card:hover { transform: none; box-shadow: none; }
+@media (max-width: 1023px) { .browse-page .skeleton-expert:nth-of-type(n+7) { display: none; } }
+.browse-page .expert-card > * { grid-column: 1 / -1; min-width: 0; }
+.browse-page .expert-card .card-top { display: flex; align-items: center; gap: 16px; margin: 0; padding: 0; background: none; border: 0; color: var(--ink); }
+.browse-page .expert-card .card-top .card-role { color: var(--ink-soft); opacity: 1; }
+.browse-page .expert-card .card-top .badge { border: 0; }
+.browse-page .expert-card .card-top .avatar { width: 56px; height: 56px; font-size: 1.05rem; flex: 0 0 auto; border: 0; }
+.browse-page .card-name { font-size: 1.2rem; font-weight: 700; }
+.browse-page .card-name .badge { font-family: var(--font-body); font-size: 0.72rem; font-weight: 600; padding: 2px 9px; border: 0; background: var(--gray-soft); color: var(--ink-soft); vertical-align: middle; }
+.browse-page .card-role { color: var(--ink-soft); font-size: 0.94rem; font-weight: 400; }
+.browse-page .card-headline, .browse-page .card-skills { display: none; }
+.browse-page .card-bio { font-size: 1rem; color: var(--ink); }
+.browse-page .card-more { color: var(--accent-text); font-weight: 700; font-size: 0.9rem; }
+.browse-page .expert-card .trust-row { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 0; }
+.browse-page .expert-card .trust-badge { white-space: nowrap; }
+.browse-page .expert-card .trust-badge { padding: 0; border: 0; background: none; color: var(--accent2-text); font-size: 0.85rem; font-weight: 400; }
+.browse-page .expert-card .card-bottom { grid-column: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 0; margin: 0; border: 0; }
+.browse-page .expert-card .price { font-size: 1.2rem; white-space: nowrap; }
+.browse-page .expert-card .price span { font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; color: var(--ink-soft); }
+.browse-page .expert-card .rating { color: var(--ink-soft); font-size: 0.82rem; }
+.browse-page .expert-card > .btn { grid-column: 2; width: auto; min-height: 48px; padding: 0 20px; font-size: 0.97rem; }
+@media (min-width: 768px) {
+  .browse-page .browse-head { padding-top: 64px; }
+  /* (the tabs scroll sideways inside the page's width; they fade out at the right edge to show there are more) */
+  .browse-page .field-chips { margin-left: 0; margin-right: 0; padding: 0 48px 0 0; -webkit-mask-image: linear-gradient(to right, var(--ink) calc(100% - 56px), transparent); mask-image: linear-gradient(to right, var(--ink) calc(100% - 56px), transparent); scrollbar-width: thin; }
+  .browse-page .expert-card .trust-row { flex-wrap: nowrap; }
+  .browse-page .expert-card { grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 24px; padding: 26px 0; }
+  .browse-page .expert-card > * { grid-column: 1; }
+  .browse-page .expert-card .card-bio, .browse-page .expert-card .trust-row { padding-left: 72px; }
+  .browse-page .expert-card .card-bottom { grid-column: 2; grid-row: 1 / span 4; align-items: flex-end; align-self: center; }
+  .browse-page .expert-card > .btn { grid-column: 3; grid-row: 1 / span 4; align-self: center; }
+}

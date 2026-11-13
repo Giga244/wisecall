@@ -239,7 +239,7 @@ test('Browse on a phone: the Filters sheet holds sort and fields, and the list f
   await expect(tablet.page.locator('#filtersBtn')).toBeHidden();
   await expect(tablet.page.locator('#sortSelect')).toBeVisible();
   const across = await tablet.page.evaluate(() => new Set(Array.from(document.querySelectorAll('.expert-card')).map((c) => Math.round(c.getBoundingClientRect().left))).size);
-  expect(across).toBe(2);
+  expect(across).toBe(1); // (the mentors are rows, one under another: docs/CLAUDE-CODE-REDESIGN-CALM.md)
   await tablet.ctx.close();
 });
 

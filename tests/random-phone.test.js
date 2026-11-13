@@ -77,8 +77,9 @@ describe('with no published answer: the example', () => {
   test('the example\'s words: "Example" on the phone, "Expert · <field>", the deadline ("პასუხი 7 დღეში"), no name, no badge, no stars (docs/CLAUDE-CODE-FINISH.md part 1)', async () => {
     const html = await (await fetch(base + '/ka/')).text();
     // ("მაგალითი": in the label above the chat on a phone, next to the dots on a computer; docs/CLAUDE-CODE-COMPACT-HOME.md)
-    assert.match(html, /<p class="qa-label"><span data-i18n="home2.qa.label">[^<]+<\/span><span class="qa-example" hidden><\/span><\/p>/);
-    assert.match(html, /<div class="qa-foot"><em class="qa-adays"><\/em><span class="qa-example-foot" hidden><\/span><span class="qa-dots"><\/span><\/div>/);
+    // (the card's first line: "მაგალითი" and the field; docs/CLAUDE-CODE-REDESIGN-CALM.md)
+    assert.match(html, /<p class="qa-label"><span class="qa-example" hidden><\/span><span class="qa-example-foot" hidden><\/span><span class="qa-name"><\/span><span class="qa-field"><\/span><\/p>/);
+    assert.match(html, /<div class="qa-foot"><em class="qa-adays"><\/em><span class="qa-dots"><\/span><\/div>/);
     assert.doesNotMatch(html, /qa-video|phone-example/, 'no video: an example is drawn, honestly');
     const js = fs.readFileSync(path.join(ROOT, 'public/js/landing.js'), 'utf8');
     assert.match(js, /\$\('\.qa-name'\)\.textContent = ex \? \[t\('home2\.qa\.expert'\), field\]\.filter\(Boolean\)\.join\(' · '\)/, 'no name');
@@ -93,7 +94,7 @@ describe('with no published answer: the example', () => {
     assert.equal(en['home2.qa.example'], 'Example');
     assert.equal(ka['home2.qa.expert'], 'ექსპერტი');
     assert.equal(ka['home2.qa.exampleDays'], '✓ პასუხი {answerDays} დღეში');
-    assert.equal(ka['home2.qa.thanks'], 'მადლობა! ⭐ {n}.0');
+    assert.equal(ka['home2.qa.thanks'], 'მადლობა! ★ {n}.0');
     // (the example's question and answer)
     assert.equal(ka['home2.ex.1.q'], 'ბიოლოგია სუსტად მაქვს. ღირს თუ არა სამედიცინოზე ჩაბარება და საიდან დავიწყო?');
     assert.match(ka['home2.ex.1.a'], /^ღირს, თუ მედიცინა ნამდვილად გაინტერესებს/);
@@ -253,21 +254,21 @@ describe('a field chosen on the page', () => {
     assert.match(js, /rotation\.jump\(\(x\) => WisecallI18n\.fieldOfNiche\(x\.niche\) === fieldId\)/);
   });
 
-  test('the page: no "Popular:" label, the pinned button with its words in both modes, the short footer on the home page only', async () => {
+  test('the page: the "Popular:" label, the pinned button with its words in both modes, the short footer on the home page only', async () => {
     const html = await (await fetch(base + '/ka/')).text();
-    assert.doesNotMatch(html, /პოპულარული:|home2\.popular/);
+    assert.match(html, /<span class="lhero-fields-label" id="heroChipsLabel" data-i18n="home2\.popular">პოპულარული:<\/span>/);
     assert.match(html, /<a class="home-pin" id="homePin" href="#heroTitle" hidden><span data-i18n="home2\.pin\.search" data-i18n-prelaunch="home2\.pin\.join">/);
     assert.match(html, /<body class="home"/);
     const ka = dict('ka'), en = dict('en');
-    assert.equal(ka['home2.pin.join'], '🚀 ჩაეწერე სიაში');
-    assert.equal(ka['home2.pin.search'], '🔍 იპოვე ექსპერტი');
+    assert.equal(ka['home2.pin.join'], 'ჩაეწერე სიაში'); // (no emoji in the interface)
+    assert.equal(ka['home2.pin.search'], 'იპოვე ექსპერტი');
     assert.ok(en['home2.pin.join'] && en['home2.pin.search']);
     const footer = fs.readFileSync(path.join(ROOT, 'public/js/footer.js'), 'utf8');
-    assert.match(footer, /const compact = document\.body\.classList\.contains\('home'\);/);
-    for (const href of ['/experts.html', '/faq.html#faq-payments', '/faq.html', '/about.html', '/contact.html', '/terms.html']) assert.ok(footer.includes(`<a href="${href}"`), href);
+    assert.match(footer, /f\.className = 'footer footer-compact';/); // (the one-line footer on every page)
+    for (const href of ['/faq.html#faq-payments', '/faq.html', '/about.html', '/contact.html', '/terms.html', '/privacy.html']) assert.ok(footer.includes(`<a href="${href}"`), href);
     // (the other links stay in the menu)
     const header = fs.readFileSync(path.join(ROOT, 'public/js/header.js'), 'utf8');
-    for (const href of ['/how-we-verify.html', '/help.html', '/answers', '/privacy.html']) assert.ok(header.includes(`'${href}'`), href);
+    for (const href of ['/how-we-verify.html', '/help.html', '/answers']) assert.ok(header.includes(`'${href}'`), href);
     // (the header's own button is in its first frame, for visitors not signed in: "join" before launch, "find an expert" after)
     assert.match(header, /const homeCtaKey = document\.getElementById\('homePrelaunch'\) \? 'nav\.cta\.join' : 'nav\.cta\.search';/);
     assert.match(header, /id="navLoggedOut"\$\{off\(signedIn\)\}>\s*\$\{homeCta\}/);
