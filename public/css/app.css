@@ -1067,7 +1067,6 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .auth-switch a { color: var(--accent-text); text-decoration: none; }
 form input, form textarea, form select { border-width: 1px; background: var(--card); }
 form input:focus, form textarea:focus, form select:focus { box-shadow: none; }
-.btn-google { border: 1.5px solid var(--border-strong); border-radius: var(--r-btn); box-shadow: none; }
 .or-divider { text-transform: none; letter-spacing: 0; font-weight: 400; }
 @media (max-width: 860px) {
   .auth-split .auth-card::before { display: block; }
