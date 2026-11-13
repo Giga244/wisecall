@@ -1021,3 +1021,31 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .hq-item { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .hq-item.is-hidden .hq-row { opacity: 0.6; }
 .hq-row input { width: 20px; height: 20px; margin: 2px 0 0; flex: 0 0 auto; }
+
+/* ==== The mentor's profile and its ask card in the calm design (docs/CLAUDE-CODE-REDESIGN-CALM.md; mockups docs/redesign/calm/profile-1280.png,
+   ask-1280.png, phone-pages.png): the person and the sections sit on the page itself, without boxes; one white card holds the price and the
+   question. ============================================================================================================================ */
+.profile-card, .profile-section { background: none; border: 0; border-radius: 0; padding: 0; }
+.profile-head .avatar { width: 96px; height: 96px; font-size: 1.7rem; }
+.profile-head h1 { font-size: clamp(1.9rem, 2vw + 1rem, 2.75rem); line-height: 1.1; }
+.profile-title { color: var(--ink-soft); }
+.profile-tags .tag, .profile-directions .tag, .tag { background: var(--card); border: 1px solid var(--line); color: var(--ink); font-weight: 600; }
+.chip-tag { background: var(--gray-soft); color: var(--ink-soft); }
+.profile-stats { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.profile-stats dt { font-size: 0.82rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.profile-stats dd { font-size: 1.1rem; font-weight: 700; }
+.profile-section h2 { font-size: 1.35rem; margin-bottom: 12px; }
+.profile-about p { color: var(--ink-soft); font-size: 1.03rem; }
+/* (a passed check is a green tick and its words, not a pill) */
+.trust-badge { padding: 0; border: 0; background: none; color: var(--accent2-text); font-weight: 400; }
+.trust-badge-lg { padding: 0; }
+.ask-card, .ask-panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); }
+.ask-price strong { font-size: 2.4rem; font-weight: 700; }
+.ask-price span { font-weight: 400; }
+.ask-tip { background: var(--gray-soft); border: 0; color: var(--ink-soft); }
+#askForm textarea { border: 1px solid var(--field-border); border-radius: var(--r-field); background: var(--card); box-shadow: none; }
+.review-card { border-top: 1px solid var(--line); }
+.ask-bar { background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(var(--shadow-rgb), 0.08); }
+/* (the checks wrap onto as many lines as they need, on a phone too) */
+.profile-checks .trust-list { flex-wrap: wrap; overflow: visible; margin: 0 0 12px; padding: 0; -webkit-mask-image: none; mask-image: none; gap: 6px 18px; }
+@media (max-width: 767px) { .profile-stats { grid-template-columns: 1fr 1fr; } }
