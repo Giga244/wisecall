@@ -1426,13 +1426,13 @@ a:not([class]) { text-decoration-thickness: 1px; }
 .founder { background: var(--card); border: 1px solid var(--line); box-shadow: none; }
 .help-article blockquote { background: var(--gray-soft); border: 0; border-left: 2px solid var(--accent); }
 
-/* ==== Empty states and the error pages (docs/CLAUDE-CODE-REDESIGN-CALM.md; mockup: phone-pages.png 5, 8): Jikhva in front of the tint circle,
+/* ==== Empty states and the error pages (docs/CLAUDE-CODE-REDESIGN-CALM.md; mockup: phone-pages.png 5, 8): Jikhva on the tint circle (a plain round fill: no gradients),
    in place of the old drawing and of the big outlined number. ========================================================================= */
 .empty-art, .wl-intro .empty-art { width: 150px; max-width: 60%; height: 150px;
-  background: url('/brand/jikhva-present.webp') center bottom / auto 96% no-repeat, radial-gradient(circle at 50% 54%, var(--tint) 0 47%, transparent 48%); }
+  border-radius: 50%; background: var(--tint) url('/brand/jikhva-present.webp') center 60% / auto 84% no-repeat; }
 .empty-art > * { display: none; }
 .error-code { width: 220px; height: 220px; margin: 0 auto 18px; font-size: 0; -webkit-text-stroke: 0; color: transparent;
-  background: url('/brand/jikhva-present.webp') center bottom / auto 96% no-repeat, radial-gradient(circle at 50% 54%, var(--tint) 0 47%, transparent 48%); }
+  border-radius: 50%; background: var(--tint) url('/brand/jikhva-present.webp') center 60% / auto 84% no-repeat; }
 .error-page h1 { font-size: clamp(1.6rem, 1.6vw + 1.2rem, 2.1rem); }
 .empty-state { border: 0; background: none; box-shadow: none; }
 .empty-state h3 { font-size: 1.2rem; }

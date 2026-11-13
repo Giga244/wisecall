@@ -44,8 +44,8 @@
 .wlc-privacy { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; }
 .wlc-why { position: relative; display: inline-block; }
 /* (a 44px target around a 20px ring) */
-.wlc-why summary { list-style: none; display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 0 -12px; border-radius: 50%; color: var(--ink-soft); font-size: 0.75rem; font-weight: 700; cursor: pointer;
-  background: radial-gradient(circle, transparent 9px, var(--ink-soft) 9.5px, var(--ink-soft) 10.5px, transparent 11px); }
+.wlc-why summary { position: relative; list-style: none; display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 0 -12px; color: var(--ink-soft); font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+.wlc-why summary::before { content: ""; position: absolute; left: 12px; top: 12px; width: 20px; height: 20px; box-sizing: border-box; border: 1px solid var(--ink-soft); border-radius: 50%; }
 .wlc-why summary::-webkit-details-marker { display: none; }
 .wlc-why[open] .waitlist-hint { position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 4px); transform: translateX(-70%); width: min(280px, 80vw); margin: 0; padding: 12px 14px;
   background: var(--raised); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--lift-shadow); font-size: 0.85rem; line-height: 1.5; }

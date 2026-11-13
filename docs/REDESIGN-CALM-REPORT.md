@@ -56,7 +56,21 @@ the `--tint` and `--band` tokens.
 
 ## Tests
 
-TEST_RESULTS
+All suites were run locally before each push (GitHub runs only the unit tests on a push).
+
+| Push | Unit | Browser | Cloud |
+|---|---|---|---|
+| Step 1 (shared look, home, experts) | 1346 / 1346 | 305 passed, 5 skipped | 30 / 30 |
+| Mentor profile and the ask flow | 1346 / 1346 | 305 passed, 5 skipped | 30 / 30 |
+| The rest (sign-up and log-in, dashboards and Settings, information pages, empty states and error pages, email colours, screenshots) | 1345 / 1346 | 305 passed, 5 skipped | 30 / 30 |
+
+The one unit failure in the last run was the project's own "no gradients" rule: the tint circle behind Jikhva on empty states was
+drawn with a gradient. It is now a plain round fill, and that test, the colour tests and the browser specs for the pages it touches
+(97 browser tests) were run again and pass. The full suites were not run a second time after that two-line fix.
+
+An earlier run on the sign-up commit had two failures in `tests/cloud-2/two-factor.test.js` (the admin's second sign-in step) and
+one in the Google button test. The Google button now keeps Google's own outline. The two-factor tests passed in the next full run
+without any change, so they look flaky rather than broken; they are worth watching.
 
 Tests that checked the old look were updated to check the new one (colour values, the footer, the home page's sections, the header's
 logo size, the experts rows). None was deleted or skipped. `npm run check:colors` and `check:contrast` pass; `check:contrast` no
