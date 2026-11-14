@@ -10,9 +10,9 @@ test('the home page shows two full rows of fields and the rest behind "See all"'
   await page.goto('/experts.html');
   const strip = page.locator('#nicheStrip');
   await expect(strip.locator('a.field-tile:visible')).toHaveCount(10); // (5 columns at 1280px)
-  await expect(page.locator('#fieldsMore')).toHaveText('See all 16 fields');
+  await expect(page.locator('#fieldsMore')).toHaveText('See all 29 fields');
   await page.locator('#fieldsMore').click();
-  await expect(strip.locator('a.field-tile:visible')).toHaveCount(16);
+  await expect(strip.locator('a.field-tile:visible')).toHaveCount(29);
   await expect(page.locator('#fieldsMore')).toHaveText('Show fewer');
   await expect(strip).toContainText('Services & Other');
   if (process.env.E2E_SHOTS) await strip.screenshot({ path: `${process.env.E2E_SHOTS}/home-strip.png` });
@@ -75,6 +75,6 @@ test('the admin sees the suggestion under Niches', async ({ page }) => {
   await S.logIn(page, { email: 'e2e-admin@example.com' }, '/admin.html');
   await page.click('#adminTabs [data-tab="niches"]');
   await expect(page.locator('.nf-suggestion', { hasText: 'Falconry' })).toBeVisible();
-  await expect(page.locator('.nf-niche')).toHaveCount(39);
+  await expect(page.locator('.nf-niche')).toHaveCount(51); // (12 added by docs/CLAUDE-CODE-NEW-CATEGORIES.md)
   if (process.env.E2E_SHOTS) await page.screenshot({ path: `${process.env.E2E_SHOTS}/admin-niches.png` });
 });

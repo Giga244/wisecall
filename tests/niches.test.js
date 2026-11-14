@@ -25,16 +25,16 @@ before(async () => {
 after(async () => { if (srv) srv.proc.kill(); await pool.end(); });
 
 describe('the niche list', () => {
-  test('39 niches in the database, sent to the pages with both names and an icon; 10 are regulated', async () => {
+  test('51 niches in the database (12 added by docs/CLAUDE-CODE-NEW-CATEGORIES.md), sent to the pages with both names and an icon; 13 are regulated', async () => {
     const { rows } = await pool.query('SELECT key, regulated FROM niches');
-    assert.equal(rows.length, 39);
+    assert.equal(rows.length, 51);
     const cfg = await client(base).api('/config');
-    assert.equal(cfg.niches.length, 39);
+    assert.equal(cfg.niches.length, 51);
     const psych = cfg.niches.find((n) => n.key === 'psychology');
     assert.deepEqual(Object.keys(psych).sort(), ['credential', 'en', 'icon', 'ka', 'key', 'regulated']); // (credential: 'diploma', no licence exists)
     assert.equal(psych.ka, 'ფსიქოლოგია'); // (renamed: docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
     assert.deepEqual(cfg.niches.filter((n) => n.regulated).map((n) => n.key).sort(),
-      ['accounting_tax', 'dentistry', 'finance', 'law', 'medicine', 'nursing', 'nutrition', 'pharmacy', 'psychology', 'veterinary']);
+      ['accounting_tax', 'allied_health', 'aviation', 'dentistry', 'finance', 'law', 'maritime', 'medicine', 'nursing', 'nutrition', 'pharmacy', 'psychology', 'veterinary']);
     assert.equal(cfg.niches[0].key, 'business', 'in their order');
   });
 
@@ -101,7 +101,7 @@ describe('suggested niches: an admin promotes one, or moves it into an existing 
     assert.equal((await outsider.api('/admin/niches')).status, 403);
     const r = await admin.api('/admin/niches');
     assert.equal(r.status, 200);
-    assert.equal(r.niches.length, 39);
+    assert.equal(r.niches.length, 51);
     const bees = r.suggestions.find((s) => s.label.toLowerCase() === 'beekeeping');
     assert.equal(bees.count, 3, 'Beekeeping, beekeeping and the listed mentor');
     assert.ok(r.suggestions.some((s) => s.label === 'Candle making' && s.count === 1));

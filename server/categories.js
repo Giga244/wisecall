@@ -1,4 +1,4 @@
-// The categories students browse and mentors choose (docs/CLAUDE-CODE-CATEGORIES.md): 16 fields (სფერო), and chips (მიმართულება) inside each. To add a
+// The categories students browse and mentors choose (docs/CLAUDE-CODE-CATEGORIES.md, docs/CLAUDE-CODE-NEW-CATEGORIES.md): 29 fields (სფერო), and chips (მიმართულება) inside each. To add a
 // chip, add one line to its field: c('key', 'ქართული', 'English', 'keywords for the search') makes the id '<field>.<key>'; give a fifth value only when
 // it counts as another niche than the field's. Every field also has '<field>.other' ("სხვა", with a text box).
 //
@@ -202,6 +202,105 @@ const FIELDS = [
     c('medicine', 'სპორტული მედიცინა', 'Sports medicine', 'sports doctor', 'medicine'),
     c('management', 'სპორტის მენეჯმენტი', 'Sports management', 'agent')
   ] },
+  // ---- The fields added in docs/CLAUDE-CODE-NEW-CATEGORIES.md. A direction that lived in another field until now (veterinary in medicine,
+  // aviation in engineering, ...) is offered here from now on; the old one stays valid for the mentors who chose it (MOVED, below).
+  { id: 'econ', icon: '📊', ka: 'ეკონომიკა', en: 'Economics', niche: 'economics', keywords: 'economics economy economist ეკონომისტი ეკონომიკური', chips: [
+    c('macro', 'მაკროეკონომიკა', 'Macroeconomics', 'inflation gdp monetary ინფლაცია მონეტარული'),
+    c('micro', 'მიკროეკონომიკა', 'Microeconomics', 'markets prices ბაზარი ფასები'),
+    c('econometrics', 'ეკონომეტრიკა', 'Econometrics', 'regression stata ეკონომეტრიკა რეგრესია'),
+    c('development', 'განვითარების ეკონომიკა', 'Development economics', 'poverty growth სიღარიბე ზრდა'),
+    c('behavioral', 'ქცევითი ეკონომიკა', 'Behavioral economics', 'behavioural nudge ქცევითი'),
+    c('trade', 'საერთაშორისო ვაჭრობა', 'International trade', 'export import ექსპორტი იმპორტი')
+  ] },
+  { id: 'social', icon: '👥', ka: 'სოციალური მეცნიერებები', en: 'Social Sciences', niche: 'social_sciences', keywords: 'social sciences society სოციალური საზოგადოება', chips: [
+    c('sociology', 'სოციოლოგია', 'Sociology', 'sociologist სოციოლოგი'),
+    c('anthropology', 'ანთროპოლოგია', 'Anthropology', 'anthropologist ანთროპოლოგი ეთნოგრაფია'),
+    c('demography', 'დემოგრაფია', 'Demography', 'population მოსახლეობა'),
+    c('gender', 'გენდერული კვლევები', 'Gender studies', 'gender გენდერი'),
+    c('methods', 'კვლევის მეთოდები', 'Research methods', 'survey qualitative quantitative გამოკითხვა თვისებრივი რაოდენობრივი'),
+    c('urban_studies', 'ურბანული კვლევები', 'Urban studies', 'city ქალაქი')
+  ] },
+  { id: 'hum', icon: '📜', ka: 'ჰუმანიტარული მეცნიერებები', en: 'Humanities', niche: 'humanities', keywords: 'humanities ჰუმანიტარული', chips: [
+    c('history', 'ისტორია', 'History', 'historian ისტორიკოსი'),
+    c('philosophy', 'ფილოსოფია', 'Philosophy', 'philosopher ფილოსოფოსი ეთიკა'),
+    c('literature', 'ლიტერატურა', 'Literature', 'literary ლიტერატურათმცოდნეობა'),
+    c('linguistics', 'ლინგვისტიკა', 'Linguistics', 'language science ენათმეცნიერება'),
+    c('art_history', 'ხელოვნების ისტორია', 'Art history', 'museum მუზეუმი'),
+    c('archaeology', 'არქეოლოგია', 'Archaeology', 'archaeologist არქეოლოგი'),
+    c('religion', 'რელიგიათმცოდნეობა', 'Religious studies', 'theology თეოლოგია')
+  ] },
+  { id: 'avia', icon: '🛫', ka: 'ავიაცია', en: 'Aviation', niche: 'aviation', keywords: 'aviation airline plane ავიაცია თვითმფრინავი ავიაკომპანია', chips: [
+    c('pilot', 'პილოტი', 'Pilot', 'pilot ppl cpl atpl flight school მფრინავი საფრენოსნო'),
+    c('cabin', 'ბორტგამცილებელი', 'Cabin crew', 'flight attendant stewardess სტიუარდესა'),
+    c('atc', 'საჰაერო მოძრაობის მართვა', 'Air traffic control', 'atc controller დისპეჩერი'),
+    c('maintenance', 'ავიატექნიკური მომსახურება', 'Aircraft maintenance', 'b1 b2 engineer mechanic ავიატექნიკოსი'),
+    c('aero_eng', 'ავიაინჟინერია', 'Aerospace engineering', 'aerospace aeronautical ავიაინჟინერი'),
+    c('airport', 'აეროპორტის მენეჯმენტი', 'Airport management', 'airport operations აეროპორტი', 'business')
+  ] },
+  { id: 'sea', icon: '⚓', ka: 'საზღვაო საქმე', en: 'Maritime', niche: 'maritime', keywords: 'maritime sea ship seafarer ზღვა გემი მეზღვაური', chips: [
+    c('navigation', 'ნავიგაცია და გემის მართვა', 'Navigation / deck officer', 'captain deck officer კაპიტანი შტურმანი'),
+    c('marine_eng', 'გემის მექანიკა', 'Marine engineering', 'engineer officer მექანიკოსი'),
+    c('cadet', 'საზღვაო განათლება', 'Maritime education', 'cadet academy კადეტი აკადემია'),
+    c('port', 'პორტის ოპერაციები', 'Port operations', 'port terminal პორტი ტერმინალი', 'logistics'),
+    c('shipping', 'საზღვაო გადაზიდვები', 'Shipping', 'shipping chartering ფრახტი', 'logistics')
+  ] },
+  { id: 'vet', icon: '🐾', ka: 'ვეტერინარია', en: 'Veterinary Medicine', niche: 'veterinary', keywords: 'veterinary vet animals ვეტერინარი ცხოველები', chips: [
+    c('pets', 'შინაური ცხოველები', 'Companion animals', 'pets dogs cats ძაღლი კატა'),
+    c('farm', 'ფერმის ცხოველები', 'Farm animals', 'livestock cattle პირუტყვი'),
+    c('surgery', 'ვეტერინარული ქირურგია', 'Veterinary surgery', 'surgery ქირურგია'),
+    c('food_safety', 'სურსათის უვნებლობა', 'Food safety', 'food safety inspection ინსპექცია'),
+    c('studies', 'ვეტერინარიის სწავლა', 'Studying veterinary medicine', 'study university სწავლა')
+  ] },
+  { id: 'public', icon: '🏛️', ka: 'საჯარო სამსახური და დიპლომატია', en: 'Public Service & Diplomacy', niche: 'public_service', keywords: 'public service government diplomat მთავრობა დიპლომატი სახელმწიფო', chips: [
+    c('diplomacy', 'დიპლომატია', 'Diplomacy', 'diplomat embassy დიპლომატი საელჩო'),
+    c('civil_service', 'საჯარო სამსახური', 'Civil service', 'government ministry სამინისტრო'),
+    c('consular', 'საკონსულო საქმე', 'Consular work', 'consulate visa საკონსულო'),
+    c('local_gov', 'ადგილობრივი თვითმმართველობა', 'Local government', 'municipality მერია მუნიციპალიტეტი'),
+    c('competition', 'საჯარო სამსახურის კონკურსი', 'Civil service exams', 'exam competition კონკურსი გამოცდა')
+  ] },
+  { id: 'security', icon: '🛡️', ka: 'სამართალდამცავი და სამხედრო სფერო', en: 'Law Enforcement & Military', niche: 'security_defense', keywords: 'military army police defense სამხედრო ჯარი პოლიცია თავდაცვა', chips: [
+    c('military', 'სამხედრო სამსახური', 'Military service', 'army armed forces ჯარი შეიარაღებული ძალები'),
+    c('academy', 'სამხედრო აკადემია', 'Military academy', 'cadet academy კადეტი აკადემია'),
+    c('police', 'პოლიცია', 'Police', 'police officer პოლიციელი'),
+    c('border', 'სასაზღვრო პოლიცია', 'Border police', 'border customs საზღვარი'),
+    c('emergency', 'საგანგებო სიტუაციების მართვა', 'Emergency management', 'firefighter rescue მეხანძრე მაშველი')
+  ] },
+  { id: 'logistics', icon: '📦', ka: 'ლოგისტიკა და მიწოდების ჯაჭვი', en: 'Logistics & Supply Chain', niche: 'logistics', keywords: 'logistics supply chain ლოგისტიკა მიწოდება', chips: [
+    c('supply_chain', 'მიწოდების ჯაჭვის მართვა', 'Supply chain management', 'scm მიწოდების ჯაჭვი'),
+    c('freight', 'საერთაშორისო გადაზიდვები', 'Freight forwarding', 'freight forwarding cargo ტვირთი ექსპედირება'),
+    c('warehouse', 'საწყობის მართვა', 'Warehousing', 'warehouse inventory საწყობი მარაგი'),
+    c('customs', 'საბაჟო საქმე', 'Customs', 'customs broker საბაჟო დეკლარანტი'),
+    c('procurement', 'შესყიდვები', 'Procurement', 'purchasing tender შესყიდვა ტენდერი')
+  ] },
+  { id: 'beauty', icon: '💄', ka: 'სილამაზე და კოსმეტოლოგია', en: 'Beauty & Cosmetology', niche: 'beauty', keywords: 'beauty cosmetology salon სილამაზე კოსმეტოლოგია სალონი', chips: [
+    c('cosmetology', 'კოსმეტოლოგია', 'Cosmetology', 'skin care კოსმეტოლოგი კანის მოვლა'),
+    c('makeup', 'ვიზაჟი', 'Makeup', 'makeup artist ვიზაჟისტი'),
+    c('hair', 'თმის სტილისტი', 'Hairdressing', 'hairdresser barber სტილისტი პარიკმახერი'),
+    c('nails', 'მანიკიური', 'Nails', 'manicure nail მანიკიური'),
+    c('salon', 'სილამაზის სალონის მართვა', 'Running a salon', 'salon business სალონი')
+  ] },
+  { id: 'fashion', icon: '👗', ka: 'მოდა', en: 'Fashion', niche: 'fashion', keywords: 'fashion clothing მოდა ტანსაცმელი', chips: [
+    c('design', 'მოდის დიზაინი', 'Fashion design', 'designer დიზაინერი'),
+    c('styling', 'სტილისტი', 'Styling', 'stylist სტილი'),
+    c('modeling', 'მოდელინგი', 'Modelling', 'model მოდელი'),
+    c('tailoring', 'კონსტრუირება და კერვა', 'Pattern making & tailoring', 'sewing tailor კერვა მკერავი'),
+    c('business', 'მოდის ბიზნესი', 'Fashion business', 'brand merchandising ბრენდი')
+  ] },
+  { id: 'perform', icon: '🎭', ka: 'თეატრი, მსახიობობა და ცეკვა', en: 'Theatre, Acting & Dance', niche: 'performing_arts', keywords: 'theatre theater acting dance სცენა თეატრი მსახიობი ცეკვა', chips: [
+    c('acting', 'მსახიობობა', 'Acting', 'actor actress მსახიობი'),
+    c('dance', 'ცეკვა', 'Dance', 'dancer ballet მოცეკვავე ბალეტი'),
+    c('directing', 'თეატრალური რეჟისურა', 'Theatre directing', 'director რეჟისორი'),
+    c('choreography', 'ქორეოგრაფია', 'Choreography', 'choreographer ქორეოგრაფი'),
+    c('auditions', 'შესარჩევი და აუდიციები', 'Auditions & admission', 'audition admission შესარჩევი აუდიცია')
+  ] },
+  { id: 'allied', icon: '🩹', ka: 'ჯანდაცვის სხვა პროფესიები', en: 'Allied Health', niche: 'allied_health', keywords: 'allied health physiotherapy nutrition public health ფიზიოთერაპია კვება ჯანდაცვა', chips: [
+    c('physio', 'ფიზიოთერაპია / რეაბილიტაცია', 'Physiotherapy / Rehabilitation', 'physical therapy რეაბილიტოლოგი'),
+    c('nutrition', 'ნუტრიციოლოგია', 'Nutrition', 'dietitian dietetics დიეტოლოგი კვება', 'nutrition'),
+    c('public_health', 'საზოგადოებრივი ჯანდაცვა', 'Public health', 'epidemiology ეპიდემიოლოგია'),
+    c('speech', 'ლოგოპედია', 'Speech therapy', 'speech language therapist ლოგოპედი'),
+    c('occupational', 'ოკუპაციური თერაპია', 'Occupational therapy', 'ot ოკუპაციური'),
+    c('lab', 'ლაბორატორიული საქმე', 'Medical laboratory', 'lab technician ლაბორანტი')
+  ] },
   { id: 'svc', icon: '🍽️', ka: 'სერვისი და სხვა', en: 'Services & Other', niche: 'tourism', keywords: 'service მომსახურება', chips: [
     c('tourism', 'ტურიზმი', 'Tourism', 'travel guide გიდი'),
     c('hotel', 'სასტუმრო ბიზნესი', 'Hotel business', 'hospitality hotel სასტუმრო'),
@@ -256,8 +355,19 @@ const LIMITS = { extraFields: 2, directions: 5, specializations: 5, specializati
 
 // ---- Looked up ------------------------------------------------------------------------------------------------------------------------------
 const OTHER_CHIP = 'other';
+// Directions that have a field of their own since docs/CLAUDE-CODE-NEW-CATEGORIES.md: no longer offered where they were (the apply form and
+// Browse's chips leave them out), but still valid, named and counted for the mentors who chose them, with the niche they had (so nobody's
+// licence rules change). The value is where the direction is offered now.
+const MOVED = {
+  'med.veterinary': 'vet.pets', 'med.physio': 'allied.physio', 'med.nutrition': 'allied.nutrition', 'med.public_health': 'allied.public_health',
+  'fin.economics': 'econ.macro', 'biz.logistics': 'logistics.supply_chain', 'eng.aviation': 'avia.aero_eng',
+  'psy.sociology': 'social.sociology', 'psy.anthropology': 'social.anthropology', 'psy.philosophy': 'hum.philosophy', 'psy.history': 'hum.history',
+  'pol.diplomacy': 'public.diplomacy', 'pol.civil_service': 'public.civil_service',
+  'art.fashion': 'fashion.design', 'art.acting': 'perform.acting', 'art.dance': 'perform.dance',
+  'svc.military': 'security.military', 'svc.aviation_crew': 'avia.pilot'
+};
 const chipsOf = (field) => {
-  const list = field.chips.map((x) => ({ ...x, id: `${field.id}.${x.key}`, niche: x.niche || field.niche, field: field.id }));
+  const list = field.chips.map((x) => ({ ...x, id: `${field.id}.${x.key}`, niche: x.niche || field.niche, field: field.id, ...(MOVED[`${field.id}.${x.key}`] ? { moved: MOVED[`${field.id}.${x.key}`] } : {}) }));
   return [...list, { key: OTHER_CHIP, id: `${field.id}.${OTHER_CHIP}`, ka: 'სხვა', en: 'Other', keywords: '', niche: field.niche, field: field.id, other: true }];
 };
 const FIELD = new Map(FIELDS.map((f) => [f.id, { ...f, chips: chipsOf(f) }]));
@@ -292,7 +402,10 @@ const FROM_NICHE = {
   science: ['sci'], languages: ['lang'], teaching: ['edu'], study_abroad: ['abroad'], psychology: ['psy'], parenting: ['psy', 'psy.child'], politics: ['pol'],
   design: ['art'], creative: ['art'], music: ['art', 'art.music'], film_photo: ['media', 'media.film'], writing: ['media', 'media.writing'],
   content_creation: ['media', 'media.content'], fitness: ['sport', 'sport.fitness'], sports_coaching: ['sport', 'sport.coaching'],
-  tourism: ['svc', 'svc.tourism'], cooking: ['svc', 'svc.culinary'], wine_agriculture: ['svc', 'svc.agro']
+  tourism: ['svc', 'svc.tourism'], cooking: ['svc', 'svc.culinary'], wine_agriculture: ['svc', 'svc.agro'],
+  // (docs/CLAUDE-CODE-NEW-CATEGORIES.md)
+  economics: ['econ'], social_sciences: ['social'], humanities: ['hum'], aviation: ['avia'], maritime: ['sea'], public_service: ['public'],
+  security_defense: ['security'], logistics: ['logistics'], beauty: ['beauty'], fashion: ['fashion'], performing_arts: ['perform'], allied_health: ['allied']
 };
 function fromNiche(niche) {
   const hit = FROM_NICHE[niche];
@@ -323,7 +436,7 @@ function forClient(counts = { fields: {}, chips: {} }) {
   return {
     fields: [...FIELD.values()].map((f) => ({
       id: f.id, icon: f.icon, ka: f.ka, en: f.en, count: counts.fields[f.id] || 0, regulated: require('./niches').isRegulated(f.niche),
-      chips: f.chips.map((x) => ({ id: x.id, ka: x.ka, en: x.en, niche: x.niche, count: counts.chips[x.id] || 0, ...(x.other ? { other: true } : {}) }))
+      chips: f.chips.map((x) => ({ id: x.id, ka: x.ka, en: x.en, niche: x.niche, count: counts.chips[x.id] || 0, ...(x.other ? { other: true } : {}), ...(x.moved ? { moved: x.moved } : {}) }))
     })),
     countries: COUNTRIES.map(({ id, ka, en }) => ({ id, ka, en })),
     years: YEARS.map(({ id, ka, en }) => ({ id, ka, en })),
@@ -387,7 +500,7 @@ async function forAdmin() {
   };
 }
 
-module.exports = {
+module.exports = { MOVED,
   FIELDS, COUNTRIES, YEARS, LIMITS, UNIVERSITY_ALIASES, FROM_NICHE, FIELD, CHIP, fieldIds, isField, isChip, isCountry, fieldOfChip, nameOf, nicheFor, fromNiche, yearsBand,
   cleanSpecializations, forClient, counts, mapExisting, forAdmin
 };

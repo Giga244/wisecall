@@ -68,6 +68,29 @@ const REGULATED = {
     registries: [],
     sources: []
   },
+  // (docs/CLAUDE-CODE-NEW-CATEGORIES.md: regulated like the fields above. Not researched yet: what is accepted is checked by a person.)
+  aviation: {
+    label: 'Aviation',
+    licence: 'Pilot, cabin crew, air traffic control or aircraft maintenance licence or certificate (not researched yet: a lawyer should confirm what Georgian law requires and whether a register exists)',
+    publicRegister: false,
+    registries: [],
+    sources: []
+  },
+  maritime: {
+    label: 'Maritime',
+    licence: "Seafarer's certificate of competency or maritime licence (not researched yet: a lawyer should confirm what Georgian law requires and whether a register exists)",
+    publicRegister: false,
+    registries: [],
+    sources: []
+  },
+  allied_health: {
+    label: 'Allied health',
+    licence: 'Physiotherapy, speech therapy, occupational therapy, public health or laboratory diploma, certificate or licence (not researched yet: a lawyer should confirm whether a licence is required)',
+    credential: 'diploma',
+    publicRegister: false,
+    registries: [],
+    sources: []
+  },
   psychology: {
     label: 'Psychology',
     licence: 'Psychology diploma or certificate (no licensing law or public register for psychologists could be confirmed)',

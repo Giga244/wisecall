@@ -3012,5 +3012,22 @@
   "home2.faq.title": "Common questions",
   "home2.faq.all": "All questions",
   "home2.faq.minor.q": "Is it safe for 16–17 year olds?",
-  "home2.faq.minor.a": "Yes. Every mentor is checked with an identity document, everything is in writing, and contact details cannot be exchanged. If you are under 18, our team checks the mentor's answer before it reaches you."
+  "home2.faq.minor.a": "Yes. Every mentor is checked with an identity document, everything is in writing, and contact details cannot be exchanged. If you are under 18, our team checks the mentor's answer before it reaches you.",
+  "pick.search": "Find a field...",
+  "pick.none": "No field matches. Try another word, or choose \"Services & Other\".",
+  "niche.economics": "Economics",
+  "niche.social_sciences": "Social Sciences",
+  "niche.humanities": "Humanities",
+  "niche.aviation": "Aviation",
+  "niche.maritime": "Maritime",
+  "niche.public_service": "Public Service & Diplomacy",
+  "niche.security_defense": "Law Enforcement & Military",
+  "niche.logistics": "Logistics & Supply Chain",
+  "niche.beauty": "Beauty & Cosmetology",
+  "niche.fashion": "Fashion",
+  "niche.performing_arts": "Theatre, Acting & Dance",
+  "niche.allied_health": "Allied Health (physio, nutrition, public health)",
+  "niche.politics": "Politics & International Relations",
+  "niche.veterinary": "Veterinary Medicine",
+  "niche.nutrition": "Nutrition"
 }

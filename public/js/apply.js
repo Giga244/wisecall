@@ -163,7 +163,10 @@
     tech: 'tech', data_ai: 'tech', cybersecurity: 'tech', gaming: 'tech', engineering: 'tech', architecture: 'tech',
     design: 'creative', creative: 'creative', film_photo: 'creative', music: 'creative', writing: 'creative', content_creation: 'creative', marketing: 'creative',
     teaching: 'education', study_abroad: 'education', languages: 'education', science: 'education', careers_hr: 'education',
-    parenting: 'life', sports_coaching: 'life', cooking: 'life', tourism: 'life', wine_agriculture: 'life', freelancing: 'life'
+    parenting: 'life', sports_coaching: 'life', cooking: 'life', tourism: 'life', wine_agriculture: 'life', freelancing: 'life',
+    // (docs/CLAUDE-CODE-NEW-CATEGORIES.md)
+    allied_health: 'health', economics: 'money', logistics: 'money', social_sciences: 'education', humanities: 'education',
+    aviation: 'tech', maritime: 'tech', public_service: 'education', security_defense: 'life', beauty: 'creative', fashion: 'creative', performing_arts: 'creative'
   };
   const groupOf = (key) => GROUP_OF[key] || 'education';
   const isRegulated = (key) => Boolean((WisecallI18n.niches().find((n) => n.key === key) || {}).regulated);
@@ -935,10 +938,16 @@
         const own = (fieldById(fieldId).chips.find((c) => c.other) || {}).niche;
         return chips.find(isRegulated) || chips[0] || own;
       };
+      let pickQuery = '';
+      const norm = (v) => String(v || '').toLowerCase().normalize('NFKC').replace(/s+/g, ' ').trim();
       const drawPick = () => {
         const mine = [pick.main, ...pick.extras].filter(Boolean);
-        area.innerHTML = `<div class="pick-fields" role="group">${catalog.fields.map((x) => `<button type="button" class="pick-field" data-field="${esc(x.id)}" aria-pressed="${mine.includes(x.id)}"><span class="pick-field-icon" aria-hidden="true">${x.icon}</span><span>${esc(WisecallI18n.nameIn(x))}</span>${x.id === pick.main ? `<small>${esc(t('pick.main'))}</small>` : (pick.extras.includes(x.id) ? `<small>${esc(t('pick.extra'))}</small>` : '')}</button>`).join('')}</div>
-          ${mine.map((id) => { const x = fieldById(id); return `<div class="pick-group"><p>${esc(fill('pick.chips', { field: WisecallI18n.nameIn(x) }))}</p><div class="pick-chips" role="group">${x.chips.map((c) => `<button type="button" class="chip apply-chip" data-direction="${esc(c.id)}" aria-pressed="${pick.directions.includes(c.id)}">${esc(WisecallI18n.nameIn(c))}</button>`).join('')}</div>${pick.directions.includes(id + '.other') ? `<input class="pick-other" type="text" maxlength="60" data-other="${esc(id)}" value="${esc(pick.other[id] || '')}" placeholder="${esc(t('pick.otherPlaceholder'))}" aria-label="${esc(t('pick.otherPlaceholder'))}">` : ''}</div>`; }).join('')}
+        // (29 fields: a box above them narrows the list as the mentor types; the chosen ones always stay in it)
+        const q = norm(pickQuery);
+        const shown = catalog.fields.filter((x) => !q || mine.includes(x.id) || norm(`${x.ka} ${x.en}`).includes(q));
+        area.innerHTML = `<div class="pick-search"><label for="apPickSearch" class="sr-only">${esc(t('pick.search'))}</label><input type="search" id="apPickSearch" data-pick-search value="${esc(pickQuery)}" placeholder="${esc(t('pick.search'))}" autocomplete="off" enterkeyhint="search"></div>`
+          + `<div class="pick-fields" role="group">${shown.map((x) => `<button type="button" class="pick-field" data-field="${esc(x.id)}" aria-pressed="${mine.includes(x.id)}"><span class="pick-field-icon" aria-hidden="true">${x.icon}</span><span>${esc(WisecallI18n.nameIn(x))}</span>${x.id === pick.main ? `<small>${esc(t('pick.main'))}</small>` : (pick.extras.includes(x.id) ? `<small>${esc(t('pick.extra'))}</small>` : '')}</button>`).join('')}${shown.length ? '' : `<p class="hint pick-none">${esc(t('pick.none'))}</p>`}</div>
+          ${mine.map((id) => { const x = fieldById(id); return `<div class="pick-group"><p>${esc(fill('pick.chips', { field: WisecallI18n.nameIn(x) }))}</p><div class="pick-chips" role="group">${x.chips.filter((c) => !c.moved || pick.directions.includes(c.id)).map((c) => `<button type="button" class="chip apply-chip" data-direction="${esc(c.id)}" aria-pressed="${pick.directions.includes(c.id)}">${esc(WisecallI18n.nameIn(c))}</button>`).join('')}</div>${pick.directions.includes(id + '.other') ? `<input class="pick-other" type="text" maxlength="60" data-other="${esc(id)}" value="${esc(pick.other[id] || '')}" placeholder="${esc(t('pick.otherPlaceholder'))}" aria-label="${esc(t('pick.otherPlaceholder'))}">` : ''}</div>`; }).join('')}
           ${mine.length ? `<p class="hint pick-count">${esc(fill('pick.count', { n: pick.directions.length, max: catalog.limits.directions }))}</p>` : ''}`;
         show();
       };
@@ -977,6 +986,15 @@
         fieldError(form, 'extra', '');
         drawPick();
         draftAbout(form);
+      });
+      area.addEventListener('input', (ev) => {
+        if (!ev.target.matches('[data-pick-search]')) return;
+        pickQuery = ev.target.value;
+        const at = ev.target.selectionStart;
+        drawPick();
+        const box = area.querySelector('[data-pick-search]');
+        box.focus();
+        try { box.setSelectionRange(at, at); } catch (e) { /* (some inputs have no caret) */ }
       });
       area.addEventListener('input', (ev) => { if (ev.target.dataset.other) { pick.other[ev.target.dataset.other] = ev.target.value; preview(); } });
       area.addEventListener('focusout', (ev) => { if (ev.target.dataset.other) draftAbout(form); });

@@ -99,7 +99,7 @@ const tiles = (page) => page.evaluate(() => {
 });
 
 for (const [width, count, columns, height] of [[375, 6, 2, 56], [390, 6, 2, 56], [768, 9, 3, 56], [1024, 8, 4, 64], [1440, 10, 5, 64], [1920, 10, 5, 64]]) {
-  test(`Browse's fields at ${width}px: ${count} tiles in ${columns} columns, then all 16; no word broken (English and Georgian)`, async ({ browser }) => {
+  test(`Browse's fields at ${width}px: ${count} tiles in ${columns} columns, then all 29; no word broken (English and Georgian)`, async ({ browser }) => {
     for (const lang of ['en', 'ka']) {
       const { ctx, page } = await open(browser, width, lang, 900, '/experts.html');
       const closed = await tiles(page);
@@ -115,10 +115,10 @@ for (const [width, count, columns, height] of [[375, 6, 2, 56], [390, 6, 2, 56],
       await expect(more).toHaveAttribute('aria-expanded', 'true');
       await expect(more).toHaveText(lang === 'ka' ? 'ნაკლების ჩვენება' : 'Show fewer');
       const all = await tiles(page);
-      expect(all.count, lang).toBe(16);
+      expect(all.count, lang).toBe(29);
       expect(all.broken, lang).toEqual([]);
       await more.click();
-      await expect(more).toHaveText(lang === 'ka' ? 'ყველა 16 სფეროს ნახვა' : 'See all 16 fields');
+      await expect(more).toHaveText(lang === 'ka' ? 'ყველა 29 სფეროს ნახვა' : 'See all 29 fields');
       expect((await tiles(page)).count, lang).toBe(count);
       await ctx.close();
     }

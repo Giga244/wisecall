@@ -116,7 +116,8 @@
     box.querySelector('#dChips').innerHTML = [main, ...extras].map((fid) => {
       const fl = (cats.fields || []).find((x) => x.id === fid);
       if (!fl) return '';
-      return `<p class="small"><strong>${esc(nameOf(fl))}</strong></p>` + fl.chips.filter((c) => !c.other).map((c) =>
+      return `<p class="small"><strong>${esc(nameOf(fl))}</strong></p>` + fl.chips.filter((c) => !c.other && (!c.moved || keep.has(c.id))).map((c) => // (a direction that has its own field now: only for whoever chose it)
+
         `<label class="checkbox-row"><input type="checkbox" name="dChip" value="${esc(c.id)}"${keep.has(c.id) ? ' checked' : ''}> <span>${esc(nameOf(c))}</span></label>`).join('');
     }).join('');
   }

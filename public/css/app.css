@@ -1100,3 +1100,13 @@ details.profile-more > summary { display: flex; align-items: center; justify-con
 details.profile-more > summary::-webkit-details-marker { display: none; }
 details.profile-more > summary::after { content: ""; width: 9px; height: 9px; margin: 0 6px 4px 12px; border-right: 2px solid var(--ink-soft); border-bottom: 2px solid var(--ink-soft); transform: rotate(45deg); transition: transform 0.2s var(--ease-out); }
 details.profile-more[open] > summary::after { transform: rotate(225deg); margin-bottom: -4px; }
+/* (the apply form's field picker: a search box above the 29 fields, docs/CLAUDE-CODE-NEW-CATEGORIES.md) */
+.pick-search { margin: 8px 0 4px; }
+.pick-search input { width: 100%; min-height: 48px; margin: 0; padding: 0 14px; border: 1px solid var(--field-border); border-radius: var(--r-field); background: var(--card); color: var(--ink); font-size: 16px; }
+.pick-search input::placeholder { color: var(--ink-soft); opacity: 1; }
+.pick-none { grid-column: 1 / -1; margin: 4px 0; }
+.pick-field { min-width: 0; overflow-wrap: break-word; hyphens: manual; }
+/* (on a small phone a whole row each, the icon beside the name: some Georgian words are wider than half the screen) */
+@media (max-width: 400px) { .pick-fields { grid-template-columns: 1fr; gap: 6px; } .pick-field { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; } .pick-field > span:not(.pick-field-icon) { flex: 1 1 auto; min-width: 0; } .pick-field > small, .pick-field-icon { flex: 0 0 auto; } }
+/* (a word wider than its tile, "სამართალდამცავი" at 360px, wraps inside it instead of running out) */
+.pick-field > span:not(.pick-field-icon) { max-width: 100%; overflow-wrap: break-word; }

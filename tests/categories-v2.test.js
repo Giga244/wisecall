@@ -1,4 +1,4 @@
-// The 16 fields, chips, specializations and the one search box (docs/CLAUDE-CODE-CATEGORIES.md, docs/PLAN-CATEGORIES.md).
+// The 29 fields, chips, specializations and the one search box (docs/CLAUDE-CODE-CATEGORIES.md, docs/PLAN-CATEGORIES.md).
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -13,8 +13,9 @@ const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
 let srv, base, admin;
 
 describe('the list', () => {
-  test('16 fields, with stable ids, KA and EN names, and "Other" in every field', () => {
-    assert.equal(categories.FIELDS.length, 16);
+  test('29 fields (13 added by docs/CLAUDE-CODE-NEW-CATEGORIES.md), with stable ids, KA and EN names, and "Other" in every field; "Services & Other" last', () => {
+    assert.equal(categories.FIELDS.length, 29);
+    assert.equal(categories.FIELDS[categories.FIELDS.length - 1].id, 'svc');
     const ids = new Set();
     for (const f of categories.FIELD.values()) {
       assert.ok(f.ka && f.en && f.icon && f.niche, f.id);
@@ -332,5 +333,58 @@ describe('on the running site', () => {
         assert.deepEqual((await client(again.base).api('/experts?q=qqqq')).experts.map((e) => e.name), ['Old Odd']);
       } finally { again.proc.kill(); }
     });
+  });
+});
+
+// docs/CLAUDE-CODE-NEW-CATEGORIES.md: 14 categories in KA and EN. Politics & IR and Veterinary already were niches; the others are new.
+describe('the new categories', () => {
+  const NEW = { econ: 'economics', social: 'social_sciences', hum: 'humanities', avia: 'aviation', sea: 'maritime', vet: 'veterinary', public: 'public_service',
+    security: 'security_defense', logistics: 'logistics', beauty: 'beauty', fashion: 'fashion', perform: 'performing_arts', allied: 'allied_health' };
+  test('each is a field with Georgian and English names, its own niche, a few directions and "Other"; Politics & IR is the field it already was', () => {
+    for (const [id, niche] of Object.entries(NEW)) {
+      const f = categories.FIELD.get(id);
+      assert.ok(f, id);
+      assert.equal(f.niche, niche, id);
+      assert.match(f.ka, /[ა-ჰ]/, `${id} in Georgian`);
+      assert.match(f.en, /[A-Za-z]/, `${id} in English`);
+      assert.ok(f.chips.filter((c) => !c.other).length >= 5, `${id}: directions`);
+      assert.ok(f.chips[f.chips.length - 1].other, `${id}: "Other" last`);
+    }
+    assert.equal(categories.FIELD.get('pol').ka, 'პოლიტიკა და საერთაშორისო ურთიერთობები');
+    assert.equal(categories.FIELD.get('econ').ka, 'ეკონომიკა');
+    assert.equal(categories.FIELD.get('allied').en, 'Allied Health');
+  });
+
+  test('aviation, maritime and allied health are regulated, with the same licence check as the others; veterinary still is', () => {
+    for (const n of ['aviation', 'maritime', 'allied_health', 'veterinary']) {
+      assert.ok(REGULATED[n], n);
+      assert.equal(REGULATED[n].publicRegister, false, `${n}: a person checks the document`);
+    }
+    assert.equal(REGULATED.allied_health.credential, 'diploma');
+    assert.equal(categories.nicheFor('avia', ['avia.pilot']), 'aviation');
+    assert.equal(categories.nicheFor('sea', []), 'maritime');
+    assert.equal(categories.nicheFor('allied', ['allied.physio']), 'allied_health');
+    // (the work in these fields that is not licensed counts as it did before)
+    assert.equal(categories.nicheFor('avia', ['avia.airport']), 'business');
+    assert.equal(categories.nicheFor('sea', ['sea.port']), 'logistics');
+  });
+
+  test('a direction that moved to a new field is no longer offered where it was, but stays valid with the niche it had (nobody\'s rules change)', () => {
+    assert.equal(Object.keys(categories.MOVED).length, 18);
+    for (const [old, now] of Object.entries(categories.MOVED)) {
+      assert.ok(categories.isChip(old), `${old} stays valid`);
+      assert.ok(categories.isChip(now), `${now} exists`);
+      assert.equal(categories.CHIP.get(old).moved, now, old);
+    }
+    assert.equal(categories.CHIP.get('eng.aviation').niche, 'engineering', 'an engineer who chose aviation stays an engineer');
+    assert.equal(categories.CHIP.get('med.physio').niche, 'medicine');
+    assert.equal(categories.CHIP.get('svc.military').niche, 'other');
+    const client = categories.forClient();
+    const med = client.fields.find((f) => f.id === 'med');
+    assert.equal(med.chips.find((c) => c.id === 'med.veterinary').moved, 'vet.pets', 'the pages know to leave it out of the choices');
+    assert.equal(client.fields.length, 29);
+    const apply = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'js', 'apply.js'), 'utf8');
+    assert.match(apply, /x\.chips\.filter\(\(c\) => !c\.moved \|\| pick\.directions\.includes\(c\.id\)\)/);
+    assert.match(apply, /data-pick-search/, 'the apply form has a box to find a field among 29');
   });
 });
