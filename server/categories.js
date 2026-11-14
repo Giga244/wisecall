@@ -62,7 +62,7 @@ const FIELDS = [
     c('consulting', 'კონსალტინგი', 'Consulting', 'consultant კონსულტანტი'),
     c('international', 'საერთაშორისო ბიზნესი', 'International business', 'export იმპორტი ექსპორტი')
   ] },
-  { id: 'fin', icon: '💰', ka: 'ფინანსები და ეკონომიკა', en: 'Finance & Economics', niche: 'finance', keywords: 'finance money ფული ფინანსისტი', chips: [
+  { id: 'fin', icon: '💰', ka: 'ფინანსები და ბანკები', en: 'Finance & Banking', niche: 'finance', keywords: 'finance banking money ფული ფინანსისტი ბანკი', chips: [
     c('bank', 'ბანკი', 'Banking', 'bank banker ბანკირი საბანკო'),
     c('accounting', 'ბუღალტერია და აუდიტი', 'Accounting & Audit', 'accountant auditor ბუღალტერი აუდიტორი ifrs', 'accounting_tax'),
     c('tax', 'საგადასახადო', 'Tax', 'taxes გადასახადები', 'accounting_tax'),

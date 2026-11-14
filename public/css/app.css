@@ -1126,6 +1126,9 @@ details.profile-more[open] > summary::after { transform: rotate(225deg); margin-
 .fp .chip[aria-pressed="true"] { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--on-accent); font-weight: 700; }
 .fp .chip:disabled { opacity: 0.5; cursor: default; }
 .fp .fp-more { color: var(--ink-soft); }
+/* Directions on a phone: the first 8 of a field, then "+ კიდევ N" (public/js/field-picker.js); a wider screen shows them all. */
+@media (max-width: 599px) { .fp .fp-dir-later { display: none; } }
+@media (min-width: 600px) { .fp .fp-dirs-more { display: none; } }
 .fp .fp-add, .fp .fp-own { border-style: dashed; color: var(--ink-soft); }
 .fp .fp-own[aria-pressed="true"] { border-style: solid; }
 .fp-new { flex: 0 0 auto; padding: 1px 8px; border-radius: var(--r-pill); background: rgba(var(--accent2-rgb), 0.16); color: var(--accent2-text); font-size: 0.72rem; font-weight: 700; }

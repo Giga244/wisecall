@@ -352,6 +352,9 @@ describe('the new categories', () => {
     }
     assert.equal(categories.FIELD.get('pol').ka, 'პოლიტიკა და საერთაშორისო ურთიერთობები');
     assert.equal(categories.FIELD.get('econ').ka, 'ეკონომიკა');
+    // (Finance no longer says Economics: one field each; the key stays, so its mentors keep everything)
+    assert.deepEqual([categories.FIELD.get('fin').ka, categories.FIELD.get('fin').en], ['ფინანსები და ბანკები', 'Finance & Banking']);
+    assert.deepEqual(categories.FIELDS.filter((f) => /ეკონომიკ|econom/i.test(f.ka + f.en)).map((f) => f.id), ['econ']);
     assert.equal(categories.FIELD.get('allied').en, 'Allied Health');
   });
 

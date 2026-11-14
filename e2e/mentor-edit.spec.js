@@ -76,6 +76,13 @@ test('"ჩემი მონაცემები": the university saves at onc
   await expect(save).toBeDisabled();
   await expect(page.locator('.fp-dirs')).toHaveClass(/is-invalid/);
   const dirs = page.locator('#fieldsForm .fp-dir');
+  // on a phone: IT's first 8 directions, then "+ კიდევ 7" opens the rest
+  await expect(dirs.filter({ visible: true })).toHaveCount(8);
+  const more = page.locator('#fieldsForm [data-fp-dirs-more="it"]');
+  await expect(more).toHaveText(KA['fp.more'].replace('{n}', '7'));
+  await more.click();
+  await expect(dirs.filter({ visible: true })).toHaveCount(15);
+  await expect(more).toHaveCount(0);
   await dirs.nth(0).click();
   await expect(save).toBeEnabled(); // (1)
   await expect(page.locator('#fpDirsError')).toBeHidden();

@@ -1092,8 +1092,11 @@
   if (!v.application.locked) window.history.replaceState({ step: current }, '', (() => { const u = new URL(window.location.href); u.searchParams.set('step', String(current + 1)); return u.pathname + u.search; })());
   render();
   // Back from the partner's page (…&kyc=returned): the result arrives a moment later, so the page asks again every 2 seconds for a minute
-  // and shows it as soon as it is there (passed: the application is sent by itself, and the "sent" screen follows).
-  if (returned() && ['started', 'checking'].includes(idState())) {
+  // and shows it as soon as it is there (passed: the application is sent by itself, and the "sent" screen follows). The ID can show as passed a
+  // moment before the server has sent the application (the age and name checks run first), so a passed ID with nothing missing waits too.
+  const waiting = () => ['started', 'checking'].includes(idState())
+    || (idState() === 'passed' && !v.application.locked && !(v.application.missing || []).length);
+  if (returned() && waiting()) {
     let tries = 0;
     const before = () => `${idState()}|${v.application.locked}`;
     let was = before();
@@ -1101,7 +1104,7 @@
       tries += 1;
       try { await load(); } catch (e) { /* the next try */ }
       if (before() !== was) { was = before(); render(); }
-      if (tries < 30 && ['started', 'checking'].includes(idState())) setTimeout(again, 2000);
+      if (tries < 30 && waiting()) setTimeout(again, 2000);
     };
     setTimeout(again, 2000);
   }
