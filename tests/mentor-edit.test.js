@@ -143,7 +143,7 @@ describe('a field change of an approved mentor waits for an admin', () => {
   before(async () => { m = await makeMentor('Gio Fields', 'gio-fields@example.com', 20, { language: 'en' }); });
 
   test('it goes to the queue, and the live profile stays as it was until it is approved', async () => {
-    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'it', extraFields: ['biz'], directions: [] } });
+    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'it', extraFields: ['biz'], directions: ['it.backend'] } });
     assert.equal(r.status, 200, r.text);
     assert.ok(r.change && r.change.id);
     const u = await userRow(m.id);
@@ -166,7 +166,7 @@ describe('a field change of an approved mentor waits for an admin', () => {
   });
 
   test('rejected: the profile stays as it was and the mentor is emailed with the reason', async () => {
-    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'art', extraFields: [], directions: [] } });
+    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'art', extraFields: [], directions: ['art.illustration'] } });
     const res = await admin.api(`/admin/changes/${r.change.id}/reject`, { method: 'POST', body: { reason: 'Your proof is about software' } });
     assert.equal(res.status, 200, res.text);
     assert.equal((await userRow(m.id)).field_id, 'it');
@@ -175,7 +175,7 @@ describe('a field change of an approved mentor waits for an admin', () => {
   });
 
   test('into a licensed field: approving is refused until that field\'s licence step has passed, and the licence can be sent for it', async () => {
-    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'law', extraFields: [], directions: [] } });
+    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'law', extraFields: [], directions: ['law.civil'] } });
     assert.equal(r.status, 200, r.text);
     const q = (await admin.api('/admin/changes')).changes.find((c) => c.id === r.change.id);
     assert.ok(q.missing.includes('license'));
@@ -213,7 +213,7 @@ describe('an application sent and not decided yet', () => {
   test('changes are saved, and the admin sees the latest version marked as updated, with what changed', async () => {
     const m = await makeMentor('Lika Pending', 'lika-pending@example.com', 15, { approve: false });
     await pool.query(`UPDATE users SET verification_status = 'pending', application_submitted_at = now() WHERE id = $1`, [m.id]);
-    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'edu', extraFields: [], directions: [] } });
+    const r = await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'edu', extraFields: [], directions: ['edu.ielts'] } });
     assert.equal(r.status, 200, r.text);
     assert.equal(r.change, null);
     assert.equal((await userRow(m.id)).field_id, 'edu');
@@ -222,5 +222,38 @@ describe('an application sent and not decided yet', () => {
     assert.ok(d.applicationChanges && d.applicationChanges.at);
     assert.ok(d.applicationChanges.fields.includes('fieldId'));
     assert.ok(d.applicationChanges.fields.includes('university'));
+  });
+});
+
+// docs/CLAUDE-CODE-NEW-CATEGORIES.md: at least 1 direction and at most 5, the same on the page (public/js/field-picker.js) and here.
+describe('directions: 1 to 5', () => {
+  let m;
+  before(async () => { m = await makeMentor('Nika Directions', 'nika-directions@example.com', 20, { approve: false }); });
+  const save = (directions) => m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'it', extraFields: [], directions } });
+
+  test('0 is refused, 1 and 5 are accepted, 6 is refused', async () => {
+    const none = await save([]);
+    assert.equal(none.status, 400, none.text);
+    assert.equal(none.error, 'too_few_directions');
+    assert.equal((await save(['it.backend'])).status, 200);
+    assert.deepEqual((await userRow(m.id)).directions, ['it.backend']);
+    const five = ['it.frontend', 'it.backend', 'it.fullstack', 'it.mobile', 'it.ai'];
+    assert.equal((await save(five)).status, 200);
+    assert.equal((await userRow(m.id)).directions.length, 5);
+    const six = await save([...five, 'it.data']);
+    assert.equal(six.status, 400, six.text);
+    assert.equal(six.error, 'too_many_directions');
+    const categories = require('../server/categories');
+    assert.deepEqual([categories.LIMITS.directionsMin, categories.LIMITS.directions], [1, 5]);
+  });
+
+  test('a mentor with none keeps their profile; only saving the field asks for one, and sending an application needs one', async () => {
+    await pool.query("UPDATE users SET directions = '{}' WHERE id = $1", [m.id]);
+    // (other details still save)
+    assert.equal((await m.c.api('/me/details', { method: 'PUT', body: { university: 'Tbilisi State University' } })).status, 200);
+    assert.equal((await m.c.api('/me/fields', { method: 'PUT', body: { fieldId: 'it', extraFields: [] } })).error, 'too_few_directions', 'nothing new chosen: still asked');
+    const experience = require('../server/verification/experience');
+    const { getUserById } = require('../server/models');
+    await assert.rejects(experience.submit(await getUserById(m.id)), (e) => e.code === 'incomplete' && e.missing.includes('directions'));
   });
 });

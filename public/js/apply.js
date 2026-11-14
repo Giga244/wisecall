@@ -46,6 +46,7 @@
   // The 16 fields and their chips (/api/categories), and what the mentor has chosen so far on step 1.
   let catalog = null;
   let pick = { main: null, extras: [], directions: [], other: {} };
+  let fieldPicker = null; // (public/js/field-picker.js, on step 1)
   const setPick = () => {
     const f = v.application.form;
     pick = { main: f.fieldId || null, extras: [...(f.extraFields || [])], directions: [...(f.directions || [])], other: { ...(f.directionOther || {}) } };
@@ -686,6 +687,8 @@
     const out = [];
     if (!form.headline.value.trim()) out.push(['headline', t('apply.err.headline')]);
     if (!form.customNiche.value.trim()) out.push(['field', t('apply.err.field')]);
+    // (1 to 5 directions: docs/CLAUDE-CODE-NEW-CATEGORIES.md; the server refuses to send an application without one)
+    if (pick.main && !pick.directions.length) { out.push(['niche', t('fp.err.min')]); if (fieldPicker) fieldPicker.showError(true); }
     const y = yearsOf(form.yearsExperience.value);
     if (y.empty) out.push(['years', t('apply.err.yearsEmpty')]);
     else if (y.error === 'nan') out.push(['years', t('apply.err.years')]);
@@ -914,6 +917,9 @@
           if (h) h.focus();
           window.scrollTo({ top: 0, behavior: 'auto' });
         } catch (e) {
+          // (no direction yet: an application started before the 1-5 rule; step 1 asks for one)
+          const noDirection = e.code === 'incomplete' && ((e.data && e.data.missing) || []).includes('directions');
+          if (noDirection) { await load(); render(); stepError(t('ap.err.directions')); return; }
           stepError(t(e.code === 'incomplete' ? 'ap.err.incomplete' : (ERR[e.code] || 'toast.error')));
           if (e.code === 'incomplete') { await load(); render(); } else btn.disabled = false;
         }
@@ -938,17 +944,21 @@
         const own = (fieldById(fieldId).chips.find((c) => c.other) || {}).niche;
         return chips.find(isRegulated) || chips[0] || own;
       };
-      let pickQuery = '';
-      const norm = (v) => String(v || '').toLowerCase().normalize('NFKC').replace(/s+/g, ' ').trim();
+      // The picker itself: public/js/field-picker.js (two cards: the main field and up to two more, then 1 to 5 directions).
       const drawPick = () => {
-        const mine = [pick.main, ...pick.extras].filter(Boolean);
-        // (29 fields: a box above them narrows the list as the mentor types; the chosen ones always stay in it)
-        const q = norm(pickQuery);
-        const shown = catalog.fields.filter((x) => !q || mine.includes(x.id) || norm(`${x.ka} ${x.en}`).includes(q));
-        area.innerHTML = `<div class="pick-search"><label for="apPickSearch" class="sr-only">${esc(t('pick.search'))}</label><input type="search" id="apPickSearch" data-pick-search value="${esc(pickQuery)}" placeholder="${esc(t('pick.search'))}" autocomplete="off" enterkeyhint="search"></div>`
-          + `<div class="pick-fields" role="group">${shown.map((x) => `<button type="button" class="pick-field" data-field="${esc(x.id)}" aria-pressed="${mine.includes(x.id)}"><span class="pick-field-icon" aria-hidden="true">${x.icon}</span><span>${esc(WisecallI18n.nameIn(x))}</span>${x.id === pick.main ? `<small>${esc(t('pick.main'))}</small>` : (pick.extras.includes(x.id) ? `<small>${esc(t('pick.extra'))}</small>` : '')}</button>`).join('')}${shown.length ? '' : `<p class="hint pick-none">${esc(t('pick.none'))}</p>`}</div>
-          ${mine.map((id) => { const x = fieldById(id); return `<div class="pick-group"><p>${esc(fill('pick.chips', { field: WisecallI18n.nameIn(x) }))}</p><div class="pick-chips" role="group">${x.chips.filter((c) => !c.moved || pick.directions.includes(c.id)).map((c) => `<button type="button" class="chip apply-chip" data-direction="${esc(c.id)}" aria-pressed="${pick.directions.includes(c.id)}">${esc(WisecallI18n.nameIn(c))}</button>`).join('')}</div>${pick.directions.includes(id + '.other') ? `<input class="pick-other" type="text" maxlength="60" data-other="${esc(id)}" value="${esc(pick.other[id] || '')}" placeholder="${esc(t('pick.otherPlaceholder'))}" aria-label="${esc(t('pick.otherPlaceholder'))}">` : ''}</div>`; }).join('')}
-          ${mine.length ? `<p class="hint pick-count">${esc(fill('pick.count', { n: pick.directions.length, max: catalog.limits.directions }))}</p>` : ''}`;
+        pick.directions = pick.directions.filter((d) => [pick.main, ...pick.extras].includes(d.split('.')[0]));
+        if (!fieldPicker || !area.contains(area.querySelector('.fp'))) {
+          fieldPicker = WisecallFieldPicker.create(area, { catalog, pick, t, fill, onChange: (kind) => {
+            if (kind === 'too_many_fields') { fieldError(form, 'extra', t('ap.err.too_many_fields')); return; }
+            if (kind === 'too_many_directions') { fieldError(form, 'niche', t('ap.err.too_many_directions')); return; }
+            if (kind === 'other') { preview(); return; }
+            chosen = true; // (a field or a direction tapped: the choice is theirs now, the words no longer change it)
+            fieldError(form, 'niche', '');
+            fieldError(form, 'extra', '');
+            show();
+            draftAbout(form);
+          } });
+        } else fieldPicker.draw();
         show();
       };
       // "Students will find you like this: …"
@@ -959,44 +969,7 @@
           form.country.value ? WisecallI18n.nameIn(catalog.countries.find((c) => c.id === form.country.value)) : ''].filter(Boolean);
         form.querySelector('[data-pick-preview]').textContent = words.length ? fill('pick.preview', { list: [...new Set(words)].join(', ') }) : t('pick.previewEmpty');
       };
-      area.addEventListener('click', (ev) => {
-        const f = ev.target.closest('[data-field]');
-        const d = ev.target.closest('[data-direction]');
-        if (f) {
-          const id = f.dataset.field;
-          // (a field only suggested from the words, never tapped, is replaced by the one tapped: it becomes the main field, not an extra one)
-          const suggestion = !chosen && pick.main && !pick.extras.length;
-          chosen = true;
-          if (suggestion && id !== pick.main) pick.main = id;
-          else if (id === pick.main) { pick.main = pick.extras.shift() || null; }
-          else if (pick.extras.includes(id)) pick.extras = pick.extras.filter((x) => x !== id);
-          else if (!pick.main) pick.main = id;
-          else if (pick.extras.length < catalog.limits.extraFields) pick.extras.push(id);
-          else { fieldError(form, 'extra', t('ap.err.too_many_fields')); return; }
-          const mine = [pick.main, ...pick.extras];
-          pick.directions = pick.directions.filter((x) => mine.includes(x.split('.')[0]));
-        } else if (d) {
-          const id = d.dataset.direction;
-          chosen = true; // (a chip tapped in the suggested field: the field is theirs now)
-          if (pick.directions.includes(id)) pick.directions = pick.directions.filter((x) => x !== id);
-          else if (pick.directions.length < catalog.limits.directions) pick.directions.push(id);
-          else { fieldError(form, 'niche', t('ap.err.too_many_directions')); return; }
-        } else return;
-        fieldError(form, 'niche', '');
-        fieldError(form, 'extra', '');
-        drawPick();
-        draftAbout(form);
-      });
-      area.addEventListener('input', (ev) => {
-        if (!ev.target.matches('[data-pick-search]')) return;
-        pickQuery = ev.target.value;
-        const at = ev.target.selectionStart;
-        drawPick();
-        const box = area.querySelector('[data-pick-search]');
-        box.focus();
-        try { box.setSelectionRange(at, at); } catch (e) { /* (some inputs have no caret) */ }
-      });
-      area.addEventListener('input', (ev) => { if (ev.target.dataset.other) { pick.other[ev.target.dataset.other] = ev.target.value; preview(); } });
+
       area.addEventListener('focusout', (ev) => { if (ev.target.dataset.other) draftAbout(form); });
       ['specialtyTags', 'university'].forEach((n) => form[n].addEventListener('input', preview));
       form.country.addEventListener('change', () => { preview(); draftAbout(form); });

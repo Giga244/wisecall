@@ -351,7 +351,8 @@ const UNIVERSITY_ALIASES = [
 ];
 
 // The limits of the mentor's choice.
-const LIMITS = { extraFields: 2, directions: 5, specializations: 5, specializationMax: 30, otherMax: 60, universityMax: 100, currentRoleMax: 100 };
+// (directions: at least directionsMin, at most directions: docs/CLAUDE-CODE-NEW-CATEGORIES.md)
+const LIMITS = { extraFields: 2, directions: 5, directionsMin: 1, specializations: 5, specializationMax: 30, otherMax: 60, universityMax: 100, currentRoleMax: 100 };
 
 // ---- Looked up ------------------------------------------------------------------------------------------------------------------------------
 const OTHER_CHIP = 'other';

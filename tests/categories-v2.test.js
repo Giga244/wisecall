@@ -383,8 +383,9 @@ describe('the new categories', () => {
     const med = client.fields.find((f) => f.id === 'med');
     assert.equal(med.chips.find((c) => c.id === 'med.veterinary').moved, 'vet.pets', 'the pages know to leave it out of the choices');
     assert.equal(client.fields.length, 29);
-    const apply = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'js', 'apply.js'), 'utf8');
-    assert.match(apply, /x\.chips\.filter\(\(c\) => !c\.moved \|\| pick\.directions\.includes\(c\.id\)\)/);
-    assert.match(apply, /data-pick-search/, 'the apply form has a box to find a field among 29');
+    // (the picker of the apply form and the details page: public/js/field-picker.js)
+    const picker = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'js', 'field-picker.js'), 'utf8');
+    assert.match(picker, /f\.chips\.filter\(\(c\) => !c\.other && \(!c\.moved \|\| pick\.directions\.includes\(c\.id\)\)\)/);
+    assert.match(picker, /data-pick-search/, 'a box to find a field among 29');
   });
 });

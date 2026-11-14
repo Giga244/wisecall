@@ -82,7 +82,26 @@ function client(base) {
     try { json = JSON.parse(text); } catch (e) { /* not JSON */ }
     return { status: res.status, headers: res.headers, text, ...json };
   };
-  call.api = (p, o) => call('/api' + p, o);
+  // An applicant needs at least 1 direction in their field to send an application (docs/CLAUDE-CODE-NEW-CATEGORIES.md), as the apply form
+  // asks. When a test sets a mentor's field through the API (their niche or a field, without saying which directions), the field's first
+  // direction is chosen too, the way a person on /apply.html would. A test that names its directions (even none) is left exactly as it is.
+  call.api = async (p, o = {}) => {
+    const res = await call('/api' + p, o);
+    const setsField = ((p === '/me' && o.method === 'PATCH') || (p === '/verification/experience' && o.method === 'PUT'))
+      && o.body && typeof o.body === 'object' && o.body.directions === undefined;
+    const u = res.user;
+    if (setsField && res.status === 200 && u && u.fieldId && !(u.directions || []).length) {
+      const f = require('../server/categories').FIELD.get(u.fieldId);
+      // (one that keeps the mentor's category as it is: same niche as theirs, else as the field's)
+      const ok = (c) => !c.other && !c.moved;
+      const first = f && (f.chips.find((c) => ok(c) && c.niche === u.niche) || f.chips.find((c) => ok(c) && c.niche === f.niche) || f.chips.find(ok));
+      if (first) {
+        const r = await call('/api/verification/experience', { method: 'PUT', body: { directions: [first.id] } }); // (only the direction: the field and any extra categories stay as the test set them)
+        if (r.status === 200 && r.user) res.user = r.user;
+      }
+    }
+    return res;
+  };
   call.cookie = () => cookie; // (for tests that send raw requests with their own paths)
   call.getCookie = (name) => jar.get(name);
   call.setCookie = (name, value) => { jar.set(name, value); cookie = jarString(); };

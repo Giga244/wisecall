@@ -123,12 +123,14 @@ test('a mentor picks a field and chips on step 1, with "სხვა", specializ
   await page.click('[data-direction="it.other"]');
   await page.fill('[data-other="it"]', 'ვებ-მაღაზიები');
   await expect(preview).toContainText('ვებ-მაღაზიები');
-  // up to 2 extra fields
+  // up to 2 extra fields ("+ დამატება", then the fields; once there are 2 the button goes: public/js/field-picker.js)
+  await page.click('[data-fp-adding]');
   await page.click('[data-field="abroad"]');
   await page.click('[data-field="edu"]');
-  await page.click('[data-field="sci"]');
-  await expect(page.locator('#apExtraErr')).toBeVisible();
-  await expect(page.locator('[data-field="sci"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('[data-remove-extra]')).toHaveCount(2);
+  await expect(page.locator('[data-fp-adding]')).toHaveCount(0);
+  await expect(page.locator('.fp-fields .fp-count')).toHaveText('2 / 2');
+  await expect(page.locator('[data-field="it"]')).toHaveAttribute('aria-pressed', 'true'); // (still the main one)
   // up to 5 chips
   for (const d of ['it.backend', 'abroad.germany', 'edu.ielts']) await page.click(`[data-direction="${d}"]`);
   await page.click('[data-direction="edu.sat"]');
@@ -179,10 +181,12 @@ test('a tapped field replaces the one only suggested from the words: it becomes 
   await expect(page.locator('[data-field="biz"]')).toHaveAttribute('aria-pressed', 'true'); // (the suggestion has arrived)
   await page.click('[data-field="law"]');
   await expect(page.locator('[data-field="law"]')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-field="law"] small')).toHaveText('მთავარი');
   await expect(page.locator('[data-field="biz"]')).toHaveAttribute('aria-pressed', 'false');
-  // a field the mentor tapped themselves stays: the next tap adds an extra one
+  // the field the mentor tapped themselves stays the main one; another is added with "+ დამატება" (public/js/field-picker.js)
+  await page.click('[data-fp-adding]');
   await page.click('[data-field="biz"]');
-  await expect(page.locator('[data-field="biz"] small')).toHaveText('დამატებითი');
-  await expect(page.locator('[data-field="law"] small')).toHaveText('მთავარი');
+  await expect(page.locator('[data-remove-extra="biz"]')).toBeVisible();
+  await page.click('[data-fp-adding]'); // ("მზადაა")
+  await expect(page.locator('[data-field="law"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.fp-fields .fp-count')).toHaveText('1 / 2');
 });

@@ -28,7 +28,8 @@ async function mentor(name, email) {
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 20 } });
   return { c, id: (await c.api('/me')).user.id };
 }
-const put = (m, body) => m.c.api('/verification/experience', { method: 'PUT', body });
+// (straight to the server, without the test client's "first direction" step: these tests read the niche layer as it is set; tests/helpers.js)
+const put = (m, body) => m.c('/api/verification/experience', { method: 'PUT', body });
 const row = async (id) => (await pool.query('SELECT niche, extra_niches, practice_kind FROM users WHERE id = $1', [id])).rows[0];
 
 describe('the closest categories from the mentor\'s own words', () => {

@@ -69,6 +69,7 @@ async function walk(page, { width, shots, tag }) {
   await page.fill('#apField', 'მაკროეკონომიკა');
   await expect(page.locator('[data-field="biz"]')).toHaveAttribute('aria-pressed', 'true');
   await page.selectOption('#apYears', '18');
+  await S.oneDirection(page); // (1 to 5 directions)
   await shot('05-step1-about');
   await page.click('.apply-next');
   await page.waitForURL(/step=2$/);

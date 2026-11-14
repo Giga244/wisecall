@@ -7,6 +7,8 @@
 (function () {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let box, user, goto, cats;
+  let dPick = null;
+  let dPicker = null;
 
   const nameOf = (x) => (x ? WisecallI18n.nameIn(x) : '');
   const fieldName = (fid) => nameOf((cats.fields || []).find((f) => f.id === fid)) || fid;
@@ -63,13 +65,9 @@
           <p>${esc(t('details.pending.body'))} ${esc([pending.proposed.fieldId, ...(pending.proposed.extraFields || [])].filter(Boolean).map(fieldName).join(', '))}${(pending.proposed.directions || []).length ? ` · ${esc(pending.proposed.directions.map(chipName).join(', '))}` : ''}</p></div>` : ''}
         ${d.licenceNeeded && d.licenceNeeded.includes('license') ? licenceForm(t) : ''}
         <form id="fieldsForm" novalidate>
-          <label for="dMain"><span>${esc(t('details.field.main'))}</span><select id="dMain">${opt(cats.fields || [], (pending ? pending.proposed.fieldId : f.fieldId))}</select></label>
-          <fieldset class="details-extra"><legend>${esc(t('details.field.extra'))}</legend>
-            ${(cats.fields || []).map((x) => `<label class="checkbox-row"><input type="checkbox" name="dExtra" value="${esc(x.id)}"${((pending ? pending.proposed.extraFields : f.extraFields) || []).includes(x.id) ? ' checked' : ''}> <span>${esc(nameOf(x))}</span></label>`).join('')}
-          </fieldset>
-          <fieldset class="details-chips" id="dChipsBox"><legend>${esc(t('details.field.chips'))}</legend><div id="dChips"></div></fieldset>
+          <div data-fp-area></div>
           <p class="form-error" role="alert" id="fieldsError"></p>
-          <button type="submit" class="btn btn-outline">${esc(t(user.verificationStatus === 'verified' ? 'details.field.send' : 'details.save'))}</button>
+          <button type="submit" class="btn btn-primary" id="fieldsSave">${esc(t(user.verificationStatus === 'verified' ? 'details.field.send' : 'details.save'))}</button>
         </form>
       </section>
 
@@ -92,7 +90,22 @@
       </section>`;
 
     WisecallPriceBlock.mount(box.querySelector('#detailsPrice'), user, { history: d.priceHistory, onPayoutNeeded: () => goto('payouts') });
-    drawChips(pending ? pending.proposed.directions : f.directions);
+    // The field and its directions: public/js/field-picker.js (1 to 5 directions; save stays faded until there is one).
+    const from = pending ? pending.proposed : f;
+    dPick = { main: from.fieldId || null, extras: [...(from.extraFields || [])], directions: [...(from.directions || [])], other: { ...(from.directionOther || {}) } };
+    const saveBtn = box.querySelector('#fieldsSave');
+    const fieldsErr = box.querySelector('#fieldsError');
+    const ready = () => { saveBtn.disabled = !dPicker.valid(); };
+    dPicker = WisecallFieldPicker.create(box.querySelector('[data-fp-area]'), { catalog: cats, pick: dPick, t, fill: (k, v) => Object.entries(v).reduce((x, [a, b]) => x.split(`{${a}}`).join(b), t(k)),
+      onChange: (kind) => {
+        if (kind === 'too_many_fields') { fieldsErr.textContent = t('details.err.fields'); return; }
+        if (kind === 'too_many_directions') { fieldsErr.textContent = t('details.err.chips'); return; }
+        fieldsErr.textContent = '';
+        ready();
+      } });
+    // (a mentor who has none yet: asked for one here, never blocked anywhere else)
+    if (dPick.main && !dPick.directions.length) dPicker.showError(true);
+    ready();
     wire();
   }
 
@@ -108,24 +121,10 @@
     </form>`;
   }
 
-  // The chips of the fields ticked (up to five in all).
-  function drawChips(selected) {
-    const main = box.querySelector('#dMain').value;
-    const extras = [...box.querySelectorAll('input[name="dExtra"]:checked')].map((x) => x.value).filter((x) => x !== main);
-    const keep = new Set(selected || [...box.querySelectorAll('input[name="dChip"]:checked')].map((x) => x.value));
-    box.querySelector('#dChips').innerHTML = [main, ...extras].map((fid) => {
-      const fl = (cats.fields || []).find((x) => x.id === fid);
-      if (!fl) return '';
-      return `<p class="small"><strong>${esc(nameOf(fl))}</strong></p>` + fl.chips.filter((c) => !c.other && (!c.moved || keep.has(c.id))).map((c) => // (a direction that has its own field now: only for whoever chose it)
-
-        `<label class="checkbox-row"><input type="checkbox" name="dChip" value="${esc(c.id)}"${keep.has(c.id) ? ' checked' : ''}> <span>${esc(nameOf(c))}</span></label>`).join('');
-    }).join('');
-  }
-
   function wire() {
     const t = WisecallI18n.t;
     const errorText = (code) => t({ invalid_current_role: 'details.err.text', invalid_university: 'details.err.text', invalid_tags: 'details.err.tags', invalid_years: 'details.err.years',
-      too_many_fields: 'details.err.fields', too_many_directions: 'details.err.chips', extra_regulated: 'details.err.extraRegulated', nothing_changed: 'details.err.same',
+      too_many_fields: 'details.err.fields', too_many_directions: 'details.err.chips', too_few_directions: 'fp.err.min', extra_regulated: 'details.err.extraRegulated', nothing_changed: 'details.err.same',
       application_locked: 'details.err.locked', invalid_url: 'details.err.url', duplicate_evidence: 'details.err.duplicate', too_much_evidence: 'details.err.tooMuch' }[code] || 'toast.error');
     box.addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-goto-tab]');
@@ -143,17 +142,14 @@
         WisecallNav.showToast(t('toast.saved'));
       } catch (e) { err.textContent = errorText(e.code); }
     });
-    box.querySelector('#dMain').addEventListener('change', () => drawChips());
-    box.querySelectorAll('input[name="dExtra"]').forEach((x) => x.addEventListener('change', () => drawChips()));
     box.querySelector('#fieldsForm').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const err = box.querySelector('#fieldsError');
       err.textContent = '';
-      const main = box.querySelector('#dMain').value;
+      if (!dPicker.valid()) { dPicker.showError(true); err.textContent = t('fp.err.min'); return; }
       try {
         const data = await WisecallAPI.apiFetch('/me/fields', { method: 'PUT', body: {
-          fieldId: main, extraFields: [...box.querySelectorAll('input[name="dExtra"]:checked')].map((x) => x.value).filter((x) => x !== main),
-          directions: [...box.querySelectorAll('input[name="dChip"]:checked')].map((x) => x.value) } });
+          fieldId: dPick.main, extraFields: dPick.extras.filter((x) => x !== dPick.main), directions: dPick.directions, directionOther: dPick.other } });
         Object.assign(user, data.user);
         WisecallNav.showToast(t(data.change ? 'details.pending.sent' : 'toast.saved'));
         await draw();

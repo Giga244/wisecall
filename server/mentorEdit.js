@@ -101,6 +101,12 @@ function previewFields(user, input) {
 // -> { user, change } (change: when it waits for an admin)
 async function saveFields(user, input) {
   if (!isMentor(user)) throw new EditError('not_a_mentor');
+  // At least one direction (docs/CLAUDE-CODE-NEW-CATEGORIES.md): asked when the field and directions are saved. A mentor who has none keeps
+  // their profile as it is; only this save asks for one.
+  const next = (input || {}).directions !== undefined ? input.directions : user.directions;
+  // (with a field chosen: a mentor whose work fits no field, "Other", has no directions to choose)
+  const field = (input || {}).fieldId !== undefined ? input.fieldId : user.fieldId;
+  if (field && (!Array.isArray(next) || new Set(next).size < require('./categories').LIMITS.directionsMin)) throw new EditError('too_few_directions', { field: 'directions' });
   const experience = require('./verification/experience');
   const approved = user.verificationStatus === 'verified';
   if (!approved) {

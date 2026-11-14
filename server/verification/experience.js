@@ -494,6 +494,9 @@ async function submit(user, { req, res } = {}) {
   if (isLocked(user)) throw new VerificationError('already_submitted');
   const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
   const missing = missingFor(user, evidence, stepMap);
+  // (at least one direction, docs/CLAUDE-CODE-NEW-CATEGORIES.md: checked here, when the application is sent, not in missingFor, so the steps
+  // of mentors who applied before the rule are counted as they were)
+  if (user.fieldId && !(user.directions || []).length) missing.push('directions'); // (a mentor whose work fits no field, "Other", has none to choose)
   if (missing.length) throw new VerificationError('incomplete', { missing });
 
   const previous = (await query(`SELECT 1 FROM verification_reviews WHERE user_id = $1 LIMIT 1`, [user.id])).rowCount > 0;
@@ -521,6 +524,7 @@ async function sendAfterIdPassed(userId) {
   if (!isMentor(user) || isLocked(user) || !['none', 'pending'].includes(user.verificationStatus || 'none')) return null;
   const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
   if (missingFor(user, evidence, stepMap).length || steps.effectiveStatus(stepMap.id_kyc) !== 'passed') return null;
+  if (user.fieldId && !(user.directions || []).length) return null; // (no direction yet: the mentor is asked on /apply.html, docs/CLAUDE-CODE-NEW-CATEGORIES.md)
   const sent = await submit(user);
   require('../notify').notifyApplicationReceived(sent);
   require('../analytics').event('apply_sent', null);

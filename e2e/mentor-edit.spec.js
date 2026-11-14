@@ -68,8 +68,26 @@ test('"ჩემი მონაცემები": the university saves at onc
   await page.fill('#dUni', 'ილიას სახელმწიფო უნივერსიტეტი');
   await page.locator('#detailsForm button[type="submit"]').click();
   await expect.poll(async () => (await S.sql('SELECT university FROM users WHERE id = $1', [mentor.id]))[0].university).toBe('ილიას სახელმწიფო უნივერსიტეტი');
-  await page.selectOption('#dMain', 'it');
-  await page.locator('#fieldsForm button[type="submit"]').click();
+  // the field picker (public/js/field-picker.js): IT as the main field, then its directions, 1 to 5
+  await page.locator('#fieldsForm [data-field="it"]').click();
+  const save = page.locator('#fieldsSave');
+  await expect(page.locator('#fpDirsError')).toBeVisible(); // (none chosen in IT yet: the error, and save faded)
+  await expect(page.locator('#fpDirsError')).toHaveText(KA['fp.err.min']);
+  await expect(save).toBeDisabled();
+  await expect(page.locator('.fp-dirs')).toHaveClass(/is-invalid/);
+  const dirs = page.locator('#fieldsForm .fp-dir');
+  await dirs.nth(0).click();
+  await expect(save).toBeEnabled(); // (1)
+  await expect(page.locator('#fpDirsError')).toBeHidden();
+  for (let i = 1; i < 5; i++) await dirs.nth(i).click();
+  await expect(page.locator('.fp-dirs .fp-count')).toHaveText('5 / 5'); // (5)
+  await expect(save).toBeEnabled();
+  await dirs.nth(5).click(); // (a 6th: refused, with the max-5 message)
+  await expect(page.locator('#fieldsError')).toHaveText(KA['details.err.chips']);
+  await expect(page.locator('.fp-dirs .fp-count')).toHaveText('5 / 5');
+  for (let i = 4; i > 0; i--) await dirs.nth(i).click(); // (back to 1)
+  await expect(page.locator('#fieldsForm .fp-hint, #fieldsForm .fp-tip').filter({ hasText: KA['fp.dirs.hint'] })).toBeVisible();
+  await save.click();
   await expect(page.locator('#detailsPending')).toContainText(KA['details.pending.title']);
   expect((await S.sql('SELECT field_id, niche FROM users WHERE id = $1', [mentor.id]))[0]).toMatchObject({ field_id: 'biz', niche: 'business' });
   await expect(page.locator('#detailsIdTitle')).toHaveText(KA['details.id.title']);

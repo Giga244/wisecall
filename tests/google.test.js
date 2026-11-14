@@ -413,6 +413,10 @@ describe('Google sign-in', () => {
       assert.equal(r.status, 200, JSON.stringify(r));
       await b.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Product designer', customNiche: 'App design', niche: 'design', specialtyTags: ['apps'], yearsExperience: 6, story: 'I designed banking and delivery apps for six years, first in an agency and then on my own for small startups in Tbilisi.', sampleAnswer: require('./helpers').longAnswer(SAMPLE) } });
       await b.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'https://mia-mentor.invalid/work' } });
+      // (1 to 5 directions, docs/CLAUDE-CODE-NEW-CATEGORIES.md: the field's first one, as the apply form would ask)
+      const meNow = await b.me();
+      const firstDir = require('../server/categories').FIELD.get(meNow.fieldId).chips.find((c) => !c.other && !c.moved && c.niche === meNow.niche);
+      await b.api('/verification/experience', { method: 'PUT', body: { fieldId: meNow.fieldId, extraFields: meNow.extraFields || [], directions: [firstDir.id] } });
       const sub = await b.api('/verification/submit', { method: 'POST' });
       assert.equal(sub.status, 200, JSON.stringify(sub));
       assert.notEqual(sub.user.verificationStatus, 'verified');

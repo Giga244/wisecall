@@ -53,6 +53,7 @@ test('the years: none chosen says so under the field, in view; 25 chosen is save
   await page.fill('#apField', 'განათლების ფსიქოლოგია, ფსიქოლოგიის ისტორია, პედაგოგი');
   await expect(page.locator('[data-field="psy"]')).toHaveAttribute('aria-pressed', 'true'); // (not "Other")
   await expect(page.locator('[data-psych-note]')).toBeVisible(); // (academics can choose teaching or science)
+  await S.oneDirection(page); // (1 to 5 directions: this test is about the years)
   const err = page.locator('#apYearsErr');
   await page.click('.apply-next');
   await seen(page, err, KA['apply.err.yearsEmpty']);
