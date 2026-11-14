@@ -90,6 +90,8 @@
           done.innerHTML = `${CHECK}<p>${place}${esc(t(prelaunch() ? 'wait.thanks' : 'wait.done'))}${share}</p>`;
           done.style.minHeight = `${form.offsetHeight}px`;
           form.replaceWith(done);
+          // (the home page's live counter shows one more at once: public/js/landing.js)
+          document.dispatchEvent(new CustomEvent('wisecall:waitlist-joined'));
           // (follow us meanwhile: Instagram, TikTok, Facebook, as set on the server; docs/CLAUDE-CODE-NEW-HOME.md 4)
           if (window.WisecallSocial && WisecallI18n.getConfig) WisecallI18n.getConfig().then((cfg) => {
             const icons = WisecallSocial.html(cfg && cfg.social);

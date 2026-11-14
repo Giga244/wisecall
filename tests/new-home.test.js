@@ -69,6 +69,40 @@ describe("the waiting list's count", () => {
   });
 });
 
+// The live, exact counter (docs/CLAUDE-CODE-LIVE-WAITLIST-COUNT.md): each address once, without test or admin addresses; only the number.
+describe('the live waiting-list counter: GET /api/waitlist/count', () => {
+  test('exact, each address once, no test or admin addresses, nothing personal; null under 50; a sign-up shows at once', async () => {
+    const live = await startServer(4863, { RATE_LIMIT_MULTIPLIER: '50', ADMIN_EMAILS: 'boss@wisecall-team.ge' });
+    try {
+      const add = (email, niche = 'any') => pool.query("INSERT INTO waitlist (email, niche, token) VALUES ($1, $2, md5(random()::text) || md5(random()::text))", [email, niche]);
+      const get = async () => { const r = await fetch(`${live.base}/api/waitlist/count`); assert.equal(r.status, 200); return r.json(); };
+      await pool.query('DELETE FROM waitlist');
+      for (let i = 0; i < 49; i++) await add(`person${i}@mail-count.ge`);
+      // (not counted: the same address again, in other letters or another field; test and example domains; the admin)
+      await add('PERSON1@mail-count.ge', 'med');
+      await add('person2@mail-count.ge', 'law');
+      for (const e of ['a@e2e.test', 'b@example.com', 'c@example.org', 'd@site.invalid', 'e@localhost', 'f@x.test', 'Boss@wisecall-team.ge']) await add(e);
+      const body = await get();
+      assert.deepEqual(body, { count: null }, '49 real addresses: under 50, so nothing to show');
+      // a sign-up through the API: the 30-second copy is forgotten and the next answer is the new number
+      const c = client(live.base);
+      await c.api('/waitlist', { method: 'POST', body: { email: 'new-one@mail-count.ge', over16: true } });
+      const now = await get();
+      assert.deepEqual(now, { count: 50 });
+      assert.deepEqual(Object.keys(now), ['count'], 'only the number');
+      const text = JSON.stringify(now);
+      assert.doesNotMatch(text, /@|mail-count|person|token/, 'no addresses or anything else personal');
+      // unsubscribing takes the address out (its rows are deleted): one out and one more in leaves 50
+      await pool.query("DELETE FROM waitlist WHERE email = 'person3@mail-count.ge'");
+      await c.api('/waitlist', { method: 'POST', body: { email: 'another@mail-count.ge', over16: true } });
+      assert.deepEqual(await get(), { count: 50 });
+      // the same person joining again changes nothing
+      await c.api('/waitlist', { method: 'POST', body: { email: 'New-One@mail-count.ge', niche: 'med', over16: true } });
+      assert.deepEqual(await get(), { count: 50 });
+    } finally { live.proc.kill(); }
+  });
+});
+
 describe('pages', () => {
   test('a visitor opens Browse and a profile without an account; the home page in launch mode has the search, not the waiting list', async () => {
     const browse = await fetch(`${base}/experts.html`);

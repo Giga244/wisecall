@@ -122,6 +122,14 @@ app.use('/api/auth/change-unconfirmed-email', authLimit(6));
 app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
 app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
+// The live counter (docs/CLAUDE-CODE-LIVE-WAITLIST-COUNT.md): { count } and nothing else, the exact number from 50 (null below, and the page
+// hides the line). Before the sign-up limit below, which is for joining: a page asks for this every minute while it is open.
+app.get('/api/waitlist/count', rateLimit({ windowMs: 60 * 1000, max: 30 }), require('./util').asyncHandler(async (req, res) => {
+  const wl = require('./waitlist');
+  const n = await wl.exactCount();
+  res.set('Cache-Control', 'no-store');
+  res.json({ count: n >= wl.COUNT_FROM ? n : null });
+}));
 app.use('/api/waitlist', rateLimit({ windowMs: 60 * 60 * 1000, max: 12 }));
 app.use('/api/admin/2fa/verify', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 })); // (and five wrong codes in a row lock the account for 5 minutes)
 app.use('/api/admin/2fa/enable', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }));

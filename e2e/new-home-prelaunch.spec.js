@@ -1,5 +1,5 @@
-// The new home page before launch (docs/CLAUDE-CODE-NEW-HOME.md 4): the hero's waiting list instead of the search, the real count (rounded,
-// hidden under 50), one friendly answer whether the address was new or already there, "დასვი კითხვა" on a profile opening the waiting list,
+// The new home page before launch (docs/CLAUDE-CODE-NEW-HOME.md 4): the hero's waiting list instead of the search, the live exact count
+// (hidden under 50: docs/CLAUDE-CODE-LIVE-WAITLIST-COUNT.md), one friendly answer whether the address was new or already there, "დასვი კითხვა" on a profile opening the waiting list,
 // and Browse still open. Runs its own server in prelaunch (the shared test database, like e2e/prelaunch-keys.spec.js).
 const { test, expect } = require('@playwright/test');
 const { startServer, client } = require('../tests/helpers');
@@ -8,7 +8,7 @@ const S = require('./support');
 let srv;
 const stamp = Date.now();
 test.beforeAll(async () => {
-  srv = await startServer(4625, { LAUNCH_MODE: 'prelaunch', RATE_LIMIT_MULTIPLIER: '100', TURNSTILE_SITE_KEY: '', TURNSTILE_SECRET_KEY: '' });
+  srv = await startServer(4625, { LAUNCH_MODE: 'prelaunch', RATE_LIMIT_MULTIPLIER: '100', TURNSTILE_SITE_KEY: '', TURNSTILE_SECRET_KEY: '', WAITLIST_COUNT_TTL_MS: '1' });
 });
 test.afterAll(() => { if (srv) srv.proc.kill(); });
 const ka = async (browser, width = 375) => {
@@ -46,20 +46,48 @@ test('the hero has the waiting list (no search); joining saves the address; a re
   await ctx.close();
 });
 
-test('the count line: the real number rounded down to ten, hidden under 50', async ({ browser }) => {
-  const { ctx, page } = await ka(browser, 1280);
-  const n = await listCount();
-  if (n < 50) {
+// (the addresses the counter counts: not test or example domains, which it leaves out; these rows are taken away again at the end)
+const COUNTED = 'mail-e2e-count.ge';
+const counted = async () => (await S.sql(`SELECT count(DISTINCT lower(email))::int AS n FROM waitlist WHERE split_part(lower(email), '@', 2) = $1
+  OR (split_part(lower(email), '@', 2) NOT IN ('example.com', 'example.org', 'example.net') AND split_part(lower(email), '@', 2) !~ '(^|[.])(test|invalid|example|localhost)$')`, [COUNTED]))[0].n;
+test('the live count: hidden under 50, the exact number from 50, one more at once after joining (and not twice)', async ({ browser }) => {
+  try {
+    const { ctx, page } = await ka(browser, 1280);
+    const n = await counted();
+    if (n < 50) {
+      await page.goto(`${srv.base}/ka/`);
+      await page.waitForResponse((r) => r.url().endsWith('/api/waitlist/count'));
+      await page.waitForTimeout(300);
+      await expect(page.locator('#waitCount')).toBeHidden();
+      for (let i = n; i < 57; i++) await S.sql("INSERT INTO waitlist (email, niche, token) VALUES ($1, 'any', md5(random()::text) || md5(random()::text))", [`count-${stamp}-${i}@${COUNTED}`]);
+    }
+    const now = await counted();
     await page.goto(`${srv.base}/ka/`);
-    await page.waitForTimeout(800);
-    await expect(page.locator('#waitCount')).toBeHidden();
-    for (let i = n; i < 63; i++) await S.sql("INSERT INTO waitlist (email, niche, token) VALUES ($1, 'any', md5(random()::text) || md5(random()::text))", [`count-${stamp}-${i}@e2e.test`]);
+    const line = page.locator('#waitCount');
+    await expect(line).toHaveText(`🔥 ${now} ადამიანი უკვე სიაშია`); // (after counting up from 0)
+    await expect(line.locator('.live-dot')).toBeVisible();
+    expect(await line.locator('.live-n').evaluate((b) => getComputedStyle(b).fontVariantNumeric)).toContain('tabular-nums');
+    // this visitor joins: one more at once
+    await page.locator('#heroWait input[type="email"]').fill(`joined-${stamp}@${COUNTED}`);
+    await page.locator('#heroWait input[name="over16"]').check();
+    await page.locator('#heroWait button[type="submit"]').click();
+    await expect(page.locator('#heroWait .waitlist-done')).toBeVisible();
+    await expect(line.locator('.live-n')).toHaveText(String(now + 1));
+    // the next answer from the server (the tab becomes visible again) counts them once, not twice
+    const next = page.waitForResponse((r) => r.url().endsWith('/api/waitlist/count'));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect((await (await next).json()).count).toBe(now + 1);
+    await page.waitForTimeout(300);
+    await expect(line.locator('.live-n')).toHaveText(String(now + 1));
+    // a failed request keeps the number (never 0, never an error)
+    await page.route('**/api/waitlist/count', (r) => r.abort());
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await page.waitForTimeout(300);
+    await expect(line).toHaveText(`🔥 ${now + 1} ადამიანი უკვე სიაშია`);
+    await ctx.close();
+  } finally {
+    await S.sql("DELETE FROM waitlist WHERE split_part(lower(email), '@', 2) = $1", [COUNTED]);
   }
-  const now = await listCount();
-  await page.goto(`${srv.base}/ka/`);
-  await expect(page.locator('#waitCount .only-wide')).toHaveText(`${Math.floor(now / 10) * 10}+ ადამიანი უკვე მოლოდინის სიაშია`);
-  await expect(page.locator('#waitCount .only-narrow')).toHaveText(`${Math.floor(now / 10) * 10}+ ადამიანი უკვე სიაშია`);
-  await ctx.close();
 });
 
 test('Browse and profiles stay open; "დასვი კითხვა" opens the waiting list with the new words', async ({ browser }) => {

@@ -51,6 +51,15 @@
   background: var(--raised); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--lift-shadow); font-size: 0.85rem; line-height: 1.5; }
 .lhero-count { margin: 2px 0 0; color: var(--ink-soft); font-size: 0.88rem; text-align: left; }
 .lhero-count b { color: var(--ink); }
+/* The live counter (public/js/landing.js): a slow green dot, the exact number in even-width digits (nothing moves as it counts), a small
+   coral pulse when it goes up. With reduced motion: no pulse, no dot animation. */
+.lhero-count:not([hidden]) { display: flex; align-items: center; gap: 8px; }
+.lhero-count .live-n { display: inline-block; font-variant-numeric: tabular-nums; text-align: right; border-radius: 4px; }
+.live-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 0 0 rgba(var(--accent2-rgb), 0.5); animation: live-dot 2.4s ease-out infinite; }
+@keyframes live-dot { 0% { box-shadow: 0 0 0 0 rgba(var(--accent2-rgb), 0.5); } 70%, 100% { box-shadow: 0 0 0 6px rgba(var(--accent2-rgb), 0); } }
+.lhero-count .live-n.is-up { animation: live-up 0.7s ease-out; }
+@keyframes live-up { 0% { color: var(--accent-text); background: rgba(var(--accent-rgb), 0.18); transform: scale(1.12); } 100% { background: rgba(var(--accent-rgb), 0); transform: none; } }
+@media (prefers-reduced-motion: reduce) { .live-dot, .lhero-count .live-n.is-up { animation: none; } }
 .lhero-wait-skeleton { display: grid; gap: 10px; }
 .waitlist-compact + .waitlist-done, .lhero-wait .waitlist-done { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 18px; }
 @media (min-width: 768px) {

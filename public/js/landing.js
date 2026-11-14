@@ -59,16 +59,64 @@
     });
   }
 
-  // ---- Before launch: "90+ people are already on the waiting list", the real number rounded down to ten, only from 50 (a shorter line on a phone).
+  // ---- Before launch: the live counter (docs/CLAUDE-CODE-LIVE-WAITLIST-COUNT.md). "🔥 93 people are already on the list": the exact number
+  // from /api/waitlist/count, only from 50 (null below: the line stays hidden). On its first showing it counts up from 0 in about 0.8s (at once
+  // with reduced motion); it is asked again every minute while the tab is visible, and when it has gone up it ticks up with a small coral
+  // pulse. When this visitor joins it shows one more at once; the next answer (the server forgets its 30-second copy on a sign-up) is the
+  // truth again, so nobody is counted twice. A failed request keeps the last number; nothing here is ever made up.
+  const live = { n: null, shown: 0, timer: null, frame: null };
+  const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function drawCountText() {
+    const el = document.getElementById('waitCount');
+    if (!el || live.n === null) return;
+    const [a, b = ''] = esc(t('home2.wait.count')).split('{n}');
+    // (as wide as the final number from the start: nothing moves while it counts up)
+    el.innerHTML = `<span class="live-dot" aria-hidden="true"></span><span class="live-text">${a}<b class="live-n" style="min-width:${String(live.n).length}ch">${live.shown}</b>${b}</span>`;
+  }
+  // The number on the page runs from what it shows to `to` (duration ms), then it is exactly `to`.
+  function runTo(to, duration, pulse) {
+    cancelAnimationFrame(live.frame);
+    const from = live.shown;
+    if (reduce() || duration <= 0 || from === to) { live.shown = to; drawCountText(); return; }
+    const start = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - start) / duration);
+      live.shown = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+      document.querySelectorAll('#waitCount .live-n').forEach((b) => { b.textContent = live.shown; });
+      if (p < 1) live.frame = requestAnimationFrame(step);
+      else {
+        drawCountText();
+        if (pulse) document.querySelectorAll('#waitCount .live-n').forEach((b) => { b.classList.remove('is-up'); void b.offsetWidth; b.classList.add('is-up'); });
+      }
+    };
+    live.frame = requestAnimationFrame(step);
+  }
   async function drawCount() {
     const el = document.getElementById('waitCount');
     if (!el || !prelaunch()) return;
     let r = null;
-    try { r = await WisecallAPI.apiFetch('/waitlist-count'); } catch (e) { return; }
-    if (!r || !Number.isInteger(r.approx)) { el.hidden = true; return; }
-    const line = (key) => esc(t(key).replace('{n}', r.approx)).replace(`${r.approx}+`, `<b>${r.approx}+</b>`);
-    el.innerHTML = `<span class="only-narrow">${line('home2.wait.countShort')}</span><span class="only-wide">${line('home2.wait.count')}</span>`;
-    el.hidden = false;
+    try { r = await WisecallAPI.apiFetch('/waitlist/count'); } catch (e) { return; } // (kept as it was)
+    if (!r || !('count' in r)) return;
+    if (!Number.isInteger(r.count)) { live.n = null; el.hidden = true; return; } // (under 50)
+    const first = live.n === null;
+    const up = !first && r.count > live.n;
+    live.n = r.count;
+    if (first) { live.shown = 0; drawCountText(); el.hidden = false; runTo(r.count, 800, false); }
+    else if (up) runTo(r.count, 600, true);
+    else if (r.count !== live.shown) { live.shown = r.count; drawCountText(); }
+  }
+  // Every minute while the tab is visible; at once when it becomes visible again.
+  function watchCount() {
+    if (!prelaunch() || !document.getElementById('waitCount')) return;
+    const tick = () => { clearTimeout(live.timer); if (document.visibilityState === 'visible') { drawCount(); live.timer = setTimeout(tick, 60 * 1000); } };
+    live.timer = setTimeout(tick, 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tick(); else clearTimeout(live.timer); });
+    // (this visitor joined: one more at once)
+    document.addEventListener('wisecall:waitlist-joined', () => {
+      if (live.n === null) return;
+      live.n += 1;
+      runTo(live.n, 400, true);
+    });
   }
 
   // ---- The way to the form: the header's button on a computer, the pinned one on a phone (hidden while the form is on screen, so there are
@@ -267,9 +315,10 @@
     drawChips();
     wireSearch();
     drawCount();
+    watchCount();
     wireWayToForm();
     drawPhone();
     if (window.location.hash === '#join' && window.WisecallWaitlist) WisecallWaitlist.goToHero();
   })().catch(() => {});
-  document.addEventListener('wisecall:lang-changed', () => { drawChips(); drawCount(); });
+  document.addEventListener('wisecall:lang-changed', () => { drawChips(); drawCountText(); });
 })();

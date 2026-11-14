@@ -31,6 +31,7 @@ async function add({ email, niche, language, wantedQuestion, source, over16 }) {
        source = COALESCE(waitlist.source, EXCLUDED.source)`,
     [address, field, language === 'ka' ? 'ka' : 'en', crypto.randomBytes(24).toString('hex'), config.LAUNCH_MODE === 'prelaunch', asked, source ? JSON.stringify(source) : null]
   );
+  forgetCount(); // (the live counter asks again: it is the new number at once)
   const { rows: [n] } = await query('SELECT count(DISTINCT lower(email))::int AS n FROM waitlist');
   return { position: n.n };
 }
@@ -68,6 +69,25 @@ async function approxCount() {
   const { rows: [r] } = await query('SELECT count(DISTINCT lower(email))::int AS n FROM waitlist');
   return r.n >= COUNT_FROM ? Math.floor(r.n / 10) * 10 : null;
 }
+
+// The live counter on the home page (docs/CLAUDE-CODE-LIVE-WAITLIST-COUNT.md): the exact number of people on the list. Each address once
+// (one row per field); people who unsubscribed are gone (unsubscribe deletes their rows); the team's own addresses (ADMIN_EMAILS) and test
+// addresses (the reserved test domains: example.com/.org/.net, *.test, *.invalid, *.example, *.localhost) are not counted. Kept for 30
+// seconds, so many visitors do not each ask the database. Only the number ever leaves here.
+const LIVE_TTL_MS = Number(process.env.WAITLIST_COUNT_TTL_MS) || 30 * 1000; // (tests set a short one)
+let live = null; // { n, at }
+async function exactCount({ fresh = false } = {}) {
+  if (!fresh && live && Date.now() - live.at < LIVE_TTL_MS) return live.n;
+  const admins = (require('./config').ADMIN_EMAILS || []).map((e) => String(e).toLowerCase());
+  const { rows: [r] } = await query(
+    `SELECT count(DISTINCT lower(email))::int AS n FROM waitlist
+      WHERE NOT (lower(email) = ANY($1::text[]))
+        AND split_part(lower(email), '@', 2) NOT IN ('example.com', 'example.org', 'example.net')
+        AND split_part(lower(email), '@', 2) !~ '(^|[.])(test|invalid|example|localhost)$'`, [admins]);
+  live = { n: r.n, at: Date.now() };
+  return r.n;
+}
+const forgetCount = () => { live = null; };
 
 // Anonymous demand for the admins: the typed questions and their fields, newest first, never with an email.
 async function demandForAdmin() {
@@ -169,4 +189,4 @@ async function afterMaybeListed(userId) {
   return 0;
 }
 
-module.exports = { WaitlistError, add, unsubscribe, approxCount, listForAdmin, demandForAdmin, removeForAdmin, deletionsForAdmin, popularFields, mentorJoined, launchDay, afterMaybeListed };
+module.exports = { WaitlistError, add, unsubscribe, approxCount, exactCount, forgetCount, COUNT_FROM, listForAdmin, demandForAdmin, removeForAdmin, deletionsForAdmin, popularFields, mentorJoined, launchDay, afterMaybeListed };
