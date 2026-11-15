@@ -62,6 +62,10 @@ html:not([data-as="mentor"]) [data-for-as="mentor"], html[data-as="mentor"] [dat
 .field input { margin-top: 0; }
 .field .hint { display: block; font-weight: 400; color: var(--ink-soft); font-size: 0.82rem; margin-top: 6px; }
 .field input[aria-invalid="true"] { border-color: var(--red-strong); }
+/* (somebody who already has an account, on the sign-up page: the way in; docs: "Fix: existing mentors can save their details") */
+.auth-returning { margin: -10px 0 18px; padding: 10px 12px; border: var(--line-w) solid var(--line); border-radius: var(--r-field); font-size: 0.95rem; }
+.auth-returning a { font-weight: 700; color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; }
+.auth-existing { margin: 0 0 12px; }
 .pw-wrap { position: relative; }
 .pw-wrap input { padding-right: 52px; min-height: 44px; }
 .pw-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: none; background: transparent; border-radius: 10px; color: var(--ink-soft); cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -814,6 +818,9 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 /* step 1: what a field needs, under that field (docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md) */
 .apply-field-error { color: var(--red-strong); font-weight: 700; font-size: 0.92rem; margin: 6px 0 0; }
 .apply-field input[aria-invalid="true"], .apply-field select[aria-invalid="true"] { border-color: var(--red-strong); }
+#detailsForm input[aria-invalid="true"], #detailsForm select[aria-invalid="true"] { border-color: var(--red-strong); }
+.details-field-error { margin: -10px 0 16px; min-height: 0; }
+.apply-optional-mark { font-weight: 400; color: var(--ink-soft); }
 .apply-psych-note { margin: 8px 0 0; }
 .apply-status { margin: 0 0 18px; }
 .apply-done .apply-actions { margin-top: 4px; }

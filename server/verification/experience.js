@@ -40,6 +40,12 @@ function parseTags(input) {
   }
   return out.length > LIMITS.tagsMax ? null : out;
 }
+// Whether what a form sent is the list a mentor already has (the form joins it with commas; spaces around a tag do not count).
+function sameTags(input, current) {
+  const list = (Array.isArray(input) ? input : String(input || '').split(',')).map((x) => (typeof x === 'string' ? oneLine(x).replace(/^#/, '') : null));
+  if (list.some((x) => x === null)) return false;
+  return JSON.stringify(list.filter(Boolean)) === JSON.stringify((current || []).map((x) => oneLine(String(x)).replace(/^#/, '')));
+}
 
 // Checks the fields that were sent (a draft may be incomplete; lengths are only checked up to the maximum here).
 // -> { patch } or { error, field }
@@ -48,9 +54,16 @@ const PRACTICE_KINDS = ['academic', 'practitioner', 'both'];
 
 // opts.strict: not a draft (a sent or approved mentor's details): my path is all three blocks or none, a sample answer has its question
 // (server/mentorStory.js); opts.current: the mentor as they are now.
+//
+// What the mentor already has is never refused. The forms send every box back with each save, and a value stored under an earlier rule
+// (8 specialty tags when 8 were allowed; a current role written on the Profile tab, which takes more) used to stop the whole save, for a
+// mentor who had changed nothing. With opts.current, a text that comes back exactly as it is stored is left as it is: only what really
+// changed is checked, and written.
 function parseExperience(input, opts = {}) {
   const b = input || {};
   const patch = {};
+  const cur = opts.current || null;
+  const stored = (key, value) => Boolean(cur) && value === oneLine(cur[key] || '');
   // (my path, starting-point tags, the sample answer, "I can help with", work links: docs/CLAUDE-CODE-MENTOR-STORY.md)
   const story = require('../mentorStory').parse(b, { draft: !opts.strict, current: opts.current || {} });
   if (story.error) return story;
@@ -58,8 +71,10 @@ function parseExperience(input, opts = {}) {
   if (b.roleTitle !== undefined) {
     if (b.roleTitle !== null && typeof b.roleTitle !== 'string') return { error: 'invalid_field', field: 'roleTitle' };
     const v = oneLine(b.roleTitle || '');
-    if (v.length > LIMITS.titleMax) return { error: 'title_too_long', field: 'roleTitle' };
-    patch.roleTitle = v || null;
+    if (!stored('roleTitle', v)) {
+      if (v.length > LIMITS.titleMax) return { error: 'title_too_long', field: 'roleTitle' };
+      patch.roleTitle = v || null;
+    }
   }
   if (b.niche !== undefined) {
     if (b.niche !== null && !rules.isCustomNiche(b.niche) && !rules.isValidNiche(b.niche)) return { error: 'invalid_niche', field: 'niche' };
@@ -79,7 +94,7 @@ function parseExperience(input, opts = {}) {
     patch.practiceKind = b.practiceKind || null;
   }
   // "Your field": the field in the mentor's own words, whatever the category (public on the profile, so it is checked like one).
-  if (b.customNiche !== undefined) {
+  if (b.customNiche !== undefined && !(typeof b.customNiche === 'string' && b.customNiche.trim() && stored('customNiche', oneLine(b.customNiche)))) {
     if (b.customNiche === null || b.customNiche === '') patch.customNiche = null;
     else {
       const c = require('../customNiche').clean(b.customNiche);
@@ -119,8 +134,11 @@ function parseExperience(input, opts = {}) {
   }
   if (b.university !== undefined) {
     const v = oneLine(b.university || '');
-    if (typeof (b.university === null ? '' : b.university) !== 'string' || [...v].length > categories.LIMITS.universityMax || /[@<>{}]|https?:|www\./i.test(v)) return { error: 'invalid_university', field: 'university' };
-    patch.university = v || null;
+    if (typeof (b.university === null ? '' : b.university) !== 'string') return { error: 'invalid_university', field: 'university' };
+    if (!stored('university', v)) {
+      if ([...v].length > categories.LIMITS.universityMax || /[@<>{}]|https?:|www\./i.test(v)) return { error: 'invalid_university', field: 'university' };
+      patch.university = v || null;
+    }
   }
   if (b.country !== undefined) {
     if (b.country !== null && b.country !== '' && !categories.isCountry(b.country)) return { error: 'invalid_country', field: 'country' };
@@ -128,13 +146,21 @@ function parseExperience(input, opts = {}) {
   }
   if (b.currentRole !== undefined) {
     const v = oneLine(b.currentRole || '');
-    if (typeof (b.currentRole === null ? '' : b.currentRole) !== 'string' || [...v].length > categories.LIMITS.currentRoleMax || /[@<>{}]|https?:|www\./i.test(v)) return { error: 'invalid_current_role', field: 'currentRole' };
-    patch.currentWork = v || null;
+    if (typeof (b.currentRole === null ? '' : b.currentRole) !== 'string') return { error: 'invalid_current_role', field: 'currentRole' };
+    // (stored as currentWork, which the Profile tab also writes, with its own, wider rule)
+    if (!stored('currentWork', v)) {
+      if ([...v].length > categories.LIMITS.currentRoleMax || /[@<>{}]|https?:|www\./i.test(v)) return { error: 'invalid_current_role', field: 'currentRole' };
+      patch.currentWork = v || null;
+    }
   }
   if (b.specialtyTags !== undefined) {
-    const tags = parseTags(b.specialtyTags);
-    if (!tags) return { error: 'invalid_tags', field: 'specialtyTags' };
-    patch.specialtyTags = tags;
+    // (the same tags, in the same order, as the mentor has now: kept, however many there are)
+    const same = Boolean(cur) && sameTags(b.specialtyTags, cur.specialtyTags || []);
+    if (!same) {
+      const tags = parseTags(b.specialtyTags);
+      if (!tags) return { error: 'invalid_tags', field: 'specialtyTags' };
+      patch.specialtyTags = tags;
+    }
   }
   if (b.yearsExperience !== undefined) {
     if (b.yearsExperience === null || b.yearsExperience === '') patch.yearsExperience = null;
@@ -148,6 +174,7 @@ function parseExperience(input, opts = {}) {
     if (b[field] === undefined) continue;
     if (b[field] !== null && typeof b[field] !== 'string') return { error: 'invalid_field', field };
     const v = tidy(b[field] || '');
+    if (cur && v === tidy(cur[field] || '')) continue;
     if ([...v].length > max) return { error: field === 'story' ? 'story_too_long' : 'sample_too_long', field };
     patch[field] = v || null;
   }
@@ -265,7 +292,8 @@ function applyChoice(user, patch) {
 // opts.evenIfSent: an application sent and not decided yet can still be changed from "My details" (the admin sees what changed: server/mentorEdit.js).
 async function saveExperience(user, input, opts = {}) {
   if (isLocked(user) && !(opts.evenIfSent && submitted(user))) throw new VerificationError('application_locked');
-  const { patch, error, field } = parseExperience(input);
+  // (current: what the mentor already has is kept as it is, never checked again; see parseExperience)
+  const { patch, error, field } = parseExperience(input, { current: user });
   if (error) throw new VerificationError(error, { field });
   applyChoice(user, patch);
   storyToBio(user, patch);
@@ -382,13 +410,19 @@ async function removeEvidence(user, id) {
 // (docs/CLAUDE-CODE-UX-WALKTHROUGH.md A): 1 the headline and years (and the field), 2 the story, 3 the price, 4 one piece of evidence (and
 // the licence in a regulated field). A title, specialty tags and a sample answer are optional; the ID check is step 5 and the review waits
 // for it.
-function missingFor(user, evidence, stepMap) {
+//
+// opts.sentBefore: this mentor's application was already sent once (sentBefore, below). It was whole by the rules of its day, so what
+// step 1 has asked for since (what I do, the field in my own words, the years of experience) is asked of them too, on the page, but is
+// never required: they can change their application and send it again with only what they had.
+function missingFor(user, evidence, stepMap, opts = {}) {
   const missing = [];
   // (not the email: an application can be sent while its code is still on the way; it cannot be approved until the email is confirmed,
   // the 'email' identity step, docs/CLAUDE-CODE-EMAIL-CODE-FIX.md)
-  if (!user.headline || !String(user.headline).trim()) missing.push('headline');
-  if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
-  if (!user.customNiche) missing.push('field');
+  if (!opts.sentBefore) {
+    if (!user.headline || !String(user.headline).trim()) missing.push('headline');
+    if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
+    if (!user.customNiche) missing.push('field');
+  }
   if (!(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) missing.push('niche');
   if (!storyVerdict(user.story, LIMITS.storyMin).ok) missing.push('story'); // (the page runs the same check: public/js/text-rules.js)
   if (user.price === null || user.price === undefined) missing.push('price'); // (0 is a price: free)
@@ -399,6 +433,17 @@ function missingFor(user, evidence, stepMap) {
     if (rules.requiredFor(user.niche).includes('license_document') && !has('license_document')) missing.push('license_document');
   }
   return missing;
+}
+// What step 1 asks for now that an application sent earlier may not have (and "directions": at least one, asked when it is sent).
+const ADDED_LATER = ['headline', 'years', 'field', 'directions'];
+// Whether this mentor's application has been sent before: it is sent or decided now, or it was and its mentor pressed "Edit my
+// application" (which leaves 'application_withdrawn' in the audit, as sending leaves 'application_submitted').
+async function sentBefore(user) {
+  if (!isMentor(user)) return false;
+  if (user.applicationSubmittedAt || user.verificationDecidedAt || ['verified', 'suspended', 'rejected'].includes(user.verificationStatus)) return true;
+  const { rows } = await query(
+    `SELECT 1 FROM verification_audit WHERE mentor_id = $1 AND action IN ('application_submitted', 'application_resubmitted', 'application_withdrawn') LIMIT 1`, [user.id]);
+  return rows.length > 0;
 }
 
 // How far an application is (docs/CLAUDE-CODE-APPLY-PROGRESS.md), the one count every page shows (the header's "2/5", the bar on
@@ -442,8 +487,8 @@ const idLeftOf = (progress, id) => progress.next === 5 && ID_LEFT.includes(id);
 // Which of the steps 1-4 are done now. -> [bool, bool, bool, bool]
 async function stepsDone(user) {
   if (!isMentor(user)) return [false, false, false, false];
-  const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
-  return progressOf(missingFor(user, evidence, stepMap), stepMap).done.slice(0, 4);
+  const [evidence, stepMap, before] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id), sentBefore(user)]);
+  return progressOf(missingFor(user, evidence, stepMap, { sentBefore: before }), stepMap).done.slice(0, 4);
 }
 // After a save: apply_step_N_done for each step that was not done before and is now (docs/ANALYTICS.md; no personal data).
 async function trackSteps(req, before, userId) {
@@ -480,8 +525,8 @@ async function progressFor(user) {
   // (being a mentor is from 18: somebody younger has no "Become a mentor" button)
   if (!isMentor(user)) return { state: require('../ageGate').isMinor(user) ? 'none' : 'asker', step: null };
   if (user.verificationStatus === 'verified' || user.verificationStatus === 'suspended') return { state: 'mentor', step: null };
-  const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
-  const p = progressOf(missingFor(user, evidence, stepMap), stepMap);
+  const [evidence, stepMap, before] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id), sentBefore(user)]);
+  const p = progressOf(missingFor(user, evidence, stepMap, { sentBefore: before }), stepMap);
   const id = idStatusOf(stepMap);
   if (submitted(user)) return { state: 'sent', step: null, id, idLeft: idLeftOf(p, id) };
   return { state: 'draft', step: p.next, done: p.count, id, idLeft: idLeftOf(p, id) };
@@ -509,11 +554,11 @@ function profileGaps(user) {
 // req/res: for the account signal (network and device). Returns the updated mentor.
 async function submit(user, { req, res } = {}) {
   if (isLocked(user)) throw new VerificationError('already_submitted');
-  const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
-  const missing = missingFor(user, evidence, stepMap);
+  const [evidence, stepMap, before] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id), sentBefore(user)]);
+  const missing = missingFor(user, evidence, stepMap, { sentBefore: before });
   // (at least one direction, docs/CLAUDE-CODE-NEW-CATEGORIES.md: checked here, when the application is sent, not in missingFor, so the steps
-  // of mentors who applied before the rule are counted as they were)
-  if (user.fieldId && !(user.directions || []).length) missing.push('directions'); // (a mentor whose work fits no field, "Other", has none to choose)
+  // of mentors who applied before the rule are counted as they were; and not asked of an application that was sent before: see missingFor)
+  if (!before && user.fieldId && !(user.directions || []).length) missing.push('directions'); // (a mentor whose work fits no field, "Other", has none to choose)
   if (missing.length) throw new VerificationError('incomplete', { missing });
 
   const previous = (await query(`SELECT 1 FROM verification_reviews WHERE user_id = $1 LIMIT 1`, [user.id])).rowCount > 0;
@@ -539,9 +584,9 @@ async function submit(user, { req, res } = {}) {
 async function sendAfterIdPassed(userId) {
   const user = await getUserById(userId);
   if (!isMentor(user) || isLocked(user) || !['none', 'pending'].includes(user.verificationStatus || 'none')) return null;
-  const [evidence, stepMap] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id)]);
-  if (missingFor(user, evidence, stepMap).length || steps.effectiveStatus(stepMap.id_kyc) !== 'passed') return null;
-  if (user.fieldId && !(user.directions || []).length) return null; // (no direction yet: the mentor is asked on /apply.html, docs/CLAUDE-CODE-NEW-CATEGORIES.md)
+  const [evidence, stepMap, before] = await Promise.all([listEvidence(user.id), steps.loadSteps(user.id), sentBefore(user)]);
+  if (missingFor(user, evidence, stepMap, { sentBefore: before }).length || steps.effectiveStatus(stepMap.id_kyc) !== 'passed') return null;
+  if (!before && user.fieldId && !(user.directions || []).length) return null; // (no direction yet: the mentor is asked on /apply.html, docs/CLAUDE-CODE-NEW-CATEGORIES.md)
   const sent = await submit(user);
   require('../notify').notifyApplicationReceived(sent);
   require('../analytics').event('apply_sent', null);
@@ -584,7 +629,8 @@ async function stageFor(user, stepMap) {
 }
 
 async function applicationFor(user, stepMap) {
-  const evidence = await listEvidence(user.id);
+  const [evidence, before] = await Promise.all([listEvidence(user.id), sentBefore(user)]);
+  const missing = missingFor(user, evidence, stepMap, { sentBefore: before });
   return {
     form: {
       fieldId: user.fieldId || null, extraFields: user.extraFields || [], directions: user.directions || [], directionOther: user.directionOther || {},
@@ -594,11 +640,13 @@ async function applicationFor(user, stepMap) {
       story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price === undefined ? null : user.price // (0: answers for free)
     },
     evidence: evidence.map(evidenceForMentor),
-    missing: missingFor(user, evidence, stepMap),
-    progress: progressOf(missingFor(user, evidence, stepMap), stepMap),
+    missing,
+    // (an application that was sent before: what step 1 asks for since then is asked, never required; the page marks it "optional")
+    optional: before ? ADDED_LATER : [],
+    progress: progressOf(missing, stepMap),
     // the ID check in one word, and whether it is the one step left (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
     id: idStatusOf(stepMap),
-    idLeft: idLeftOf(progressOf(missingFor(user, evidence, stepMap), stepMap), idStatusOf(stepMap)),
+    idLeft: idLeftOf(progressOf(missing, stepMap), idStatusOf(stepMap)),
     // why the story does not count yet, when it does not: 'short' | 'repeated' (docs/CLAUDE-CODE-STORY-STEP-CHECK.md)
     // (a path that was started and does not count yet says why itself: server/mentorStory.js)
     storyReason: storyVerdict(user.story, LIMITS.storyMin).ok ? null : (require('../mentorStory').pathReason(user) || storyVerdict(user.story, LIMITS.storyMin).reason),
@@ -651,6 +699,6 @@ async function priceRangeFor(niche) {
 module.exports = {
   stepsDone, trackSteps, funnel, priceRangeFor, nichesOf, anyRegulated, EXTRA_NICHES_MAX, PRACTICE_KINDS,
   isLocked, submitted, parseTags, parseExperience, applyChoice, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
-  missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
+  missingFor, sentBefore, ADDED_LATER, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
   bioToStory, pathToStory, applicationProgress, progressFor, idStatusOf, ID_LEFT, sendAfterIdPassed
 };

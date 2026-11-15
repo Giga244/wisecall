@@ -76,12 +76,37 @@
   // Which field an error belongs to, so it can be marked and focused.
   const FIELD_FOR = { invalid_username: 'username', reserved_username: 'username', username_taken: 'username', email_taken: 'email', invalid_email: 'email', weak_password: 'password', missing_fields: 'name', adult_required: 'adult', birth_required: 'birthYear', parent_permission_required: 'parentPermission', password_breached: 'password' };
 
+  const existing = document.getElementById('existingAccount');
+  // (while the way into an existing account is offered, it is the page's main button; creating an account is the other one)
+  const offerLogin = (on) => {
+    existing.hidden = !on;
+    const submit = form.querySelector('button[type="submit"]');
+    submit.classList.toggle('btn-primary', !on);
+    submit.classList.toggle('btn-outline', on);
+  };
   function fail(message, fieldId) {
     errorEl.textContent = message;
+    offerLogin(false);
     form.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
     const field = fieldId && document.getElementById(fieldId);
     if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
   }
+  // A box marked red is right again as soon as it is changed: the mark and its line go (they used to stay until the next try, so a box
+  // that had just been filled in still looked wrong).
+  const unmark = (ev) => {
+    const el = ev.target;
+    if (!el || !el.getAttribute || el.getAttribute('aria-invalid') !== 'true') return;
+    el.removeAttribute('aria-invalid');
+    errorEl.textContent = '';
+    offerLogin(false);
+  };
+  form.addEventListener('input', unmark);
+  form.addEventListener('change', unmark);
+  // The email already has an account (a mentor who came back for their application, signed out, lands on this page): the way into it,
+  // with the email carried to the log-in page (kept in this tab only, never in the address).
+  document.getElementById('existingLogin').addEventListener('click', () => {
+    try { sessionStorage.setItem('wisecall_login_email', document.getElementById('email').value.trim()); } catch (e) { /* typed again there */ }
+  });
 
   WisecallTurnstile.watch(form);
   form.addEventListener('submit', async (ev) => {
@@ -90,7 +115,10 @@
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    if (!name || !email || !password) { fail(t('auth.error.missingFields'), !name ? 'name' : (!email ? 'email' : 'password')); return; }
+    // (each box says what it needs, in words: not one "fill in every field" for whichever is empty)
+    if (!name) { fail(t('auth.error.nameMissing'), 'name'); return; }
+    if (!email) { fail(t('auth.error.emailMissing'), 'email'); return; }
+    if (!password) { fail(t('auth.error.passwordMissing'), 'password'); return; }
     if (password.length < 8) { fail(t('auth.error.weakPassword'), 'password'); return; }
     if (asMentor && !document.getElementById('adult').checked) { fail(t('auth.mentor18'), 'adult'); return; }
     const birthYm = asMentor ? undefined : WisecallAgeFields.value(form);
@@ -121,6 +149,7 @@
       // (under 16: nothing was created and nothing was kept; a kind message takes the form's place)
       if (e.code === 'under_16') { WisecallAgeFields.under16(document.querySelector('.auth-card') || form); return; }
       fail(WisecallTurnstile.errorText(e.code) || t(ERROR_KEYS[e.code] || 'toast.error'), FIELD_FOR[e.code]);
+      if (e.code === 'email_taken') offerLogin(true);
       WisecallTurnstile.reset(form);
       button.disabled = false;
     }

@@ -4,7 +4,8 @@
   const t = WisecallI18n.t;
 
   if (!user) {
-    window.location.href = '/login.html?redirect=/settings.html';
+    // (the whole address: the dashboard's "add your path" link is /settings.html?tab=details#story, and it must still be that after log-in)
+    window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname.replace(/^\/ka(?=\/)/, '') + window.location.search + window.location.hash);
     return;
   }
 

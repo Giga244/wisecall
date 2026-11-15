@@ -57,6 +57,7 @@
     <h1 id="authTitle"><span data-for-as="asker" data-i18n="auth.signup.title">Create your account</span><span data-for-as="mentor" data-i18n="auth.signup.mentorTitle">Create your mentor account</span></h1>
     <p class="muted" data-for-as="asker" data-i18n="auth.signup.sub">Join as someone looking for advice — you can become a mentor later in Settings.</p>
     <p class="muted" data-for-as="mentor" data-i18n="auth.signup.mentorSub">It takes about 10 minutes. You can save and finish later.</p>
+    <div class="auth-returning" data-for-as="mentor"><span data-i18n="auth.signup.returning">Already started your application?</span> <a href="/login.html" data-i18n="auth.signup.returningLogIn">Log in to continue</a></div>
     <p class="form-error google-error" id="googleError" role="alert"></p>
     <div class="google-block" {{GOOGLE_HIDDEN}}>
       <a class="btn-google" id="googleBtn" href="/api/auth/google/start?mode=signup"><span class="btn-google-logo"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span data-i18n="auth.google.continue">Continue with Google</span></a>
@@ -94,6 +95,8 @@
       <label class="checkbox-row adult-row" for="adult" data-for-as="mentor"><input type="checkbox" id="adult"> <span data-i18n="auth.adult">I'm 18 or older</span></label>
       <div class="turnstile-slot"></div>
       <p class="form-error" id="formError" role="alert"></p>
+      <!-- (the email already has an account: the way into it, with the email carried over; public/js/signup.js) -->
+      <p class="auth-existing" id="existingAccount" hidden><a class="btn btn-primary btn-block" id="existingLogin" href="/login.html" data-i18n="auth.existing.logIn">Log in to this account</a></p>
       <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.signup.cta">Create account</button>
       <p class="consent muted small"><span data-i18n="auth.consent.before">By signing up you agree to the </span><a href="/terms.html" target="_blank" rel="noopener" data-i18n="auth.consent.terms">Terms</a><span data-i18n="auth.consent.and"> and </span><a href="/privacy.html" target="_blank" rel="noopener" data-i18n="auth.consent.privacy">Privacy Policy</a><span data-i18n="auth.consent.after">.</span></p>
     </form>

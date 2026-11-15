@@ -12,6 +12,15 @@
   // An account from before the age rule answers it once, now. (A mentor's account: when they ask a first question.)
   const after = (u) => (u && u.needsAge && u.role === 'seeker' && !WisecallAPI.asMentor() ? `/age-check.html?redirect=${encodeURIComponent(redirect)}` : redirect);
 
+  // (from the sign-up page's "this email already has an account": the email is filled in, and the password box is next)
+  try {
+    const carried = sessionStorage.getItem('wisecall_login_email');
+    if (carried) {
+      sessionStorage.removeItem('wisecall_login_email');
+      if (!document.getElementById('email').value) { document.getElementById('email').value = carried; document.getElementById('password').focus(); }
+    }
+  } catch (e) { /* typed by hand */ }
+
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     errorEl.textContent = '';

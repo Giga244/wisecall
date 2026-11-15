@@ -11,6 +11,7 @@
   let dPicker = null;
 
   const nameOf = (x) => (x ? WisecallI18n.nameIn(x) : '');
+  const fillText = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), WisecallI18n.t(key));
   const fieldName = (fid) => nameOf((cats.fields || []).find((f) => f.id === fid)) || fid;
   const chipName = (cid) => {
     for (const f of cats.fields || []) { const c = f.chips.find((x) => x.id === cid); if (c) return nameOf(c); }
@@ -54,13 +55,18 @@
         <p class="muted small">${esc(t('details.free.intro'))}</p>
         <form id="detailsForm" novalidate>
           <label for="dSpecs"><span>${esc(t('details.specs'))}</span>
-            <input type="text" id="dSpecs" maxlength="200" value="${esc((det.specialtyTags || []).join(', '))}">
-            <span class="hint">${esc(t('details.specs.hint'))}</span></label>
-          <label for="dRole"><span>${esc(t('details.role'))}</span><input type="text" id="dRole" maxlength="100" value="${esc(det.currentRole)}"></label>
-          <label for="dUni"><span>${esc(t('details.university'))}</span><input type="text" id="dUni" maxlength="100" value="${esc(det.university)}"></label>
+            <input type="text" id="dSpecs" maxlength="200" value="${esc((det.specialtyTags || []).join(', '))}" aria-describedby="dSpecsErr">
+            <span class="hint">${esc(fillText('details.specs.hint', { max: (cats.limits || {}).specializations || 5, chars: (cats.limits || {}).specializationMax || 30 }))}</span></label>
+          <p class="form-error details-field-error" id="dSpecsErr" role="alert" hidden></p>
+          <label for="dRole"><span>${esc(t('details.role'))}</span><input type="text" id="dRole" maxlength="100" value="${esc(det.currentRole)}" aria-describedby="dRoleErr"></label>
+          <p class="form-error details-field-error" id="dRoleErr" role="alert" hidden></p>
+          <label for="dUni"><span>${esc(t('details.university'))}</span><input type="text" id="dUni" maxlength="100" value="${esc(det.university)}" aria-describedby="dUniErr"></label>
+          <p class="form-error details-field-error" id="dUniErr" role="alert" hidden></p>
           <label for="dCountry"><span>${esc(t('details.country'))}</span>
-            <select id="dCountry"><option value="">—</option>${opt(cats.countries || [], det.country)}</select></label>
-          <label for="dYears"><span>${esc(t('details.years'))}</span><input type="number" id="dYears" min="0" max="70" step="1" inputmode="numeric" value="${esc(det.yearsExperience == null ? '' : det.yearsExperience)}"></label>
+            <select id="dCountry" aria-describedby="dCountryErr"><option value="">—</option>${opt(cats.countries || [], det.country)}</select></label>
+          <p class="form-error details-field-error" id="dCountryErr" role="alert" hidden></p>
+          <label for="dYears"><span>${esc(t('details.years'))}</span><input type="number" id="dYears" min="0" max="70" step="1" inputmode="numeric" value="${esc(det.yearsExperience == null ? '' : det.yearsExperience)}" aria-describedby="dYearsErr"></label>
+          <p class="form-error details-field-error" id="dYearsErr" role="alert" hidden></p>
           <p class="form-error" role="alert" id="detailsError"></p>
           <button type="submit" class="btn btn-primary">${esc(t('details.save'))}</button>
         </form>
@@ -135,9 +141,11 @@
 
   function wire() {
     const t = WisecallI18n.t;
-    const errorText = (code) => t({ invalid_current_role: 'details.err.text', invalid_university: 'details.err.text', invalid_tags: 'details.err.tags', invalid_years: 'details.err.years',
+    const limits = (cats && cats.limits) || {};
+    const errorText = (code) => fillText({ invalid_current_role: 'details.err.role', invalid_university: 'details.err.university', invalid_tags: 'details.err.tags', invalid_years: 'details.err.years', invalid_country: 'details.err.country',
       too_many_fields: 'details.err.fields', too_many_directions: 'details.err.chips', too_few_directions: 'fp.err.min', extra_regulated: 'details.err.extraRegulated', nothing_changed: 'details.err.same',
-      application_locked: 'details.err.locked', invalid_url: 'details.err.url', duplicate_evidence: 'details.err.duplicate', too_much_evidence: 'details.err.tooMuch' }[code] || 'toast.error');
+      application_locked: 'details.err.locked', invalid_url: 'details.err.url', duplicate_evidence: 'details.err.duplicate', too_much_evidence: 'details.err.tooMuch' }[code] || 'toast.error',
+      { max: limits.specializations || 5, chars: limits.specializationMax || 30, role: limits.currentRoleMax || 100, university: limits.universityMax || 100 });
     box.addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-goto-tab]');
       if (b) goto(b.dataset.gotoTab);
@@ -159,17 +167,33 @@
         if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
       }
     });
-    box.querySelector('#detailsForm').addEventListener('submit', async (ev) => {
+    // The box a save was refused for: marked and in focus, with a line right under it saying what is wrong (in sight on a phone); right
+    // again once it is changed. A refusal that is about no box is said under the form.
+    const detailsForm = box.querySelector('#detailsForm');
+    const DETAILS_INPUT = { specialtyTags: '#dSpecs', currentRole: '#dRole', university: '#dUni', country: '#dCountry', yearsExperience: '#dYears' };
+    const fieldLine = (input, text) => { const p = box.querySelector(`#${input.id}Err`); if (p) { p.textContent = text || ''; p.hidden = !text; } };
+    const unmarkDetails = (ev) => {
+      if (!ev.target.getAttribute || ev.target.getAttribute('aria-invalid') !== 'true') return;
+      ev.target.removeAttribute('aria-invalid');
+      fieldLine(ev.target, '');
+    };
+    detailsForm.addEventListener('input', unmarkDetails);
+    detailsForm.addEventListener('change', unmarkDetails);
+    detailsForm.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const err = box.querySelector('#detailsError');
       err.textContent = '';
+      detailsForm.querySelectorAll('[aria-invalid]').forEach((el) => { el.removeAttribute('aria-invalid'); fieldLine(el, ''); });
       try {
         const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: {
           specialtyTags: box.querySelector('#dSpecs').value, currentRole: box.querySelector('#dRole').value, university: box.querySelector('#dUni').value,
           country: box.querySelector('#dCountry').value || null, yearsExperience: box.querySelector('#dYears').value } });
         Object.assign(user, data.user);
         WisecallNav.showToast(t('toast.saved'));
-      } catch (e) { err.textContent = errorText(e.code); }
+      } catch (e) {
+        const input = box.querySelector(DETAILS_INPUT[(e.data || {}).field] || '#none');
+        if (input) { input.setAttribute('aria-invalid', 'true'); fieldLine(input, errorText(e.code)); input.focus(); } else err.textContent = errorText(e.code);
+      }
     });
     box.querySelector('#fieldsForm').addEventListener('submit', async (ev) => {
       ev.preventDefault();

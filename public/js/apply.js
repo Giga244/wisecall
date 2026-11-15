@@ -179,6 +179,10 @@
     return n > v.limits.yearsMax ? { error: 'max' } : { n };
   }
 
+  // An application that was sent before (v.application.optional, from the server): what step 1 has asked for since then is still asked of
+  // its mentor, but never required, and never marked red: the label says "optional".
+  const optional = (code) => (v.application.optional || []).includes(code);
+  const optMark = (code) => (optional(code) ? ` <span class="apply-optional-mark">${esc(t('apply.optional'))}</span>` : '');
   function aboutStep() {
     const f = v.application.form;
     setPick();
@@ -190,14 +194,14 @@
         <h1 tabindex="-1">${esc(t('apply.about.title'))}</h1>
         <p class="apply-lead">${esc(t('apply.about.lead'))}</p>
         <div class="apply-field">
-          <label for="apHeadline">${esc(t('apply.f.headline'))}</label>
-          <input id="apHeadline" name="headline" type="text" maxlength="100" value="${esc(user.headline || '')}" placeholder="${esc(t(`apply.ex.${groupOf(niche)}.headline`))}" autocomplete="organization-title" aria-describedby="apHeadlineHint apHeadlineErr" required>
+          <label for="apHeadline">${esc(t('apply.f.headline'))}${optMark('headline')}</label>
+          <input id="apHeadline" name="headline" type="text" maxlength="100" value="${esc(user.headline || '')}" placeholder="${esc(t(`apply.ex.${groupOf(niche)}.headline`))}" autocomplete="organization-title" aria-describedby="apHeadlineHint apHeadlineErr"${optional('headline') ? '' : ' required'}>
           <span class="hint" id="apHeadlineHint">${esc(t('apply.f.headline.hint'))}</span>
           <p class="apply-field-error" id="apHeadlineErr" data-error-for="headline" hidden></p>
         </div>
         <div class="apply-field">
-          <label for="apField">${esc(t('apply.f.field'))}</label>
-          <input id="apField" name="customNiche" type="text" maxlength="60" value="${esc(f.customNiche || '')}" autocomplete="off" aria-describedby="apFieldHint apCategory apFieldErr" required>
+          <label for="apField">${esc(t('apply.f.field'))}${optMark('field')}</label>
+          <input id="apField" name="customNiche" type="text" maxlength="60" value="${esc(f.customNiche || '')}" autocomplete="off" aria-describedby="apFieldHint apCategory apFieldErr"${optional('field') ? '' : ' required'}>
           <span class="hint" id="apFieldHint">${esc(t('apply.f.field.hint'))}</span>
           <p class="apply-field-error" id="apFieldErr" data-error-for="field" hidden></p>
         </div>
@@ -212,13 +216,15 @@
         </fieldset>
         <div class="apply-field">
           <label for="apTags">${esc(t('pick.spec'))}</label>
-          <input id="apTags" name="specialtyTags" type="text" maxlength="200" value="${esc((f.specialtyTags || []).join(', '))}" aria-describedby="apTagsHint">
+          <input id="apTags" name="specialtyTags" type="text" maxlength="200" value="${esc((f.specialtyTags || []).join(', '))}" aria-describedby="apTagsHint apTagsErr">
           <span class="hint" id="apTagsHint">${esc(fill('pick.spec.hint', { max: v.limits.tagsMax, chars: v.limits.tagMax }))}</span>
+          <p class="apply-field-error" id="apTagsErr" data-error-for="tags" hidden></p>
         </div>
         <div class="apply-field">
           <label for="apUniversity">${esc(t('pick.university'))}</label>
-          <input id="apUniversity" name="university" type="text" maxlength="100" list="apUniversities" value="${esc(f.university || '')}" autocomplete="off" aria-describedby="apUniversityHint">
+          <input id="apUniversity" name="university" type="text" maxlength="100" list="apUniversities" value="${esc(f.university || '')}" autocomplete="off" aria-describedby="apUniversityHint apUniversityErr">
           <span class="hint" id="apUniversityHint">${esc(t('pick.university.hint'))}</span>
+          <p class="apply-field-error" id="apUniversityErr" data-error-for="university" hidden></p>
           <datalist id="apUniversities"></datalist>
         </div>
         <div class="apply-field">
@@ -227,8 +233,9 @@
         </div>
         <div class="apply-field">
           <label for="apCurrentRole">${esc(t('pick.currentRole'))}</label>
-          <input id="apCurrentRole" name="currentRole" type="text" maxlength="100" value="${esc(f.currentRole || '')}" aria-describedby="apCurrentRoleHint">
+          <input id="apCurrentRole" name="currentRole" type="text" maxlength="100" value="${esc(f.currentRole || '')}" aria-describedby="apCurrentRoleHint apCurrentRoleErr">
           <span class="hint" id="apCurrentRoleHint">${esc(t('pick.currentRole.hint'))}</span>
+          <p class="apply-field-error" id="apCurrentRoleErr" data-error-for="currentRole" hidden></p>
         </div>
         <p class="pick-preview" data-pick-preview aria-live="polite"></p>
         <fieldset class="apply-field apply-kind">
@@ -237,8 +244,8 @@
           <p class="mv-note" data-academic-limit hidden>${esc(t('apply.f.academicLimit'))}</p>
         </fieldset>
         <div class="apply-field apply-years">
-          <label for="apYears">${esc(t('apply.f.years'))}</label>
-          <select id="apYears" name="yearsExperience" aria-describedby="apYearsErr" required>
+          <label for="apYears">${esc(t('apply.f.years'))}${optMark('years')}</label>
+          <select id="apYears" name="yearsExperience" aria-describedby="apYearsErr"${optional('years') ? '' : ' required'}>
             <option value="">${esc(t('apply.f.years.choose'))}</option>
             ${Array.from({ length: v.limits.yearsMax + 1 }, (x, n) => `<option value="${n}"${f.yearsExperience === n ? ' selected' : ''}>${esc(n === 0 ? t('apply.f.years.lessThanOne') : String(n))}</option>`).join('')}
           </select>
@@ -249,8 +256,9 @@
           <summary>${esc(t('apply.about.more'))}</summary>
           <div class="apply-field">
             <label for="apTitle">${esc(t('ap.f.title'))}</label>
-            <input id="apTitle" name="roleTitle" type="text" maxlength="${v.limits.titleMax}" value="${esc(f.roleTitle || '')}" autocomplete="organization-title" aria-describedby="apTitleHint">
+            <input id="apTitle" name="roleTitle" type="text" maxlength="${v.limits.titleMax}" value="${esc(f.roleTitle || '')}" autocomplete="organization-title" aria-describedby="apTitleHint apTitleErr">
             <span class="hint" id="apTitleHint">${esc(t('ap.f.title.hint'))}</span>
+            <p class="apply-field-error" id="apTitleErr" data-error-for="title" hidden></p>
           </div>
         </details>
         ${nav(0)}
@@ -638,7 +646,9 @@
   // (brought into view: on a phone the line under the buttons can be below the screen)
   const stepError = (text) => { const el = root.querySelector('.apply-error'); if (!el) return; el.textContent = text || ''; if (text && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
   const subError = (sub, text) => { const el = sub && sub.querySelector('.apply-sub-error'); if (el) el.textContent = text || ''; };
-  const errText = (map, e) => t(map[e.code] || 'toast.error');
+  // (the numbers in a message are the server's own limits, so a message can never name a limit that is no longer the rule)
+  const errText = (map, e) => fill(map[e.code] || 'toast.error', { max: v.limits.tagsMax, chars: v.limits.tagMax,
+    role: ((catalog || {}).limits || {}).currentRoleMax || 100, university: ((catalog || {}).limits || {}).universityMax || 100 });
 
   const ERR = {
     invalid_field: 'toast.error', invalid_years: 'ap.err.invalid_years', story_too_long: 'ap.err.story_too_long', invalid_niche: 'ap.err.invalid_niche',
@@ -655,7 +665,7 @@
   // ---- Step 1 (about you): an error under each field, the years read from what was typed, and a draft saved as the mentor goes
   // (docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
   let aboutDraftTimer = null;
-  const ERROR_INPUT = { headline: 'apHeadline', field: 'apField', niche: 'apPicker', years: 'apYears' };
+  const ERROR_INPUT = { headline: 'apHeadline', field: 'apField', niche: 'apPicker', years: 'apYears', tags: 'apTags', university: 'apUniversity', currentRole: 'apCurrentRole', title: 'apTitle' };
   function fieldError(form, name, text) {
     const el = form.querySelector(`[data-error-for="${name}"]`);
     const input = form.querySelector('#' + ERROR_INPUT[name]);
@@ -669,18 +679,21 @@
     if (!input) return;
     // (the field choice is long on a phone: its message is what is brought into view)
     const target = name === 'niche' ? form.querySelector('[data-error-for="niche"]') : input;
+    // (the title is under "More": opened, so the box and its message are in sight)
+    const more = input.closest('details');
+    if (more) more.open = true;
     if (target.scrollIntoView) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
     input.focus({ preventScroll: true });
   }
   // [field, message] for each thing step 1 still needs, in the order of the page.
   function aboutProblems(form) {
     const out = [];
-    if (!form.headline.value.trim()) out.push(['headline', t('apply.err.headline')]);
-    if (!form.customNiche.value.trim()) out.push(['field', t('apply.err.field')]);
+    if (!optional('headline') && !form.headline.value.trim()) out.push(['headline', t('apply.err.headline')]);
+    if (!optional('field') && !form.customNiche.value.trim()) out.push(['field', t('apply.err.field')]);
     // (1 to 5 directions: docs/CLAUDE-CODE-NEW-CATEGORIES.md; the server refuses to send an application without one)
-    if (pick.main && !pick.directions.length) { out.push(['niche', t('fp.err.min')]); if (fieldPicker) fieldPicker.showError(true); }
+    if (!optional('directions') && pick.main && !pick.directions.length) { out.push(['niche', t('fp.err.min')]); if (fieldPicker) fieldPicker.showError(true); }
     const y = yearsOf(form.yearsExperience.value);
-    if (y.empty) out.push(['years', t('apply.err.yearsEmpty')]);
+    if (y.empty) { if (!optional('years')) out.push(['years', t('apply.err.yearsEmpty')]); }
     else if (y.error === 'nan') out.push(['years', t('apply.err.years')]);
     else if (y.error === 'max') out.push(['years', fill('apply.err.yearsMax', { max: v.limits.yearsMax })]);
     return out;
@@ -783,7 +796,8 @@
   }
   // A refused or failed save: under the field the server named (step 1), otherwise one line in view. A request that never reached the
   // server (no connection, a dropped network in an in-app browser) says so, and what was typed stays on the page.
-  const FIELD_OF = { headline: 'headline', customNiche: 'field', niche: 'niche', yearsExperience: 'years', extraNiches: 'extra', extraFields: 'extra', directions: 'niche', directionOther: 'niche', fieldId: 'niche' };
+  const FIELD_OF = { headline: 'headline', customNiche: 'field', niche: 'niche', yearsExperience: 'years', extraNiches: 'extra', extraFields: 'extra', directions: 'niche', directionOther: 'niche', fieldId: 'niche',
+    specialtyTags: 'tags', university: 'university', currentRole: 'currentRole', roleTitle: 'title' };
   function showSaveError(e) {
     const form = root.querySelector('form.apply-step');
     if (!e || !e.code) { stepError(t('apply.err.network')); return; }
