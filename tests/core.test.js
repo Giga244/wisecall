@@ -78,13 +78,19 @@ describe('accounts', () => {
 });
 
 describe('mentor application and approval', () => {
-  test('an unverified email cannot apply, and nothing is saved', async () => {
+  // (the email no longer comes first, docs/CLAUDE-CODE-EMAIL-CODE-FIX.md: the application is saved before the code is entered, and only the
+  // approval waits for it; tests/email-code-fix.test.js has the whole rule)
+  test('an unverified email can fill in the application (it is saved), but cannot be approved', async () => {
     const c = client(base);
     await c.api('/auth/signup', { method: 'POST', body: { adult: true, birthYm: '1990-01', name: 'Unverified', email: 'unverified@example.com', password: 'test-pass-12345' } });
     await c.api('/me', { method: 'PATCH', body: { becomeMentor: true } });
     const r = await c.api('/me', { method: 'PATCH', body: { roleTitle: 'Doctor', niche: 'medicine', price: 20, proofUrl: 'https://linkedin.com/in/x', sampleAnswer: SAMPLE } });
-    assert.equal(r.error, 'email_not_verified');
-    assert.equal((await c.api('/me')).user.roleTitle, null);
+    assert.equal(r.status, 200, r.text);
+    const me = (await c.api('/me')).user;
+    assert.equal(me.roleTitle, 'Doctor');
+    assert.equal(me.emailVerified, false);
+    const v = await c.api('/verification');
+    assert.notEqual((v.requirements.find((x) => x.step === 'email') || {}).status, 'passed', 'the email step is not passed, so approval is not possible');
   });
 
   test('an incomplete application cannot be submitted; a complete one goes to pending', async () => {

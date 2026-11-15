@@ -36,12 +36,13 @@
   // from the server's settings so the page never disagrees with what the server really does.
   let vars = {};
   function fillVars(s) {
-    return typeof s === 'string' ? s.replace(/\{(answerDays|holdDays|disputeDays|feePct|sharePct|priceMin|priceMax|questionMin|questionMax|answerMin|answerMax|unpaidDays|payoutMin)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m)) : s;
+    return typeof s === 'string' ? s.replace(/\{(answerDays|holdDays|disputeDays|feePct|sharePct|priceMin|priceMax|questionMin|questionMax|answerMin|answerMax|unpaidDays|payoutMin|support)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m)) : s;
   }
   function setVarsFrom(cfg) {
     vars = {
       answerDays: cfg.answerDeadlineDays, holdDays: cfg.payoutHoldDays === undefined ? 7 : cfg.payoutHoldDays, disputeDays: cfg.disputeDays === undefined ? 7 : cfg.disputeDays,
       feePct: cfg.platformFeePercent, sharePct: cfg.mentorSharePercent, priceMin: cfg.priceMin, priceMax: cfg.priceMax, payoutMin: cfg.payoutMinGel === undefined ? 100 : cfg.payoutMinGel,
+      support: cfg.contactEmail || `${location.host}/contact.html`, // (where the generic error message says to write)
       questionMin: cfg.questionMin, questionMax: cfg.questionMax, answerMin: cfg.answerMin, answerMax: cfg.answerMax, unpaidDays: cfg.unpaidAttemptDays
     };
   }
@@ -135,6 +136,12 @@
   }
 
   function t(key) {
+    // The generic error says what to do (try again, or write to support) and, after a server error, its short reference
+    // (docs/CLAUDE-CODE-UNKNOWN-ERROR.md 4).
+    if (key === 'toast.error') {
+      const ref = window.WisecallAPI && window.WisecallAPI.lastErrorRef ? window.WisecallAPI.lastErrorRef() : null;
+      return fillVars(currentDict[key] || key) + (ref && currentDict['toast.errorRef'] ? currentDict['toast.errorRef'].replace('{ref}', ref) : '');
+    }
     return fillVars(currentDict[key] || key);
   }
 

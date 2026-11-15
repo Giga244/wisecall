@@ -119,6 +119,7 @@ app.use('/api/auth/signup', authLimit(15));
 app.use('/api/auth/verify-email', authLimit(10));
 app.use('/api/auth/resend-verification', authLimit(6));
 app.use('/api/auth/change-unconfirmed-email', authLimit(6));
+app.use('/api/me/email', authLimit(10)); // (changing a confirmed email: the password, then a code to the new address)
 app.use('/api/auth/forgot-password', authLimit(6));
 app.use('/api/auth/reset-password', authLimit(10));
 app.use('/api/contact', rateLimit({ windowMs: 60 * 60 * 1000, max: 5 }));
@@ -387,13 +388,16 @@ app.use((err, req, res, next) => {
     console.warn(`[busy] ${req.method} ${req.path}: ${err.message}`);
     return res.status(503).set('Retry-After', '5').json({ error: 'busy_try_again' });
   }
-  console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
+  // A short reference, in the log and in the answer: the person can quote it to support, who finds the real error with it
+  // (docs/CLAUDE-CODE-UNKNOWN-ERROR.md 4; nothing about the error itself goes to the page).
+  const ref = require('crypto').randomBytes(3).toString('hex').toUpperCase();
+  console.error(`[error] ref=${ref} ${req.method} ${req.originalUrl}:`, err);
   const errorReport = require('./errorReport');
   errorReport.report(err, { method: req.method, route: errorReport.routeOf(req), status: err.status || 500 }); // (off without SENTRY_DSN; nothing personal)
   if (res.headersSent) return next(err);
   const wantsHtml = !req.path.startsWith('/api/') && req.method === 'GET' && String(req.accepts(['html', 'json'])).startsWith('html');
   if (wantsHtml) return pages.errorPage(req, res);
-  res.status(err.status || 500).json({ error: 'server_error' });
+  res.status(err.status || 500).json({ error: 'server_error', ref });
 });
 
 async function start() {

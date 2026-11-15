@@ -18,6 +18,8 @@
   const errorEl = document.getElementById('formError');
   const devCodeBox = document.getElementById('devCodeBox');
 
+  // (a page brought back from the browser's history is checked again: the email may have been confirmed since)
+  window.addEventListener('pageshow', (ev) => { if (ev.persisted) window.location.reload(); });
   if (user.emailVerified) {
     await becomeMentor();
     window.location.href = redirect;
@@ -72,6 +74,13 @@
       startCountdown();
     } catch (e) {
       const map = { invalid_email: 'auth.error.invalidEmail', email_taken: 'auth.error.emailTaken', same_email: 'auth.verify.sameEmail', too_many_requests: 'auth.verify.tooMany' };
+      // (confirmed meanwhile, in another tab or with this page left open: another address is chosen in Settings; this answer once showed
+      // only a generic error, docs/CLAUDE-CODE-UNKNOWN-ERROR.md)
+      if (e.code === 'already_verified') {
+        const esc = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        changeError.innerHTML = `${esc(t('email.code.alreadyVerified').replace('{email}', (e.data && e.data.email) || ''))} <a href="/settings.html?tab=account#email">${esc(t('email.code.toSettings'))}</a>`;
+        return;
+      }
       changeError.textContent = t(map[e.code] || 'toast.error');
     }
   });
@@ -106,6 +115,7 @@
       await becomeMentor();
       window.location.href = redirect;
     } catch (e) {
+      if (e.code === 'already_verified') { window.location.href = redirect; return; }
       const map = { invalid_code: 'auth.verify.invalidCode', expired: 'auth.verify.expiredCode', no_pending_code: 'auth.verify.noPendingCode', too_many_attempts: 'auth.verify.tooManyAttempts' };
       errorEl.textContent = WisecallI18n.t(map[e.code] || 'toast.error');
       submitBtn.disabled = false;
@@ -126,6 +136,8 @@
       errorEl.textContent = '';
       WisecallNav.showToast(t('auth.verify.resent'));
     } catch (e) {
+      if (e.code === 'already_verified') { window.location.href = redirect; return; }
+      if (e.code === 'resend_wait') { until = Date.now() + ((e.data && e.data.retryAfter) || WAIT_S) * 1000; if (!timer) timer = setInterval(tick, 1000); tick(); return; }
       WisecallNav.showToast(t(e.code === 'too_many_requests' ? 'auth.verify.tooMany' : 'toast.error'));
       tick();
     }

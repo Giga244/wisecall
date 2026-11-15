@@ -52,6 +52,7 @@ function userFromRow(r) {
     liveApprovedAt: r.live_approved_at || null,
     emailStatus: r.email_status || null, // (the last email's result: sent, delivered, delayed, bounced, complained)
     emailStatusAt: r.email_status_at || null,
+    pendingEmail: r.pending_email || null, // (a confirmed address being changed: the new one, until its code is entered)
     freeWeeklyCap: r.free_weekly_cap === undefined || r.free_weekly_cap === null ? 10 : r.free_weekly_cap, // (free questions a week, when the price is 0)
     emailVerified: r.email_verified,
     emailVerifyCodeHash: r.email_code_hash,
@@ -137,7 +138,7 @@ const USER_COLUMNS = {
   headline: 'headline', currentWork: 'current_work', city: 'city', languages: 'languages', linkedinUrl: 'linkedin_url', websiteUrl: 'website_url',
   profileVisibility: 'profile_visibility', photoUpdatedAt: 'photo_updated_at', theme: 'theme',
   specialtyTags: 'specialty_tags', yearsExperience: 'years_experience', story: 'story', applicationSubmittedAt: 'application_submitted_at',
-  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', extraNiches: 'extra_niches', practiceKind: 'practice_kind', foundingMentorAt: 'founding_mentor_at', universityDomain: 'university_domain', universityBadge: 'university_badge', showOnHome: 'show_on_home', emailCodeAttempts: 'email_code_attempts', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
+  verificationRules: 'verification_rules', payoutHoldUntil: 'payout_hold_until', publicAnswersPref: 'public_answers_pref', customNiche: 'custom_niche', extraNiches: 'extra_niches', practiceKind: 'practice_kind', foundingMentorAt: 'founding_mentor_at', universityDomain: 'university_domain', universityBadge: 'university_badge', showOnHome: 'show_on_home', emailCodeAttempts: 'email_code_attempts', pendingEmail: 'pending_email', fieldOverride: 'field_override', liveApprovedAt: 'live_approved_at',
   freeWeeklyCap: 'free_weekly_cap', applyTouchedAt: 'apply_touched_at',
   fieldId: 'field_id', extraFields: 'extra_fields', directions: 'directions', directionOther: 'direction_other', university: 'university', country: 'country'
 };

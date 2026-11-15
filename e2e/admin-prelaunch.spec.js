@@ -47,7 +47,7 @@ for (const width of [1280, 360]) {
     await expect(page.locator('#adminTabs [data-tab="mentors"]')).toBeVisible();
     await expect(page.locator('#adminTabs [data-tab="waitlist"]')).toBeVisible();
     await expect(page.locator('#statusFilters')).toBeVisible();
-    await expect(page.locator('#statusFilters .chip')).toHaveCount(6); // Needs a human, Verified, A step failed, Rejected, Suspended, All
+    await expect(page.locator('#statusFilters .chip')).toHaveCount(7); // Needs a human, Verified, A step failed, Rejected, Suspended, Email not confirmed, All
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/admin-${width}.png`, fullPage: true });
 
     // the Verified chip lists the approved mentor (and the address says so)

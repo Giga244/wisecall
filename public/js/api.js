@@ -1,4 +1,7 @@
 (function () {
+  let lastError = null;
+  // The reference of a server error in the last 20 seconds (or null).
+  const lastErrorRef = () => (lastError && Date.now() - lastError.at < 20000 ? lastError.ref : null);
   async function apiFetch(path, opts = {}) {
     const res = await fetch('/api' + path, {
       credentials: 'include',
@@ -13,6 +16,8 @@
       err.code = data.error;
       err.message2 = data.message;
       err.data = data; // the rest of the answer (for example how long to wait)
+      // (a server error's short reference: the generic message shows it, so support can find the real error; docs/CLAUDE-CODE-UNKNOWN-ERROR.md)
+      if (data.ref) lastError = { ref: String(data.ref).slice(0, 12), at: Date.now() };
       // An admin whose second step (an authenticator code) has run out: the page is loaded again, and the server then asks for the code.
       if ((err.code === 'two_factor_required' || err.code === 'two_factor_setup_required') && window.location.pathname === '/admin.html') {
         if (window.WisecallNav && window.WisecallI18n) window.WisecallNav.showToast(window.WisecallI18n.t('admin.tf.expired'));
@@ -127,5 +132,5 @@
     return t('safety.contactBlocked') + (found.length ? ' ' + t('safety.found').replace('{what}', found.join(', ')) : '');
   }
 
-  window.WisecallAPI = { apiFetch, uploadFile, safeRedirect, asMentor, keepMentorPath, formatPrice, formatAmount, textLength, avatarStyle, avatar, initialsOf, linkLabels, contactBlockedText };
+  window.WisecallAPI = { apiFetch, lastErrorRef, uploadFile, safeRedirect, asMentor, keepMentorPath, formatPrice, formatAmount, textLength, avatarStyle, avatar, initialsOf, linkLabels, contactBlockedText };
 })();

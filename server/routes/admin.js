@@ -31,6 +31,9 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
   else if (status === 'failed_step') {
     where += ` AND ((verification_status = 'verified' AND ${failedRequiredStepSql()})
                 OR EXISTS (SELECT 1 FROM mentor_flags f WHERE f.mentor_id = users.id AND f.kind = 'required_step_failed' AND f.status = 'open'))`;
+  } else if (status === 'email_unconfirmed') {
+    // (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md 5: applicants whose email code was not entered yet, sent or not; none of them can be approved)
+    where += ` AND NOT email_verified AND deleted_at IS NULL AND verification_status IN ('none', 'pending')`;
   } else if (status) { params.push(String(status)); where += ` AND verification_status = $${params.length}`; }
   const { rows } = await query(`SELECT ${userColumnsSql()} FROM users WHERE ${where} ORDER BY created_at DESC LIMIT 200`, params);
   const mentors = rows.map(userFromRow);

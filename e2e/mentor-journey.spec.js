@@ -42,10 +42,10 @@ for (const width of [360, 1280]) {
     await page.fill('#password', S.PASSWORD);
     await page.check('#adult');
     await page.click('#signupForm button[type="submit"]');
-    await page.waitForURL(/verify-email\.html/);
-    await page.fill('#code', S.codeIn(await S.waitForMail(email)));
-    await page.click('#verifyForm button[type="submit"]');
-    await page.waitForURL((u) => !/verify-email/.test(u.pathname));
+    // (straight to the application: the code box waits on step 5, docs/CLAUDE-CODE-EMAIL-CODE-FIX.md; here the code is entered at once)
+    await page.waitForURL(/apply\.html/);
+    const code = S.codeIn(await S.waitForMail(email));
+    expect(await page.evaluate(async (c) => (await fetch('/api/auth/verify-email', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'wisecall' }, body: JSON.stringify({ code: c }) })).status, code)).toBe(200);
 
     // Step 1: the years from a list; errors under the field; the headline example follows the field.
     await page.goto('/ka/apply.html');

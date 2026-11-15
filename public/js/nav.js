@@ -212,7 +212,8 @@
         bar.innerHTML = `<span>${t("nav.deletionBanner").replace("{date}", WisecallI18n.formatDate(until, { dateStyle: "long" }))}</span> <a href="/settings.html?tab=account">${t("nav.deletionKeep")}</a>`;
         header.insertAdjacentElement("afterend", bar);
       }
-      if (!user.emailVerified && location.pathname !== '/verify-email.html' && header) {
+      // (the application and the dashboard have the code box itself: docs/CLAUDE-CODE-EMAIL-CODE-FIX.md)
+      if (!user.emailVerified && location.pathname !== '/verify-email.html' && !/\/(apply|dashboard)\.html$/.test(location.pathname) && header) {
         const bar = document.createElement('div');
         bar.className = 'verify-banner';
         bar.innerHTML = `<span>${t('nav.verifyBanner')}</span> <a href="/verify-email.html?redirect=${encodeURIComponent(location.pathname)}">${t('nav.verifyBannerCta')}</a>`;

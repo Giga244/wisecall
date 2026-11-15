@@ -13,7 +13,7 @@
   const filters = document.getElementById('statusFilters');
   let activeStatus = 'pending';
   let tab = 'mentors';
-  const MENTOR_FILTERS = ['pending', 'verified', 'failed_step', 'rejected', 'suspended', ''];
+  const MENTOR_FILTERS = ['pending', 'verified', 'failed_step', 'rejected', 'suspended', 'email_unconfirmed', ''];
   const BOOKING_FILTERS = ['paid', 'answered', 'refund_pending', 'refunded', 'pending_payment', ''];
   const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist', 'niches', 'support', 'disputes', 'overview', 'answers', 'requests', 'live', 'safety', 'categories']; // tabs that have no status chips
   const tabs = document.getElementById('adminTabs');

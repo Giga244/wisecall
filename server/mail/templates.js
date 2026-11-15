@@ -27,7 +27,7 @@ const S = {
     linkFallback: "If the button doesn't work, copy this link into your browser:",
     verify: {
       subject: 'Wisecall – your code: {code}', heading: 'Verify your email',
-      intro: 'Use this code to finish setting up your account:', expiry: 'The code expires in 15 minutes.', page: 'Enter it here',
+      intro: 'Use this code to finish setting up your account:', expiry: 'The code works for 24 hours.', page: 'Enter it here',
       footer: "If you didn't create a Wisecall account, you can safely ignore this email."
     },
     loginAttempts: {
@@ -367,6 +367,11 @@ const S = {
       notYou: 'If you did not do this, sign in with Google now, choose a new password with "Forgot password" and write to us: someone may be using your account.',
       button: 'Open security settings'
     },
+    emailChanged: {
+      subject: 'Your Wisecall email was changed', heading: 'Your email was changed',
+      intro: 'The email of your Wisecall account is now {email}. We will not send mail to this address any more.',
+      notYou: 'If you did not do this, write to us now: someone may be using your account.'
+    },
     contact: { subject: 'New message from the Wisecall contact form', heading: 'New contact message' }
   },
 
@@ -375,7 +380,7 @@ const S = {
     linkFallback: 'თუ ღილაკი არ მუშაობს, დააკოპირე ეს ბმული ბრაუზერში:',
     verify: {
       subject: 'Wisecall – შენი კოდი: {code}', heading: 'დაადასტურე ელფოსტა', page: 'კოდი აქ ჩაწერე',
-      intro: 'გამოიყენე ეს კოდი ანგარიშის შექმნის დასასრულებლად:', expiry: 'კოდი მოქმედია 15 წუთის განმავლობაში.',
+      intro: 'გამოიყენე ეს კოდი ანგარიშის შექმნის დასასრულებლად:', expiry: 'კოდი 24 საათის განმავლობაში მოქმედებს.',
       footer: 'თუ Wisecall-ზე ანგარიში შენ არ შეგიქმნია, უბრალოდ უგულებელყავი ეს წერილი.'
     },
     loginAttempts: {
@@ -715,6 +720,11 @@ const S = {
       notYou: 'თუ ეს შენ არ გაგიკეთებია, ახლავე შედი Google-ით, „დაგავიწყდა პაროლი?“-ით აირჩიე ახალი პაროლი და მოგვწერე: შესაძლოა, შენს ანგარიშს სხვა იყენებს.',
       button: 'უსაფრთხოების პარამეტრები'
     },
+    emailChanged: {
+      subject: 'შენი Wisecall-ის ელ-ფოსტა შეიცვალა', heading: 'შენი ელ-ფოსტა შეიცვალა',
+      intro: 'შენი Wisecall-ის ანგარიშის ელ-ფოსტა ახლა არის {email}. ამ მისამართზე წერილებს აღარ გამოგიგზავნით.',
+      notYou: 'თუ ეს შენ არ გაგიკეთებია, ახლავე მოგვწერე: შესაძლოა, შენს ანგარიშს სხვა იყენებს.'
+    },
     contact: { subject: 'ახალი შეტყობინება Wisecall-ის საკონტაქტო ფორმიდან', heading: 'ახალი შეტყობინება' }
   }
 };
@@ -1035,6 +1045,11 @@ const BUILDERS = {
     heading: s.passwordSet.heading,
     blocks: [{ p: fill(s.passwordSet.intro, d), raw: true }, { p: s.passwordSet.others }, { p: s.passwordSet.notYou },
       { button: s.passwordSet.button, url: `${config.PUBLIC_URL}/settings.html?tab=account` }]
+  }),
+  // (to the old address, after the change is confirmed with a code sent to the new one)
+  emailChanged: (s, d) => ({
+    heading: s.emailChanged.heading,
+    blocks: [{ p: fill(s.emailChanged.intro, d), raw: true }, { p: s.emailChanged.notYou }, { link: `${config.PUBLIC_URL}/contact.html` }]
   }),
   contact: (s, d) => ({
     heading: s.contact.heading,

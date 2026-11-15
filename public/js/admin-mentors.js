@@ -329,6 +329,10 @@
   // The last email to this person, as the provider reported it (a code that never arrived shows here as bounced or still "sent").
   const EMAIL_TONE = { delivered: 'answered', sent: 'pending_payment', delayed: 'pending_payment', bounced: 'rejected', complained: 'rejected' };
   const emailStatus = (m) => `<span class="badge badge-${EMAIL_TONE[m.emailStatus] || 'muted'} mv-email-status">${esc(fill('admin.email.last', { status: t('admin.email.' + (m.emailStatus || 'none')) }))}${m.emailStatusAt ? ` · ${esc(WisecallI18n.formatDate(m.emailStatusAt, { dateStyle: 'short', timeStyle: 'short' }))}` : ''}</span>`;
+  // Confirmed or not (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md 5): an application can be sent before the email code is entered, never approved.
+  const emailConfirmed = (m) => (m.emailVerified
+    ? `<span class="badge badge-answered mv-email-ok">${esc(t('admin.email.confirmed'))}</span>`
+    : `<span class="badge badge-rejected mv-email-unconfirmed">${esc(t('admin.email.unconfirmed'))}</span> <span class="muted small mv-email-why">${esc(t('admin.email.noApprove'))}</span>`);
   function card(m) {
     const v = m.verification || {};
     return `
@@ -338,6 +342,7 @@
           <div>
             <div class="card-name">${esc(m.name)}</div>
             <span class="muted small">${esc(m.email)}</span>
+            ${emailConfirmed(m)}
             ${emailStatus(m)}
           </div>
           <div class="booking-amount">${m.price === null || m.price === undefined ? '—' : WisecallAPI.formatPrice(m.price)}</div>

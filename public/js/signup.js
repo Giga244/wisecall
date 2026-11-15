@@ -104,6 +104,14 @@
         body: { name, email, password, ...(asMentor ? { adult: true } : WisecallAgeFields.answer(form)), language: WisecallI18n.getLang(), as: asMentor ? 'mentor' : undefined, username: (!asMentor && usernameInput.value.trim().toLowerCase()) || undefined,
           turnstileToken: await WisecallTurnstile.token(form) }
       });
+      // A mentor starts the application at once; the code was sent in the meantime and its box waits on step 5 and on the dashboard
+      // (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md: a company mail server can hold it for hours, and nothing may wait for it).
+      if (asMentor) {
+        const next = new URL(redirect, location.origin);
+        if (data.devMode && data.devVerifyCode) next.searchParams.set('devCode', data.devVerifyCode);
+        window.location.href = next.pathname + next.search;
+        return;
+      }
       let verifyUrl = `/verify-email.html?redirect=${encodeURIComponent(redirect)}${asMentor ? '&as=mentor' : ''}`;
       if (data.devMode && data.devVerifyCode) verifyUrl += `&devCode=${data.devVerifyCode}`;
       // The account exists but the email could not be sent (bank-grade rule: say so, never show the code).

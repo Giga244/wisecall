@@ -11,7 +11,7 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NOISE.test(m.text())) problems.push(`console: ${m.text()}`); });
   return problems;
 }
-const WRONG = /something went wrong|დაფიქსირდა შეცდომა/i;
+const WRONG = /something went wrong|დაფიქსირდა შეცდომა|რაღაც არ გამოვიდა|unknown error/i;
 
 for (const lang of ['en', 'ka']) {
   test.describe(`every page and tab in ${lang === 'en' ? 'English' : 'Georgian'}`, () => {

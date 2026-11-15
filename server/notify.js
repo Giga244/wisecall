@@ -103,6 +103,8 @@ const notifyPayoutChanged = (mentor, { oldLast4, newLast4, holdUntil }) => safeS
 const notifyTwoFactorOff = (user, { device, at }) => safeSend('2fa off notify', 'twoFactorOff', user, { device: device || '?', when: utcDate(at || new Date(), user.language) });
 // A first password was set on an account that had none (made with Google): always sent, a security notice like the one above.
 const notifyPasswordSet = (user, { device, at }) => safeSend('password set notify', 'passwordSet', user, { device: device || '?', when: utcDate(at || new Date(), user.language) });
+// The account's email was changed (Settings): a short notice to the OLD address (oldUser: the account as it was), always sent.
+const notifyEmailChanged = (oldUser, newEmail) => safeSend('email changed notify', 'emailChanged', oldUser, { email: newEmail });
 
 // A time written for the person receiving it, always with the zone spelled out.
 const utcDate = (date, lang) => new Date(date).toLocaleString(lang === 'ka' ? 'ka-GE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
@@ -161,4 +163,4 @@ const notifyIdReminder = (mentor, d = {}) => safeSend('ID check reminder', 'idRe
 // Right after sending without the ID check (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md 4): once, see verification/reminders.js oneStepLeft.
 const notifyIdOneStep = (mentor) => safeSend('ID check: one step left', 'idOneStep', mentor, {});
 
-module.exports = { notifyApplicationReceived, notifyWelcome, notifyApplyReminder, notifyIdReminder, notifyIdOneStep, notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifyFollowUpReminder, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins, notifyPriceChanged, notifyChangeDecided };
+module.exports = { notifyApplicationReceived, notifyWelcome, notifyApplyReminder, notifyIdReminder, notifyIdOneStep, notifyDeletionScheduled, notifyProfileHidden, notifyMentorNewQuestion, notifySeekerAnswered, notifyRefund, notifyFollowUp, notifyFollowUpReminder, notifySupportReply, notifyReceipt, notifyDisputeOpened, notifyDisputeResolved, notifyMentorDeadlineSoon, notifyMentorDecision, notifyPayoutPaid, notifyPayoutChanged, notifyTwoFactorOff, notifyPasswordSet, notifyEmailChanged, notifyWithdrawal, notifyMentorSuspended, notifyVerificationUpdate, notifyInterviewRequested, notifyVerificationSimplified, notifyInterviewBooked, notifyInterviewLink, notifyInterviewCancelled, notifyRateReminder, notifyAdmins, notifyPriceChanged, notifyChangeDecided };

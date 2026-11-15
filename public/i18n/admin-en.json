@@ -812,5 +812,9 @@
   "admin.hq.hiddenTag": "hidden from the phone",
   "admin.hq.show": "Show on the phone",
   "admin.hq.hide": "Hide from the phone",
-  "admin.hq.empty": "No published answer that both people agreed to show yet. The phone plays the example video, marked \"Example\"."
+  "admin.hq.empty": "No published answer that both people agreed to show yet. The phone plays the example video, marked \"Example\".",
+  "admin.email.confirmed": "Email confirmed",
+  "admin.email.unconfirmed": "Email not confirmed yet",
+  "admin.email.noApprove": "Can’t be approved until the mentor enters the code.",
+  "admin.filter.email_unconfirmed": "Email not confirmed"
 }

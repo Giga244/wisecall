@@ -133,9 +133,9 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   const isMentor = next.role === 'mentor' || next.role === 'both';
   const changedApplication = APPLICATION_FIELDS.filter((f) => patch[f] !== undefined && patch[f] !== existing[f]);
 
-  // Saving mentor details needs a verified email, and the application cannot change while it is reviewed or approved.
+  // Saving mentor details does not wait for the email code (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md: a slow company mail server must never block
+  // anyone; the email is checked before approval), but the application cannot change while it is reviewed or approved.
   if (changedApplication.length && isMentor) {
-    if (!existing.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
     if (experience.isLocked(existing)) return res.status(409).json({ error: 'application_locked' });
   }
 
@@ -396,6 +396,77 @@ router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   // A first password is a security notice: the owner is told, with the device (an account made with Google never had one).
   if (!hasPassword) require('../notify').notifyPasswordSet(user, { device: auth.deviceLabel(req.get('user-agent')), at: new Date() });
   res.json({ ok: true });
+}));
+
+// Settings -> Account: change the account's confirmed email (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md 3). The password first (or, for an account
+// made with Google, a recent sign-in), then a code goes to the new address; only when it is entered does the address change, and the old
+// address gets a short notice. Until then the old address stays the account's (users.pending_email waits). The code rules are the ones of
+// every email code (server/emailCodes.js): 24 hours, the last 3, five wrong in a row then a short wait, resend once a minute.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailCodes = require('../emailCodes');
+async function sendChangeCode(user, to, code) {
+  if (!config.EMAIL_ENABLED) return false;
+  try { await require('../mail').sendTemplate('verify', { to, lang: user.language, data: { code }, quick: true }); return true; } catch (e) { console.error('[email] change code send failed:', e.message); return false; }
+}
+const devCode = (sent, code) => ({ emailSent: sent, devMode: !sent && !config.IS_PROD, devVerifyCode: (sent || config.IS_PROD) ? undefined : code });
+router.post('/email', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  if (!user.emailVerified) return res.status(400).json({ error: 'email_not_verified' }); // (not confirmed yet: "Use another email" on the code box)
+  const email = typeof (req.body || {}).email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
+  if (email === String(user.email).toLowerCase()) return res.status(400).json({ error: 'same_email' });
+  if (user.passwordHash) {
+    const password = (req.body || {}).password;
+    if (typeof password !== 'string' || !password) return res.status(400).json({ error: 'missing_fields' });
+    if (tooManyWrong(res, user.id)) return;
+    if (!(await bcrypt.compare(password, user.passwordHash))) { reauthGuard.fail(user.id); return res.status(400).json({ error: 'wrong_password' }); }
+    reauthGuard.succeed(user.id);
+  } else if (!(await auth.signedInRecently(user.id, req.userToken.sid, config.REAUTH_MINUTES))) {
+    return res.status(403).json({ error: 'reauth_required', minutes: config.REAUTH_MINUTES });
+  }
+  if (await require('../models').getUserByEmail(email)) return res.status(409).json({ error: 'email_taken' });
+  const wait = await emailCodes.resendWait(user.id, 'change');
+  if (wait) { res.set('Retry-After', String(wait)); return res.status(429).json({ error: 'resend_wait', retryAfter: wait }); }
+  if (user.pendingEmail !== email) await emailCodes.clear(user.id, 'change'); // (a different new address: the codes for the last one go)
+  await updateUser(user.id, { pendingEmail: email });
+  const code = await emailCodes.issue(user.id, email, { purpose: 'change', reason: 'change' });
+  res.json({ pendingEmail: email, ...devCode(await sendChangeCode(user, email, code), code) });
+}));
+router.post('/email/confirm', requireAuth, asyncHandler(async (req, res) => {
+  const user = await getUserById(req.userToken.id);
+  if (!user) return res.status(404).json({ error: 'not_found' });
+  const code = (req.body || {}).code;
+  if (typeof code !== 'string' || !code.trim()) return res.status(400).json({ error: 'missing_fields' });
+  if (!user.pendingEmail) return res.status(400).json({ error: 'no_pending_code' });
+  const turn = await emailCodes.takeTry(user.id);
+  if (turn.wait) { res.set('Retry-After', String(turn.wait)); return res.status(400).json({ error: 'too_many_attempts', retryAfter: turn.wait }); }
+  // (the code sent for this move, or one that went to this address when the account was signed up with it: it may arrive hours late)
+  const result = await emailCodes.check(user, user.pendingEmail, code, ['change', 'verify']);
+  if (result === 'none') return res.status(400).json({ error: 'no_pending_code' });
+  if (result === 'expired') return res.status(400).json({ error: 'expired' });
+  if (result !== 'ok') {
+    const left = await emailCodes.wrong(user.id, turn.used);
+    return res.status(400).json({ error: left ? 'invalid_code' : 'too_many_attempts', attemptsLeft: left });
+  }
+  const oldUser = { ...user };
+  try {
+    await updateUser(user.id, { email: user.pendingEmail, pendingEmail: null });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
+    throw err;
+  }
+  await emailCodes.clear(user.id, 'change');
+  await emailCodes.clear(user.id, 'verify');
+  await query('UPDATE users SET email_status = NULL, email_status_at = NULL WHERE id = $1', [user.id]);
+  // (the short notice goes to the old address: if somebody else did this, the owner hears of it there)
+  require('../notify').notifyEmailChanged(oldUser, user.pendingEmail);
+  res.json({ user: meProfile(await getUserById(user.id)) });
+}));
+router.delete('/email/pending', requireAuth, asyncHandler(async (req, res) => {
+  await updateUser(req.userToken.id, { pendingEmail: null });
+  await emailCodes.clear(req.userToken.id, 'change');
+  res.json({ user: meProfile(await getUserById(req.userToken.id)) });
 }));
 
 // Settings -> Account: download my data (JSON) and delete my account (re-authentication, then a grace period; see server/account.js).

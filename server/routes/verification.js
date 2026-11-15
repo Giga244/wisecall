@@ -69,7 +69,7 @@ router.post('/kyc/start', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
   if (!isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
-  if (!user.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
+  // (the email code may still be on its way: the ID check does not wait for it, docs/CLAUDE-CODE-EMAIL-CODE-FIX.md; approval does)
   try {
     const out = await kycService.startForMentor(user);
     require('../analytics').event('id_check_started', req);
@@ -142,7 +142,6 @@ const submit = (handler) => [requireAuth, asyncHandler(async (req, res) => {
 
 // Step 2: the Experience form (saved as a draft), the evidence list, then "Submit for review".
 router.put('/experience', ...submit(async (user, b) => {
-  if (!user.emailVerified) throw new steps.VerificationError('email_not_verified');
   return { user: meProfile(await experience.saveExperience(user, b)) };
 }));
 router.post('/evidence', ...submit(async (user, b) => {

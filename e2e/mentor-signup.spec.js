@@ -2,7 +2,8 @@
 // Georgian, goes from the home page to "become a mentor", the mentor's sign-up, the email code, the five steps of /apply.html and
 // "Submit", and never needs the Settings tabs. The application is then in the admin's review queue with no "Profile incomplete" label.
 // The clicks from the home page to a finished account are counted (4: the hero button, "Start my application", "Create account",
-// "Confirm"). The invite link (/mentor) leads to the same sign-up and is counted as "invite".
+// "Confirm" on the email code box). The email code does not come first (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md): the sign-up goes straight to
+// step 1 and the code box waits on step 5, before sending. The invite link (/mentor) leads to the same sign-up and is counted as "invite".
 //
 // E2E_MENTOR_SHOTS=<folder> also walks the path at 360px and 1280px, light and dark, in Georgian, and saves a picture of every step there
 // (docs/quality-screens/mentor-signup/).
@@ -53,12 +54,7 @@ async function walk(page, { width, shots, tag }) {
   await page.check('#adult');
   await shot('03-signup');
   await click(page.locator('#signupForm button[type="submit"]'));
-  await page.waitForURL(/verify-email\.html.*as=mentor/);
-  await shot('04-email-code');
-  const mail = await S.waitForMail(email);
-  await page.fill('#code', S.codeIn(mail));
-  await click(page.locator('#verifyForm button[type="submit"]'));
-  // Straight into the application, step 1: the account is a mentor applicant now.
+  // Straight into the application, step 1, with no code to wait for: the account is a mentor applicant now.
   await page.waitForURL(/\/apply\.html\?step=1$/);
   await expect.poll(async () => (await S.sql('SELECT role FROM users WHERE email = $1', [email]))[0].role).toBe('mentor');
 
@@ -102,8 +98,17 @@ async function walk(page, { width, shots, tag }) {
   const [ev] = await S.sql('SELECT e.kind FROM mentor_evidence e JOIN users u ON u.id = e.user_id WHERE u.email = $1', [email]);
   expect(ev.kind).toBe('linkedin');
 
-  // 5. Everything else is done: "One step left: confirm your identity", and no "send" before it (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md).
-  //    Once the (fake) ID check has passed, the application is sent by itself.
+  // 5. The email code box first (the code was sent at sign-up and nothing waited for it); then everything else is done: "One step left:
+  //    confirm your identity", and no "send" before it (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md). Once the (fake) ID check has passed, the
+  //    application is sent by itself.
+  await expect(page.locator('.apply-email .email-code-lead')).toHaveText(`შეიყვანე კოდი, რომელიც ${email}-ზე გამოგიგზავნეთ`);
+  await expect(page.locator('.apply-email')).toContainText('კოდი 24 საათის განმავლობაში მოქმედებს.');
+  await expect(page.locator('.apply-email')).toContainText('კოდი არ მოვიდა? შეამოწმე Junk / Spam საქაღალდე.');
+  await expect(page.locator('.apply-checklist .is-missing')).toHaveCount(1); // (the email)
+  await shot('09a-step5-email-code');
+  await page.fill('.apply-email .email-code-input', S.codeIn(await S.waitForMail(email)));
+  await click(page.locator('.apply-email .email-code-form button[type="submit"]'));
+  await expect(page.locator('.apply-email')).toHaveCount(0);
   await expect(page.locator('.apply-checklist .is-missing')).toHaveCount(0);
   await expect(page.locator('.id-card h1')).toHaveText('დარჩა ერთი ნაბიჯი: პირადობის დადასტურება');
   await shot('09-step5-submit');
@@ -167,10 +172,7 @@ test('the invite link /ka/mentor leads to the same sign-up, and the account says
   await page.fill('#password', S.PASSWORD);
   await page.check('#adult');
   await page.click('#signupForm button[type="submit"]');
-  await page.waitForURL(/verify-email\.html/);
-  await page.fill('#code', S.codeIn(await S.waitForMail(email)));
-  await page.click('#verifyForm button[type="submit"]');
-  await page.waitForURL(/\/apply\.html\?step=1$/);
+  await page.waitForURL(/\/apply\.html\?step=1$/); // (no code first: docs/CLAUDE-CODE-EMAIL-CODE-FIX.md)
   const [u] = await S.sql('SELECT signup_source, role FROM users WHERE email = $1', [email]);
   expect(u.signup_source.source).toBe('invite');
   expect(u.role).toBe('mentor');

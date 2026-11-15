@@ -132,7 +132,7 @@ test('the dashboard: two question cards as skeletons, then the questions in thei
   const mine = await hold(page, '**/api/bookings/mine');
   await page.goto('/dashboard.html');
   await mine.fail();
-  await expect(page.locator('#askedList')).toHaveText('Something went wrong.');
+  await expect(page.locator('#askedList')).toHaveText(/^Something went wrong. Try again, or write to us: /);
   await ctx.close();
 });
 
@@ -159,13 +159,13 @@ test('the inbox: conversations and a conversation\'s messages as skeletons (one 
     await thread.arrived;
     await expectLoading(page, '#threadView', '.skeleton-bubble', 2);
     await thread.fail();
-    await expect(page.locator('#threadView')).toHaveText('Something went wrong.');
+    await expect(page.locator('#threadView')).toHaveText(/^Something went wrong. Try again, or write to us: /);
   }
   await page.unroute('**/api/inbox');
   const failing = await hold(page, '**/api/inbox');
   await page.goto('/inbox.html');
   await failing.fail();
-  await expect(page.locator('#threadList')).toHaveText('Something went wrong.');
+  await expect(page.locator('#threadList')).toHaveText(/^Something went wrong. Try again, or write to us: /);
   await ctx.close();
 });
 

@@ -227,7 +227,7 @@ function storyToBio(user, patch) {
   return patch;
 }
 function bioToStory(user, patch) {
-  if (patch.bio === undefined || !patch.bio || isLocked(user) || !user.emailVerified) return patch;
+  if (patch.bio === undefined || !patch.bio || isLocked(user)) return patch;
   if ([...patch.bio].length <= LIMITS.storyMax && inStep(user.story, user.bio)) patch.story = patch.bio;
   return patch;
 }
@@ -368,7 +368,8 @@ async function removeEvidence(user, id) {
 // for it.
 function missingFor(user, evidence, stepMap) {
   const missing = [];
-  if (!user.emailVerified) missing.push('email');
+  // (not the email: an application can be sent while its code is still on the way; it cannot be approved until the email is confirmed,
+  // the 'email' identity step, docs/CLAUDE-CODE-EMAIL-CODE-FIX.md)
   if (!user.headline || !String(user.headline).trim()) missing.push('headline');
   if (user.yearsExperience === null || user.yearsExperience === undefined) missing.push('years');
   if (!user.customNiche) missing.push('field');

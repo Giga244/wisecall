@@ -1,5 +1,5 @@
 const express = require('express');
-const codeAttempts = require('../codeAttempts');
+const emailCodes = require('../emailCodes');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { clearAuthCookie, requireAuth, startSession, endSession, endAllSessions, tokenFrom } = require('../auth');
@@ -65,7 +65,6 @@ router.post('/signup', asyncHandler(async (req, res) => {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  const verifyCode = String(crypto.randomInt(100000, 1000000));
 
   let user;
   try {
@@ -74,9 +73,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
       email: normalizedEmail,
       passwordHash: await bcrypt.hash(password, 10),
       color: randomColor(),
-      language: language === 'ka' ? 'ka' : 'en',
-      emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10),
-      emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000)
+      language: language === 'ka' ? 'ka' : 'en'
     });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
@@ -91,6 +88,7 @@ router.post('/signup', asyncHandler(async (req, res) => {
     await usernames.assignNew(user.id, user.name, null); // somebody took it a moment ago: use one made from their name
   }
   user = await getUserById(user.id);
+  const verifyCode = await emailCodes.issue(user.id, normalizedEmail, { reason: 'signup' });
 
   // (not sent: the dev-mode fallback below, local development only)
   const emailSent = await sendCode(user, normalizedEmail, verifyCode);
@@ -244,6 +242,8 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// The email code (server/emailCodes.js): any of the last 3 codes sent to the address in use works for 24 hours, so a company mail server
+// that holds the mail for hours never makes the code useless. Five wrong codes in a row: a short wait (too_many_attempts, retryAfter).
 router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
   const { code } = req.body || {};
   if (!isStr(code) || !code) return res.status(400).json({ error: 'missing_fields' });
@@ -251,61 +251,65 @@ router.post('/verify-email', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
   if (user.emailVerified) return res.json({ user: meProfile(user) });
-  if (!user.emailVerifyCodeHash || !user.emailVerifyCodeExpiresAt) return res.status(400).json({ error: 'no_pending_code' });
-  if (new Date(user.emailVerifyCodeExpiresAt).getTime() < Date.now()) return res.status(400).json({ error: 'expired' });
-  // At most 5 tries per code for this account, whatever the IP address (docs/AUDIT.md #2); then a new code must be asked for.
-  const used = await codeAttempts.takeTry(user.id, 'email');
-  if (used === null) return res.status(400).json({ error: 'too_many_attempts' });
-  if (!(await bcrypt.compare(code.trim(), user.emailVerifyCodeHash))) {
-    const left = await codeAttempts.wrongCode(user.id, 'email', used);
-    return res.status(400).json({ error: left ? 'invalid_code' : 'too_many_attempts', attemptsLeft: left });
+  const turn = await emailCodes.takeTry(user.id);
+  if (turn.wait) { res.set('Retry-After', String(turn.wait)); return res.status(400).json({ error: 'too_many_attempts', retryAfter: turn.wait }); }
+  const result = await emailCodes.check(user, user.email, code);
+  if (result === 'none') return res.status(400).json({ error: 'no_pending_code' });
+  if (result === 'expired') return res.status(400).json({ error: 'expired' });
+  if (result !== 'ok') {
+    const left = await emailCodes.wrong(user.id, turn.used);
+    return res.status(400).json({ error: left ? 'invalid_code' : 'too_many_attempts', attemptsLeft: left, ...(left ? {} : { retryAfter: emailCodes.LOCK_MINUTES * 60 }) });
   }
 
-  const updated = await updateUser(user.id, { emailVerified: true, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null, emailCodeAttempts: 0 });
-  if (updated.role === 'mentor' || updated.role === 'both') await verification.syncEmailStep(updated);
+  const updated = await updateUser(user.id, { emailVerified: true });
+  await emailCodes.clear(user.id, 'verify', user.email); // (codes that went to an address used before stay: a move back to it in Settings)
+  if (updated.role === 'mentor' || updated.role === 'both') {
+    await verification.syncEmailStep(updated);
+    // (an application sent before the code was entered: it is decided again now that the email is confirmed)
+    require('../verification/analysis').afterIdentityChange(updated.id);
+  }
   require('../notify').notifyWelcome(updated); // (once: an address already verified returned above)
   require('../analytics').event('email_verified', req);
-  res.json({ user: meProfile(updated) });
+  res.json({ user: meProfile(await getUserById(user.id)) });
 }));
 
+// "Resend code": at most once a minute per account (resend_wait, retryAfter); the codes sent before it keep working.
 router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
   if (user.emailVerified) return res.status(400).json({ error: 'already_verified' });
+  const wait = await emailCodes.resendWait(user.id);
+  if (wait) { res.set('Retry-After', String(wait)); return res.status(429).json({ error: 'resend_wait', retryAfter: wait }); }
 
-  const verifyCode = String(crypto.randomInt(100000, 1000000));
-  await updateUser(user.id, {
-    emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10),
-    emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
-    emailCodeAttempts: 0
-  });
-
+  const verifyCode = await emailCodes.issue(user.id, user.email, { reason: 'resend' });
   const emailSent = await sendCode(user, user.email, verifyCode);
   res.json({ ok: true, emailSent, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
 }));
 
-// A typo in the address (the code went nowhere): while the email is not confirmed yet, the person can correct it on the code screen, and
-// a new code goes to the new address. Signed in, rate limited, refused when the address belongs to another account.
+// "Use another email" (a typo, or a company address whose mail does not come): while the email is not confirmed yet, the person can
+// change it on the code box and a new code goes to the new address; everything already filled in stays (it belongs to the account, not to
+// the address). Signed in, rate limited, refused when the address belongs to another account. Codes sent to the old address stop counting.
 router.post('/change-unconfirmed-email', requireAuth, asyncHandler(async (req, res) => {
   const email = isStr((req.body || {}).email) ? req.body.email.trim().toLowerCase() : '';
   if (!EMAIL_RE.test(email) || email.length > 254) return res.status(400).json({ error: 'invalid_email' });
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
-  if (user.emailVerified) return res.status(400).json({ error: 'already_verified' });
+  // (already confirmed: the move is in Settings, with the password: the code page says so; docs/CLAUDE-CODE-UNKNOWN-ERROR.md)
+  if (user.emailVerified) return res.status(400).json({ error: 'already_verified', email: user.email });
   if (email === String(user.email).toLowerCase()) return res.status(400).json({ error: 'same_email' });
   const other = await getUserByEmail(email);
   if (other && other.id !== user.id) return res.status(409).json({ error: 'email_taken' });
-  const verifyCode = String(crypto.randomInt(100000, 1000000));
-  let updated;
   try {
-    updated = await updateUser(user.id, { email, emailVerifyCodeHash: await bcrypt.hash(verifyCode, 10), emailVerifyCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000), emailCodeAttempts: 0 });
+    await updateUser(user.id, { email, emailVerifyCodeHash: null, emailVerifyCodeExpiresAt: null });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'email_taken' });
     throw err;
   }
   await query('UPDATE users SET email_status = NULL, email_status_at = NULL WHERE id = $1', [user.id]);
+  const verifyCode = await emailCodes.issue(user.id, email, { reason: 'switch' });
+  const updated = await getUserById(user.id);
   const emailSent = await sendCode(updated, email, verifyCode);
-  res.json({ user: meProfile(updated), emailSent, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
+  res.json({ user: meProfile(await getUserById(user.id)), emailSent, devMode: !emailSent && !config.IS_PROD, devVerifyCode: (emailSent || config.IS_PROD) ? undefined : verifyCode });
 }));
 
 function randomColor() {

@@ -164,6 +164,7 @@
   SettingsProfile.init(user);
   if (window.WisecallProfileSections) WisecallProfileSections.init(user);
   SettingsAccounts.init();
+  SettingsEmail.init(user);
   loadPayout();
   updateTabVisibility();
   selectTab(new URLSearchParams(window.location.search).get('tab') || 'profile', { push: false });

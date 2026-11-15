@@ -20,17 +20,8 @@
   if (!user) { window.location.href = (WisecallI18n.getLang() === 'ka' ? '/ka' : '') + '/signup.html?as=mentor'; return; }
   const config = await WisecallI18n.getConfig();
 
-  // ---- Not ready yet: the email first ---------------------------------------------------------------------------------------------
-  if (!user.emailVerified) {
-    head.hidden = true;
-    root.innerHTML = `
-      <div class="apply-step">
-        <h1 tabindex="-1">${esc(t('apply.email.title'))}</h1>
-        <p class="apply-lead">${esc(t('apply.email.body'))}</p>
-        <p><a class="btn btn-primary btn-lg btn-arrow" href="/verify-email.html?redirect=%2Fapply.html&amp;as=mentor">${esc(t('apply.email.cta'))}</a></p>
-      </div>`;
-    return;
-  }
+  // (the email code does not come first any more: docs/CLAUDE-CODE-EMAIL-CODE-FIX.md. A company mail server can hold the code for hours, so
+  // the 5 steps start at once and the code box waits on step 5, before sending, and on the "sent" screen; see emailBox below.)
   // Somebody who came straight here (an invite, the dashboard, Google) becomes a mentor applicant now: the same as "Become a mentor".
   // (under 18 the server refuses: being a mentor is from 18)
   const notYet = () => { head.hidden = true; root.innerHTML = `<div class="apply-step"><p class="apply-lead" role="status">${esc(t('auth.mentor18'))}</p></div>`; };
@@ -456,7 +447,7 @@
   // The checklist: one line per thing a reviewer needs, done or not, with the step to go back to.
   function checklist() {
     const rows = [
-      ['email', !has('email'), null],
+      ['email', Boolean(user.emailVerified), null],
       ['about', stepDone(0), 0],
       ['story', stepDone(1), 1],
       ['price', stepDone(2), 2],
@@ -625,11 +616,23 @@
   }
 
   // ---- Drawing and wiring -------------------------------------------------------------------------------------------------------------
+  // The email code box while the email is not confirmed (public/js/email-code.js): on step 5 above "send" (sending does not wait for it:
+  // the application is then "Email not confirmed yet", and it cannot be approved until the code is entered) and on the "sent" screen.
+  // Outside the step's form (it has forms of its own).
+  function emailBox(sent) {
+    if (user.emailVerified) return;
+    root.insertAdjacentHTML('afterbegin', `<div class="apply-email${sent ? ' is-sent' : ''}">${WisecallEmailCode.html(user, { title: sent ? 'email.code.title' : 'apply.email.boxTitle', note: sent ? 'dash.email.body' : 'apply.email.sendAnyway' })}</div>`);
+    WisecallEmailCode.wire(root.querySelector('.apply-email'), user, {
+      onVerified: async (u) => { user = u; await load(); render(); },
+      onSwitched: (u) => { user = u; }
+    });
+  }
   function render() {
     drawIdTop();
     if (v.application.locked) {
       head.hidden = true;
       root.innerHTML = doneScreen();
+      emailBox(true);
       WisecallIdCard.wire(root);
       wireCommon();
       wireLicence(root);
@@ -638,6 +641,7 @@
     }
     drawHead();
     root.innerHTML = [aboutStep, storyStep, priceStep, proofStep, submitStep][current]();
+    if (current === 4) emailBox(false);
     WisecallIdCard.wire(root);
     const h1 = root.querySelector('form.apply-step h1');
     if (h1 && flagged(current)) h1.insertAdjacentHTML('afterend', `<p class="apply-gap" role="status"><span aria-hidden="true">!</span> ${esc(gapLine(current))}</p>`);

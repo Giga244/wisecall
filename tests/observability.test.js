@@ -69,6 +69,7 @@ describe('error monitoring', () => {
     const r = await admin.api('/admin/dev/crash', { method: 'POST' });
     assert.equal(r.status, 500);
     assert.equal(r.error, 'server_error', 'the visitor gets no details');
+    assert.match(r.ref, /^[0-9A-F]{6}$/, 'a short reference to quote to support (docs/CLAUDE-CODE-UNKNOWN-ERROR.md)');
     const env = await until(() => seen.sentry[0]);
     assert.ok(env);
     assert.match(env.headers['x-sentry-auth'], /sentry_key=testkey/);

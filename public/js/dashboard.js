@@ -543,6 +543,23 @@
   }
   drawMentorCard();
   placeMentorCard();
+
+  // Email not confirmed yet (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md): a banner with the code box and "Resend the code", in place of the bar
+  // that sends people to another page. A mentor's application waits for it before it can be approved, which the banner says.
+  function drawEmailBanner() {
+    const box = document.getElementById('emailCodeBanner');
+    if (!box || !window.WisecallEmailCode) return;
+    if (user.emailVerified) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.className = 'dash-email-banner';
+    box.innerHTML = WisecallEmailCode.html(user, { title: 'email.code.title', note: isMentor ? 'dash.email.body' : 'dash.email.bodyAsker' });
+    WisecallEmailCode.wire(box, user, {
+      onVerified: (u) => { Object.assign(user, u); drawEmailBanner(); document.querySelectorAll('.verify-banner:not(.deletion-banner)').forEach((b) => b.remove()); },
+      onSwitched: (u) => { Object.assign(user, u); }
+    });
+  }
+  drawEmailBanner();
+  document.addEventListener('wisecall:lang-changed', drawEmailBanner);
   document.addEventListener('wisecall:lang-changed', () => { drawMentorCard(); placeMentorCard(); });
 
   // The price, on the mentor's first screen: the switch and Save (docs/CLAUDE-CODE-MENTOR-EDIT.md), and the way to "My details".
