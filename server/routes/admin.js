@@ -160,6 +160,8 @@ router.get('/overview', requireAuth, requireAdmin, asyncHandler(async (req, res)
   res.json({
     currency: config.CURRENCY,
     feePercent: config.PLATFORM_FEE_PERCENT,
+    // ("Find your mentor": counts only, never what a student wrote; docs/CLAUDE-CODE-MENTOR-MATCH.md 6)
+    matching: await require('../matching').stats(),
     signups: users.rows[0],
     applications: { byStatus: byKey(apps.rows, 'status'), waitingByRisk: byKey(risks.rows, 'risk'), openFlags: flags.rows[0].n },
     waitlist: { byNiche: byKey(waiting.rows, 'niche'), total: waiting.rows.reduce((s, r) => s + r.n, 0) },

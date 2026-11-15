@@ -84,6 +84,16 @@
         </div>
       </div>
     </div>
+    <!-- "Find your mentor" (docs/CLAUDE-CODE-MENTOR-MATCH.md): for somebody who does not know whom to choose. In the page from the first
+         paint, so the list below never moves. -->
+    <aside class="browse-match" aria-labelledby="browseMatchTitle">
+      <img class="browse-match-jikhva" src="/brand/jikhva-wave.webp" alt="" width="98" height="190" decoding="async">
+      <div class="browse-match-text">
+        <h2 id="browseMatchTitle" data-i18n="browse.match.title">Not sure who to choose?</h2>
+        <p data-i18n="browse.match.body">Tell us about yourself and we'll pick mentors who started like you.</p>
+      </div>
+      <a class="btn btn-primary browse-match-btn" id="browseMatchLink" href="/match" data-i18n="browse.match.cta">Help me choose →</a>
+    </aside>
     <p class="browse-note small muted" data-i18n="browse.note">Already have a rough idea of your field? Find an expert in it and ask.</p>
     <!-- (what the words name, while a student types; then the fields, or the chips of the chosen one: they scroll sideways on a phone) -->
     <div class="field-chips" id="searchChips" role="group" hidden></div>
@@ -160,7 +170,7 @@
         <span class="skeleton skeleton-btn"></span>
       </div>
     </div>
-    <p class="rq-cta"><a href="/find-a-mentor.html" data-i18n="rq.cta">Can't find the right person? Tell us who you need.</a></p>
+    <p class="rq-cta"><a href="/find-a-mentor.html?request=1" data-i18n="rq.cta">Can't find the right person? Tell us who you need.</a></p>
   </div>
 </section>
 

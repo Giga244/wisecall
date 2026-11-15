@@ -18,8 +18,11 @@
   let question = '';
   let questionField = null;
 
+  // (drawn, not an emoji: the emoji envelope is a white rectangle on the coral button)
+  const ICONS = { mail: '<svg class="waitlist-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7.5 8.5 6 8.5-6"/></svg>' };
+
   let counter = 0;
-  // opts.submit: another word for the button (an empty field: "notify me when a mentor appears").
+  // opts.submit: another word for the button (an empty field: "notify me when a mentor appears"). opts.icon: 'mail' draws an envelope after it.
   // opts.compact: the home page's hero before launch (docs/CLAUDE-CODE-NEW-HOME.md 4): the email and "ჩაეწერე სიაში" on one line; the field is
   // chosen with the hero's chips (a hidden field, "any field" until one is tapped), and the "16 or older" box under them.
   function html(niche, opts = {}) {
@@ -57,7 +60,7 @@
         </div>
         <div class="turnstile-slot"></div>
         <label class="checkbox-row waitlist-age" for="wl${n}-age"><input id="wl${n}-age" type="checkbox" name="over16" required> <span>${esc(t('wait.over16'))}</span></label>
-        <button class="btn btn-primary waitlist-submit" type="submit">${esc(opts.submit || t('wait.submit'))}</button>
+        <button class="btn btn-primary waitlist-submit" type="submit">${esc(opts.submit || t('wait.submit'))}${ICONS[opts.icon] || ''}</button>
         <p class="hint waitlist-hint">${t('wait.consent')} <a href="/privacy.html">${t('footer.privacy')}</a></p>
         <p class="form-error waitlist-error" role="alert"></p>
       </form>`;

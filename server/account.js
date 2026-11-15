@@ -88,6 +88,8 @@ async function exportData(user) {
     questionsAsked: asked, questionsAnswered: answered, ratingsGiven, ratingsReceived, messagesWritten: messages, notifications,
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
     waitingList: waitlist, connectedAccounts: identities, emailSettings: settings[0] || { email_off: [] }, publicAnswers, mentorRequests,
+    // ("Find your mentor": the answers given while signed in; the free text only for its 30 days)
+    mentorMatching: (await query('SELECT created_at, field_id, results, stage, start_tags, directions, worry FROM match_runs WHERE user_id = $1 ORDER BY created_at', [id])).rows,
     liveSessionsHosted: liveHosted, liveTickets, mentorsFollowed: following, liveRatingsGiven, discountCodes, liveWaitingLists: liveWaiting,
     liveSeriesBought: seriesBought, replayPasses, reportsAndQuestionsWritten: reportsWritten,
     profileSections: { items: (await require('./profileSections').itemsOf(id)).map((i) => ({ section: i.section, ...i.data, verified: Boolean(i.verified_at), createdAt: i.created_at })),
@@ -165,7 +167,7 @@ async function anonymize(userId) {
               work_email_code_expires_at = NULL, verification_note = NULL, suspension_reason = NULL, university = NULL, direction_other = NULL, birth_ym = NULL, age_group = NULL, age_confirmed_at = NULL, parent_permission_at = NULL, deleted_at = now()
         WHERE id = $1`, [userId, `deleted-${userId}@deleted.invalid`]);
     for (const sql of [
-      'DELETE FROM email_codes WHERE user_id = $1', 'DELETE FROM user_photos WHERE user_id = $1', 'DELETE FROM contact_blocks WHERE user_id = $1', 'DELETE FROM user_identities WHERE user_id = $1', 'DELETE FROM username_history WHERE user_id = $1',
+      'DELETE FROM email_codes WHERE user_id = $1', 'DELETE FROM match_runs WHERE user_id = $1', 'DELETE FROM user_photos WHERE user_id = $1', 'DELETE FROM contact_blocks WHERE user_id = $1', 'DELETE FROM user_identities WHERE user_id = $1', 'DELETE FROM username_history WHERE user_id = $1',
       'DELETE FROM verification_documents WHERE user_id = $1', 'DELETE FROM mentor_credentials WHERE user_id = $1', 'DELETE FROM mentor_evidence WHERE user_id = $1',
       'DELETE FROM verification_reviews WHERE user_id = $1', 'DELETE FROM account_signals WHERE user_id = $1', 'DELETE FROM notifications WHERE user_id = $1',
       'DELETE FROM notification_settings WHERE user_id = $1', 'DELETE FROM admin_two_factor WHERE user_id = $1', 'DELETE FROM sessions WHERE user_id = $1',

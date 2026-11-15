@@ -1,6 +1,12 @@
 // "Find me a mentor": the request form. A visitor who is signed in (with a confirmed email) sends it straight away; anybody else gets a
 // link by email to confirm it. ?field= fills in the field (from a search in Browse); ?confirmed= and ?removed= come from the email links.
 (async function () {
+  // This page is "Find your mentor" first (public/js/match.js); the request form is for its own links: ?request=1, ?field= (from a search
+  // in Browse that found nobody), ?niche=, and the confirm / remove links of its emails. Decided at once, before anything is waited for.
+  const requestMode = ['request', 'field', 'niche', 'confirmed', 'removed'].some((k) => new URLSearchParams(location.search).has(k));
+  document.getElementById('requestCard').hidden = !requestMode;
+  document.getElementById('matchApp').hidden = requestMode;
+  if (!requestMode) return;
   await WisecallI18n.initI18n();
   const user = await WisecallNav.initNav();
   const t = WisecallI18n.t;

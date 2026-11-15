@@ -147,6 +147,12 @@
     activeField = knownField(field) ? field : 'all';
     activeChip = chip && activeField !== 'all' ? chip : null;
     drawChips();
+    // ("Help me choose" starts from the field the student is looking at)
+    const matchLink = document.getElementById('browseMatchLink');
+    if (matchLink) {
+      const to = '/match' + (activeField !== 'all' && activeField !== 'other' ? `?f=${encodeURIComponent(activeField)}` : '');
+      matchLink.setAttribute('href', WisecallI18n.getLang() === 'ka' ? WisecallI18n.kaHref(to) : to);
+    }
     if (!opts || opts.push !== false) {
       const url = new URL(window.location.href);
       url.searchParams.delete('niche');

@@ -28,6 +28,13 @@
         card(t('admin.ov.app.verified'), n(a.verified)), card(t('admin.ov.app.rejected'), n(a.rejected)),
         card(t('admin.ov.app.suspended'), n(a.suspended)), card(t('admin.ov.flags'), n(d.applications.openFlags), d.applications.openFlags > 0)])
         + `<p class="muted small">${esc(t('admin.ov.risk'))}: ${['high', 'medium', 'low', 'none'].map((k) => `<span class="badge ${TONE[k]}">${esc(t('admin.ov.risk.' + k))}: ${n(r[k])}</span>`).join(' ')}</p>`),
+      // "Find your mentor": counts only (docs/CLAUDE-CODE-MENTOR-MATCH.md 6). Never what a student wrote.
+      section(t('admin.ov.matching'), d.matching && d.matching.total ? cards([
+        card(t('admin.ov.match.total'), n(d.matching.total)), card(t('admin.ov.match.month'), n(d.matching.month)),
+        ...Object.keys(d.matching.byResults).map((k) => card(t('admin.ov.match.r').replace('{n}', k), n(d.matching.byResults[k]), Number(k) < d.matching.top && d.matching.byResults[k] > 0))])
+        + `<h3 class="small">${esc(t('admin.ov.match.fields'))}</h3><ul class="earn-list ov-match-fields">${d.matching.fields.map((f) => `<li><span>${esc(t('admin.ov.match.row').replace('{field}', WisecallI18n.nameIn(WisecallI18n.fields().find((x) => x.id === f.fieldId)) || f.fieldId).replace('{runs}', n(f.runs)).replace('{mentors}', n(f.mentors)))}</span>${f.short ? `<span class="badge badge-pending_payment">${esc(t('admin.ov.match.need').replace('{short}', n(f.short)))}</span>` : ''}</li>`).join('')}</ul>
+        <p class="muted small">${esc(t('admin.ov.match.note'))}</p>`
+        : `<p class="muted">${esc(t('admin.ov.match.none'))}</p>`),
       section(t('admin.ov.waitlist'), `<p><strong>${esc(t('admin.wl.total').replace('{n}', n(d.waitlist.total)))}</strong></p>`
         + (wl.length ? `<p class="wl-counts">${wl.map(([k, v]) => `<span class="badge badge-paid">${esc(field(k))}: ${n(v)}</span>`).join(' ')}</p>` : '')),
       section(t('admin.ov.questions'), cards([

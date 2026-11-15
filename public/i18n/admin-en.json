@@ -820,5 +820,14 @@
   "admin.niches.notInList": "\"My field is not in the list\"",
   "admin.niches.notInList.hint": "What mentors typed when they could not find their field. Each of them chose the closest category meanwhile. It is only a suggestion for a new category or direction.",
   "admin.niches.notInList.chose": "chose: {field}",
-  "admin.ai.f.extras": "Added to the profile (starting point, \"I can help with\", links):"
+  "admin.ai.f.extras": "Added to the profile (starting point, \"I can help with\", links):",
+  "admin.ov.matching": "Matching (\"Find your mentor\")",
+  "admin.ov.match.total": "Matches made",
+  "admin.ov.match.month": "Last 30 days",
+  "admin.ov.match.r": "{n} mentors shown",
+  "admin.ov.match.fields": "Categories",
+  "admin.ov.match.row": "{field}: {runs} matches · {mentors} mentors",
+  "admin.ov.match.need": "needs more mentors: {short} matches found fewer than 3",
+  "admin.ov.match.none": "No matches yet.",
+  "admin.ov.match.note": "Counts only: what a student wrote is never shown here."
 }

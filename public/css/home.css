@@ -376,3 +376,16 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
   font-weight: 700; font-size: 0.82rem; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--ink-soft); }
 .sheet-body .filters select, .sheet-body .sort-select { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-btn); background-color: var(--card); color: var(--ink); font: inherit; font-size: 1rem; box-shadow: none; }
 .sheet-body .filter-chips .chip { min-height: 44px; }
+
+/* The experts page's "Not sure who to choose?" banner (docs/CLAUDE-CODE-MENTOR-MATCH.md): dark, with Jikhva, under the search. */
+.browse-match { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: center; margin: 16px 0 4px; padding: 16px 18px; border-radius: var(--r-card); background: var(--band); color: var(--on-band); overflow: hidden; }
+.browse-match-jikhva { grid-row: 1 / span 2; width: auto; height: 84px; align-self: end; margin-bottom: -16px; }
+.browse-match-text h2 { margin: 0; font-size: 1.05rem; line-height: 1.3; color: var(--on-band); }
+.browse-match-text p { margin: 2px 0 0; font-size: 0.9rem; line-height: 1.45; color: var(--on-band-soft); }
+.browse-match-btn { grid-column: 2; justify-self: start; min-height: 44px; margin-top: 6px; }
+@media (min-width: 760px) {
+  .browse-match { grid-template-columns: auto minmax(0, 1fr) auto; padding: 14px 22px; }
+  .browse-match-jikhva { grid-row: auto; height: 76px; margin-bottom: -14px; }
+  .browse-match-btn { grid-column: 3; margin-top: 0; }
+}
+.browse-match-btn { white-space: nowrap; padding-inline: 16px; font-size: 0.95rem; }

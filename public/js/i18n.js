@@ -50,10 +50,13 @@
   // A Georgian address (/ka/...) is always Georgian, and remembers it; otherwise the saved choice, then the browser's language.
   const KA_PATH = /^\/ka(\/|$)/;
   const onKaPath = () => KA_PATH.test(location.pathname);
+  // (/en/<page>: the same English page as <page>, always in English; server/pages.js languagePrefix)
+  const onEnPath = () => /^\/en(\/|$)/.test(location.pathname);
   // The page's address without the /ka prefix (what scripts compare against).
-  const path = () => location.pathname.replace(/^\/ka(?=\/|$)/, '') || '/';
+  const path = () => location.pathname.replace(/^\/(?:ka|en)(?=\/|$)/, '') || '/';
   function getLang() {
     if (onKaPath()) { try { localStorage.setItem(STORAGE_KEY, 'ka'); } catch (e) { /* storage unavailable */ } return 'ka'; }
+    if (onEnPath()) { try { localStorage.setItem(STORAGE_KEY, 'en'); } catch (e) { /* storage unavailable */ } return 'en'; }
     let saved = null;
     try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { /* storage unavailable */ }
     if (saved) return saved;

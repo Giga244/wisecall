@@ -171,6 +171,9 @@ async function ageGroups() {
 async function safetyHousekeeping() {
   const n = await require('./safety').purgeOld();
   if (n) console.log(`[jobs] deleted the text of ${n} old emergency check(s)`);
+  // "Find your mentor": what a signed-in student wrote about their worry is kept for 30 days, then emptied (server/matching.js).
+  const m = await require('./matching').purgeOld();
+  if (m) console.log(`[jobs] emptied the free text of ${m} old match(es)`);
 }
 
 async function verificationHousekeeping() {

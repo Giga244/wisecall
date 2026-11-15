@@ -1256,3 +1256,98 @@ details.profile-more[open] > summary::after { transform: rotate(225deg); margin-
 .story-opt .story-points textarea:first-of-type, .story-opt .story-links input:first-of-type { margin-top: 0; }
 textarea.story-grow { overflow: hidden; resize: none; min-height: 6.5em; }
 textarea.story-point.story-grow { min-height: 48px; line-height: 1.4; overflow-wrap: anywhere; }
+
+/* "Find your mentor" (docs/CLAUDE-CODE-MENTOR-MATCH.md, public/js/match.js): the form (one page on a computer, three steps on a phone),
+   the short "looking" state, the results. Calm: tokens only. */
+.match-page { padding: 28px 0 80px; }
+.match-wrap { max-width: 720px; }
+.match-card { background: var(--card); border: var(--line-w) solid var(--line); border-radius: var(--r-card-lg); padding: 28px; }
+.match-card h1, .match-banner h1 { margin: 0 0 6px; font-size: clamp(1.5rem, 1.6vw + 1rem, 2rem); line-height: 1.2; }
+.match-card h1:focus, .match-banner h1:focus { outline: none; }
+.match-lead { margin: 0 0 22px; color: var(--ink-soft); font-size: 1.02rem; line-height: 1.5; }
+.match-skeleton { display: flex; flex-wrap: wrap; gap: 10px; min-height: 320px; align-content: flex-start; }
+.match-skeleton > span:nth-child(1), .match-skeleton > span:nth-child(5) { flex-basis: 100%; } /* (the two "question" lines) */
+.match-progress { display: none; gap: 6px; margin: 0 0 18px; }
+.match-progress i { flex: 1 1 0; height: 6px; border-radius: 3px; background: var(--line); }
+.match-progress i.is-on { background: var(--accent); }
+.match-q { margin: 0 0 24px; }
+.match-q h2 { margin: 0 0 10px; font-size: 1.08rem; line-height: 1.35; }
+.match-q h2 label { font: inherit; }
+.match-q h3 { margin: 0 0 10px; font-size: 0.95rem; }
+.match-optional { color: var(--ink-soft); font-weight: 500; font-size: 0.9em; }
+.match-hint { margin: -4px 0 10px; }
+.match-sub { margin: 18px 0 0; padding: 16px 0 0; border-top: var(--chip-w) dashed var(--line); }
+.match-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.match-chip { min-height: 44px; }
+.match-chip[aria-pressed="true"], .match-chip[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.match-more { border-style: dashed; }
+.match-hits { margin: 0 0 10px; }
+.match-hit-field { font-weight: 400; opacity: 0.8; }
+.match-search { position: relative; margin: 0 0 12px; }
+.match-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); fill: none; stroke: var(--ink-soft); stroke-width: 2.2; stroke-linecap: round; pointer-events: none; }
+.match-search input { width: 100%; min-height: 48px; padding: 0 14px 0 42px; border: 1px solid var(--field-border); border-radius: var(--r-field); background: var(--card); color: var(--ink); font: inherit; font-size: 1rem; }
+.match-form textarea { display: block; width: 100%; min-height: 7em; padding: 14px 16px; border: 1px solid var(--field-border); border-radius: var(--r-field); background: var(--card); color: var(--ink); font: inherit; font-size: 1rem; line-height: 1.5; overflow: hidden; resize: none; }
+.match-count { margin: 6px 0 0; font-size: 0.85rem; color: var(--ink-soft); min-height: 1.2em; }
+.match-count.is-over { color: var(--red-strong); font-weight: 700; }
+.match-privacy { margin: 6px 0 0; font-size: 0.88rem; line-height: 1.5; color: var(--ink-soft); }
+.match-error { margin: 10px 0 0; }
+.match-error:empty { display: none; }
+.match-nav { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 0; }
+.match-nav .btn { flex: 1 1 auto; }
+.match-nav .match-back, .match-nav .match-next { display: none; }
+.match-free { margin: 12px 0 0; text-align: center; font-size: 0.88rem; color: var(--ink-soft); }
+@media (max-width: 699px) {
+  .match-page { padding-top: 16px; }
+  .match-card { padding: 20px 18px; }
+  .match-progress { display: flex; }
+  .match-step { display: none; }
+  .match-step.is-current { display: block; }
+  .match-nav .match-back:not([hidden]), .match-nav .match-next:not([hidden]) { display: inline-flex; }
+  .match-nav .match-submit[data-last-only] { display: none; }
+}
+
+.match-jikhva, .match-few-jikhva { display: block; margin: 0 auto 14px; border-radius: 50%; background: var(--tint) url('/brand/jikhva-present.webp') center 60% / auto 84% no-repeat; }
+.match-jikhva { width: 150px; height: 150px; }
+.match-searching { text-align: center; }
+.match-checks { list-style: none; margin: 0 auto; padding: 0; display: grid; gap: 8px; max-width: 26em; text-align: left; }
+.match-checks li { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: var(--line-w) solid var(--line); border-radius: var(--r-card); line-height: 1.45; }
+.match-checks svg { flex: 0 0 auto; margin-top: 4px; color: var(--accent2-text); }
+@media (prefers-reduced-motion: no-preference) { .match-jikhva { animation: match-bob 1.2s ease-in-out infinite alternate; } }
+@keyframes match-bob { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+
+.match-banner { display: flex; align-items: center; gap: 14px; padding: 16px 20px; margin: 0 0 16px; border-radius: var(--r-card); background: var(--band); color: var(--on-band); }
+.match-banner h1 { margin: 0; font-size: 1.15rem; line-height: 1.4; color: var(--on-band); }
+.match-banner-jikhva { flex: 0 0 auto; width: 58px; height: 74px; background: url('/brand/jikhva-wave.webp') center bottom / contain no-repeat; }
+.match-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.match-mentor { background: var(--card); border: var(--line-w) solid var(--line); border-radius: var(--r-card); padding: 18px; }
+.match-mentor-top { display: flex; align-items: flex-start; gap: 14px; }
+.match-mentor-top .avatar { width: 56px; height: 56px; flex: 0 0 auto; }
+.match-mentor-who { flex: 1 1 auto; min-width: 0; }
+.match-mentor-name { display: inline-flex; align-items: center; min-height: 28px; font-weight: 800; font-size: 1.08rem; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+.match-mentor-name:hover { text-decoration: underline; }
+.match-mentor-role { margin: 0 0 2px; color: var(--ink-soft); font-size: 0.95rem; overflow-wrap: anywhere; }
+.match-mentor .verified-mark { margin: 0; }
+.match-rank { flex: 0 0 auto; padding: 3px 10px; border-radius: var(--r-pill); background: var(--inverse); color: var(--on-inverse); font-size: 0.8rem; font-weight: 800; }
+.match-mentor:first-child .match-rank { background: var(--accent); color: var(--on-accent); }
+.match-why { margin: 14px 0 0; padding: 12px 14px; border-radius: 14px; background: var(--coral-tint); line-height: 1.55; overflow-wrap: anywhere; }
+.match-why strong { color: var(--accent-text); }
+.match-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+.match-mentor-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 14px 0 0; }
+.match-price { font-weight: 800; font-size: 1.1rem; }
+.match-price small { font-weight: 500; font-size: 0.8rem; color: var(--ink-soft); }
+.match-few { margin: 16px 0 0; padding: 22px 18px; border: var(--chip-w) dashed var(--line); border-radius: var(--r-card); text-align: center; }
+.match-few-jikhva { width: 84px; height: 84px; }
+.match-few h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.match-few > p { margin: 0 0 14px; color: var(--ink-soft); line-height: 1.5; }
+.match-notify { text-align: left; }
+.match-real { margin: 12px 0 0; }
+.match-all, .match-again { margin: 18px 0 0; text-align: center; color: var(--ink-soft); }
+.match-again { margin-top: 6px; }
+.match-page .match-request { margin: 0 auto; }
+@media (max-width: 479px) { .match-mentor-foot .btn { flex: 1 1 100%; } }
+.match-notify .waitlist-hint, .match-notify .waitlist-form { text-align: left; }
+.waitlist-submit .waitlist-icon { flex: none; }
+/* (before launch a card's "გამოწერა" opens the waiting list under it: the same form as on a mentor's page) */
+.match-wait { margin: 14px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); text-align: left; }
+.match-wait-note { margin: 0 0 12px; font-size: 0.92rem; line-height: 1.5; color: var(--ink-soft); }
+.match-wait .waitlist-hint, .match-wait .waitlist-form { text-align: left; }

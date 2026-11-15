@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Find me a mentor — Wisecall</title>
-<meta name="description" content="Tell us who you need, and we will email you once when a matching mentor joins Wisecall.">
-<link rel="canonical" href="{{PUBLIC_URL}}/find-a-mentor.html">
+<title>Find your mentor — Wisecall</title>
+<meta name="description" content="Answer a few questions and see the verified mentors who fit you best. Free.">
+<link rel="canonical" href="{{PUBLIC_URL}}/match">
 <meta property="og:site_name" content="Wisecall">
-<meta property="og:title" content="Find me a mentor — Wisecall">
-<meta property="og:description" content="Tell us who you need, and we will email you once when a matching mentor joins Wisecall.">
+<meta property="og:title" content="Find your mentor — Wisecall">
+<meta property="og:description" content="Answer a few questions and see the verified mentors who fit you best. Free.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="{{PUBLIC_URL}}/find-a-mentor.html">
+<meta property="og:url" content="{{PUBLIC_URL}}/match">
 <meta property="og:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Wisecall — Advice from people who've already done it.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Find me a mentor — Wisecall">
-<meta name="twitter:description" content="Tell us who you need, and we will email you once when a matching mentor joins Wisecall.">
+<meta name="twitter:title" content="Find your mentor — Wisecall">
+<meta name="twitter:description" content="Answer a few questions and see the verified mentors who fit you best. Free.">
 <meta name="twitter:image" content="{{PUBLIC_URL}}/og-image-1200x630.png">
 <meta name="twitter:image:alt" content="Wisecall — Advice from people who've already done it.">
 <link rel="preload" href="/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -28,8 +28,22 @@
 </head><body>
 
 <script src="/js/header.js"></script>
-<main class="auth-page" id="main">
-  <div class="auth-card contact-card">
+<!-- One page, two parts (docs/CLAUDE-CODE-MENTOR-MATCH.md):
+     1. "Find your mentor": a few questions, then the verified mentors who fit best, each with a true reason (public/js/match.js). This is
+        what /match, /ka/match and /en/match open.
+     2. "Tell us who you need": the request form this page always had, for when nobody fits (public/js/find-mentor.js). It opens for its
+        own links (?request=1, ?field=..., and the confirm / remove links in its emails). -->
+<main class="match-page" id="main">
+  <div class="container match-wrap" id="matchApp" aria-live="polite">
+    <!-- (the first paint: the heading as it will be, and the form's place, so nothing jumps when the script draws it) -->
+    <div class="match-card match-first">
+      <h1 data-i18n="match.title">Let's find your mentor</h1>
+      <p class="match-lead" data-i18n="match.lead">A few questions, and we show you the 3 mentors who know your path best.</p>
+      <div class="match-skeleton" aria-hidden="true"><span class="skeleton skeleton-line w60 strong"></span><span class="skeleton skeleton-pill lg"></span><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill lg"></span><span class="skeleton skeleton-line w40 strong"></span><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill lg"></span></div>
+      <p class="sr-only" role="status" data-i18n="experts.loading">Loading…</p>
+    </div>
+  </div>
+  <div class="auth-card contact-card match-request" id="requestCard" hidden>
     <h1 data-i18n="rq.title">Find me a mentor</h1>
     <p class="muted" data-i18n="rq.sub">Can't find the right person? Tell us who you need. We'll email you once, when a matching mentor joins.</p>
     <p class="contact-done" id="rqStatus" role="status" hidden></p>
@@ -64,6 +78,7 @@
       <button type="submit" class="btn btn-primary btn-block" data-i18n="rq.send">Send my request</button>
     </form>
     <p class="muted small"><a href="/requests" data-i18n="rq.boardLink">What people are looking for</a></p>
+    <p class="muted small"><a href="/match" data-i18n="match.fromRequest">Or answer a few questions and see who fits you →</a></p>
   </div>
 </main>
 
@@ -74,6 +89,8 @@
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
 <script src="/js/turnstile.js"></script>
+<script src="/js/waitlist.js"></script>
 <script src="/js/find-mentor.js"></script>
+<script src="/js/match.js"></script>
 </body>
 </html>

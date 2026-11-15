@@ -232,6 +232,8 @@ app.use('/api/categories', publicCache(), require('./routes/categories'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/answers', publicCache(), require('./routes/answers'));
 app.use('/api/requests', require('./routes/requests'));
+// "Find your mentor" (docs/CLAUDE-CODE-MENTOR-MATCH.md): free, no account needed, rules only.
+app.use('/api/match', rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }), require('./routes/match'));
 app.use('/api/live', publicCache(), require('./routes/live'));
 // A live session's cover picture (public once the session is).
 app.get(/^\/api\/live-covers\/([0-9a-f-]{36})\.webp$/, require('./auth').optionalAuth, async (req, res, next) => {

@@ -210,3 +210,17 @@
 
 /* ---- The header's own button on the home page: "ჩაეწერე" before launch ("იპოვე ექსპერტი" after), instead of "Sign up" ----------------- */
 body.home #navLoggedOut .btn-primary:not(.nav-cta) { display: none; }
+
+/* "Find your mentor" on the home page (docs/CLAUDE-CODE-MENTOR-MATCH.md): before launch one small row under the waiting list (the list
+   stays the only big button); after launch a card under the search. */
+.lhero-match { margin: 10px 0 0; font-size: 0.92rem; color: var(--ink-soft); text-align: left; }
+.lhero-match a { color: var(--accent-text); font-weight: 700; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; }
+.lhero-match a:hover { text-decoration: underline; }
+.lhero-match-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; align-items: center; margin: 14px 0 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--card); color: var(--ink); text-decoration: none; text-align: left; }
+.lhero-match-jikhva { grid-row: 1 / span 2; width: auto; height: 72px; }
+.lhero-match-text { display: grid; gap: 2px; font-size: 0.9rem; line-height: 1.45; color: var(--ink-soft); }
+.lhero-match-text strong { font-size: 1rem; color: var(--ink); }
+.lhero-match-btn { grid-column: 2; justify-self: start; min-height: 44px; }
+.lhero-match-wrap { margin-top: 18px; }
+.lhero-match-wrap .lhero-match-card { margin: 0; max-width: 560px; }
+@media (min-width: 900px) { .lhero-match-wrap .lhero-match-card { grid-template-columns: auto minmax(0, 1fr) auto; max-width: none; } .lhero-match-wrap .lhero-match-jikhva { grid-row: auto; height: 60px; } .lhero-match-wrap .lhero-match-btn { grid-column: 3; } }

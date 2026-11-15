@@ -54,6 +54,8 @@
       <!-- (the waiting list instead of the search: drawn by public/js/waitlist.js into its skeleton, the same height) -->
       <div class="lhero-wait" id="heroWait"><div class="lhero-wait-skeleton" aria-hidden="true"><span class="skeleton skeleton-input"></span><span class="skeleton skeleton-line w60"></span></div></div>
       <p class="lhero-count" id="waitCount" hidden></p>
+      <!-- ("Find your mentor": before launch only this small row; the waiting list stays the one big button) -->
+      <p class="lhero-match" id="heroMatchRow"><span data-i18n="home2.match.q">Not sure who to ask?</span> <a href="/match" data-i18n="home2.match.link">Find your mentor →</a></p>
       <!-- /before launch -->
     </div>
 
@@ -79,6 +81,18 @@
       </figure>
     </div>
   </div>
+
+  <!-- after launch -->
+  <div class="container lhero-match-wrap">
+    <!-- ("Find your mentor", docs/CLAUDE-CODE-MENTOR-MATCH.md: after launch a card under the hero, below the search and the example, so
+         neither is pushed down the page) -->
+    <a class="lhero-match-card" href="/match" id="heroMatchCard">
+      <img class="lhero-match-jikhva" src="/brand/jikhva-wave.webp" alt="" width="98" height="190" loading="lazy" decoding="async">
+      <span class="lhero-match-text"><strong data-i18n="home2.match.q">Not sure who to ask?</strong><span data-i18n="home2.match.body">Answer 4 questions and we find 3 mentors who started like you.</span></span>
+      <span class="btn btn-outline lhero-match-btn" data-i18n="home2.match.cta">Find your mentor · free</span>
+    </a>
+  </div>
+  <!-- /after launch -->
 
   <!-- 4. The popular fields: choosing one shows that field's example in the card (and is the field of the waiting list) -->
   <div class="container lhero-fields">

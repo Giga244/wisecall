@@ -439,13 +439,15 @@ const CATEGORY_COLUMNS = 'field_id, extra_fields, directions';
 function forClient(counts = { fields: {}, chips: {} }) {
   return {
     fields: [...FIELD.values()].map((f) => ({
-      id: f.id, icon: f.icon, ka: f.ka, en: f.en, count: counts.fields[f.id] || 0, regulated: require('./niches').isRegulated(f.niche),
+      id: f.id, icon: f.icon, ka: f.ka, en: f.en, niche: f.niche, count: counts.fields[f.id] || 0, regulated: require('./niches').isRegulated(f.niche),
       chips: f.chips.map((x) => ({ id: x.id, ka: x.ka, en: x.en, niche: x.niche, count: counts.chips[x.id] || 0, ...(x.other ? { other: true } : {}), ...(x.moved ? { moved: x.moved } : {}) }))
     })),
     countries: COUNTRIES.map(({ id, ka, en }) => ({ id, ka, en })),
     years: YEARS.map(({ id, ka, en }) => ({ id, ka, en })),
     // (where a mentor started from: their own tags, a Browse filter; server/mentorStory.js)
     startTags: require('./mentorStory').START_TAGS,
+    // (the starting points a student can choose in "Find your mentor": server/matchConfig.js)
+    matchTags: require('./matchConfig').studentTags,
     limits: LIMITS
   };
 }

@@ -40,12 +40,17 @@ const DICTS = {};
 const dict = (lang) => (DICTS[lang] = DICTS[lang] || JSON.parse(fs.readFileSync(path.join(PUBLIC, 'i18n', `${lang === 'ka' ? 'ka' : 'en'}.json`), 'utf8')));
 const langOf = (res) => (res.locals && res.locals.pageLang === 'ka' ? 'ka' : 'en');
 const kaUrl = (enPath) => `${config.PUBLIC_URL}/ka${enPath === '/' ? '/' : enPath}`;
-const pageKeyOf = (p) => (p === '/' || p === '/index.html' ? 'index' : (/^\/([\w-]+)\.html$/.exec(p) || [])[1] || null);
+// (the matching page, /match, is public/find-a-mentor.html: its title and description are that page's)
+const pageKeyOf = (p) => (p === '/' || p === '/index.html' ? 'index' : (p === '/match' ? 'find-a-mentor' : (/^\/([\w-]+)\.html$/.exec(p) || [])[1] || null));
 
 function languagePrefix(req, res, next) {
   if (req.path === '/ka') return res.redirect(301, '/ka/' + (req.url.slice(3) || ''));
   if (req.path.startsWith('/ka/') && !req.path.startsWith('/ka/api/')) {
     res.locals.pageLang = 'ka';
+    req.url = req.url.slice(3);
+  } else if (req.path.startsWith('/en/') && !req.path.startsWith('/en/api/')) {
+    // (an English page at /en/...: the same page as without a prefix, always in English; public/js/i18n.js keeps the language the same way)
+    res.locals.pageLang = 'en';
     req.url = req.url.slice(3);
   }
   next();
@@ -872,6 +877,12 @@ function pageRoutes() {
   });
   router.get('/help', (req, res) => res.redirect(301, (res.locals.pageLang === 'ka' ? '/ka' : '') + '/help.html'));
 
+  // "Find your mentor" (docs/CLAUDE-CODE-MENTOR-MATCH.md): /match, /ka/match and /en/match are one page, public/find-a-mentor.html (which is
+  // also where "tell us who you need" lives, as before).
+  router.get(/^\/match\/?$/, async (req, res, next) => {
+    try { if (!(await sendPage(res, 'find-a-mentor.html', baseVars('/match')))) next(); } catch (e) { next(e); }
+  });
+
   // What people are looking for.
   router.get(/^\/requests\/?$/, async (req, res, next) => {
     try { await sendRequestsBoard(req, res); } catch (e) { next(e); }
@@ -1019,8 +1030,8 @@ function seoRoutes() {
 
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
-      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/become-a-mentor.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/find-a-mentor.html', 0.4], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
-        .filter(([p]) => p === '/' || fs.existsSync(path.join(PUBLIC, p)))
+      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/become-a-mentor.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/match', 0.6], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
+        .filter(([p]) => p === '/' || p === '/match' || fs.existsSync(path.join(PUBLIC, p)))
         // (a help article in both languages)
         .concat(require('./help').articles('en').filter((a) => require('./help').article('ka', a.slug)).map((a) => [`/help/${a.slug}`, 0.4]));
       // Before launch the profiles are not offered to visitors, so they are not offered to search engines either.
