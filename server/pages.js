@@ -40,8 +40,14 @@ const DICTS = {};
 const dict = (lang) => (DICTS[lang] = DICTS[lang] || JSON.parse(fs.readFileSync(path.join(PUBLIC, 'i18n', `${lang === 'ka' ? 'ka' : 'en'}.json`), 'utf8')));
 const langOf = (res) => (res.locals && res.locals.pageLang === 'ka' ? 'ka' : 'en');
 const kaUrl = (enPath) => `${config.PUBLIC_URL}/ka${enPath === '/' ? '/' : enPath}`;
-// (the matching page, /match, is public/find-a-mentor.html: its title and description are that page's)
-const pageKeyOf = (p) => (p === '/' || p === '/index.html' ? 'index' : (p === '/match' ? 'find-a-mentor' : (/^\/([\w-]+)\.html$/.exec(p) || [])[1] || null));
+// (the matching page, /match, is public/find-a-mentor.html, with its own title and description: meta.match.*)
+const pageKeyOf = (p) => (p === '/' || p === '/index.html' ? 'index' : (p === '/match' ? 'match' : (/^\/([\w-]+)\.html$/.exec(p) || [])[1] || null));
+// A page's description in a language. Before launch a page may have another one (meta.<page>.description.prelaunch): the home page's
+// usual words are about paying for a question, and nothing can be bought yet. The numbers in it come from the settings.
+function metaDescription(d, key) {
+  const text = (config.LAUNCH_MODE === 'prelaunch' && d[`meta.${key}.description.prelaunch`]) || d[`meta.${key}.description`];
+  return text ? withSettings(text) : text;
+}
 
 function languagePrefix(req, res, next) {
   if (req.path === '/ka') return res.redirect(301, '/ka/' + (req.url.slice(3) || ''));
@@ -115,7 +121,8 @@ function kaHref(href) {
 const kaLinks = (html) => html.replace(/(<a\b[^>]*?\shref=")([^"]+)(")/g, (m, a, href, b) => a + kaHref(href) + b);
 
 // The head of a page in its language, with its alternates. Pages without a canonical address (error pages) only get <html lang>.
-function localize(html, lang) {
+// langs: the languages the page exists in (an article may be written in one only: then only that one is named).
+function localize(html, lang, langs = ['en', 'ka']) {
   html = html.replace(/<html lang="[a-z-]+"/, () => `<html lang="${lang}"${config.LAUNCH_MODE === 'prelaunch' ? ' data-launch="prelaunch"' : ''}`);
   html = translateBody(html, lang);
   if (lang === 'ka') html = kaLinks(html);
@@ -127,7 +134,7 @@ function localize(html, lang) {
   const d = dict(lang);
   const key = pageKeyOf(enPath);
   const title = key && d[`meta.${key}.title`];
-  const description = key && d[`meta.${key}.description`];
+  const description = key && metaDescription(d, key);
   if (title) {
     html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`)
       .replace(/(<meta (?:property|name)="(?:og|twitter):title" content=")[^"]*(")/g, (m, a, b) => a + escapeHtml(title) + b);
@@ -140,11 +147,11 @@ function localize(html, lang) {
       .replace(/(<meta property="og:url" content=")[^"]*(")/, (m, a, b) => a + escapeHtml(ka) + b);
   }
   const tags = [
-    `<link rel="alternate" hreflang="en" href="${escapeHtml(enUrl)}">`,
-    `<link rel="alternate" hreflang="ka" href="${escapeHtml(ka)}">`,
-    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(ka)}">`,
+    ...(langs.includes('en') ? [`<link rel="alternate" hreflang="en" href="${escapeHtml(enUrl)}">`] : []),
+    ...(langs.includes('ka') ? [`<link rel="alternate" hreflang="ka" href="${escapeHtml(ka)}">`] : []),
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(langs.includes('ka') ? ka : enUrl)}">`,
     `<meta property="og:locale" content="${lang === 'ka' ? 'ka_GE' : 'en_US'}">`,
-    `<meta property="og:locale:alternate" content="${lang === 'ka' ? 'en_US' : 'ka_GE'}">`
+    ...(langs.length > 1 ? [`<meta property="og:locale:alternate" content="${lang === 'ka' ? 'en_US' : 'ka_GE'}">`] : [])
   ];
   // (a Georgian page draws its words in Noto Sans Georgian: fetched at once, like the latin fonts every page preloads)
   if (lang === 'ka') tags.push(assets.rewrite('<link rel="preload" href="/fonts/noto-sans-georgian.woff2" as="font" type="font/woff2" crossorigin>'));
@@ -170,7 +177,7 @@ function sendHtml(res, status, html) {
   if (!res.get('Cache-Control')) res.set('Cache-Control', 'no-cache');
   res.set('Speculation-Rules', require('./speculation').HEADER); // (which links the browser may fetch ahead: server/speculation.js)
   if (status === 200 && res.req) require('./analytics').pageview(res.req); // (off unless PLAUSIBLE_DOMAIN is set; not for a page fetched ahead)
-  res.status(status).type('html').send(localize(html, langOf(res)));
+  res.status(status).type('html').send(localize(html, langOf(res), (res.locals && res.locals.pageLangs) || undefined));
 }
 
 function fill(html, vars) {
@@ -414,17 +421,57 @@ function sendHelp(res, slug) {
   return true;
 }
 
-// The home page: who runs the site, and the site itself.
+// The home page: who runs the site, and the site itself. The organisation carries its other names (the name in Georgian letters, and
+// "Wisecall Georgia": there are other companies called Wisecall), what it is in the page's language, the country it serves, its languages
+// and its social pages (docs/CLAUDE-CODE-SEO.md 4).
 function homeJsonLd(lang) {
   const url = lang === 'ka' ? kaUrl('/') : `${config.PUBLIC_URL}/`;
   const d = dict(lang);
-  const org = { '@type': 'Organization', '@id': `${config.PUBLIC_URL}/#org`, name: 'Wisecall', url: `${config.PUBLIC_URL}/`, logo: config.PUBLIC_URL + assets.rewrite('/brand/wisecall-mark.svg'),
-    description: "Advice from people who've already done it.",
+  const org = { '@type': 'Organization', '@id': `${config.PUBLIC_URL}/#org`, name: 'Wisecall', alternateName: ['უაისქოლი', 'Wisecall Georgia'],
+    url: `${config.PUBLIC_URL}/`, logo: config.PUBLIC_URL + assets.rewrite('/brand/wisecall-mark.svg'),
+    description: d['org.description'] || '', areaServed: 'GE', knowsLanguage: ['ka', 'en'],
     ...(config.LEGAL_NAME ? { legalName: config.LEGAL_NAME } : {}), ...(config.SUPPORT_EMAIL ? { email: config.SUPPORT_EMAIL } : {}),
     sameAs: Object.values(config.SOCIAL_URLS || {}).filter(Boolean) };
   const site = { '@type': 'WebSite', '@id': `${config.PUBLIC_URL}/#site`, name: 'Wisecall', url, inLanguage: lang === 'ka' ? 'ka' : 'en', publisher: { '@id': org['@id'] },
-    description: d['meta.index.description'] || '' };
+    description: metaDescription(d, 'index') || '' };
   return jsonLd({ '@context': 'https://schema.org', '@graph': [org, site] });
+}
+// Search Console's and Bing's "HTML tag" proof of ownership: on the home page (both languages), only when the code is set.
+function verificationTags() {
+  return [
+    config.GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${escapeHtml(config.GOOGLE_SITE_VERIFICATION)}">` : '',
+    config.BING_SITE_VERIFICATION ? `<meta name="msvalidate.01" content="${escapeHtml(config.BING_SITE_VERIFICATION)}">` : ''
+  ].filter(Boolean).join('\n');
+}
+
+// /llms.txt: what Wisecall is, in a few plain lines, for AI assistants that read it (docs/CLAUDE-CODE-SEO.md 1). The addresses come from
+// PUBLIC_URL and the facts from the settings (the askers' age, the days to answer, the mentors' share), so it cannot fall behind them.
+function llmsTxt() {
+  const u = config.PUBLIC_URL;
+  const ka = (p) => `${u}/ka${p}`;
+  const pre = config.LAUNCH_MODE === 'prelaunch';
+  return [
+    '# Wisecall',
+    '',
+    '> Wisecall (უაისქოლი) is a Georgian platform where students and young people ask verified experts questions about their field, studies and career, and get a written answer.',
+    '',
+    `- Site: ${u} (Georgian: ${u}/ka/)`,
+    `- Status: ${pre ? 'opening soon; a waitlist is open now.' : 'open.'}`,
+    '- Languages: Georgian and English.',
+    `- How it works: choose an expert in your field, write your question, get a written answer within ${config.ANSWER_DEADLINE_DAYS} days or your money back.`,
+    `- Mentors: adults, ID-verified; they set their own price or answer for free, and keep ${100 - config.PLATFORM_FEE_PERCENT}%.`,
+    `- Askers: ${require('./ageGate').MIN_ASKER_AGE} and older. Written only, no calls; personal contacts are protected.`,
+    ...(config.SUPPORT_EMAIL ? [`- Contact: ${config.SUPPORT_EMAIL}`] : []),
+    '',
+    '## Pages',
+    `- [How we verify mentors](${ka('/how-we-verify.html')})`,
+    `- [Find your mentor (matching)](${ka('/match')})`,
+    `- [Become a mentor](${ka('/become-a-mentor.html')})`,
+    `- [FAQ](${ka('/faq.html')})`,
+    `- [Help center](${ka('/help.html')})`,
+    `- [About](${ka('/about.html')})`,
+    ''
+  ].join('\n');
 }
 
 // ---- Public answers (server/publicAnswers.js) -------------------------------------------------------------------------------------------
@@ -814,6 +861,136 @@ async function sendAdvice(req, res, key) {
   return true;
 }
 
+// ---- "რჩევები": the articles written in Admin (server/articles.js; docs/CLAUDE-CODE-SEO.md 5) ---------------------------------------------
+// /advice-articles: the published articles of the page's language; /advice-articles/<slug>: one of them. Both are written here, whole, in
+// the page's language (nothing of the text needs a script), with Article data naming the real author. Only published articles exist: a
+// draft or an article taken down is 404 (a verified admin alone sees it, as a preview that is never indexed). An article written in one
+// language only has only that language's address, and names only that one in its head and in the sitemap.
+const articleUrl = (lang, p) => (lang === 'ka' ? kaUrl(p) : config.PUBLIC_URL + p);
+const fieldName = (id, lang) => { const f = require('./categories').FIELDS.find((x) => x.id === id); return f ? (lang === 'ka' ? f.ka : f.en) : ''; };
+// The end of every article page: "find your mentor" (the matching page, at the article's field), and before launch the waiting list (a
+// plain link to the home page's form; public/js/article.js puts the form itself here).
+function articleEnd(lang, d, category) {
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const pre = config.LAUNCH_MODE === 'prelaunch';
+  return `
+  <section class="article-next" aria-labelledby="articleNextTitle">
+    <h2 id="articleNextTitle">${escapeHtml(d['home2.match.q'])}</h2>
+    <p>${escapeHtml(d['home2.match.body'])}</p>
+    <p><a class="btn btn-primary" href="${prefix}/match${category ? `?f=${encodeURIComponent(category)}` : ''}">${escapeHtml(d['home2.match.cta'])}</a></p>
+  </section>${pre ? `
+  <section class="article-wait" aria-labelledby="articleWaitTitle">
+    <h2 id="articleWaitTitle">${escapeHtml(d['articles.wait.title'])}</h2>
+    <p>${escapeHtml(d['articles.wait.body'])}</p>
+    <div id="articleWait" data-field="${escapeHtml(category || '')}"><a class="btn btn-outline" href="${prefix}/#heroWait">${escapeHtml(d['wait.join'])}</a></div>
+  </section>` : ''}`;
+}
+const articleByline = (a, lang) => `<p class="article-by"><span class="article-author">${escapeHtml(a.authorName)}</span>${a.date ? ` · <time datetime="${escapeHtml(a.date)}">${escapeHtml(require('./articles').dateText(a.date, lang))}</time>` : ''}</p>`;
+
+async function sendArticles(req, res) {
+  const articles = require('./articles');
+  const html = readPage('article.html');
+  if (html === null) return notFoundHandler(req, res);
+  await require('./launch').ensureFresh(5000);
+  const lang = langOf(res);
+  const list = await articles.published(lang);
+  // (nothing to read in this language yet: there is no such page, so nobody, and no search engine, lands on an empty one)
+  if (!list.length) return notFoundHandler(req, res);
+  const d = dict(lang);
+  const prefix = lang === 'ka' ? '/ka' : '';
+  const n = await articles.counts();
+  res.locals.pageLangs = articles.LANGS.filter((l) => n[l] > 0);
+  const url = articleUrl(lang, '/advice-articles');
+  const body = `
+  <header class="article-head"><h1>${escapeHtml(d['articles.title'])}</h1><p class="legal-intro">${escapeHtml(d['articles.intro'])}</p></header>
+  <ul class="article-list">${list.map((a) => `
+    <li class="article-card">
+      ${a.category ? `<p class="article-kicker">${escapeHtml(fieldName(a.category, lang))}</p>` : ''}
+      <h2><a href="${prefix}/advice-articles/${a.slug}">${escapeHtml(a[lang].title)}</a></h2>
+      <p>${escapeHtml(a[lang].intro)}</p>
+      ${articleByline(a, lang)}
+    </li>`).join('')}
+  </ul>${articleEnd(lang, d, null)}`;
+  const ld = jsonLd({ '@context': 'https://schema.org', '@type': 'CollectionPage', url, inLanguage: lang, name: d['articles.title'], description: d['articles.intro'],
+    hasPart: list.slice(0, 50).map((a) => ({ '@type': 'Article', headline: a[lang].title, url: articleUrl(lang, `/advice-articles/${a.slug}`) })) });
+  sendHtml(res, 200, addToHead(fill(html, { ...baseVars('/advice-articles'), TITLE: escapeHtml(d['articles.meta.title']), DESCRIPTION: escapeHtml(d['articles.intro']), OG_TYPE: 'website',
+    ROBOTS: 'index, follow', SERVER_LANG: '<meta name="wisecall-server-lang" content="1">', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']),
+    CRUMBS: `<li><span aria-current="page">${escapeHtml(d['articles.title'])}</span></li>`, BODY: body }), ld));
+}
+
+async function sendArticle(req, res, slug) {
+  const articles = require('./articles');
+  const a = await articles.bySlug(slug);
+  if (!a) return notFoundHandler(req, res);
+  const html = readPage('article.html');
+  if (html === null) return notFoundHandler(req, res);
+  await require('./launch').ensureFresh(5000);
+  const lang = langOf(res);
+  const other = lang === 'ka' ? 'en' : 'ka';
+  const prefix = lang === 'ka' ? '/ka' : '';
+  // Not published: there is no such page, except for a verified admin looking at what they are about to publish.
+  const preview = a.status !== 'published';
+  if (preview) {
+    const who = await require('./adminAuth').whoIsAsking(req);
+    if (!who.verified) return notFoundHandler(req, res);
+    res.set('Cache-Control', 'no-store');
+    // (a draft is shown as far as it is written; one with nothing in this language yet is shown in the other)
+    if (!a[lang].title && !a[lang].body) {
+      if (a[other].title || a[other].body) return res.redirect(302, `${other === 'ka' ? '/ka' : ''}/advice-articles/${a.slug}`);
+      return notFoundHandler(req, res);
+    }
+  } else if (!a.langs.includes(lang)) {
+    // Written in the other language only (the language switch leads here): to this language's articles, or its home page. This address
+    // is in no sitemap and no page names it.
+    const n = await articles.counts();
+    return res.redirect(302, n[lang] > 0 ? `${prefix}/advice-articles` : `${prefix}/`);
+  }
+  const d = dict(lang);
+  const v = a[lang];
+  res.locals.pageLangs = preview ? [lang] : a.langs;
+  const path2 = `/advice-articles/${a.slug}`;
+  const url = articleUrl(lang, path2);
+  const category = a.category ? fieldName(a.category, lang) : '';
+  const more = preview ? [] : (await articles.published(lang)).filter((x) => x.id !== a.id).slice(0, 3);
+  const body = `${preview ? `
+  <p class="launch-banner article-draft" role="status">${escapeHtml(d['articles.draft'])}</p>` : ''}
+  <article class="help-article blog-article">
+    <header class="article-head">
+      ${category ? `<p class="article-kicker">${escapeHtml(category)}</p>` : ''}
+      <h1>${escapeHtml(v.title)}</h1>
+      ${v.intro ? `<p class="legal-intro article-intro">${escapeHtml(v.intro)}</p>` : ''}
+      ${articleByline(a, lang)}
+    </header>
+    <div class="article-body">
+${articles.bodyHtml(v.body)}
+    </div>
+  </article>${articleEnd(lang, d, a.category)}${more.length ? `
+  <nav class="help-nav article-more" aria-labelledby="articleMoreTitle">
+    <h2 id="articleMoreTitle">${escapeHtml(d['articles.more'])}</h2>
+    <ul>${more.map((x) => `<li><a href="${prefix}/advice-articles/${x.slug}">${escapeHtml(x[lang].title)}</a></li>`).join('')}</ul>
+  </nav>` : ''}`;
+  // The article as data: the real author (as the owner typed the name), the dates, and where it sits on the site.
+  const changed = new Date(a.updatedAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Tbilisi' });
+  const org = { '@type': 'Organization', '@id': `${config.PUBLIC_URL}/#org`, name: 'Wisecall', url: `${config.PUBLIC_URL}/` };
+  const ld = jsonLd({ '@context': 'https://schema.org', '@graph': [
+    { '@type': 'Article', '@id': `${url}#article`, headline: v.title, description: v.intro, inLanguage: lang, url, mainEntityOfPage: url,
+      ...(a.date ? { datePublished: a.date, dateModified: changed > a.date ? changed : a.date } : {}),
+      author: { '@type': 'Person', name: a.authorName }, publisher: org, ...(category ? { articleSection: category } : {}) },
+    { '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: d['expert.crumb.home'], item: articleUrl(lang, '/') },
+      { '@type': 'ListItem', position: 2, name: d['articles.title'], item: articleUrl(lang, '/advice-articles') },
+      { '@type': 'ListItem', position: 3, name: v.title, item: url }] }] });
+  // (the link to the list only when the list exists: a preview of the first article has none yet)
+  const hasList = !preview || (await articles.counts())[lang] > 0;
+  sendHtml(res, 200, addToHead(fill(html, { ...baseVars(path2), TITLE: escapeHtml(`${v.title} — Wisecall`), DESCRIPTION: escapeHtml(shortText(v.intro, 160)), OG_TYPE: 'article',
+    ROBOTS: preview ? 'noindex' : 'index, follow',
+    // (an article in English only stays readable for somebody whose chosen language is Georgian: the page is not moved to /ka)
+    SERVER_LANG: preview || a.langs.includes('ka') ? '<meta name="wisecall-server-lang" content="1">' : '',
+    PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']),
+    CRUMBS: `<li>${hasList ? `<a href="${prefix}/advice-articles">${escapeHtml(d['articles.title'])}</a>` : `<span>${escapeHtml(d['articles.title'])}</span>`}</li><li><span aria-current="page">${escapeHtml(shortText(v.title, 40))}</span></li>`,
+    BODY: body }), preview ? '' : ld));
+}
+
 async function sendPage(res, file, vars, status = 200) {
   const html = readPage(file);
   if (html === null) return false;
@@ -854,7 +1031,7 @@ function pageRoutes() {
         html = html.replace('id="homeMentors" aria-labelledby="homeMentorsTitle" hidden>', 'id="homeMentors" aria-labelledby="homeMentorsTitle">')
           .replace('<ul class="lexpert-grid" id="homeMentorsList"></ul>', `<ul class="lexpert-grid" id="homeMentorsList" aria-busy="true">${HOME_CARD_SKELETON.repeat(3)}</ul>`);
       }
-      sendHtml(res, 200, addToHead(fill(html, baseVars('/')), homeJsonLd(langOf(res))));
+      sendHtml(res, 200, addToHead(fill(html, baseVars('/')), [homeJsonLd(langOf(res)), verificationTags()].filter(Boolean).join('\n')));
     } catch (e) { next(e); }
   });
 
@@ -911,6 +1088,14 @@ function pageRoutes() {
   });
   router.get(/^\/answers\/([a-z0-9-]{3,80})\/?$/, async (req, res, next) => {
     try { await sendAnswer(req, res, req.params[0]); } catch (e) { next(e); }
+  });
+
+  // "რჩევები": the articles, and one article.
+  router.get(/^\/advice-articles\/?$/, async (req, res, next) => {
+    try { await sendArticles(req, res); } catch (e) { next(e); }
+  });
+  router.get(/^\/advice-articles\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/, async (req, res, next) => {
+    try { await sendArticle(req, res, req.params[0]); } catch (e) { next(e); }
   });
 
   // A page per field: /advice/<niche>.
@@ -988,7 +1173,7 @@ function pageRoutes() {
       const name = req.params[0];
       // The error pages are served by the error handlers, not by their own address. (Asking for them
       // directly gets the normal "not found" page, never the raw file with its {{placeholders}}.)
-      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'answers' || name === 'answer' || name === 'requests' || name === 'live' || name === 'live-session' || name === 'live-room' || name === 'live-series' || name === 'live-replay') return notFoundHandler(req, res); // (sent only by their own routes)
+      if (name === '403' || name === '404' || name === '500' || name === 'admin-2fa' || name === 'advice' || name === 'article' || name === 'answers' || name === 'answer' || name === 'requests' || name === 'live' || name === 'live-session' || name === 'live-room' || name === 'live-series' || name === 'live-replay') return notFoundHandler(req, res); // (sent only by their own routes)
       if (name === 'profile') return void (await sendProfile(res, null)); // (the page itself says when nobody is found)
       if (name === 'faq') {
         const html = readPage('faq.html');
@@ -1028,6 +1213,13 @@ function seoRoutes() {
     ].join('\n'));
   });
 
+  router.get('/llms.txt', async (req, res, next) => {
+    try {
+      await require('./launch').ensureFresh(5000);
+      res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(llmsTxt());
+    } catch (e) { next(e); }
+  });
+
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
       const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/become-a-mentor.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/match', 0.6], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
@@ -1045,12 +1237,17 @@ function seoRoutes() {
       // Live sessions people can still join (the list and each session).
       const live = !config.LIVE_ENABLED ? [] : (await query(`SELECT s.slug, s.updated_at FROM live_sessions s WHERE s.status IN ('published', 'live') AND s.starts_at > now() - interval '2 hours'
                                      AND EXISTS (SELECT 1 FROM users u WHERE u.id = s.mentor_id AND ${listableSql('u')}) ORDER BY s.starts_at LIMIT 1000`)).rows;
-      // Each page in both languages, each naming the other (and Georgian as the default).
-      const both = (p, extra) => {
+      // The published articles ("რჩევები"), before launch too: they are what there is to read. Each in the languages it is written in.
+      const articles = await require('./articles').published();
+      // Each page in its languages (nearly always both), each naming the other (and Georgian as the default).
+      const versions = (p, langs, extra) => {
         const en = config.PUBLIC_URL + p, ka = kaUrl(p);
-        const alt = `<xhtml:link rel="alternate" hreflang="en" href="${escapeHtml(en)}"/><xhtml:link rel="alternate" hreflang="ka" href="${escapeHtml(ka)}"/><xhtml:link rel="alternate" hreflang="x-default" href="${escapeHtml(ka)}"/>`;
-        return [en, ka].map((loc) => `<url><loc>${escapeHtml(loc)}</loc>${alt}${extra}</url>`);
+        const alt = (langs.includes('en') ? `<xhtml:link rel="alternate" hreflang="en" href="${escapeHtml(en)}"/>` : '') + (langs.includes('ka') ? `<xhtml:link rel="alternate" hreflang="ka" href="${escapeHtml(ka)}"/>` : '') +
+          `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeHtml(langs.includes('ka') ? ka : en)}"/>`;
+        return [langs.includes('en') ? en : null, langs.includes('ka') ? ka : null].filter(Boolean).map((loc) => `<url><loc>${escapeHtml(loc)}</loc>${alt}${extra}</url>`);
       };
+      const both = (p, extra) => versions(p, ['en', 'ka'], extra);
+      const articleLangs = ['en', 'ka'].filter((l) => articles.some((a) => a.langs.includes(l)));
       const urls = [
         ...staticPages.flatMap(([p, prio]) => both(p, `<priority>${prio}</priority>`)),
         ...fields.flatMap((k) => both(`/advice/${k}`, '<priority>0.8</priority>')),
@@ -1058,7 +1255,9 @@ function seoRoutes() {
         ...answers.flatMap((a) => both(`/answers/${a.slug}`, `<lastmod>${new Date(a.published_at).toISOString().slice(0, 10)}</lastmod><priority>0.6</priority>`)),
         ...(answers.length ? both('/answers', '<priority>0.7</priority>') : []),
         ...live.flatMap((s) => both(`/live/${s.slug}`, `<lastmod>${new Date(s.updated_at).toISOString().slice(0, 10)}</lastmod><priority>0.6</priority>`)),
-        ...(live.length ? both('/live', '<priority>0.7</priority>') : [])
+        ...(live.length ? both('/live', '<priority>0.7</priority>') : []),
+        ...articles.flatMap((a) => versions(`/advice-articles/${a.slug}`, a.langs, `<lastmod>${new Date(Math.max(new Date(a.updatedAt), new Date(a.publishedAt || a.updatedAt))).toISOString().slice(0, 10)}</lastmod><priority>0.7</priority>`)),
+        ...(articleLangs.length ? versions('/advice-articles', articleLangs, '<priority>0.7</priority>') : [])
       ];
       res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
     } catch (e) { next(e); }

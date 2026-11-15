@@ -11,7 +11,7 @@ const SECRET = [
   'DIDIT_API_KEY', 'DIDIT_WEBHOOK_SECRET', 'FLITT_SECRET_KEY', 'FLITT_PAYOUT_SECRET_KEY', 'BOG_CLIENT_SECRET', 'TBC_API_KEY', 'TBC_CLIENT_SECRET',
   'DAILY_API_KEY', 'ANTHROPIC_API_KEY', 'SENTRY_DSN'
 ];
-const PUBLIC = ['GOOGLE_CLIENT_ID', 'TURNSTILE_SITE_KEY', 'PLAUSIBLE_DOMAIN', 'FLITT_MERCHANT_ID'];
+const PUBLIC = ['GOOGLE_CLIENT_ID', 'TURNSTILE_SITE_KEY', 'PLAUSIBLE_DOMAIN', 'FLITT_MERCHANT_ID', 'GOOGLE_SITE_VERIFICATION', 'BING_SITE_VERIFICATION'];
 
 // [name, value] for every secret that is set and long enough to recognise (a database address also gives its password on its own).
 function secretValues(env = process.env) {

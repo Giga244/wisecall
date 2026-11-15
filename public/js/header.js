@@ -183,6 +183,7 @@
         </nav>
         <nav class="mm-more" aria-label="More" data-i18n-aria="nav.more">
           ${MORE.map(([href, key]) => `<a href="${href}" data-i18n="${key}">${w(key) || ''}</a>`).join('')}
+          <a href="/advice-articles" data-i18n="articles.title" data-articles hidden>${w('articles.title') || ''}</a>
         </nav>
         <div class="mm-lang">${langSwitch('mm-lang-toggle')}</div>
         ${themeRow}

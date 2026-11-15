@@ -225,7 +225,17 @@
       if (header) header.classList.remove('is-authed');
     }
     showLaunchBanner(user);
+    showArticlesLink();
     return user;
+  }
+
+  // "რჩევები" in the menu (docs/CLAUDE-CODE-SEO.md 5): only when an article is published in the page's language (the server says so).
+  function showArticlesLink() {
+    const link = document.querySelector('.mm-more [data-articles]');
+    if (!link || !window.WisecallI18n || !WisecallI18n.getConfig) return;
+    const show = () => WisecallI18n.getConfig().then((cfg) => { link.hidden = !(cfg && cfg.articles && cfg.articles[WisecallI18n.getLang() === 'ka' ? 'ka' : 'en']); }).catch(() => {});
+    show();
+    document.addEventListener('wisecall:lang-changed', show);
   }
 
   // Before launch: a slim bar under the header on every page except the home page (its hero already says it) and

@@ -18,14 +18,20 @@ function inline(text) {
 }
 
 // -> { title, html, description }
-function render(md) {
+// opts.title false: the text has no "# Title" line of its own (an article written in Admin has a title box: server/articles.js), so a "#" line
+// is a heading like any other. opts.level: which HTML heading a line with n "#" becomes (the help centre: n + 1).
+function render(md, opts = {}) {
+  const level = opts.level || ((n) => n + 1);
   const lines = String(md).replace(/\r\n?/g, '\n').split('\n');
   const out = [];
-  let title = '', description = '', list = null, para = [];
+  let title = '', description = '', lead = '', list = null, para = [];
+  // The description (what a search result shows under the title) is the article's first real sentence. An article that opens with a short
+  // label and a list ("**Answering**", then the rules) is described by the label and its first point, not by the label alone.
+  const plain = (s) => s.replace(/\*\*|\*|`/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim();
   const flushPara = () => {
     if (!para.length) return;
     const text = para.join(' ');
-    if (!description) description = text.replace(/\*\*|\*|`/g, '');
+    if (!description) { if (plain(text).length >= 40) description = plain(text); else lead = lead || plain(text); }
     out.push(`<p>${inline(text)}</p>`);
     para = [];
   };
@@ -36,13 +42,14 @@ function render(md) {
     if (!line.trim()) { flushPara(); flushList(); continue; }
     if ((m = /^(#{1,3})\s+(.*)$/.exec(line))) {
       flushPara(); flushList();
-      if (m[1].length === 1 && !title) { title = m[2].trim(); continue; }
-      out.push(`<h${m[1].length + 1}>${inline(m[2])}</h${m[1].length + 1}>`);
+      if (m[1].length === 1 && !title && opts.title !== false) { title = m[2].trim(); continue; }
+      out.push(`<h${level(m[1].length)}>${inline(m[2])}</h${level(m[1].length)}>`);
     } else if ((m = /^\s*[-*]\s+(.*)$/.exec(line)) || (m = /^\s*\d+\.\s+(.*)$/.exec(line))) {
       flushPara();
       const tag = /^\s*\d+\./.test(line) ? 'ol' : 'ul';
       if (!list || list.tag !== tag) { flushList(); list = { tag, items: [] }; }
       list.items.push(m[1]);
+      if (!description && lead) description = `${lead}: ${plain(m[1])}`;
     } else if ((m = /^>\s?(.*)$/.exec(line))) {
       flushPara(); flushList();
       out.push(`<blockquote><p>${inline(m[1])}</p></blockquote>`);
@@ -52,7 +59,7 @@ function render(md) {
     }
   }
   flushPara(); flushList();
-  return { title, html: out.join('\n'), description };
+  return { title, html: out.join('\n'), description: description || lead };
 }
 
 function load() {

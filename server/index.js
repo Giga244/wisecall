@@ -108,6 +108,8 @@ if (!useFakeVideo) {
 
 // State-changing API calls must come from our own pages (see security.js).
 app.use('/api', csrfGuard);
+// (an article written in Admin is long, and a Georgian letter is three bytes: its own, larger limit; server/articles.js checks the lengths)
+app.use('/api/admin/articles', express.json({ limit: '300kb' }));
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
 app.use(require('./attribution').capture); // (where visitors come from: a first-party cookie, see server/attribution.js)
@@ -263,6 +265,7 @@ app.use('/api/admin/support', require('./routes/inbox').adminRouter);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/admin', require('./routes/adminVerification'));
 app.use('/api/admin', require('./routes/adminNiches').router);
+app.use('/api/admin', require('./routes/adminArticles')); // "რჩევები": the articles (docs/CLAUDE-CODE-SEO.md 5)
 if (useMockBank) app.use('/api/mock-bank', require('./routes/mockBank'));
 if (useMockKyc) app.use('/api/mock-kyc', require('./routes/mockKyc'));
 
@@ -359,6 +362,8 @@ app.get('/api/config', publicCache(), async (req, res) => {
     // The 16 fields students browse (their chips and counts: /api/categories), and which field an old category's mentors are in.
     fields: require('./categories').FIELDS.map((f) => ({ id: f.id, icon: f.icon, ka: f.ka, en: f.en, ...(f.short ? { short: f.short } : {}) })),
     fieldOfNiche: Object.fromEntries(Object.entries(require('./categories').FROM_NICHE).map(([k, v]) => [k, v[0]])),
+    // Whether there is a published article to read in each language (the menu's link to "რჩევები" shows only then).
+    articles: await require('./articles').counts().then((n) => ({ ka: n.ka > 0, en: n.en > 0 })),
     // The 6 fields people wait for most: first in the waiting list's field menu.
     popularFields: await require('./waitlist').popularFields(),
     // Only present on a developer's computer, where pages may show dev-mode helpers. In production the

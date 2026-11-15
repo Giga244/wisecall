@@ -127,6 +127,10 @@ const config = {
   // Visitor statistics with Plausible (server/analytics.js): the site's domain as registered there. Empty = off.
   PLAUSIBLE_DOMAIN: (env.PLAUSIBLE_DOMAIN || '').trim(),
   PLAUSIBLE_API_URL: (env.PLAUSIBLE_API_URL || 'https://plausible.io/api/event').trim(),
+  // Search engine verification (docs/CLAUDE-CODE-SEO.md): the codes Google Search Console and Bing Webmaster Tools give for the "HTML tag"
+  // method. When set, the home page carries the tag (both languages); empty = no tag. Only letters, digits, "-", "_" and "=" are taken.
+  GOOGLE_SITE_VERIFICATION: /^[A-Za-z0-9_=-]{6,120}$/.test((env.GOOGLE_SITE_VERIFICATION || '').trim()) ? env.GOOGLE_SITE_VERIFICATION.trim() : '',
+  BING_SITE_VERIFICATION: /^[A-Za-z0-9_=-]{6,120}$/.test((env.BING_SITE_VERIFICATION || '').trim()) ? env.BING_SITE_VERIFICATION.trim() : '',
   // The seller's legal details (a company or individual entrepreneur), required on receipts and in the footer for Georgian
   // e-commerce. Each is shown only when set.
   LEGAL_NAME: (env.LEGAL_NAME || '').trim(),

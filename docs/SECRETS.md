@@ -49,6 +49,7 @@ After any rotation, Render redeploys by itself when you save the environment. Th
 | `GOOGLE_CLIENT_ID` | It's part of the "Continue with Google" address. |
 | `TURNSTILE_SITE_KEY` | The page draws Cloudflare's check with it (`/api/config` → `turnstileSiteKey`). |
 | `PLAUSIBLE_DOMAIN` | The name the site is counted under in Plausible. |
+| `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | The codes that prove to Google Search Console and Bing Webmaster Tools that the site is ours: a tag on the home page. |
 | `FLITT_MERCHANT_ID` | Flitt's id for the shop, sent with every payment. |
 
 ## Not secret, but not sent to browsers either

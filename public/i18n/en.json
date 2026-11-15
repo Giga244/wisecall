@@ -1999,8 +1999,8 @@
   "rq.board.intro": "Anonymous requests for mentors, by field. Know this field? Become a mentor and answer them.",
   "rq.board.count": "{n} people are looking for: {field}",
   "rq.board.become": "Become a mentor for this",
-  "meta.find-a-mentor.title": "Find your mentor — Wisecall",
-  "meta.find-a-mentor.description": "Answer a few questions and see the verified mentors who fit you best. Free.",
+  "meta.match.title": "Find your mentor — Wisecall",
+  "meta.match.description": "Tell us about yourself and we'll pick 3 verified mentors who started like you. Free.",
   "rq.board.countOne": "1 person is looking for: {field}",
   "human.failed": "Please complete the check that you are a person, then try again.",
   "human.unavailable": "We could not check that you are a person just now. Please try again in a minute.",
@@ -3261,5 +3261,14 @@
   "home2.match.q": "Not sure who to ask?",
   "home2.match.link": "Find your mentor →",
   "home2.match.body": "Answer 4 questions and we find 3 mentors who started like you.",
-  "home2.match.cta": "Find your mentor · free"
+  "home2.match.cta": "Find your mentor · free",
+  "meta.index.description.prelaunch": "Ask someone who has already walked this path: a verified expert in your field answers in writing within {answerDays} days. Wisecall opens soon — join the waitlist.",
+  "org.description": "Wisecall (უაისქოლი) is a Georgian platform where students and young people ask verified experts questions about their field, studies and career, and get a written answer.",
+  "articles.title": "Advice",
+  "articles.intro": "Articles on choosing a profession, studying and starting a career.",
+  "articles.meta.title": "Advice for students — Wisecall",
+  "articles.more": "More articles",
+  "articles.wait.title": "Wisecall opens soon",
+  "articles.wait.body": "Join the waitlist and we'll write to you the day it opens.",
+  "articles.draft": "Draft: this article is not published yet. Only an admin can see it."
 }

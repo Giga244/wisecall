@@ -15,7 +15,7 @@
   let tab = 'mentors';
   const MENTOR_FILTERS = ['pending', 'verified', 'failed_step', 'rejected', 'suspended', 'email_unconfirmed', ''];
   const BOOKING_FILTERS = ['paid', 'answered', 'refund_pending', 'refunded', 'pending_payment', ''];
-  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist', 'niches', 'support', 'disputes', 'overview', 'answers', 'requests', 'live', 'safety', 'categories']; // tabs that have no status chips
+  const NO_FILTERS = ['payouts', 'interviews', 'queue', 'reviews', 'waitlist', 'niches', 'support', 'disputes', 'overview', 'answers', 'requests', 'live', 'safety', 'categories', 'articles']; // tabs that have no status chips
   const tabs = document.getElementById('adminTabs');
 
   function escapeHtml(str) {
@@ -57,6 +57,8 @@
         await AdminProfiles.render(content);
       } else if (tab === 'requests') {
         await AdminRequests.render(content);
+      } else if (tab === 'articles') {
+        await AdminArticles.render(content);
       } else if (tab === 'answers') {
         await AdminPublicAnswers.render(content);
       } else if (tab === 'overview') {
