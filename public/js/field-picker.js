@@ -5,6 +5,9 @@
 //
 //   const picker = WisecallFieldPicker.create(area, { catalog, pick, t, fill, onChange });
 //   pick: { main, extras: [], directions: [], other: {} } is changed in place; onChange(kind) after every change ('field', 'direction', 'other').
+//   The search also finds directions by any word that names them ("ვებ-დიზაინი", "sales", "ფრილანსი": the server's one search, with typos),
+//   and a direction found that way is chosen together with its field. "My field isn't in the list" (docs/CLAUDE-CODE-MENTOR-STORY.md 1): the
+//   mentor types it (pick.suggestion) and still picks the closest category; the admins see what was typed as a suggestion.
 //   picker.draw() redraws (after pick was changed from outside); picker.valid() -> at least one direction; picker.showError(on).
 (function () {
   const MIN = 1;
@@ -29,6 +32,25 @@
     let adding = false;   // the next field tapped is an extra one ("+ add")
     const dirsOpen = new Set(); // fields whose directions are all shown on a phone ("+ კიდევ N" pressed)
     let errorOn = false;  // the min-1 error is shown (after a try to save, or when the last direction was taken away)
+    let hits = [];        // directions the search words name (from the server: keywords, both languages, typos)
+    let hitsFor = '';
+    let hitTimer = null;
+    let notListed = Boolean(pick.suggestion); // "my field isn't in the list" is open
+    const chipOf = (id) => { for (const f of catalog.fields) { const c = f.chips.find((x) => x.id === id); if (c) return c; } return null; };
+    function findHits() {
+      clearTimeout(hitTimer);
+      const q = norm(query);
+      if (q.length < 2) { hits = []; hitsFor = q; return; }
+      hitTimer = setTimeout(async () => {
+        try {
+          const r = await WisecallAPI.apiFetch('/categories/search?q=' + encodeURIComponent(q));
+          if (norm(query) !== q) return; // (typed on since)
+          hits = (r.chips || []).filter((c) => { const x = chipOf(c.id); return x && !x.other && !x.moved; }).slice(0, 6);
+          hitsFor = q;
+          draw();
+        } catch (e) { /* the fields by name still work */ }
+      }, 250);
+    }
 
     const chosenFields = () => [pick.main, ...pick.extras].filter(Boolean);
     const fieldChip = (x) => {
@@ -58,7 +80,15 @@
         <div class="fp-chips pick-fields" role="group" aria-labelledby="fpMainTitle">${shown.map(fieldChip).join('')}
           ${rest > 0 ? `<button type="button" class="chip fp-more" data-fp-more>${esc(fill('fp.more', { n: rest }))}</button>` : ''}
           ${!q && open ? `<button type="button" class="chip fp-more" data-fp-less>${esc(t('fp.less'))}</button>` : ''}</div>
-        ${matches.length ? '' : `<p class="fp-hint pick-none">${esc(t('pick.none'))}</p>`}
+        ${q && hitsFor === q && hits.length ? `<p class="fp-hint fp-hits-title">${esc(t('fp.hits'))}</p>
+          <div class="fp-chips fp-hits">${hits.map((c) => `<button type="button" class="chip fp-hit" data-hit="${esc(c.id)}" data-hit-field="${esc(c.field)}">${esc(nameIn(c))} <span class="fp-hit-field">· ${esc(nameIn(fieldById(c.field)))}</span></button>`).join('')}</div>` : ''}
+        ${matches.length || (q && hitsFor === q && hits.length) ? '' : `<p class="fp-hint pick-none">${esc(t('pick.none'))}</p>`}
+        ${adding ? '' : `<div class="fp-not-listed">
+          <button type="button" class="linklike" data-fp-not-listed aria-expanded="${notListed}">${esc(t('fp.notListed'))}</button>
+          ${notListed ? `<label for="fpSuggestion">${esc(t('fp.notListed.label'))}</label>
+            <input type="text" id="fpSuggestion" data-suggestion maxlength="60" value="${esc(pick.suggestion || '')}" placeholder="${esc(t('fp.notListed.ex'))}" autocomplete="off" aria-describedby="fpSuggestionHint">
+            <p class="fp-hint" id="fpSuggestionHint">${esc(t('fp.notListed.hint'))}</p>` : ''}
+        </div>`}
         <div class="fp-extra">
           <div class="fp-row"><h4>${esc(t('fp.extra.title'))}</h4><span class="fp-count">${pick.extras.length} / ${maxExtras}</span></div>
           <div class="fp-chips">${pick.extras.map((id) => `<button type="button" class="chip fp-extra-chip" data-remove-extra="${esc(id)}" aria-pressed="true" aria-label="${esc(fill('fp.extra.remove', { field: nameIn(fieldById(id)) }))}">${esc(nameIn(fieldById(id)))} <span aria-hidden="true">×</span></button>`).join('')}
@@ -96,10 +126,10 @@
     }
 
     function draw() {
-      const focused = document.activeElement && area.contains(document.activeElement) && document.activeElement.id === 'fpSearch';
-      const caret = focused ? document.activeElement.selectionStart : null;
+      const focusedId = document.activeElement && area.contains(document.activeElement) && ['fpSearch', 'fpSuggestion'].includes(document.activeElement.id) ? document.activeElement.id : null;
+      const caret = focusedId ? document.activeElement.selectionStart : null;
       area.innerHTML = `<div class="fp">${fieldsCard()}${directionsCard()}</div>`;
-      if (focused) { const box = area.querySelector('#fpSearch'); box.focus(); try { box.setSelectionRange(caret, caret); } catch (e) { /* no caret */ } }
+      if (focusedId) { const box = area.querySelector('#' + focusedId); if (box) { box.focus(); try { box.setSelectionRange(caret, caret); } catch (e) { /* no caret */ } } }
     }
 
     area.addEventListener('click', (ev) => {
@@ -115,6 +145,34 @@
         return;
       }
       if (target.matches('[data-fp-less]')) { open = false; draw(); return; }
+      if (target.matches('[data-fp-not-listed]')) {
+        notListed = !notListed;
+        if (!notListed) { pick.suggestion = ''; onChange('suggestion'); }
+        open = notListed || open; // (the whole list, to pick the closest one)
+        draw();
+        if (notListed) { const box = area.querySelector('#fpSuggestion'); if (box) box.focus(); }
+        return;
+      }
+      // A direction the search found: its field is chosen with it (the main one, or an extra one while adding).
+      if (target.dataset.hit) {
+        const id = target.dataset.hit;
+        const field = target.dataset.hitField;
+        if (adding) {
+          if (field !== pick.main && !pick.extras.includes(field)) {
+            if (pick.extras.length >= maxExtras) { onChange('too_many_fields'); return; }
+            pick.extras.push(field);
+          }
+        } else if (field !== pick.main && !pick.extras.includes(field)) {
+          pick.main = field;
+        }
+        pick.directions = pick.directions.filter((d) => chosenFields().includes(d.split('.')[0]));
+        if (!pick.directions.includes(id)) {
+          if (pick.directions.length >= maxDirections) { onChange('too_many_directions'); return; }
+          pick.directions.push(id);
+        }
+        query = ''; hits = []; hitsFor = '';
+        draw(); onChange('field'); return;
+      }
       if (target.matches('[data-fp-adding]')) { adding = !adding; query = ''; open = adding; draw(); return; }
       if (target.dataset.removeExtra) {
         pick.extras = pick.extras.filter((x) => x !== target.dataset.removeExtra);
@@ -151,7 +209,8 @@
       }
     });
     area.addEventListener('input', (ev) => {
-      if (ev.target.matches('[data-pick-search]')) { query = ev.target.value; draw(); return; }
+      if (ev.target.matches('[data-pick-search]')) { query = ev.target.value; findHits(); draw(); return; }
+      if (ev.target.matches('[data-suggestion]')) { pick.suggestion = ev.target.value; onChange('suggestion'); return; }
       if (ev.target.dataset.other) { pick.other[ev.target.dataset.other] = ev.target.value; onChange('other'); }
     });
 

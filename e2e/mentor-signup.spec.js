@@ -70,14 +70,21 @@ async function walk(page, { width, shots, tag }) {
   await page.click('.apply-next');
   await page.waitForURL(/step=2$/);
 
-  // 2. The story, with a live counter and an example.
-  await expect(page.locator('.apply-example')).toBeVisible();
-  await page.fill('#apStory', 'ცოტა');
-  await expect(page.locator('#apStoryCount')).toContainText('მინიმუმ 100');
+  // 2. "My path": three short blocks, each with a live counter and an example labelled "Example" (docs/CLAUDE-CODE-MENTOR-STORY.md).
+  await expect(page.locator('form[data-step="1"] h1')).toHaveText('ჩემი გზა');
+  await expect(page.locator('.story-field .story-example')).toHaveCount(3);
+  await expect(page.locator('.story-field .story-example-label').first()).toHaveText('მაგალითი:');
+  await page.fill('#ap-pathStart', 'ცოტა');
+  await expect(page.locator('#ap-pathStart-count')).toContainText('მინიმუმ 40');
   await page.click('.apply-next');
-  await expect(page.locator('.apply-error')).toContainText('მინიმუმ 100'); // (not yet: it says what is missing)
-  await page.fill('#apStory', STORY);
-  await expect(page.locator('#apStoryCount')).toHaveClass(/is-ok/);
+  await expect(page.locator('.apply-error')).toContainText('მინიმუმ 40'); // (not yet: it says what is missing)
+  await S.fillPath(page);
+  await expect(page.locator('#ap-pathStart-count')).toHaveClass(/is-ok/);
+  await expect(page.locator('#ap-pathNow-count')).toHaveClass(/is-ok/);
+  // (where I started from: up to 3 tags, the mentor's own choice)
+  await page.locator('[data-start-tag="region"]').click();
+  await page.locator('[data-start-tag="selftaught"]').click();
+  await expect(page.locator('[data-start-tag="region"]')).toHaveAttribute('aria-pressed', 'true');
   await shot('06-step2-story');
   await page.click('.apply-next');
   await page.waitForURL(/step=3$/);

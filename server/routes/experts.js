@@ -31,7 +31,7 @@ async function aboutFor(owner, viewer) {
 }
 
 router.get('/', asyncHandler(async (req, res) => {
-  const { niche, q, field, chip, country, years, price } = req.query;
+  const { niche, q, field, chip, country, years, price, start } = req.query;
   const categories = require('../categories');
   const search = require('../categorySearch');
   const params = [];
@@ -42,6 +42,10 @@ router.get('/', asyncHandler(async (req, res) => {
   if (typeof field === 'string' && categories.isField(field)) { params.push(field); where += ` AND (field_id = $${params.length} OR $${params.length} = ANY(extra_fields))`; }
   if (typeof chip === 'string' && categories.isChip(chip)) { params.push(chip); where += ` AND $${params.length} = ANY(directions)`; }
   if (typeof country === 'string' && categories.isCountry(country)) { params.push(country); where += ` AND country = $${params.length}`; }
+  // ("Where they started": a starting-point tag the mentor set themselves, server/mentorStory.js)
+  // (several, separated by commas: a mentor with any of them)
+  const starts = typeof start === 'string' ? [...new Set(start.split(',').filter((x) => require('../mentorStory').isTag(x)))] : [];
+  if (starts.length) { params.push(starts); where += ` AND start_tags && $${params.length}::text[]`; }
   const band = { '1-2': 'years_experience <= 2', '3-5': 'years_experience BETWEEN 3 AND 5', '6-10': 'years_experience BETWEEN 6 AND 10', '10+': 'years_experience > 10' }[String(years)];
   if (band) where += ` AND ${band}`;
   if (niche && niche !== 'all') { params.push(String(niche)); where += ` AND (niche = $${params.length} OR $${params.length} = ANY(extra_niches))`; } // (the main category or an extra one)
@@ -69,7 +73,11 @@ router.get('/', asyncHandler(async (req, res) => {
   // (headline, current position, years of experience and top skills: only what everyone may see)
   const summaries = await require('../profileSections').publicSummaries(users);
   // (a hidden profile has no summary, and so no bio)
-  res.json({ experts: (await withStats(users)).map((e) => ({ ...e, bio: summaries[e.id] && summaries[e.id].showAbout ? e.bio : null, profile: summaries[e.id] || null })) });
+  // (the card's line from "where I am now", its starting-point chips and "sample answer": nothing for a hidden profile)
+  const byId = new Map(users.map((u) => [u.id, u]));
+  const mentorStory = require('../mentorStory');
+  res.json({ experts: (await withStats(users)).map((e) => ({ ...e, bio: summaries[e.id] && summaries[e.id].showAbout ? e.bio : null, profile: summaries[e.id] || null,
+    trust: summaries[e.id] ? mentorStory.cardView(byId.get(e.id), { showAbout: Boolean(summaries[e.id].showAbout) }) : null })) });
 }));
 
 router.get('/:id', optionalAuth, asyncHandler(async (req, res) => {

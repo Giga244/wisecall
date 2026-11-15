@@ -544,6 +544,33 @@
   drawMentorCard();
   placeMentorCard();
 
+  // A mentor from before "My path" (docs/CLAUDE-CODE-MENTOR-STORY.md 6): one card, "Add your path and a sample answer", until both are
+  // there or the card is closed (closed for good: the server remembers). No email is ever sent about it.
+  function drawStoryCard() {
+    const box = document.getElementById('storyCard');
+    if (!box) return;
+    if (!isMentor || !user.storyCard) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.innerHTML = `
+      <section class="mentor-card story-card" aria-labelledby="storyCardTitle">
+        <div class="mentor-card-text">
+          <h2 id="storyCardTitle">${escapeHtml(t('dash.story.title'))}</h2>
+          <p>${escapeHtml(t('dash.story.body'))}</p>
+        </div>
+        <div class="story-card-actions">
+          <a class="btn btn-primary" href="/settings.html?tab=details#story">${escapeHtml(t('dash.story.cta'))}</a>
+          <button type="button" class="btn btn-ghost" data-story-dismiss>${escapeHtml(t('dash.story.dismiss'))}</button>
+        </div>
+      </section>`;
+    box.querySelector('[data-story-dismiss]').addEventListener('click', async () => {
+      user.storyCard = false;
+      drawStoryCard();
+      try { await WisecallAPI.apiFetch('/me/story-card/dismiss', { method: 'POST' }); } catch (e) { /* it is asked again next time */ }
+    });
+  }
+  drawStoryCard();
+  document.addEventListener('wisecall:lang-changed', drawStoryCard);
+
   // Email not confirmed yet (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md): a banner with the code box and "Resend the code", in place of the bar
   // that sends people to another page. A mentor's application waits for it before it can be approved, which the banner says.
   function drawEmailBanner() {

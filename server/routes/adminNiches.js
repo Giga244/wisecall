@@ -50,6 +50,25 @@ async function suggestions() {
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
 
+// "My field is not in the list" (docs/CLAUDE-CODE-MENTOR-STORY.md 1): what mentors typed, grouped the same way, with the closest category each
+// of them chose meanwhile. A suggestion for a new field or direction; nobody is moved by it.
+async function fieldSuggestions() {
+  const { rows } = await query(`SELECT id, name, email, field_suggestion, field_id, niche, verification_status FROM users
+    WHERE field_suggestion IS NOT NULL AND role IN ('mentor', 'both') AND deleted_at IS NULL ORDER BY created_at`);
+  const groups = new Map();
+  for (const r of rows) {
+    const g = customNiche.groupKey(r.field_suggestion);
+    if (!g) continue;
+    if (!groups.has(g)) groups.set(g, { group: g, labels: new Map(), mentors: [] });
+    const item = groups.get(g);
+    item.labels.set(r.field_suggestion, (item.labels.get(r.field_suggestion) || 0) + 1);
+    item.mentors.push({ id: r.id, name: r.name, email: r.email, status: r.verification_status, fieldId: r.field_id, niche: r.niche });
+  }
+  return [...groups.values()]
+    .map((g) => ({ group: g.group, label: [...g.labels.entries()].sort((a, b) => b[1] - a[1])[0][0], spellings: [...g.labels.keys()], count: g.mentors.length, mentors: g.mentors.slice(0, 20) }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
 // Moves the mentors of one suggestion group into a niche. Returns how many moved. Each move is in the mentor's audit log. Their own words
 // stay: they are "Your field" on the profile, next to the category.
 async function moveGroup(group, key, admin) {
@@ -80,7 +99,8 @@ router.get('/niches', requireAuth, requireAdmin, asyncHandler(async (req, res) =
       mentors: mentors[n.key] || 0, listed: live[n.key] || 0, extra: asExtra[n.key] || 0
     })),
     other: mentors.other || 0,
-    suggestions: await suggestions()
+    suggestions: await suggestions(),
+    fieldSuggestions: await fieldSuggestions()
   });
 }));
 

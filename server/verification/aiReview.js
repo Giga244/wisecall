@@ -105,7 +105,7 @@ function buildApplication(user, evidence) {
     specialty_tags: (user.specialtyTags || []).map(redact),
     years_of_experience: user.yearsExperience,
     story: redact(user.story),
-    sample_answer: user.sampleAnswer ? redact(user.sampleAnswer) : null, // (optional)
+    sample_answer: (user.sampleAnswer || user.sampleReply) ? redact(user.sampleAnswer || user.sampleReply) : null, // (optional)
     evidence: evidence.map((e) => {
       const r = e.checkResult || {};
       const item = { kind: e.kind };

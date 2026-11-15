@@ -134,8 +134,10 @@ test('an application started in the old Settings form comes back whole in /apply
   await expect(page.locator('#apTags')).toHaveValue('ინფლაცია, მაგისტრატურა');
   await expect(page.locator('form[data-step="0"] .apply-optional')).toHaveAttribute('open', ''); // (open: something is in it)
   await page.goto('/apply.html?step=2');
-  await expect(page.locator('#apStory')).toHaveValue(STORY);
-  await expect(page.locator('#apSample')).toHaveValue(/პირველ რიგში აირჩიე/);
+  // (a story written before "My path" stays, and is shown, until the three blocks are filled in: docs/CLAUDE-CODE-MENTOR-STORY.md)
+  await expect(page.locator('#ap-pathStart')).toHaveValue('');
+  await page.locator('.story-old > summary').click();
+  await expect(page.locator('.story-old-text')).toHaveText(STORY);
   await page.goto('/apply.html?step=3');
   await expect(page.locator('#apPrice')).toHaveValue('40');
   await page.goto('/apply.html?step=4');

@@ -128,6 +128,7 @@
         </ul>
         <div class="booking-answer"><strong>${t('admin.ai.f.story')}</strong> ${esc(a.story || '')}</div>
         <div class="booking-answer" style="margin-top:8px"><strong>${t('admin.sampleTitle')}</strong> ${esc(a.sampleAnswer || '')}</div>
+        ${a.profileExtras && [a.profileExtras.startTags, a.profileExtras.helpPoints, a.profileExtras.workLinks].some((x) => (x || []).length) ? `<div class="booking-answer mv-extras" style="margin-top:8px"><strong>${t('admin.ai.f.extras')}</strong> ${esc([...(a.profileExtras.startTags || []).map((id) => t('start.' + id)), ...(a.profileExtras.helpPoints || []), ...(a.profileExtras.workLinks || [])].join(' · '))}</div>` : ''}
       </div>`;
   }
 

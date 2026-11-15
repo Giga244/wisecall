@@ -277,6 +277,16 @@ config.EMAIL_ENABLED = (() => {
   return false;
 })();
 
+// A placeholder support address (support@wisecall.example, anything at example.com, a .test or .invalid domain) is for tests and a
+// developer's own computer. A live site never shows one: in production it counts as not set (no address in the footer, the pages or the
+// emails, rather than one nobody reads), a line at startup says so, and `npm run check:launch` fails on it (server/launchCheck.js).
+config.isPlaceholderEmail = (v) => /@(?:[a-z0-9-]+\.)*(?:example\.(?:com|org|net)|example|test|invalid|localhost)$/i.test(String(v || '').trim());
+config.SUPPORT_EMAIL_AS_SET = config.SUPPORT_EMAIL;
+if (IS_PROD && config.isPlaceholderEmail(config.SUPPORT_EMAIL)) {
+  console.error(`[WARNING] SUPPORT_EMAIL is a placeholder address (${config.SUPPORT_EMAIL}): it is NOT shown on the live site. Set it to your real support address.`);
+  config.SUPPORT_EMAIL = '';
+}
+
 // Fail fast: refuse to start with a configuration that would break or be unsafe.
 const problems = [];
 if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresql://user:pass@localhost:5432/wisecall)');

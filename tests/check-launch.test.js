@@ -34,7 +34,7 @@ const goodEnv = () => ({
   NODE_ENV: 'production', PUBLIC_URL: 'https://wisecall.example', DATABASE_URL: process.env.TEST_DATABASE_URL, SESSION_SECRET, DATA_ENCRYPTION_KEY: DATA_KEY,
   PAYMENT_PROVIDER: 'bog', BOG_CLIENT_ID: bank.BOG_ID, BOG_CLIENT_SECRET: bank.BOG_SECRET, BOG_API_URL: bank.url, BOG_AUTH_URL: `${bank.url}/bog-oauth/token`,
   KYC_PROVIDER: 'didit', DIDIT_API_KEY: didit.API_KEY, DIDIT_WORKFLOW_ID: didit.WORKFLOW, DIDIT_WEBHOOK_SECRET: didit.SECRET, DIDIT_API_URL: didit.url,
-  EMAIL_PROVIDER: 'resend', RESEND_API_KEY: resend.key, RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecall.example>', SUPPORT_EMAIL: 'support@wisecall.example',
+  EMAIL_PROVIDER: 'resend', RESEND_API_KEY: resend.key, RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecall.example>', SUPPORT_EMAIL: 'support@wisecall-team.ge',
   ADMIN_EMAILS: 'owner@wisecall.example', LAUNCH_MODE: 'live'
 });
 
@@ -57,7 +57,7 @@ describe('a correct production setup', () => {
     assert.match(r.out, /READY: every check passed/);
     assert.doesNotMatch(r.out, /❌|⚠/);
     for (const text of ['NODE_ENV is "production"', 'Development mode (devMode) is off', 'SESSION_SECRET is set', 'PUBLIC_URL is https://wisecall.example', 'No fake (mock) provider is active',
-      'Bank of Georgia answers', 'Didit answers', 'Resend answers', 'SUPPORT_EMAIL is support@wisecall.example', 'LAUNCH_MODE is "live"', 'Admin accounts need two-step verification']) {
+      'Bank of Georgia answers', 'Didit answers', 'Resend answers', 'SUPPORT_EMAIL is support@wisecall-team.ge', 'LAUNCH_MODE is "live"', 'Admin accounts need two-step verification']) {
       assert.match(line(r.out, text), /^ {2}✅/, `${text}\n${r.out}`);
     }
     assert.match(r.out, /migrations? applied|reachable/);
@@ -139,6 +139,17 @@ describe('each setting is judged on its own', () => {
       assert.match(r.out, pattern);
     });
   }
+
+  test('a placeholder SUPPORT_EMAIL (support@wisecall.example, example.com, a .test address) blocks: the live site would show no address', async () => {
+    for (const address of ['support@wisecall.example', 'help@example.com', 'support@wisecall.test']) {
+      const r = await check({ SUPPORT_EMAIL: address });
+      assert.notEqual(r.code, 0, address);
+      assert.match(line(r.out, 'SUPPORT_EMAIL is your real support address'), /^ {2}❌/, r.out);
+      assert.match(r.out, new RegExp(`${address.replace(/\./g, '\\.')} is a placeholder`));
+    }
+    const config = require('../server/config');
+    for (const real of ['support@wisecallge.ge', 'help@wisecall.ge', 'team@testing.ge', 'a@example.ge']) assert.equal(config.isPlaceholderEmail(real), false, real);
+  });
 
   test('a personal mailbox as SUPPORT_EMAIL, and prelaunch mode, are warnings that do not block', async () => {
     const r = await check({ SUPPORT_EMAIL: 'someone@gmail.com', LAUNCH_MODE: 'prelaunch' });

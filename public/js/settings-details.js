@@ -21,6 +21,8 @@
   async function init(el, opts) {
     box = el; user = opts.user; goto = opts.goto;
     await draw();
+    // (from the dashboard's "add your path" card: straight to that card)
+    if (window.location.hash === '#story') { const el = box.querySelector('#story'); if (el) el.scrollIntoView({ block: 'start' }); }
   }
 
   async function draw() {
@@ -36,6 +38,16 @@
     const chosenFields = [f.fieldId, ...(f.extraFields || [])].filter(Boolean);
     box.innerHTML = `
       <div id="detailsPrice"></div>
+
+      <section class="settings-card details-story" id="story" aria-labelledby="detailsStoryTitle">
+        <h2 id="detailsStoryTitle">${esc(t('details.story.title'))}</h2>
+        <p class="muted small">${esc(t('details.story.intro'))}</p>
+        <form id="storyForm" novalidate>
+          ${WisecallStoryForm.html(d.story, { limits: d.story.limits, startTags: d.story.startTags, prefix: 'ds', oldStory: d.story.oldStory, open: true })}
+          <p class="form-error" role="alert" id="storyError"></p>
+          <button type="submit" class="btn btn-primary">${esc(t('details.story.save'))}</button>
+        </form>
+      </section>
 
       <section class="settings-card" aria-labelledby="detailsFreeTitle">
         <h2 id="detailsFreeTitle">${esc(t('details.free.title'))}</h2>
@@ -92,7 +104,7 @@
     WisecallPriceBlock.mount(box.querySelector('#detailsPrice'), user, { history: d.priceHistory, onPayoutNeeded: () => goto('payouts') });
     // The field and its directions: public/js/field-picker.js (1 to 5 directions; save stays faded until there is one).
     const from = pending ? pending.proposed : f;
-    dPick = { main: from.fieldId || null, extras: [...(from.extraFields || [])], directions: [...(from.directions || [])], other: { ...(from.directionOther || {}) } };
+    dPick = { main: from.fieldId || null, extras: [...(from.extraFields || [])], directions: [...(from.directions || [])], other: { ...(from.directionOther || {}) }, suggestion: d.story.fieldSuggestion || '' };
     const saveBtn = box.querySelector('#fieldsSave');
     const fieldsErr = box.querySelector('#fieldsError');
     const ready = () => { saveBtn.disabled = !dPicker.valid(); };
@@ -130,6 +142,23 @@
       const b = ev.target.closest('[data-goto-tab]');
       if (b) goto(b.dataset.gotoTab);
     });
+    // My path, the starting-point tags, the sample answer, "I can help with" and the work links (public/js/story-form.js): saved at once.
+    const storyForm = box.querySelector('#storyForm');
+    WisecallStoryForm.wire(storyForm);
+    storyForm.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const err = box.querySelector('#storyError');
+      err.textContent = '';
+      try {
+        const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: WisecallStoryForm.read(storyForm) });
+        Object.assign(user, data.user);
+        WisecallNav.showToast(t('story.saved'));
+      } catch (e) {
+        err.textContent = WisecallStoryForm.knows(e.code) ? WisecallStoryForm.errorText(e) : errorText(e.code);
+        const el = WisecallStoryForm.fieldOf(storyForm, e);
+        if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
+      }
+    });
     box.querySelector('#detailsForm').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const err = box.querySelector('#detailsError');
@@ -150,6 +179,8 @@
       try {
         const data = await WisecallAPI.apiFetch('/me/fields', { method: 'PUT', body: {
           fieldId: dPick.main, extraFields: dPick.extras.filter((x) => x !== dPick.main), directions: dPick.directions, directionOther: dPick.other } });
+        // ("my field isn't in the list": what they typed goes to the admins as a suggestion)
+        await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: { fieldSuggestion: dPick.suggestion || '' } }).catch(() => {});
         Object.assign(user, data.user);
         WisecallNav.showToast(t(data.change ? 'details.pending.sent' : 'toast.saved'));
         await draw();

@@ -49,8 +49,10 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
     limits: {
       titleMax: rules.LIMITS.titleMax, tagsMax: rules.LIMITS.tagsMax, tagMax: rules.LIMITS.tagMax, yearsMax: rules.LIMITS.yearsMax,
       storyMin: rules.LIMITS.storyMin, storyMax: rules.LIMITS.storyMax, sampleMin: rules.LIMITS.sampleMin, sampleMax: rules.LIMITS.sampleMax,
-      evidenceMax: rules.LIMITS.evidenceMax, evidenceNoteMax: rules.LIMITS.evidenceNoteMax, minutesToApply: rules.LIMITS.minutesToApply
+      evidenceMax: rules.LIMITS.evidenceMax, evidenceNoteMax: rules.LIMITS.evidenceNoteMax, minutesToApply: rules.LIMITS.minutesToApply,
+      story: require('../mentorStory').LIMITS // (my path, the sample answer, "I can help with", work links)
     },
+    startTags: require('../mentorStory').START_TAGS,
     evidenceKinds: rules.EVIDENCE_KINDS,
     licence: summary.regulated ? { publicRegister: Boolean(rules.REGULATED[user.niche] && rules.REGULATED[user.niche].publicRegister),
       credential: (rules.REGULATED[user.niche] && rules.REGULATED[user.niche].credential) || 'licence' } : null,

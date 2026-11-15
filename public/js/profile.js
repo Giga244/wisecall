@@ -92,7 +92,7 @@
     sheetEl.querySelector('.sheet-close').setAttribute('aria-label', t('sheet.close'));
     bar.innerHTML = `
       <div class="ask-bar-price"><strong>${WisecallAPI.formatPrice(expert.price)}</strong>${expert.price === 0 ? '' : `<span>${t('expert.priceLabel')}</span>`}</div>
-      <button type="button" class="btn btn-primary btn-lg" id="askOpen" aria-haspopup="dialog" aria-expanded="false" aria-controls="askSheet">${t('expert.askCta')}</button>`;
+      <button type="button" class="btn btn-primary btn-lg" id="askOpen" aria-haspopup="dialog" aria-expanded="false" aria-controls="askSheet">${t(prelaunch ? 'expert.subscribeCta' : 'expert.askCta')}</button>`;
     const open = bar.querySelector('#askOpen');
     open.addEventListener('click', () => sheet.open(open));
   }
@@ -119,32 +119,79 @@
   // What students find this mentor by: the directions, the specializations, where they studied, the country.
   let catalog = null;
   const chipOf = (id) => { for (const f of (catalog ? catalog.fields : [])) { const c = f.chips.find((x) => x.id === id); if (c) return c; } return null; };
+  // In one wrapping row, each thing once (docs/CLAUDE-CODE-MENTOR-STORY.md: no pile of chips, the main field never twice): the main field
+  // first, how they mainly work, their other fields, then the directions and the specializations. A direction or a specialization that says
+  // the same as the field (or as one before it) is left out.
   const directionsHtml = () => {
     if (!isMentor) return '';
+    const seen = new Set();
+    const once = (text) => { const k = String(text || '').toLowerCase().replace(/[\s\-–/]+/g, ' ').trim(); if (!k || seen.has(k)) return false; seen.add(k); return true; };
+    const chips = [];
+    if (expert.niche) {
+      const name = WisecallI18n.fieldName(expert);
+      if (once(name)) {
+        chips.push(expert.niche === 'other' ? `<span class="tag tag-niche">${escapeHtml(name)}</span>`
+          : `<a class="tag tag-niche" href="/advice/${encodeURIComponent(expert.niche)}" title="${escapeHtml(t('niche.' + expert.niche))}">${escapeHtml(name)}</a>`);
+      }
+      if (expert.niche !== 'other') once(t('niche.' + expert.niche)); // (the category's own name is said by the chip's link)
+    }
+    if (expert.practiceKind) chips.push(`<span class="chip-tag kind-tag">${escapeHtml(t('profile.kind.' + expert.practiceKind))}</span>`);
+    for (const k of (expert.extraNiches || []).filter((x) => x !== expert.niche)) {
+      if (once(t('niche.' + k))) chips.push(`<a class="tag" href="/advice/${encodeURIComponent(k)}">${escapeHtml(t('niche.' + k))}</a>`);
+    }
     const names = (expert.directions || []).map((id) => (id.endsWith('.other') ? (expert.directionOther || {})[id.split('.')[0]] : WisecallI18n.nameIn(chipOf(id)))).filter(Boolean);
-    const specs = expert.specializations || [];
+    for (const x of [...names, ...(expert.specializations || [])]) if (once(x)) chips.push(`<span class="tag">${escapeHtml(x)}</span>`);
     const country = expert.country && catalog ? catalog.countries.find((c) => c.id === expert.country) : null;
     const facts = [expert.university ? `${t('profile.studied')}: ${expert.university}` : '', country ? `${t('profile.country')}: ${WisecallI18n.nameIn(country)}` : ''].filter(Boolean);
-    if (!names.length && !specs.length && !facts.length) return '';
-    return `<div class="profile-directions">${[...names, ...specs].map((x) => `<span class="tag">${escapeHtml(x)}</span>`).join(' ')}${facts.length ? `<p class="muted small">${escapeHtml(facts.join(' · '))}</p>` : ''}</div>`;
+    if (!chips.length && !facts.length) return '';
+    return `<div class="profile-directions">${chips.length ? `<div class="profile-fieldrow">${chips.join('')}</div>` : ''}${facts.length ? `<p class="muted small profile-studied">${escapeHtml(facts.join(' · '))}</p>` : ''}</div>`;
   };
-  function fieldsHtml() {
-    if (!isMentor) return '';
-    const extra = (expert.extraNiches || []).filter((k) => k !== expert.niche);
-    if (!extra.length && !expert.practiceKind) return '';
-    return `<p class="profile-fields">${expert.practiceKind ? `<span class="chip-tag kind-tag">${escapeHtml(t('profile.kind.' + expert.practiceKind))}</span> ` : ''}${extra.length ? `<span class="muted small">${escapeHtml(t('profile.alsoIn'))}</span> ${extra.map((k) => `<a class="tag" href="/advice/${encodeURIComponent(k)}">${escapeHtml(t('niche.' + k))}</a>`).join(' ')}` : ''}</p>`;
-  }
 
   // ---- The details every profile has: work or study, city, languages, links, member since -----------------------------
   const LINK_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
   const monthYear = (d) => WisecallI18n.formatDate(d, { month: 'long', year: 'numeric' });
+  // ---- What the mentor wrote to be trusted by (docs/CLAUDE-CODE-MENTOR-STORY.md): their path in three blocks, where they started from,
+  // a sample answer (always labelled so), what they can help with. All of it theirs; nothing here is made up by the site. ----
+  const story = () => (isMentor && expert.trust ? expert.trust : null);
+  const yearsText = (n) => (n === 0 ? t('profile.years.less') : (n === 1 ? t('profile.years.one') : t('profile.years').replace('{n}', n)));
+  function startTagsHtml() {
+    const st = story();
+    if (!st || !st.startTags.length) return '';
+    return `<div class="profile-start" role="group" aria-labelledby="startTagsLabel"><p class="profile-start-label" id="startTagsLabel">${escapeHtml(t('profile.startTags'))}</p><div class="profile-start-list">${st.startTags.map((id) => `<span class="tag tag-start">${escapeHtml(t('start.' + id))}</span>`).join('')}</div></div>`;
+  }
+  function storyHtml() {
+    const st = story();
+    if (!st) return '';
+    const para = (text) => escapeHtml(text);
+    const path = st.path ? `<section class="profile-section profile-path" aria-labelledby="pathTitle">
+        <h2 id="pathTitle">${t('profile.path.title')}</h2>
+        <div class="path-blocks">
+          ${[['start', st.path.start], ['how', st.path.how], ['now', st.path.now]].map(([k, text], i) => `<div class="path-block"><h3><span class="path-n" aria-hidden="true">${i + 1}</span>${t('profile.path.' + k)}</h3><p>${para(text)}</p></div>`).join('')}
+        </div>
+      </section>` : '';
+    const help = st.helpPoints.length ? `<section class="profile-section profile-help" aria-labelledby="helpTitle">
+        <h2 id="helpTitle">${t('profile.help.title')}</h2>
+        <ul class="profile-help-list">${st.helpPoints.map((x) => `<li>${CHECK}<span>${escapeHtml(x)}</span></li>`).join('')}</ul>
+      </section>` : '';
+    const sample = st.sample ? `<section class="profile-section profile-sample" aria-labelledby="sampleTitle">
+        <h2 id="sampleTitle"><span class="badge badge-muted sample-label">${t('profile.sample.label')}</span></h2>
+        <p class="sample-q"><span class="sr-only">${t('profile.sample.q')}: </span>${escapeHtml(st.sample.question)}</p>
+        <p class="sample-a">${para(st.sample.answer)}</p>
+        <p class="muted small sample-note">${t('profile.sample.note')}</p>
+      </section>` : '';
+    return path + help + sample;
+  }
+
   function detailsHtml() {
     const rows = [];
+    if (story() && story().years !== null) rows.push(`<li><span class="muted small">${t('profile.exp')}</span><strong class="profile-years">${escapeHtml(yearsText(story().years))}</strong></li>`);
     if (expert.currentWork) rows.push(`<li><span class="muted small">${t('profile.currentWork')}</span><strong>${escapeHtml(expert.currentWork)}</strong></li>`);
     if (expert.city) rows.push(`<li><span class="muted small">${t('profile.city')}</span><strong>${escapeHtml(expert.city)}</strong></li>`);
     if ((expert.languages || []).length) rows.push(`<li><span class="muted small">${t('profile.languages')}</span><strong>${expert.languages.map((l) => escapeHtml(t('lang.' + l))).join(', ')}</strong></li>`);
     rows.push(`<li><span class="muted small">${t('profile.memberSince')}</span><strong>${escapeHtml(monthYear(expert.memberSince))}</strong></li>`);
     const links = [];
+    // (the mentor's own links to their work: Behance, Dribbble, a site, LinkedIn; server/mentorStory.js)
+    for (const w of (story() ? story().workLinks : [])) links.push(`<a class="profile-link profile-work-link" href="${escapeHtml(w.url)}" target="_blank" rel="noopener noreferrer nofollow ugc">${LINK_ICON}${escapeHtml(w.label)}</a>`);
     if (expert.linkedinUrl) links.push(`<a class="profile-link" href="${escapeHtml(expert.linkedinUrl)}" target="_blank" rel="noopener noreferrer nofollow ugc">${LINK_ICON}LinkedIn</a>`);
     if (expert.websiteUrl) links.push(`<a class="profile-link" href="${escapeHtml(expert.websiteUrl)}" target="_blank" rel="noopener noreferrer nofollow ugc">${LINK_ICON}${escapeHtml(new URL(expert.websiteUrl).hostname.replace(/^www\./, ''))}</a>`);
     return `<ul class="profile-facts">${rows.join('')}</ul>${links.length ? `<p class="profile-links">${links.join('')}</p>` : ''}`;
@@ -166,22 +213,20 @@
           <div class="profile-head">
             ${WisecallAPI.avatar(expert, { cls: 'avatar-lg', size: 76 })}
             <div>
-              <h1 id="expertName">${escapeHtml(expert.name)}</h1>
-              ${title ? `<p class="profile-title">${escapeHtml(title)}</p>` : ''}
+              <div class="profile-name">
+                <h1 id="expertName">${escapeHtml(expert.name)}</h1>
+                ${isMentor ? `<span class="verified-mark">${CHECK}${t('expert.verifiedShort')}</span>` : ''}
+              </div>
+              ${title || (isMentor && (expert.reviewCount || 0) < 3) ? `<p class="profile-title">${escapeHtml(title)}${isMentor && (expert.reviewCount || 0) < 3 ? ` <span class="badge badge-paid profile-new">${t('expert.newMentor')}</span>` : ''}</p>` : ''}
               ${isMentor && expert.headline ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
               ${WisecallRatings.askerBadgeHtml(expert.asker)}
               ${window.WisecallProfileView ? WisecallProfileView.topSkills(expert.sections) : ''}
-              <div class="profile-tags">
-                ${isMentor && expert.niche ? (expert.niche === 'other' ? `<span class="tag tag-niche">${escapeHtml(WisecallI18n.fieldName(expert))}</span>` : `<a class="tag tag-niche" href="/advice/${encodeURIComponent(expert.niche)}" title="${escapeHtml(t('niche.' + expert.niche))}">${escapeHtml(WisecallI18n.fieldName(expert))}</a>`) : ''}
-                ${isMentor ? `<span class="tag tag-verified">${CHECK}${t('expert.verified')}</span>` : ''}
-                ${isMentor && (expert.reviewCount || 0) < 3 ? `<span class="tag tag-new">${t('expert.newMentor')}</span>` : ''}
-              </div>
-              ${fieldsHtml()}
-              <div id="profileDirections">${directionsHtml()}</div>
             </div>
           </div>
-          ${isMentor && expert.username ? `<p class="profile-share">${WisecallCopy.button(location.origin + location.pathname)}</p>` : ''}
+          <div id="profileDirections">${directionsHtml()}</div>
+          ${startTagsHtml()}
           ${isMentor && !isSelf && liveOn ? '<div class="profile-follow" id="profileFollow"></div>' : ''}
+          ${isMentor && expert.username ? `<p class="profile-share">${WisecallCopy.button(location.origin + location.pathname, { quiet: true })}</p>` : ''}
           ${isSelf ? `<p class="profile-self small"><a class="btn btn-outline btn-sm" href="/settings.html?tab=profile">${t('profile.edit')}</a> ${expert.visibility === 'contacts' ? `<span class="muted">${t('profile.visibleToContacts')}</span>` : ''}</p>` : ''}
           ${detailsHtml()}
           ${isMentor ? `<dl class="profile-stats">
@@ -196,7 +241,9 @@
           <div class="ask-panel" id="askCard"></div>
         </aside>` : ''}
 
-        ${expert.bio ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
+        ${storyHtml()}
+
+        ${expert.bio && !(story() && story().path && story().aboutIsPath) ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
 
         ${window.WisecallProfileView ? WisecallProfileView.html(expert.sections) : ''}
 
@@ -456,7 +503,7 @@
       area.innerHTML = `
         <h2>${t('expert.prelaunch.title')}</h2>
         <p class="ask-tip">${escapeHtml(t('expert.prelaunch.wait'))}</p>
-        <div class="empty-wait">${WisecallWaitlist.html(expert.niche)}</div>`;
+        <div class="empty-wait">${WisecallWaitlist.html(expert.niche, { submit: t('expert.subscribeCta') })}</div>`;
       WisecallWaitlist.wire(area);
       return;
     }

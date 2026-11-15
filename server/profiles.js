@@ -122,7 +122,9 @@ async function view(owner, viewer) {
     const pub = require('./util').publicProfile(owner);
     out.mentor = { fieldId: pub.fieldId, extraFields: pub.extraFields, directions: pub.directions, directionOther: pub.directionOther, specializations: pub.specializations, university: pub.university, country: pub.country, yearsBand: pub.yearsBand,
       roleTitle: owner.roleTitle, niche: owner.niche, customNiche: owner.customNiche || null, price: owner.price, badges: badges[owner.id] || [], ...stats[owner.id],
-      ...(week[owner.id] ? { freeFull: week[owner.id].full } : {}) }; // (answers for free, and this week's free questions are taken)
+      ...(week[owner.id] ? { freeFull: week[owner.id].full } : {}), // (answers for free, and this week's free questions are taken)
+      // (my path, starting-point tags, the sample answer, "I can help with", work links: server/mentorStory.js; the texts follow "About")
+      trust: require('./mentorStory').publicView(owner, { showAbout: has('about') }) };
   }
   // How mentors rated this person as an asker: nothing under 3 ratings, then a friendly badge and their top tags (never the ratings themselves).
   out.asker = await require('./ratings').askerBadge(owner.id);

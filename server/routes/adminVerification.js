@@ -75,7 +75,11 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
       roleTitle: mentor.roleTitle, niche: mentor.niche, customNiche: mentor.customNiche, fieldOverride: mentor.fieldOverride,
       wordsCategory: require('../fieldRules').regulatedCategoryIn(mentor.customNiche, mentor.roleTitle),
       specialtyTags: mentor.specialtyTags, yearsExperience: mentor.yearsExperience,
-      story: mentor.story, sampleAnswer: mentor.sampleAnswer, submittedAt: mentor.applicationSubmittedAt, submitted: experience.submitted(mentor)
+      // (the sample answer: the one written for the review, or the question and short answer the mentor shows on their profile,
+      // docs/CLAUDE-CODE-MENTOR-STORY.md; the admin reads what the public will)
+      story: mentor.story, sampleAnswer: mentor.sampleAnswer || (mentor.sampleQuestion && mentor.sampleReply ? `${mentor.sampleQuestion}\n\n${mentor.sampleReply}` : null),
+      profileExtras: { startTags: mentor.startTags || [], helpPoints: mentor.helpPoints || [], workLinks: mentor.workLinks || [], fieldSuggestion: mentor.fieldSuggestion || null },
+      submittedAt: mentor.applicationSubmittedAt, submitted: experience.submitted(mentor)
     },
     evidence: evidence.map((e) => ({ ...e, registry: e.kind === 'company' ? rules.COMPANY_REGISTRY : undefined })),
     analysis: reviews[0] || null,

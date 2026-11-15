@@ -36,6 +36,8 @@ function meProfile(user) {
     // needsPayout: payout details are still needed to be listed (a mentor who answers for free needs none)
     ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), needsPayout: user.price !== 0 && !payoutIbanEnc, needsAge: !user.birthYm, hasPassword: Boolean(passwordHash), photoUrl: photoUrl(user), isListedMentor: isListable(user),
     verificationState: verificationState(user),
+    // (the dashboard's one card for a mentor who applied before "My path": docs/CLAUDE-CODE-MENTOR-STORY.md 6; closed for good once dismissed)
+    storyCard: (user.role === 'mentor' || user.role === 'both') && (user.verificationStatus === 'verified' || Boolean(user.applicationSubmittedAt)) && require('./mentorStory').wantsCard(user),
     isAdmin: Boolean(user.email) && Boolean(user.emailVerified) && config.ADMIN_EMAILS.includes(String(user.email).toLowerCase())
   };
 }

@@ -65,11 +65,14 @@ for (const width of [360, 1280]) {
 
     // Step 2: two examples that fit the field.
     await page.waitForURL(/step=2$/);
-    const example = page.locator('.apply-example');
-    await expect(example).toContainText(KA['apply.story.exampleLecturer']);
-    await expect(example).toContainText(KA['apply.ex.money.lecturer']);
-    await expect(example).toContainText(KA['apply.ex.money.practitioner']);
-    await page.fill('#apStory', STORY);
+    // ("My path", docs/CLAUDE-CODE-MENTOR-STORY.md: three short blocks, each with an example labelled as one)
+    await expect(page.locator('form[data-step="1"] h1')).toHaveText(KA['story.title']);
+    const examples = page.locator('.story-field .story-example');
+    await expect(examples).toHaveCount(3);
+    await expect(examples.nth(0)).toHaveText(`${KA['story.example']} ${KA['story.start.ex']}`);
+    await expect(examples.nth(1)).toHaveText(`${KA['story.example']} ${KA['story.how.ex']}`);
+    await expect(examples.nth(2)).toHaveText(`${KA['story.example']} ${KA['story.now.ex']}`);
+    await S.fillPath(page);
     await shot('02-step-2-story');
     await page.click('.apply-next');
 

@@ -46,9 +46,15 @@ function parseTags(input) {
 const EXTRA_NICHES_MAX = 2;
 const PRACTICE_KINDS = ['academic', 'practitioner', 'both'];
 
-function parseExperience(input) {
+// opts.strict: not a draft (a sent or approved mentor's details): my path is all three blocks or none, a sample answer has its question
+// (server/mentorStory.js); opts.current: the mentor as they are now.
+function parseExperience(input, opts = {}) {
   const b = input || {};
   const patch = {};
+  // (my path, starting-point tags, the sample answer, "I can help with", work links: docs/CLAUDE-CODE-MENTOR-STORY.md)
+  const story = require('../mentorStory').parse(b, { draft: !opts.strict, current: opts.current || {} });
+  if (story.error) return story;
+  Object.assign(patch, story.patch);
   if (b.roleTitle !== undefined) {
     if (b.roleTitle !== null && typeof b.roleTitle !== 'string') return { error: 'invalid_field', field: 'roleTitle' };
     const v = oneLine(b.roleTitle || '');
@@ -226,6 +232,15 @@ function storyToBio(user, patch) {
   if (patch.story && inStep(user.bio, user.story)) patch.bio = patch.story;
   return patch;
 }
+// "My path" (three short blocks, server/mentorStory.js) is the story once all three are there: the review, the copied-text checks and the
+// admin's page go on reading users.story, and the About text follows it as it follows any story. An old free-text story stays until then.
+function pathToStory(user, patch) {
+  const mentorStory = require('../mentorStory');
+  if (!mentorStory.PATH_KEYS.some((k) => patch[k] !== undefined)) return patch;
+  const next = { ...user, ...patch };
+  if (mentorStory.pathComplete(next)) { patch.story = mentorStory.asStory(next); storyToBio(user, patch); }
+  return patch;
+}
 function bioToStory(user, patch) {
   if (patch.bio === undefined || !patch.bio || isLocked(user)) return patch;
   if ([...patch.bio].length <= LIMITS.storyMax && inStep(user.story, user.bio)) patch.story = patch.bio;
@@ -254,6 +269,7 @@ async function saveExperience(user, input, opts = {}) {
   if (error) throw new VerificationError(error, { field });
   applyChoice(user, patch);
   storyToBio(user, patch);
+  pathToStory(user, patch);
   if (Object.keys(patch).length) patch.applyTouchedAt = new Date(); // (the reminders count from the last change: ./reminders.js)
   // A different niche can need different steps (a licence), so the steps shown are recomputed from it when the page reloads.
   return Object.keys(patch).length ? updateUser(user.id, patch) : user;
@@ -574,6 +590,7 @@ async function applicationFor(user, stepMap) {
       fieldId: user.fieldId || null, extraFields: user.extraFields || [], directions: user.directions || [], directionOther: user.directionOther || {},
       university: user.university || '', country: user.country || '', currentRole: user.currentWork || '',
       roleTitle: user.roleTitle || '', niche: user.niche || null, extraNiches: user.extraNiches || [], practiceKind: user.practiceKind || null, customNiche: user.customNiche || '', regulatedByWords: regulatedByWords(user), specialtyTags: user.specialtyTags || [], yearsExperience: user.yearsExperience,
+      ...require('../mentorStory').formOf(user),
       story: user.story || '', sampleAnswer: user.sampleAnswer || '', price: user.price === undefined ? null : user.price // (0: answers for free)
     },
     evidence: evidence.map(evidenceForMentor),
@@ -583,7 +600,8 @@ async function applicationFor(user, stepMap) {
     id: idStatusOf(stepMap),
     idLeft: idLeftOf(progressOf(missingFor(user, evidence, stepMap), stepMap), idStatusOf(stepMap)),
     // why the story does not count yet, when it does not: 'short' | 'repeated' (docs/CLAUDE-CODE-STORY-STEP-CHECK.md)
-    storyReason: storyVerdict(user.story, LIMITS.storyMin).reason,
+    // (a path that was started and does not count yet says why itself: server/mentorStory.js)
+    storyReason: storyVerdict(user.story, LIMITS.storyMin).ok ? null : (require('../mentorStory').pathReason(user) || storyVerdict(user.story, LIMITS.storyMin).reason),
     submittedAt: user.applicationSubmittedAt,
     locked: isLocked(user),
     stage: await stageFor(user, stepMap)
@@ -634,5 +652,5 @@ module.exports = {
   stepsDone, trackSteps, funnel, priceRangeFor, nichesOf, anyRegulated, EXTRA_NICHES_MAX, PRACTICE_KINDS,
   isLocked, submitted, parseTags, parseExperience, applyChoice, saveExperience, listEvidence, evidenceFromRow, addEvidence, removeEvidence,
   missingFor, profileGaps, submit, withdraw, applicationFor, cleanUrl, applyFieldRules, setFieldByAdmin, kindFromUrl, isUniversity, suggestTags,
-  bioToStory, applicationProgress, progressFor, idStatusOf, ID_LEFT, sendAfterIdPassed
+  bioToStory, pathToStory, applicationProgress, progressFor, idStatusOf, ID_LEFT, sendAfterIdPassed
 };

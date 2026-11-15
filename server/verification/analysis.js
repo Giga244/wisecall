@@ -168,7 +168,7 @@ async function decideAndApply(userId, reviewId, { notify = false } = {}) {
     injection: Boolean(checks.injection && checks.injection.found),
     links: checks.links || {},
     signals: checks.signals || {},
-    noSample: !user.sampleAnswer // (the sample answer is optional: its score counts only when there is one)
+    noSample: !(user.sampleAnswer || user.sampleReply) // (the sample answer is optional: its score counts only when there is one)
   };
   const risk = rules.riskFrom(facts);
   const decision = rules.decide({

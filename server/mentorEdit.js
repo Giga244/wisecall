@@ -66,12 +66,16 @@ async function markUpdated(user, fields) {
 }
 
 // ---- The details anybody can change at any time ----------------------------------------------------------------------------------------------------
-const FREE = ['specialtyTags', 'university', 'country', 'currentRole', 'yearsExperience'];
+// (and, docs/CLAUDE-CODE-MENTOR-STORY.md: my path, the starting-point tags, the sample answer, "I can help with" and the work links. The
+// mentor's own words about themselves, checked by the contact filter; they can change or remove them at any time.)
+const FREE = ['specialtyTags', 'university', 'country', 'currentRole', 'yearsExperience', ...require('./mentorStory').KEYS];
 async function saveDetails(user, input) {
   if (!isMentor(user)) throw new EditError('not_a_mentor');
   const body = Object.fromEntries(FREE.filter((k) => (input || {})[k] !== undefined).map((k) => [k, input[k]]));
-  const { patch, error, field } = require('./verification/experience').parseExperience(body);
+  const experience = require('./verification/experience');
+  const { patch, error, field } = experience.parseExperience(body, { strict: true, current: user });
   if (error) throw new EditError(error, { field });
+  experience.pathToStory(user, patch); // (a complete path is the story, and the About text while that follows it)
   if (!Object.keys(patch).length) return user;
   const updated = await updateUser(user.id, patch);
   await markUpdated(user, Object.keys(body));
@@ -214,6 +218,8 @@ async function detailsFor(user) {
   const [change, kyc, history] = await Promise.all([openChange(user.id), require('./verification/kyc').summaryFor(user.id), priceHistoryForMentor(user.id)]);
   return {
     details: { specialtyTags: user.specialtyTags || [], university: user.university || '', country: user.country || '', currentRole: user.currentWork || '', yearsExperience: user.yearsExperience },
+    // (my path and what goes with it: server/mentorStory.js; oldStory: the free-text story shown until the path is filled in)
+    story: { ...require('./mentorStory').formOf(user), oldStory: require('./mentorStory').pathComplete(user) ? '' : (user.story || ''), limits: require('./mentorStory').LIMITS, startTags: require('./mentorStory').START_TAGS },
     fields: snapshot(user),
     pendingChange: change ? changeView(change) : null,
     licenceNeeded: change && change.proposed.niche ? await missingFor(user.id, change.proposed.niche) : [],

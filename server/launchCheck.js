@@ -42,7 +42,8 @@ function settings(config, env) {
   out.push(config.ADMIN_2FA_REQUIRED
     ? ok(`Admin accounts need two-step verification (an authenticator app; a verified session lasts ${config.ADMIN_2FA_SESSION_HOURS} hours)`)
     : fail('Admin accounts need two-step verification', 'ADMIN_2FA=off switches it off, which is only for automated tests. Remove it (the default is required)'));
-  if (!config.SUPPORT_EMAIL) out.push(warn('SUPPORT_EMAIL is set', 'it is empty, so no public contact address appears in the footer, Terms, Privacy Policy or emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@wisecallge.ge before launch'));
+  if (config.isPlaceholderEmail(config.SUPPORT_EMAIL_AS_SET)) out.push(fail('SUPPORT_EMAIL is your real support address', `${config.SUPPORT_EMAIL_AS_SET} is a placeholder, so the live site shows no contact address at all. Set it to the address your team reads`));
+  else if (!config.SUPPORT_EMAIL) out.push(warn('SUPPORT_EMAIL is set', 'it is empty, so no public contact address appears in the footer, Terms, Privacy Policy or emails, and the contact page shows only the form (messages still reach ADMIN_EMAILS). Set it to a role address such as support@wisecallge.ge before launch'));
   else if (!isEmail(config.SUPPORT_EMAIL)) out.push(fail('SUPPORT_EMAIL is an email address', `"${config.SUPPORT_EMAIL}" is not one`));
   else if (PERSONAL_MAIL.test(config.SUPPORT_EMAIL)) out.push(warn('SUPPORT_EMAIL is a role address on your own domain', `${config.SUPPORT_EMAIL} looks like a personal mailbox, and it is shown to everyone`));
   else out.push(ok(`SUPPORT_EMAIL is ${config.SUPPORT_EMAIL}`));

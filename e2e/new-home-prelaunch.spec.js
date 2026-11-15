@@ -90,7 +90,8 @@ test('the live count: hidden under 50, the exact number from 50, one more at onc
   }
 });
 
-test('Browse and profiles stay open; "დასვი კითხვა" opens the waiting list with the new words', async ({ browser }) => {
+// (before launch nobody can ask yet: the profile's one coral button is "გამოწერა", the waiting list; "დასვი კითხვა" after launch)
+test('Browse and profiles stay open; "გამოწერა" opens the waiting list with the new words', async ({ browser }) => {
   // (a mentor Browse lists, so their profile is public and has the button: one picked from the database at random could be hidden)
   const [m] = ((await (await fetch(`${srv.base}/api/experts`)).json()).experts || []).filter((e) => e.username);
   const { ctx, page } = await ka(browser);
@@ -98,10 +99,13 @@ test('Browse and profiles stay open; "დასვი კითხვა" opens 
   await expect(page.locator('#expertGrid')).toBeVisible();
   if (m) {
     await page.goto(`${srv.base}/ka/u/${encodeURIComponent(m.username)}`);
-    await expect(page.locator('#askOpen')).toHaveText('დასვი კითხვა');
+    await expect(page.locator('#askOpen')).toHaveText('გამოწერა');
+    await expect(page.locator('#askOpen')).toHaveClass(/btn-primary/);
     await page.click('#askOpen');
     await expect(page.locator('#askArea')).toContainText('Wisecall მალე იხსნება. ჩაეწერე და პირველს შეგატყობინებთ');
     await expect(page.locator('#askArea .waitlist-form input[type="email"]')).toBeVisible();
+    await expect(page.locator('#askArea .waitlist-submit')).toHaveText('გამოწერა');
+    await expect(page.locator('#askArea .waitlist-submit')).toHaveClass(/btn-primary/);
     await expect(page.locator('#askArea #question')).toHaveCount(0);
   }
   await ctx.close();

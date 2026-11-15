@@ -83,7 +83,7 @@ async function exportData(user) {
       hasPhoto: Boolean(user.photoUpdatedAt),
       cameFrom: (await query('SELECT signup_source FROM users WHERE id = $1', [id])).rows[0].signup_source || null
     },
-    mentorProfile: (user.role === 'mentor' || user.role === 'both') ? pick(user, ['roleTitle', 'niche', 'customNiche', 'price', 'specialtyTags', 'yearsExperience', 'story', 'sampleAnswer', 'verificationStatus', 'applicationSubmittedAt']) : null,
+    mentorProfile: (user.role === 'mentor' || user.role === 'both') ? pick(user, ['roleTitle', 'niche', 'customNiche', 'price', 'specialtyTags', 'yearsExperience', 'story', 'sampleAnswer', 'pathStart', 'pathHow', 'pathNow', 'startTags', 'sampleQuestion', 'sampleReply', 'helpPoints', 'workLinks', 'fieldSuggestion', 'verificationStatus', 'applicationSubmittedAt']) : null,
     payoutDetails: user.payoutName || iban ? { name: user.payoutName, ibanEndsWith: iban ? iban.slice(-4) : null } : null,
     questionsAsked: asked, questionsAnswered: answered, ratingsGiven, ratingsReceived, messagesWritten: messages, notifications,
     earnings: payouts, payoutsReceived: batches, verificationSteps: steps, evidence, signedInDevices: sessions, receipts,
@@ -160,7 +160,7 @@ async function anonymize(userId) {
       `UPDATE users SET name = 'Deleted user', email = $2, password_hash = NULL, email_verified = false, email_code_hash = NULL, email_code_expires_at = NULL, pending_email = NULL,
               reset_token_hash = NULL, reset_token_expires_at = NULL, username = NULL, username_changed_at = NULL, headline = NULL, current_work = NULL,
               city = NULL, languages = '{}', linkedin_url = NULL, website_url = NULL, bio = NULL, photo_updated_at = NULL, profile_visibility = 'contacts',
-              role_title = NULL, price = NULL, story = NULL, specialty_tags = '{}', sample_answer = NULL, proof_url = NULL, custom_niche = NULL,
+              role_title = NULL, price = NULL, story = NULL, specialty_tags = '{}', sample_answer = NULL, path_start = NULL, path_how = NULL, path_now = NULL, start_tags = '{}', sample_question = NULL, sample_reply = NULL, help_points = '{}', work_links = '{}', field_suggestion = NULL, proof_url = NULL, custom_niche = NULL,
               years_experience = NULL, payout_name = NULL, payout_iban_enc = NULL, payout_iban_last4 = NULL, work_email = NULL, work_email_code_hash = NULL,
               work_email_code_expires_at = NULL, verification_note = NULL, suspension_reason = NULL, university = NULL, direction_other = NULL, birth_ym = NULL, age_group = NULL, age_confirmed_at = NULL, parent_permission_at = NULL, deleted_at = now()
         WHERE id = $1`, [userId, `deleted-${userId}@deleted.invalid`]);

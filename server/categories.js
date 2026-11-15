@@ -53,7 +53,8 @@ const FIELDS = [
     c('management', 'მენეჯმენტი', 'Management', 'manager მენეჯერი mba'),
     c('marketing', 'მარკეტინგი', 'Marketing', 'brand ბრენდი', 'marketing'),
     c('digital', 'ციფრული მარკეტინგი / SMM', 'Digital marketing / SMM', 'smm seo ads facebook instagram სოციალური მედია', 'marketing'),
-    c('sales', 'გაყიდვები', 'Sales', 'seller გამყიდველი'),
+    c('sales', 'გაყიდვები', 'Sales', 'seller selling b2b account manager გამყიდველი გაყიდვა გაყიდვების მენეჯერი'),
+    c('freelance', 'ფრილანსი', 'Freelancing', 'freelance freelancer upwork fiverr remote clients ფრილანსერი ფრილანსინგი დისტანციური სამუშაო შეკვეთები', 'freelancing'),
     c('hr', 'HR', 'HR', 'human resources recruiter career რეკრუტერი ადამიანური რესურსები კარიერა', 'careers_hr'),
     c('projects', 'პროექტების მართვა', 'Project management', 'pmp agile project manager'),
     c('logistics', 'ლოგისტიკა / მიწოდების ჯაჭვი', 'Logistics / Supply chain', 'supply chain'),
@@ -176,6 +177,8 @@ const FIELDS = [
   ] },
   { id: 'art', icon: '🎨', ka: 'დიზაინი და ხელოვნება', en: 'Design & Arts', niche: 'creative', keywords: 'design art artist დიზაინი ხელოვნება', chips: [
     c('graphic', 'გრაფიკული დიზაინი', 'Graphic design', 'graphic designer photoshop illustrator დიზაინერი', 'design'),
+    // (docs/CLAUDE-CODE-MENTOR-STORY.md: a web designer found no place for herself; "ვებ-დიზაინი", "ვებ დიზაინი" and "web design" all find this)
+    c('web', 'ვებ-დიზაინი', 'Web design', 'web designer website webflow wordpress figma landing ვებ დიზაინი ვებდიზაინი ვებდიზაინერი ვებ დიზაინერი საიტი ვებსაიტი', 'design'),
     c('illustration', 'ილუსტრაცია', 'Illustration', 'illustrator ილუსტრატორი'),
     c('animation', '3D / ანიმაცია', '3D / Animation', 'blender maya animation ანიმატორი'),
     c('fashion', 'ფეშენ-დიზაინი', 'Fashion design', 'fashion მოდა', 'design'),
@@ -441,6 +444,8 @@ function forClient(counts = { fields: {}, chips: {} }) {
     })),
     countries: COUNTRIES.map(({ id, ka, en }) => ({ id, ka, en })),
     years: YEARS.map(({ id, ka, en }) => ({ id, ka, en })),
+    // (where a mentor started from: their own tags, a Browse filter; server/mentorStory.js)
+    startTags: require('./mentorStory').START_TAGS,
     limits: LIMITS
   };
 }

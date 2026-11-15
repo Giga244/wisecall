@@ -69,6 +69,13 @@
     container.innerHTML = `
       <h2 class="nf-title">${t('admin.niches.suggestions')}</h2>
       ${data.suggestions.length ? data.suggestions.map(suggestionCard).join('') : `<p class="muted">${t('admin.niches.none')}</p>`}
+      <h2 class="nf-title">${t('admin.niches.notInList')}</h2>
+      <p class="muted small">${t('admin.niches.notInList.hint')}</p>
+      ${(data.fieldSuggestions || []).length ? data.fieldSuggestions.map((s) => `
+        <div class="booking-card nf-not-in-list">
+          <div class="mv-step-head"><strong>${esc(s.label)}</strong><span class="badge badge-muted">${esc(String(s.count))}</span></div>
+          <ul class="earn-list">${s.mentors.map((m) => `<li><span>${esc(m.name)}</span><span class="muted small">${esc(m.email)}</span><span class="muted small">${esc(fill('admin.niches.notInList.chose', { field: m.fieldId || m.niche || '—' }))}</span></li>`).join('')}</ul>
+        </div>`).join('') : `<p class="muted">${t('admin.niches.none')}</p>`}
       <h2 class="nf-title">${t('admin.niches.all')}</h2>
       <details class="booking-card"><summary><strong>${t('admin.niches.add')}</strong></summary>${nicheForm(null, 'nfnew')}</details>
       ${data.niches.map(nicheRow).join('')}`;

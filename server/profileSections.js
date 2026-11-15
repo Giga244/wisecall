@@ -426,7 +426,7 @@ const SECTION_NAMES = {
   en: { headline: 'headline, work and city', about: 'about', experience: 'experience', education: 'education', licences: 'licences and certifications',
     skills: 'skills', languages: 'languages', projects: 'projects', journey: 'journey', links: 'links' },
   ka: { headline: 'სათაური, სამსახური და ქალაქი', about: 'ჩემ შესახებ', experience: 'გამოცდილება', education: 'განათლება', licences: 'ლიცენზიები და სერტიფიკატები',
-    skills: 'უნარები', languages: 'ენები', projects: 'პროექტები', journey: 'ჩემი გზა', links: 'ბმულები' }
+    skills: 'უნარები', languages: 'ენები', projects: 'პროექტები', journey: 'ჩემი გზის ეტაპები', links: 'ბმულები' }
 };
 
 // Hiding one section (`section`) or the whole profile (no section), with the reason the owner is told; and showing it again.

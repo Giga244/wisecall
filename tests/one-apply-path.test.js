@@ -36,9 +36,14 @@ describe('Settings has no application form', () => {
 
   test('/apply.html has every field of the old form: the optional title, tags and sample answer too', () => {
     const js = read('public/js/apply.js');
-    for (const name of ['headline', 'customNiche', 'yearsExperience', 'roleTitle', 'specialtyTags', 'story', 'sampleAnswer', 'price', 'url']) {
+    for (const name of ['headline', 'customNiche', 'yearsExperience', 'roleTitle', 'specialtyTags', 'price', 'url']) {
       assert.match(js, new RegExp(`name="${name}"`), name);
     }
+    // (the story is "My path" now, three short blocks, and the sample answer is a question with a short answer shown on the profile:
+    // docs/CLAUDE-CODE-MENTOR-STORY.md; one form for /apply.html and Settings, public/js/story-form.js)
+    assert.match(js, /WisecallStoryForm\.html\(/);
+    const story = read('public/js/story-form.js');
+    for (const name of ['pathStart', 'pathHow', 'pathNow', 'sampleQuestion', 'sampleReply', 'helpPoint', 'workLink']) assert.ok(story.includes(name), name);
     // and after "Submit": the ID check, a licence to give again, the video call, "Edit my application"
     for (const part of ['identityDone()', 'licenceToFix ? licenceBlock()', 'interviewBlock()', 'data-edit']) assert.ok(js.includes(part), part);
   });

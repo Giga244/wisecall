@@ -25,10 +25,24 @@
   let paidOnly = startParams.get('paid') === '1';
   let activeCountry = startParams.get('country') || '';
   let activeYears = startParams.get('years') || '';
+  // "Where they started": a starting-point tag mentors set themselves (docs/CLAUDE-CODE-MENTOR-STORY.md), so a student finds one who started like them.
+  // (several can be chosen: a mentor with any of them is shown)
+  const activeStarts = new Set((startParams.get('start') || '').split(',').filter(Boolean));
+  // (the tags are drawn at once, before the list and the catalog arrive, so the cards below do not move when they do: the server's list is
+  // server/mentorStory.js START_TAGS, and tests/mentor-story.test.js keeps the two the same)
+  const START_IDS = ['region', 'grant', 'worked', 'selftaught', 'switched', 'abroad', 'firstgen'];
   let searchTerm = '';
   // Mentors the server found for the search (it also matches their specialty tags, which are not sent to the page): ids, or null.
   let serverMatches = null;
-  let sortMode = 'rating';
+  // "Recommended" is the list's own order; "Top rated" is offered only once a mentor has a real rating (never a sort by ratings nobody gave).
+  let sortMode = 'recommended';
+  const anyRatings = () => allExperts.some((e) => (e.reviewCount || 0) > 0 && e.ratingAvg);
+  function syncSort() {
+    const opt = sortSelect.querySelector('option[value="rating"]');
+    if (opt) { opt.hidden = !anyRatings(); opt.disabled = !anyRatings(); }
+    if (sortMode === 'rating' && !anyRatings()) sortMode = 'recommended';
+    sortSelect.value = sortMode;
+  }
   // "Free": only mentors who answer for free (?free=1), on top of the field.
   let freeOnly = new URLSearchParams(window.location.search).get('free') === '1';
 
@@ -36,12 +50,29 @@
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // The role and the field say the same thing ("ვებ-დიზაინერი" and "ვებ-დიზაინი", "Product designer" and "Product design"): the card says it once.
+  function sameThing(a, b) {
+    const n = (v) => String(v || '').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}]+/gu, '');
+    const x = n(a), y = n(b);
+    if (!x || !y) return false;
+    const short = x.length <= y.length ? x : y, long = x.length <= y.length ? y : x;
+    let i = 0;
+    while (i < short.length && short[i] === long[i]) i += 1;
+    return i >= Math.max(4, Math.ceil(short.length * 0.75));
+  }
+
   function sortList(list) {
     const sorted = [...list];
     if (sortMode === 'priceAsc') sorted.sort((a, b) => a.price - b.price);
     else if (sortMode === 'priceDesc') sorted.sort((a, b) => b.price - a.price);
     else if (sortMode === 'newest') sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    else sorted.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0) || (b.reviewCount || 0) - (a.reviewCount || 0));
+    else if (sortMode === 'rating') sorted.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0) || (b.reviewCount || 0) - (a.reviewCount || 0));
+    else {
+      // Recommended: real ratings first (when there are any), then the profiles that tell a student more (their path, a sample answer),
+      // then the newest. Nothing here is a number the site made up.
+      const told = (e) => (e.trust ? (e.trust.nowLine ? 1 : 0) + (e.trust.hasSample ? 1 : 0) : 0);
+      sorted.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0) || (b.reviewCount || 0) - (a.reviewCount || 0) || told(b) - told(a) || new Date(b.createdAt) - new Date(a.createdAt));
+    }
     return sorted;
   }
 
@@ -57,7 +88,8 @@
   const chipById = (id) => { for (const f of (catalog ? catalog.fields : [])) { const c = f.chips.find((x) => x.id === id); if (c) return c; } return null; };
   const knownField = (id) => id === 'other' || WisecallI18n.fields().some((f) => f.id === id);
   // What the list shows apart from the field and the chip: free or paid, a country, the years of experience.
-  const passesFilters = (e) => (!freeOnly || e.price === 0) && (!paidOnly || e.price > 0) && (!activeCountry || e.country === activeCountry) && (!activeYears || e.yearsBand === activeYears);
+  const passesFilters = (e) => (!freeOnly || e.price === 0) && (!paidOnly || e.price > 0) && (!activeCountry || e.country === activeCountry) && (!activeYears || e.yearsBand === activeYears)
+    && (!activeStarts.size || Boolean(e.trust && e.trust.startTags.some((id) => activeStarts.has(id))));
   // What the search box asks for (the list and the field chips' counts both use it).
   const matchesSearch = (e) => {
     if (!searchTerm) return true;
@@ -69,11 +101,29 @@
 
   function drawChips() {
     const options = (list, chosen, none) => `<option value="">${escapeHtml(none)}</option>${list.map((x) => `<option value="${escapeHtml(x.id)}"${x.id === chosen ? ' selected' : ''}>${escapeHtml(nameIn(x))}</option>`).join('')}`;
+    // Each group with its own label (in the sheet on a phone they are stacked, full width; on a computer they are one row).
     filters.innerHTML = `
-      <button type="button" class="chip chip-free${freeOnly ? ' active' : ''}" data-free aria-pressed="${freeOnly}">${escapeHtml(t('experts.filter.free'))}</button>
-      <button type="button" class="chip${paidOnly ? ' active' : ''}" data-paid aria-pressed="${paidOnly}">${escapeHtml(t('browse.filter.paid'))}</button>
-      <label class="filter-select"><span class="sr-only">${escapeHtml(t('browse.filter.country'))}</span><select id="filterCountry" data-filter="country">${options(catalog ? catalog.countries : [], activeCountry, t('browse.filter.country'))}</select></label>
-      <label class="filter-select"><span class="sr-only">${escapeHtml(t('browse.filter.years'))}</span><select id="filterYears" data-filter="years">${options(catalog ? catalog.years : [], activeYears, t('browse.filter.years'))}</select></label>`;
+      <div class="filter-group filter-price" role="group" aria-labelledby="filterPriceLabel">
+        <p class="filter-label" id="filterPriceLabel">${escapeHtml(t('browse.filter.price'))}</p>
+        <div class="filter-chips">
+          <button type="button" class="chip chip-free${freeOnly ? ' active' : ''}" data-free aria-pressed="${freeOnly}">${escapeHtml(t('experts.filter.free'))}</button>
+          <button type="button" class="chip${paidOnly ? ' active' : ''}" data-paid aria-pressed="${paidOnly}">${escapeHtml(t('browse.filter.paid'))}</button>
+        </div>
+      </div>
+      <div class="filter-group filter-select">
+        <label class="filter-label" for="filterCountry">${escapeHtml(t('browse.filter.country'))}</label>
+        <select id="filterCountry" data-filter="country">${options(catalog ? catalog.countries : [], activeCountry, t('browse.filter.country'))}</select>
+      </div>
+      <div class="filter-group filter-select">
+        <label class="filter-label" for="filterYears">${escapeHtml(t('browse.filter.years'))}</label>
+        <select id="filterYears" data-filter="years">${options(catalog ? catalog.years : [], activeYears, t('browse.filter.years'))}</select>
+      </div>
+      <div class="filter-group filter-start" role="group" aria-labelledby="filterStartLabel">
+        <p class="filter-label" id="filterStartLabel">${escapeHtml(t('browse.filter.start'))}</p>
+        <div class="filter-chips">
+          ${(catalog && catalog.startTags ? catalog.startTags : START_IDS.map((id) => ({ id }))).map((x) => `<button type="button" class="chip chip-start${activeStarts.has(x.id) ? ' active' : ''}" data-start="${escapeHtml(x.id)}" aria-pressed="${activeStarts.has(x.id)}">${escapeHtml(t('start.' + x.id))}</button>`).join('')}
+        </div>
+      </div>`;
     const count = (test) => allExperts.filter((e) => matchesSearch(e) && test(e)).length;
     const button = (attrs, label, n, on) => `<button type="button" class="chip${on ? ' active' : ''}" ${attrs} aria-pressed="${Boolean(on)}">${label}${n === null ? '' : ` <span class="chip-count">${n}</span>`}</button>`;
     if (activeField === 'all') {
@@ -107,6 +157,7 @@
       put('paid', paidOnly ? '1' : null);
       put('country', activeCountry);
       put('years', activeYears);
+      put('start', [...activeStarts].join(','));
       window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     }
     render();
@@ -139,7 +190,7 @@
   // "8 experts" under the search, the number of filters in use on the Filters button, and the sheet's own button.
   let shown = 0;
   function summary() {
-    const active = (sortMode !== 'rating' ? 1 : 0) + (freeOnly ? 1 : 0) + (paidOnly ? 1 : 0) + (activeCountry ? 1 : 0) + (activeYears ? 1 : 0);
+    const active = (sortMode !== 'recommended' ? 1 : 0) + (freeOnly ? 1 : 0) + (paidOnly ? 1 : 0) + (activeCountry ? 1 : 0) + (activeYears ? 1 : 0) + activeStarts.size;
     filtersCount.hidden = active === 0;
     filtersCount.textContent = String(active);
     filtersBtn.setAttribute('aria-label', active ? `${t('experts.filters')} (${active})` : t('experts.filters'));
@@ -185,12 +236,13 @@
           ${WisecallAPI.avatar(e)}
           <div>
             <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
-            <div class="card-role">${escapeHtml(e.roleTitle || '')}${e.niche ? ` · ${escapeHtml(WisecallI18n.fieldName(e))}` : ''}${e.practiceKind ? ` <span class="chip-tag kind-tag">${escapeHtml(t('profile.kind.' + e.practiceKind))}</span>` : ''}</div>
+            <div class="card-role">${[e.roleTitle, e.niche && !sameThing(e.roleTitle, WisecallI18n.fieldName(e)) ? WisecallI18n.fieldName(e) : ''].filter(Boolean).map(escapeHtml).join(' · ')}${e.practiceKind ? ` <span class="chip-tag kind-tag">${escapeHtml(t('profile.kind.' + e.practiceKind))}</span>` : ''}</div>
             ${e.profile && (e.profile.currentPosition || e.profile.yearsOfExperience) ? `<div class="card-role small">${e.profile.currentPosition ? escapeHtml(t('experts.card.at').replace('{title}', e.profile.currentPosition.title).replace('{organisation}', e.profile.currentPosition.organisation)) : ''}${e.profile.currentPosition && e.profile.yearsOfExperience ? ' · ' : ''}${e.profile.yearsOfExperience ? escapeHtml(t('experts.card.years').replace('{n}', e.profile.yearsOfExperience)) : ''}</div>` : ''}
           </div>
         </div>
         ${e.profile && e.profile.headline ? `<div class="card-headline">${escapeHtml(e.profile.headline)}</div>` : ''}
-        <div class="card-bio">${e.bio ? `<p class="card-bio-text" data-clamp>${escapeHtml(e.bio)}</p><span class="card-more" data-clamp-more hidden>${escapeHtml(t('experts.card.more'))}</span>` : ''}</div>
+        <div class="card-bio">${e.trust && e.trust.nowLine ? `<p class="card-bio-text card-now" data-clamp>${escapeHtml(e.trust.nowLine)}</p><span class="card-more" data-clamp-more hidden>${escapeHtml(t('experts.card.more'))}</span>` : (e.bio ? `<p class="card-bio-text" data-clamp>${escapeHtml(e.bio)}</p><span class="card-more" data-clamp-more hidden>${escapeHtml(t('experts.card.more'))}</span>` : '')}</div>
+        ${e.trust && (e.trust.startTags.length || e.trust.hasSample) ? `<div class="card-start">${e.trust.startTags.slice(0, 2).map((id) => `<span class="tag tag-start">${escapeHtml(t('start.' + id))}</span>`).join(' ')}${e.trust.hasSample ? ` <span class="tag tag-sample">${escapeHtml(t('experts.card.sample'))}</span>` : ''}</div>` : ''}
         ${e.profile && (e.profile.topSkills || []).length ? `<div class="card-skills">${e.profile.topSkills.map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join(' ')}</div>` : ''}
         ${(e.directions || []).length ? `<div class="card-skills">${e.directions.slice(0, 3).map(chipById).filter((c) => c && !c.other).map((c) => `<span class="tag">${escapeHtml(nameIn(c))}</span>`).join(' ')}</div>` : ''}
         ${WisecallBadges.row(e.badges)}
@@ -208,7 +260,8 @@
   filters.addEventListener('click', ev => {
     const btn = ev.target.closest('.chip');
     if (btn && btn.hasAttribute('data-free')) { freeOnly = !freeOnly; if (freeOnly) paidOnly = false; setField(activeField, activeChip); return; }
-    if (btn && btn.hasAttribute('data-paid')) { paidOnly = !paidOnly; if (paidOnly) freeOnly = false; setField(activeField, activeChip); }
+    if (btn && btn.hasAttribute('data-paid')) { paidOnly = !paidOnly; if (paidOnly) freeOnly = false; setField(activeField, activeChip); return; }
+    if (btn && btn.dataset.start) { if (activeStarts.has(btn.dataset.start)) activeStarts.delete(btn.dataset.start); else activeStarts.add(btn.dataset.start); setField(activeField, activeChip); }
   });
   filters.addEventListener('change', (ev) => {
     if (ev.target.dataset.filter === 'country') activeCountry = ev.target.value;
@@ -260,12 +313,13 @@
   placeControls();
   filtersBtn.addEventListener('click', () => sheet.open(filtersBtn));
   document.getElementById('filtersClear').addEventListener('click', () => {
-    sortMode = 'rating';
-    sortSelect.value = 'rating';
+    sortMode = 'recommended';
+    sortSelect.value = 'recommended';
     freeOnly = false;
     paidOnly = false;
     activeCountry = '';
     activeYears = '';
+    activeStarts.clear();
     setField(activeField, activeChip);
   });
 
@@ -305,6 +359,7 @@
     allExperts = data.experts;
     catalog = list;
     loaded = true;
+    syncSort();
     setField(activeField, activeChip, { push: false }); // (the chips now know which fields have mentors)
   } catch (e) {
     grid.setAttribute('aria-busy', 'false');

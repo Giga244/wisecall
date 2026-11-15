@@ -102,11 +102,17 @@ describe('too long is said, never cut', () => {
     const apply = read('public/js/apply.js');
     assert.doesNotMatch(apply, /<textarea id="apStory"[^>]*maxlength/);
     assert.doesNotMatch(apply, /<textarea id="apSample"[^>]*maxlength/);
-    assert.match(apply, /const over = n > v\.limits\.storyMax;/);
+    // (step 2 is "My path" now, docs/CLAUDE-CODE-MENTOR-STORY.md: its boxes are drawn by public/js/story-form.js, none with a maxlength; the
+    // counter says when a text is over, and the save refuses it with what was typed still in the box)
+    const story = read('public/js/story-form.js');
+    assert.doesNotMatch(story, /maxlength/);
+    assert.match(story, /const over = \[\.\.\.area\.value\.trim\(\)\]\.length > max;/);
+    assert.match(apply, /WisecallStoryForm\.html\(/);
     assert.doesNotMatch(read('public/js/settings-profile-sections.js'), /const area = [^\n]*maxlength/);
     for (const l of ['en', 'ka']) {
       const d = JSON.parse(read(`public/i18n/${l}.json`));
       assert.match(d['apply.story.countOver'], /\{max\}/);
+      assert.match(d['story.count.over'], /\{max\}/);
       assert.match(d['ps.err.invalid_description'], /\{max\}/);
     }
   });

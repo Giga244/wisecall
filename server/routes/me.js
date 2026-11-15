@@ -398,6 +398,12 @@ router.post('/password', requireAuth, asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// The dashboard's "add your path and a sample answer" card is closed (docs/CLAUDE-CODE-MENTOR-STORY.md 6): it does not come back.
+router.post('/story-card/dismiss', requireAuth, asyncHandler(async (req, res) => {
+  await updateUser(req.userToken.id, { pathCardDismissedAt: new Date() });
+  res.json({ ok: true });
+}));
+
 // Settings -> Account: change the account's confirmed email (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md 3). The password first (or, for an account
 // made with Google, a recent sign-in), then a code goes to the new address; only when it is entered does the address change, and the old
 // address gets a short notice. Until then the old address stays the account's (users.pending_email waits). The code rules are the ones of

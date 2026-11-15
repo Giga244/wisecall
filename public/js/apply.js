@@ -1,5 +1,5 @@
 // /apply.html: the mentor application, one step at a time (docs/CLAUDE-CODE-MENTOR-SIGNUP.md #3, docs/CLAUDE-CODE-UX-WALKTHROUGH.md A).
-//   1 About you (what I do, my field in my own words with the closest category, years)  2 Your story  3 Your price
+//   1 About you (what I do, my field in my own words with the closest category, years)  2 My path (three short blocks)  3 Your price
 //   4 Proof of experience (one link or document; the licence in a regulated field)       5 ID check, then send
 // The ID check comes before "send" (docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md): until it has passed or is with the partner, step 5's one button
 // starts it, and with steps 1-4 done "One step left: confirm your identity" is at the top of every step and of the "sent" screen.
@@ -40,7 +40,7 @@
   let fieldPicker = null; // (public/js/field-picker.js, on step 1)
   const setPick = () => {
     const f = v.application.form;
-    pick = { main: f.fieldId || null, extras: [...(f.extraFields || [])], directions: [...(f.directions || [])], other: { ...(f.directionOther || {}) } };
+    pick = { main: f.fieldId || null, extras: [...(f.extraFields || [])], directions: [...(f.directions || [])], other: { ...(f.directionOther || {}) }, suggestion: f.fieldSuggestion || '' };
   };
   let iv = null; // GET /verification/interview (a video call, only when an admin asked for one)
   async function load() {
@@ -69,7 +69,7 @@
   function started(i) {
     const f = v.application.form;
     return [Boolean(user.headline || f.customNiche || (f.yearsExperience !== null && f.yearsExperience !== undefined)),
-      Boolean(f.story && f.story.trim()), user.price !== null && user.price !== undefined, v.application.evidence.length > 0][i];
+      Boolean((f.story && f.story.trim()) || f.pathStart || f.pathHow || f.pathNow), user.price !== null && user.price !== undefined, v.application.evidence.length > 0][i];
   }
   const flagged = (i) => i < 4 && !stepDone(i) && missingIn(i).length > 0 && (i < furthest || started(i));
   // The line under the step's title: for the story, why it does not count; otherwise what is missing.
@@ -77,7 +77,6 @@
     if (i === 1 && v.application.storyReason === 'repeated') return t('apply.err.storyRepeated');
     return fill('apply.gap', { list: missingIn(i).map(missingText).join(', ') });
   }
-  const storyMessage = (verdict) => (verdict.reason === 'repeated' ? t('apply.err.storyRepeated') : fill('apply.err.story', { min: v.limits.storyMin }));
   function stepFromUrl() {
     const n = Number(new URLSearchParams(window.location.search).get('step'));
     return Number.isInteger(n) && n >= 1 && n <= 5 ? n - 1 : null;
@@ -218,7 +217,8 @@
         </div>
         <div class="apply-field">
           <label for="apUniversity">${esc(t('pick.university'))}</label>
-          <input id="apUniversity" name="university" type="text" maxlength="100" list="apUniversities" value="${esc(f.university || '')}" autocomplete="off">
+          <input id="apUniversity" name="university" type="text" maxlength="100" list="apUniversities" value="${esc(f.university || '')}" autocomplete="off" aria-describedby="apUniversityHint">
+          <span class="hint" id="apUniversityHint">${esc(t('pick.university.hint'))}</span>
           <datalist id="apUniversities"></datalist>
         </div>
         <div class="apply-field">
@@ -257,33 +257,17 @@
       </form>`;
   }
 
+  // Step 2, "My path" (docs/CLAUDE-CODE-MENTOR-STORY.md): three short blocks in place of the free-text story (public/js/story-form.js). A
+  // story written before stays, and is shown on the profile, until the three blocks are filled in.
+  const oldStoryOk = () => WisecallTextRules.storyVerdict(v.application.form.story, v.limits.storyMin).ok;
   function storyStep() {
     const f = v.application.form;
-    const L = v.limits;
+    const pathDone = !WisecallStoryForm.pathProblem(f, v.limits.story);
     return `
       <form class="apply-step" data-step="1" novalidate>
-        <h1 tabindex="-1">${esc(t('apply.story.title'))}</h1>
-        <p class="apply-lead">${esc(t('apply.story.lead'))}</p>
-        <div class="apply-field">
-          <label for="apStory">${esc(t('apply.f.story'))}</label>
-          <textarea id="apStory" name="story" rows="9" data-max="${L.storyMax}" aria-describedby="apStoryCount apStoryNote" required>${esc(f.story)}</textarea>
-          <p class="apply-count" id="apStoryCount" aria-live="polite"></p>
-          <p class="hint" id="apStoryNote">${esc(t('apply.story.about'))}</p>
-        </div>
-        <div class="apply-example">
-          <p class="apply-example-label">${esc(t('apply.story.exampleLecturer'))}</p>
-          <p>${esc(t(`apply.ex.${groupOf(v.niche)}.lecturer`))}</p>
-          <p class="apply-example-label">${esc(t('apply.story.examplePractitioner'))}</p>
-          <p>${esc(t(`apply.ex.${groupOf(v.niche)}.practitioner`))}</p>
-        </div>
-        <details class="apply-more apply-optional"${f.sampleAnswer ? ' open' : ''}>
-          <summary>${esc(t('apply.story.more'))}</summary>
-          <div class="apply-field">
-            <label for="apSample">${esc(t('ap.f.sample'))}</label>
-            <textarea id="apSample" name="sampleAnswer" rows="6" data-max="${v.limits.sampleMax}" aria-describedby="apSampleHint">${esc(f.sampleAnswer || '')}</textarea>
-            <span class="hint" id="apSampleHint">${esc(t('ap.f.sample.hint'))}</span>
-          </div>
-        </details>
+        <h1 tabindex="-1">${esc(t('story.title'))}</h1>
+        <p class="apply-lead">${esc(t('story.lead'))}</p>
+        ${WisecallStoryForm.html(f, { limits: v.limits.story, startTags: v.startTags || [], prefix: 'ap', oldStory: pathDone ? '' : (f.story || '') })}
         ${nav(1)}
       </form>`;
   }
@@ -710,6 +694,7 @@
       method: 'PUT',
       body: { customNiche: form.customNiche.value.trim(), roleTitle: form.roleTitle.value, specialtyTags: form.specialtyTags.value,
         ...(pick.main ? { fieldId: pick.main, extraFields: pick.extras, directions: pick.directions, directionOther: pick.other } : {}),
+        fieldSuggestion: pick.suggestion || '', // ("my field isn't in the list": what they typed, for the admins)
         university: form.university.value, country: form.country.value || null, currentRole: form.currentRole.value, practiceKind: (form.querySelector('input[name="practiceKind"]:checked') || {}).value || null,
         ...(y.empty ? { yearsExperience: null } : (y.n !== undefined ? { yearsExperience: y.n } : {})) }
     });
@@ -734,11 +719,26 @@
       await saveAbout(form);
       if (problems.length) { problems.forEach(([name, text]) => fieldError(form, name, text)); focusField(form, problems[0][0]); return false; }
     } else if (step === 1) {
-      const story = form.story.value;
-      // (saved first, so nothing is lost; then the server's own rule decides whether it counts: public/js/text-rules.js)
-      await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: { story, sampleAnswer: form.sampleAnswer.value } });
-      const verdict = WisecallTextRules.storyVerdict(story, v.limits.storyMin);
-      if (check && !verdict.ok) { await load(); drawHead(); stepError(storyMessage(verdict)); form.story.focus(); return false; }
+      const story = WisecallStoryForm.read(form);
+      // (saved first, so nothing is lost; a field the server refuses says why, under the step, with the field in view)
+      try {
+        await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: story });
+      } catch (e) {
+        if (!e.code || !WisecallStoryForm.knows(e.code)) throw e;
+        stepError(WisecallStoryForm.errorText(e, v.limits.story));
+        const el = WisecallStoryForm.fieldOf(form, e);
+        if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
+        return false;
+      }
+      // (all three blocks, each long enough; or none of them while a story written before still counts)
+      const problem = WisecallStoryForm.pathProblem(story, v.limits.story, { oldStoryOk: oldStoryOk() });
+      if (check && problem) {
+        await load(); drawHead();
+        stepError(WisecallStoryForm.errorText({ code: problem.code }, v.limits.story));
+        const el = form.querySelector(`[name="${problem.field}"]`);
+        if (el) el.focus();
+        return false;
+      }
     } else if (step === 2) {
       // "Answer for free" is price 0 (docs/CLAUDE-CODE-FREE-ANSWERS.md).
       if (form.priceMode.value === 'free') { if (user.price !== 0) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price: 0 } }); return true; }
@@ -772,6 +772,8 @@
         if (gaps.length) { gaps.forEach(([n, text]) => fieldError(form, n, text)); focusField(form, gaps[0][0]); } else stepError(gapLine(current));
         return;
       }
+      // ("Saved ✓" after every step: nothing waits for the end of the form)
+      if (check && typeof target === 'number' && target > current) WisecallNav.showToast(t('apply.savedStep'));
       go(target);
     } catch (e) {
       showSaveError(e);
@@ -958,6 +960,7 @@
             if (kind === 'too_many_fields') { fieldError(form, 'extra', t('ap.err.too_many_fields')); return; }
             if (kind === 'too_many_directions') { fieldError(form, 'niche', t('ap.err.too_many_directions')); return; }
             if (kind === 'other') { preview(); return; }
+            if (kind === 'suggestion') { draftAbout(form); return; } // ("my field isn't in the list": saved with the step)
             chosen = true; // (a field or a direction tapped: the choice is theirs now, the words no longer change it)
             fieldError(form, 'niche', '');
             fieldError(form, 'extra', '');
@@ -1030,22 +1033,7 @@
       });
       Object.entries(ERROR_INPUT).forEach(([n, id]) => { const el = form.querySelector('#' + id); if (el) el.addEventListener('input', () => fieldError(form, n, '')); });
     }
-    if (current === 1) {
-      const area = form.story;
-      const out = form.querySelector('#apStoryCount');
-      const draw = () => {
-        const verdict = WisecallTextRules.storyVerdict(area.value, v.limits.storyMin);
-        const n = verdict.n;
-        // (too long: said here and refused on saving, never cut: what was pasted stays whole in the box)
-        const over = n > v.limits.storyMax;
-        const key = over ? 'apply.story.countOver' : verdict.ok ? 'apply.story.countOk' : (verdict.reason === 'repeated' ? 'apply.story.countRepeated' : 'apply.story.count');
-        out.textContent = fill(key, { n, min: v.limits.storyMin, max: v.limits.storyMax });
-        out.classList.toggle('is-ok', verdict.ok && !over);
-        out.classList.toggle('is-over', over);
-      };
-      area.addEventListener('input', draw);
-      draw();
-    }
+    if (current === 1) WisecallStoryForm.wire(form); // (the counters, and "at most 3" for the starting-point tags)
     if (current === 2) {
       const input = form.price;
       const out = form.querySelector('#apPriceYou') || root.querySelector('#apPriceYou');

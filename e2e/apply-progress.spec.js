@@ -57,7 +57,7 @@ test('steps 1 and 3 done, step 2 open: "ნაბიჯი 2: ისტორი
   for (const width of [1280, 360]) {
     const { ctx, page } = await pageFor(browser, width, people.half);
     await page.goto('/apply.html?step=2');
-    await expectProgress(page, { step: 2, name: 'ისტორია', done: 2, ticks: [true, false, true, false, false] });
+    await expectProgress(page, { step: 2, name: 'ჩემი გზა', done: 2, ticks: [true, false, true, false, false] });
     if (width === 1280) await expect(page.locator('#navLoggedIn [data-mentor-cta="nav"] .nm-short')).toHaveText('განაცხადი · 2/5');
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/${width}-apply-step2.png` });
     // the Settings card: the same count, and "Continue" to the first unfinished step
@@ -78,10 +78,10 @@ test('steps 1 and 3 done, step 2 open: "ნაბიჯი 2: ისტორი
 test('saving a step ticks it at once (no reload), and the header follows; emptying a step takes its tick away', async ({ browser }) => {
   const { ctx, page } = await pageFor(browser, 1280, people.half);
   await page.goto('/apply.html?step=2');
-  await expectProgress(page, { step: 2, name: 'ისტორია', done: 2, ticks: [true, false, true, false, false] });
+  await expectProgress(page, { step: 2, name: 'ჩემი გზა', done: 2, ticks: [true, false, true, false, false] });
   let loads = 0;
   page.on('load', () => { loads += 1; });
-  await page.fill('#apStory', STORY);
+  await S.fillPath(page); // ("My path": three short blocks)
   await page.click('.apply-next');
   await page.waitForURL(/step=3$/);
   await expectProgress(page, { step: 3, name: 'ფასი', done: 3, ticks: [true, true, true, false, false] });

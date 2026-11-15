@@ -1175,3 +1175,84 @@ details.profile-more[open] > summary::after { transform: rotate(225deg); margin-
   .email-code-input { flex: 1 1 8em; }
 }
 @media (max-width: 479px) { .email-code-actions { flex-direction: column; align-items: flex-start; } .email-code-actions > span[aria-hidden] { display: none; } }
+
+/* "My path" and what goes with it (docs/CLAUDE-CODE-MENTOR-STORY.md): the form (public/js/story-form.js), the profile's three blocks,
+   the starting-point chips, the sample answer, the Browse card and the dashboard's one card. Calm: tokens only, no new colours. */
+.story-example { margin: 4px 0 0; color: var(--ink-soft); }
+.story-example-label { font-weight: 700; }
+.story-count { margin: 4px 0 0; }
+.story-old-text { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-soft); }
+.story-tags, .story-points, .story-links { border: 0; padding: 0; margin-inline: 0; min-width: 0; }
+.story-tags legend, .story-points legend, .story-links legend { font-weight: 700; padding: 0; }
+.story-tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+.story-tag { min-height: 44px; }
+.story-tags-max { margin: 8px 0 0; font-weight: 700; }
+.story-points textarea, .story-links input { display: block; width: 100%; margin: 8px 0 0; }
+.details-story .apply-field { margin: 0 0 16px; }
+.details-story .apply-field > label, .details-story .apply-field > legend { display: block; font-weight: 700; margin: 0 0 6px; }
+.details-story textarea, .details-story input[type="text"], .details-story input[type="url"] { width: 100%; }
+.fp-hits-title { margin: 12px 0 6px; }
+.fp-hit-field { color: var(--ink-soft); font-weight: 400; }
+.fp-not-listed { margin: 14px 0 0; display: grid; gap: 6px; }
+.fp-not-listed .linklike { justify-self: start; min-height: 44px; }
+.fp-not-listed label { font-weight: 700; }
+.fp-not-listed input { width: 100%; }
+
+/* The profile's head (docs/CLAUDE-CODE-MENTOR-STORY.md): a small "✓ Verified" by the name; under the head, at the card's full width, one
+   wrapping row for the field and the directions, then the starting-point tags as their own small group with a label. */
+.profile-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 4px; }
+.profile-name h1 { margin: 0; }
+.verified-mark { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; font-weight: 700; color: var(--accent2-text); white-space: nowrap; }
+.profile-title .profile-new { margin-left: 4px; vertical-align: middle; }
+#profileDirections:empty { display: none; }
+.profile-card .profile-directions { margin-top: 16px; }
+.profile-fieldrow, .profile-card > .profile-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.profile-card > .profile-tags { margin-top: 16px; }
+.profile-studied { margin: 8px 0 0; }
+.profile-start { margin: 14px 0 0; }
+.profile-start-label { margin: 0 0 6px; font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); }
+.profile-start-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.copy-link-quiet { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--ink-soft); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.copy-link-quiet:hover, .copy-link-quiet.copied { color: var(--ink); }
+.copy-link-quiet:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.profile-share { margin: 6px 0 0; }
+.tag-start { background: var(--sun-tint); color: var(--ink); border: var(--line-w) solid var(--line); }
+.tag-sample { background: var(--gray-soft); color: var(--ink); }
+.path-blocks { display: grid; gap: 14px; }
+.path-block { padding: 14px 16px; border: var(--line-w) solid var(--line); border-radius: var(--r-card); background: var(--card); }
+.path-block h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 1rem; line-height: 1.3; }
+.path-n { flex: 0 0 auto; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--sun-tint); border: var(--line-w) solid var(--line); font-size: 0.85rem; font-weight: 800; }
+.path-block p { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (min-width: 900px) { .path-blocks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.profile-help-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.profile-help-list li { display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; overflow-wrap: anywhere; }
+.profile-help-list svg { flex: 0 0 auto; margin-top: 4px; color: var(--accent2); }
+.profile-sample h2 { margin: 0 0 10px; font-size: 1rem; }
+.sample-label { font-size: 0.85rem; }
+.sample-q { margin: 0 0 8px; font-weight: 800; line-height: 1.45; overflow-wrap: anywhere; }
+.sample-a { margin: 0 0 10px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sample-note { margin: 0; }
+.card-start { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.card-start .tag { font-size: 0.8rem; }
+.story-card { align-items: center; }
+.story-card-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 639px) { .story-card-actions .btn { flex: 1 1 auto; } }
+
+/* Step 2's optional parts (docs/CLAUDE-CODE-MENTOR-STORY.md): in sight under their heading, each one a row that opens. And the boxes of
+   "My path" grow with the text (public/js/story-form.js), so nothing scrolls inside a box. */
+.story-more { margin: 22px 0 0; }
+.story-more-title { margin: 0 0 4px; font-size: 1.05rem; line-height: 1.35; }
+.story-more-hint { margin: 0 0 12px; }
+.story-opt { border: var(--line-w) solid var(--line); border-radius: var(--r-card); background: var(--card); margin: 0 0 10px; }
+.story-opt > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; min-height: 56px; padding: 10px 14px; }
+.story-opt > summary::-webkit-details-marker { display: none; }
+.story-opt > summary::after { content: "+"; grid-column: 2; grid-row: 1 / span 2; font-size: 1.4rem; font-weight: 700; line-height: 1; color: var(--ink-soft); }
+.story-opt[open] > summary::after { content: "–"; }
+.story-opt > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-card); }
+.story-opt-name { grid-column: 1; font-weight: 700; }
+.story-opt-what { grid-column: 1; font-size: 0.88rem; color: var(--ink-soft); line-height: 1.4; }
+.story-opt > .apply-field { margin: 0; padding: 4px 14px 14px; }
+.story-opt > fieldset.apply-field { padding-top: 0; }
+.story-opt .story-points textarea:first-of-type, .story-opt .story-links input:first-of-type { margin-top: 0; }
+textarea.story-grow { overflow: hidden; resize: none; min-height: 6.5em; }
+textarea.story-point.story-grow { min-height: 48px; line-height: 1.4; overflow-wrap: anywhere; }

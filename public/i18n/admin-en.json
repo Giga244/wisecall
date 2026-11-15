@@ -816,5 +816,9 @@
   "admin.email.confirmed": "Email confirmed",
   "admin.email.unconfirmed": "Email not confirmed yet",
   "admin.email.noApprove": "Can’t be approved until the mentor enters the code.",
-  "admin.filter.email_unconfirmed": "Email not confirmed"
+  "admin.filter.email_unconfirmed": "Email not confirmed",
+  "admin.niches.notInList": "\"My field is not in the list\"",
+  "admin.niches.notInList.hint": "What mentors typed when they could not find their field. Each of them chose the closest category meanwhile. It is only a suggestion for a new category or direction.",
+  "admin.niches.notInList.chose": "chose: {field}",
+  "admin.ai.f.extras": "Added to the profile (starting point, \"I can help with\", links):"
 }

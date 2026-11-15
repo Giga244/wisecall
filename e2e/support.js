@@ -95,6 +95,18 @@ async function oneDirection(page) {
   if (await first.count()) await first.click();
 }
 
+// Step 2 of /apply.html, "My path" (docs/CLAUDE-CODE-MENTOR-STORY.md): three short blocks in place of the free-text story.
+const PATH = {
+  start: 'ქუთაისიდან ჩამოვედი თბილისში, ინგლისური თითქმის არ ვიცოდი და ნაცნობიც არავინ მყავდა.',
+  how: 'ღამით უფასო კურსებით ვსწავლობდი, დღისით ვმუშაობდი და პირველი შეკვეთა ოც ლარად ავიღე.',
+  now: 'უკვე მრავალი წელია ამ სფეროში ვმუშაობ და სტუდენტებს ვასწავლი. ხშირად მეკითხებიან, საიდან დაიწყონ.'
+};
+async function fillPath(page, p = {}) {
+  await page.fill('#ap-pathStart', p.start || PATH.start);
+  await page.fill('#ap-pathHow', p.how || PATH.how);
+  await page.fill('#ap-pathNow', p.now || PATH.now);
+}
+
 async function applyAsMentor(page, a) {
   await page.goto('/apply.html');
   await page.waitForURL(/\/apply\.html\?step=1$/);
@@ -113,8 +125,13 @@ async function applyAsMentor(page, a) {
   }
   await page.click('.apply-next');
   await page.waitForURL(/step=2$/);
-  await page.fill('#apStory', a.story);
-  if (a.sample) { await page.locator('form[data-step="1"] .apply-optional > summary').click(); await page.fill('#apSample', a.sample); }
+  await fillPath(page, a.path);
+  // (optional: a sample question with a short sample answer, shown on the profile labelled "Sample answer")
+  if (a.sample) {
+    await page.locator('form[data-step="1"] .story-opt[data-opt="sample"] > summary').click();
+    await page.fill('#ap-sampleQuestion', a.sampleQuestion || 'როგორ დავიწყო ამ სფეროში ნულიდან?');
+    await page.fill('#ap-sampleReply', a.sample);
+  }
   await page.click('.apply-next');
   await page.waitForURL(/step=3$/);
   await page.fill('#apPrice', String(a.price));
@@ -190,4 +207,4 @@ async function untilBooking(id, predicate, message, timeout = 20000) {
 // Where the fake evidence pages are (e2e/global-setup.js writes it): /p/<name-with-dashes> shows that name.
 const fakeWeb = () => JSON.parse(fs.readFileSync(path.join(__dirname, '.tmp', 'fakes.json'), 'utf8')).web;
 
-module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, pickNiche, oneDirection, passIdCheck, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };
+module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, fillPath, PATH, pickNiche, oneDirection, passIdCheck, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };

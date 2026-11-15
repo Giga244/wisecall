@@ -277,9 +277,9 @@ function profileSsr(p, stats, mentor, lang) {
             <h1>${escapeHtml(p.name)}</h1>
             ${role ? `<p class="profile-title">${escapeHtml(role)}</p>` : ''}
             ${mentor && p.headline ? `<p class="profile-headline">${escapeHtml(p.headline)}</p>` : ''}
-            ${mentor ? '<div class="profile-tags" aria-hidden="true" data-skeleton><span class="skeleton skeleton-pill sm"></span><span class="skeleton skeleton-pill lg"></span><span class="skeleton skeleton-pill"></span></div>' : ''}
           </div>
         </div>
+        ${mentor ? '<div class="profile-tags" aria-hidden="true" data-skeleton><span class="skeleton skeleton-pill sm"></span><span class="skeleton skeleton-pill lg"></span><span class="skeleton skeleton-pill"></span></div>' : ''}
         ${mentor ? '<p class="profile-share" aria-hidden="true" data-skeleton><span class="skeleton skeleton-share"></span></p>' : ''}
         ${facts ? `<ul class="profile-facts">${facts}</ul>` : ''}
         ${mentor ? `<div class="profile-stats" aria-hidden="true" data-skeleton>${'<div><span class="skeleton skeleton-line w60"></span><span class="skeleton skeleton-name w40"></span></div>'.repeat(4)}</div>` : ''}

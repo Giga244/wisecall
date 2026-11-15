@@ -75,7 +75,8 @@
         <div class="sort-slot" id="sortSlot">
           <label for="sortSelect" class="sr-only" data-i18n="experts.sort.label">Sort</label>
           <select id="sortSelect" class="sort-select" data-i18n-aria="experts.sort.label" aria-label="Sort">
-            <option value="rating" data-i18n="experts.sort.rating">Top rated</option>
+            <option value="recommended" data-i18n="experts.sort.recommended">Recommended</option>
+            <option value="rating" data-i18n="experts.sort.rating" hidden disabled>Top rated</option>
             <option value="priceAsc" data-i18n="experts.sort.priceAsc">Price: low to high</option>
             <option value="priceDesc" data-i18n="experts.sort.priceDesc">Price: high to low</option>
             <option value="newest" data-i18n="experts.sort.newest">Newest</option>
@@ -177,7 +178,6 @@
     <div class="sheet-body">
       <p class="sheet-label" id="sortLabel" data-i18n="experts.sort.label">Sort</p>
       <div id="sheetSort"></div>
-      <p class="sheet-label" data-i18n="experts.fieldLabel">Field</p>
       <div id="sheetFilters"></div>
     </div>
     <div class="sheet-foot">

@@ -23,7 +23,8 @@
   }
 
   const ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
-  const button = (url) => `<button type="button" class="btn btn-outline btn-sm copy-link" data-url="${esc(url)}">${ICON}<span class="copy-label" aria-live="polite">${esc(t('copy.link'))}</span></button>`;
+  // opts.quiet: a small text button (the profile: its one strong button is the coral "Ask a question" / "Subscribe")
+  const button = (url, opts = {}) => `<button type="button" class="${opts.quiet ? 'copy-link copy-link-quiet' : 'btn btn-outline btn-sm copy-link'}" data-url="${esc(url)}">${ICON}<span class="copy-label" aria-live="polite">${esc(t('copy.link'))}</span></button>`;
 
   function wire(root) {
     (root || document).querySelectorAll('.copy-link:not([data-wired])').forEach((b) => {
