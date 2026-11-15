@@ -69,7 +69,9 @@ router.post('/kyc/start', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
   if (!isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
-  // (the email code may still be on its way: the ID check does not wait for it, docs/CLAUDE-CODE-EMAIL-CODE-FIX.md; approval does)
+  // The ID check waits for a confirmed email (the owner's decision, docs/CLAUDE-CODE-EMAIL-CODE-FIX.md: it guards the partner's paid checks
+  // against throwaway accounts). Steps 1-4 do not wait; step 5 shows the code box until the email is confirmed.
+  if (!user.emailVerified) return res.status(400).json({ error: 'email_not_verified' });
   try {
     const out = await kycService.startForMentor(user);
     require('../analytics').event('id_check_started', req);

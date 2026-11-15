@@ -531,7 +531,7 @@
     } else if (m.state === 'draft') {
       box.innerHTML = card('draft', m.step ? fill('dash.mentor.draft.title', { n: m.step }) : t('nav.continueApp'), t('dash.mentor.draft.body'),
         `<a class="btn btn-primary btn-lg btn-arrow" href="${B.href(m)}">${escapeHtml(t('dash.mentor.draft.cta'))}</a>`);
-    } else if (m.state === 'idleft' && window.WisecallIdCard) {
+    } else if (m.state === 'idleft' && window.WisecallIdCard && user.emailVerified) { // (unconfirmed: the code box above comes first)
       // (steps 1-4 done and the ID check is what is left, sent or not: "One step left", with its own button; docs/CLAUDE-CODE-ID-CHECK-VISIBLE.md)
       box.innerHTML = WisecallIdCard.html(m.id || 'todo');
       WisecallIdCard.wire(box);

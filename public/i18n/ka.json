@@ -195,7 +195,7 @@
   "settings.mentor.proofUrl.hint": "სავალდებულოა. ამას ვამოწმებთ სანამ შენი პროფილი საჯარო გახდება — ასე ვრწმუნდებით, რომ ნამდვილად ღირს შენთვის ფულის გადახდა რჩევისთვის.",
   "settings.mentor.proofUrl.invalid": "ეს ბმული არასწორია (უნდა იწყებოდეს http:// ან https://-ით).",
   "settings.mentor.proofUrl.required": "მენტორად გახდომამდე უნდა დაამატო დადასტურების ბმული (LinkedIn ან მსგავსი).",
-  "settings.mentor.emailNotVerified": "მენტორობაზე განაცხადამდე დაადასტურე შენი ელფოსტა.",
+  "settings.mentor.emailNotVerified": "პირადობის შემოწმებამდე დაადასტურე ელ-ფოსტა: შეიყვანე კოდი, რომელიც გამოგიგზავნეთ.",
   "settings.verify.none": "ჯერ არ არის გაგზავნილი",
   "settings.verify.pending": "განხილვის მოლოდინში",
   "settings.verify.verified": "დადასტურებულია ✓ — საჯაროდ ჩანს",
@@ -3080,5 +3080,7 @@
   "settings.email.confirmed": "დადასტურებულია",
   "toast.errorRef": " (შეცდომის კოდი: {ref})",
   "email.code.alreadyVerified": "ეს ანგარიში უკვე დადასტურებულია ({email}). სხვა ელ-ფოსტაზე გადასვლა პარამეტრებში შეგიძლია: ახალ მისამართზე კოდს გამოგიგზავნით.",
-  "email.code.toSettings": "ელ-ფოსტის შეცვლა"
+  "email.code.toSettings": "ელ-ფოსტის შეცვლა",
+  "apply.email.beforeIdTitle": "ჯერ ელ-ფოსტის დადასტურება",
+  "apply.email.idWaits": "პირადობის შემოწმება ელ-ფოსტის დადასტურების შემდეგ გაიხსნება. შეიყვანე კოდი ზემოთ და აქვე გააგრძელე."
 }

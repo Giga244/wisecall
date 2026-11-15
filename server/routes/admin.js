@@ -76,9 +76,9 @@ router.get('/mentors', requireAuth, requireAdmin, asyncHandler(async (req, res) 
       };
   });
   if (queue === 'needs_human') {
-    // Riskiest first, then the oldest submission.
+    // Confirmed emails first (an unconfirmed one cannot be approved yet: after them, with a grey chip), then the riskiest, then the oldest.
     const risk = (m) => (m.analysis && m.analysis.risk ? RISK_ORDER[m.analysis.risk] : 3);
-    list.sort((x, y) => risk(x) - risk(y) || new Date(x.applicationSubmittedAt || x.createdAt) - new Date(y.applicationSubmittedAt || y.createdAt));
+    list.sort((x, y) => Number(!x.emailVerified) - Number(!y.emailVerified) || risk(x) - risk(y) || new Date(x.applicationSubmittedAt || x.createdAt) - new Date(y.applicationSubmittedAt || y.createdAt));
   }
   res.json({ mentors: list });
 }));

@@ -363,6 +363,7 @@
           <span class="badge badge-${m.verificationStatus === 'rejected' ? 'rejected' : (m.verificationStatus === 'verified' ? 'answered' : 'pending_payment')}">${t('settings.verify.' + (m.verificationStatus || 'none'))}</span>
           ${v.total ? `<span class="muted small">${t('admin.mv.progress').replace('{done}', v.done).replace('{total}', v.total)}</span>` : ''}
           ${v.backInReview ? `<span class="badge badge-pending_payment">${t('admin.mv.backInReview')}</span>` : ''}
+          ${v.submitted && !m.emailVerified ? `<span class="badge badge-muted mv-email-chip">${esc(t('admin.filter.email_unconfirmed'))}</span>` : ''}
           ${v.waiting ? `<span class="badge badge-pending_payment">${t('admin.mv.waiting').replace('{n}', v.waiting)}</span>` : ''}
           ${v.openFlags ? `<span class="badge badge-rejected">${t('admin.mv.flagsOpen').replace('{n}', v.openFlags)}</span>` : ''}
           ${v.failedRequired ? `<span class="badge badge-rejected">${t('admin.mv.failedRequired')}</span>` : ''}

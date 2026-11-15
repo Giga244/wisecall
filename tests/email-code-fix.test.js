@@ -284,3 +284,43 @@ describe('switching email after confirming another one (the "Unknown error" case
     }
   });
 });
+
+// The owner's decisions after the first version: the ID check (step 5, a paid partner check) waits for a confirmed email; steps 1-4 do
+// not. In the review queue an unconfirmed email comes after the confirmed ones (and the card shows a grey chip).
+describe('the ID check waits for the email; the queue puts unconfirmed emails last', () => {
+  test('steps 1-4 save, the ID check is refused until the code is entered, then it starts', async () => {
+    const m = await signup('Step Five', 'step-five@corp.example');
+    assert.equal((await m.c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 30, headline: 'Head of operations' } })).status, 200);
+    const refused = await m.c.api('/verification/kyc/start', { method: 'POST' });
+    assert.equal(refused.status, 400);
+    assert.equal(refused.error, 'email_not_verified');
+    assert.equal((await verify(m.c, m.code)).status, 200);
+    const started = await m.c.api('/verification/kyc/start', { method: 'POST' });
+    assert.equal(started.status, 200, started.text);
+    assert.ok(started.url);
+  });
+
+  test('in the review queue, unconfirmed emails come after the confirmed ones', async () => {
+    const form = { roleTitle: 'Operations lead', customNiche: 'Running a small company', niche: 'business', specialtyTags: ['operations'], yearsExperience: 12,
+      story: 'For twelve years I have run the day-to-day operations of small companies in Tbilisi, from hiring the first people to setting up suppliers.', sampleAnswer: longAnswer(SAMPLE) };
+    const send = async (c) => {
+      assert.equal((await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25, headline: 'Operations lead' } })).status, 200);
+      assert.equal((await c.api('/verification/experience', { method: 'PUT', body: form })).status, 200);
+      assert.equal((await c.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: `https://ops-${Date.now()}-${Math.random()}.invalid/` } })).status, 200);
+      const r = await c.api('/verification/submit', { method: 'POST' });
+      assert.equal(r.status, 200, r.text);
+      return r.user.id;
+    };
+    // (sent first, so by age alone it would be on top: the unconfirmed one, as when ID checks are closed)
+    const early = await signup('Early Unconfirmed', 'early-unconfirmed@corp.example');
+    const earlyId = await send(early.c);
+    const late = await signupVerified(base, 'Late Confirmed', 'late-confirmed@corp.example');
+    const lateId = await send(late);
+    const queue = (await admin.api('/admin/mentors?queue=needs_human')).mentors.map((m) => m.id);
+    assert.ok(queue.includes(earlyId) && queue.includes(lateId));
+    assert.ok(queue.indexOf(lateId) < queue.indexOf(earlyId), 'the confirmed one first');
+    const list = (await admin.api('/admin/mentors?queue=needs_human')).mentors;
+    const firstUnconfirmed = list.findIndex((m) => !m.emailVerified);
+    assert.ok(list.slice(firstUnconfirmed).every((m) => !m.emailVerified), 'every unconfirmed one after every confirmed one');
+  });
+});

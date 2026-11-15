@@ -195,7 +195,7 @@
   "settings.mentor.proofUrl.hint": "Required. We check this before your profile goes public — it's how we confirm you're actually worth paying for advice.",
   "settings.mentor.proofUrl.invalid": "That doesn't look like a valid link (needs to start with http:// or https://).",
   "settings.mentor.proofUrl.required": "You must add a proof link (LinkedIn or similar) before you can become a mentor.",
-  "settings.mentor.emailNotVerified": "Verify your email before applying to become a mentor.",
+  "settings.mentor.emailNotVerified": "Confirm your email before the ID check: enter the code we sent you.",
   "settings.verify.none": "Not submitted yet",
   "settings.verify.pending": "Pending review",
   "settings.verify.verified": "Verified ✓ — visible publicly",
@@ -3080,5 +3080,7 @@
   "settings.email.confirmed": "Confirmed",
   "toast.errorRef": " (error code: {ref})",
   "email.code.alreadyVerified": "This account is already confirmed ({email}). You can switch to another email in Settings: we will send a code to the new address.",
-  "email.code.toSettings": "Change email"
+  "email.code.toSettings": "Change email",
+  "apply.email.beforeIdTitle": "First, confirm your email",
+  "apply.email.idWaits": "The ID check opens once your email is confirmed. Enter the code above and continue right here."
 }

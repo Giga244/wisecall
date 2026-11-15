@@ -109,7 +109,8 @@
   function drawIdTop() {
     const top = document.getElementById('applyIdTop');
     // (on step 5 and on the "sent" screen the card is the page itself, not a second one on top)
-    const show = idWaits() && v.application.idLeft && !v.application.locked && current !== 4;
+    // (not while the email is unconfirmed: the ID check waits for it, and step 5 has the code box)
+    const show = idWaits() && v.application.idLeft && !v.application.locked && current !== 4 && user.emailVerified;
     top.innerHTML = show ? WisecallIdCard.html(idState(), { failedText: idFailedText() }) : '';
     if (show) WisecallIdCard.wire(top);
   }
@@ -477,7 +478,8 @@
     if (idWaits()) {
       return `
       <form class="apply-step apply-step-id" data-step="4" novalidate>
-        ${WisecallIdCard.html(idState(), { heading: 'h1', failedText: idFailedText(), returned: returned(), title: v.application.idLeft ? null : 'apply.id.title' })}
+        ${user.emailVerified ? WisecallIdCard.html(idState(), { heading: 'h1', failedText: idFailedText(), returned: returned(), title: v.application.idLeft ? null : 'apply.id.title' })
+          : `<h1 tabindex="-1">${esc(t('apply.id.title'))}</h1><p class="apply-lead apply-id-wait">${esc(t('apply.email.idWaits'))}</p>`}
         <div class="apply-block">
           <h2>${esc(t('apply.check.title'))}</h2>
           ${checklist()}
@@ -621,7 +623,7 @@
   // Outside the step's form (it has forms of its own).
   function emailBox(sent) {
     if (user.emailVerified) return;
-    root.insertAdjacentHTML('afterbegin', `<div class="apply-email${sent ? ' is-sent' : ''}">${WisecallEmailCode.html(user, { title: sent ? 'email.code.title' : 'apply.email.boxTitle', note: sent ? 'dash.email.body' : 'apply.email.sendAnyway' })}</div>`);
+    root.insertAdjacentHTML('afterbegin', `<div class="apply-email${sent ? ' is-sent' : ''}">${WisecallEmailCode.html(user, { title: sent ? 'email.code.title' : (idWaits() ? 'apply.email.beforeIdTitle' : 'apply.email.boxTitle'), note: sent ? 'dash.email.body' : (idWaits() ? null : 'apply.email.sendAnyway') })}</div>`);
     WisecallEmailCode.wire(root.querySelector('.apply-email'), user, {
       onVerified: async (u) => { user = u; await load(); render(); },
       onSwitched: (u) => { user = u; }
