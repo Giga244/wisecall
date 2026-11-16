@@ -204,7 +204,8 @@
       <div class="mv-credentials">
         <p><strong>${t('admin.mv.credentials')}</strong></p>
         <ul class="mv-evidence">
-          ${c ? line(t('admin.mv.licenseNumber'), `<strong>${esc(c.licenseNumber || '—')}</strong>`) + line(t('admin.mv.issuingBody'), esc(c.issuingBody)) + line(t('admin.mv.holderName'), esc(c.holderName)) + line(t('admin.mv.validUntil'), esc(c.validUntil || '—')) : ''}
+          ${c ? line(t('admin.mv.licenseNumber'), `<strong>${esc(c.licenseNumber || '—')}</strong>`) + line(t('admin.mv.issuingBody'), esc(c.issuingBody)) + line(t('admin.mv.holderName'), esc(c.holderName)) + line(t('admin.mv.validUntil'), esc(c.validUntil || t('admin.mv.noExpiry')))
+            + (c.second ? line(t('admin.mv.second'), `${esc(c.second.issuingBody)}${c.second.licenseNumber ? ` · <strong>${esc(c.second.licenseNumber)}</strong>` : ''}`) : '') : ''}
           ${d.workEmail ? line(t('admin.mv.workEmail'), `${esc(d.workEmail.address)} · ${d.workEmail.verifiedAt ? t('admin.mv.workEmailConfirmed') : t('admin.mv.workEmailWaiting')}`) : ''}
         </ul>
         ${docs.length ? `

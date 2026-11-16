@@ -69,7 +69,7 @@
   function started(i) {
     const f = v.application.form;
     return [Boolean(user.headline || f.customNiche || (f.yearsExperience !== null && f.yearsExperience !== undefined)),
-      Boolean((f.story && f.story.trim()) || f.pathStart || f.pathHow || f.pathNow), user.price !== null && user.price !== undefined, v.application.evidence.length > 0][i];
+      Boolean((f.story && f.story.trim()) || f.pathStart || f.pathHow || f.pathNow), user.price !== null && user.price !== undefined, v.application.evidence.length > 0 || Boolean(v.inputs.license)][i];
   }
   const flagged = (i) => i < 4 && !stepDone(i) && missingIn(i).length > 0 && (i < furthest || started(i));
   // The line under the step's title: for the story, why it does not count; otherwise what is missing.
@@ -315,6 +315,13 @@
       </li>`).join('')}</ul>`;
   }
 
+  // A field whose register is public (law, accounting): the number and who issued it are enough. An admin looks the number up, so
+  // nothing has to be uploaded or linked, and the end date is optional ("No expiry" is ticked to begin with).
+  const publicRegister = () => Boolean(v.regulated && v.licence && v.licence.publicRegister);
+  // The words of a licence that was sent: its end date only when it has one, and the second licence when one was named.
+  const licenceLine = (l) => esc(fill(dip() || !l.validUntil ? 'vt.lic.submitted.dip' : 'vt.lic.submitted', { last4: l.numberEnding, body: l.issuingBody, date: l.validUntil }))
+    + (l.second ? ` ${esc(fill('vt.lic.second.line', { body: l.second.issuingBody }))}` : '');
+  const bodyHint = () => { const own = t('vt.lic.bodyHint.' + v.niche); return dip() || own === 'vt.lic.bodyHint.' + v.niche ? lic('vt.lic.bodyHint') : own; };
   function licenceBlock() {
     if (!v.regulated) return '';
     const l = v.inputs.license;
@@ -324,14 +331,25 @@
     return `
       <div class="apply-block apply-licence">
         <h2>${esc(lic('ap.lic.title'))}</h2>
-        <p class="hint">${esc(fill(dip() ? 'ap.lic.help.dip' : 'ap.lic.help', { niche: t('niche.' + v.niche) }))}</p>
-        ${l && r.status !== 'failed' ? `<p class="ap-line ap-ok">✓ ${esc(fill(dip() || !l.validUntil ? 'vt.lic.submitted.dip' : 'vt.lic.submitted', { last4: l.numberEnding, body: l.issuingBody, date: l.validUntil }))}</p>` : `
+        ${publicRegister() ? `<p class="hint apply-register-note">${esc(t('ap.lic.register'))}</p>`
+    : `<p class="hint">${esc(fill(dip() ? 'ap.lic.help.dip' : 'ap.lic.help', { niche: t('niche.' + v.niche) }))}</p>`}
+        ${l && r.status !== 'failed' ? `<p class="ap-line ap-ok">✓ ${licenceLine(l)}</p>` : `
         <div class="apply-sub" data-sub="license">
           ${r.status === 'failed' && r.reason ? `<p class="form-error"><strong>${esc(t('vt.reason'))}</strong> ${esc(r.reason)}</p>` : ''}
           <div class="apply-field"><label for="apLicNumber">${esc(lic('vt.lic.number'))}</label><input id="apLicNumber" name="number" type="text" maxlength="40" autocomplete="off"></div>
-          <div class="apply-field"><label for="apLicBody">${esc(lic('vt.lic.body'))}</label><input id="apLicBody" name="issuingBody" type="text" maxlength="120" placeholder="${esc(lic('vt.lic.bodyHint'))}"></div>
+          <div class="apply-field"><label for="apLicBody">${esc(lic('vt.lic.body'))}</label><input id="apLicBody" name="issuingBody" type="text" maxlength="120" placeholder="${esc(bodyHint())}"></div>
           <div class="apply-field"><label for="apLicHolder">${esc(lic('vt.lic.holder'))}</label><input id="apLicHolder" name="holderName" type="text" maxlength="100" value="${esc(l ? l.holderName : user.name)}"></div>
-          <div class="apply-field"><label for="apLicUntil">${esc(lic('vt.lic.until'))}</label><input id="apLicUntil" name="validUntil" type="date" value="${esc(l ? l.validUntil : '')}"></div>
+          <!-- (a licence may have no end date at all: "No expiry" instead of a date; a diploma never has one) -->
+          <div class="apply-field apply-until">
+            <label for="apLicUntil">${esc(lic('vt.lic.until'))}</label>
+            <input id="apLicUntil" name="validUntil" type="date" value="${esc(l && l.validUntil ? l.validUntil : '')}"${!dip() && publicRegister() && !(l && l.validUntil) ? ' disabled' : ''}>
+            ${dip() ? '' : `<label class="checkbox-row apply-noexpiry" for="apLicNoExpiry"><input id="apLicNoExpiry" name="noExpiry" type="checkbox"${publicRegister() && !(l && l.validUntil) ? ' checked' : ''}> <span>${esc(t('vt.lic.noExpiry'))}</span></label>`}
+          </div>
+          ${dip() ? '' : `<details class="apply-more apply-second">
+            <summary>${esc(t('vt.lic.second'))}</summary>
+            <div class="apply-field"><label for="apLic2Body">${esc(t('vt.lic.second.body'))}</label><input id="apLic2Body" name="secondBody" type="text" maxlength="120" placeholder="${esc(t('vt.lic.second.bodyHint'))}" autocomplete="off"></div>
+            <div class="apply-field"><label for="apLic2Number">${esc(t('vt.lic.second.number'))}</label><input id="apLic2Number" name="secondNumber" type="text" maxlength="40" autocomplete="off"></div>
+          </details>`}
           <p class="form-error apply-sub-error" role="alert"></p>
           <button type="button" class="btn btn-outline btn-lg" data-save-licence>${esc(lic('vt.lic.save'))}</button>
         </div>`}
@@ -352,7 +370,8 @@
     return `
       <form class="apply-step" data-step="3" novalidate>
         <h1 tabindex="-1">${esc(t('apply.proof.title'))}</h1>
-        <p class="apply-lead">${esc(t('apply.proof.lead'))}</p>
+        <p class="apply-lead">${esc(t(publicRegister() ? 'apply.proof.leadRegister' : 'apply.proof.lead'))}</p>
+        ${publicRegister() ? `${licenceBlock()}<p class="hint apply-proof-optional">${esc(t('apply.proof.optional'))}</p>` : ''}
         ${evidenceList()}
         <div class="apply-sub" data-sub="evidence">
           <div class="apply-field">
@@ -390,7 +409,7 @@
           <p class="form-error apply-sub-error" role="alert"></p>
           <button type="button" class="btn btn-outline btn-lg" data-upload="diploma" data-input="apDoc">${esc(t('vt.doc.upload'))}</button>
         </div>
-        ${licenceBlock()}
+        ${publicRegister() ? '' : licenceBlock()}
         ${nav(3)}
       </form>`;
   }
@@ -660,7 +679,7 @@
     invalid_company_id: 'ap.ev.err.invalid_company_id', company_needs_id_or_url: 'ap.ev.err.company_needs_id_or_url', application_locked: 'ap.err.application_locked',
     unsupported_file_type: 'vt.doc.err.type', file_too_large: 'vt.doc.err.size', too_many_files: 'vt.doc.err.many', empty_file: 'vt.doc.err.empty'
   };
-  const LIC_ERR = { invalid_license_number: 'vt.lic.err.number', invalid_issuing_body: 'vt.lic.err.body', invalid_holder_name: 'vt.lic.err.holder', invalid_valid_until: 'vt.lic.err.until' };
+  const LIC_ERR = { invalid_second_body: 'vt.lic.err.secondBody', invalid_second_number: 'vt.lic.err.secondNumber', invalid_license_number: 'vt.lic.err.number', invalid_issuing_body: 'vt.lic.err.body', invalid_holder_name: 'vt.lic.err.holder', invalid_valid_until: 'vt.lic.err.until' };
 
   // ---- Step 1 (about you): an error under each field, the years read from what was typed, and a draft saved as the mentor goes
   // (docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md)
@@ -763,8 +782,11 @@
     } else if (step === 3) {
       // A link typed in but not added yet is added now ("Next" with the link in the box does what they meant).
       if (form.url.value.trim()) { const ok = await addLink(form); if (!ok) return false; }
-      if (check && !v.application.evidence.length) { stepError(t('apply.err.proof')); form.url.focus(); return false; }
-      if (check && v.regulated && v.application.missing.some((m) => m === 'license' || m === 'license_document')) { stepError(lic('apply.err.licence')); return false; }
+      // (the server says what is missing: in a field with a public register the licence number is the proof, and nothing else is asked)
+      const licenceMissing = v.regulated && v.application.missing.some((m) => m === 'license' || m === 'license_document');
+      if (check && publicRegister() && licenceMissing) { stepError(t('apply.err.licenceAbove')); const first = form.querySelector('#apLicNumber'); if (first) first.focus(); return false; }
+      if (check && v.application.missing.includes('evidence')) { stepError(t('apply.err.proof')); form.url.focus(); return false; }
+      if (check && licenceMissing) { stepError(lic('apply.err.licence')); return false; }
     }
     return true;
   }
@@ -871,15 +893,27 @@
       try { await WisecallAPI.apiFetch(`/verification/documents/${b.dataset.docRemove}`, { method: 'DELETE' }); await load(); render(); }
       catch (e) { WisecallNav.showToast(t('toast.error')); b.disabled = false; }
     }));
+    // "No expiry": the date box is put away (and emptied) while it is ticked.
+    const noExpiry = scope.querySelector('[name="noExpiry"]');
+    if (noExpiry) noExpiry.addEventListener('change', () => {
+      const date = noExpiry.closest('.apply-until').querySelector('[name="validUntil"]');
+      date.disabled = noExpiry.checked;
+      if (noExpiry.checked) date.value = '';
+      subError(noExpiry.closest('.apply-sub'), ''); // (what was asked about the date no longer stands)
+    });
     const lic = scope.querySelector('[data-save-licence]');
     if (lic) lic.addEventListener('click', async () => {
       const sub = lic.closest('.apply-sub');
-      const val = (n) => sub.querySelector(`[name="${n}"]`).value.trim();
+      const val = (n) => { const el = sub.querySelector(`[name="${n}"]`); return el ? el.value.trim() : ''; };
+      const none = Boolean((sub.querySelector('[name="noExpiry"]') || {}).checked);
       subError(sub, '');
-      if (!val('number') || !val('issuingBody') || !val('holderName') || !val('validUntil')) { subError(sub, t('vt.fillIn')); return; }
+      if (!val('number') || !val('issuingBody') || !val('holderName')) { subError(sub, t('vt.fillIn')); return; }
+      // (the end date: a date, or "No expiry"; a diploma needs neither)
+      if (!dip() && !none && !val('validUntil')) { subError(sub, t('vt.lic.err.until')); sub.querySelector('[name="validUntil"]').focus(); return; }
       lic.disabled = true;
       try {
-        await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: val('number'), issuingBody: val('issuingBody'), holderName: val('holderName'), validUntil: val('validUntil') } });
+        await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: val('number'), issuingBody: val('issuingBody'), holderName: val('holderName'),
+          validUntil: none ? '' : val('validUntil'), noExpiry: none, second: { issuingBody: val('secondBody'), number: val('secondNumber') } } });
         WisecallNav.showToast(t('toast.saved'));
         await load();
         render();

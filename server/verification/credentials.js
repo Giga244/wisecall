@@ -25,31 +25,60 @@ function requireStep(user, step) {
 }
 
 // ---- Licence or registration number -----------------------------------------------------------
+const NUMBER_RE = /^[\p{L}\p{N}][\p{L}\p{N}\s./\-]*$/u;
+const last4 = (number) => number.replace(/\s/g, '').slice(-4);
+// The optional second licence: { issuingBody, number? } -> cleaned, null when nothing was written, or the error.
+function secondOf(input) {
+  const s = input && typeof input === 'object' ? input : {};
+  const body = String(s.issuingBody == null ? '' : s.issuingBody).trim();
+  const num = String(s.number == null ? '' : s.number).trim();
+  if (!body && !num) return null;
+  const issuingBody = text(body, 2, 120);
+  if (!issuingBody) throw new VerificationError('invalid_second_body');
+  const number = num ? text(num, 3, 40) : null;
+  if (num && (!number || !NUMBER_RE.test(number))) throw new VerificationError('invalid_second_number');
+  return { issuingBody, number };
+}
 async function submitLicense(user, input) {
   requireStep(user, 'license');
   const number = text(input.number, 3, 40);
   const issuingBody = text(input.issuingBody, 2, 120);
   const holderName = text(input.holderName || user.name, 3, 100);
   const validUntil = String(input.validUntil || '');
-  if (!number || !/^[\p{L}\p{N}][\p{L}\p{N}\s./\-]*$/u.test(number)) throw new VerificationError('invalid_license_number');
+  if (!number || !NUMBER_RE.test(number)) throw new VerificationError('invalid_license_number');
   if (!issuingBody) throw new VerificationError('invalid_issuing_body');
   if (!holderName) throw new VerificationError('invalid_holder_name');
-  // A diploma or certificate (psychology, nursing: no licence exists) has no end date: it may be left empty; given, it is checked.
-  const diploma = (rules.REGULATED[user.niche] || {}).credential === 'diploma';
+  // The end date. Many licences have none by nature: membership of the Georgian Bar Association, a state certificate given for life, a
+  // diploma. So a date is never forced where there is none to give:
+  //   - a diploma or certificate (psychology, nursing: no licence exists), and a field whose register is public (law, accounting: the
+  //     admin looks the number up in the register, which says whether it is in force): the date may simply be left empty;
+  //   - any other licence: a date, or the mentor's own "No expiry" (noExpiry), which the admin sees and checks against the document.
+  // A date that IS given is always checked: a real day, not past, within 15 years.
+  const kind = rules.REGULATED[user.niche] || {};
+  const dateOptional = kind.credential === 'diploma' || Boolean(kind.publicRegister) || input.noExpiry === true;
   const until = /^\d{4}-\d{2}-\d{2}$/.test(validUntil) ? new Date(`${validUntil}T23:59:59Z`) : null;
   const latest = Date.now() + 15 * 365 * 86400000;
-  if (!(diploma && !validUntil) && (!until || Number.isNaN(until.getTime()) || until.getTime() < Date.now() || until.getTime() > latest)) throw new VerificationError('invalid_valid_until');
+  // (a real day: "2031-02-30" is read by JavaScript as 2 March, and the database would refuse it)
+  const realDay = until && !Number.isNaN(until.getTime()) && until.toISOString().slice(0, 10) === validUntil;
+  if (!(dateOptional && !validUntil) && (!realDay || until.getTime() < Date.now() || until.getTime() > latest)) throw new VerificationError('invalid_valid_until');
+  // A second licence or jurisdiction (a Georgian advocate also admitted in New York): optional. The body that issued it; its number is
+  // optional too; it has no end date and no document.
+  const second = secondOf(input.second);
 
   await query(
-    `INSERT INTO mentor_credentials (user_id, license_number_enc, license_last4, issuing_body, holder_name, valid_until)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO mentor_credentials (user_id, license_number_enc, license_last4, issuing_body, holder_name, valid_until, second_body, second_number_enc, second_last4)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      ON CONFLICT (user_id) DO UPDATE SET license_number_enc = EXCLUDED.license_number_enc, license_last4 = EXCLUDED.license_last4,
-       issuing_body = EXCLUDED.issuing_body, holder_name = EXCLUDED.holder_name, valid_until = EXCLUDED.valid_until, updated_at = now()`,
-    [user.id, encrypt(number), number.replace(/\s/g, '').slice(-4), issuingBody, holderName, validUntil || null]
+       issuing_body = EXCLUDED.issuing_body, holder_name = EXCLUDED.holder_name, valid_until = EXCLUDED.valid_until,
+       second_body = EXCLUDED.second_body, second_number_enc = EXCLUDED.second_number_enc, second_last4 = EXCLUDED.second_last4, updated_at = now()`,
+    [user.id, encrypt(number), last4(number), issuingBody, holderName, validUntil || null,
+      second ? second.issuingBody : null, second && second.number ? encrypt(second.number) : null, second && second.number ? last4(second.number) : null]
   );
   // Never the number itself in evidence: only the last characters, the body and the expiry.
   await steps.setStep(user.id, 'license', 'pending', {
-    evidence: { issuingBody, validUntil: validUntil || null, numberEnding: number.replace(/\s/g, '').slice(-4) }, replaceEvidence: true, actor: steps.mentorActor(user)
+    evidence: { issuingBody, validUntil: validUntil || null, noExpiry: !validUntil, numberEnding: last4(number),
+      ...(second ? { second: { issuingBody: second.issuingBody, numberEnding: second.number ? last4(second.number) : null } } : {}) },
+    replaceEvidence: true, actor: steps.mentorActor(user)
   });
   await require('./names').recompute(user.id); // the name on the licence is compared with the ID
 }
@@ -59,14 +88,16 @@ async function credentialsFor(userId) {
   const { rows } = await query('SELECT *, valid_until::text AS valid_until_text FROM mentor_credentials WHERE user_id = $1', [userId]);
   const r = rows[0];
   if (!r) return null;
-  return { licenseNumber: decrypt(r.license_number_enc), issuingBody: r.issuing_body, holderName: r.holder_name, validUntil: r.valid_until_text, submittedAt: r.submitted_at };
+  return { licenseNumber: decrypt(r.license_number_enc), issuingBody: r.issuing_body, holderName: r.holder_name, validUntil: r.valid_until_text, submittedAt: r.submitted_at,
+    second: r.second_body ? { issuingBody: r.second_body, licenseNumber: r.second_number_enc ? decrypt(r.second_number_enc) : null } : null };
 }
 
 // For the mentor: enough to show what they submitted, never the full number.
 async function ownCredentials(userId) {
-  const { rows } = await query('SELECT license_last4, issuing_body, holder_name, valid_until::text AS valid_until FROM mentor_credentials WHERE user_id = $1', [userId]);
+  const { rows } = await query('SELECT license_last4, issuing_body, holder_name, valid_until::text AS valid_until, second_body, second_last4 FROM mentor_credentials WHERE user_id = $1', [userId]);
   const r = rows[0];
-  return r ? { numberEnding: r.license_last4, issuingBody: r.issuing_body, holderName: r.holder_name, validUntil: r.valid_until } : null;
+  return r ? { numberEnding: r.license_last4, issuingBody: r.issuing_body, holderName: r.holder_name, validUntil: r.valid_until,
+    second: r.second_body ? { issuingBody: r.second_body, numberEnding: r.second_last4 || null } : null } : null;
 }
 
 // ---- Work email --------------------------------------------------------------------------------

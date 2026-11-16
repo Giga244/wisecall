@@ -190,6 +190,8 @@
   "admin.mv.issuingBody": "გამცემი ორგანო",
   "admin.mv.holderName": "სახელი ლიცენზიაზე",
   "admin.mv.validUntil": "მოქმედია",
+  "admin.mv.noExpiry": "ვადა არ აქვს",
+  "admin.mv.second": "მეორე ლიცენზია / იურისდიქცია",
   "admin.mv.workEmail": "სამსახურეობრივი ელფოსტა",
   "admin.mv.workEmailConfirmed": "დადასტურებულია",
   "admin.mv.workEmailWaiting": "კოდს ელოდება",

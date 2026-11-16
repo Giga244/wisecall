@@ -791,6 +791,13 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .apply-sub .form-error { margin: 6px 0 10px; }
 .apply-more { margin: 0 0 14px; }
 .apply-more summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+/* The licence's end date: "No expiry" sits right under the date box; the second licence opens on a tap. */
+.apply-noexpiry { margin: 10px 0 0; font-weight: 700; }
+.apply-until input[type="date"]:disabled { opacity: 0.5; }
+.apply-register-note { margin: 0 0 14px; }
+.apply-proof-optional { margin: 4px 0 14px; }
+.vt-second { margin: 4px 0 10px; }
+.vt-second summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
 .apply-or { margin: 6px 0 12px; font-weight: 800; }
 .apply-doc { padding-top: 14px; border-top: var(--chip-w, 2px) dashed var(--border); }
 .apply-evidence { margin: 0 0 18px; }

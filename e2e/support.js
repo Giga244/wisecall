@@ -144,7 +144,9 @@ async function applyAsMentor(page, a) {
     const lic = page.locator('.apply-licence');
     await lic.locator('[name="number"]').fill(a.licence.number);
     await lic.locator('[name="issuingBody"]').fill(a.licence.body);
-    await lic.locator('[name="validUntil"]').fill(a.licence.until);
+    const none = lic.locator('[name="noExpiry"]');
+    if (a.licence.until && (await none.count()) && (await none.isChecked())) await none.uncheck();
+    if (a.licence.until) await lic.locator('[name="validUntil"]').fill(a.licence.until);
     await lic.locator('[data-save-licence]').click();
     await expect(lic.locator('.ap-ok')).toBeVisible();
   }

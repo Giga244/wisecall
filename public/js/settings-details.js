@@ -134,6 +134,7 @@
       <label for="dLicNo"><span>${esc(t('details.licence.number'))}</span><input type="text" id="dLicNo" maxlength="40"></label>
       <label for="dLicBody"><span>${esc(t('details.licence.body'))}</span><input type="text" id="dLicBody" maxlength="120"></label>
       <label for="dLicUntil"><span>${esc(t('details.licence.until'))}</span><input type="date" id="dLicUntil"></label>
+      <label class="checkbox-row" for="dLicNoExpiry"><input type="checkbox" id="dLicNoExpiry"> <span>${esc(t('vt.lic.noExpiry'))}</span></label>
       <p class="form-error" role="alert" id="licenceError"></p>
       <button type="submit" class="btn btn-primary">${esc(t('details.licence.send'))}</button>
     </form>`;
@@ -216,7 +217,7 @@
       const err = box.querySelector('#licenceError');
       err.textContent = '';
       try {
-        await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: box.querySelector('#dLicNo').value, issuingBody: box.querySelector('#dLicBody').value, validUntil: box.querySelector('#dLicUntil').value } });
+        await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: box.querySelector('#dLicNo').value, issuingBody: box.querySelector('#dLicBody').value, validUntil: box.querySelector('#dLicNoExpiry').checked ? '' : box.querySelector('#dLicUntil').value, noExpiry: box.querySelector('#dLicNoExpiry').checked } });
         WisecallNav.showToast(t('details.licence.sent'));
         await draw();
       } catch (e) { err.textContent = t('details.err.licence'); }

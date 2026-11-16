@@ -190,6 +190,8 @@
   "admin.mv.issuingBody": "Issued by",
   "admin.mv.holderName": "Name on the license",
   "admin.mv.validUntil": "Valid until",
+  "admin.mv.noExpiry": "No expiry",
+  "admin.mv.second": "Second licence / jurisdiction",
   "admin.mv.workEmail": "Work email",
   "admin.mv.workEmailConfirmed": "confirmed",
   "admin.mv.workEmailWaiting": "waiting for the code",

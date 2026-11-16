@@ -426,9 +426,11 @@ function missingFor(user, evidence, stepMap, opts = {}) {
   if (!(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) missing.push('niche');
   if (!storyVerdict(user.story, LIMITS.storyMin).ok) missing.push('story'); // (the page runs the same check: public/js/text-rules.js)
   if (user.price === null || user.price === undefined) missing.push('price'); // (0 is a price: free)
-  if (evidence.filter((e) => e.kind !== 'work_email' || e.checkStatus === 'ok').length < LIMITS.evidenceMin) missing.push('evidence');
+  const has = (s) => stepMap[s] && ['pending', 'passed'].includes(steps.effectiveStatus(stepMap[s]));
+  // (a field whose register is public, law or accounting: the licence number is the proof, an admin looks it up; nothing to link or upload)
+  const numberIsProof = Boolean((rules.REGULATED[user.niche] || {}).publicRegister) && has('license');
+  if (!numberIsProof && evidence.filter((e) => e.kind !== 'work_email' || e.checkStatus === 'ok').length < LIMITS.evidenceMin) missing.push('evidence');
   if (rules.isRegulated(user.niche)) {
-    const has = (s) => stepMap[s] && ['pending', 'passed'].includes(steps.effectiveStatus(stepMap[s]));
     if (!has('license')) missing.push('license');
     if (rules.requiredFor(user.niche).includes('license_document') && !has('license_document')) missing.push('license_document');
   }

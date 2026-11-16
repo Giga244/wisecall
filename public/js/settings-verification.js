@@ -101,7 +101,12 @@
           <label><span>${lic('vt.lic.number')}</span><input type="text" name="number" maxlength="40" autocomplete="off" required></label>
           <label><span>${lic('vt.lic.body')}</span><input type="text" name="issuingBody" maxlength="120" placeholder="${esc(lic('vt.lic.bodyHint'))}" required></label>
           <label><span>${lic('vt.lic.holder')}</span><input type="text" name="holderName" maxlength="100" value="${esc(l ? l.holderName : data.user.name)}" required></label>
-          <label><span>${lic('vt.lic.until')}</span><input type="date" name="validUntil" value="${esc(l && l.validUntil ? l.validUntil : '')}"${dip ? '' : ' required'}></label>
+          <label><span>${lic('vt.lic.until')}</span><input type="date" name="validUntil" value="${esc(l && l.validUntil ? l.validUntil : '')}"></label>
+          ${dip ? '' : `<label class="checkbox-row"><input type="checkbox" name="noExpiry"${data.v.licence && data.v.licence.publicRegister && !(l && l.validUntil) ? ' checked' : ''}> <span>${t('vt.lic.noExpiry')}</span></label>
+          <details class="vt-second"><summary>${t('vt.lic.second')}</summary>
+            <label><span>${t('vt.lic.second.body')}</span><input type="text" name="secondBody" maxlength="120" placeholder="${esc(t('vt.lic.second.bodyHint'))}" autocomplete="off"></label>
+            <label><span>${t('vt.lic.second.number')}</span><input type="text" name="secondNumber" maxlength="40" autocomplete="off"></label>
+          </details>`}
           <p class="form-error vt-error" role="alert"></p>
           <button class="btn btn-primary btn-sm" type="submit">${lic('vt.lic.save')}</button>
         </form>` : ''}
@@ -198,7 +203,7 @@
   // ---- Actions ----------------------------------------------------------------------------------------------------------------
   const formError = (form, text) => { const el = form.querySelector('.vt-error'); if (el) el.textContent = text || ''; };
 
-  const LICENSE_ERR = { invalid_license_number: 'vt.lic.err.number', invalid_issuing_body: 'vt.lic.err.body', invalid_holder_name: 'vt.lic.err.holder', invalid_valid_until: 'vt.lic.err.until' };
+  const LICENSE_ERR = { invalid_second_body: 'vt.lic.err.secondBody', invalid_second_number: 'vt.lic.err.secondNumber', invalid_license_number: 'vt.lic.err.number', invalid_issuing_body: 'vt.lic.err.body', invalid_holder_name: 'vt.lic.err.holder', invalid_valid_until: 'vt.lic.err.until' };
   const DOC_ERR = { unsupported_file_type: 'vt.doc.err.type', file_too_large: 'vt.doc.err.size', too_many_files: 'vt.doc.err.many', empty_file: 'vt.doc.err.empty', application_locked: 'ap.err.application_locked' };
   const EMAIL_ERR = { free_email_domain: 'vt.we.free', invalid_email: 'vt.we.invalid', invalid_code: 'vt.we.wrongCode', expired: 'vt.we.expired', no_pending_code: 'vt.we.expired', too_many_attempts: 'vt.we.tooManyAttempts' };
 
@@ -210,7 +215,11 @@
   }
 
   const HANDLERS = {
-    license: (f) => WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: f.number.value, issuingBody: f.issuingBody.value, holderName: f.holderName.value, validUntil: f.validUntil.value } }),
+    license: (f) => {
+      const none = Boolean(f.noExpiry && f.noExpiry.checked);
+      return WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: f.number.value, issuingBody: f.issuingBody.value, holderName: f.holderName.value,
+        validUntil: none ? '' : f.validUntil.value, noExpiry: none, second: { issuingBody: f.secondBody ? f.secondBody.value : '', number: f.secondNumber ? f.secondNumber.value : '' } } });
+    },
     workEmailSend: async (f) => {
       const r = await WisecallAPI.apiFetch('/verification/work-email', { method: 'POST', body: { email: f.email.value.trim() } });
       devWorkEmailCode = r.devCode || null; // shown under the code box (never sent in production)
