@@ -763,10 +763,10 @@
         await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: story });
       } catch (e) {
         if (!e.code || !WisecallStoryForm.knows(e.code)) throw e;
-        // (a link the server refuses never costs the rest of the step: the path and everything else are saved without the links)
-        if (e.data && e.data.field === 'workLinks') {
+        // (a link or an About the server refuses never costs the rest of the step: the path and everything else are saved without it)
+        if (e.data && ['workLinks', 'about'].includes(e.data.field)) {
           const rest = { ...story };
-          delete rest.workLinks;
+          delete rest[e.data.field];
           await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: rest }).catch(() => {});
         }
         stepError(WisecallStoryForm.errorText(e, v.limits.story));

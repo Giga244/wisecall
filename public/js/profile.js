@@ -207,7 +207,10 @@
       ? `<span class="rating">★ ${expert.ratingAvg}</span> <span class="muted">(${expert.reviewCount} ${t('expert.reviewsShort')})</span>`
       : `<span class="muted">${t('expert.noReviewsYet')}</span>`;
     const wait = waitText(expert.avgAnswerSeconds);
-    const title = isMentor ? (expert.roleTitle || '') : (expert.headline || '');
+    // (a mentor's role title is made from their headline when they apply, cut at its limit: the two are the same words, said once, whole)
+    const norm = (s) => String(s || '').replace(/[\s…]+/g, ' ').trim().toLowerCase();
+    const headlineIsTitle = isMentor && Boolean(expert.headline) && Boolean(expert.roleTitle) && norm(expert.headline).startsWith(norm(expert.roleTitle));
+    const title = isMentor ? (headlineIsTitle ? expert.headline : (expert.roleTitle || '')) : (expert.headline || '');
     return `
       <div class="expert-layout${isMentor ? '' : ' profile-plain'}">
         <section class="profile-card" aria-labelledby="expertName">
@@ -219,7 +222,7 @@
                 ${isMentor ? `<span class="verified-mark">${CHECK}${t('expert.verifiedShort')}</span>` : ''}
               </div>
               ${title || (isMentor && (expert.reviewCount || 0) < 3) ? `<p class="profile-title">${escapeHtml(title)}${isMentor && (expert.reviewCount || 0) < 3 ? ` <span class="badge badge-paid profile-new">${t('expert.newMentor')}</span>` : ''}</p>` : ''}
-              ${isMentor && expert.headline ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
+              ${isMentor && expert.headline && !headlineIsTitle ? `<p class="profile-headline">${escapeHtml(expert.headline)}</p>` : ''}
               ${WisecallRatings.askerBadgeHtml(expert.asker)}
               ${window.WisecallProfileView ? WisecallProfileView.topSkills(expert.sections) : ''}
             </div>
@@ -242,9 +245,12 @@
           <div class="ask-panel" id="askCard"></div>
         </aside>` : ''}
 
-        ${storyHtml()}
-
-        ${expert.bio && !(story() && story().path && story().aboutIsPath) ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : ''}
+        ${(() => {
+    // About ("შესახებ": the mentor's own words, only when they wrote it), then "ჩემი გზა" and what goes with it, one under the other.
+    const about = expert.bio && !(story() && story().aboutIsPath) ? `<section class="profile-section profile-about" aria-labelledby="aboutTitle"><h2 id="aboutTitle">${t('expert.about')}</h2><p>${escapeHtml(expert.bio)}</p></section>` : '';
+    const rest = storyHtml();
+    return about || rest ? `<div class="profile-story-wrap">${about}${rest}</div>` : '';
+  })()}
 
         ${window.WisecallProfileView ? WisecallProfileView.html(expert.sections) : ''}
 

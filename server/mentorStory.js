@@ -11,12 +11,15 @@
 //   sample       a common question in their field and a short sample answer (100 to 600 characters), always labelled "Sample answer".
 //   helpPoints   up to 3 short lines: "I can help with".
 //   workLinks    up to 3 links to their work (Behance, Dribbble, a site, LinkedIn). http/https only; never a messenger, payment or contact link.
+//   about        "შენ შესახებ" / "About you": optional, 0 to 2000 characters, the mentor's whole career in their own words (users.bio, the
+//                profile's About). Never written by the site: the path is no longer copied into it. An About that is still the copy of the
+//                path made before (ownAbout) counts as empty: the form shows nothing and the profile shows the path instead.
 //
 // Every text goes through the contact filter and the rude-word check (server/textSafety.js), like the answers people pay for.
 const textSafety = require('./textSafety');
 const { size, looksRepeated } = require('./content');
 
-const LIMITS = { pathMin: 40, pathMax: 400, tagsMax: 3, questionMin: 10, questionMax: 160, replyMin: 100, replyMax: 600, pointsMax: 3, pointMin: 3, pointMax: 90, linksMax: 3, linkMax: 300, suggestionMax: 60 };
+const LIMITS = { pathMin: 40, pathMax: 400, tagsMax: 3, questionMin: 10, questionMax: 160, replyMin: 100, replyMax: 600, pointsMax: 3, pointMin: 3, pointMax: 90, linksMax: 3, linkMax: 300, suggestionMax: 60, aboutMax: 2000 };
 
 // Where a mentor started from. Neutral on purpose: what they did and where they came from, never what their family had.
 const START_TAGS = [
@@ -32,7 +35,7 @@ const TAG_IDS = START_TAGS.map((x) => x.id);
 const isTag = (id) => TAG_IDS.includes(id);
 
 const PATH_KEYS = ['pathStart', 'pathHow', 'pathNow'];
-const KEYS = [...PATH_KEYS, 'startTags', 'sampleQuestion', 'sampleReply', 'helpPoints', 'workLinks', 'fieldSuggestion'];
+const KEYS = [...PATH_KEYS, 'startTags', 'sampleQuestion', 'sampleReply', 'helpPoints', 'workLinks', 'fieldSuggestion', 'about'];
 
 const bad = (error, field) => ({ error, field });
 // A text as it is stored (or null), or what is wrong with it.
@@ -126,6 +129,17 @@ function parse(input, { draft = false, current = {} } = {}) {
     if (out.length > LIMITS.linksMax) return bad('too_many_links', 'workLinks');
     patch.workLinks = out;
   }
+  // About (users.bio): what is sent as it was is left exactly as it is, never cleaned or checked again (an old About is kept whole, and a
+  // copy of the path is not emptied by a form that showed it as empty). A changed one goes through the same checks as every text here.
+  // (patch.about: server/verification/experience.js stores it as the bio)
+  if (b.about !== undefined) {
+    if (b.about !== null && typeof b.about !== 'string') return bad('invalid_field', 'about');
+    if (String(b.about || '').trim() !== ownAbout(current).trim()) {
+      const r = cleanText(b.about, 'about', { max: LIMITS.aboutMax });
+      if (r.error) return r;
+      patch.about = r.value;
+    }
+  }
   if (b.fieldSuggestion !== undefined) {
     const r = cleanText(b.fieldSuggestion, 'fieldSuggestion', { max: LIMITS.suggestionMax, oneLine: true });
     if (r.error) return r;
@@ -155,6 +169,11 @@ const pathReason = (u) => (pathComplete(u) || !PATH_KEYS.some((k) => u[k]) ? nul
   : (PATH_KEYS.some((k) => u[k] && size(u[k]) >= LIMITS.pathMin && looksRepeated(u[k])) ? 'repeated' : 'short'));
 // The path as one text: the application's story (and the About text, while that follows the story).
 const asStory = (u) => PATH_KEYS.map((k) => u[k]).join('\n\n');
+// Whether the About text is only the copy of the path the site made before (the three blocks, one after the other), not the mentor's About.
+const sameText = (a, b) => String(a || '').replace(/\s+/g, ' ').trim() === String(b || '').replace(/\s+/g, ' ').trim();
+const aboutIsPathCopy = (u) => Boolean(pathComplete(u) && u.bio && sameText(u.bio, asStory(u)));
+// The mentor's own About: their bio, or nothing while the bio is that copy.
+const ownAbout = (u) => (u && u.bio && !aboutIsPathCopy(u) ? u.bio : '');
 const hasSample = (u) => Boolean(u.sampleQuestion && size(u.sampleQuestion) >= LIMITS.questionMin && u.sampleReply && size(u.sampleReply) >= LIMITS.replyMin && !looksRepeated(u.sampleReply));
 
 // A link as a chip: where it leads, by a name people know.
@@ -173,7 +192,7 @@ function linkChip(url) {
 const formOf = (u) => ({
   pathStart: u.pathStart || '', pathHow: u.pathHow || '', pathNow: u.pathNow || '', startTags: u.startTags || [],
   sampleQuestion: u.sampleQuestion || '', sampleReply: u.sampleReply || '', helpPoints: u.helpPoints || [], workLinks: u.workLinks || [],
-  fieldSuggestion: u.fieldSuggestion || ''
+  fieldSuggestion: u.fieldSuggestion || '', about: ownAbout(u)
 });
 
 // What everyone may see on the profile. showAbout: the About section is visible to this viewer (the path, the sample answer and the
@@ -183,7 +202,7 @@ function publicView(u, { showAbout = true } = {}) {
   return {
     path: showAbout && complete ? { start: u.pathStart, how: u.pathHow, now: u.pathNow } : null,
     // (the About text is the same words as the path: the page shows the three blocks instead of it, not both)
-    aboutIsPath: Boolean(complete && u.bio && u.bio.replace(/\s+/g, ' ').trim() === asStory(u).replace(/\s+/g, ' ').trim()),
+    aboutIsPath: aboutIsPathCopy(u),
     startTags: (u.startTags || []).filter(isTag),
     sample: showAbout && hasSample(u) ? { question: u.sampleQuestion, answer: u.sampleReply } : null,
     helpPoints: showAbout ? (u.helpPoints || []) : [],
@@ -201,4 +220,4 @@ function cardView(u, { showAbout = true } = {}) {
 // The dashboard's one card for mentors from before this ("add your path and a sample answer"): until it is closed, or both are there.
 const wantsCard = (u) => !u.pathCardDismissedAt && (!pathComplete(u) || !hasSample(u));
 
-module.exports = { LIMITS, START_TAGS, TAG_IDS, PATH_KEYS, KEYS, isTag, parse, pathComplete, pathReason, asStory, hasSample, formOf, publicView, cardView, linkChip, wantsCard };
+module.exports = { LIMITS, START_TAGS, TAG_IDS, PATH_KEYS, KEYS, isTag, parse, pathComplete, pathReason, asStory, aboutIsPathCopy, ownAbout, hasSample, formOf, publicView, cardView, linkChip, wantsCard };

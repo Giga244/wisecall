@@ -135,8 +135,9 @@ describe('the application: her step 2 is saved and she goes on', () => {
 
   test('a link that IS refused takes nothing else with it: the page saves the rest of the step first (the page\'s own code)', () => {
     const src = read('public/js/apply.js');
-    assert.match(src, /e\.data && e\.data\.field === 'workLinks'/);
-    assert.match(src, /delete rest\.workLinks;\s+await WisecallAPI\.apiFetch\('\/verification\/experience', \{ method: 'PUT', body: rest \}\)/);
+    // (the same for "შენ შესახებ": a refused About takes nothing else with it either)
+    assert.match(src, /e\.data && \['workLinks', 'about'\]\.includes\(e\.data\.field\)/);
+    assert.match(src, /delete rest\[e\.data\.field\];\s+await WisecallAPI\.apiFetch\('\/verification\/experience', \{ method: 'PUT', body: rest \}\)/);
   });
 
   test('step 4: a profile link is taken with or without "https://"; only what is not an address is refused', async () => {

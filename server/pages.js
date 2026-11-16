@@ -254,7 +254,8 @@ async function sendProfile(res, row, asked) {
     ogFor(res, () => ({ description: shortText(listable ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price === 0 ? 'უფასოდ' : `${u.price} ₾`}. ${profile.bio || ''}` : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`) }));
     if (u.photoUpdatedAt) vars.OG_IMAGE = config.PUBLIC_URL + require('./util').photoUrl(u);
     const stats = listable ? (await require('./models').mentorStatsFor([u.id]))[u.id] : null;
-    vars.PROFILE_SSR = profileSsr(profile, stats, listable ? u : null, lang);
+    // (the About written into the page is the mentor's own: not the copy of their path made before, which the page shows as "ჩემი გზა")
+    vars.PROFILE_SSR = profileSsr({ ...profile, bio: profile.bio ? (require('./mentorStory').ownAbout(u) || null) : null }, stats, listable ? u : null, lang);
     // (worksFor, alumniOf, knowsAbout, knowsLanguage: only from the sections everyone may see)
     const extra = await require('./profileSections').jsonLdFields(u);
     if (listable) extraHead = profileJsonLd({ ...u, bio: profile.bio }, stats, lang, extra);
@@ -300,7 +301,10 @@ function profileSsr(p, stats, mentor, lang) {
     mentor ? fact('expert.stat.price', mentor.price === 0 ? (ka ? 'უფასო' : 'Free') : (ka ? `${mentor.price} ₾ ერთ კითხვაზე` : `${mentor.price} GEL per question`)) : '',
     stats && stats.reviewCount ? fact('expert.stat.rating', ka ? `★ ${stats.ratingAvg} (${stats.reviewCount} შეფასება)` : `★ ${stats.ratingAvg} (${stats.reviewCount} reviews)`) : ''
   ].join('');
-  const role = mentor ? mentor.roleTitle : p.headline;
+  // (a mentor's role title is made from their headline when they apply, cut at its limit: said once, whole; public/js/profile.js does the same)
+  const norm = (s) => String(s || '').replace(/[\s…]+/g, ' ').trim().toLowerCase();
+  const headlineIsTitle = Boolean(mentor && p.headline && mentor.roleTitle && norm(p.headline).startsWith(norm(mentor.roleTitle)));
+  const role = mentor ? (headlineIsTitle ? p.headline : mentor.roleTitle) : p.headline;
   // The rich sections everyone may see, as plain text for search engines and link previews (the page script draws them properly).
   const s = p.sections || {};
   const when = (d) => (d ? (d.month ? `${d.month}/${d.year}` : String(d.year)) : '');
@@ -318,7 +322,7 @@ function profileSsr(p, stats, mentor, lang) {
           <div>
             <h1>${escapeHtml(p.name)}</h1>
             ${role ? `<p class="profile-title">${escapeHtml(role)}</p>` : ''}
-            ${mentor && p.headline ? `<p class="profile-headline">${escapeHtml(p.headline)}</p>` : ''}
+            ${mentor && p.headline && !headlineIsTitle ? `<p class="profile-headline">${escapeHtml(p.headline)}</p>` : ''}
           </div>
         </div>
         ${mentor ? '<div class="profile-tags" aria-hidden="true" data-skeleton><span class="skeleton skeleton-pill sm"></span><span class="skeleton skeleton-pill lg"></span><span class="skeleton skeleton-pill"></span></div>' : ''}

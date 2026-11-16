@@ -67,7 +67,10 @@ function parseExperience(input, opts = {}) {
   // (my path, starting-point tags, the sample answer, "I can help with", work links: docs/CLAUDE-CODE-MENTOR-STORY.md)
   const story = require('../mentorStory').parse(b, { draft: !opts.strict, current: opts.current || {} });
   if (story.error) return story;
-  Object.assign(patch, story.patch);
+  const { about, ...rest } = story.patch;
+  Object.assign(patch, rest);
+  // ("შენ შესახებ" / "About you" is the profile's About: the mentor's own words, as they wrote them, or nothing)
+  if (about !== undefined) patch.bio = about;
   if (b.roleTitle !== undefined) {
     if (b.roleTitle !== null && typeof b.roleTitle !== 'string') return { error: 'invalid_field', field: 'roleTitle' };
     const v = oneLine(b.roleTitle || '');
@@ -252,24 +255,33 @@ const anyRegulated = (user) => nichesOf(user).some((k) => rules.isRegulated(k));
 const regulatedByWords = (user) => !user.fieldOverride && rules.isRegulated(user.niche)
   && require('../fieldRules').regulatedCategoryIn(user.customNiche, user.roleTitle) === user.niche;
 
-// "About me" (the profile) and "Your story" (the application) are the same text for most mentors: while they are the same, or one of them is
-// still empty, writing one writes the other (docs/CLAUDE-CODE-UX-WALKTHROUGH.md D). Once they differ, each is kept as written.
+// "About me" (the profile) and "Your story" (the free-text story mentors wrote before "My path") are the same text for most of those
+// mentors: while they are the same, or one of them is still empty, writing one writes the other (docs/CLAUDE-CODE-UX-WALKTHROUGH.md D).
+// Once they differ, each is kept as written. An About the mentor sends with the same save ("შენ შესახებ") is theirs and is never replaced.
 const inStep = (a, b) => !a || !String(a).trim() || tidy(a) === tidy(b || '');
 function storyToBio(user, patch) {
+  if (patch.bio !== undefined) return patch;
   if (patch.story && inStep(user.bio, user.story)) patch.bio = patch.story;
   return patch;
 }
 // "My path" (three short blocks, server/mentorStory.js) is the story once all three are there: the review, the copied-text checks and the
-// admin's page go on reading users.story, and the About text follows it as it follows any story. An old free-text story stays until then.
+// admin's page go on reading users.story. The path is never copied into an empty About ("შენ შესახებ" is the mentor's own, optional text);
+// an About that already is the copy of the path made before keeps following it, out of sight on the profile (mentorStory.aboutIsPathCopy).
 function pathToStory(user, patch) {
   const mentorStory = require('../mentorStory');
   if (!mentorStory.PATH_KEYS.some((k) => patch[k] !== undefined)) return patch;
   const next = { ...user, ...patch };
-  if (mentorStory.pathComplete(next)) { patch.story = mentorStory.asStory(next); storyToBio(user, patch); }
+  if (mentorStory.pathComplete(next)) {
+    patch.story = mentorStory.asStory(next);
+    // (only a copy of the path: an About that was the old free-text story is the mentor's own words and stays exactly as it is)
+    if (mentorStory.aboutIsPathCopy(user) && patch.bio === undefined) patch.bio = patch.story;
+  }
   return patch;
 }
 function bioToStory(user, patch) {
   if (patch.bio === undefined || !patch.bio || isLocked(user)) return patch;
+  // (a complete path is the story: an About written next to it never takes its place)
+  if (require('../mentorStory').pathComplete(user)) return patch;
   if ([...patch.bio].length <= LIMITS.storyMax && inStep(user.story, user.bio)) patch.story = patch.bio;
   return patch;
 }

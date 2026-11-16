@@ -151,6 +151,9 @@ a.tag-niche:hover { background: var(--inverse); color: var(--on-inverse); }
 .profile-section { background: var(--card); border-radius: var(--r-card-lg); padding: 26px 30px; border: var(--line-w) solid var(--line); }
 .profile-section h2 { margin: 0 0 14px; font-size: 1.45rem; }
 .profile-about { grid-area: about; }
+/* About, then "My path", "I can help with" and the sample answer, one under the other in the About place (public/js/profile.js). */
+.profile-story-wrap { grid-area: about; display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.profile-story-wrap > .profile-about { grid-area: auto; }
 .profile-checks { grid-area: checks; }
 .profile-reviews { grid-area: reviews; }
 .report-section { grid-area: report; margin-top: 0; border-top: none; padding-top: 0; }

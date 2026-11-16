@@ -62,7 +62,8 @@ describe('"My path" in the application (a draft)', () => {
     const full = await put(m.c, { pathStart: START, pathHow: HOW, pathNow: NOW, startTags: ['region', 'selftaught'] });
     assert.equal(full.status, 200, full.text);
     assert.equal(full.user.story, `${START}\n\n${HOW}\n\n${NOW}`, 'the three blocks are the application\'s story');
-    assert.equal(full.user.bio, full.user.story, 'and the About text, while that follows the story');
+    // (the path is never copied into the About: "შენ შესახებ" is the mentor's own, optional text; tests/mentor-about.test.js)
+    assert.equal(full.user.bio, null, 'the About stays empty until the mentor writes it');
     assert.deepEqual(full.user.startTags, ['region', 'selftaught']);
     assert.ok(!(await missing(m.c)).includes('story'));
     const form = (await m.c.api('/verification')).application.form;
@@ -175,7 +176,9 @@ describe('on the profile and on Browse', () => {
 
     const p = await profileOf(m.username);
     assert.deepEqual(p.mentor.trust.path, { start: START, how: HOW, now: NOW });
-    assert.equal(p.mentor.trust.aboutIsPath, true, 'the About text is the same words: the page shows the three blocks instead');
+    // (the About they had, their old story, is kept exactly as it is and shown above the path: it is no longer replaced by a copy of the path)
+    assert.equal(p.mentor.trust.aboutIsPath, false, 'the About is their own words, not the path');
+    assert.equal(p.bio, OLD_STORY, 'the About is unchanged');
     assert.deepEqual(p.mentor.trust.startTags, ['region', 'worked', 'selftaught']);
     assert.deepEqual(p.mentor.trust.sample, { question: QUESTION, answer: REPLY });
     assert.deepEqual(p.mentor.trust.helpPoints, ['Building a first portfolio', 'Pricing an order', 'Writing to a client abroad']);

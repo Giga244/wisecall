@@ -1,6 +1,6 @@
 // "My path" and what goes with it (docs/CLAUDE-CODE-MENTOR-STORY.md), one form for step 2 of the application (public/js/apply.js) and for
 // Settings -> My details (public/js/settings-details.js): three short blocks (where I started, how I coped, where I am now), up to 3
-// starting-point tags, and, all optional, a sample question with a short sample answer, three "I can help with" lines and up to 3 work links.
+// starting-point tags, "შენ შესახებ" (the profile's About, optional, up to 2000 characters), and, all optional, a sample question with a short sample answer, three "I can help with" lines and up to 3 work links.
 // The server decides every rule (server/mentorStory.js); this asks, counts and explains. Every example is labelled "Example".
 //   WisecallStoryForm.html(values, { limits, startTags, prefix, oldStory, open })  -> the fields (inside the page's own <form>)
 //   WisecallStoryForm.wire(root)            counters, "at most 3" for the tags
@@ -27,9 +27,21 @@
     // (short boxes that wrap and grow like the others: a point is never cut off at the side of a phone; a line break in one is a space)
     const points = [0, 1, 2].map((i) => `<textarea name="helpPoint" rows="1" class="story-point" placeholder="${esc(t('story.example'))} ${esc(t(`story.help.ex${i + 1}`))}" aria-label="${esc(fill('story.help.n', { n: i + 1 }))}">${esc((v.helpPoints || [])[i] || '')}</textarea>`).join('');
     const links = [0, 1, 2].map((i) => `<input type="url" name="workLink" inputmode="url" value="${esc((v.workLinks || [])[i] || '')}" placeholder="https://" aria-label="${esc(fill('story.links.n', { n: i + 1 }))}">`).join('');
+    // "შენ შესახებ" / "About you": optional, the whole career in the mentor's own words; the profile's About. No length cap in the box
+    // (nothing typed is ever cut): the count says when it is over, and the server says so too.
+    const aboutMax = L.aboutMax || 2000;
+    const about = `
+      <div class="apply-field story-about">
+        <label for="${prefix}-about">${esc(t('story.about.label'))} <span class="hint">${esc(t('story.about.optional'))}</span></label>
+        <p class="hint" id="${prefix}-about-hint">${esc(t('story.about.hint'))}</p>
+        <textarea id="${prefix}-about" name="about" rows="6" data-about-count data-max="${aboutMax}" aria-describedby="${prefix}-about-hint ${prefix}-about-count ${prefix}-about-ex">${esc(v.about || '')}</textarea>
+        <p class="apply-count story-count" id="${prefix}-about-count" aria-live="polite"></p>
+        <p class="hint story-example" id="${prefix}-about-ex"><span class="story-example-label">${esc(t('story.example'))}</span> ${esc(t('story.about.ex'))}</p>
+      </div>`;
     return `
       <div class="story-form" data-story-form>
         ${PATH.map(block).join('')}
+        ${about}
         ${oldStory ? `<details class="apply-more story-old"><summary>${esc(t('story.old.title'))}</summary>
           <p class="hint">${esc(t('story.old.note'))}</p><p class="story-old-text">${esc(oldStory)}</p></details>` : ''}
         <fieldset class="apply-field story-tags" data-max-tags="${L.tagsMax}">
@@ -94,6 +106,18 @@
       area.addEventListener('input', draw);
       draw();
     });
+    // About: "n / 2000"; over the limit it says so (nothing is cut).
+    form.querySelectorAll('[data-about-count]').forEach((area) => {
+      const out = form.querySelector(`#${CSS.escape(area.id)}-count`);
+      const max = Number(area.dataset.max);
+      const draw = () => {
+        const n = [...area.value.trim()].length;
+        out.textContent = fill('profile.bio.count', { n, max });
+        out.classList.toggle('is-over', n > max);
+      };
+      area.addEventListener('input', draw);
+      draw();
+    });
     // The boxes grow with what is written in them (nothing scrolls inside a box): now, as the mentor types, and when a closed part opens.
     const grow = (area) => { if (!area.offsetParent) return; area.style.height = 'auto'; area.style.height = `${area.scrollHeight + 2}px`; };
     form.querySelectorAll('textarea').forEach((area) => { area.classList.add('story-grow'); area.addEventListener('input', () => grow(area)); grow(area); });
@@ -116,7 +140,7 @@
     const form = root.querySelector('[data-story-form]');
     const val = (name) => (form.querySelector(`[name="${name}"]`) || { value: '' }).value;
     return {
-      pathStart: val('pathStart'), pathHow: val('pathHow'), pathNow: val('pathNow'),
+      pathStart: val('pathStart'), pathHow: val('pathHow'), pathNow: val('pathNow'), about: val('about'),
       startTags: [...form.querySelectorAll('[data-start-tag][aria-pressed="true"]')].map((b) => b.dataset.startTag),
       sampleQuestion: val('sampleQuestion'), sampleReply: val('sampleReply'),
       helpPoints: [...form.querySelectorAll('[name="helpPoint"]')].map((i) => i.value).filter((x) => x.trim()),
@@ -142,7 +166,7 @@
     sample_question_short: 'story.err.sample_question', sample_reply_short: 'story.err.sample_reply', help_point_short: 'story.err.help_point',
     too_many_help_points: 'story.err.help_point', invalid_link: 'story.err.link', too_many_links: 'story.err.link',
     pathStart_too_long: 'story.err.too_long', pathHow_too_long: 'story.err.too_long', pathNow_too_long: 'story.err.too_long', sampleQuestion_too_long: 'story.err.too_long',
-    sampleReply_too_long: 'story.err.too_long', helpPoints_too_long: 'story.err.too_long', fieldSuggestion_too_long: 'story.err.too_long'
+    sampleReply_too_long: 'story.err.too_long', helpPoints_too_long: 'story.err.too_long', fieldSuggestion_too_long: 'story.err.too_long', about_too_long: 'story.err.aboutLong'
   };
   const knows = (code) => Object.prototype.hasOwnProperty.call(ERRORS, code);
   function errorText(e, limits) {

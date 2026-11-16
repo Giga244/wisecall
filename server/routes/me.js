@@ -142,10 +142,23 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
   // "About me" is only replaced by someone who saw the current one: a form opened earlier (another tab, or before the application's
   // story was copied into it) sends the text it started from as bioWas, and an older start is refused with the current text, never
   // written over it (a mentor's card once showed half his story that way: docs/CLAUDE-CODE-FINISH.md part 2).
+  // (a mentor's About that is still the copy of their path is shown to them as empty, mentorStory.ownAbout: either is what they saw)
+  const mentorStory = require('../mentorStory');
   if (patch.bio !== undefined && updates.bioWas !== undefined) {
     const { tidy } = require('../content');
     const now = tidy(existing.bio || '');
-    if (tidy(typeof updates.bioWas === 'string' ? updates.bioWas : '') !== now && tidy(patch.bio || '') !== now) return res.status(409).json({ error: 'bio_changed', bio: existing.bio || '' });
+    const shown = tidy(mentorStory.ownAbout(existing));
+    const was = tidy(typeof updates.bioWas === 'string' ? updates.bioWas : '');
+    if (was !== now && was !== shown && tidy(patch.bio || '') !== now) return res.status(409).json({ error: 'bio_changed', bio: mentorStory.ownAbout(existing) });
+  }
+  // A changed About goes through the same checks as every text of the profile a mentor writes (the contact filter, rude words:
+  // server/mentorStory.js); one sent back as it was is left exactly as it is.
+  if (isMentor && patch.bio !== undefined && (patch.bio || '').trim() !== (existing.bio || '').trim() && (patch.bio || '').trim() !== mentorStory.ownAbout(existing).trim()) {
+    const textSafety = require('../textSafety');
+    if (patch.bio && textSafety.isOffensive(patch.bio)) return res.status(400).json({ error: 'offensive', field: 'bio' });
+    if (patch.bio && textSafety.findBlockedContact(patch.bio).length) return res.status(400).json({ error: 'contact_details', field: 'bio' });
+  } else if (patch.bio !== undefined && !(patch.bio || '').trim() && mentorStory.aboutIsPathCopy(existing)) {
+    delete patch.bio; // (left empty where the copy of the path was: the copy is not theirs, and stays out of sight as it was)
   }
   if (isMentor && changedApplication.length) experience.applyFieldRules(existing, patch);
   // (the profile's "About me" and the application's story stay one text while they are the same: server/verification/experience.js)

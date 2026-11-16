@@ -181,7 +181,8 @@ window.SettingsProfile = (function () {
     $('headline').value = user.headline || '';
     $('currentWork').value = user.currentWork || '';
     $('city').value = user.city || '';
-    $('bio').value = user.bio || '';
+    // (a mentor's About as they wrote it: empty while it is only the copy of their path, which the profile shows as "ჩემი გზა"; /api/me about)
+    $('bio').value = (typeof user.about === 'string' ? user.about : user.bio) || '';
     $('linkedinUrl').value = user.linkedinUrl || '';
     $('websiteUrl').value = user.websiteUrl || '';
     $('profileVisibility').value = user.profileVisibility || 'public';
@@ -220,11 +221,11 @@ window.SettingsProfile = (function () {
       // "About me" changed elsewhere since this page was opened: what was typed stays in the box; the next save replaces the newer text,
       // knowingly (or a reload shows it)
       if (e.code === 'bio_changed') {
-        if (e.data && typeof e.data.bio === 'string') { user.bio = e.data.bio; loaded.bio = e.data.bio.trim(); }
+        if (e.data && typeof e.data.bio === 'string') { user.about = e.data.bio; loaded.bio = e.data.bio.trim(); }
         error.textContent = t('profile.err.bioChanged');
         return;
       }
-      const map = { invalid_linkedin_url: 'profile.err.linkedin', invalid_website_url: 'profile.err.website', bio_too_long: 'profile.err.bioLong', invalid_language: 'profile.err.language', missing_fields: 'profile.err.name', mentor_profile_must_be_public: 'profile.visibility.lockedMentor' };
+      const map = { contact_details: 'story.err.contact', offensive: 'story.err.offensive', invalid_linkedin_url: 'profile.err.linkedin', invalid_website_url: 'profile.err.website', bio_too_long: 'profile.err.bioLong', invalid_language: 'profile.err.language', missing_fields: 'profile.err.name', mentor_profile_must_be_public: 'profile.visibility.lockedMentor' };
       error.textContent = t(map[e.code] || 'toast.error');
       if (['invalid_linkedin_url', 'invalid_website_url', 'invalid_language', 'mentor_profile_must_be_public'].includes(e.code)) $('profileMore').open = true; // (the field is under "More profile details")
     }
