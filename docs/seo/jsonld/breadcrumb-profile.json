@@ -2,8 +2,8 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Wisecall", "item": "https://wisecallge.ge/" },
-    { "@type": "ListItem", "position": 2, "name": "Marketing", "item": "https://wisecallge.ge/?niche=marketing#experts" },
+    { "@type": "ListItem", "position": 1, "name": "Wisecall", "item": "https://wisecall.ge/" },
+    { "@type": "ListItem", "position": 2, "name": "Marketing", "item": "https://wisecall.ge/?niche=marketing#experts" },
     { "@type": "ListItem", "position": 3, "name": "Tamar Lomidze" }
   ]
 }

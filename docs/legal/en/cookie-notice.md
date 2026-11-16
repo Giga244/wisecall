@@ -18,10 +18,10 @@ count as strictly necessary and need no consent — especially `wisecall_device`
 
 | Name | What it is for | How long | Set by |
 |---|---|---|---|
-| `wisecall_token` | Keeps you signed in. Contains a signed session (your account id and email). HttpOnly, Secure, SameSite=Lax. | 30 days, or until you log out | wisecallge.ge |
-| `wisecall_device` | A random identifier for this browser. Only a keyed hash of it is stored, to notice many accounts or applications from one device (fraud prevention). HttpOnly. | 1 year | wisecallge.ge |
-| `wisecall_oauth` | Only while you use "Continue with Google": remembers the security values of that sign-in. HttpOnly, limited to `/api/auth/google`. | 10 minutes | wisecallge.ge |
-| `wc_src` | What brought you on your first visit: a campaign link (utm_source, utm_medium, utm_campaign), a click from Facebook or Instagram (never the click's id), or another website (its domain only), or "direct" when nothing did; and the path of the first page you opened. No identifier and nothing about you; we use it only to count, per campaign, how many sign-ups, mentor applications and first questions came from it. Not set if your browser sends "Do Not Track" or "Global Privacy Control". HttpOnly. | 30 days | wisecallge.ge |
+| `wisecall_token` | Keeps you signed in. Contains a signed session (your account id and email). HttpOnly, Secure, SameSite=Lax. | 30 days, or until you log out | wisecall.ge |
+| `wisecall_device` | A random identifier for this browser. Only a keyed hash of it is stored, to notice many accounts or applications from one device (fraud prevention). HttpOnly. | 1 year | wisecall.ge |
+| `wisecall_oauth` | Only while you use "Continue with Google": remembers the security values of that sign-in. HttpOnly, limited to `/api/auth/google`. | 10 minutes | wisecall.ge |
+| `wc_src` | What brought you on your first visit: a campaign link (utm_source, utm_medium, utm_campaign), a click from Facebook or Instagram (never the click's id), or another website (its domain only), or "direct" when nothing did; and the path of the first page you opened. No identifier and nothing about you; we use it only to count, per campaign, how many sign-ups, mentor applications and first questions came from it. Not set if your browser sends "Do Not Track" or "Global Privacy Control". HttpOnly. | 30 days | wisecall.ge |
 
 ## Browser storage (not cookies, never sent to our server)
 

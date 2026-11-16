@@ -99,7 +99,7 @@ function requestOnce(u, { allowPrivate, timeoutMs, maxBytes, accept }) {
       lookup: allowPrivate ? undefined : safeLookup,
       timeout: timeoutMs,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; WisecallLinkCheck/1.0; +https://wisecallge.ge/how-we-verify.html)',
+        'User-Agent': `Mozilla/5.0 (compatible; WisecallLinkCheck/1.0; +${config.PUBLIC_URL}/how-we-verify.html)`,
         Accept: accept || 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.2',
         'Accept-Language': 'en,ka;q=0.8',
         'Accept-Encoding': 'identity'

@@ -116,6 +116,6 @@ the interview, what mistakes they made in their first year.
 On Wisecall you can ask a Georgian who has already won a scholarship. Describe your goal and get a written answer within 7 days — or your money
 back automatically.
 
-👉 [Find a mentor in Studying abroad](https://wisecallge.ge/advice/study_abroad)
+👉 [Find a mentor in Studying abroad](https://wisecall.ge/advice/study_abroad)
 
 *This article is general information and does not replace official sources.*

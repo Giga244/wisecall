@@ -1,17 +1,17 @@
 {
   "@context": "https://schema.org",
   "@type": "ProfilePage",
-  "url": "https://wisecallge.ge/u/tamar-lomidze",
+  "url": "https://wisecall.ge/u/tamar-lomidze",
   "inLanguage": "ka",
   "dateModified": "2026-09-27",
   "mainEntity": {
     "@type": "Person",
-    "@id": "https://wisecallge.ge/u/tamar-lomidze#person",
+    "@id": "https://wisecall.ge/u/tamar-lomidze#person",
     "name": "თამარ ლომიძე",
     "alternateName": "Tamar Lomidze",
     "jobTitle": "ციფრული მარკეტინგის ხელმძღვანელი",
     "description": "ვეხმარები მცირე და საშუალო ბიზნესს სოციალურ მედიაში სტრატეგიის შექმნაში, რეკლამის ბიუჯეტის დაგეგმვასა და შედეგების გაზომვაში.",
-    "image": "https://wisecallge.ge/api/photo/<user-id>",
+    "image": "https://wisecall.ge/api/photo/<user-id>",
     "address": { "@type": "PostalAddress", "addressLocality": "ქუთაისი", "addressCountry": "GE" },
     "knowsLanguage": ["ka", "en", "ru"],
     "knowsAbout": ["Digital marketing", "Social media strategy"],
@@ -22,7 +22,7 @@
       "price": "25.00",
       "priceCurrency": "GEL",
       "availability": "https://schema.org/InStock",
-      "url": "https://wisecallge.ge/u/tamar-lomidze"
+      "url": "https://wisecall.ge/u/tamar-lomidze"
     }
   },
   "_note": "Only for LISTED mentors with a public profile (the same rule as <meta robots index>). Fields come from server/profiles.js view(). Do NOT add aggregateRating from our own reviews on a Person: Google treats self-served reviews of the site's own sellers as ineligible for review snippets and it can look like spam; show the stars in the page only. Never include email, IBAN or verification data. Emit it in the <head> from server/pages.js sendProfile(), escaping </script> in every string."

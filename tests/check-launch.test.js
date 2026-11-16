@@ -148,7 +148,7 @@ describe('each setting is judged on its own', () => {
       assert.match(r.out, new RegExp(`${address.replace(/\./g, '\\.')} is a placeholder`));
     }
     const config = require('../server/config');
-    for (const real of ['support@wisecallge.ge', 'help@wisecall.ge', 'team@testing.ge', 'a@example.ge']) assert.equal(config.isPlaceholderEmail(real), false, real);
+    for (const real of ['support@wisecall.ge', 'help@wisecall.ge', 'team@testing.ge', 'a@example.ge']) assert.equal(config.isPlaceholderEmail(real), false, real);
   });
 
   test('a personal mailbox as SUPPORT_EMAIL, and prelaunch mode, are warnings that do not block', async () => {

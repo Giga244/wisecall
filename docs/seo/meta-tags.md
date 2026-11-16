@@ -35,18 +35,18 @@ shows. Georgian uses the informal შენ like the rest of the site.
 ## hreflang and canonical (every indexable page)
 
 ```html
-<!-- on https://wisecallge.ge/u/tamar-lomidze (English) -->
+<!-- on https://wisecall.ge/u/tamar-lomidze (English) -->
 <html lang="en">
-<link rel="canonical" href="https://wisecallge.ge/u/tamar-lomidze">
-<link rel="alternate" hreflang="en" href="https://wisecallge.ge/u/tamar-lomidze">
-<link rel="alternate" hreflang="ka" href="https://wisecallge.ge/ka/u/tamar-lomidze">
-<link rel="alternate" hreflang="x-default" href="https://wisecallge.ge/ka/u/tamar-lomidze">
+<link rel="canonical" href="https://wisecall.ge/u/tamar-lomidze">
+<link rel="alternate" hreflang="en" href="https://wisecall.ge/u/tamar-lomidze">
+<link rel="alternate" hreflang="ka" href="https://wisecall.ge/ka/u/tamar-lomidze">
+<link rel="alternate" hreflang="x-default" href="https://wisecall.ge/ka/u/tamar-lomidze">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="ka_GE">
 
-<!-- on https://wisecallge.ge/ka/u/tamar-lomidze (Georgian): the same three alternates, and -->
+<!-- on https://wisecall.ge/ka/u/tamar-lomidze (Georgian): the same three alternates, and -->
 <html lang="ka">
-<link rel="canonical" href="https://wisecallge.ge/ka/u/tamar-lomidze">
+<link rel="canonical" href="https://wisecall.ge/ka/u/tamar-lomidze">
 <meta property="og:locale" content="ka_GE">
 ```
 Each language version is its own canonical (never point the Georgian page's canonical at the English one). `x-default` → Georgian, the

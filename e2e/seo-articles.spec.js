@@ -19,7 +19,7 @@ const liveLook = async (ctx) => {
   if (!SHOTS) return;
   await ctx.route('**/api/config', async (route) => {
     const res = await route.fetch();
-    await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecallge.ge' } });
+    await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecall.ge' } });
   });
 };
 

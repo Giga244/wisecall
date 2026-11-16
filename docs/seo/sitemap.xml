@@ -8,38 +8,38 @@
      The example uses the demo mentor from tests/e2e-cloud/seed-dev.js. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://wisecallge.ge/ka/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecallge.ge/ka/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisecallge.ge/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://wisecallge.ge/ka/"/>
+    <loc>https://wisecall.ge/ka/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecall.ge/ka/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisecall.ge/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wisecall.ge/ka/"/>
   </url>
   <url>
-    <loc>https://wisecallge.ge/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecallge.ge/ka/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisecallge.ge/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://wisecallge.ge/ka/"/>
+    <loc>https://wisecall.ge/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecall.ge/ka/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisecall.ge/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wisecall.ge/ka/"/>
   </url>
   <url>
-    <loc>https://wisecallge.ge/ka/about.html</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecallge.ge/ka/about.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisecallge.ge/about.html"/>
+    <loc>https://wisecall.ge/ka/about.html</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecall.ge/ka/about.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisecall.ge/about.html"/>
   </url>
   <url>
-    <loc>https://wisecallge.ge/about.html</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecallge.ge/ka/about.html"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisecallge.ge/about.html"/>
+    <loc>https://wisecall.ge/about.html</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecall.ge/ka/about.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisecall.ge/about.html"/>
   </url>
   <!-- the same pattern for contact.html, terms.html, privacy.html and every help article once the help center is published -->
   <url>
-    <loc>https://wisecallge.ge/ka/u/tamar-lomidze</loc>
+    <loc>https://wisecall.ge/ka/u/tamar-lomidze</loc>
     <lastmod>2026-09-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecallge.ge/ka/u/tamar-lomidze"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisecallge.ge/u/tamar-lomidze"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecall.ge/ka/u/tamar-lomidze"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisecall.ge/u/tamar-lomidze"/>
   </url>
   <url>
-    <loc>https://wisecallge.ge/u/tamar-lomidze</loc>
+    <loc>https://wisecall.ge/u/tamar-lomidze</loc>
     <lastmod>2026-09-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecallge.ge/ka/u/tamar-lomidze"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://wisecallge.ge/u/tamar-lomidze"/>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://wisecall.ge/ka/u/tamar-lomidze"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wisecall.ge/u/tamar-lomidze"/>
   </url>
 </urlset>

@@ -1,10 +1,10 @@
 # Wisecall operations runbook
 
-For whoever runs wisecallge.ge day to day. It describes the app as it is at commit `2b99ada`. Setup and first deploy are in `DEPLOY.md`;
+For whoever runs wisecall.ge day to day. It describes the app as it is at commit `2b99ada`. Setup and first deploy are in `DEPLOY.md`;
 this file is about **running** it. Code changes that would make these tasks easier are listed in `docs/TODO-FROM-CLOUD.md`.
 
 **Where things are**
-- Admin panel: `https://wisecallge.ge/admin.html`. Your account's email must be in `ADMIN_EMAILS` and verified, and you pass two-step
+- Admin panel: `https://wisecall.ge/admin.html`. Your account's email must be in `ADMIN_EMAILS` and verified, and you pass two-step
   verification (an authenticator app) every `ADMIN_2FA_SESSION_HOURS` (12 h).
 - Hosting: Render — web service `wisecall` (one instance, region Frankfurt) and PostgreSQL `wisecall-db` (see `render.yaml`).
 - Logs: Render → `wisecall` → **Logs**. Every line starts with a tag: `[req]`, `[payments]`, `[jobs]`, `[kyc]`, `[email]`, `[admin]`,
@@ -21,7 +21,7 @@ this file is about **running** it. Code changes that would make these tasks easi
 
 Do it at the same time every day, in this order (most urgent first).
 
-1. **Is the site up?** Open `https://wisecallge.ge/healthz`. Glance at Render → Metrics (errors, restarts, memory).
+1. **Is the site up?** Open `https://wisecall.ge/healthz`. Glance at Render → Metrics (errors, restarts, memory).
 2. **Logs since yesterday.** Search the logs for `[error]`, `rejected callback`, `amount mismatch`, `refund`, `owed back`,
    `sweep failed`, `failed:`. Each is explained in section 9.
 3. **Bookings and refunds** tab: filter **Refund in progress** (`refund_pending`). Anything older than 2 days, or with an error shown,
@@ -262,7 +262,7 @@ legal deadline [LAWYER: 10 working days?]:
 - [ ] The 🔴 items of `docs/AUDIT.md` are fixed (#1 rate limits, #2 email-code attempts), and ideally #3–#8.
 - [ ] Every address in `ADMIN_EMAILS` has signed up, verified its email and set up 2FA (docs/AUDIT.md #2), with recovery codes stored.
 - [ ] Bank merchant contract signed; production keys in hand; sandbox test passed (`docs/BANK-GOLIVE.md`).
-- [ ] Didit production keys, workflow (ID + liveness + face match) and webhook URL `https://wisecallge.ge/api/kyc/webhook` set up.
+- [ ] Didit production keys, workflow (ID + liveness + face match) and webhook URL `https://wisecall.ge/api/kyc/webhook` set up.
 - [ ] Email domain verified (SPF, DKIM); `EMAIL_FROM` on that domain; a test email arrives in Gmail and not in spam.
 - [ ] Render database on a paid plan with backups; a restore was tested; `DATA_ENCRYPTION_KEY` in the password manager.
 - [ ] At least one mentor fully approved **and** with payout details (otherwise buyers see an empty Browse page).
@@ -273,7 +273,7 @@ legal deadline [LAWYER: 10 working days?]:
    `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET`. Leave `LAUNCH_MODE=prelaunch` for now. Save (restart).
 3. Run `npm run check:launch` against production values (or read the startup lines): payments on, ID check on, no `[WARNING]` you
    did not expect.
-4. Register the callback URL with the bank: `https://wisecallge.ge/api/payments/callback`.
+4. Register the callback URL with the bank: `https://wisecall.ge/api/payments/callback`.
 5. Set `LAUNCH_MODE=live`. Save (restart). The server refuses to start in `live` without the bank and Didit keys — if it does not come
    up, read why in the logs; the old instance keeps running.
 6. **Real smoke test with a real card and a small price** (e.g. a test mentor at 5 ₾): ask → pay → the booking turns **Paid** (the

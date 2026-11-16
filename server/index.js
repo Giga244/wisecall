@@ -24,6 +24,9 @@ app.use((req, res, next) => { if (draining) res.set('Connection', 'close'); next
 app.use(securityHeaders);
 app.use(require('compression')()); // the pages, scripts, styles and JSON are text: about a quarter of the size on the wire
 app.use(requestLogger);
+// The site moved to another domain (OLD_DOMAINS), or was asked for with "www.": a permanent 301 to the same page on PUBLIC_URL, before
+// anything else of the site runs. The addresses outside services call answer on every host (server/domainMove.js).
+app.use(require('./domainMove').redirectOldDomains);
 app.use(require('./live/switch').gate); // (live sessions switched off: their pages and API do not exist, see server/live/switch.js)
 
 // Health check for the hosting platform: also proves the database is reachable.

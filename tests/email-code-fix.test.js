@@ -168,7 +168,7 @@ describe('Settings: change a confirmed email', () => {
   let mailSrv, mbase;
   before(async () => {
     await resend.start();
-    mailSrv = await startServer(4874, { EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecallge.ge>', RATE_LIMIT_MULTIPLIER: '20' });
+    mailSrv = await startServer(4874, { EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecall.ge>', RATE_LIMIT_MULTIPLIER: '20' });
     mbase = mailSrv.base;
   });
   after(async () => { if (mailSrv) mailSrv.proc.kill(); await resend.stop(); });

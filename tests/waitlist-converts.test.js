@@ -17,7 +17,7 @@ let srv, base;
 before(async () => {
   await resend.start();
   await resetDatabase();
-  srv = await startServer(4784, { RATE_LIMIT_MULTIPLIER: '30', EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecallge.ge>' });
+  srv = await startServer(4784, { RATE_LIMIT_MULTIPLIER: '30', EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecall.ge>' });
   base = srv.base;
 });
 after(async () => { if (srv) srv.proc.kill(); await resend.stop(); await pool.end(); });

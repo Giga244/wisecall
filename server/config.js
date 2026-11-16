@@ -127,6 +127,10 @@ const config = {
   // Visitor statistics with Plausible (server/analytics.js): the site's domain as registered there. Empty = off.
   PLAUSIBLE_DOMAIN: (env.PLAUSIBLE_DOMAIN || '').trim(),
   PLAUSIBLE_API_URL: (env.PLAUSIBLE_API_URL || 'https://plausible.io/api/event').trim(),
+  // The site's earlier address(es), when it has moved to another domain (docs/DOMAIN-MOVE.md): host names, comma-separated, for example
+  // "old-site.ge,www.old-site.ge". A request for one of them is sent, with a permanent 301, to the same page on PUBLIC_URL
+  // (server/domainMove.js; the addresses outside services call are not redirected). Empty = no redirect at all.
+  OLD_DOMAINS: [...new Set(list(env.OLD_DOMAINS).map((h) => h.replace(/^https?:\/\//, '').replace(/[/:].*$/, '').replace(/\.$/, '')).filter((h) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(h)))],
   // Search engine verification (docs/CLAUDE-CODE-SEO.md): the codes Google Search Console and Bing Webmaster Tools give for the "HTML tag"
   // method. When set, the home page carries the tag (both languages); empty = no tag. Only letters, digits, "-", "_" and "=" are taken.
   GOOGLE_SITE_VERIFICATION: /^[A-Za-z0-9_=-]{6,120}$/.test((env.GOOGLE_SITE_VERIFICATION || '').trim()) ? env.GOOGLE_SITE_VERIFICATION.trim() : '',
@@ -292,6 +296,15 @@ if (IS_PROD && config.isPlaceholderEmail(config.SUPPORT_EMAIL)) {
 }
 
 // Fail fast: refuse to start with a configuration that would break or be unsafe.
+// (the site's own host can never be one of its old domains: that would redirect the site to itself for ever)
+try {
+  const own = new URL(config.PUBLIC_URL).hostname.toLowerCase();
+  if (config.OLD_DOMAINS.includes(own)) {
+    console.error(`[WARNING] OLD_DOMAINS names ${own}, which is the site's own address (PUBLIC_URL): ignored. List only the earlier domain(s) there.`);
+    config.OLD_DOMAINS = config.OLD_DOMAINS.filter((h) => h !== own);
+  }
+} catch (e) { /* (PUBLIC_URL is checked below) */ }
+
 const problems = [];
 if (!config.DATABASE_URL) problems.push('DATABASE_URL is not set (e.g. postgresql://user:pass@localhost:5432/wisecall)');
 if (!['resend', 'postmark', 'log'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend, postmark or log');
@@ -326,7 +339,7 @@ if (IS_PROD) {
   const secret = env.SESSION_SECRET || env.JWT_SECRET;
   if (!secret || secret === JWT_DEFAULT || secret.length < 24) problems.push('SESSION_SECRET must be set to 24+ random characters');
   if (!env.DATA_ENCRYPTION_KEY || env.DATA_ENCRYPTION_KEY.length < 32) problems.push('DATA_ENCRYPTION_KEY must be set to 32+ random characters (it encrypts mentors\' IBANs)');
-  if (!env.PUBLIC_URL && !env.APP_URL) problems.push('PUBLIC_URL is required: your site\'s public https:// address (for example https://wisecallge.ge)');
+  if (!env.PUBLIC_URL && !env.APP_URL) problems.push('PUBLIC_URL is required: your site\'s public https:// address (for example https://your-domain.ge)');
   else if (!/^https:\/\//.test(config.PUBLIC_URL)) problems.push('PUBLIC_URL must be your public https:// address');
   else if (/\/\/(localhost|127\.|0\.0\.0\.0|\[::1\])/i.test(config.PUBLIC_URL)) problems.push('PUBLIC_URL must be your real public address, not localhost');
   if (!['resend', 'postmark'].includes(config.EMAIL_PROVIDER)) problems.push('EMAIL_PROVIDER must be resend or postmark in production');

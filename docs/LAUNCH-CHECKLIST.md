@@ -16,7 +16,7 @@ Legend: **required** (the server refuses to start in production without it, or t
    payout (credit) secret key. Ask Flitt: the fee per IBAN withdrawal, that IBAN withdrawal is enabled, and the [VERIFY] points in
    docs/BANK-GOLIVE.md §0.
 3. **Didit** account (ID checks for mentors): API key, a workflow (ID + liveness + face match), webhook secret, webhook URL
-   `https://wisecallge.ge/api/kyc/webhook`.
+   `https://wisecall.ge/api/kyc/webhook`.
 4. **Email** domain verified at Resend (SPF, DKIM: DEPLOY.md §9); a new API key; a test email reaches Gmail, not spam.
 5. **Cloudflare Turnstile** (the "are you a person?" check on sign-up, login and forms): site key and secret key.
 6. **Lawyer** reviewed `docs/legal/` and docs/LEGAL-REVIEW.md; the approved texts are on the site.
@@ -29,7 +29,7 @@ Legend: **required** (the server refuses to start in production without it, or t
    compares every table).
 2. Web service on **Standard** (Starter serves only about 100 visitors at once: docs/LAUNCH-REHEARSAL.md); health check `/healthz`;
    one instance (the rate limits and caches are per process: docs/TODO-REHEARSAL.md R-11).
-3. Custom domain `wisecallge.ge` with HTTPS (DEPLOY.md §10).
+3. Custom domain `wisecall.ge` with HTTPS (DEPLOY.md §10).
 
 ## C. Environment variables
 
@@ -38,13 +38,13 @@ Legend: **required** (the server refuses to start in production without it, or t
 | Variable | Value |
 |---|---|
 | `NODE_ENV` | `production` |
-| `PUBLIC_URL` | `https://wisecallge.ge` (https, no trailing slash, never localhost) |
+| `PUBLIC_URL` | `https://wisecall.ge` (https, no trailing slash, never localhost) |
 | `DATABASE_URL` | from the Render database (render.yaml fills it) |
 | `SESSION_SECRET` | 32+ random characters (render.yaml generates it) |
 | `DATA_ENCRYPTION_KEY` | 32+ random characters, different from the above; **copy it into your password manager** (IBANs, verified names and documents are unreadable without it) |
 | `ADMIN_EMAILS` | the admins' addresses (comma-separated); each sets up two-step verification on first sign-in (`ADMIN_2FA` must stay unset: `off` is refused in production) |
-| `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | `resend`, the key, `Wisecall <hello@wisecallge.ge>` |
-| `SUPPORT_EMAIL` | `support@wisecallge.ge` (public: footer, Terms, Reply-To) |
+| `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | `resend`, the key, `Wisecall <hello@wisecall.ge>` |
+| `SUPPORT_EMAIL` | `support@wisecall.ge` (public: footer, Terms, Reply-To) |
 | `LAUNCH_MODE` | `prelaunch` until launch day, then `live` |
 | `LIVE_SESSIONS` | `off` (the production default; render.yaml sets it) |
 
@@ -76,7 +76,7 @@ Legend: **required** (the server refuses to start in production without it, or t
 | `LEGAL_NAME`, `LEGAL_ID`, `LEGAL_ADDRESS` | before the first real payment (receipts) |
 | `NODE_OPTIONS` | `--max-old-space-size=1536` on Standard (render.yaml has 384 for Starter) |
 | `SENTRY_DSN` | errors, without personal data |
-| `PLAUSIBLE_DOMAIN` | `wisecallge.ge` (visitor counts without cookies) |
+| `PLAUSIBLE_DOMAIN` | `wisecall.ge` (visitor counts without cookies) |
 | `ANTHROPIC_API_KEY` | AI summaries of mentor applications (`ANTHROPIC_MODEL`, `AI_MONTHLY_BUDGET_USD`, `AUTO_APPROVE=off`) |
 
 ### Business rules (defaults match the Terms; change only together with them)
@@ -103,7 +103,7 @@ Legend: **required** (the server refuses to start in production without it, or t
 3. Render → Environment: the payment, payout and ID-check values above (keep `LAUNCH_MODE=prelaunch`), Turnstile, `BANK_FEE_PERCENT=2`,
    `LIVE_SESSIONS=off`. Settings → Instance type: **Standard**. Save (restart).
 4. `npm run check:launch` in Render → Shell: no ❌; Flitt and Didit answer and accept the keys.
-5. In the Flitt portal: the callback address is this site (`https://wisecallge.ge/api/payments/callback` is sent with every order).
+5. In the Flitt portal: the callback address is this site (`https://wisecall.ge/api/payments/callback` is sent with every order).
 6. `LAUNCH_MODE=live`, save. If the server does not come up, the logs say why; the old instance keeps running.
 7. **Real test**: ask yourself one 5 ₾ question with a real card → it turns Paid → answer it → the email arrives → refund it from the admin
    panel → Refunded. With `PAYOUT_METHOD=flitt_iban`, one small payout to your own IBAN with a 2FA code.

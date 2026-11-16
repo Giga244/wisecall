@@ -14,7 +14,7 @@ Buyers choose in a few seconds. Your profile should answer: *who are you, what c
 
 **Links.** LinkedIn and a website (https only). They also help your application.
 
-**Your username** is your profile address: `wisecallge.ge/u/your-name`. You can change it once every 30 days; the old address keeps working.
+**Your username** is your profile address: `{site}/u/your-name`. You can change it once every 30 days; the old address keeps working.
 
 **Reviews** come from real buyers only. You can reply to each review once, publicly. Keep it calm and useful. Never ask for, pay for or trade reviews.
 

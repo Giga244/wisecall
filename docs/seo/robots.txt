@@ -1,4 +1,4 @@
-# PROPOSED robots.txt for https://wisecallge.ge (generated today by server/pages.js seoRoutes(); this is the suggested new output).
+# PROPOSED robots.txt for https://wisecall.ge (generated today by server/pages.js seoRoutes(); this is the suggested new output).
 # Changes vs today:
 #   1. /api/ is no longer blocked as a whole: mentor profiles and the expert list are drawn by JavaScript from /api/users/<name> and
 #      /api/experts, and a crawler that obeys robots.txt cannot render them (docs/QUALITY-AUDIT.md SEO-1). Only the private API areas stay
@@ -17,4 +17,4 @@ Disallow: /admin.html
 Disallow: /mock-bank.html
 Disallow: /mock-kyc.html
 
-Sitemap: https://wisecallge.ge/sitemap.xml
+Sitemap: https://wisecall.ge/sitemap.xml

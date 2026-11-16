@@ -23,7 +23,7 @@ const phoneKa = async (browser) => {
   const ctx = await browser.newContext(PHONE);
   await ctx.addInitScript(() => { try { localStorage.setItem('wisecall_lang', 'ka'); } catch (e) { /* none */ } });
   // (for the pictures only: the test server's support address is a placeholder; the pictures show the live site's own)
-  if (SHOTS) await ctx.route('**/api/config', async (route) => { const res = await route.fetch(); await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecallge.ge' } }); });
+  if (SHOTS) await ctx.route('**/api/config', async (route) => { const res = await route.fetch(); await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecall.ge' } }); });
   return { ctx, page: await ctx.newPage() };
 };
 

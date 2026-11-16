@@ -21,7 +21,7 @@ The older events still go out too: `mentor_application_started`, `mentor_applica
 
 ## Adding them as Goals in Plausible
 
-1. Open plausible.io, choose the wisecallge.ge site, then **Site settings → Goals**.
+1. Open plausible.io, choose the wisecall.ge site, then **Site settings → Goals**.
 2. Click **+ Add goal**, choose **Custom event**, type the event name exactly as in the table (for example `apply_sent`), and save.
 3. Repeat for each event in the table: `waitlist_join`, `signup`, `email_verified`, `apply_step_1_done`, `apply_step_2_done`, `apply_step_3_done`, `apply_step_4_done`, `apply_sent`, `id_check_started`, `id_check_passed`, `mentor_approved`.
 4. For the properties (field, source, role): **Site settings → Custom properties → + Add property**, then add `field`, `source`, `role` and `method`. On the dashboard, click a goal to break it down by them.

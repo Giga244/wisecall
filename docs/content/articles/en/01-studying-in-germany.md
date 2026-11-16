@@ -127,6 +127,6 @@ On Wisecall you can ask a question to someone who got into a German university a
 situation — level, field, language level, budget — and get a written answer within 7 days. If the mentor doesn’t answer, you’re refunded
 automatically.
 
-👉 [Find a mentor in Studying abroad](https://wisecallge.ge/advice/study_abroad)
+👉 [Find a mentor in Studying abroad](https://wisecall.ge/advice/study_abroad)
 
 *This article is general information and does not replace official sources or professional advice.*

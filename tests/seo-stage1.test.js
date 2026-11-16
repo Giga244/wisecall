@@ -26,7 +26,7 @@ before(async () => {
   // "live": open, other numbers than the usual ones (5 days, the mentor keeps 70%), no support address, no verification codes.
   live = await startServer(4881, { RATE_LIMIT_MULTIPLIER: '50', ANSWER_DEADLINE_DAYS: '5', PLATFORM_FEE_PERCENT: '30' });
   // "pre": before launch, as the live site is today: the support address, the social pages and both verification codes set.
-  pre = await startServer(4882, { RATE_LIMIT_MULTIPLIER: '50', LAUNCH_MODE: 'prelaunch', SUPPORT_EMAIL: 'support@wisecallge.ge', ...SOCIAL,
+  pre = await startServer(4882, { RATE_LIMIT_MULTIPLIER: '50', LAUNCH_MODE: 'prelaunch', SUPPORT_EMAIL: 'support@wisecall.ge', ...SOCIAL,
     GOOGLE_SITE_VERIFICATION: 'g00gle-Code_123456', BING_SITE_VERIFICATION: 'B1NGC0DE4567890' });
 });
 after(() => { for (const s of [live, pre]) if (s) s.proc.kill(); });
@@ -48,7 +48,7 @@ describe('/llms.txt', () => {
       '- How it works: choose an expert in your field, write your question, get a written answer within 7 days or your money back.',
       '- Mentors: adults, ID-verified; they set their own price or answer for free, and keep 80%.',
       '- Askers: 16 and older. Written only, no calls; personal contacts are protected.',
-      '- Contact: support@wisecallge.ge',
+      '- Contact: support@wisecall.ge',
       '',
       '## Pages',
       `- [How we verify mentors](${u}/ka/how-we-verify.html)`,
@@ -197,7 +197,7 @@ describe('the brand: who Wisecall is', () => {
     assert.equal(org.description, 'Wisecall (უაისქოლი) ქართული პლატფორმაა, სადაც სტუდენტები და ახალგაზრდები გადამოწმებულ ექსპერტებს უსვამენ კითხვებს სფეროზე, სწავლასა და კარიერაზე და წერილობით პასუხს იღებენ.');
     assert.equal(org.areaServed, 'GE');
     assert.deepEqual(org.knowsLanguage, ['ka', 'en']);
-    assert.equal(org.email, 'support@wisecallge.ge');
+    assert.equal(org.email, 'support@wisecall.ge');
     assert.deepEqual([...org.sameAs].sort(), Object.values(SOCIAL).sort(), 'Instagram, TikTok and Facebook');
     // in English: the same organisation, described in English
     const en = jsonLd(await html(pre, '/'))['@graph'].find((x) => x['@type'] === 'Organization');

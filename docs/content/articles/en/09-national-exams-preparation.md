@@ -120,6 +120,6 @@ teacher advises for your specific subject, or what studying is like at the facul
 On Wisecall you can ask a teacher, or a student who recently passed the national exams. Describe your subjects and goal and get a written
 answer within 7 days — or your money back automatically.
 
-👉 [Find a mentor in Teaching & education](https://wisecallge.ge/advice/teaching)
+👉 [Find a mentor in Teaching & education](https://wisecall.ge/advice/teaching)
 
 *This article is general information and does not replace official sources.*

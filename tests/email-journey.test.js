@@ -17,8 +17,8 @@ let srv, base;
 before(async () => {
   await resend.start();
   await resetDatabase();
-  srv = await startServer(4780, { EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecallge.ge>',
-    SUPPORT_EMAIL: 'support@wisecallge.ge', RESEND_WEBHOOK_SECRET: SECRET });
+  srv = await startServer(4780, { EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecall.ge>',
+    SUPPORT_EMAIL: 'support@wisecall.ge', RESEND_WEBHOOK_SECRET: SECRET });
   base = srv.base;
 });
 after(async () => { if (srv) srv.proc.kill(); await resend.stop(); await pool.end(); });
@@ -37,8 +37,8 @@ describe('the code email', () => {
     const code = resend.codeIn(mail);
     assert.match(code, /^\d{6}$/);
     assert.equal(mail.body.subject, `Wisecall – შენი კოდი: ${code}`);
-    assert.equal(mail.body.from, 'Wisecall <hello@wisecallge.ge>');
-    assert.equal(mail.body.reply_to, 'support@wisecallge.ge');
+    assert.equal(mail.body.from, 'Wisecall <hello@wisecall.ge>');
+    assert.equal(mail.body.reply_to, 'support@wisecall.ge');
     assert.doesNotMatch(mail.body.html, /<img/i, 'no pictures');
     assert.match(mail.body.text, new RegExp(code));
     assert.match(mail.body.text, /\/verify-email\.html/);

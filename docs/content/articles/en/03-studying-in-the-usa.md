@@ -119,6 +119,6 @@ how someone else’s visa interview went.
 On Wisecall you can ask a Georgian who got into a US university or graduated there. Describe your situation and get a written answer within
 7 days — or your money back automatically.
 
-👉 [Find a mentor in Studying abroad](https://wisecallge.ge/advice/study_abroad)
+👉 [Find a mentor in Studying abroad](https://wisecall.ge/advice/study_abroad)
 
 *This article is general information and does not replace official sources or professional advice.*

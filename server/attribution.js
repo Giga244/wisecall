@@ -24,6 +24,7 @@ const domain = (v) => {
 const ownHosts = () => {
   const out = new Set(['localhost', '127.0.0.1']);
   try { out.add(new URL(config.PUBLIC_URL).hostname.replace(/^www\./, '')); } catch (e) { /* not a URL */ }
+  for (const h of config.OLD_DOMAINS || []) out.add(h.replace(/^www\./, '')); // (the site's earlier address is this site too)
   return out;
 };
 const optedOut = (req) => req.get('dnt') === '1' || req.get('sec-gpc') === '1';

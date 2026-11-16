@@ -16,7 +16,7 @@ const tag = Date.now();
 const noOverflow = async (page) => expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
 // (for the pictures only: the test server's support address is a placeholder; the pictures show the live site's own, so nobody takes the
 // placeholder for what visitors see)
-const LIVE_SUPPORT = 'support@wisecallge.ge';
+const LIVE_SUPPORT = 'support@wisecall.ge';
 const liveLook = async (ctx) => {
   if (!SHOTS) return;
   await ctx.route('**/api/config', async (route) => {

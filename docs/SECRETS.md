@@ -40,7 +40,7 @@ Findings from any scan name the file, line and rule, never the value.
 | `ANTHROPIC_API_KEY` | AI summaries for the mentor review | Optional | console.anthropic.com → API Keys → create a new key → Render → disable the old one. |
 | `SENTRY_DSN` | Where error reports go | Optional | Sentry → the project → Client Keys (DSN) → create a new key → Render → disable the old one. It's semi-public by design but kept server-side here. |
 
-After any rotation, Render redeploys by itself when you save the environment. Then check `https://wisecallge.ge/healthz`.
+After any rotation, Render redeploys by itself when you save the environment. Then check `https://wisecall.ge/healthz`.
 
 ## Public: safe for every browser to see
 

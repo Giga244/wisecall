@@ -19,7 +19,7 @@ let srv, base, admin;
 before(async () => {
   await resend.start();
   await resetDatabase();
-  srv = await startServer(4789, { SWEEP_INTERVAL_SECONDS: '1', EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecallge.ge>' });
+  srv = await startServer(4789, { SWEEP_INTERVAL_SECONDS: '1', EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecall.ge>' });
   base = srv.base;
   admin = await signupByEmail(resend, base, 'QA Admin', 'qa-admin@example.com', 'en');
 });

@@ -120,6 +120,6 @@ they explained the switch to employers.
 On Wisecall you can ask someone who has already changed careers, or an HR specialist who hires such candidates. Describe your current job and
 the direction you want, and get a written answer within 7 days — or your money back automatically.
 
-👉 [Find a mentor in Careers & HR](https://wisecallge.ge/advice/careers_hr)
+👉 [Find a mentor in Careers & HR](https://wisecall.ge/advice/careers_hr)
 
 *This article is general information and does not replace professional advice.*

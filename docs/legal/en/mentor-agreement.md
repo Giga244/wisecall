@@ -7,7 +7,7 @@
 **Version:** draft 1 · **Last updated:** [date]
 
 This Agreement is between [LAWYER: Wisecall legal entity, ID code, address] ("**Wisecall**") and you, a person who applies to answer
-questions on wisecallge.ge (the "**Mentor**"). It adds to the Terms of Service; if they conflict on a Mentor matter, this Agreement
+questions on wisecall.ge (the "**Mentor**"). It adds to the Terms of Service; if they conflict on a Mentor matter, this Agreement
 prevails. You accept it when you submit your application. [LAWYER: is click-acceptance sufficient, or is a signed/e-signed agreement
 needed for the payout and tax parts?]
 

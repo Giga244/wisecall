@@ -11,14 +11,14 @@ no calls or meetings. Nothing below changes a rule about money, identity or 18+.
 **Exists.** Resend sends everything (server/email.js, a text part already goes with every email). The verify email has the code only, and
 the logo images in its header. POST /api/auth/resend-verification exists (6 per 15 minutes per address). verify-email.html asks for the code.
 
-**DNS today** (public lookups, 2026-10-28; no Resend key on this machine, it only lives on the server): SPF and MX on send.wisecallge.ge,
+**DNS today** (public lookups, 2026-10-28; no Resend key on this machine, it only lives on the server): SPF and MX on send.wisecall.ge,
 the resend._domainkey DKIM key and `_dmarc` with `p=none` are all there. The root SPF lists only Cloudflare email routing (fine: Resend sends
-from send.wisecallge.ge). Nothing is missing. To do, by the owner: check "Verified" in Resend, then tighten DMARC with a report address
+from send.wisecall.ge). Nothing is missing. To do, by the owner: check "Verified" in Resend, then tighten DMARC with a report address
 (docs/EMAIL-DNS.md).
 
 **Changes.**
 - The verify email: subject "Wisecall – შენი კოდი: 123456" / "Wisecall – your code: 123456", no images, no tracking, plain HTML plus a text
-  part. Reply-To is the support address; the sender is EMAIL_FROM, set to "Wisecall <hello@wisecallge.ge>" (docs).
+  part. Reply-To is the support address; the sender is EMAIL_FROM, set to "Wisecall <hello@wisecall.ge>" (docs).
 - The code screen: the address it went to, with "change email"; "resend code" with a 60 s countdown (the server keeps its limit); the
   Spam / Junk line.
 - Resend webhook: POST /api/email/webhook, signed (Svix headers, RESEND_WEBHOOK_SECRET). It keeps the last result per address (delivered,

@@ -75,9 +75,9 @@ protect every payment).
 | Merchant (e-commerce) agreement for "online consultations / advice marketplace" | — | Ask explicitly whether a marketplace that collects money and pays experts later is acceptable, and about holding funds 7+ days (see `LEGAL-REVIEW.md` §1). **[CONFIRM WITH BANK]** |
 | `client_id` | `BOG_CLIENT_ID` | Issued by BOG for the merchant (Business Manager / your BOG manager). |
 | `client_secret` | `BOG_CLIENT_SECRET` | Secret. Render env only. |
-| Callback URL | sent with every order as `callback_url` = `https://wisecallge.ge/api/payments/callback` | HTTPS, public. Also ask whether it must be registered in the merchant settings. **[CONFIRM WITH BANK]** |
+| Callback URL | sent with every order as `callback_url` = `https://wisecall.ge/api/payments/callback` | HTTPS, public. Also ask whether it must be registered in the merchant settings. **[CONFIRM WITH BANK]** |
 | Callback public key | `BOG_CALLBACK_PUBLIC_KEY` (optional) | Our code has BOG's published key built in. It is **byte-identical** to the key shipped in the independent `bog-payments-sdk` (checked). Still confirm with BOG and set it explicitly so a key change is a config change. |
-| Success / fail pages | sent per order: `https://wisecallge.ge/u/<mentor>?booking=<id>&status=success|fail` | No registration needed as far as known. **[CONFIRM]** |
+| Success / fail pages | sent per order: `https://wisecall.ge/u/<mentor>?booking=<id>&status=success|fail` | No registration needed as far as known. **[CONFIRM]** |
 
 ### API as documented vs our code
 | Step | BOG (documented) | `server/pay/bog.js` | OK? |
@@ -117,8 +117,8 @@ protect every payment).
 | `apikey` | `TBC_API_KEY` | From the **TBC Developers portal** (developers.tbcbank.ge): register an app and subscribe it to the Checkout / "tpay – web payments" product. Identifies the app. |
 | `client_id` | `TBC_CLIENT_ID` | From the TBC **merchant dashboard** after the contract. |
 | `client_secret` | `TBC_CLIENT_SECRET` | Merchant dashboard. Secret. |
-| **Callback URL — must be added on the merchant dashboard** | `https://wisecallge.ge/api/payments/callback` (we also send it per payment as `callbackUrl`) | TBC's docs: "the callbackUrl must be added on the merchant dashboard; if not provided, the dashboard value is used." **Do this, or callbacks may not arrive** (the sweep still catches payments, but slower). |
-| Return URL | sent per payment as `returnurl` = `https://wisecallge.ge/u/<mentor>?booking=<id>&status=return` | TBC sends the buyer back here for every outcome; our page then asks the server, which asks TBC. |
+| **Callback URL — must be added on the merchant dashboard** | `https://wisecall.ge/api/payments/callback` (we also send it per payment as `callbackUrl`) | TBC's docs: "the callbackUrl must be added on the merchant dashboard; if not provided, the dashboard value is used." **Do this, or callbacks may not arrive** (the sweep still catches payments, but slower). |
+| Return URL | sent per payment as `returnurl` = `https://wisecall.ge/u/<mentor>?booking=<id>&status=return` | TBC sends the buyer back here for every outcome; our page then asks the server, which asks TBC. |
 
 ### API as documented vs our code
 | Step | TBC (documented) | `server/pay/tbc.js` | OK? |
@@ -146,7 +146,7 @@ protect every payment).
 1. Merchant contract signed; the business category allows paid consultations; ask about chargeback handling and settlement days.
 2. Sandbox test passed (above), including one refund end-to-end.
 3. Production keys into Render → Environment (never into git or chat): `PAYMENT_PROVIDER` + the bank's keys (Flitt: `FLITT_MERCHANT_ID`, `FLITT_SECRET_KEY`, and for payouts `FLITT_PAYOUT_SECRET_KEY` with `PAYOUT_METHOD=flitt_iban`).
-4. Callback URL registered with the bank: `https://wisecallge.ge/api/payments/callback`.
+4. Callback URL registered with the bank: `https://wisecall.ge/api/payments/callback`.
 5. Keep `LAUNCH_MODE=prelaunch`, restart, run `npm run check:launch` → the bank issues a token.
 6. Follow `docs/RUNBOOK.md` §11 (launch day): `LAUNCH_MODE=live`, one real small payment and one real refund.
 7. For the first week, reconcile daily: the bank portal's completed payments vs Wisecall's paid bookings (catches AUDIT #4).

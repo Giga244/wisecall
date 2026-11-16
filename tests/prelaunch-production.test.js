@@ -24,8 +24,8 @@ const BANK_AND_DIDIT = {
 };
 // A production server with everything a first deploy has (domain, email, secrets), and no bank or Didit keys.
 const prodEnv = (extra) => ({
-  NODE_ENV: 'production', PUBLIC_URL: 'https://wisecallge.ge', DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345',
-  EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecallge.ge>', SUPPORT_EMAIL: 'support@wisecallge.ge',
+  NODE_ENV: 'production', PUBLIC_URL: 'https://wisecall.ge', DATA_ENCRYPTION_KEY: 'test-data-key-that-is-long-enough-12345',
+  EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 're_test_key', RESEND_API_URL: resend.url, EMAIL_FROM: 'Wisecall <hello@wisecall.ge>', SUPPORT_EMAIL: 'support@wisecall.ge',
   ...NO_KEYS, ...extra
 });
 // The same, started as a separate program (for the cases where it must refuse to start). Values are blanked, not left out, so the
@@ -33,7 +33,7 @@ const prodEnv = (extra) => ({
 function startFails(extra) {
   const env = {
     PATH: process.env.PATH, PORT: '4669', DATABASE_URL: process.env.TEST_DATABASE_URL, SESSION_SECRET: 'test-secret-that-is-long-enough-1234567890',
-    JWT_SECRET: '', APP_URL: '', ADMIN_EMAILS: 'boss@wisecallge.ge', ADMIN_EMAIL: '', ADMIN_2FA: '', LAUNCH_MODE: '', ...prodEnv({}), RESEND_API_URL: 'http://127.0.0.1:9/emails', ...extra
+    JWT_SECRET: '', APP_URL: '', ADMIN_EMAILS: 'boss@wisecall.ge', ADMIN_EMAIL: '', ADMIN_2FA: '', LAUNCH_MODE: '', ...prodEnv({}), RESEND_API_URL: 'http://127.0.0.1:9/emails', ...extra
   };
   return spawnSync('node', ['server/index.js'], { cwd: ROOT, encoding: 'utf8', timeout: 15000, env });
 }
@@ -61,7 +61,7 @@ describe('production + LAUNCH_MODE=prelaunch, with no bank and no Didit keys', (
     assert.equal(cfg.launchMode, 'prelaunch');
     assert.equal(cfg.idChecksOpen, false);
     assert.ok(!('devMode' in cfg));
-    assert.equal(cfg.contactEmail, 'support@wisecallge.ge');
+    assert.equal(cfg.contactEmail, 'support@wisecall.ge');
   });
 
   test('a mentor can sign up (code by email), fill in the application, and waits: the ID check is closed, the other steps work', async () => {
@@ -188,20 +188,21 @@ describe('what the mentor sees, and the documents', () => {
     for (const k of ['vt.kyc.soon', 'vt.kyc.soonBody']) assert.match(ka[k], /[ა-ჿ]/, k);
   });
 
-  test('DEPLOY.md, .env.example and render.yaml use wisecallge.ge and explain going online in prelaunch', () => {
+  test('DEPLOY.md and .env.example name the site\'s domain in their examples, the blueprint names none, and they explain going online in prelaunch', () => {
     // (Windows checkouts may have CRLF line endings: the files in git have LF)
     const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
     const deploy = read('DEPLOY.md');
     const example = read('.env.example');
     const render = read('render.yaml');
     for (const text of [deploy, example]) {
-      assert.match(text, /https:\/\/wisecallge\.ge/);
-      assert.match(text, /hello@wisecallge\.ge/);
-      assert.match(text, /support@wisecallge\.ge/);
+      assert.match(text, /https:\/\/wisecall\.ge/);
+      assert.match(text, /hello@wisecall\.ge/);
+      assert.match(text, /support@wisecall\.ge/);
     }
     assert.match(deploy, /## Going online first, in prelaunch/);
     assert.match(render, /key: LAUNCH_MODE\n\s+value: prelaunch/);
     assert.doesNotMatch(render, /key: (DIDIT_|BOG_|TBC_|PAYMENT_PROVIDER|KYC_PROVIDER)/, 'the blueprint does not ask for keys the first deploy does not have');
-    assert.doesNotMatch(deploy + example, /wisecall\.ge\b/, 'no other spelling of the domain');
+    // (the blueprint holds no address: PUBLIC_URL, EMAIL_FROM and SUPPORT_EMAIL are set in the dashboard only, docs/DOMAIN-MOVE.md)
+    assert.doesNotMatch(render, /wisecall\.ge\b/);
   });
 });

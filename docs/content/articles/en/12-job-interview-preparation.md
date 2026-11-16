@@ -126,6 +126,6 @@ answer, what salary range is realistic for your experience.
 On Wisecall you can ask an HR specialist, a recruiter or a manager in your field. Describe the role you’re interviewing for and get a written
 answer within 7 days — or your money back automatically.
 
-👉 [Find a mentor in Careers & HR](https://wisecallge.ge/advice/careers_hr)
+👉 [Find a mentor in Careers & HR](https://wisecall.ge/advice/careers_hr)
 
 *This article is general information and does not replace professional advice.*

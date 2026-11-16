@@ -115,6 +115,6 @@ how they price, how they get paid and how they keep their paperwork in order.
 On Wisecall you can ask an experienced freelancer in your field. Describe your skill and your goal and get a written answer within 7 days — or
 your money back automatically.
 
-👉 [Find a mentor in Freelancing](https://wisecallge.ge/advice/freelancing)
+👉 [Find a mentor in Freelancing](https://wisecall.ge/advice/freelancing)
 
 *This article is general information and does not replace accounting or legal advice.*

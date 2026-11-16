@@ -4,7 +4,7 @@
 > No statistics are invented: where the application should cite a market number, it names the official source to take it from.
 
 ## 1. Summary (≈ 100 words)
-Wisecall (wisecallge.ge) is a Georgian marketplace where anyone can pay to ask a verified expert one written question and get a
+Wisecall (wisecall.ge) is a Georgian marketplace where anyone can pay to ask a verified expert one written question and get a
 thoughtful written answer within 7 days — or their money back automatically. Mentors set their own price (5–2,000 ₾); Wisecall keeps 20%.
 Every mentor passes an ID and selfie check, an age check, a name match and a review of their experience by a person; doctors, lawyers and
 financial advisers also need a licence we check in the official register. The product is built in Georgian and English, takes payments
@@ -57,7 +57,7 @@ professional communities, the mentors’ own networks (every mentor shares their
 
 ## 6. Traction (honest)
 Wisecall is **pre-launch**. What exists today:
-- A working product at wisecallge.ge in prelaunch mode: accounts, Google sign-in, mentor application with ID checks, admin review with
+- A working product at wisecall.ge in prelaunch mode: accounts, Google sign-in, mentor application with ID checks, admin review with
   two-step verification, bank payment integrations (BOG and TBC, tested against a simulator), refunds, payouts ledger, ratings, EN/KA.
 - An automated test suite, an end-to-end browser test of the whole journey on desktop and mobile, and accessibility checks (axe-core,
   Lighthouse 97–100 on the main pages).

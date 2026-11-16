@@ -116,7 +116,7 @@ what they looked out for in the contract.
 On Wisecall you can ask someone who works or has worked legally abroad, or an HR specialist. Describe the country and type of work and get a
 written answer within 7 days — or your money back automatically.
 
-👉 [Find a mentor in Careers & HR](https://wisecallge.ge/advice/careers_hr) ·
-[Law](https://wisecallge.ge/advice/law)
+👉 [Find a mentor in Careers & HR](https://wisecall.ge/advice/careers_hr) ·
+[Law](https://wisecall.ge/advice/law)
 
 *This article is general information and does not replace legal advice or official sources.*

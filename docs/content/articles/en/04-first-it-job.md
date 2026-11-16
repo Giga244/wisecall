@@ -118,6 +118,6 @@ direction suits your previous experience, or what junior candidates are asked at
 On Wisecall you can ask a developer, tester or analyst who found their own first job, or who runs interviews. Send a description of your CV
 or a link to your portfolio and get a written answer within 7 days — or your money back automatically.
 
-👉 [Find a mentor in Tech](https://wisecallge.ge/advice/tech)
+👉 [Find a mentor in Tech](https://wisecall.ge/advice/tech)
 
 *This article is general information and does not replace professional advice.*

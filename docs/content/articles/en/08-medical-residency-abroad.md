@@ -110,6 +110,6 @@ Fachsprachprüfung, how long recognition took in a particular state, or how they
 On Wisecall you can ask a Georgian doctor who has already walked this road. Mentors in medical fields on Wisecall have their licence checked.
 Describe your situation and get a written answer within 7 days — or your money back automatically.
 
-👉 [Find a mentor in Medicine](https://wisecallge.ge/advice/medicine)
+👉 [Find a mentor in Medicine](https://wisecall.ge/advice/medicine)
 
 *This article is general information and does not replace official sources or professional advice.*

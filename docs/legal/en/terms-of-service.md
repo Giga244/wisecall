@@ -8,7 +8,7 @@
 
 ## 1. Who we are
 
-Wisecall ("**Wisecall**", "**we**", "**us**") runs the website wisecallge.ge (the "**Platform**"). The Platform is operated by
+Wisecall ("**Wisecall**", "**we**", "**us**") runs the website wisecall.ge (the "**Platform**"). The Platform is operated by
 [LAWYER: full legal name of the company or individual entrepreneur], identification code [LAWYER: ID code], registered address
 [LAWYER: address], Georgia. Contact: [support email] (the address in `SUPPORT_EMAIL`).
 
@@ -40,7 +40,7 @@ Keep your password secret; you are responsible for what happens in your account.
 3.3. One person, one account. Do not create accounts for other people, share an account, or use a false name. Mentors must use
 their real name (it is compared with their ID).
 
-3.4. **Profiles.** Every account has a profile page at `wisecallge.ge/u/<username>`. You choose who can see it in Settings
+3.4. **Profiles.** Every account has a profile page at `wisecall.ge/u/<username>`. You choose who can see it in Settings
 ("everyone" or "only people I have had a question with"). A listed Mentor's profile is always public.
 [LAWYER: today the default for new Askers is "everyone" (public). Confirm this is acceptable, or change the default — see
 docs/AUDIT.md #10.]

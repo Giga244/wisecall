@@ -21,7 +21,7 @@ const liveLook = async (ctx) => {
   if (!SHOTS) return;
   await ctx.route('**/api/config', async (route) => {
     const res = await route.fetch();
-    await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecallge.ge' } });
+    await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecall.ge' } });
   });
 };
 const phoneKa = async (browser) => {
@@ -306,7 +306,7 @@ test('the home page: after launch a card under the search; before launch only a 
   // before launch (its own server, in prelaunch)
   const pre = await browser.newContext(PHONE);
   await pre.addInitScript(() => { try { localStorage.setItem('wisecall_lang', 'ka'); } catch (e) { /* none */ } });
-  if (SHOTS) await pre.route('**/api/config', async (route) => { const res = await route.fetch(); await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecallge.ge' } }); });
+  if (SHOTS) await pre.route('**/api/config', async (route) => { const res = await route.fetch(); await route.fulfill({ response: res, json: { ...(await res.json()), contactEmail: 'support@wisecall.ge' } }); });
   const p = await pre.newPage();
   await p.goto(`${prelaunch.base}/ka/`);
   const row = p.locator('#heroMatchRow');

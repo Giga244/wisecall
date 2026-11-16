@@ -5,11 +5,11 @@ Keys and passwords go in Render → wisecall → Environment, never into the cod
 
 ## 1. Email: DNS and Resend (docs/EMAIL-DNS.md has every step)
 
-- [ ] Resend → Domains → wisecallge.ge: every row *Verified*.
+- [ ] Resend → Domains → wisecall.ge: every row *Verified*.
 - [ ] Resend: turn **off** click tracking and open tracking.
 - [ ] Cloudflare → DNS: the `_dmarc` TXT record with a `rua=` address for reports (exact value in docs/EMAIL-DNS.md, step 3).
-- [ ] Render: `EMAIL_FROM` = `Wisecall <hello@wisecallge.ge>`, `SUPPORT_EMAIL` = the support address.
-- [ ] Optional: Resend → Webhooks → add `https://wisecallge.ge/api/email/webhook` (events: sent, delivered, delivery delayed, bounced,
+- [ ] Render: `EMAIL_FROM` = `Wisecall <hello@wisecall.ge>`, `SUPPORT_EMAIL` = the support address.
+- [ ] Optional: Resend → Webhooks → add `https://wisecall.ge/api/email/webhook` (events: sent, delivered, delivery delayed, bounced,
       complained), then put its signing secret in Render as `RESEND_WEBHOOK_SECRET`. Admin → Mentors then shows whether each person's last
       email arrived.
 - [ ] If live.com / Outlook still puts codes in Junk: Microsoft SNDS (docs/EMAIL-DNS.md, step 6).

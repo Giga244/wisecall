@@ -43,9 +43,14 @@ services:
       # Generated once here; copy it from the Render dashboard into your password manager.
       - key: DATA_ENCRYPTION_KEY
         generateValue: true
-      # Your domain. Until its DNS points at Render, you can use the https://....onrender.com address instead.
+      # Your site's address (https://your-domain). Set in the dashboard, never here: the blueprint must not hold a domain, or a sync would
+      # put an old one back after the site has moved (docs/DOMAIN-MOVE.md). Until the DNS points at Render, the https://....onrender.com
+      # address works too.
       - key: PUBLIC_URL
-        value: https://wisecallge.ge
+        sync: false
+      # The site's earlier domain(s) after a move, comma-separated: each is sent to PUBLIC_URL with a 301. Empty = no redirect.
+      - key: OLD_DOMAINS
+        sync: false
       - key: PLATFORM_FEE_PERCENT
         value: "20"
       - key: ANSWER_DEADLINE_DAYS
@@ -79,10 +84,11 @@ services:
         value: resend
       - key: RESEND_API_KEY
         sync: false
+      # (addresses on your own domain, verified at the email provider: set in the dashboard)
       - key: EMAIL_FROM
-        value: Wisecall <hello@wisecallge.ge>
+        sync: false
       - key: SUPPORT_EMAIL
-        value: support@wisecallge.ge
+        sync: false
       # Mentor verification (rules v2): the AI review of applications, and whether it may approve by itself (off: a person approves).
       - key: ANTHROPIC_API_KEY
         sync: false

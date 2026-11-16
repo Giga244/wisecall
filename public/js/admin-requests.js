@@ -38,7 +38,7 @@
       <ul class="earn-list">${d.requests.map((r) => `<li><span>${esc(day(r.createdAt))}</span><span><strong>${esc(r.field)}</strong> · ${esc(r.email)}<br><span class="muted small">${esc(r.need)}</span></span>
         <span class="badge badge-muted">${esc(t('admin.rq.status.' + r.status))}</span></li>`).join('')}</ul>`;
     container.querySelectorAll('.rq-copy').forEach((b) => b.addEventListener('click', async () => {
-      const ok = await copy(fill('admin.rq.outreach', { field: b.dataset.field, count: b.dataset.count }));
+      const ok = await copy(fill('admin.rq.outreach', { field: b.dataset.field, count: b.dataset.count, site: window.location.host }));
       WisecallNav.showToast(t(ok ? 'admin.rq.copied' : 'toast.error'));
     }));
     container.querySelector('.rq-merge-btn').addEventListener('click', async () => {

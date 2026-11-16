@@ -64,7 +64,7 @@ GENERAL = [
     ('DiditFree', 'Didit free ID checks per month', 500, 'checks', 'Didit pricing page: 500 free per month — https://didit.me/pricing [VERIFY]'),
     ('DiditUSD', 'Didit price per full KYC check above the free tier', 0.33, 'USD', 'Didit pricing: $0.33 per full KYC (ID + liveness + face match) — https://didit.me/pricing [VERIFY]'),
     ('AIReviewUSD', 'Anthropic API cost per mentor review (Claude Sonnet 5, ~4k in / ≤3k out tokens)', 0.04, 'USD', 'List price $2 / $10 per million tokens → ≤ $0.038; the code also caps spend at AI_MONTHLY_BUDGET_USD (default 20)'),
-    ('DomainYear', 'Domain wisecallge.ge (per year)', 60, '₾ / year', 'PLACEHOLDER [VERIFY] with your .ge registrar'),
+    ('DomainYear', 'Domain wisecall.ge (per year)', 60, '₾ / year', 'PLACEHOLDER [VERIFY] with your .ge registrar'),
     ('Accountant', 'Accountant', 300, '₾ / month', 'PLACEHOLDER [VERIFY WITH ACCOUNTANT] — ask for a quote'),
     ('BankMonthly', 'Bank account + acquiring monthly fees', 0, '₾ / month', 'PLACEHOLDER [VERIFY] with BOG / TBC'),
     ('OtherMonthly', 'Other monthly costs (tools, phone, …)', 50, '₾ / month', 'PLACEHOLDER'),

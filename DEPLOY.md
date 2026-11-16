@@ -39,7 +39,7 @@ Getting a bank merchant agreement and a Didit workflow can take weeks. The site 
 - **With `LAUNCH_MODE` empty the site never opens by itself without the keys.** Even with mentors listed it stays in prelaunch until the bank keys and the Didit keys are set, and the server log says so.
 - The server prints `[WARNING]` lines naming what is still closed (`PAYMENTS ARE OFF`, `ID CHECKS ARE OFF`), and `npm run check:launch` shows ⚠️ warnings (not ❌ failures) for the missing keys.
 
-What the first deploy needs (see [step 7](#7-environment-variables) for what each value is): `NODE_ENV=production`, `PUBLIC_URL=https://wisecallge.ge`, `DATABASE_URL`, `SESSION_SECRET`, `DATA_ENCRYPTION_KEY`, `EMAIL_PROVIDER=resend` with `RESEND_API_KEY` and `EMAIL_FROM=Wisecall <hello@wisecallge.ge>`, `SUPPORT_EMAIL=support@wisecallge.ge`, `ADMIN_EMAILS` and `LAUNCH_MODE=prelaunch`. Leave the bank and Didit variables out.
+What the first deploy needs (see [step 7](#7-environment-variables) for what each value is): `NODE_ENV=production`, `PUBLIC_URL=https://wisecall.ge`, `DATABASE_URL`, `SESSION_SECRET`, `DATA_ENCRYPTION_KEY`, `EMAIL_PROVIDER=resend` with `RESEND_API_KEY` and `EMAIL_FROM=Wisecall <hello@wisecall.ge>`, `SUPPORT_EMAIL=support@wisecall.ge`, `ADMIN_EMAILS` and `LAUNCH_MODE=prelaunch`. Leave the bank and Didit variables out.
 
 **Going live later** is one change: add the bank keys (`PAYMENT_PROVIDER` and its keys, [step 2](#2-get-your-bank-account-and-api-keys)) and the Didit keys ([step 2b](#2b-set-up-id-verification-for-mentors-didit)), register the callback addresses ([step 8](#8-register-the-bank-callback-url)), run `npm run check:launch`, and set `LAUNCH_MODE=live` (or empty: it then opens when the first mentor is listed). **With `LAUNCH_MODE=live` the strict rules apply: the server refuses to start without the real bank keys and the Didit keys**, and it never accepts the fake bank or fake ID check in production, launched or not.
 
@@ -127,7 +127,7 @@ Also sign Didit's data-processing agreement and read [LEGAL-REVIEW.md](LEGAL-REV
 2. Open the menu → **APIs & Services** → **OAuth consent screen** (Google now also calls this **Google Auth Platform**). Click **Get started** and fill in:
    - **App name**: `Wisecall`. **User support email**: your support address.
    - **Audience**: **External**. **Contact information**: your email. Accept the policy and **Create**.
-3. In **Branding** (or the same wizard) set the **Application home page** to `https://YOUR-DOMAIN`, the **Privacy policy link** to `https://YOUR-DOMAIN/privacy.html` and the **Terms of service link** to `https://YOUR-DOMAIN/terms.html`, and add your domain (`wisecallge.ge`) under **Authorized domains**. Add a logo if you like.
+3. In **Branding** (or the same wizard) set the **Application home page** to `https://YOUR-DOMAIN`, the **Privacy policy link** to `https://YOUR-DOMAIN/privacy.html` and the **Terms of service link** to `https://YOUR-DOMAIN/terms.html`, and add your domain (`wisecall.ge`) under **Authorized domains**. Add a logo if you like.
 4. In **Data Access** click **Add or remove scopes** and tick exactly these three (they are the basic ones: no Google review is needed for them): `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile`. Save. Wisecall asks for nothing else.
 5. In **Audience** the app starts in **Testing**: then only the Google accounts you list as **Test users** can sign in. When you are ready for everyone, click **Publish app** (**In production**). With only these three basic scopes it needs no further Google verification.
 6. Open **Clients** (or **APIs & Services → Credentials → Create credentials → OAuth client ID**). **Application type: Web application**, name `Wisecall web`. Leave **Authorized JavaScript origins** empty (the whole sign-in happens on the server, and no Google script is ever loaded on your pages). Under **Authorized redirect URIs** add **every** address the site can run on, written exactly like this (the same scheme and host as `PUBLIC_URL`, no slash at the end of the host, nothing else):
@@ -196,7 +196,7 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | Variable | Value |
 |---|---|
 | `NODE_ENV` | `production` |
-| `PUBLIC_URL` | Your public address with `https://` and no slash at the end: `https://wisecallge.ge` (or, while you test, your Render address such as `https://wisecall.onrender.com`). Must not be localhost |
+| `PUBLIC_URL` | Your public address with `https://` and no slash at the end: `https://wisecall.ge` (or, while you test, your Render address such as `https://wisecall.onrender.com`). Must not be localhost |
 | `DATABASE_URL` | The Internal Database URL from step 5 |
 | `SESSION_SECRET` | 32+ random characters (generate with the command in step 1) |
 | `DATA_ENCRYPTION_KEY` | 32+ random characters, different from the one above. Encrypts mentors' IBANs. **Save a copy somewhere safe**: if it is lost, stored IBANs cannot be read |
@@ -221,13 +221,14 @@ Set these in Render under **Environment**. `.env.example` lists every variable w
 | `DISPUTE_DAYS` | `7`: how long the asker can report a problem with an answer; earnings are held at least this long |
 | `LEGAL_NAME`, `LEGAL_ID`, `LEGAL_ADDRESS` | Your company or individual entrepreneur's name, identification number and legal address, printed on every receipt and shown in the footer. Each one is hidden while empty; set them before the first real payment |
 | `FOUNDER_NAME`, `FOUNDER_ROLE`, `FOUNDER_PHOTO`, `FOUNDER_STORY_EN`, `FOUNDER_STORY_KA` | Optional: the founder section on the About page (hidden while the name is empty). The photo must be a file on the site, such as `/brand/founder.jpg` |
-| `PLAUSIBLE_DOMAIN` | Optional: the domain as added in Plausible (`wisecallge.ge`) to count visitors without cookies. Empty = off |
+| `OLD_DOMAINS` | Only after a move to another domain ([docs/DOMAIN-MOVE.md](docs/DOMAIN-MOVE.md)): the earlier host name(s), comma-separated. Each is sent to the same page on `PUBLIC_URL` with a 301. Empty = no redirect |
+| `PLAUSIBLE_DOMAIN` | Optional: the domain as added in Plausible (`wisecall.ge`) to count visitors without cookies. Empty = off |
 | `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | Optional: the verification codes from Google Search Console ("HTML tag" method) and Bing Webmaster Tools: only the `content="..."` value of the tag they show. The home page then carries the tag. Empty = no tag |
 | `SENTRY_DSN` | Optional: a Sentry project DSN to be told about server errors (no personal data is sent). Empty = off |
 | `EMAIL_PROVIDER` | `resend` |
 | `RESEND_API_KEY` | From resend.com. **Create a new key**; do not reuse one that was ever pasted into a chat |
-| `EMAIL_FROM` | `Wisecall <hello@wisecallge.ge>` (an address on the domain you verify in step 9) |
-| `SUPPORT_EMAIL` | Your **public** contact address: `support@wisecallge.ge`. It is shown in the footer, the contact page, the Terms and the Privacy Policy, and is the Reply-To of every email. If empty, no address is shown anywhere. Contact-form messages do **not** go here: they go to `ADMIN_EMAILS`, which stays private |
+| `EMAIL_FROM` | `Wisecall <hello@wisecall.ge>` (an address on the domain you verify in step 9) |
+| `SUPPORT_EMAIL` | Your **public** contact address: `support@wisecall.ge`. It is shown in the footer, the contact page, the Terms and the Privacy Policy, and is the Reply-To of every email. If empty, no address is shown anywhere. Contact-form messages do **not** go here: they go to `ADMIN_EMAILS`, which stays private |
 | `SOCIAL_FACEBOOK`, `SOCIAL_INSTAGRAM`, `SOCIAL_LINKEDIN`, `SOCIAL_X`, `SOCIAL_TIKTOK`, `SOCIAL_YOUTUBE` | Optional. Full `https://` addresses of your pages. Each one that is set gets an icon in the footer; empty ones are simply not shown |
 | `ADMIN_EMAILS` | Your email (comma-separated for more people). These accounts can approve mentors, refund bookings and record payouts. **Every admin must pass two-step verification**: the first time an admin opens `/admin.html` the site shows a QR code to scan with an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password, Authy), asks for the first 6-digit code, and shows 8 one-time recovery codes **once** (keep them somewhere safe, not on the same phone). After that every sign-in needs a code, and a verified session lasts `ADMIN_2FA_SESSION_HOURS` (12). It cannot be switched off in production (`ADMIN_2FA=off` is refused; it exists only for automated tests). If an admin loses the phone **and** the recovery codes, run `npm run admin:reset-2fa -- their@email` on the server: they set it up again at their next sign-in |
 | `LAUNCH_MODE` | **`prelaunch` for the first deploy** (no bank or Didit keys needed): mentors can sign up and apply, visitors join the waiting list, nobody can book or pay. **`live`** when the bank and Didit keys are set: the server then refuses to start without them. Empty = automatic: `prelaunch` until the bank keys and the Didit keys are set **and** the first mentor is listed, then `live` by itself (it never opens without them). The server warns at startup (and `npm run check:launch` warns) if you force `live` with no mentor listed |
@@ -261,7 +262,7 @@ The bank tells Wisecall about payment results by calling one address:
 https://YOUR-PUBLIC-URL/api/payments/callback
 ```
 
-For example `https://wisecallge.ge/api/payments/callback`. Wisecall also prints it in the server log when it starts.
+For example `https://wisecall.ge/api/payments/callback`. Wisecall also prints it in the server log when it starts.
 
 - **BOG:** the callback address is sent with every order, so nothing has to be set up in a dashboard. Ask BOG whether your merchant needs the address on an allow-list, and make sure your site is reachable over HTTPS (BOG requires it).
 - **TBC:** the address is also sent with every payment, and TBC's merchant dashboard has a default callback address. Set it to the same URL. TBC sends the callbacks from the addresses 193.104.20.44, 193.104.20.45, 185.52.80.44 and 185.52.80.45; if you use a firewall, allow them.
@@ -293,9 +294,9 @@ Changing provider later? Set `EMAIL_PROVIDER=postmark` and `POSTMARK_TOKEN`. No 
 
 ## 10. Custom domain and HTTPS
 
-1. The domain is **wisecallge.ge** (a `.ge` from a Georgian registrar).
+1. The domain is **wisecall.ge** (a `.ge` from a Georgian registrar).
 2. In Render, open the web service → **Settings → Custom Domains → Add**. Render shows the DNS record to create at your registrar (a `CNAME`, or an `A` record for the bare domain). Add it and wait for Render to say it is verified. Render creates the HTTPS certificate on its own; there is nothing to buy or install.
-3. Change `PUBLIC_URL` in Render to `https://wisecallge.ge` and redeploy. Emailed links, the bank's return and callback addresses, the sitemap and the page canonical links all use this value.
+3. Change `PUBLIC_URL` in Render to `https://wisecall.ge` and redeploy. Emailed links, the bank's return and callback addresses, the sitemap and the page canonical links all use this value.
 4. Tell the bank the new callback address ([step 8](#8-register-the-bank-callback-url)) and verify your domain for email if you have not ([step 9](#9-email-send-from-your-own-domain-spf-and-dkim)).
 5. Submit `https://yourdomain.com/sitemap.xml` in Google Search Console.
 

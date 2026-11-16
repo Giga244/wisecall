@@ -215,7 +215,7 @@ database plan [VERIFY which plan includes PITR on render.com]; restoring from Re
 
 | Where | Alert | Threshold | Why (from the rehearsal) |
 |---|---|---|---|
-| **Uptime checker** (Better Stack, UptimeRobot, Checkly…) | `GET https://wisecallge.ge/healthz` | down for 2 checks at 1-min interval | DB down = 503 here (§4) |
+| **Uptime checker** (Better Stack, UptimeRobot, Checkly…) | `GET https://wisecall.ge/healthz` | down for 2 checks at 1-min interval | DB down = 503 here (§4) |
 | | `GET /api/status` JSON `status` | `degraded` for 15 min (jobs delayed) or `down` | the sweep repairs lost callbacks and refunds: if it stops, money waits |
 | | `GET /` and `/ka/` | response > 2 s for 5 min | Starter's p95 crosses 1 s at ~100 active visitors |
 | **Render** (service → Metrics / Notifications) | CPU | > 80 % of the plan for 10 min | CPU is the limit (§1.2) |

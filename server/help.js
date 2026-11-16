@@ -62,12 +62,14 @@ function render(md, opts = {}) {
   return { title, html: out.join('\n'), description: description || lead };
 }
 
+// (an article names the site by "{site}": never a domain typed in, so the help centre is right on whatever address the site has)
+const siteHost = () => { try { return new URL(require('./config').PUBLIC_URL).host; } catch (e) { return ''; } };
 function load() {
   const byLang = {};
   for (const lang of ['en', 'ka']) {
     const dir = path.join(DIR, lang);
     byLang[lang] = !fs.existsSync(dir) ? [] : fs.readdirSync(dir).filter((f) => /^\d\d-[a-z0-9-]+\.md$/.test(f)).sort().map((file) => {
-      const md = fs.readFileSync(path.join(dir, file), 'utf8');
+      const md = fs.readFileSync(path.join(dir, file), 'utf8').split('{site}').join(siteHost());
       if (md.includes('[CHECK')) return null; // (not settled yet: not published)
       const slug = file.replace(/^\d\d-/, '').replace(/\.md$/, '');
       return { slug, ...render(md) };

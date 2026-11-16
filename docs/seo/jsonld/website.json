@@ -1,21 +1,21 @@
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "@id": "https://wisecallge.ge/#website",
-  "url": "https://wisecallge.ge/",
+  "@id": "https://wisecall.ge/#website",
+  "url": "https://wisecall.ge/",
   "name": "Wisecall",
   "inLanguage": [
     "ka",
     "en"
   ],
   "publisher": {
-    "@id": "https://wisecallge.ge/#organization"
+    "@id": "https://wisecall.ge/#organization"
   },
   "potentialAction": {
     "@type": "SearchAction",
     "target": {
       "@type": "EntryPoint",
-      "urlTemplate": "https://wisecallge.ge/?q={search_term_string}#experts"
+      "urlTemplate": "https://wisecall.ge/?q={search_term_string}#experts"
     },
     "query-input": "required name=search_term_string"
   },

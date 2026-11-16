@@ -626,7 +626,7 @@
   "admin.rq.status.notified": "Told",
   "admin.rq.status.expired": "Expired",
   "admin.rq.status.removed": "Removed",
-  "admin.rq.outreach": "Hello [name],\n[A personal line: where you know them from, or something about their work.]\nI'm [your name] from Wisecall (wisecallge.ge), a Georgian platform where people pay to ask one question to someone who has already walked the path. {count} people are looking for a mentor in {field} right now, and I thought of you.\nYou set your own price per question (5 to 2,000 ₾), answer in writing when you have time (within 7 days), and keep 80%. Signing up takes about 10 minutes. Interested?",
+  "admin.rq.outreach": "Hello [name],\n[A personal line: where you know them from, or something about their work.]\nI'm [your name] from Wisecall ({site}), a Georgian platform where people pay to ask one question to someone who has already walked the path. {count} people are looking for a mentor in {field} right now, and I thought of you.\nYou set your own price per question (5 to 2,000 ₾), answer in writing when you have time (within 7 days), and keep 80%. Signing up takes about 10 minutes. Interested?",
   "admin.ov.sources": "Where people come from",
   "admin.ov.src.source": "Source",
   "admin.ov.src.campaign": "Campaign",

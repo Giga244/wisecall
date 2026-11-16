@@ -22,7 +22,7 @@ const icsText = (v) => String(v || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;
 // One session, or several (a series: one event each).
 function ics(one, lang) {
   const event = (s) => ['BEGIN:VEVENT',
-    `UID:live-${s.id}@wisecallge.ge`, `DTSTAMP:${icsDate(new Date())}`, `DTSTART:${icsDate(s.starts_at)}`, `DTEND:${icsDate(endsAt(s))}`,
+    `UID:live-${s.id}@${new URL(config.PUBLIC_URL).hostname}`, `DTSTAMP:${icsDate(new Date())}`, `DTSTART:${icsDate(s.starts_at)}`, `DTEND:${icsDate(endsAt(s))}`,
     `SUMMARY:${icsText(s.title)}`, `DESCRIPTION:${icsText(`${s.title}\n${urlOf(s, lang)}`)}`, `URL:${urlOf(s, lang)}`,
     'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(s.title)}`, 'END:VALARM', 'END:VEVENT'];
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Wisecall//Live sessions//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',

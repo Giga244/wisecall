@@ -118,7 +118,7 @@ business, how long it took to get the first customers, or which mistakes cost th
 On Wisecall you can ask an entrepreneur who has already started a business in Georgia, or an accountant a general question. Describe your idea
 and get a written answer within 7 days — or your money back automatically.
 
-👉 [Find a mentor in Business](https://wisecallge.ge/advice/business) ·
-[Accounting & tax](https://wisecallge.ge/advice/accounting_tax)
+👉 [Find a mentor in Business](https://wisecall.ge/advice/business) ·
+[Accounting & tax](https://wisecall.ge/advice/accounting_tax)
 
 *This article is general information and does not replace accounting or legal advice.*
