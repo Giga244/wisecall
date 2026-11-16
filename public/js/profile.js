@@ -2,7 +2,8 @@
 // for a mentor, how they were checked, their reviews, and the box where a buyer writes a question and goes to pay at the bank.
 (async function () {
   const params = new URLSearchParams(location.search);
-  const username = (location.pathname.match(/^(?:\/ka)?\/u\/([\w-]+)/) || [])[1] || '';
+  // (the address is /u/<name>, /ka/u/<name> or /en/u/<name>: the same profile, in the language of the prefix)
+  const username = (location.pathname.match(/^(?:\/(?:ka|en))?\/u\/([\w-]+)/) || [])[1] || '';
   // Everything the page needs is asked for at the same moment (texts, who is signed in, the profile), not one after the other.
   const profileRequest = username ? WisecallAPI.apiFetch('/users/' + encodeURIComponent(username)).catch((e) => ({ error: e.code || 'error' })) : Promise.resolve({ error: 'not_found' });
   await WisecallI18n.initI18n();
@@ -24,7 +25,7 @@
 
   let answer = await profileRequest;
   if (answer.redirectTo) { // an old username: go to the new one (the server does this for pages; this covers a link followed from a script)
-    history.replaceState(null, '', `/u/${answer.redirectTo}${location.search}`);
+    history.replaceState(null, '', `${(location.pathname.match(/^\/(?:ka|en)(?=\/)/) || [''])[0]}/u/${answer.redirectTo}${location.search}`);
     answer = await WisecallAPI.apiFetch('/users/' + encodeURIComponent(answer.redirectTo)).catch((e) => ({ error: e.code || 'error' }));
   }
   if (answer.private) { document.title = `${t('profile.private.title')} — Wisecall`; showMessage('profile.private.title', `<p class="muted">${t('profile.private.body')}</p>`); return; }

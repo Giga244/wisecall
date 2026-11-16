@@ -242,7 +242,7 @@
   // the admin page (which has its own note). Mentors are told what to do; everyone else can join the waiting list.
   function showLaunchBanner(user) {
     if (!window.WisecallI18n || WisecallI18n.launchMode() !== 'prelaunch') return;
-    const path = location.pathname.replace(/^\/ka(?=\/|$)/, '') || '/';
+    const path = location.pathname.replace(/^\/(?:ka|en)(?=\/|$)/, '') || '/';
     if (path === '/' || path === '/index.html' || path === '/admin.html' || document.querySelector('.launch-banner')) return;
     const header = document.getElementById('siteHeader');
     if (!header) return;

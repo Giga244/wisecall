@@ -24,7 +24,7 @@
       return JIKHVA;
     }
   };
-  const here = window.location.pathname.replace(/^\/ka(?=\/|$)/, '') || '/'; // (the Georgian address /ka/... is the same page)
+  const here = window.location.pathname.replace(/^\/(?:ka|en)(?=\/|$)/, '') || '/'; // (the Georgian address /ka/... and the English /en/... are the same page)
   const onHome = here === '/' || here === '/index.html';
   const link = (l) => l.href || (onHome ? '' : '/index.html') + l.hash; // on the home page "How it works" just scrolls; Browse and the mentors' page are their own
 
@@ -32,6 +32,7 @@
   // same words; tests/header-hint.test.js keeps these equal to public/i18n/en.json and ka.json). The language as i18n.js finds it.
   const LANG = (() => {
     if (/^\/ka(\/|$)/.test(window.location.pathname)) return 'ka';
+    if (/^\/en(\/|$)/.test(window.location.pathname)) return 'en';
     try { const saved = localStorage.getItem('wisecall_lang'); if (saved === 'ka' || saved === 'en') return saved; } catch (e) { /* storage unavailable */ }
     return navigator.language && navigator.language.toLowerCase().startsWith('ka') ? 'ka' : 'en';
   })();
@@ -209,7 +210,7 @@
   // (docs/CLAUDE-CODE-REDESIGN-CALM.md). A link to a part of a page ("#how") is never the current page.
   document.querySelectorAll('#siteHeader a[href], #mobileMenu a[href]').forEach((a) => {
     const u = new URL(a.getAttribute('href'), location.href);
-    const path = u.pathname.replace(/^\/ka(?=\/|$)/, '') || '/';
+    const path = u.pathname.replace(/^\/(?:ka|en)(?=\/|$)/, '') || '/';
     if (!u.hash && path === here && !a.classList.contains('logo')) a.setAttribute('aria-current', 'page');
   });
 

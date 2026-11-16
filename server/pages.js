@@ -1109,7 +1109,9 @@ function pageRoutes() {
       const found = await require('./usernames').resolve(req.params[0]);
       if (found && found.redirectTo) {
         const qs = new URLSearchParams(req.query).toString();
-        return res.redirect(301, `/u/${found.redirectTo}${qs ? '?' + qs : ''}`);
+        // (an old name keeps the language of the address it was asked at: /ka/u/old -> /ka/u/new, /en/u/old -> /en/u/new)
+        const lang = res.locals.pageLang === 'ka' ? '/ka' : (res.locals.pageLang === 'en' ? '/en' : '');
+        return res.redirect(301, `${lang}/u/${found.redirectTo}${qs ? '?' + qs : ''}`);
       }
       await sendProfile(res, found ? found.row : null, req.params[0]);
     } catch (e) { next(e); }
