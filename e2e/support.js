@@ -147,8 +147,7 @@ async function applyAsMentor(page, a) {
     const none = lic.locator('[name="noExpiry"]');
     if (a.licence.until && (await none.count()) && (await none.isChecked())) await none.uncheck();
     if (a.licence.until) await lic.locator('[name="validUntil"]').fill(a.licence.until);
-    await lic.locator('[data-save-licence]').click();
-    await expect(lic.locator('.ap-ok')).toBeVisible();
+    // (no button of its own on step 4: "Save and continue" below saves the licence with the step)
   }
   await page.click('.apply-next');
   await page.waitForURL(/step=5$/);

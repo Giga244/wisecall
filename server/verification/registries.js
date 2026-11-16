@@ -9,6 +9,8 @@
 //   credential      'diploma' when there is no licence at all and what we accept is a diploma or certificate (psychology, nursing):
 //                   the pages then say "diploma or certificate", never "licence", and it needs no end date
 //                   (docs/CLAUDE-CODE-APPLY-STEP1-MOBILE.md).
+//   issuer          { ka, en }: the one body that issues it, when there is only one. The application fills "who issued it" in with it, in
+//                   the page's language, and the mentor can change it. Left out where several bodies issue it (or it was not confirmed).
 //   sources         where the facts above come from.
 //
 // The keys are niche keys (the niches table, migration 019).
@@ -103,6 +105,7 @@ const REGULATED = {
     label: 'Law',
     licence: 'Membership of the Georgian Bar Association (advocates)',
     publicRegister: true,
+    issuer: { ka: 'საქართველოს ადვოკატთა ასოციაცია', en: 'Georgian Bar Association' }, // (the only body that admits advocates: "who issued it" is filled in)
     registries: [
       { key: 'gba', label: 'Georgian Bar Association: members registry', url: 'https://gba.ge/en/Lawyers/Members-Registry' }
     ],

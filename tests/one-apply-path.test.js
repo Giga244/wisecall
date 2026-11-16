@@ -45,7 +45,7 @@ describe('Settings has no application form', () => {
     const story = read('public/js/story-form.js');
     for (const name of ['pathStart', 'pathHow', 'pathNow', 'sampleQuestion', 'sampleReply', 'helpPoint', 'workLink']) assert.ok(story.includes(name), name);
     // and after "Submit": the ID check, a licence to give again, the video call, "Edit my application"
-    for (const part of ['identityDone()', 'licenceToFix ? licenceBlock()', 'interviewBlock()', 'data-edit']) assert.ok(js.includes(part), part);
+    for (const part of ['identityDone()', 'licenceToFix ? licenceBlock({ withSave: true })', 'interviewBlock()', 'data-edit']) assert.ok(js.includes(part), part);
   });
 });
 

@@ -92,7 +92,7 @@ describe('the server', () => {
   test('psychology: a diploma or certificate (no licence), with no end date needed; a licence elsewhere still needs one', async () => {
     const v = await c.api('/verification');
     assert.equal(v.regulated, true);
-    assert.deepEqual(v.licence, { publicRegister: false, credential: 'diploma' });
+    assert.deepEqual(v.licence, { publicRegister: false, credential: 'diploma', issuer: null });
     const cfg = await c.api('/config');
     const psych = cfg.niches.find((n) => n.key === 'psychology');
     assert.equal(psych.credential, 'diploma');

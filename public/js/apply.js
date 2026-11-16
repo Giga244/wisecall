@@ -322,7 +322,12 @@
   const licenceLine = (l) => esc(fill(dip() || !l.validUntil ? 'vt.lic.submitted.dip' : 'vt.lic.submitted', { last4: l.numberEnding, body: l.issuingBody, date: l.validUntil }))
     + (l.second ? ` ${esc(fill('vt.lic.second.line', { body: l.second.issuingBody }))}` : '');
   const bodyHint = () => { const own = t('vt.lic.bodyHint.' + v.niche); return dip() || own === 'vt.lic.bodyHint.' + v.niche ? lic('vt.lic.bodyHint') : own; };
-  function licenceBlock() {
+  // The one body that issues it (law: the Georgian Bar Association), in the page's language: "who issued it" starts with it filled in.
+  const issuer = () => (v.licence && v.licence.issuer ? (v.licence.issuer[WisecallI18n.getLang() === 'ka' ? 'ka' : 'en'] || '') : '');
+  // (each field of the licence says under itself what it still needs: data-lic-error)
+  const licErr = (name) => `<p class="apply-field-error" data-lic-error="${name}" hidden></p>`;
+  // withSave: a button of its own, for where the licence is asked for again after "Submit". On step 4 "Save and continue" saves it.
+  function licenceBlock({ withSave = false } = {}) {
     if (!v.regulated) return '';
     const l = v.inputs.license;
     const r = (v.requirements.find((x) => x.step === 'license') || { status: 'todo' });
@@ -336,22 +341,23 @@
         ${l && r.status !== 'failed' ? `<p class="ap-line ap-ok">✓ ${licenceLine(l)}</p>` : `
         <div class="apply-sub" data-sub="license">
           ${r.status === 'failed' && r.reason ? `<p class="form-error"><strong>${esc(t('vt.reason'))}</strong> ${esc(r.reason)}</p>` : ''}
-          <div class="apply-field"><label for="apLicNumber">${esc(lic('vt.lic.number'))}</label><input id="apLicNumber" name="number" type="text" maxlength="40" autocomplete="off"></div>
-          <div class="apply-field"><label for="apLicBody">${esc(lic('vt.lic.body'))}</label><input id="apLicBody" name="issuingBody" type="text" maxlength="120" placeholder="${esc(bodyHint())}"></div>
-          <div class="apply-field"><label for="apLicHolder">${esc(lic('vt.lic.holder'))}</label><input id="apLicHolder" name="holderName" type="text" maxlength="100" value="${esc(l ? l.holderName : user.name)}"></div>
+          <div class="apply-field"><label for="apLicNumber">${esc(lic('vt.lic.number'))}</label><input id="apLicNumber" name="number" type="text" maxlength="40" autocomplete="off">${licErr('number')}</div>
+          <div class="apply-field"><label for="apLicBody">${esc(lic('vt.lic.body'))}</label><input id="apLicBody" name="issuingBody" type="text" maxlength="120" placeholder="${esc(bodyHint())}" value="${esc(l ? l.issuingBody : issuer())}">${licErr('issuingBody')}</div>
+          <div class="apply-field"><label for="apLicHolder">${esc(lic('vt.lic.holder'))}</label><input id="apLicHolder" name="holderName" type="text" maxlength="100" value="${esc(l ? l.holderName : user.name)}">${licErr('holderName')}</div>
           <!-- (a licence may have no end date at all: "No expiry" instead of a date; a diploma never has one) -->
           <div class="apply-field apply-until">
             <label for="apLicUntil">${esc(lic('vt.lic.until'))}</label>
             <input id="apLicUntil" name="validUntil" type="date" value="${esc(l && l.validUntil ? l.validUntil : '')}"${!dip() && publicRegister() && !(l && l.validUntil) ? ' disabled' : ''}>
             ${dip() ? '' : `<label class="checkbox-row apply-noexpiry" for="apLicNoExpiry"><input id="apLicNoExpiry" name="noExpiry" type="checkbox"${publicRegister() && !(l && l.validUntil) ? ' checked' : ''}> <span>${esc(t('vt.lic.noExpiry'))}</span></label>`}
+            ${licErr('validUntil')}
           </div>
           ${dip() ? '' : `<details class="apply-more apply-second">
             <summary>${esc(t('vt.lic.second'))}</summary>
-            <div class="apply-field"><label for="apLic2Body">${esc(t('vt.lic.second.body'))}</label><input id="apLic2Body" name="secondBody" type="text" maxlength="120" placeholder="${esc(t('vt.lic.second.bodyHint'))}" autocomplete="off"></div>
-            <div class="apply-field"><label for="apLic2Number">${esc(t('vt.lic.second.number'))}</label><input id="apLic2Number" name="secondNumber" type="text" maxlength="40" autocomplete="off"></div>
+            <div class="apply-field"><label for="apLic2Body">${esc(t('vt.lic.second.body'))}</label><input id="apLic2Body" name="secondBody" type="text" maxlength="120" placeholder="${esc(t('vt.lic.second.bodyHint'))}" autocomplete="off">${licErr('secondBody')}</div>
+            <div class="apply-field"><label for="apLic2Number">${esc(t('vt.lic.second.number'))}</label><input id="apLic2Number" name="secondNumber" type="text" maxlength="40" autocomplete="off">${licErr('secondNumber')}</div>
           </details>`}
           <p class="form-error apply-sub-error" role="alert"></p>
-          <button type="button" class="btn btn-outline btn-lg" data-save-licence>${esc(lic('vt.lic.save'))}</button>
+          ${withSave ? `<button type="button" class="btn btn-outline btn-lg" data-save-licence>${esc(lic('vt.lic.save'))}</button>` : ''}
         </div>`}
         ${needsDoc ? `
           <p class="hint">${esc(lic('ap.lic.docHelp'))} ${esc(t('vt.doc.private'))}</p>
@@ -615,7 +621,7 @@
             <h2>${esc(t(statusOf('id_kyc') === 'passed' ? 'apply.id.title' : 'apply.done.idTitle'))}</h2>
             ${identityDone()}
           </div>`}
-        ${licenceToFix ? licenceBlock() : ''}
+        ${licenceToFix ? licenceBlock({ withSave: true }) : ''}
         ${closed ? '' : interviewBlock()}
         <p class="apply-status"><strong>${esc(t('apply.done.status'))}</strong> ${esc(t('ap.rev.' + stage))}</p>
         <div class="apply-actions">
@@ -739,7 +745,7 @@
 
   // Saves what the current step holds. check: also refuse to move on while something this step needs is missing.
   async function saveStep(check) {
-    const form = root.querySelector('form.apply-step');
+    let form = root.querySelector('form.apply-step');
     if (!form) return true;
     const step = Number(form.dataset.step);
     stepError('');
@@ -788,11 +794,26 @@
     } else if (step === 3) {
       // A link typed in but not added yet is added now ("Next" with the link in the box does what they meant).
       if (form.url.value.trim()) { const ok = await addLink(form); if (!ok) return false; }
+      // The licence is saved with the step: whatever is typed in it ("Save and continue" does what the mentor meant), and, while it is
+      // still needed, also when nothing is typed, so the field that is empty says so under itself and is focused. Saved, the step is
+      // drawn again (the licence shows as sent) and what the server still finds missing is asked for below.
+      const sub = form.querySelector('.apply-licence [data-sub="license"]');
+      const licenceNeeded = () => v.regulated && v.application.missing.includes('license');
+      if (sub && (licenceTyped(sub) || (check && licenceNeeded()))) {
+        if (!(await saveLicence(sub))) return false;
+        await load();
+        render();
+        form = root.querySelector('form.apply-step');
+      }
       // (the server says what is missing: in a field with a public register the licence number is the proof, and nothing else is asked)
-      const licenceMissing = v.regulated && v.application.missing.some((m) => m === 'license' || m === 'license_document');
-      if (check && publicRegister() && licenceMissing) { stepError(t('apply.err.licenceAbove')); const first = form.querySelector('#apLicNumber'); if (first) first.focus(); return false; }
       if (check && v.application.missing.includes('evidence')) { stepError(t('apply.err.proof')); form.url.focus(); return false; }
-      if (check && licenceMissing) { stepError(lic('apply.err.licence')); return false; }
+      if (check && v.regulated && v.application.missing.includes('license_document')) {
+        stepError(lic('apply.err.licenceDoc'));
+        const file = form.querySelector('#apLicDoc');
+        if (file) file.focus();
+        return false;
+      }
+      if (check && licenceNeeded()) { stepError(lic('apply.err.licence')); return false; }
     }
     return true;
   }
@@ -906,25 +927,64 @@
       date.disabled = noExpiry.checked;
       if (noExpiry.checked) date.value = '';
       subError(noExpiry.closest('.apply-sub'), ''); // (what was asked about the date no longer stands)
+      licFieldError(noExpiry.closest('.apply-sub'), 'validUntil', '');
     });
+    // (what a field was asked for goes away as soon as something is typed in it)
+    scope.querySelectorAll('[data-sub="license"] input').forEach((i) => i.addEventListener('input', () => licFieldError(i.closest('.apply-sub'), i.name, '')));
     const lic = scope.querySelector('[data-save-licence]');
     if (lic) lic.addEventListener('click', async () => {
       const sub = lic.closest('.apply-sub');
-      const val = (n) => { const el = sub.querySelector(`[name="${n}"]`); return el ? el.value.trim() : ''; };
-      const none = Boolean((sub.querySelector('[name="noExpiry"]') || {}).checked);
-      subError(sub, '');
-      if (!val('number') || !val('issuingBody') || !val('holderName')) { subError(sub, t('vt.fillIn')); return; }
-      // (the end date: a date, or "No expiry"; a diploma needs neither)
-      if (!dip() && !none && !val('validUntil')) { subError(sub, t('vt.lic.err.until')); sub.querySelector('[name="validUntil"]').focus(); return; }
       lic.disabled = true;
       try {
-        await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: val('number'), issuingBody: val('issuingBody'), holderName: val('holderName'),
-          validUntil: none ? '' : val('validUntil'), noExpiry: none, second: { issuingBody: val('secondBody'), number: val('secondNumber') } } });
-        WisecallNav.showToast(t('toast.saved'));
-        await load();
-        render();
-      } catch (e) { subError(sub, errText(LIC_ERR, e)); lic.disabled = false; }
+        if (await saveLicence(sub)) { WisecallNav.showToast(t('toast.saved')); await load(); render(); return; }
+      } catch (e) { subError(sub, errText(LIC_ERR, e)); }
+      lic.disabled = false;
     });
+  }
+
+  // The licence fields. Each says under itself what it still needs, and the first of them is focused (in view): never one general line
+  // while the number is filled in. The same checks for "Save and continue" on step 4 and for the licence's own button after "Submit".
+  const LIC_NAMES = ['number', 'issuingBody', 'holderName', 'validUntil', 'secondBody', 'secondNumber'];
+  const LIC_FIELD_OF = { invalid_license_number: 'number', invalid_issuing_body: 'issuingBody', invalid_holder_name: 'holderName', invalid_valid_until: 'validUntil',
+    invalid_second_body: 'secondBody', invalid_second_number: 'secondNumber' };
+  const licVal = (sub, n) => { const el = sub.querySelector(`[name="${n}"]`); return el ? el.value.trim() : ''; };
+  // (what the mentor typed: the issuer and the name the page filled in by itself do not count)
+  const licenceTyped = (sub) => ['number', 'validUntil', 'secondBody', 'secondNumber'].some((n) => licVal(sub, n));
+  function licFieldError(sub, name, text) {
+    const el = sub && sub.querySelector(`[data-lic-error="${name}"]`);
+    const input = sub && sub.querySelector(`[name="${name}"]`);
+    if (el) { el.textContent = text || ''; el.hidden = !text; }
+    if (input) input.setAttribute('aria-invalid', text ? 'true' : 'false');
+  }
+  function licFocus(sub, name) {
+    const input = sub.querySelector(`[name="${name}"]`);
+    if (!input) return;
+    const more = input.closest('details');
+    if (more) more.open = true;
+    if (input.scrollIntoView) input.scrollIntoView({ block: 'center' });
+    input.focus();
+  }
+  // Saves the licence as typed: true when it was saved, false when a field still needs something (said under it). A request that failed
+  // for another reason (no connection) is thrown, for the caller to say.
+  async function saveLicence(sub) {
+    LIC_NAMES.forEach((n) => licFieldError(sub, n, ''));
+    subError(sub, '');
+    const none = Boolean((sub.querySelector('[name="noExpiry"]') || {}).checked);
+    const need = [['number', lic('vt.lic.need.number')], ['issuingBody', t('vt.lic.need.body')], ['holderName', lic('vt.lic.need.holder')]].filter(([n]) => !licVal(sub, n));
+    // (the end date: a date, or "No expiry"; a diploma needs neither)
+    if (!dip() && !none && !licVal(sub, 'validUntil')) need.push(['validUntil', t('vt.lic.err.until')]);
+    if (need.length) { need.forEach(([n, text]) => licFieldError(sub, n, text)); licFocus(sub, need[0][0]); return false; }
+    try {
+      await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: licVal(sub, 'number'), issuingBody: licVal(sub, 'issuingBody'), holderName: licVal(sub, 'holderName'),
+        validUntil: none ? '' : licVal(sub, 'validUntil'), noExpiry: none, second: { issuingBody: licVal(sub, 'secondBody'), number: licVal(sub, 'secondNumber') } } });
+    } catch (e) {
+      const field = e && LIC_FIELD_OF[e.code];
+      if (!field) throw e;
+      licFieldError(sub, field, errText(LIC_ERR, e));
+      licFocus(sub, field);
+      return false;
+    }
+    return true;
   }
 
   // After "Submit": book or cancel the video call, and "Edit my application" (an approved mentor leaves Browse experts until it is

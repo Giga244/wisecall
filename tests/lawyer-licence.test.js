@@ -60,7 +60,8 @@ describe('a lawyer: the bar number is enough', () => {
   test('the page is told the register is public, and only the licence itself is required (never a document)', async () => {
     const v = await m.c.api('/verification');
     assert.equal(v.regulated, true);
-    assert.deepEqual(v.licence, { publicRegister: true, credential: 'licence' });
+    // (the one body that admits advocates: the page fills "who issued it" in with it, in its language)
+    assert.deepEqual(v.licence, { publicRegister: true, credential: 'licence', issuer: { ka: 'საქართველოს ადვოკატთა ასოციაცია', en: 'Georgian Bar Association' } });
     assert.deepEqual(rules.requiredFor('law').filter((s) => /^license/.test(s)), ['license']);
     assert.ok(!v.requirements.some((r) => r.step === 'license_document'), 'no upload is asked of a lawyer');
     // before the number is given: the licence is asked for (and, like everyone, some proof)
@@ -200,6 +201,14 @@ describe('every regulated field: a date is never forced where a licence has none
     assert.deepEqual(Object.keys(REG).sort(), ['accounting_tax', 'allied_health', 'aviation', 'dentistry', 'finance', 'law', 'maritime', 'medicine', 'nursing', 'nutrition', 'pharmacy', 'psychology', 'veterinary']);
     assert.deepEqual(Object.keys(REG).filter((k) => REG[k].publicRegister).sort(), ['accounting_tax', 'law']);
     assert.deepEqual(Object.keys(REG).filter((k) => REG[k].credential === 'diploma').sort(), ['allied_health', 'nursing', 'nutrition', 'psychology', 'veterinary']);
+    // a single known issuer only where there is one (law); every issuer is named in both languages
+    assert.deepEqual(Object.keys(REG).filter((k) => REG[k].issuer), ['law']);
+    for (const k of Object.keys(REG).filter((x) => REG[x].issuer)) assert.ok(REG[k].issuer.ka && REG[k].issuer.en, k);
+  });
+
+  test('a field without a single issuer gives the page none, so nothing is filled in for the mentor', async () => {
+    const m = await applicant('Mentor issuer check', 'reg-issuer-check@example.com', 'medicine');
+    assert.equal((await m.c.api('/verification')).licence.issuer, null);
   });
 
   for (const niche of Object.keys(REG)) {
@@ -278,7 +287,7 @@ describe('the pages and the words', () => {
     for (const l of ['ka', 'en']) {
       const d = dict(l);
       for (const k of ['vt.lic.second', 'vt.lic.second.body', 'vt.lic.second.bodyHint', 'vt.lic.second.number', 'vt.lic.second.line', 'vt.lic.err.secondBody', 'vt.lic.err.secondNumber',
-        'vt.lic.bodyHint.law', 'vt.lic.bodyHint.accounting_tax', 'ap.lic.register', 'apply.proof.leadRegister', 'apply.proof.optional', 'apply.err.licenceAbove']) assert.ok(d[k], `${l} ${k}`);
+        'vt.lic.bodyHint.law', 'vt.lic.bodyHint.accounting_tax', 'ap.lic.register', 'apply.proof.leadRegister', 'apply.proof.optional', 'vt.lic.need.number', 'vt.lic.need.number.dip', 'vt.lic.need.body', 'vt.lic.need.holder', 'vt.lic.need.holder.dip', 'apply.err.licenceDoc', 'apply.err.licenceDoc.dip']) assert.ok(d[k], `${l} ${k}`);
       assert.match(d['vt.lic.second.bodyHint'], /New York State Bar/);
       assert.match(d['vt.lic.err.until'], l === 'ka' ? /ვადა არ აქვს/ : /No expiry/, 'the date message names the way out');
       const a = JSON.parse(read(`public/i18n/admin-${l}.json`));

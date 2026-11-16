@@ -55,7 +55,8 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
     startTags: require('../mentorStory').START_TAGS,
     evidenceKinds: rules.EVIDENCE_KINDS,
     licence: summary.regulated ? { publicRegister: Boolean(rules.REGULATED[user.niche] && rules.REGULATED[user.niche].publicRegister),
-      credential: (rules.REGULATED[user.niche] && rules.REGULATED[user.niche].credential) || 'licence' } : null,
+      credential: (rules.REGULATED[user.niche] && rules.REGULATED[user.niche].credential) || 'licence',
+      issuer: (rules.REGULATED[user.niche] && rules.REGULATED[user.niche].issuer) || null } : null,
     inputs: {
       license: await credentials.ownCredentials(user.id),
       workEmailDomain: user.workEmail ? user.workEmail.split('@')[1] : null,
