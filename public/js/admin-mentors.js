@@ -128,7 +128,7 @@
         </ul>
         <div class="booking-answer"><strong>${t('admin.ai.f.story')}</strong> ${esc(a.story || '')}</div>
         <div class="booking-answer" style="margin-top:8px"><strong>${t('admin.sampleTitle')}</strong> ${esc(a.sampleAnswer || '')}</div>
-        ${a.profileExtras && [a.profileExtras.startTags, a.profileExtras.helpPoints, a.profileExtras.workLinks].some((x) => (x || []).length) ? `<div class="booking-answer mv-extras" style="margin-top:8px"><strong>${t('admin.ai.f.extras')}</strong> ${esc([...(a.profileExtras.startTags || []).map((id) => t('start.' + id)), ...(a.profileExtras.helpPoints || []), ...(a.profileExtras.workLinks || [])].join(' · '))}</div>` : ''}
+        ${a.profileExtras && [a.profileExtras.startTags, a.profileExtras.helpPoints, a.profileExtras.workLinks].some((x) => (x || []).length) ? `<div class="booking-answer mv-extras" style="margin-top:8px"><strong>${t('admin.ai.f.extras')}</strong> ${esc([...(a.profileExtras.startTags || []).map((id) => t('start.' + id)), ...(a.profileExtras.helpPoints || [])].join(' · '))}${(a.profileExtras.workLinks || []).length ? `<p class="small mv-work-links" style="overflow-wrap:anywhere;margin:6px 0 0"><span class="badge badge-muted">${esc(t('admin.ai.linkFlag.could_not_check'))}</span> ${a.profileExtras.workLinks.map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">${esc(u)}</a>`).join(' · ')}</p>` : ''}</div>` : ''}
       </div>`;
   }
 

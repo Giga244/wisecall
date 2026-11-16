@@ -158,6 +158,7 @@
   "admin.ai.linkFlag.refused_address": "შიდა ან სახიფათო მისამართი (არ გაიხსნა)",
   "admin.ai.linkFlag.new_domain": "სულ ახალი ვებსაიტი",
   "admin.ai.linkFlag.blocks_automatic_checks": "საიტი ბლოკავს ავტომატურ შემოწმებას: გახსენი თავად",
+  "admin.ai.linkFlag.could_not_check": "ავტომატურად ვერ შემოწმდა: გახსენი და შეამოწმე ხელით",
   "admin.ai.linkFlag.not_a_web_page": "ვებგვერდი არ არის",
   "admin.ai.linkFlag.no_https": "https-ის გარეშე",
   "admin.ai.linkFlag.redirected_elsewhere": "გადამისამართდება სხვა ვებსაიტზე",

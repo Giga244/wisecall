@@ -331,8 +331,11 @@ function evidenceForMentor(e) {
 }
 
 function cleanUrl(value) {
-  const s = String(value || '').trim();
-  if (!s || s.length > LIMITS.urlMax) return null;
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  // ("www.linkedin.com/in/…" pasted without its "https://" is still a link; another scheme, ftp: or javascript:, does not become one)
+  const s = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  if (s.length > LIMITS.urlMax) return null;
   let u;
   try { u = new URL(s); } catch (e) { return null; }
   if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || !u.hostname.includes('.')) return null;

@@ -57,10 +57,14 @@ function cleanLink(value) {
   try { u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); } catch (e) { return bad('invalid_link', 'workLinks'); }
   if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || !u.hostname.includes('.') || u.toString().length > LIMITS.linkMax) return bad('invalid_link', 'workLinks');
   if (CONTACT_HOSTS.test(u.hostname)) return bad('contact_details', 'workLinks');
-  // (a phone number or an email address written into the address itself)
+  // A known profile site (LinkedIn, ResearchGate, ORCID, Google Scholar…): the address is all that is looked at. Their addresses are full
+  // of numbers (an ORCID iD is 0000-0002-1825-0097), which must never be read as a phone number.
+  if (require('./verification/linkCheck').isProfileSite(u.hostname)) return { value: u.toString() };
+  // Anywhere else, only what is clearly a way to be contacted: an email address, "mailto:" or "tel:", a phone number written the
+  // international way (+995…), or a phone given as a parameter (?phone=, ?tel=, ?whatsapp=). A run of digits alone is an id, not a phone.
   let rest = `${u.pathname}${u.search}${u.hash}`;
   try { rest = decodeURIComponent(rest); } catch (e) { /* as it is */ }
-  if (/@|mailto:|tel:/i.test(rest) || textSafety.findContactDetails(rest.replace(/[/_.=&?#-]+/g, ' ')).some((k) => k === 'phone' || k === 'email')) return bad('contact_details', 'workLinks');
+  if (/@|mailto:|tel:/i.test(rest) || /\+\s?\d(?:[\s().-]?\d){8,}/.test(rest) || /[?&](?:phone|tel|telephone|mobile|whatsapp|viber)=[^&]*\d{6,}/i.test(u.search)) return bad('contact_details', 'workLinks');
   if (textSafety.isOffensive(rest.replace(/[^\p{L}\p{N}]+/gu, ' '))) return bad('offensive', 'workLinks');
   return { value: u.toString() };
 }
@@ -155,7 +159,9 @@ const hasSample = (u) => Boolean(u.sampleQuestion && size(u.sampleQuestion) >= L
 
 // A link as a chip: where it leads, by a name people know.
 const KNOWN_HOSTS = [[/(^|\.)behance\.net$/, 'Behance'], [/(^|\.)dribbble\.com$/, 'Dribbble'], [/(^|\.)linkedin\.com$/, 'LinkedIn'], [/(^|\.)github\.com$/, 'GitHub'],
-  [/(^|\.)(youtube\.com|youtu\.be)$/, 'YouTube'], [/(^|\.)medium\.com$/, 'Medium'], [/(^|\.)figma\.com$/, 'Figma']];
+  [/(^|\.)(youtube\.com|youtu\.be)$/, 'YouTube'], [/(^|\.)medium\.com$/, 'Medium'], [/(^|\.)figma\.com$/, 'Figma'],
+  [/(^|\.)researchgate\.net$/, 'ResearchGate'], [/(^|\.)orcid\.org$/, 'ORCID'], [/^scholar\.google\.[a-z.]{2,6}$/, 'Google Scholar'], [/(^|\.)academia\.edu$/, 'Academia.edu'],
+  [/(^|\.)(webofscience\.com|publons\.com)$/, 'Web of Science']];
 function linkChip(url) {
   let host = '';
   try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return null; }

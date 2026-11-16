@@ -188,6 +188,16 @@ const WALLED = ['linkedin.com', 'instagram.com', 'facebook.com', 'fb.com', 'x.co
 const OLD_PLATFORMS = new Set([...WALLED, 'behance.net', 'dribbble.com', 'github.com', 'gitlab.com', 'youtube.com', 'medium.com', 'substack.com',
   'google.com', 'apple.com', 'wikipedia.org', 'researchgate.net', 'scholar.google.com', 'orcid.org', 'wordpress.com', 'wix.com', 'notion.site',
   'artstation.com', 'vimeo.com', 'soundcloud.com', 'amazon.com', 'goodreads.com', 'play.google.com', 'apps.apple.com', 'upwork.com', 'fiverr.com']);
+// Profile sites people really use to show who they are (academics and designers first). Several of them refuse every automatic visitor
+// (LinkedIn answers 999, ResearchGate 403), so a link to one is never opened by the server: only its address is looked at, the mentor
+// goes on, and an admin opens it by hand ("couldn't check automatically").
+const PROFILE_SITES = ['linkedin.com', 'researchgate.net', 'orcid.org', 'scholar.google.com', 'academia.edu', 'publons.com', 'webofscience.com',
+  'behance.net', 'dribbble.com', 'github.com'];
+function isProfileSite(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
+  // (Google Scholar also answers on its country addresses: scholar.google.ge, scholar.google.co.uk)
+  return PROFILE_SITES.some((d) => host === d || host.endsWith('.' + d)) || /^scholar\.google\.[a-z.]{2,6}$/.test(host);
+}
 // Search and result pages repeat whatever is in the address, so they can never show who someone is.
 const SEARCH_PATH = /(^|\/)(search|results|find|explore|query|lookup|suche|poisk)(\/|$)/i;
 const SEARCH_PARAMS = ['q', 'query', 'search', 'search_query', 'keyword', 'keywords', 'term', 'text', 's', 'k', 'p'];
@@ -303,6 +313,14 @@ async function checkLink(value, person, opts = {}) {
   if (isFreeHosting(host)) result.flags.push('free_hosting');
   if (SEARCH_PATH.test(u.pathname) || SEARCH_PARAMS.some((k) => u.searchParams.has(k))) result.flags.push('search_page');
 
+  // A known profile site: never opened by the server (it would be refused, and a refusal is not the mentor's fault). An admin opens it.
+  if (isProfileSite(host)) {
+    result.profileSite = true;
+    result.flags.push('could_not_check');
+    if (namesSomeoneElse(u.toString(), person)) result.flags.push('other_person');
+    return { checkStatus: 'warning', autoVerified: false, result };
+  }
+
   let page = null;
   try {
     const r = await safeGet(u.toString(), opts);
@@ -321,12 +339,17 @@ async function checkLink(value, person, opts = {}) {
       else result.flags.push('not_a_web_page');
     } else if ((r.status === 999 || r.status === 401 || r.status === 403 || r.status === 429) && onPlatform(host, WALLED)) {
       result.flags.push('blocks_automatic_checks');
+    } else if (r.status === 404 || r.status === 410) {
+      result.flags.push('dead_link'); // (the site itself says the page is not there)
     } else {
-      result.flags.push('dead_link');
+      // Any other refusal (403 to a robot, 429, 5xx, a login wall): the page may be perfectly real. Not a dead link: an admin opens it.
+      result.flags.push('could_not_check');
     }
   } catch (e) {
     result.error = e.code || 'unreachable';
-    result.flags.push(e.code === 'blocked_address' || e.code === 'port_not_allowed' ? 'refused_address' : 'dead_link');
+    // An address the server must not open is refused; a name that does not exist is a dead link (usually a typo, and the mentor is told);
+    // anything else (no answer, a timeout, a broken certificate, too many redirects) could not be checked, which is not the mentor's fault.
+    result.flags.push(e.code === 'blocked_address' || e.code === 'port_not_allowed' ? 'refused_address' : (e.code === 'dns_failed' ? 'dead_link' : 'could_not_check'));
   }
 
   // (a page on a free hosting platform has no age of its own: the platform's would only mislead)
@@ -364,4 +387,4 @@ function companyIdFormat(value) {
   return null;
 }
 
-module.exports = { LinkError, isBlockedAddress, checkAddress, safeGet, parseHtml, registrableDomain, isFreeHosting, findPerson, domainCreated, ageDays, checkLink, companyIdFormat, SHORTENERS, namesSomeoneElse };
+module.exports = { LinkError, isBlockedAddress, checkAddress, safeGet, parseHtml, registrableDomain, isFreeHosting, findPerson, domainCreated, ageDays, checkLink, companyIdFormat, SHORTENERS, namesSomeoneElse, PROFILE_SITES, isProfileSite };

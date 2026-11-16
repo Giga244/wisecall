@@ -50,7 +50,8 @@ async function latestReview(userId, submittedAt) {
 async function checkEvidence(user) {
   const items = await experience.listEvidence(user.id);
   const person = { name: user.name, brands: [user.currentWork].filter((b) => b && b.length >= 3) };
-  const summary = { total: 0, opened: 0, autoVerified: 0, dead: 0, shorteners: 0, newDomains: 0, adminCheck: 0 };
+  // (unchecked: links the server could not check itself, a known profile site or a site that did not answer: an admin opens them)
+  const summary = { total: 0, opened: 0, autoVerified: 0, dead: 0, shorteners: 0, newDomains: 0, adminCheck: 0, unchecked: 0 };
   const checked = [];
   for (const e of items) {
     let status = e.checkStatus;
@@ -79,7 +80,8 @@ async function checkEvidence(user) {
         [e.id, status, auto, JSON.stringify(result)]);
     }
     const flags = result.flags || [];
-    if (e.url) {
+    if (e.url && flags.includes('could_not_check')) summary.unchecked += 1;
+    else if (e.url) {
       summary.total += 1;
       if (result.title !== undefined || result.description !== undefined) summary.opened += 1;
       if (flags.includes('dead_link') || flags.includes('refused_address')) summary.dead += 1;

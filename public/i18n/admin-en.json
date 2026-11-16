@@ -158,6 +158,7 @@
   "admin.ai.linkFlag.refused_address": "internal or unsafe address (not opened)",
   "admin.ai.linkFlag.new_domain": "brand-new website",
   "admin.ai.linkFlag.blocks_automatic_checks": "the site blocks automatic checks: open it yourself",
+  "admin.ai.linkFlag.could_not_check": "couldn't check automatically: open it and check by hand",
   "admin.ai.linkFlag.not_a_web_page": "not a web page",
   "admin.ai.linkFlag.no_https": "no https",
   "admin.ai.linkFlag.redirected_elsewhere": "redirects to another website",
