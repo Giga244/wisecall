@@ -373,7 +373,7 @@ describe('SEO, error pages and the contact form', () => {
   test('pages carry a canonical link, share image and the right domain', async () => {
     const html = await (await get('/')).text();
     assert.match(html, /<link rel="canonical" href="http:\/\/localhost:4551\/">/);
-    assert.match(html, /og:image" content="http:\/\/localhost:4551\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/);
+    assert.match(html, /og:image" content="http:\/\/localhost:4551\/og\/og-ka\.png(\?v=[0-9a-f]{10})?"/);
     assert.match(html, /twitter:card" content="summary_large_image"/);
     assert.doesNotMatch(html, /\{\{/, 'no unfilled placeholders');
     const dash = await (await get('/dashboard.html')).text();
@@ -597,7 +597,7 @@ describe('production safety', () => {
         assert.doesNotMatch(text, /localhost|127\.0\.0\.1/, `${p} mentions localhost`);
       }
       assert.match(await (await fetch(`${prod.base}/`)).text(), /rel="canonical" href="https:\/\/wisecall\.example\/"/);
-      assert.match(await (await fetch(`${prod.base}/`)).text(), /og:image" content="https:\/\/wisecall\.example\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/);
+      assert.match(await (await fetch(`${prod.base}/`)).text(), /og:image" content="https:\/\/wisecall\.example\/og\/og-ka\.png(\?v=[0-9a-f]{10})?"/);
       assert.match(await (await fetch(`${prod.base}/robots.txt`)).text(), /Sitemap: https:\/\/wisecall\.example\/sitemap\.xml/);
       assert.match(await (await fetch(`${prod.base}/sitemap.xml`)).text(), /<loc>https:\/\/wisecall\.example\/<\/loc>/);
     } finally { prod.proc.kill(); }

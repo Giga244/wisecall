@@ -92,10 +92,10 @@ describe('every page carries the icons, the manifest and the theme colour', () =
       }
       assert.equal((html.match(/rel="icon"/g) || []).length, 2, `${f}: exactly two icon links`);
       if (!f.startsWith('mock-')) { // (the fake-provider pages are not shared)
-        assert.match(html, /og:image" content="[^"]*\/og-image-1200x630\.png(\?v=[0-9a-f]{10})?"/, `${f} og:image`);
+        assert.match(html, /og:image" content="[^"]*\/og\/og-ka\.png(\?v=[0-9a-f]{10})?"/, `${f} og:image`);
         assert.match(html, /og:image:width" content="1200"/);
         assert.match(html, /og:image:height" content="630"/);
-        assert.match(html, /og:image:alt" content="Wisecall — Advice from people who've already done it\."/);
+        assert.match(html, /og:image:alt" content="Wisecall — მიიღე რჩევა მათგან, ვინც ეს უკვე გაიარა\."/);
       }
     }
   });

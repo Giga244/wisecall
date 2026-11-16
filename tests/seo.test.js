@@ -40,7 +40,7 @@ describe('a Georgian address for every page', () => {
     assert.match(h, /<html lang="en"/);
     assert.match(h, /<title>About Wisecall — how it works<\/title>/);
     assert.match(h, new RegExp(`hreflang="ka" href="${base}/ka/about.html"`));
-    assert.match(h, /property="og:locale" content="en_US"/);
+    assert.match(h, /property="og:locale" content="ka_GE"/, "a bare address is previewed in Georgian"); assert.match(await html("/en/about.html"), /property="og:locale" content="en_US"/);
     assert.match(await html('/ka/about.html'), /<title>Wisecall-ის შესახებ — როგორ მუშაობს<\/title>/);
   });
 

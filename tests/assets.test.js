@@ -11,7 +11,7 @@ const { ROOT, resetDatabase, startServer, client } = require('./helpers');
 const PUBLIC = path.join(ROOT, 'public');
 let srv, base, visitor;
 const sha = (data) => crypto.createHash('sha1').update(data).digest('hex').slice(0, 10);
-const LOCAL = /^(?:https?:\/\/localhost:\d+)?(\/(?:(?:css|js|brand|fonts)\/[^\s"'?]+|favicon\.svg|favicon\.ico|apple-touch-icon\.png|icon-[\w-]+\.png|og-image[\w-]*\.png|site\.webmanifest))(\?v=([0-9a-f]{10}))?$/;
+const LOCAL = /^(?:https?:\/\/localhost:\d+)?(\/(?:(?:css|js|brand|fonts|og)\/[^\s"'?]+|favicon\.svg|favicon\.ico|apple-touch-icon\.png|icon-[\w-]+\.png|og-image[\w-]*\.png|site\.webmanifest))(\?v=([0-9a-f]{10}))?$/;
 
 before(async () => { await resetDatabase(); srv = await startServer(4609); base = srv.base; visitor = client(base); });
 after(() => { if (srv) srv.proc.kill(); });
@@ -39,7 +39,7 @@ describe('addresses carry the version of the file', () => {
       }
     }
     // the icons of the head, by name
-    for (const u of ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png', '/site.webmanifest', '/css/style.css', '/js/theme-init.js', '/js/header.js', '/og-image-1200x630.png']) assert.ok(seen.has(u), `${u} is named with a version somewhere`);
+    for (const u of ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png', '/site.webmanifest', '/css/style.css', '/js/theme-init.js', '/js/header.js', '/og/og-ka.png']) assert.ok(seen.has(u), `${u} is named with a version somewhere`);
     // the version really is the hash of what is served at that address
     for (const [url, v] of seen) {
       const res = await fetch(`${base}${url}?v=${v}`);

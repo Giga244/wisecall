@@ -18,7 +18,7 @@ const DAY = 86400;
 
 // What is versioned: files under these folders, and these files at the root. (The lookbehind keeps "public/js/x" in a comment and
 // "https://site/css/x" alone: the address must not continue a longer path.)
-const REF = /(?<![\w.\-/])(?:\/(?:css|js|brand|fonts)\/[\w.\-/]+|\/(?:favicon\.svg|favicon\.ico|apple-touch-icon\.png|icon-[\w-]+\.png|og-image[\w-]*\.png|site\.webmanifest))/g;
+const REF = /(?<![\w.\-/])(?:\/(?:css|js|brand|fonts|og)\/[\w.\-/]+|\/(?:favicon\.svg|favicon\.ico|apple-touch-icon\.png|icon-[\w-]+\.png|og-image[\w-]*\.png|site\.webmanifest))/g;
 const FILE_TYPES = /\.(css|js|svg|png|jpe?g|webp|mp4|woff2|ico|webmanifest)$/i;
 const TEXT_TYPES = /\.(css|js|webmanifest)$/i;
 

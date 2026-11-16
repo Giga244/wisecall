@@ -1762,6 +1762,7 @@
   "settings.twoStep.off": "Two-step verification is off.",
   "settings.twoStep.admin": "As an admin you manage two-step verification on the admin page; it can't be turned off.",
   "settings.twoStep.verifyEmail": "Confirm your email address first: two-step verification can be turned on once it is confirmed.",
+  "meta.ogAlt": "Wisecall — Advice from people who've already done it.",
   "meta.index.title": "Wisecall — Ask verified experts in Georgia",
   "meta.index.description": "Pay per question and get a written answer from a verified mentor within 7 days, or your money back. Some mentors answer for free. Founders, engineers, doctors and more.",
   "meta.about.title": "About Wisecall — how it works",

@@ -39,6 +39,13 @@ function readPage(file) {
 const DICTS = {};
 const dict = (lang) => (DICTS[lang] = DICTS[lang] || JSON.parse(fs.readFileSync(path.join(PUBLIC, 'i18n', `${lang === 'ka' ? 'ka' : 'en'}.json`), 'utf8')));
 const langOf = (res) => (res.locals && res.locals.pageLang === 'ka' ? 'ka' : 'en');
+// The language of the link preview: English only under /en/; the bare address and /ka/ are previewed in Georgian (see localize).
+const shareLangOf = (res) => (res.locals && res.locals.pageLang === 'en' ? 'en' : 'ka');
+// A page built from content or from words of its own (the lists, a field page, a profile) names its preview title and description itself.
+// On a bare address they are written in Georgian, whatever the language the page itself is shown in: ogFor(res, (d) => ({ title, description })).
+function ogFor(res, make) {
+  if (!res.locals.pageLang) res.locals.og = make(dict('ka'));
+}
 const kaUrl = (enPath) => `${config.PUBLIC_URL}/ka${enPath === '/' ? '/' : enPath}`;
 // (the matching page, /match, is public/find-a-mentor.html, with its own title and description: meta.match.*)
 const pageKeyOf = (p) => (p === '/' || p === '/index.html' ? 'index' : (p === '/match' ? 'match' : (/^\/([\w-]+)\.html$/.exec(p) || [])[1] || null));
@@ -120,12 +127,31 @@ function kaHref(href) {
 }
 const kaLinks = (html) => html.replace(/(<a\b[^>]*?\shref=")([^"]+)(")/g, (m, a, href, b) => a + kaHref(href) + b);
 
+// The share picture (og:image, twitter:image): one picture per language, public/og/og-<lang>.png, 1200x630, with its size and its alternative
+// text in the page's language. Pages still carry the old picture (public/og-image-1200x630.png) in their source, which stays as the fallback
+// and is replaced here; a page that names its own picture (a mentor's photo, a live session's cover) keeps it and only gets the alternative text.
+const OG_OLD = /\/og-image-1200x630\.png(?:\?v=[0-9a-f]{10})?"/;
+function shareImage(html, lang) {
+  if (!/<meta property="og:image" content="/.test(html)) return html;
+  const alt = String(dict(lang)['meta.ogAlt'] || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); // (an apostrophe stays readable)
+  const url = escapeHtml(config.PUBLIC_URL + assets.rewrite(`/og/og-${lang === 'ka' ? 'ka' : 'en'}.png`));
+  html = html.replace(/\s*<meta (?:property="og:image:(?:width|height|alt)"|name="twitter:image:alt") content="[^"]*">/g, '');
+  html = html.replace(/(<meta (?:property="og:image"|name="twitter:image") content=")[^"]*(\/og-image-1200x630\.png(?:\?v=[0-9a-f]{10})?")/g, (m, a, b) => (OG_OLD.test(b) ? a + url + '"' : m));
+  return html.replace(/<meta property="og:image" content="[^"]*">/, (m) => `${m}\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta property="og:image:alt" content="${alt}">`)
+    .replace(/<meta name="twitter:image" content="[^"]*">/, (m) => `${m}\n<meta name="twitter:image:alt" content="${alt}">`);
+}
+
 // The head of a page in its language, with its alternates. Pages without a canonical address (error pages) only get <html lang>.
 // langs: the languages the page exists in (an article may be written in one only: then only that one is named).
-function localize(html, lang, langs = ['en', 'ka']) {
+// share: the language of the link preview (og:/twitter: tags). Georgian is the site's default language and the address people share is the
+// bare one, so a page without a prefix is previewed in Georgian (picture, title, description, alt text) while the page itself stays as it
+// is; only /en/ pages are previewed in English. og: a page built from content brings its own preview title and description (see ogFor).
+function localize(html, lang, langs = ['en', 'ka'], share = lang, og = null) {
+  if (!langs.includes(share)) { share = lang; og = null; } // (a page that exists in one language only is previewed in that language)
   html = html.replace(/<html lang="[a-z-]+"/, () => `<html lang="${lang}"${config.LAUNCH_MODE === 'prelaunch' ? ' data-launch="prelaunch"' : ''}`);
   html = translateBody(html, lang);
   if (lang === 'ka') html = kaLinks(html);
+  html = shareImage(html, share);
   const canon = /<link rel="canonical" href="([^"]*)">/.exec(html);
   if (!canon) return html;
   const enUrl = canon[1];
@@ -135,13 +161,14 @@ function localize(html, lang, langs = ['en', 'ka']) {
   const key = pageKeyOf(enPath);
   const title = key && d[`meta.${key}.title`];
   const description = key && metaDescription(d, key);
-  if (title) {
-    html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`)
-      .replace(/(<meta (?:property|name)="(?:og|twitter):title" content=")[^"]*(")/g, (m, a, b) => a + escapeHtml(title) + b);
-  }
-  if (description) {
-    html = html.replace(/(<meta (?:name="description"|(?:property|name)="(?:og|twitter):description") content=")[^"]*(")/g, (m, a, b) => a + escapeHtml(description) + b);
-  }
+  // (the preview's words are those of the share language; a page built from content brings its own, see ogFor)
+  const ds = dict(share);
+  const shareTitle = (key && ds[`meta.${key}.title`]) || (og && og.title);
+  const shareDescription = (key && metaDescription(ds, key)) || (og && og.description);
+  if (title) html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`);
+  if (shareTitle) html = html.replace(/(<meta (?:property|name)="(?:og|twitter):title" content=")[^"]*(")/g, (m, a, b) => a + escapeHtml(shareTitle) + b);
+  if (description) html = html.replace(/(<meta name="description" content=")[^"]*(")/, (m, a, b) => a + escapeHtml(description) + b);
+  if (shareDescription) html = html.replace(/(<meta (?:property|name)="(?:og|twitter):description" content=")[^"]*(")/g, (m, a, b) => a + escapeHtml(shareDescription) + b);
   if (lang === 'ka') {
     html = html.replace(canon[0], () => `<link rel="canonical" href="${escapeHtml(ka)}">`)
       .replace(/(<meta property="og:url" content=")[^"]*(")/, (m, a, b) => a + escapeHtml(ka) + b);
@@ -150,8 +177,8 @@ function localize(html, lang, langs = ['en', 'ka']) {
     ...(langs.includes('en') ? [`<link rel="alternate" hreflang="en" href="${escapeHtml(enUrl)}">`] : []),
     ...(langs.includes('ka') ? [`<link rel="alternate" hreflang="ka" href="${escapeHtml(ka)}">`] : []),
     `<link rel="alternate" hreflang="x-default" href="${escapeHtml(langs.includes('ka') ? ka : enUrl)}">`,
-    `<meta property="og:locale" content="${lang === 'ka' ? 'ka_GE' : 'en_US'}">`,
-    ...(langs.length > 1 ? [`<meta property="og:locale:alternate" content="${lang === 'ka' ? 'en_US' : 'ka_GE'}">`] : [])
+    `<meta property="og:locale" content="${share === 'ka' ? 'ka_GE' : 'en_US'}">`,
+    ...(langs.length > 1 ? [`<meta property="og:locale:alternate" content="${share === 'ka' ? 'en_US' : 'ka_GE'}">`] : [])
   ];
   // (a Georgian page draws its words in Noto Sans Georgian: fetched at once, like the latin fonts every page preloads)
   if (lang === 'ka') tags.push(assets.rewrite('<link rel="preload" href="/fonts/noto-sans-georgian.woff2" as="font" type="font/woff2" crossorigin>'));
@@ -177,7 +204,7 @@ function sendHtml(res, status, html) {
   if (!res.get('Cache-Control')) res.set('Cache-Control', 'no-cache');
   res.set('Speculation-Rules', require('./speculation').HEADER); // (which links the browser may fetch ahead: server/speculation.js)
   if (status === 200 && res.req) require('./analytics').pageview(res.req); // (off unless PLAUSIBLE_DOMAIN is set; not for a page fetched ahead)
-  res.status(status).type('html').send(localize(html, langOf(res), (res.locals && res.locals.pageLangs) || undefined));
+  res.status(status).type('html').send(localize(html, langOf(res), (res.locals && res.locals.pageLangs) || undefined, shareLangOf(res), (res.locals && res.locals.og) || null));
 }
 
 function fill(html, vars) {
@@ -223,6 +250,8 @@ async function sendProfile(res, row, asked) {
       ? (lang === 'ka' ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price === 0 ? 'უფასოდ' : `${u.price} ₾`}. ${profile.bio || ''}` : `Ask ${u.name} (${u.roleTitle}) a question on Wisecall ${u.price === 0 ? 'for free' : `for ${u.price} GEL`}. ${profile.bio || ''}`)
       : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`;
     vars.DESCRIPTION = escapeHtml(shortText(text));
+    // (the preview of a bare address is Georgian: the same sentence as /ka/ writes)
+    ogFor(res, () => ({ description: shortText(listable ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price === 0 ? 'უფასოდ' : `${u.price} ₾`}. ${profile.bio || ''}` : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`) }));
     if (u.photoUpdatedAt) vars.OG_IMAGE = config.PUBLIC_URL + require('./util').photoUrl(u);
     const stats = listable ? (await require('./models').mentorStatsFor([u.id]))[u.id] : null;
     vars.PROFILE_SSR = profileSsr(profile, stats, listable ? u : null, lang);
@@ -231,6 +260,7 @@ async function sendProfile(res, row, asked) {
     if (listable) extraHead = profileJsonLd({ ...u, bio: profile.bio }, stats, lang, extra);
     else if (Object.keys(extra).length) extraHead = personJsonLd(u, lang, extra);
   } else {
+    ogFor(res, () => ({ title: 'პროფილი — Wisecall', description: 'პროფილი Wisecall-ზე, სადაც ადამიანები გადამოწმებულ ექსპერტებს კითხვებს უსვამენ.' }));
     vars.TITLE = lang === 'ka' ? 'პროფილი — Wisecall' : 'Profile — Wisecall';
     vars.DESCRIPTION = lang === 'ka' ? 'პროფილი Wisecall-ზე, სადაც ადამიანები გადამოწმებულ ექსპერტებს კითხვებს უსვამენ.' : 'A profile on Wisecall, where people ask verified experts and get real, paid answers.';
   }
@@ -407,6 +437,7 @@ function sendHelp(res, slug) {
   if (slug && !a) return false;
   const nav = list.filter((x) => !a || x.slug !== a.slug).map((x) => `<li><a href="${prefix}/help/${x.slug}">${escapeHtml(x.title)}</a></li>`).join('');
   const helpTitle = d['help.title'] || 'Help centre';
+  if (!a) ogFor(res, (g) => ({ title: `${g['help.title'] || helpTitle} — Wisecall`, description: shortText(g['help.intro'] || '') }));
   const vars = {
     ...baseVars(a ? `/help/${a.slug}` : '/help.html'),
     TITLE: escapeHtml(a ? `${a.title} — Wisecall` : `${helpTitle} — Wisecall`),
@@ -502,6 +533,7 @@ async function sendAnswers(req, res) {
   const list = await require('./publicAnswers').list({ q, niche, sort, limit: 30 });
   const searching = Boolean(q) || niche !== 'all' || sort !== 'newest';
   const h1 = d['answers.title'];
+  ogFor(res, (g) => ({ title: `${g['answers.title']} — Wisecall`, description: g['answers.intro'] }));
   sendHtml(res, 200, fill(html, {
     ...baseVars('/answers'),
     TITLE: escapeHtml(`${h1} — Wisecall`), DESCRIPTION: escapeHtml(d['answers.intro']), OG_TYPE: 'website',
@@ -580,6 +612,7 @@ async function sendRequestsBoard(req, res) {
       ${f.texts.map((x) => `<p class="answer-a">“${escapeHtml(x)}”</p>`).join('')}
       <p><a class="btn btn-primary btn-sm" href="${prefix}/signup.html?mentor=1">${escapeHtml(d['rq.board.become'])}</a></p>
     </article>`).join('');
+  ogFor(res, (g) => ({ title: `${g['rq.board.title']} — Wisecall`, description: g['rq.board.intro'] }));
   sendHtml(res, 200, fill(html, { ...baseVars('/requests'), TITLE: escapeHtml(`${h1} — Wisecall`), DESCRIPTION: escapeHtml(d['rq.board.intro']), OG_TYPE: 'website',
     ROBOTS: 'index, follow', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']), H1: escapeHtml(h1), INTRO: escapeHtml(d['rq.board.intro']), LIST: list,
     ASK: escapeHtml(d['rq.cta']) }));
@@ -622,6 +655,7 @@ async function sendLiveList(req, res) {
   const filtering = Object.values(f).some(Boolean);
   const niches = require('./niches');
   const opt = (value, label, current) => `<option value="${escapeHtml(value)}"${String(current || '') === value ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+  ogFor(res, (g) => ({ title: `${g['live.title']} — Wisecall`, description: g['live.intro'] }));
   sendHtml(res, 200, fill(html, { ...baseVars('/live'), TITLE: escapeHtml(`${d['live.title']} — Wisecall`), DESCRIPTION: escapeHtml(d['live.intro']), OG_TYPE: 'website',
     ROBOTS: filtering ? 'noindex, follow' : 'index, follow', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']), H1: escapeHtml(d['live.title']), INTRO: escapeHtml(d['live.intro']),
     F_FIELD: escapeHtml(d['live.f.field']), F_LANGUAGE: escapeHtml(d['live.f.language']), F_TYPE: escapeHtml(d['live.f.type']), F_FROM: escapeHtml(d['live.f.from']),
@@ -838,6 +872,11 @@ async function sendAdvice(req, res, key) {
   const intro = ka
     ? `დაუსვი კითხვა გადამოწმებულ მენტორს (${name}) და მიიღე ნამდვილი, წერილობითი პასუხი. Wisecall-ის ყველა მენტორმა გაიარა პირადობის შემოწმება და გამოცდილების განხილვა.`
     : `Ask a verified mentor your question about ${name} and get a real, written answer. Every mentor on Wisecall passed an ID check and a review of their experience.`;
+  ogFor(res, () => {
+    const g = niches.nameOf(key, 'ka');
+    return { title: `რჩევა: ${g} — მათგან, ვისაც ეს გაუვლია — Wisecall`,
+      description: `დაუსვი კითხვა გადამოწმებულ მენტორს (${g}) და მიიღე ნამდვილი, წერილობითი პასუხი. Wisecall-ის ყველა მენტორმა გაიარა პირადობის შემოწმება და გამოცდილების განხილვა.` };
+  });
   const vars = {
     ...baseVars(`/advice/${key}`),
     TITLE: escapeHtml(`${h1} — Wisecall`),
@@ -913,6 +952,7 @@ async function sendArticles(req, res) {
   </ul>${articleEnd(lang, d, null)}`;
   const ld = jsonLd({ '@context': 'https://schema.org', '@type': 'CollectionPage', url, inLanguage: lang, name: d['articles.title'], description: d['articles.intro'],
     hasPart: list.slice(0, 50).map((a) => ({ '@type': 'Article', headline: a[lang].title, url: articleUrl(lang, `/advice-articles/${a.slug}`) })) });
+  ogFor(res, (g) => ({ title: g['articles.meta.title'], description: g['articles.intro'] }));
   sendHtml(res, 200, addToHead(fill(html, { ...baseVars('/advice-articles'), TITLE: escapeHtml(d['articles.meta.title']), DESCRIPTION: escapeHtml(d['articles.intro']), OG_TYPE: 'website',
     ROBOTS: 'index, follow', SERVER_LANG: '<meta name="wisecall-server-lang" content="1">', PREFIX: prefix, HOME: escapeHtml(d['expert.crumb.home']),
     CRUMBS: `<li><span aria-current="page">${escapeHtml(d['articles.title'])}</span></li>`, BODY: body }), ld));
