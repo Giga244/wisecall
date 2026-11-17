@@ -64,8 +64,8 @@
       </label>
       <fieldset class="rq-budget">
         <legend data-i18n="rq.budget">Budget per question in ₾ (optional)</legend>
-        <label for="rqMin"><span data-i18n="rq.budget.min">From</span><input type="number" id="rqMin" min="5" max="2000" step="1" inputmode="numeric"></label>
-        <label for="rqMax"><span data-i18n="rq.budget.max">To</span><input type="number" id="rqMax" min="5" max="2000" step="1" inputmode="numeric"></label>
+        <label for="rqMin"><span data-i18n="rq.budget.min">From</span><input type="number" id="rqMin" min="{{PRICE_MIN}}" max="{{PRICE_MAX}}" step="1" inputmode="numeric"></label>
+        <label for="rqMax"><span data-i18n="rq.budget.max">To</span><input type="number" id="rqMax" min="{{PRICE_MIN}}" max="{{PRICE_MAX}}" step="1" inputmode="numeric"></label>
       </fieldset>
       <label for="rqEmail" id="rqEmailField"><span data-i18n="contact.email">Your email</span>
         <input type="email" id="rqEmail" maxlength="254" autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false">

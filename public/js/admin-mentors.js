@@ -261,7 +261,7 @@
         <p class="small"><strong>${t('admin.price.title')}</strong> · ${esc(t('admin.price.now'))} <strong class="mv-price-now">${esc(money(d.price))}</strong></p>
         <div class="mv-decide">
           <label class="checkbox-row"><input type="checkbox" class="mv-price-free"${d.price === 0 ? ' checked' : ''}> <span>${t('admin.price.free')}</span></label>
-          <input type="number" class="mv-price-amount" min="5" max="2000" step="1" inputmode="numeric" value="${d.price > 0 ? esc(d.price) : ''}" aria-label="${esc(t('admin.price.amount'))}" placeholder="₾"${d.price === 0 ? ' hidden' : ''}>
+          <input type="number" class="mv-price-amount" min="${esc(WisecallI18n.settings().priceMin)}" max="${esc(WisecallI18n.settings().priceMax)}" step="1" inputmode="numeric" value="${d.price > 0 ? esc(d.price) : ''}" aria-label="${esc(t('admin.price.amount'))}" placeholder="₾"${d.price === 0 ? ' hidden' : ''}>
         </div>
         <div class="mv-decide">
           <input type="text" class="mv-price-reason" maxlength="300" placeholder="${esc(t('admin.price.reason'))}" aria-label="${esc(t('admin.price.reason'))}">
@@ -388,10 +388,27 @@
     } catch (e) { el.innerHTML = ''; }
   }
 
+  // Mentors whose price is above today's maximum (set before the range was lowered): named here, with their price, until it is changed.
+  // Nothing is changed for them automatically; an admin can change a price from the mentor's card (with a reason).
+  async function priceOverLine(el) {
+    try {
+      const r = await WisecallAPI.apiFetch('/admin/price-over-max');
+      if (!r.mentors.length) { el.innerHTML = ''; return; }
+      el.innerHTML = `<div class="mv-price-over" role="note">
+        <p><strong>${esc(fill('admin.priceOver.title', { n: r.mentors.length, max: r.max }))}</strong></p>
+        <ul>${r.mentors.map((m) => `<li><strong>${esc(m.name)}</strong> · ${esc(m.price)} ₾ <span class="muted small">${esc(m.email)}${['verified', 'pending', 'rejected', 'suspended'].includes(m.status) ? ` · ${esc(t('admin.filter.' + m.status))}` : ''}</span>${m.username ? ` · <a href="/u/${encodeURIComponent(m.username)}" target="_blank" rel="noopener">${esc(t('admin.priceOver.profile'))}</a>` : ''}</li>`).join('')}</ul>
+        <p class="muted small">${esc(t('admin.priceOver.note'))}</p>
+      </div>`;
+    } catch (e) { el.innerHTML = ''; }
+  }
+
   function render(container, mentors, onChange) {
     // (the one-off "profile update" email to approved mentors: public/js/admin-profile-update.js)
-    const costs = '<div class="mv-costs"></div><div class="mv-profile-update"></div>';
-    const update = () => { const b = container.querySelector('.mv-profile-update'); if (b && window.AdminProfileUpdate) AdminProfileUpdate.mount(b); };
+    const costs = '<div class="mv-price-over-box"></div><div class="mv-costs"></div><div class="mv-profile-update"></div>';
+    const update = () => {
+      const b = container.querySelector('.mv-profile-update'); if (b && window.AdminProfileUpdate) AdminProfileUpdate.mount(b);
+      const p = container.querySelector('.mv-price-over-box'); if (p) priceOverLine(p);
+    };
     if (!mentors.length) { container.innerHTML = costs + `<p class="muted">${t('admin.empty')}</p>`; costLine(container.querySelector('.mv-costs')); update(); return; }
     container.innerHTML = costs + mentors.map(card).join('');
     costLine(container.querySelector('.mv-costs'));

@@ -46,9 +46,12 @@ const config = {
   SWEEP_INTERVAL_SECONDS: int(env.SWEEP_INTERVAL_SECONDS, 600),
   // Attempts to ask a question that were never paid (cancelled, failed, timed out) are deleted after this many days.
   UNPAID_ATTEMPT_DAYS: int(env.UNPAID_ATTEMPT_DAYS, 7),
-  // A mentor's price: 0 (they answer for free: docs/CLAUDE-CODE-FREE-ANSWERS.md), or PRICE_MIN to PRICE_MAX lari.
+  // A mentor's price: 0 (they answer for free: docs/CLAUDE-CODE-FREE-ANSWERS.md), or PRICE_MIN to PRICE_MAX lari. THE one place for the
+  // range: the server's checks, the price fields (/api/config) and every text that says it ({priceMin}, {priceMax}) follow it. A mentor
+  // whose price was set above a later, lower PRICE_MAX keeps it until they change it (admin → Mentors lists them). The database allows
+  // up to 2000 (migrations/045), so PRICE_MAX can go up to that without a migration.
   PRICE_MIN: 5,
-  PRICE_MAX: 2000,
+  PRICE_MAX: 200,
   // The range /apply.html suggests to a new mentor ("most new mentors start between 20 and 60 ₾"); only advice, any price in range is fine.
   PRICE_SUGGEST_MIN: 20,
   PRICE_SUGGEST_MAX: 50,

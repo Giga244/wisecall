@@ -292,7 +292,7 @@
         </fieldset>
         <div class="apply-field" id="apPaidBox"${user.price === 0 ? ' hidden' : ''}>
           <label for="apPrice">${esc(t('apply.f.price'))}</label>
-          <div class="apply-money"><input id="apPrice" name="price" type="number" min="${config.priceMin}" max="${config.priceMax}" step="1" inputmode="numeric" value="${esc(user.price || '')}" aria-describedby="apPriceSuggest apPriceYou" required><span aria-hidden="true">₾</span></div>
+          <div class="apply-money"><input id="apPrice" name="price" type="number" min="${config.priceMin}" max="${Math.max(config.priceMax, user.price || 0)}" step="1" inputmode="numeric" value="${esc(user.price || '')}" aria-describedby="apPriceSuggest apPriceYou" required><span aria-hidden="true">₾</span></div>
           <p class="hint" id="apPriceSuggest">${esc(fill(v.priceRange && v.priceRange.fromData ? 'apply.price.range' : 'apply.price.suggest', { from: (v.priceRange || {}).from || 20, to: (v.priceRange || {}).to || 50, field: nicheName(v.niche) }))}</p>
         </div>
         <p class="apply-you" id="apPriceYou" aria-live="polite"></p>
@@ -801,7 +801,8 @@
       const raw = form.price.value.trim();
       const price = Number(raw);
       if (raw === '' && !check) return true;
-      if (!Number.isInteger(price) || price < config.priceMin || price > config.priceMax) { stepError(t('apply.err.price')); form.price.focus(); return false; }
+      // (a price set before the range was lowered, left as it is, is kept: only a new price must be in config.priceMin..priceMax)
+      if (price !== user.price && (!Number.isInteger(price) || price < config.priceMin || price > config.priceMax)) { stepError(t('apply.err.price')); form.price.focus(); return false; }
       if (price !== user.price) await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price } });
     } else if (step === 3) {
       // A link typed in but not added yet is added now ("Next" with the link in the box does what they meant).
@@ -1169,7 +1170,7 @@
         const free = form.priceMode.value === 'free';
         box.hidden = free;
         const p = Number(input.value);
-        const valid = Number.isInteger(p) && p >= config.priceMin && p <= config.priceMax;
+        const valid = Number.isInteger(p) && p >= config.priceMin && (p <= config.priceMax || p === user.price);
         out.textContent = free ? t('price.mode.freeNote') : valid ? fill('apply.price.you', { price: p, you: (Math.round(p * share) / 100).toFixed(2).replace(/\.00$/, ''), share }) : fill('apply.price.share', { share });
       };
       input.addEventListener('input', draw);

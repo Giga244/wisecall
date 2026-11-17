@@ -213,7 +213,9 @@ function fill(html, vars) {
 
 function baseVars(canonicalPath) {
   // GOOGLE_HIDDEN: the "Continue with Google" block on the login and sign-up pages exists only when Google sign-in is set up.
-  return { PUBLIC_URL: config.PUBLIC_URL, CANONICAL_URL: config.PUBLIC_URL + canonicalPath, GOOGLE_HIDDEN: config.GOOGLE_ENABLED ? '' : 'hidden' };
+  // PRICE_MIN / PRICE_MAX: the price range (server/config.js) for the pages' own number boxes (min="{{PRICE_MIN}}" max="{{PRICE_MAX}}").
+  return { PUBLIC_URL: config.PUBLIC_URL, CANONICAL_URL: config.PUBLIC_URL + canonicalPath, GOOGLE_HIDDEN: config.GOOGLE_ENABLED ? '' : 'hidden',
+    PRICE_MIN: String(config.PRICE_MIN), PRICE_MAX: String(config.PRICE_MAX) };
 }
 
 // A public mentor's name and role for the page <title>; null when they aren't listed.

@@ -71,7 +71,9 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     if (updates[field] === undefined) continue;
     if (field === 'price') {
       const n = Number(updates.price);
-      // 0 is "answer for free" (docs/CLAUDE-CODE-FREE-ANSWERS.md); a paid price is PRICE_MIN to PRICE_MAX.
+      // 0 is "answer for free" (docs/CLAUDE-CODE-FREE-ANSWERS.md); a paid price is PRICE_MIN to PRICE_MAX. A price set before the range
+      // was lowered (above today's PRICE_MAX) is never changed for the mentor: sent back as it is, it is kept; only a new price must fit.
+      if (updates.price !== '' && n === existing.price) continue;
       if (updates.price === '' || !Number.isFinite(n) || (n !== 0 && (n < config.PRICE_MIN || n > config.PRICE_MAX))) return res.status(400).json({ error: 'invalid_price' });
       patch.price = Math.round(n);
     } else if (field === 'freeWeeklyCap') {

@@ -7,6 +7,8 @@
   async function mount(box, user, opts) {
     const o = opts || {};
     const t = WisecallI18n.t;
+    // (the range is the server's: config.PRICE_MIN to config.PRICE_MAX)
+    const cfg = await WisecallI18n.getConfig();
     let history = o.history;
     if (!history) { try { history = (await WisecallAPI.apiFetch('/me/details')).priceHistory || []; } catch (e) { history = []; } }
     let lastPaid = user.price > 0 ? user.price : ((history.find((h) => h.to > 0) || {}).to || '');
@@ -19,7 +21,7 @@
         <form data-price-form novalidate>
           <label class="checkbox-row price-free-toggle" for="${id}free"><input type="checkbox" role="switch" id="${id}free" data-price-free${user.price === 0 ? ' checked' : ''}> <span>${esc(t('priceBlock.freeToggle'))}</span></label>
           <label for="${id}amount" data-price-paid${user.price === 0 ? ' hidden' : ''}><span>${esc(t('priceBlock.label'))}</span>
-            <input type="number" id="${id}amount" data-price-input min="5" max="2000" step="1" inputmode="numeric" value="${esc(user.price > 0 ? user.price : lastPaid)}">
+            <input type="number" id="${id}amount" data-price-input min="${cfg.priceMin}" max="${Math.max(cfg.priceMax, user.price || 0)}" step="1" inputmode="numeric" value="${esc(user.price > 0 ? user.price : lastPaid)}">
           </label>
           <p class="hint">${esc(t('priceBlock.keep'))}</p>
           <p class="form-error" role="alert" data-price-error></p>
@@ -40,7 +42,8 @@
       ev.preventDefault();
       error.textContent = '';
       const price = free.checked ? 0 : Number(input.value);
-      if (!free.checked && (!Number.isInteger(price) || price < 5 || price > 2000)) { error.textContent = t('settings.mentor.price.invalid'); input.focus(); return; }
+      // (a price set before the range was lowered, kept as it is, is not refused: only a new one must be in the range)
+      if (!free.checked && price !== user.price && (!Number.isInteger(price) || price < cfg.priceMin || price > cfg.priceMax)) { error.textContent = t('settings.mentor.price.invalid'); input.focus(); return; }
       try {
         const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body: { price } });
         Object.assign(user, data.user);

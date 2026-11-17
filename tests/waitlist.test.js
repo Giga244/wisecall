@@ -39,7 +39,7 @@ describe('public settings for the pages', () => {
     assert.equal(c.mentorSharePercent, 80);
     assert.equal(c.answerDeadlineDays, 7);
     assert.equal(c.priceMin, 5);
-    assert.equal(c.priceMax, 2000);
+    assert.equal(c.priceMax, 200);
     assert.equal(c.contactEmail, 'help@wisecall.example');
     assert.deepEqual(c.social, { instagram: 'https://instagram.com/wisecall' }, 'empty and non-https links are not shown');
   });

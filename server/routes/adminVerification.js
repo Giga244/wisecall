@@ -196,6 +196,16 @@ router.post('/mentors/:id/interview/request', requireAuth, requireAdmin, asyncHa
 }));
 
 // What the AI reviews cost (this month and in total), which model is used, and whether automatic approval is on.
+// Mentors whose price is above today's PRICE_MAX (set before the range was lowered): they keep it until they, or an admin with a reason,
+// change it. Listed at the top of admin → Mentors.
+router.get('/price-over-max', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const config = require('../config');
+  const { rows } = await query(
+    `SELECT id, name, email, username, price, verification_status FROM users
+      WHERE role IN ('mentor', 'both') AND price > $1 AND deleted_at IS NULL ORDER BY price DESC, name`, [config.PRICE_MAX]);
+  res.json({ max: config.PRICE_MAX, mentors: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, username: r.username, price: r.price, status: r.verification_status })) });
+}));
+
 // The one-off "profile update" email to approved mentors (server/profileUpdateEmail.js): the preview sends nothing; "გაგზავნა" sends to
 // the ticked mentors only (confirm: true, from that button), each at most once.
 router.get('/profile-update', requireAuth, requireAdmin, asyncHandler(async (req, res) => {

@@ -163,8 +163,11 @@ describe('answering after the deadline', () => {
   });
 });
 
-// Every whole-lari price a mentor can set (5..2000 GEL): the amount is exact in tetri, fee + mentor share always add up to the amount,
-// and the fee is the configured percent rounded to the nearest tetri.
+// Every whole-lari price a mentor can have: the amount is exact in tetri, fee + mentor share always add up to the amount, and the fee is
+// the configured percent rounded to the nearest tetri. A mentor sets PRICE_MIN..PRICE_MAX (server/config.js, 5..200); a price set before
+// the maximum was lowered can be up to 2000 (what the database allows, migrations/045) and is still asked at: those are written straight
+// into the test database, the API refusing them as new prices.
+const DB_MAX = 2000;
 async function feeSweep(port, feePercent) {
   // (about 2,000 questions from one address: above the per-address limit on starting questions, so it is raised here)
   const ctx = await marketplace(port, { SWEEP_INTERVAL_SECONDS: '3600', PLATFORM_FEE_PERCENT: String(feePercent), RATE_LIMIT_MULTIPLIER: '100' });
@@ -172,9 +175,11 @@ async function feeSweep(port, feePercent) {
     const cfg = await client(ctx.base).api('/config');
     assert.equal(cfg.platformFeePercent, feePercent);
     const problems = [];
-    for (let price = cfg.priceMin; price <= cfg.priceMax; price++) {
-      const p = await ctx.mentor.api('/me', { method: 'PATCH', body: { price } });
-      if (p.status !== 200) { problems.push(`${price}: price refused (${p.status})`); continue; }
+    for (let price = cfg.priceMin; price <= DB_MAX; price++) {
+      if (price <= cfg.priceMax) {
+        const p = await ctx.mentor.api('/me', { method: 'PATCH', body: { price } });
+        if (p.status !== 200) { problems.push(`${price}: price refused (${p.status})`); continue; }
+      } else await pool.query('UPDATE users SET price = $2 WHERE id = $1', [ctx.mentorId, price]);
       const r = await ctx.seeker.api('/bookings', { method: 'POST', body: { mentorId: ctx.mentorId, question: longQuestion(`Price check ${price}.`) } });
       if (r.status !== 201) { problems.push(`${price}: booking ${r.status}`); continue; }
       const b = r.booking;
@@ -186,14 +191,15 @@ async function feeSweep(port, feePercent) {
       if (b.platformFeeAmount !== Math.round(exactFee)) problems.push(`${price}: fee not rounded to nearest tetri`);
     }
     await pool.query(`DELETE FROM bookings WHERE status = 'pending_payment'`); // (keep the test database small)
-    return { problems, checked: cfg.priceMax - cfg.priceMin + 1, range: [cfg.priceMin, cfg.priceMax] };
+    return { problems, checked: DB_MAX - cfg.priceMin + 1, range: [cfg.priceMin, cfg.priceMax] };
   } finally { ctx.srv.proc.kill(); }
 }
 
 describe('platform fee for every price', () => {
-  test('20% (the default): exact for every price from 5 to 2000 GEL', async () => {
+  test('20% (the default): exact for every price from 5 to 2000 GEL (5 to 200 set by mentors, above it kept from before)', async () => {
     const r = await feeSweep(4803, 20);
-    assert.deepEqual(r.range, [5, 2000]);
+    assert.deepEqual(r.range, [5, 200]);
+    assert.equal(r.checked, 1996);
     assert.deepEqual(r.problems, []);
   });
   test('17.5% (a fee that needs rounding): fee rounded to the nearest tetri, never a tetri lost', async () => {

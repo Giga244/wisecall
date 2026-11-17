@@ -976,6 +976,10 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .details-id dt { font-weight: 700; }
 .details-id dd { margin: 0; overflow-wrap: anywhere; }
 .details-links .linklike { padding: 0; }
+/* Admin → Mentors: mentors whose price is above today's maximum */
+.mv-price-over { margin: 0 0 16px; padding: 14px 16px; background: var(--card); border: 2px solid var(--accent); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
+.mv-price-over p { margin: 0 0 6px; }
+.mv-price-over ul { margin: 0 0 8px; padding-left: 20px; }
 /* Admin → Mentors: the one-off "profile update" email (public/js/admin-profile-update.js) */
 .mv-profile-update { margin: 0 0 18px; }
 .pu-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }

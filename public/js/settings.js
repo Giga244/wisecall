@@ -58,6 +58,9 @@
   }
   function fillForm(u) {
     priceInput.value = u.price || '';
+    // (a price set before the range was lowered stays as it is: the box lets it be saved unchanged; the server refuses only a new one)
+    const rangeMax = Number(priceInput.dataset.priceMax) || 200;
+    priceInput.max = String(Math.max(rangeMax, u.price || 0));
     mentorForm.querySelector(`input[name="priceMode"][value="${u.price === 0 ? 'free' : 'paid'}"]`).checked = true;
     document.getElementById('freeWeeklyCap').value = u.freeWeeklyCap || 10;
     showPriceMode();

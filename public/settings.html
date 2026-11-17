@@ -150,7 +150,7 @@
         <label class="checkbox-row" for="priceModePaid"><input type="radio" id="priceModePaid" name="priceMode" value="paid" checked> <span data-i18n="price.mode.paid">Set a price</span></label>
       </fieldset>
       <label for="price" id="pricePaidBox"><span data-i18n="settings.mentor.price">Price per question (USD)</span>
-        <input type="number" id="price" min="5" max="2000" step="1" inputmode="numeric" required>
+        <input type="number" id="price" min="{{PRICE_MIN}}" max="{{PRICE_MAX}}" data-price-max="{{PRICE_MAX}}" step="1" inputmode="numeric" required>
         <span class="hint" data-i18n="settings.mentor.price.hint">You can change your price at any time.</span>
       </label>
       <label for="freeWeeklyCap" id="priceFreeBox" hidden><span data-i18n="price.cap.label">Free questions a week, at most</span>

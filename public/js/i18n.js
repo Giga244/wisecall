@@ -13,8 +13,9 @@
   let currentDict = {};
 
   // Public settings from the server (fee, deadline, price range, contact email, social links), fetched
-  // once and shared by every script on the page. If the request fails the defaults are used.
-  const DEFAULT_CONFIG = { answerDeadlineDays: 7, platformFeePercent: 20, mentorSharePercent: 80, priceMin: 5, priceMax: 2000, questionMin: 50, questionMax: 4000, answerMin: 150, answerMax: 8000, unpaidAttemptDays: 7, currency: 'gel', contactEmail: null, social: {}, launchMode: 'live' };
+  // once and shared by every script on the page. If the request fails the defaults are used (the same values as server/config.js:
+  // tests/price-range.test.js keeps the price range equal to it).
+  const DEFAULT_CONFIG = { answerDeadlineDays: 7, platformFeePercent: 20, mentorSharePercent: 80, priceMin: 5, priceMax: 200, questionMin: 50, questionMax: 4000, answerMin: 150, answerMax: 8000, unpaidAttemptDays: 7, currency: 'gel', contactEmail: null, social: {}, launchMode: 'live' };
   let configPromise = null;
   let loadedConfig = DEFAULT_CONFIG;
   function getConfig() {
@@ -23,6 +24,8 @@
     }
     return configPromise;
   }
+  // The settings as loaded (the defaults until /api/config has answered; by the time a page draws, initI18n() has loaded them).
+  const settings = () => loadedConfig;
   // "live" or "prelaunch" (buyers cannot pay yet). Known once initI18n() has finished; "live" before that.
   const launchMode = () => loadedConfig.launchMode;
   // True only on a developer's computer (the server does not send the setting at all in production).
@@ -224,5 +227,5 @@
     return dict;
   }
 
-  window.WisecallI18n = { fields, nameIn, fieldOfNiche, initI18n, kaHref, getLang, setLang, loadDict, applyDict, t, getConfig, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, popularFields, nicheName, fieldName, formatDate, path };
+  window.WisecallI18n = { fields, nameIn, fieldOfNiche, initI18n, kaHref, getLang, setLang, loadDict, applyDict, t, getConfig, settings, launchMode, devMode, idChecksOpen, liveSessions, ready, niches, popularFields, nicheName, fieldName, formatDate, path };
 })();
