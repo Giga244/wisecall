@@ -205,7 +205,9 @@ router.post('/profile-update/send', requireAuth, requireAdmin, asyncHandler(asyn
   const b = req.body || {};
   if (b.confirm !== true) return res.status(400).json({ error: 'confirm_required' });
   if (!Array.isArray(b.ids) || !b.ids.length) return res.status(400).json({ error: 'nobody_chosen' });
-  res.json(await require('../profileUpdateEmail').send(b.ids));
+  // (langs: the language chosen for each mentor in the preview, { [id]: 'ka' | 'en' })
+  const langs = b.langs && typeof b.langs === 'object' && !Array.isArray(b.langs) ? b.langs : {};
+  res.json(await require('../profileUpdateEmail').send(b.ids, langs));
 }));
 
 router.get('/verification/costs', requireAuth, requireAdmin, asyncHandler(async (req, res) => {

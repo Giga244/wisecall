@@ -22,10 +22,13 @@ function missingParts(u) {
     photo: !u.photoUpdatedAt
   }[p]));
 }
+// The mentor's site language (the preview's choice starts on it): Georgian, or English for a mentor whose language is English.
 const langOf = (u) => (u.language === 'en' ? 'en' : 'ka');
+const LANGS = ['ka', 'en'];
 // The first name for "გამარჯობა, {name}!" (the whole name when it is one word).
 const firstName = (name) => String(name || '').trim().split(/\s+/)[0] || '';
-const emailFor = (u, parts) => render('profileUpdate', langOf(u), { name: firstName(u.name), parts });
+const emailFor = (u, parts, lang) => render('profileUpdate', lang, { name: firstName(u.name), parts });
+const shown = (m) => ({ subject: m.subject, html: m.html, text: m.text });
 
 // Approved mentors (not being deleted), each with when they got the email.
 async function approvedMentors(ids = null) {
@@ -37,7 +40,8 @@ async function approvedMentors(ids = null) {
   return rows.map((r) => ({ user: userFromRow(r), sentAt: r.pu_sent_at || null }));
 }
 
-// The admin's preview: who would get it, what each lacks and the exact email; and who already got it (with the date).
+// The admin's preview: who would get it, what each lacks and the exact email in each language (language: the one chosen to begin with,
+// from their site language; the admin can choose the other); and who already got it (with the date).
 async function preview() {
   const all = await approvedMentors();
   const list = [];
@@ -46,14 +50,15 @@ async function preview() {
     const parts = missingParts(u);
     if (sentAt) { sent.push({ id: u.id, name: u.name, email: u.email, sentAt, missing: parts }); continue; }
     if (!parts.length) continue; // (a complete profile: nothing to ask for)
-    const m = emailFor(u, parts);
-    list.push({ id: u.id, name: u.name, email: u.email, username: u.username, language: langOf(u), missing: parts, message: { subject: m.subject, html: m.html, text: m.text } });
+    const messages = Object.fromEntries(LANGS.map((l) => [l, shown(emailFor(u, parts, l))]));
+    list.push({ id: u.id, name: u.name, email: u.email, username: u.username, language: langOf(u), missing: parts, message: messages[langOf(u)], messages });
   }
   return { mentors: list, sent };
 }
 
-// "გაგზავნა": to each of these mentors who is still approved, still lacks something and has not had it. -> { sent, skipped, failed }
-async function send(ids) {
+// "გაგზავნა": to each of these mentors who is still approved, still lacks something and has not had it, in the language the admin chose
+// for them (langs: { [id]: 'ka' | 'en' }; anything else, or none: their site language). -> { sent: [{ id, sentAt, language }], skipped, failed }
+async function send(ids, langs = {}) {
   const wanted = [...new Set((Array.isArray(ids) ? ids : []).filter((x) => /^[0-9a-f-]{36}$/i.test(String(x))))];
   const out = { sent: [], skipped: [], failed: [] };
   if (!wanted.length) return out;
@@ -66,10 +71,11 @@ async function send(ids) {
     const claim = await query(`UPDATE users SET profile_update_sent_at = now() WHERE id = $1 AND profile_update_sent_at IS NULL RETURNING profile_update_sent_at`, [id]);
     if (!claim.rowCount) { out.skipped.push({ id, reason: 'already_sent' }); continue; }
     const u = m.user;
+    const chosen = langs && Object.prototype.hasOwnProperty.call(langs, id) && LANGS.includes(langs[id]) ? langs[id] : langOf(u);
     try {
-      const r = await sendTemplate('profileUpdate', { to: u.email, lang: langOf(u), data: { name: firstName(u.name), parts } });
+      const r = await sendTemplate('profileUpdate', { to: u.email, lang: chosen, data: { name: firstName(u.name), parts } });
       if (r && r.sent === false) throw new Error(r.reason || 'not_sent');
-      out.sent.push({ id, sentAt: claim.rows[0].profile_update_sent_at });
+      out.sent.push({ id, sentAt: claim.rows[0].profile_update_sent_at, language: chosen });
     } catch (e) {
       // (refused by the email service: not marked as sent, so it can be tried again)
       await query(`UPDATE users SET profile_update_sent_at = NULL WHERE id = $1`, [id]);

@@ -171,6 +171,34 @@ describe('sending', () => {
     assert.equal(updates(people.copied.email).length, 1);
   });
 
+  test('the language chosen in the preview is the one sent; anything else, or none, is their site language', async () => {
+    const kaMentor = await mentor('თამარ ენა', { path: true, about: ABOUT }); // (site language Georgian)
+    const enMentor = await mentor('Mark Language', { path: true, about: ABOUT, lang: 'en' }); // (site language English)
+    const odd = await mentor('ნიკა უცნაური', { path: true, about: ABOUT }); // (an unknown language sent for him)
+    const p = (await preview()).mentors;
+    const pk = p.find((x) => x.id === kaMentor.id);
+    // the preview has the email in both languages, the site language chosen to begin with
+    assert.equal(pk.language, 'ka');
+    assert.deepEqual(pk.message, pk.messages.ka);
+    assert.equal(pk.messages.ka.subject, SUBJECT_KA);
+    assert.equal(pk.messages.en.subject, "We've added something new to Wisecall ✨");
+    assert.match(pk.messages.en.text, /^Hello, თამარ!/);
+    assert.equal(p.find((x) => x.id === enMentor.id).language, 'en');
+
+    const r = await send([kaMentor.id, enMentor.id, odd.id], { confirm: true, langs: { [kaMentor.id]: 'en', [enMentor.id]: 'ka', [odd.id]: 'fr' } });
+    assert.equal(r.status, 200, r.text);
+    assert.deepEqual(r.sent.map((x) => [x.id, x.language]), [[kaMentor.id, 'en'], [enMentor.id, 'ka'], [odd.id, 'ka']]);
+    const [toKa] = updates(kaMentor.email);
+    assert.equal(toKa.body.subject, "We've added something new to Wisecall ✨", 'chosen English for a Georgian-speaking mentor');
+    assert.match(toKa.body.text, /^Hello, თამარ!/);
+    assert.match(toKa.body.text, new RegExp(`${SITE}/en/settings\\.html\\?tab=details`));
+    const [toEn] = updates(enMentor.email);
+    assert.equal(toEn.body.subject, SUBJECT_KA, 'chosen Georgian for an English-speaking mentor');
+    assert.match(toEn.body.text, /^გამარჯობა, Mark!/);
+    assert.match(toEn.body.text, new RegExp(`${SITE}/ka/settings\\.html\\?tab=details`));
+    assert.equal(updates(odd.email)[0].body.subject, SUBJECT_KA, 'an unknown language: the site language');
+  });
+
   test('refused by the email service: not marked as sent, still on the list, and it can be sent again', async () => {
     const m = await mentor('Refused Once', { path: true, about: ABOUT });
     resend.refuse.add(m.email);

@@ -3,6 +3,8 @@
 // in Georgian:
 //   - "პროფილის განახლების წერილი" says how many would get it and how many already did; opened, it lists each approved mentor who lacks
 //     "ჩემი გზა", "შენ შესახებ" or a photo, with what they lack and the exact email (subject and the email as it looks)
+//   - next to each mentor, the email's language (ქართული / English), chosen from their site language: the email shown follows a change,
+//     and it is the language sent
 //   - every mentor starts ticked; unticked ones get nothing; nothing goes out until "გაგზავნა" and its one question
 //   - sent: the mentor moves to "უკვე მიიღეს" with the date, and is not offered it again
 // The pictures for the owner: E2E_PU_SHOTS=<folder> (the preview at 1280px and 375px, and the email as it arrives).
@@ -42,7 +44,9 @@ test.beforeAll(async () => {
   // (approved, nothing of the new parts yet: they lack all three; Georgian)
   people.nino = await S.listedMentor(admin, { name: 'ნინო სატესტო', email: `pu-nino-${tag}@e2e.test`, niche: 'design', roleTitle: 'დიზაინერი', price: 25 });
   people.giorgi = await S.listedMentor(admin, { name: 'გიორგი სატესტო', email: `pu-giorgi-${tag}@e2e.test`, niche: 'design', roleTitle: 'ილუსტრატორი', price: 25 });
-  for (const m of [people.nino, people.giorgi]) await S.sql(`UPDATE users SET language = 'ka' WHERE id = $1`, [m.id]);
+  // (Eka: Georgian on the site; the admin chooses English for her email)
+  people.eka = await S.listedMentor(admin, { name: 'ეკა სატესტო', email: `pu-eka-${tag}@e2e.test`, niche: 'design', roleTitle: 'ფოტოგრაფი', price: 25 });
+  for (const m of [people.nino, people.giorgi, people.eka]) await S.sql(`UPDATE users SET language = 'ka' WHERE id = $1`, [m.id]);
   // (Giorgi has a photo and "ჩემი გზა": he lacks only "შენ შესახებ")
   expect((await people.giorgi.client.api('/me/details', { method: 'PUT', body: { pathStart: S.PATH.start, pathHow: S.PATH.how, pathNow: S.PATH.now } })).status).toBe(200);
   await S.sql('UPDATE users SET photo_updated_at = now() WHERE id = $1', [people.giorgi.id]);
@@ -67,6 +71,22 @@ test('the preview: who lacks what, and the exact email; nothing is sent by it', 
     await expect(frame.locator('h1')).toHaveText('გამარჯობა, გიორგი!');
     await expect(frame.locator('body')).toContainText('„შენ შესახებ“ — თქვენი კარიერა თქვენივე სიტყვებით.');
     await expect(frame.locator('body')).not.toContainText('„ჩემი გზა“ —');
+    // the language: chosen from the site language, and the email shown follows a change at once (and back)
+    const lang = item(page, people.giorgi).locator('[data-pu-lang]');
+    await expect(lang).toHaveValue('ka');
+    await expect(lang.locator('option')).toHaveText([KA['admin.pu.lang.ka'], KA['admin.pu.lang.en']]);
+    await lang.selectOption('en');
+    await expect(item(page, people.giorgi).locator('.pu-subject')).toContainText("We've added something new to Wisecall ✨");
+    await expect(frame.locator('h1')).toHaveText('Hello, გიორგი!');
+    await expect(frame.locator('body')).toContainText('“About you”: your career in your own words.');
+    if (SHOTS && width === 1280) {
+      fs.mkdirSync(SHOTS, { recursive: true });
+      await item(page, people.giorgi).evaluate((el) => el.scrollIntoView({ block: 'start' }));
+      await page.evaluate(() => window.scrollBy(0, -90));
+      await page.screenshot({ path: path.join(SHOTS, 'pu-preview-english-1280.png'), fullPage: false });
+    }
+    await lang.selectOption('ka');
+    await expect(frame.locator('h1')).toHaveText('გამარჯობა, გიორგი!');
     expect(await noSideways(page), 'nothing scrolls sideways').toBeLessThanOrEqual(0);
     if (SHOTS) {
       fs.mkdirSync(SHOTS, { recursive: true });
@@ -83,17 +103,20 @@ test('the preview: who lacks what, and the exact email; nothing is sent by it', 
   expect((await S.sql('SELECT profile_update_sent_at FROM users WHERE id = $1', [people.nino.id]))[0].profile_update_sent_at).toBeNull();
 });
 
-test('only the ticked mentor gets it, after "გაგზავნა" and its question; then "უკვე მიიღეს", with the date', async ({ browser }) => {
+test('only the ticked mentors get it, each in the language chosen, after "გაგზავნა" and its question; then "უკვე მიიღეს", with the date', async ({ browser }) => {
   const { ctx, page } = await adminPage(browser, 1280);
   await page.locator('[data-pu-open]').click();
   await expect(item(page, people.nino)).toBeVisible();
-  // (everyone else unticked: only Nino; other test mentors on the list get nothing)
-  for (const box of await page.locator('[data-pu-id]').all()) if ((await box.getAttribute('data-pu-id')) !== people.nino.id) await box.uncheck();
+  // (everyone else unticked: only Nino and Eka; other test mentors on the list get nothing)
+  const keep = [people.nino.id, people.eka.id];
+  for (const box of await page.locator('[data-pu-id]').all()) if (!keep.includes(await box.getAttribute('data-pu-id'))) await box.uncheck();
+  // Eka's email in English
+  await item(page, people.eka).locator('[data-pu-lang]').selectOption('en');
   const send = page.locator('[data-pu-send]');
-  await expect(send).toHaveText(KA['admin.pu.send'].replace('{n}', 1));
+  await expect(send).toHaveText(KA['admin.pu.send'].replace('{n}', 2));
   await send.click();
   const dialog = page.locator('.wc-dialog');
-  await expect(dialog.locator('#wcDialogMessage')).toHaveText(KA['admin.pu.confirm'].replace('{n}', 1));
+  await expect(dialog.locator('#wcDialogMessage')).toHaveText(KA['admin.pu.confirm'].replace('{n}', 2));
   // "Cancel": nothing
   await dialog.locator('[data-cancel]').click();
   expect((await S.sql('SELECT profile_update_sent_at FROM users WHERE id = $1', [people.nino.id]))[0].profile_update_sent_at).toBeNull();
@@ -103,6 +126,12 @@ test('only the ticked mentor gets it, after "გაგზავნა" and its q
   expect(mail.text).toMatch(/^გამარჯობა, ნინო!/);
   expect(mail.text).toContain('• „ჩემი გზა“');
   expect(mail.text).toContain('• ფოტო');
+  // Eka: in the language chosen for her, English (her site language is Georgian)
+  const eka = await S.waitForMail(people.eka.email, 'Wisecall');
+  expect(eka.subject).toBe("We've added something new to Wisecall ✨");
+  expect(eka.text).toMatch(/^Hello, ეკა!/);
+  expect(eka.text).toContain('/en/settings.html?tab=details');
+  expect(S.mails().filter((m) => m.to === people.eka.email && m.subject === SUBJECT), 'not in Georgian as well').toHaveLength(0);
   expect(S.mails().filter((m) => m.to === people.giorgi.email && m.subject === SUBJECT), 'unticked: nothing').toHaveLength(0);
   await expect.poll(async () => (await S.sql('SELECT profile_update_sent_at FROM users WHERE id = $1', [people.nino.id]))[0].profile_update_sent_at).not.toBeNull();
   // the list: Nino has moved to "უკვე მიიღეს"
