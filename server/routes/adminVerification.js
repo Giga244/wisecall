@@ -196,6 +196,18 @@ router.post('/mentors/:id/interview/request', requireAuth, requireAdmin, asyncHa
 }));
 
 // What the AI reviews cost (this month and in total), which model is used, and whether automatic approval is on.
+// The one-off "profile update" email to approved mentors (server/profileUpdateEmail.js): the preview sends nothing; "გაგზავნა" sends to
+// the ticked mentors only (confirm: true, from that button), each at most once.
+router.get('/profile-update', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  res.json(await require('../profileUpdateEmail').preview());
+}));
+router.post('/profile-update/send', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  if (b.confirm !== true) return res.status(400).json({ error: 'confirm_required' });
+  if (!Array.isArray(b.ids) || !b.ids.length) return res.status(400).json({ error: 'nobody_chosen' });
+  res.json(await require('../profileUpdateEmail').send(b.ids));
+}));
+
 router.get('/verification/costs', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
   res.json(await analysis.costs());
 }));

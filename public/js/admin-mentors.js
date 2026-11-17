@@ -389,10 +389,13 @@
   }
 
   function render(container, mentors, onChange) {
-    const costs = '<div class="mv-costs"></div>';
-    if (!mentors.length) { container.innerHTML = costs + `<p class="muted">${t('admin.empty')}</p>`; costLine(container.querySelector('.mv-costs')); return; }
+    // (the one-off "profile update" email to approved mentors: public/js/admin-profile-update.js)
+    const costs = '<div class="mv-costs"></div><div class="mv-profile-update"></div>';
+    const update = () => { const b = container.querySelector('.mv-profile-update'); if (b && window.AdminProfileUpdate) AdminProfileUpdate.mount(b); };
+    if (!mentors.length) { container.innerHTML = costs + `<p class="muted">${t('admin.empty')}</p>`; costLine(container.querySelector('.mv-costs')); update(); return; }
     container.innerHTML = costs + mentors.map(card).join('');
     costLine(container.querySelector('.mv-costs'));
+    update();
 
     container.querySelectorAll('.mv-card').forEach((el) => {
       const id = el.dataset.id;

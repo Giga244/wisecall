@@ -976,6 +976,23 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .details-id dt { font-weight: 700; }
 .details-id dd { margin: 0; overflow-wrap: anywhere; }
 .details-links .linklike { padding: 0; }
+/* Admin → Mentors: the one-off "profile update" email (public/js/admin-profile-update.js) */
+.mv-profile-update { margin: 0 0 18px; }
+.pu-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.pu-panel { margin-top: 14px; padding: 18px; background: var(--card); border: 2px solid var(--line); border-radius: var(--radius); }
+.pu-title { font-size: 1.15rem; margin: 0 0 6px; }
+.pu-sub { font-size: 1rem; margin: 22px 0 8px; }
+.pu-list, .pu-sent { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 12px; }
+.pu-sent { gap: 6px; }
+.pu-item { padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); min-width: 0; }
+.pu-pick { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; overflow-wrap: anywhere; }
+.pu-pick input { margin-top: 4px; flex: none; width: 20px; height: 20px; }
+.pu-missing { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pu-mail { margin-top: 8px; }
+.pu-mail summary { cursor: pointer; color: var(--accent-text); font-weight: 600; }
+.pu-subject { margin: 8px 0; overflow-wrap: anywhere; }
+.pu-frame { display: block; width: 100%; min-height: 560px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--card); }
+.pu-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .mv-price { margin: 14px 0; padding-top: 12px; border-top: 1px solid var(--border); }
 .mv-price .mv-price-amount { max-width: 120px; }
 .mv-updated .badge { margin-right: 6px; }

@@ -99,6 +99,17 @@ const S = {
       intro: 'Your price was changed: {from} → {to}. If you did not ask for this, write to us.', free: 'free',
       after: 'Questions already asked keep the price they were asked at. The new price is only for new questions.', button: 'Write to us'
     },
+    // (one-off, to approved mentors whose profile lacks one of the new parts: server/profileUpdateEmail.js)
+    profileUpdate: {
+      subject: "We've added something new to Wisecall ✨", heading: 'Hello, {name}!',
+      intro: 'Your profile is already visible on the site. Wisecall opens soon, and before it does we have added new parts to profiles so students can get to know you better:',
+      parts: {
+        path: '“My path”: three short answers: where you started, how you coped, where you are now. This is how students find a mentor who started out like them.',
+        about: '“About you”: your career in your own words.',
+        photo: 'A photo: students trust mentors with a photo more.'
+      },
+      after: 'It takes 3–5 minutes. Everything you have already written stays as it is.', button: 'Update your profile', sign: 'Giga, Wisecall'
+    },
     changeApproved: {
       subject: 'Your change on Wisecall was approved', heading: 'Your change was approved',
       intro: 'We checked the change to your details and approved it. Your profile now shows it.', reasonLabel: 'Note:', button: 'Open your profile'
@@ -451,6 +462,16 @@ const S = {
       subject: 'შენი ფასი Wisecall-ზე შეიცვალა', heading: 'შენი ფასი შეიცვალა',
       intro: 'თქვენი ფასი შეიცვალა: {from} → {to}. თუ ეს თქვენ არ გითხოვიათ, მოგვწერეთ.', free: 'უფასოდ',
       after: 'უკვე დასმული კითხვები ძველ ფასად რჩება. ახალი ფასი მხოლოდ ახალ კითხვებზეა.', button: 'მოგვწერე'
+    },
+    profileUpdate: {
+      subject: 'Wisecall-ზე ახალი რამ დავამატეთ ✨', heading: 'გამარჯობა, {name}!',
+      intro: 'თქვენი პროფილი საიტზე უკვე ჩანს. Wisecall მალე იხსნება და მანამდე პროფილს ახალი ნაწილები დავამატეთ, რომ სტუდენტებმა უკეთ გაგიცნონ:',
+      parts: {
+        path: '„ჩემი გზა“ — სამი მოკლე პასუხი: სად დაიწყეთ, როგორ გაუმკლავდით, სად ხართ ახლა. ამით სტუდენტები პოულობენ მენტორს, ვინც მათსავით დაიწყო.',
+        about: '„შენ შესახებ“ — თქვენი კარიერა თქვენივე სიტყვებით.',
+        photo: 'ფოტო — სტუდენტები ფოტოიან მენტორს მეტად ენდობიან.'
+      },
+      after: '3–5 წუთი სჭირდება. რაც უკვე დაწერეთ, უცვლელი რჩება.', button: 'პროფილის განახლება', sign: 'გიგა, Wisecall'
     },
     changeApproved: {
       subject: 'შენი ცვლილება Wisecall-ზე დადასტურდა', heading: 'ცვლილება დადასტურდა',
@@ -904,6 +925,16 @@ const BUILDERS = {
   priceChanged: (s, d) => {
     const money = (n) => (Number(n) === 0 ? s.priceChanged.free : `${n} ₾`);
     return { heading: s.priceChanged.heading, blocks: [{ p: fill(s.priceChanged.intro, { from: money(d.from), to: money(d.to) }) }, { p: s.priceChanged.after }, { button: s.priceChanged.button, url: `${config.PUBLIC_URL}/contact.html` }] };
+  },
+  // d.name: the mentor's first name; d.parts: what their profile lacks, in this order ('path', 'about', 'photo'): one line each, nothing else.
+  profileUpdate: (s, d, l) => {
+    const u = s.profileUpdate;
+    const parts = ['path', 'about', 'photo'].filter((p) => (d.parts || []).includes(p));
+    return {
+      heading: fill(u.heading, { name: d.name || '' }, false).replace(/,\s*!/, '!'),
+      blocks: [{ p: u.intro }, ...parts.map((p) => ({ p: `• ${u.parts[p]}` })), { p: u.after },
+        { button: u.button, url: `${config.PUBLIC_URL}/${l === 'en' ? 'en' : 'ka'}/settings.html?tab=details` }, { p: u.sign }]
+    };
   },
   changeApproved: (s, d) => ({
     heading: s.changeApproved.heading,

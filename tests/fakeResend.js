@@ -12,6 +12,7 @@ function createFakeResend() {
     // What GET /domains answers (used by the launch check): the key it accepts and the domains on the account.
     key: 're_test_key',
     restricted: false, // true = a sending-only key, which cannot list domains
+    refuse: new Set(), // addresses the fake refuses (422)
     domains: [{ name: 'wisecall.example', status: 'verified' }],
     start: () => new Promise((resolve) => {
       server = http.createServer(async (req, res) => {
@@ -25,7 +26,13 @@ function createFakeResend() {
           res.writeHead(status, { 'content-type': 'application/json' });
           return res.end(JSON.stringify(body));
         }
-        sent.push({ headers: req.headers, body: JSON.parse(Buffer.concat(chunks).toString('utf8')) });
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        // (an address in refuse: Resend answers 422 and nothing is sent, as for an address it will not deliver to)
+        if (api.refuse.has(body.to)) {
+          res.writeHead(422, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ name: 'validation_error', message: 'refused (test)' }));
+        }
+        sent.push({ headers: req.headers, body });
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end(JSON.stringify({ id: 'email_' + sent.length }));
       });
