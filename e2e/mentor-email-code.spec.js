@@ -77,7 +77,7 @@ test('a mentor with a slow company email: steps 1-4 before the code, step 5 wait
   const okMentor = await S.apiUser('ნინო კაპანაძე', `confirmed-${Date.now()}@e2e.test`);
   expect((await okMentor.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 30, headline: 'ოპერაციების ხელმძღვანელი' } })).status).toBe(200);
   expect((await okMentor.api('/verification/experience', { method: 'PUT', body: { customNiche: 'მცირე ბიზნესის მართვა', niche: 'business', yearsExperience: 12,
-    story: 'თორმეტი წელია, მცირე კომპანიების ყოველდღიურ საქმიანობას ვმართავ თბილისში: პირველი თანამშრომლების აყვანიდან მომწოდებლების მოძებნამდე.' } })).status).toBe(200);
+    story: 'თორმეტი წელია, მცირე კომპანიების ყოველდღიურ საქმიანობას ვმართავ თბილისში: პირველი თანამშრომლების აყვანიდან მომწოდებლების მოძებნამდე.', about: S.ABOUT } })).status).toBe(200);
   expect((await okMentor.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: `https://ops-${Date.now()}.invalid/` } })).status).toBe(200);
   expect((await okMentor.api('/verification/submit', { method: 'POST' })).status).toBe(200);
 

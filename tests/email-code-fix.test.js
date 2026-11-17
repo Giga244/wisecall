@@ -5,7 +5,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, client, signupVerified, SAMPLE, longAnswer } = require('./helpers');
+const { resetDatabase, startServer, client, signupVerified, SAMPLE, ABOUT, longAnswer } = require('./helpers');
 const { createFakeResend } = require('./fakeResend');
 
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
@@ -99,7 +99,7 @@ describe('a mentor never waits for the email', () => {
   const form = {
     roleTitle: 'Business adviser', customNiche: 'Company strategy', niche: 'business', specialtyTags: ['strategy'], yearsExperience: 22,
     story: 'I have advised companies in Tbilisi for twenty-two years, first at a large consultancy and for the last ten years in my own advisory practice.',
-    sampleAnswer: longAnswer(SAMPLE)
+    about: ABOUT, sampleAnswer: longAnswer(SAMPLE)
   };
   let lawyer;
 
@@ -302,7 +302,7 @@ describe('the ID check waits for the email; the queue puts unconfirmed emails la
 
   test('in the review queue, unconfirmed emails come after the confirmed ones', async () => {
     const form = { roleTitle: 'Operations lead', customNiche: 'Running a small company', niche: 'business', specialtyTags: ['operations'], yearsExperience: 12,
-      story: 'For twelve years I have run the day-to-day operations of small companies in Tbilisi, from hiring the first people to setting up suppliers.', sampleAnswer: longAnswer(SAMPLE) };
+      story: 'For twelve years I have run the day-to-day operations of small companies in Tbilisi, from hiring the first people to setting up suppliers.', about: ABOUT, sampleAnswer: longAnswer(SAMPLE) };
     const send = async (c) => {
       assert.equal((await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25, headline: 'Operations lead' } })).status, 200);
       assert.equal((await c.api('/verification/experience', { method: 'PUT', body: form })).status, 200);

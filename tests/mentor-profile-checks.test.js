@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, signupVerified, longAnswer, SAMPLE } = require('./helpers');
+const { resetDatabase, startServer, signupVerified, longAnswer, SAMPLE, ABOUT } = require('./helpers');
 
 const ROOT = path.join(__dirname, '..');
 const json = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
@@ -41,12 +41,14 @@ test('the ID check can be started with nothing filled in, and it never sends the
 test('"Submit for review" refuses until the story, headline, field and price are there, and says exactly what is missing', async () => {
   let r = await mia.api('/verification/submit', { method: 'POST' });
   assert.equal(r.error, 'incomplete');
-  for (const m of ['field', 'story', 'headline', 'price']) assert.ok(r.missing.includes(m), m);
+  for (const m of ['field', 'story', 'bio', 'headline', 'price']) assert.ok(r.missing.includes(m), m);
   assert.equal((await mia.api('/verification/experience', { method: 'PUT', body: FORM })).status, 200);
   assert.equal((await mia.api('/verification/evidence', { method: 'POST', body: { kind: 'website', url: 'https://mia-shop.invalid/' } })).status, 200);
   r = await mia.api('/verification/submit', { method: 'POST' });
-  assert.deepEqual(r.missing, ['headline', 'price'], 'the headline (Profile tab) and the price (Mentor tab) as well');
+  assert.deepEqual(r.missing, ['headline', 'bio', 'price'], 'the headline (Profile tab), "შენ შესახებ" (the story under 150 is not enough) and the price (Mentor tab) as well');
   assert.equal((await mia.api('/me', { method: 'PATCH', body: { price: 25 } })).status, 200);
+  assert.deepEqual((await mia.api('/verification/submit', { method: 'POST' })).missing, ['headline', 'bio']);
+  assert.equal((await mia.api('/verification/experience', { method: 'PUT', body: { about: ABOUT } })).status, 200);
   assert.deepEqual((await mia.api('/verification/submit', { method: 'POST' })).missing, ['headline']);
   assert.equal((await statusOf()).verification_status, 'none', 'still not sent');
   assert.equal((await mia.api('/me', { method: 'PATCH', body: { headline: 'Running a small clothing shop' } })).status, 200);
@@ -55,7 +57,7 @@ test('"Submit for review" refuses until the story, headline, field and price are
   // (in English and Georgian, with a way to the tab where it is filled in)
   const en = json('public/i18n/en.json');
   const ka = json('public/i18n/ka.json');
-  for (const k of ['ap.missing.headline', 'ap.missing.headlineLink', 'ap.missing.story', 'ap.missing.field', 'ap.missing.price']) {
+  for (const k of ['ap.missing.headline', 'ap.missing.headlineLink', 'ap.missing.story', 'ap.missing.bio', 'ap.missing.field', 'ap.missing.price']) {
     assert.ok(en[k] && ka[k] && en[k] !== ka[k], k);
   }
   // (the application page names each missing thing with a link to its step: the headline is step 1)

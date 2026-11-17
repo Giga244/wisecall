@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { Pool } = require('pg');
-const { ROOT, resetDatabase, startServer, signupVerified, client, wait } = require('./helpers');
+const { ROOT, resetDatabase, startServer, signupVerified, client, wait, ABOUT } = require('./helpers');
 const { createFakeWeb } = require('./fakeAnthropic');
 const mentorStory = require('../server/mentorStory');
 const linkCheck = require('../server/verification/linkCheck');
@@ -123,13 +123,14 @@ describe('the application: her step 2 is saved and she goes on', () => {
     id = (await c.api('/me')).user.id;
   });
 
-  test('step 2 with the path and the three links is saved; nothing about the story is missing', async () => {
-    const r = await c.api('/verification/experience', { method: 'PUT', body: { ...PATH, startTags: [], sampleQuestion: '', sampleReply: '', helpPoints: [], workLinks: HER_LINKS } });
+  test('step 2 with the path, "შენ შესახებ" and the three links is saved; nothing about the story is missing', async () => {
+    const r = await c.api('/verification/experience', { method: 'PUT', body: { ...PATH, about: ABOUT, startTags: [], sampleQuestion: '', sampleReply: '', helpPoints: [], workLinks: HER_LINKS } });
     assert.equal(r.status, 200, r.text);
     const v = await c.api('/verification');
     assert.deepEqual(v.application.form.workLinks, HER_LINKS);
     assert.equal(v.application.form.pathStart, PATH.pathStart);
     assert.equal(v.application.missing.includes('story'), false, JSON.stringify(v.application.missing));
+    assert.equal(v.application.missing.includes('bio'), false, JSON.stringify(v.application.missing));
     assert.deepEqual((await pool.query('SELECT work_links FROM users WHERE id = $1', [id])).rows[0].work_links, HER_LINKS);
   });
 

@@ -3,7 +3,7 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('http');
-const { resetDatabase, startServer, signupVerified, client, approveMentor, wait } = require('./helpers');
+const { resetDatabase, startServer, signupVerified, client, approveMentor, wait, ABOUT } = require('./helpers');
 
 const seen = [];
 let fake, srv, base;
@@ -47,7 +47,7 @@ test('a mentor\'s journey sends each goal once, in order, with no personal data;
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'Professor of economics' } });
   await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', niche: 'business', yearsExperience: 18 } });
   assert.ok(await until(() => count('apply_step_1_done') === 1), names().join());
-  await c.api('/verification/experience', { method: 'PUT', body: { story: STORY } });
+  await c.api('/verification/experience', { method: 'PUT', body: { story: STORY, about: ABOUT } });
   assert.ok(await until(() => count('apply_step_2_done') === 1), names().join());
   await c.api('/verification/experience', { method: 'PUT', body: { story: STORY + ' Again.' } });
   await c.api('/me', { method: 'PATCH', body: { price: 30 } });

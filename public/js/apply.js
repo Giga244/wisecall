@@ -60,7 +60,7 @@
   // the header's "2/5" and the Settings card show (docs/CLAUDE-CODE-APPLY-PROGRESS.md). Step 5 is done when the ID check has passed.
   const progress = () => v.application.progress;
   const stepDone = (i) => Boolean(progress().done[i]);
-  const STEP_OF = { headline: 0, years: 0, field: 0, niche: 0, story: 1, price: 2, evidence: 3, license: 3, license_document: 3 };
+  const STEP_OF = { headline: 0, years: 0, field: 0, niche: 0, story: 1, bio: 1, price: 2, evidence: 3, license: 3, license_document: 3 };
   const firstOpenStep = () => progress().next - 1;
   // A step 1-4 the mentor started or moved past, but that the server still finds incomplete, is never left silently unchecked: its dot
   // shows "!" and, opened, one line says what is missing (docs/CLAUDE-CODE-STORY-STEP-CHECK.md).
@@ -275,7 +275,7 @@
       <form class="apply-step" data-step="1" novalidate>
         <h1 tabindex="-1">${esc(t('story.title'))}</h1>
         <p class="apply-lead">${esc(t('story.lead'))}</p>
-        ${WisecallStoryForm.html(f, { limits: v.limits.story, startTags: v.startTags || [], prefix: 'ap', oldStory: pathDone ? '' : (f.story || '') })}
+        ${WisecallStoryForm.html(f, { limits: v.limits.story, startTags: v.startTags || [], prefix: 'ap', oldStory: pathDone ? '' : (f.story || ''), aboutOptional: optional('bio') })}
         ${nav(1)}
       </form>`;
   }
@@ -666,6 +666,9 @@
     if (h1 && flagged(current)) h1.insertAdjacentHTML('afterend', `<p class="apply-gap" role="status"><span aria-hidden="true">!</span> ${esc(gapLine(current))}</p>`);
     wireCommon();
     wireStep();
+    // (back on "My path" from the checklist with the About still short: what it needs is said under it at once)
+    const storyForm = current === 1 && flagged(1) && has('bio') ? root.querySelector('form.apply-step') : null;
+    if (storyForm) { const p = WisecallStoryForm.aboutProblem(WisecallStoryForm.read(storyForm), v.limits.story); if (p) WisecallStoryForm.aboutError(storyForm, WisecallStoryForm.aboutText(p, v.limits.story)); }
   }
 
   // (brought into view: on a phone the line under the buttons can be below the screen)
@@ -758,6 +761,7 @@
       if (problems.length) { problems.forEach(([name, text]) => fieldError(form, name, text)); focusField(form, problems[0][0]); return false; }
     } else if (step === 1) {
       const story = WisecallStoryForm.read(form);
+      WisecallStoryForm.aboutError(form, '');
       // (saved first, so nothing is lost; a field the server refuses says why, under the step, with the field in view)
       try {
         await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: story });
@@ -769,6 +773,8 @@
           delete rest[e.data.field];
           await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: rest }).catch(() => {});
         }
+        // (what is wrong with the About is said right under it)
+        if (e.data && e.data.field === 'about') { WisecallStoryForm.aboutError(form, WisecallStoryForm.errorText(e, v.limits.story), { focus: true }); return false; }
         stepError(WisecallStoryForm.errorText(e, v.limits.story));
         const el = WisecallStoryForm.fieldOf(form, e);
         if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
@@ -776,11 +782,17 @@
       }
       // (all three blocks, each long enough; or none of them while a story written before still counts)
       const problem = WisecallStoryForm.pathProblem(story, v.limits.story, { oldStoryOk: oldStoryOk() });
-      if (check && problem) {
+      // "შენ შესახებ", at least 150 characters: only "Save and continue" asks (a draft is saved however short it is); never asked of an
+      // application sent before (server: experience.missingFor 'bio'). Said under the box, with how many characters it still needs.
+      const about = optional('bio') ? null : WisecallStoryForm.aboutProblem(story, v.limits.story);
+      if (check && (problem || about)) {
         await load(); drawHead();
-        stepError(WisecallStoryForm.errorText({ code: problem.code }, v.limits.story));
-        const el = form.querySelector(`[name="${problem.field}"]`);
-        if (el) el.focus();
+        if (about) WisecallStoryForm.aboutError(form, WisecallStoryForm.aboutText(about, v.limits.story), { focus: !problem });
+        if (problem) {
+          stepError(WisecallStoryForm.errorText({ code: problem.code }, v.limits.story));
+          const el = form.querySelector(`[name="${problem.field}"]`);
+          if (el) el.focus();
+        }
         return false;
       }
     } else if (step === 2) {

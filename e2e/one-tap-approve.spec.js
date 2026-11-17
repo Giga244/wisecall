@@ -27,7 +27,7 @@ async function adminClient() {
 async function applicant(name, email, { idPassed }) {
   const c = await S.apiUser(name, email);
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'ფსიქოლოგიის პროფესორი', price: 30 } });
-  await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'განათლების ფსიქოლოგია', niche: 'psychology', yearsExperience: 20, story: STORY } });
+  await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'განათლების ფსიქოლოგია', niche: 'psychology', yearsExperience: 20, story: STORY, about: S.ABOUT } });
   await c.api('/verification/evidence', { method: 'POST', body: { url: `https://tsu.example.org/staff/${tag}-${email.split('@')[0]}` } });
   const id = (await c.api('/me')).user.id;
   await c.api('/verification/license', { method: 'POST', body: { number: 'TSU-2004-118', issuingBody: 'თბილისის სახელმწიფო უნივერსიტეტი', holderName: name, validUntil: '' } });

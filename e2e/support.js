@@ -101,10 +101,13 @@ const PATH = {
   how: 'ღამით უფასო კურსებით ვსწავლობდი, დღისით ვმუშაობდი და პირველი შეკვეთა ოც ლარად ავიღე.',
   now: 'უკვე მრავალი წელია ამ სფეროში ვმუშაობ და სტუდენტებს ვასწავლი. ხშირად მეკითხებიან, საიდან დაიწყონ.'
 };
+// "შენ შესახებ" (required, at least 150 characters): filled with the path unless p.about is false; a text of its own in p.about.
+const ABOUT = 'რვა წელია ამ სფეროში ვმუშაობ: ჯერ პატარა კომპანიაში დავიწყე, ახლა გუნდს ვხელმძღვანელობ და დამწყებებს ვასწავლი. შემიძლია გირჩიო, საიდან დაიწყო, რა ისწავლო პირველ წელს და როგორ მოემზადო პირველი სამსახურისთვის.';
 async function fillPath(page, p = {}) {
   await page.fill('#ap-pathStart', p.start || PATH.start);
   await page.fill('#ap-pathHow', p.how || PATH.how);
   await page.fill('#ap-pathNow', p.now || PATH.now);
+  if (p.about !== false) await page.fill('#ap-about', p.about || ABOUT);
 }
 
 async function applyAsMentor(page, a) {
@@ -208,4 +211,4 @@ async function untilBooking(id, predicate, message, timeout = 20000) {
 // Where the fake evidence pages are (e2e/global-setup.js writes it): /p/<name-with-dashes> shows that name.
 const fakeWeb = () => JSON.parse(fs.readFileSync(path.join(__dirname, '.tmp', 'fakes.json'), 'utf8')).web;
 
-module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, fillPath, PATH, pickNiche, oneDirection, passIdCheck, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };
+module.exports = { fakeWeb, BASE, PASSWORD, sql, pool, mails, waitForMail, codeIn, signUp, logIn, apiUser, listedMentor, applyAsMentor, fillPath, PATH, ABOUT, pickNiche, oneDirection, passIdCheck, askAndPay, bookingRow, untilBooking, confirm, GOOD_IBAN, SAMPLE };

@@ -411,7 +411,7 @@ describe('Google sign-in', () => {
       assert.equal((await b.me()).emailVerified, true, 'the email is verified (Google said so)');
       const r = await b.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25, headline: 'Product designer for apps' } });
       assert.equal(r.status, 200, JSON.stringify(r));
-      await b.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Product designer', customNiche: 'App design', niche: 'design', specialtyTags: ['apps'], yearsExperience: 6, story: 'I designed banking and delivery apps for six years, first in an agency and then on my own for small startups in Tbilisi.', sampleAnswer: require('./helpers').longAnswer(SAMPLE) } });
+      await b.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Product designer', customNiche: 'App design', niche: 'design', specialtyTags: ['apps'], yearsExperience: 6, story: 'I designed banking and delivery apps for six years, first in an agency and then on my own for small startups in Tbilisi.', about: require('./helpers').ABOUT, sampleAnswer: require('./helpers').longAnswer(SAMPLE) } });
       await b.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'https://mia-mentor.invalid/work' } });
       // (1 to 5 directions, docs/CLAUDE-CODE-NEW-CATEGORIES.md: the field's first one, as the apply form would ask)
       const meNow = await b.me();

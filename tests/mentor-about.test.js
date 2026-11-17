@@ -1,6 +1,11 @@
 // "შენ შესახებ" / "About you": the profile's About (users.bio), back in the application now that "ჩემი გზა" took the place of the free-text
 // story, which used to become the About. It is the mentor's own words:
-//   - optional everywhere: it never stops saving, moving on or sending the application; 0 to 2000 characters
+//   - required for a new application: at least 150 characters (up to 2000) before step 2 counts and the application can be sent; a draft
+//     is saved however short or empty it is
+//   - required in Settings → My details too, for saving that section, when it is new, changed or empty; an About a mentor already had is
+//     kept as it is, however short
+//   - an approved mentor without one is never hidden, held back or sent back to review: one card on the dashboard, until they write it or
+//     close it; an application sent before is not held back for it either
 //   - the same rules as the other texts a mentor writes (the contact filter, rude words)
 //   - never written by the site: the path is not copied into an empty About any more
 //   - an existing About is kept exactly as it is (saving other things never touches it, and one sent back unchanged is not checked again);
@@ -47,19 +52,48 @@ const profileOf = async (username) => (await client(base).api('/users/' + userna
 const bioOf = async (id) => (await pool.query('SELECT bio FROM users WHERE id = $1', [id])).rows[0].bio;
 const PATH = { pathStart: START, pathHow: HOW, pathNow: NOW };
 
+const submit = (c) => c.api('/verification/submit', { method: 'POST' });
+
 describe('in the application ("ჩემი გზა" step)', () => {
-  test('optional: the path alone completes the step, nothing asks for an About, and the path is not copied into it', async () => {
+  test('required: without it the step is not done and the application cannot be sent; the draft is saved all the same', async () => {
     const m = await mentor('No About');
     const r = await put(m.c, PATH);
     assert.equal(r.status, 200, r.text);
-    const app = await application(m.c);
-    assert.ok(!app.missing.includes('story'), 'the step counts without an About');
-    assert.ok(!app.missing.some((x) => /about|bio/.test(x)));
+    let app = await application(m.c);
+    assert.ok(!app.missing.includes('story'), 'the path itself counts');
+    assert.ok(app.missing.includes('bio'), 'the About is what step 2 still needs');
+    assert.equal(app.progress.done[1], false);
+    assert.deepEqual(app.optional, []);
     assert.equal(await bioOf(m.id), null, 'never filled in by the site');
     assert.equal(app.form.about, '');
+    let s = await submit(m.c);
+    assert.equal(s.status, 400);
+    assert.equal(s.error, 'incomplete');
+    assert.deepEqual(s.missing, ['bio'], 'only the About is missing');
+    // a draft that is too short, or the same letter over and over: saved as typed, and still not enough
+    for (const text of ['I design websites.', 'ა'.repeat(200)]) {
+      assert.equal((await put(m.c, { about: text })).status, 200, 'a draft is always saved');
+      assert.equal(await bioOf(m.id), text);
+      app = await application(m.c);
+      assert.ok(app.missing.includes('bio'), text);
+      assert.equal((await submit(m.c)).error, 'incomplete');
+    }
+    // under 150 characters: not yet; 150: enough (counted like the path: spaces at the ends do not count)
+    const under = 'I design websites and apps. '.repeat(6).trim().slice(0, 149);
+    assert.equal(mentorStory.LIMITS.aboutMin, 150);
+    assert.equal((await put(m.c, { about: `  ${under}  ` })).status, 200);
+    assert.ok((await application(m.c)).missing.includes('bio'), 'under 150');
+    assert.equal((await put(m.c, { about: `${under}x` })).status, 200);
+    assert.ok(!(await application(m.c)).missing.includes('bio'), '150');
+    assert.equal((await put(m.c, { about: ABOUT })).status, 200);
+    app = await application(m.c);
+    assert.ok(!app.missing.includes('bio'));
+    assert.equal(app.progress.done[1], true);
+    s = await submit(m.c);
+    assert.equal(s.status, 200, s.text);
   });
 
-  test('written with the path: saved exactly as written, shown in the form, and the step still counts', async () => {
+  test('written with the path: saved exactly as written, shown in the form, and the step counts', async () => {
     const m = await mentor('With About');
     const r = await put(m.c, { ...PATH, about: ABOUT });
     assert.equal(r.status, 200, r.text);
@@ -67,9 +101,11 @@ describe('in the application ("ჩემი გზა" step)', () => {
     const app = await application(m.c);
     assert.equal(app.form.about, ABOUT);
     assert.ok(!app.missing.includes('story'));
-    // emptied again: nothing
+    assert.ok(!app.missing.includes('bio'));
+    // emptied again in a draft: saved (nothing kept), and the step is open again
     assert.equal((await put(m.c, { about: '' })).status, 200);
     assert.equal(await bioOf(m.id), null);
+    assert.ok((await application(m.c)).missing.includes('bio'));
   });
 
   test('up to 2000 characters; the contact filter and rude words as for every other text; a refusal changes nothing', async () => {
@@ -89,7 +125,7 @@ describe('in the application ("ჩემი გზა" step)', () => {
 });
 
 describe('in Settings → My details, and on the Profile tab', () => {
-  test('an approved mentor adds, changes and empties it in My details; the profile shows it', async () => {
+  test('an approved mentor adds and changes it in My details, but cannot empty it or make it short; the profile shows it', async () => {
     const m = await mentor('Settings About');
     assert.equal((await put(m.c, PATH)).status, 200);
     await approveMentor(admin, m.c);
@@ -101,11 +137,32 @@ describe('in Settings → My details, and on the Profile tab', () => {
     assert.equal(p.bio, ABOUT);
     assert.equal(p.mentor.trust.aboutIsPath, false);
     assert.deepEqual(p.mentor.trust.path, { start: START, how: HOW, now: NOW }, 'and "ჩემი გზა" next to it');
-    assert.equal((await details(m.c, { about: 'Call me on +995 599 12 34 56' })).error, 'contact_details');
-    r = await details(m.c, { about: '' });
-    assert.equal(r.status, 200, 'optional here too');
+    assert.equal((await details(m.c, { about: `${ABOUT} Call me on +995 599 12 34 56` })).error, 'contact_details');
+    // required here too: never emptied, never under 150 characters, never one letter over and over; the About stays as it was
+    for (const [text, code] of [['', 'about_short'], ['I design websites.', 'about_short'], ['ა'.repeat(200), 'about_repeated']]) {
+      r = await details(m.c, { ...PATH, about: text });
+      assert.equal(r.status, 400, text);
+      assert.equal(r.error, code, text);
+      assert.equal(r.field, 'about', 'said next to the field');
+      assert.equal(await bioOf(m.id), ABOUT, 'nothing was changed');
+    }
+    // the other fields of the API are saved without it (only the section that sends it asks for it)
+    assert.equal((await details(m.c, { startTags: ['region'] })).status, 200);
     p = await profileOf(m.username);
-    assert.equal(p.bio, null);
+    assert.equal(p.bio, ABOUT);
+  });
+
+  test('an approved mentor with no About: the section cannot be saved without one (150 at least), and the first one that is long enough is saved', async () => {
+    const m = await mentor('Settings Empty About');
+    assert.equal((await put(m.c, PATH)).status, 200);
+    await approveMentor(admin, m.c);
+    await addPayoutDetails(m.c);
+    const r = await details(m.c, { ...PATH, about: '', startTags: ['worked'] });
+    assert.equal(r.status, 400);
+    assert.equal(r.error, 'about_short');
+    assert.equal(r.field, 'about');
+    assert.equal((await details(m.c, { ...PATH, about: ABOUT, startTags: ['worked'] })).status, 200);
+    assert.equal(await bioOf(m.id), ABOUT);
   });
 
   test('the Profile tab writes the same About, through the same contact filter', async () => {
@@ -126,7 +183,7 @@ describe('existing mentors', () => {
     const m = await mentor('Old About', { story: OLD_ABOUT });
     assert.equal(await bioOf(m.id), OLD_ABOUT, '(the old story was their About)');
     // a legacy About the filter would refuse today is not checked again when it comes back unchanged
-    await pool.query('UPDATE users SET bio = $2 WHERE id = $1', [m.id, `${OLD_ABOUT}\nMy site: studio.example`]);
+    await pool.query('UPDATE users SET bio = $2 WHERE id = $1', [m.id, `${OLD_ABOUT}\nSite: st.example`]);
     const before = await bioOf(m.id);
     assert.equal((await put(m.c, PATH)).status, 200);
     assert.equal(await bioOf(m.id), before, 'adding the path leaves the About as it was');
@@ -135,7 +192,8 @@ describe('existing mentors', () => {
     assert.equal(await bioOf(m.id), before, 'byte for byte');
     await approveMentor(admin, m.c);
     await addPayoutDetails(m.c);
-    // approved: My details sends it back with every save, and it stays as it is
+    // approved: My details sends it back with every save, and it stays as it is (shorter than 150, and still saved: it was there before)
+    assert.ok(mentorStory.LIMITS.aboutMin > [...before].length);
     assert.equal((await details(m.c, { ...PATH, about: before, startTags: ['region', 'worked'] })).status, 200);
     assert.equal(await bioOf(m.id), before, 'byte for byte after My details too');
     const p = await profileOf(m.username);
@@ -161,9 +219,9 @@ describe('existing mentors', () => {
     assert.equal((await m.c.api('/me/details')).story.about, '');
     let p = await profileOf(m.username);
     assert.equal(p.mentor.trust.aboutIsPath, true, 'the profile shows only "ჩემი გზა"');
-    // the path changed: the copy follows it (still out of sight), never the other way round
+    // the path changed (through the API, without the About box): the copy follows it (still out of sight), never the other way round
     const NOW2 = `${NOW} I also mentor two junior designers.`;
-    assert.equal((await details(m.c, { ...PATH, pathNow: NOW2, about: '' })).status, 200);
+    assert.equal((await details(m.c, { ...PATH, pathNow: NOW2 })).status, 200);
     assert.equal(await bioOf(m.id), mentorStory.asStory({ ...PATH, pathNow: NOW2 }));
     assert.equal((await profileOf(m.username)).mentor.trust.aboutIsPath, true);
     // their own About replaces it, and shows
@@ -172,6 +230,56 @@ describe('existing mentors', () => {
     p = await profileOf(m.username);
     assert.equal(p.mentor.trust.aboutIsPath, false);
     assert.equal(p.bio, ABOUT);
+  });
+});
+
+describe('approved mentors without an About', () => {
+  test('stay listed and approved; one card on the dashboard until they write it or close it', async () => {
+    const m = await mentor('Listed No About');
+    assert.equal((await put(m.c, PATH)).status, 200);
+    await approveMentor(admin, m.c);
+    await addPayoutDetails(m.c);
+    let me = (await m.c.api('/me')).user;
+    assert.equal(me.verificationStatus, 'verified');
+    assert.equal(me.isListedMentor, true, 'listed without an About');
+    assert.ok((await profileOf(m.username)).mentor, 'the profile is a mentor profile');
+    const browse = await client(base).api('/experts?q=Listed');
+    assert.ok(browse.experts.some((x) => x.id === m.id), 'in Browse experts');
+    assert.equal(me.aboutCard, true, 'the card');
+    // (an asker never sees it; nor a mentor with an About, however short)
+    // closed: it does not come back, and nothing else changes
+    assert.equal((await m.c.api('/me/about-card/dismiss', { method: 'POST' })).status, 200);
+    me = (await m.c.api('/me')).user;
+    assert.equal(me.aboutCard, false);
+    assert.equal(me.isListedMentor, true);
+    assert.equal(me.verificationStatus, 'verified');
+  });
+
+  test('the card is gone once they write their About; one they had before, however short, never brings it', async () => {
+    const m = await mentor('Card Goes');
+    assert.equal((await put(m.c, PATH)).status, 200);
+    await approveMentor(admin, m.c);
+    await addPayoutDetails(m.c);
+    assert.equal((await m.c.api('/me')).user.aboutCard, true);
+    assert.equal((await details(m.c, { ...PATH, about: ABOUT })).status, 200);
+    assert.equal((await m.c.api('/me')).user.aboutCard, false);
+    const old = await mentor('Short Old About', { story: OLD_ABOUT });
+    await approveMentor(admin, old.c);
+    assert.equal((await old.c.api('/me')).user.aboutCard, false, 'an About of 128 characters is theirs: no card');
+    const asker = await signupVerified(base, 'Asker No Card', 'asker-no-card@example.com');
+    assert.equal((await asker.api('/me')).user.aboutCard, false);
+  });
+
+  test('"Edit my application": an application sent before is never held back for the About', async () => {
+    const m = await mentor('Edit No About');
+    assert.equal((await put(m.c, PATH)).status, 200);
+    await approveMentor(admin, m.c);
+    await addPayoutDetails(m.c);
+    assert.equal((await m.c.api('/verification/edit', { method: 'POST' })).status, 200);
+    const app = await application(m.c);
+    assert.ok(!app.missing.includes('bio'), 'not required of it');
+    assert.ok(app.optional.includes('bio'), 'the page says "optional"');
+    assert.equal(app.progress.done[1], true);
   });
 });
 

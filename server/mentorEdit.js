@@ -75,6 +75,15 @@ async function saveDetails(user, input) {
   const experience = require('./verification/experience');
   const { patch, error, field } = experience.parseExperience(body, { strict: true, current: user });
   if (error) throw new EditError(error, { field });
+  // "შენ შესახებ" is required here too (150 characters at least) when the section sends it: one that is new or changed, and an empty one.
+  // An About the mentor already had and sent back as it was is kept as it is, however short (nothing that was there is ever refused).
+  if (body.about !== undefined) {
+    const ms = require('./mentorStory');
+    const sent = patch.bio; // (undefined: the same About as before, which parseExperience leaves out)
+    const kept = sent === undefined && ms.ownAbout(user).trim();
+    const reason = kept ? null : ms.aboutReason(sent === undefined ? ms.ownAbout(user) : sent);
+    if (reason) throw new EditError(reason === 'repeated' ? 'about_repeated' : 'about_short', { field: 'about' });
+  }
   experience.pathToStory(user, patch); // (a complete path is the story, and the About text while that follows it)
   if (!Object.keys(patch).length) return user;
   const updated = await updateUser(user.id, patch);

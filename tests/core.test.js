@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 const path = require('path');
 const { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, rate, addPayoutDetails, approveMentor, SAMPLE } = require('./helpers');
-const { longAnswer, longQuestion } = require('./helpers');
+const { longAnswer, longQuestion, ABOUT } = require('./helpers');
 
 let srv, base;
 const ids = {};
@@ -99,7 +99,7 @@ describe('mentor application and approval', () => {
     const empty = await m.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.error, 'incomplete');
     // (only what a reviewer needs: a title, tags and a sample answer are optional, docs/CLAUDE-CODE-UX-WALKTHROUGH.md A)
-    assert.deepEqual(empty.missing, ['headline', 'years', 'field', 'niche', 'story', 'evidence']);
+    assert.deepEqual(empty.missing, ['headline', 'years', 'field', 'niche', 'story', 'bio', 'evidence']);
     assert.equal((await m.api('/me')).user.verificationStatus, 'none', 'nothing is submitted');
     assert.equal((await m.api('/me', { method: 'PATCH', body: { headline: 'Cardiologist in a public hospital in Tbilisi' } })).status, 200);
 
@@ -324,7 +324,7 @@ describe('admin: mentor decisions and refunds', () => {
   test('rejecting needs a reason, and the mentor is told what it was', async () => {
     const m = await signupVerified(base, 'Reject Me', 'reject-me@example.com');
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 10, headline: 'Sales coach for small teams' } });
-    await m.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Coach', customNiche: 'Sales coaching', niche: 'business', specialtyTags: ['sales'], yearsExperience: 6, story: 'I have coached small sales teams in Tbilisi for six years, first inside a telecom company and then on my own with shops and cafés.', sampleAnswer: longAnswer(SAMPLE) } });
+    await m.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Coach', customNiche: 'Sales coaching', niche: 'business', specialtyTags: ['sales'], yearsExperience: 6, story: 'I have coached small sales teams in Tbilisi for six years, first inside a telecom company and then on my own with shops and cafés.', about: ABOUT, sampleAnswer: longAnswer(SAMPLE) } });
     await m.api('/verification/evidence', { method: 'POST', body: { kind: 'website', url: 'https://reject-me.invalid/' } });
     const app = await m.api('/verification/submit', { method: 'POST' });
     assert.equal(app.status, 200, app.text);

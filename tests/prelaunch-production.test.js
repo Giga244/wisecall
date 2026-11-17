@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { Pool } = require('pg');
-const { ROOT, resetDatabase, startServer, client, SAMPLE, longQuestion, longAnswer } = require('./helpers');
+const { ROOT, resetDatabase, startServer, client, SAMPLE, ABOUT, longQuestion, longAnswer } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
@@ -73,7 +73,7 @@ describe('production + LAUNCH_MODE=prelaunch, with no bank and no Didit keys', (
     assert.equal(start.status, 503);
     assert.equal(start.error, 'kyc_unavailable');
     // The rest of the application works: the Experience form, the evidence, and submitting it.
-    const form = await mentor.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Product designer', customNiche: 'App design', niche: 'design', specialtyTags: ['apps'], yearsExperience: 7, story: 'I taught myself product design and have spent seven years designing apps for shops, banks and delivery services in Tbilisi.', sampleAnswer: longAnswer(SAMPLE) } });
+    const form = await mentor.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Product designer', customNiche: 'App design', niche: 'design', specialtyTags: ['apps'], yearsExperience: 7, story: 'I taught myself product design and have spent seven years designing apps for shops, banks and delivery services in Tbilisi.', about: ABOUT, sampleAnswer: longAnswer(SAMPLE) } });
     assert.equal(form.error, undefined, form.text);
     const ev = await mentor.api('/verification/evidence', { method: 'POST', body: { kind: 'portfolio', url: 'https://nino-mentor.invalid/portfolio' } });
     assert.equal(ev.error, undefined, ev.text);

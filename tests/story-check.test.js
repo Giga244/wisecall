@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { ROOT, resetDatabase, startServer, signupVerified } = require('./helpers');
+const { ROOT, resetDatabase, startServer, signupVerified, ABOUT } = require('./helpers');
 
 // The rule as the page has it: the file run as a browser runs it (no module, a window).
 function pageRules() {
@@ -60,6 +60,8 @@ describe('the page and the server agree on every sample', () => {
     srv = await startServer(4777);
     c = await signupVerified(srv.base, 'Nino Story', 'nino-story@example.com');
     await c.api('/me', { method: 'PATCH', body: { becomeMentor: true } });
+    // ("შენ შესახებ" written first: step 2's tick then follows the story alone)
+    await c.api('/verification/experience', { method: 'PUT', body: { about: ABOUT } });
   });
   after(() => { if (srv) srv.proc.kill(); });
 

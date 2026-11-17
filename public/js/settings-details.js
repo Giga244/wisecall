@@ -24,6 +24,8 @@
     await draw();
     // (from the dashboard's "add your path" card: straight to that card)
     if (window.location.hash === '#story') { const el = box.querySelector('#story'); if (el) el.scrollIntoView({ block: 'start' }); }
+    // (from the dashboard's "add „შენ შესახებ“" card: that box, in view and in focus)
+    if (window.location.hash === '#about') { const el = box.querySelector('#ds-about'); if (el) { el.scrollIntoView({ block: 'center' }); el.focus({ preventScroll: true }); } }
   }
 
   async function draw() {
@@ -158,11 +160,19 @@
       ev.preventDefault();
       const err = box.querySelector('#storyError');
       err.textContent = '';
+      WisecallStoryForm.aboutError(storyForm, '');
       try {
         const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: WisecallStoryForm.read(storyForm) });
         Object.assign(user, data.user);
         WisecallNav.showToast(t('story.saved'));
       } catch (e) {
+        // ("შენ შესახებ" is required here too, 150 characters: what it still needs is said right under it, and the box is in focus)
+        if (e.data && e.data.field === 'about') {
+          const L = { aboutMin: Number((storyForm.querySelector('[name="about"]') || { dataset: {} }).dataset.min) || 150 };
+          const p = e.code === 'about_short' || e.code === 'about_repeated' ? WisecallStoryForm.aboutProblem(WisecallStoryForm.read(storyForm), L) : null;
+          WisecallStoryForm.aboutError(storyForm, p ? WisecallStoryForm.aboutText(p, L) : WisecallStoryForm.errorText(e, L), { focus: true });
+          return;
+        }
         err.textContent = WisecallStoryForm.knows(e.code) ? WisecallStoryForm.errorText(e) : errorText(e.code);
         const el = WisecallStoryForm.fieldOf(storyForm, e);
         if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }

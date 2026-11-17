@@ -37,7 +37,7 @@ function userFromRow(r) {
     // (docs/CLAUDE-CODE-MENTOR-STORY.md, server/mentorStory.js: my path, starting-point tags, a sample answer, "I can help with", work links)
     pathStart: r.path_start || null, pathHow: r.path_how || null, pathNow: r.path_now || null, startTags: r.start_tags || [],
     sampleQuestion: r.sample_question || null, sampleReply: r.sample_reply || null, helpPoints: r.help_points || [], workLinks: r.work_links || [],
-    fieldSuggestion: r.field_suggestion || null, pathCardDismissedAt: r.path_card_dismissed_at || null,
+    fieldSuggestion: r.field_suggestion || null, pathCardDismissedAt: r.path_card_dismissed_at || null, aboutCardDismissedAt: r.about_card_dismissed_at || null,
     verificationNote: r.verification_note,
     verificationDecidedAt: r.verification_decided_at,
     suspendedAt: r.suspended_at,
@@ -135,7 +135,7 @@ const USER_COLUMNS = {
   roleTitle: 'role_title', bio: 'bio', price: 'price', color: 'color',
   language: 'language', verificationStatus: 'verification_status',
   payoutName: 'payout_name', payoutIbanEnc: 'payout_iban_enc', payoutIbanLast4: 'payout_iban_last4', payoutUpdatedAt: 'payout_updated_at',
-  proofUrl: 'proof_url', sampleAnswer: 'sample_answer', pathStart: 'path_start', pathHow: 'path_how', pathNow: 'path_now', startTags: 'start_tags', sampleQuestion: 'sample_question', sampleReply: 'sample_reply', helpPoints: 'help_points', workLinks: 'work_links', fieldSuggestion: 'field_suggestion', pathCardDismissedAt: 'path_card_dismissed_at', verificationNote: 'verification_note',
+  proofUrl: 'proof_url', sampleAnswer: 'sample_answer', pathStart: 'path_start', pathHow: 'path_how', pathNow: 'path_now', startTags: 'start_tags', sampleQuestion: 'sample_question', sampleReply: 'sample_reply', helpPoints: 'help_points', workLinks: 'work_links', fieldSuggestion: 'field_suggestion', pathCardDismissedAt: 'path_card_dismissed_at', aboutCardDismissedAt: 'about_card_dismissed_at', verificationNote: 'verification_note',
   verificationDecidedAt: 'verification_decided_at', suspendedAt: 'suspended_at', suspensionReason: 'suspension_reason', emailVerified: 'email_verified', emailVerifyCodeHash: 'email_code_hash',
   emailVerifyCodeExpiresAt: 'email_code_expires_at', resetTokenHash: 'reset_token_hash',
   resetTokenExpiresAt: 'reset_token_expires_at',

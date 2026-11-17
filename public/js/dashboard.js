@@ -569,7 +569,32 @@
     });
   }
   drawStoryCard();
+  // An approved mentor with no "შენ შესახებ" of their own: one card, to Settings -> My details, until it is written or closed (the server
+  // remembers). Nothing else: such a mentor stays listed as they are.
+  function drawAboutCard() {
+    const box = document.getElementById('aboutCard');
+    if (!box) return;
+    if (!isMentor || !user.aboutCard) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.innerHTML = `
+      <section class="mentor-card story-card about-card" aria-labelledby="aboutCardTitle">
+        <div class="mentor-card-text">
+          <h2 id="aboutCardTitle">${escapeHtml(t('dash.about.title'))}</h2>
+        </div>
+        <div class="story-card-actions">
+          <a class="btn btn-primary" href="/settings.html?tab=details#about">${escapeHtml(t('dash.about.cta'))}</a>
+          <button type="button" class="btn btn-ghost" data-about-dismiss>${escapeHtml(t('dash.story.dismiss'))}</button>
+        </div>
+      </section>`;
+    box.querySelector('[data-about-dismiss]').addEventListener('click', async () => {
+      user.aboutCard = false;
+      drawAboutCard();
+      try { await WisecallAPI.apiFetch('/me/about-card/dismiss', { method: 'POST' }); } catch (e) { /* it is asked again next time */ }
+    });
+  }
+  drawAboutCard();
   document.addEventListener('wisecall:lang-changed', drawStoryCard);
+  document.addEventListener('wisecall:lang-changed', drawAboutCard);
 
   // Email not confirmed yet (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md): a banner with the code box and "Resend the code", in place of the bar
   // that sends people to another page. A mentor's application waits for it before it can be approved, which the banner says.

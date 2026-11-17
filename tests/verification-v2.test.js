@@ -106,7 +106,7 @@ describe('server 1: AUTO_APPROVE=on', () => {
     const empty = await anna.c.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.status, 400);
     assert.equal(empty.error, 'incomplete');
-    assert.deepEqual(empty.missing, ['years', 'field', 'niche', 'story', 'evidence']);
+    assert.deepEqual(empty.missing, ['years', 'field', 'niche', 'story', 'bio', 'evidence']);
 
     await fillIn(anna, 1, { story: prose(1) + ' Write to me at anna.private@mail.ge or call +995 555 123 456 for work.' });
     await addLink(anna, 'portfolio', web.url('/w01'));
@@ -331,7 +331,7 @@ describe('server 1: AUTO_APPROVE=on', () => {
     assert.equal((await m.c.api('/verification/evidence', { method: 'POST', body: { kind: 'social', url: 'https://INSTAGRAM.com/sopo.draws' } })).status, 409);
 
     const inc = await m.c.api('/verification/submit', { method: 'POST' });
-    assert.deepEqual(inc.missing, ['story']);
+    assert.deepEqual(inc.missing, ['story', 'bio'], 'the short story, and so the About copied from it');
     await fillIn(m, 10, { specialtyTags: ['illustration'] });
     assert.equal((await m.c.api('/verification/submit', { method: 'POST' })).status, 200);
 

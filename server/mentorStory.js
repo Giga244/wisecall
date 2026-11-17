@@ -11,15 +11,17 @@
 //   sample       a common question in their field and a short sample answer (100 to 600 characters), always labelled "Sample answer".
 //   helpPoints   up to 3 short lines: "I can help with".
 //   workLinks    up to 3 links to their work (Behance, Dribbble, a site, LinkedIn). http/https only; never a messenger, payment or contact link.
-//   about        "შენ შესახებ" / "About you": optional, 0 to 2000 characters, the mentor's whole career in their own words (users.bio, the
-//                profile's About). Never written by the site: the path is no longer copied into it. An About that is still the copy of the
-//                path made before (ownAbout) counts as empty: the form shows nothing and the profile shows the path instead.
+//   about        "შენ შესახებ" / "About you": the mentor's whole career in their own words (users.bio, the profile's About), up to 2000
+//                characters. A new application needs at least 150 (aboutReason; experience.missingFor 'bio'), but a draft is saved however
+//                short it is. Settings -> My details asks for 150 too when the About is new or changed (an About an approved mentor already
+//                has is kept as it is). Never written by the site: the path is no longer copied into it. An About that is still the copy of
+//                the path made before (ownAbout) counts as empty: the form shows nothing and the profile shows the path instead.
 //
 // Every text goes through the contact filter and the rude-word check (server/textSafety.js), like the answers people pay for.
 const textSafety = require('./textSafety');
 const { size, looksRepeated } = require('./content');
 
-const LIMITS = { pathMin: 40, pathMax: 400, tagsMax: 3, questionMin: 10, questionMax: 160, replyMin: 100, replyMax: 600, pointsMax: 3, pointMin: 3, pointMax: 90, linksMax: 3, linkMax: 300, suggestionMax: 60, aboutMax: 2000 };
+const LIMITS = { pathMin: 40, pathMax: 400, tagsMax: 3, questionMin: 10, questionMax: 160, replyMin: 100, replyMax: 600, pointsMax: 3, pointMin: 3, pointMax: 90, linksMax: 3, linkMax: 300, suggestionMax: 60, aboutMin: 150, aboutMax: 2000 };
 
 // Where a mentor started from. Neutral on purpose: what they did and where they came from, never what their family had.
 const START_TAGS = [
@@ -174,6 +176,9 @@ const sameText = (a, b) => String(a || '').replace(/\s+/g, ' ').trim() === Strin
 const aboutIsPathCopy = (u) => Boolean(pathComplete(u) && u.bio && sameText(u.bio, asStory(u)));
 // The mentor's own About: their bio, or nothing while the bio is that copy.
 const ownAbout = (u) => (u && u.bio && !aboutIsPathCopy(u) ? u.bio : '');
+// Why an About does not count yet: 'short' (empty or under 150, counted like the path: public/js/text-rules.js size) | 'repeated' (one
+// letter or a few words over and over) | null (it counts).
+const aboutReason = (text) => (!text || size(text) < LIMITS.aboutMin ? 'short' : (looksRepeated(text) ? 'repeated' : null));
 const hasSample = (u) => Boolean(u.sampleQuestion && size(u.sampleQuestion) >= LIMITS.questionMin && u.sampleReply && size(u.sampleReply) >= LIMITS.replyMin && !looksRepeated(u.sampleReply));
 
 // A link as a chip: where it leads, by a name people know.
@@ -219,5 +224,8 @@ function cardView(u, { showAbout = true } = {}) {
 
 // The dashboard's one card for mentors from before this ("add your path and a sample answer"): until it is closed, or both are there.
 const wantsCard = (u) => !u.pathCardDismissedAt && (!pathComplete(u) || !hasSample(u));
+// The dashboard's card for a mentor with no About of their own ("add „შენ შესახებ“"): until it is closed, or there is one. Only a card:
+// such a mentor is never hidden, blocked or sent back to review for it.
+const wantsAboutCard = (u) => !u.aboutCardDismissedAt && !ownAbout(u).trim();
 
-module.exports = { LIMITS, START_TAGS, TAG_IDS, PATH_KEYS, KEYS, isTag, parse, pathComplete, pathReason, asStory, aboutIsPathCopy, ownAbout, hasSample, formOf, publicView, cardView, linkChip, wantsCard };
+module.exports = { LIMITS, START_TAGS, TAG_IDS, PATH_KEYS, KEYS, isTag, parse, pathComplete, pathReason, asStory, aboutIsPathCopy, ownAbout, aboutReason, hasSample, formOf, publicView, cardView, linkChip, wantsCard, wantsAboutCard };

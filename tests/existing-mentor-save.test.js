@@ -129,8 +129,8 @@ describe('the application, opened again with "Edit my application"', () => {
     const v = await m.api('/verification');
     const a = v.application;
     assert.equal(a.locked, false);
-    assert.deepEqual(a.optional, ['headline', 'years', 'field', 'directions']);
-    for (const code of ['headline', 'years', 'field', 'story']) assert.ok(!a.missing.includes(code), `${code} is not missing`);
+    assert.deepEqual(a.optional, ['headline', 'years', 'field', 'directions', 'bio']);
+    for (const code of ['headline', 'years', 'field', 'story', 'bio']) assert.ok(!a.missing.includes(code), `${code} is not missing`);
     assert.equal(a.progress.done[0], true, 'step 1 counts as done with what they have');
     assert.equal(a.progress.done[1], true, 'the old story counts: "My path" is not required');
     // step 1 saved untouched (7 tags, the old "current work", no field in their own words, no years)
@@ -158,7 +158,7 @@ describe('the application, opened again with "Edit my application"', () => {
     assert.equal((await m.api('/verification')).application.locked, true);
     assert.equal((await m.api('/verification/edit', { method: 'POST' })).status, 200);
     const a = (await m.api('/verification')).application;
-    assert.deepEqual(a.optional, ['headline', 'years', 'field', 'directions'], 'it was sent before: remembered after it was opened again');
+    assert.deepEqual(a.optional, ['headline', 'years', 'field', 'directions', 'bio'], 'it was sent before: remembered after it was opened again');
     assert.deepEqual(a.missing, []);
     assert.equal((await m.api('/verification/experience', { method: 'PUT', body: aboutBody(a.form) })).status, 200);
     assert.equal((await m.api('/verification/submit', { method: 'POST' })).status, 200);
@@ -171,11 +171,11 @@ describe('the application, opened again with "Edit my application"', () => {
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true } });
     const a = (await m.api('/verification')).application;
     assert.deepEqual(a.optional, []);
-    for (const code of ['headline', 'years', 'field']) assert.ok(a.missing.includes(code), code);
+    for (const code of ['headline', 'years', 'field', 'bio']) assert.ok(a.missing.includes(code), code);
     const sent = await m.api('/verification/submit', { method: 'POST' });
     assert.equal(sent.status, 400);
     assert.equal(sent.error, 'incomplete');
-    for (const code of ['headline', 'years', 'field']) assert.ok(sent.missing.includes(code), code);
+    for (const code of ['headline', 'years', 'field', 'bio']) assert.ok(sent.missing.includes(code), code);
     assert.equal(await experience.sentBefore((await m.api('/me')).user), false);
   });
 });

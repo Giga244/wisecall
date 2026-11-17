@@ -6,7 +6,7 @@ const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
 const { resetDatabase, startServer, signupVerified, client, bookAndPay, rate, SAMPLE, wait } = require('./helpers');
-const { longAnswer } = require('./helpers');
+const { longAnswer, ABOUT } = require('./helpers');
 const { createFakeDidit } = require('./fakeDidit');
 
 const didit = createFakeDidit();
@@ -57,7 +57,7 @@ describe('a new Medicine mentor (regulated)', () => {
     await apply(doc, {
       roleTitle: 'Cardiologist', customNiche: 'Heart health', niche: 'medicine', specialtyTags: ['heart health'], yearsExperience: 14,
       story: 'I trained in Tbilisi and have worked as a cardiologist for fourteen years, the last six running a clinic for patients after heart surgery.',
-      sampleAnswer: longAnswer(SAMPLE)
+      about: ABOUT, sampleAnswer: longAnswer(SAMPLE)
     }, 'https://levan-clinic.invalid/team');
     assert.equal((await doc.api('/verification/license', { method: 'POST', body: { number: 'MD-77-2291', issuingBody: 'Ministry of Health of Georgia', holderName: 'Levan Kiknadze', validUntil: new Date(Date.now() + 700 * 86400000).toISOString().slice(0, 10) } })).status, 200);
     const up = await doc.api('/verification/documents/license_document', { method: 'POST', body: PDF, headers: { 'Content-Type': 'application/pdf', 'X-Filename': 'license.pdf' } });
@@ -138,7 +138,7 @@ describe('a new Design mentor (standard)', () => {
     await apply(des, {
       roleTitle: 'Product designer', customNiche: 'Mobile app design', niche: 'design', specialtyTags: ['mobile apps', 'onboarding'], yearsExperience: 8,
       story: 'I taught myself design while working in a bank, then spent eight years designing mobile apps for startups in Tbilisi and Berlin.',
-      sampleAnswer: longAnswer('Start with the one screen people see first and make it do one thing well.')
+      about: ABOUT, sampleAnswer: longAnswer('Start with the one screen people see first and make it do one thing well.')
     }, 'https://nino-design.invalid/work');
     const v = await des.api('/verification');
     assert.equal(v.level, 'standard');

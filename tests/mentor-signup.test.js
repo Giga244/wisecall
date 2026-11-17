@@ -43,7 +43,7 @@ describe('what an application needs', () => {
     const m = await newMentor('Nino Beridze', 'nino@example.com');
     const empty = await m.c.api('/verification/submit', { method: 'POST' });
     assert.equal(empty.error, 'incomplete');
-    assert.deepEqual(empty.missing, ['headline', 'years', 'field', 'niche', 'story', 'price', 'evidence'], 'in the order /apply.html asks');
+    assert.deepEqual(empty.missing, ['headline', 'years', 'field', 'niche', 'story', 'bio', 'price', 'evidence'], 'in the order /apply.html asks');
 
     // Step 1: what I do (the profile's headline), the field in my own words (no category chosen) and the years.
     assert.equal((await m.c.api('/me', { method: 'PATCH', body: { headline: 'Associate professor of economics at TSU' } })).status, 200);
@@ -66,7 +66,7 @@ describe('what an application needs', () => {
     assert.equal(row.role_title, 'Associate professor of economics at TSU', 'the headline is the title when none was given');
     assert.deepEqual(row.specialty_tags, ['Macroeconomics', 'public policy'], 'the tags come from the field, and can be changed later');
     assert.equal(row.sample_answer, null);
-    assert.equal(row.bio, STORY, 'the story is also "About me"');
+    assert.equal(row.bio, STORY, 'the story is also "About me" (over 150 characters: it counts as "შენ შესახებ")');
 
     // In the admin review queue, with nothing missing from the profile.
     const queue = await admin.api('/admin/mentors?status=pending');

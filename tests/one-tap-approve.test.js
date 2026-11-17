@@ -5,7 +5,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, signupVerified } = require('./helpers');
+const { resetDatabase, startServer, signupVerified, ABOUT } = require('./helpers');
 
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
 const STORY = 'I have taught educational psychology and the history of psychology at Tbilisi State University for twenty years and supervise doctoral students.';
@@ -16,7 +16,7 @@ let srv, admin;
 async function applicant(name, email, { idPassed = true, send = true } = {}) {
   const c = await signupVerified(srv.base, name, email);
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'Professor of psychology', price: 30 } });
-  await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Educational psychology', niche: 'psychology', yearsExperience: 20, story: STORY } });
+  await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Educational psychology', niche: 'psychology', yearsExperience: 20, story: STORY, about: ABOUT } });
   await c.api('/verification/evidence', { method: 'POST', body: { url: `https://tsu.example.org/staff/${email.split('@')[0]}` } });
   const id = (await c.api('/me')).user.id;
   const lic = await c.api('/verification/license', { method: 'POST', body: { number: 'TSU-2004-118', issuingBody: 'Tbilisi State University', holderName: name, validUntil: '' } });

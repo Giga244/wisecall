@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const { ROOT, resetDatabase, startServer, wait } = require('./helpers');
+const { ROOT, resetDatabase, startServer, wait, ABOUT } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const resend = createFakeResend();
@@ -33,7 +33,7 @@ async function settle() { await wait(2500); } // (two sweeps)
 async function fourSteps(name, email, lang = 'en') {
   const c = await signupByEmail(resend, base, name, email, lang);
   await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'Professor of economics', price: 30 } });
-  await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', niche: 'business', yearsExperience: 18, story: STORY } });
+  await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', niche: 'business', yearsExperience: 18, story: STORY, about: ABOUT } });
   const ev = await c.api('/verification/evidence', { method: 'POST', body: { url: `https://tsu.ge/staff/${email.split('@')[0]}` } });
   assert.equal(ev.status, 200, ev.text);
   return c;

@@ -440,6 +440,9 @@ function missingFor(user, evidence, stepMap, opts = {}) {
   }
   if (!(rules.isValidNiche(user.niche) || rules.isCustomNiche(user.niche))) missing.push('niche');
   if (!storyVerdict(user.story, LIMITS.storyMin).ok) missing.push('story'); // (the page runs the same check: public/js/text-rules.js)
+  // "შენ შესახებ", at least 150 characters (server/mentorStory.js aboutReason): asked of a new application only, like the step 1 fields
+  // above; one sent before (an approved mentor editing it) is never held back for it.
+  if (!opts.sentBefore) { const ms = require('../mentorStory'); if (ms.aboutReason(ms.ownAbout(user))) missing.push('bio'); }
   if (user.price === null || user.price === undefined) missing.push('price'); // (0 is a price: free)
   const has = (s) => stepMap[s] && ['pending', 'passed'].includes(steps.effectiveStatus(stepMap[s]));
   // (a field whose register is public, law or accounting: the licence number is the proof, an admin looks it up; nothing to link or upload)
@@ -452,7 +455,7 @@ function missingFor(user, evidence, stepMap, opts = {}) {
   return missing;
 }
 // What step 1 asks for now that an application sent earlier may not have (and "directions": at least one, asked when it is sent).
-const ADDED_LATER = ['headline', 'years', 'field', 'directions'];
+const ADDED_LATER = ['headline', 'years', 'field', 'directions', 'bio'];
 // Whether this mentor's application has been sent before: it is sent or decided now, or it was and its mentor pressed "Edit my
 // application" (which leaves 'application_withdrawn' in the audit, as sending leaves 'application_submitted').
 async function sentBefore(user) {
@@ -467,7 +470,7 @@ async function sentBefore(user) {
 // /apply.html, the Settings card): which of the five steps are done, how many, and the first one that is not (where "Continue" goes).
 // Steps 1-4 are done when nothing they ask for is missing; step 5 when the ID check has passed ("pending" is only started).
 //   missing: missingFor(); idStatus: the effective status of the id_kyc step (or undefined) -> { done: [5 booleans], count, next }
-const STEP_CODES = [['headline', 'years', 'field', 'niche'], ['story'], ['price'], ['evidence', 'license', 'license_document']];
+const STEP_CODES = [['headline', 'years', 'field', 'niche'], ['story', 'bio'], ['price'], ['evidence', 'license', 'license_document']];
 function applicationProgress(missing, idStatus) {
   const done = [...STEP_CODES.map((codes) => !codes.some((c) => missing.includes(c))), idStatus === 'passed'];
   const open = done.indexOf(false);

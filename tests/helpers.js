@@ -194,5 +194,7 @@ async function approveMentor(adminClient, mentorClient) {
   return me.id;
 }
 const SAMPLE = 'This is a detailed sample answer that is comfortably longer than eighty characters to pass validation.';
+// "შენ შესახებ" for an application a test sends: required, at least 150 characters (server/mentorStory.js aboutReason).
+const ABOUT = 'For many years I have worked in this field, first as a junior in a small company and now leading a team of my own. I also teach beginners and can help with where to start and what to learn first.';
 
-module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, ageAnswer, rate, addPayoutDetails, approveMentor, GOOD_IBAN, wait, SAMPLE, longQuestion, longAnswer };
+module.exports = { ROOT, resetDatabase, startServer, client, signupVerified, bookAndPay, ageAnswer, rate, addPayoutDetails, approveMentor, GOOD_IBAN, wait, SAMPLE, ABOUT, longQuestion, longAnswer };

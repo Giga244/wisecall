@@ -4,7 +4,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, wait } = require('./helpers');
+const { resetDatabase, startServer, wait, ABOUT } = require('./helpers');
 const { createFakeResend, signupByEmail } = require('./fakeResend');
 
 const resend = createFakeResend();
@@ -66,7 +66,7 @@ describe('everything sent but the ID check', () => {
   before(async () => {
     const c = await signupByEmail(resend, base, 'Nino NoId', email, 'en');
     await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, headline: 'Professor of economics', price: 30 } });
-    await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', niche: 'business', yearsExperience: 18, story: STORY } });
+    await c.api('/verification/experience', { method: 'PUT', body: { customNiche: 'Macroeconomics', niche: 'business', yearsExperience: 18, story: STORY, about: ABOUT } });
     await c.api('/verification/evidence', { method: 'POST', body: { url: 'https://tsu.ge/staff/nino-noid' } });
     const sent = await c.api('/verification/submit', { method: 'POST' });
     assert.equal(sent.status, 200, sent.text);

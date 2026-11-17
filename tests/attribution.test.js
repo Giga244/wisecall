@@ -5,7 +5,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { Pool } = require('pg');
-const { resetDatabase, startServer, signupVerified, client, approveMentor, addPayoutDetails, bookAndPay, longAnswer, SAMPLE } = require('./helpers');
+const { resetDatabase, startServer, signupVerified, client, approveMentor, addPayoutDetails, bookAndPay, longAnswer, SAMPLE, ABOUT } = require('./helpers');
 
 const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
 let srv, base, admin;
@@ -151,7 +151,7 @@ describe('kept on sign-up, questions and applications, and counted for the admin
     await pool.query(`UPDATE users SET email_verified = true WHERE email = 'nino-a@example.com'`);
     await applicant.api('/me', { method: 'PATCH', body: { becomeMentor: true, price: 25, headline: 'Shop owner' } });
     await applicant.api('/verification/experience', { method: 'PUT', body: { roleTitle: 'Shop owner', customNiche: 'Running a small shop', niche: 'business', specialtyTags: ['retail'], yearsExperience: 5,
-      story: 'I have run a small clothing shop in Kutaisi for five years and moved it online during the pandemic, with a team of three people.', sampleAnswer: longAnswer(SAMPLE) } });
+      story: 'I have run a small clothing shop in Kutaisi for five years and moved it online during the pandemic, with a team of three people.', about: ABOUT, sampleAnswer: longAnswer(SAMPLE) } });
     await applicant.api('/verification/evidence', { method: 'POST', body: { kind: 'website', url: 'https://nino-applicant.invalid/' } });
     assert.equal((await applicant.api('/verification/submit', { method: 'POST' })).status, 200);
     assert.equal((await pool.query(`SELECT application_source FROM users WHERE email = 'nino-a@example.com'`)).rows[0].application_source.source, 'linkedin');
