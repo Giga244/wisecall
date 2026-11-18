@@ -761,8 +761,8 @@
       if (problems.length) { problems.forEach(([name, text]) => fieldError(form, name, text)); focusField(form, problems[0][0]); return false; }
     } else if (step === 1) {
       const story = WisecallStoryForm.read(form);
-      WisecallStoryForm.aboutError(form, '');
-      // (saved first, so nothing is lost; a field the server refuses says why, under the step, with the field in view)
+      WisecallStoryForm.clearErrors(form);
+      // (saved first, so nothing is lost; a field the server refuses says why, under the step and under the field, with the field in view)
       try {
         await WisecallAPI.apiFetch('/verification/experience', { method: 'PUT', body: story });
       } catch (e) {
@@ -776,6 +776,7 @@
         // (what is wrong with the About is said right under it)
         if (e.data && e.data.field === 'about') { WisecallStoryForm.aboutError(form, WisecallStoryForm.errorText(e, v.limits.story), { focus: true }); return false; }
         stepError(WisecallStoryForm.errorText(e, v.limits.story));
+        if (e.data && e.data.field) WisecallStoryForm.fieldError(form, e.data.field, WisecallStoryForm.errorText(e, v.limits.story));
         const el = WisecallStoryForm.fieldOf(form, e);
         if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
         return false;
@@ -790,6 +791,8 @@
         if (about) WisecallStoryForm.aboutError(form, WisecallStoryForm.aboutText(about, v.limits.story), { focus: !problem });
         if (problem) {
           stepError(WisecallStoryForm.errorText({ code: problem.code }, v.limits.story));
+          // (each block that does not count yet says so under itself, with how many characters it still needs)
+          WisecallStoryForm.pathProblems(story, v.limits.story).forEach((p) => WisecallStoryForm.fieldError(form, p.field, WisecallStoryForm.problemText(p, v.limits.story)));
           const el = form.querySelector(`[name="${problem.field}"]`);
           if (el) el.focus();
         }

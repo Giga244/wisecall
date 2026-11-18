@@ -198,10 +198,12 @@ router.get('/details', requireAuth, asyncHandler(async (req, res) => {
   if (!user || !isMentor(user)) return res.status(400).json({ error: 'not_a_mentor' });
   res.json(await require('../mentorEdit').detailsFor(user));
 }));
+// (a refused save is written to the log with what was refused and why, never the text: "PUT /api/me/details 400" alone said nothing)
+const logRefused = (what, req, e) => { if (e && e.code) console.warn(`[${what}] refused ${e.code}${e.field ? ` field=${e.field}` : ''} user=${req.userToken && req.userToken.id} sent=${Object.keys(req.body || {}).join(',')}`); };
 router.put('/details', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
-  try { res.json({ user: meProfile(await require('../mentorEdit').saveDetails(user, req.body || {})) }); } catch (e) { editFail(res, e); }
+  try { res.json({ user: meProfile(await require('../mentorEdit').saveDetails(user, req.body || {})) }); } catch (e) { logRefused('details', req, e); editFail(res, e); }
 }));
 router.put('/fields', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
@@ -210,7 +212,7 @@ router.put('/fields', requireAuth, asyncHandler(async (req, res) => {
   try {
     const out = await require('../mentorEdit').saveFields(user, req.body || {});
     res.json({ user: meProfile(out.user), change: out.change });
-  } catch (e) { editFail(res, e); }
+  } catch (e) { logRefused('fields', req, e); editFail(res, e); }
 }));
 
 // New proof from "My details": while the application is sent or approved it is added unchecked and an admin checks it (the apply form's

@@ -7,6 +7,8 @@
 //   WisecallStoryForm.read(root)            -> what to send
 //   WisecallStoryForm.pathProblem(values, limits, { oldStoryOk }) -> null | { field, code }   (before "Next": all three blocks, or none with an old story)
 //   WisecallStoryForm.aboutProblem(values, limits) -> null | { code, left }; aboutError(root, text, { focus }); aboutText(problem, limits)
+//   WisecallStoryForm.pathProblems(values, limits) -> [{ field, code, left }] (each block's own reason); problemText(p, limits)
+//   WisecallStoryForm.fieldError(root, field, text, { focus }) / clearErrors(root): the line under a field; restore(root, values): typed text back
 //   WisecallStoryForm.errorText(error)      -> words for a server answer (error.code, error.data.field)
 (function () {
   const t = (k) => WisecallI18n.t(k);
@@ -21,8 +23,9 @@
     const block = ([key, name]) => `
       <div class="apply-field story-field">
         <label for="${prefix}-${key}">${esc(t(`story.${name}.label`))}</label>
-        <textarea id="${prefix}-${key}" name="${key}" rows="4" data-story-count data-min="${L.pathMin}" data-max="${L.pathMax}" aria-describedby="${prefix}-${key}-count ${prefix}-${key}-ex">${esc(v[key] || '')}</textarea>
+        <textarea id="${prefix}-${key}" name="${key}" rows="4" data-story-count data-min="${L.pathMin}" data-max="${L.pathMax}" aria-describedby="${prefix}-${key}-count ${prefix}-${key}-err ${prefix}-${key}-ex">${esc(v[key] || '')}</textarea>
         <p class="apply-count story-count" id="${prefix}-${key}-count" aria-live="polite"></p>
+        <p class="apply-field-error" id="${prefix}-${key}-err" data-field-error="${key}" role="alert" hidden></p>
         <p class="hint story-example" id="${prefix}-${key}-ex"><span class="story-example-label">${esc(t('story.example'))}</span> ${esc(t(`story.${name}.ex`))}</p>
       </div>`;
     // (short boxes that wrap and grow like the others: a point is never cut off at the side of a phone; a line break in one is a space)
@@ -66,11 +69,13 @@
               <label for="${prefix}-sampleQuestion">${esc(t('story.sample.q'))}</label>
               <textarea id="${prefix}-sampleQuestion" name="sampleQuestion" rows="1" class="story-point" aria-describedby="${prefix}-sq-ex">${esc(v.sampleQuestion || '')}</textarea>
               <span class="hint story-example" id="${prefix}-sq-ex"><span class="story-example-label">${esc(t('story.example'))}</span> ${esc(t('story.sample.q.ex'))}</span>
+              <p class="apply-field-error" data-field-error="sampleQuestion" role="alert" hidden></p>
             </div>
             <div class="apply-field">
               <label for="${prefix}-sampleReply">${esc(fill('story.sample.a', { min: L.replyMin, max: L.replyMax }))}</label>
               <textarea id="${prefix}-sampleReply" name="sampleReply" rows="4" data-story-count data-min="${L.replyMin}" data-max="${L.replyMax}" aria-describedby="${prefix}-sampleReply-count ${prefix}-sa-hint">${esc(v.sampleReply || '')}</textarea>
               <p class="apply-count story-count" id="${prefix}-sampleReply-count" aria-live="polite"></p>
+              <p class="apply-field-error" data-field-error="sampleReply" role="alert" hidden></p>
               <span class="hint" id="${prefix}-sa-hint">${esc(t('story.sample.hint'))}</span>
             </div>
           </details>
@@ -79,6 +84,7 @@
             <fieldset class="apply-field story-points">
               <legend class="sr-only">${esc(t('story.help.title'))}</legend>
               ${points}
+              <p class="apply-field-error" data-field-error="helpPoints" role="alert" hidden></p>
             </fieldset>
           </details>
           <details class="story-opt" data-opt="links"${open || (v.workLinks || []).length ? ' open' : ''}>
@@ -86,6 +92,7 @@
             <fieldset class="apply-field story-links">
               <legend class="sr-only">${esc(t('story.links.title'))}</legend>
               ${links}
+              <p class="apply-field-error" data-field-error="workLinks" role="alert" hidden></p>
             </fieldset>
           </details>
         </section>
@@ -127,6 +134,13 @@
       area.addEventListener('input', () => { draw(); aboutError(form, ''); });
       draw();
     });
+    // (what was said under a field goes once it is changed)
+    form.addEventListener('input', (ev) => {
+      const name = ev.target && ev.target.name;
+      if (!name || ev.isTrusted === false) return;
+      const field = { helpPoint: 'helpPoints', workLink: 'workLinks' }[name] || name;
+      if (field !== 'about') fieldError(form, field, '');
+    });
     // The boxes grow with what is written in them (nothing scrolls inside a box): now, as the mentor types, and when a closed part opens.
     const grow = (area) => { if (!area.offsetParent) return; area.style.height = 'auto'; area.style.height = `${area.scrollHeight + 2}px`; };
     form.querySelectorAll('textarea').forEach((area) => { area.classList.add('story-grow'); area.addEventListener('input', () => grow(area)); grow(area); });
@@ -167,6 +181,64 @@
       if (window.WisecallTextRules && WisecallTextRules.looksRepeated(values[key])) return { field: key, code: 'path_repeated' };
     }
     return null;
+  }
+
+  // ---- What is wrong, under the field it is about --------------------------------------------------------------------------------------
+  // The input(s) of a field name (the links and the "I can help with" lines are several boxes with one name).
+  const inputsOf = (form, field) => [...form.querySelectorAll(`[name="${({ helpPoints: 'helpPoint', workLinks: 'workLink' }[field] || field)}"]`)];
+  // The line under a field (empty text: none), the field marked; with focus: opened (when it is in a closed part), in view and in focus.
+  function fieldError(root, field, text, { focus = false } = {}) {
+    const form = root.querySelector('[data-story-form]') || root;
+    if (field === 'about') return aboutError(root, text, { focus });
+    const line = form.querySelector(`[data-field-error="${field}"]`);
+    if (!line) return false;
+    line.textContent = text || '';
+    line.hidden = !text;
+    const inputs = inputsOf(form, field);
+    inputs.forEach((i) => i.setAttribute('aria-invalid', text ? 'true' : 'false'));
+    if (text && focus) {
+      const more = line.closest('details');
+      if (more) more.open = true;
+      const target = inputs.find((i) => !i.value.trim()) || inputs[0] || line;
+      if (target.scrollIntoView) target.scrollIntoView({ block: 'center' });
+      if (target.focus) target.focus({ preventScroll: true });
+    }
+    return true;
+  }
+  function clearErrors(root) {
+    const form = root.querySelector('[data-story-form]') || root;
+    form.querySelectorAll('[data-field-error]').forEach((l) => { l.textContent = ''; l.hidden = true; });
+    form.querySelectorAll('[aria-invalid="true"]').forEach((i) => i.setAttribute('aria-invalid', 'false'));
+    aboutError(root, '');
+  }
+  // Every "My path" block that does not count yet, each with its own reason: [{ field, code, left }]. None filled in is fine (the path is
+  // then simply not shown); one or two filled in asks for the others.
+  function pathProblems(values, limits) {
+    const min = (limits && limits.pathMin) || 40;
+    const filled = PATH.filter(([key]) => String(values[key] || '').trim());
+    if (!filled.length) return [];
+    const out = [];
+    for (const [key] of PATH) {
+      const text = String(values[key] || '');
+      if (!text.trim()) out.push({ field: key, code: 'path_incomplete' });
+      else if (size(text) < min) out.push({ field: key, code: 'path_short', left: min - size(text) });
+      else if (window.WisecallTextRules && WisecallTextRules.looksRepeated(text)) out.push({ field: key, code: 'path_repeated' });
+    }
+    return out;
+  }
+  // The words for one of those, for the line under its field.
+  const problemText = (p, limits) => fill({ path_short: 'story.err.blockShort', path_incomplete: 'story.err.blockEmpty', path_repeated: 'apply.err.storyRepeated' }[p.code] || 'toast.error',
+    { min: (limits && limits.pathMin) || 40, left: p.left || 0 });
+  // What read() gave, put back into the form (after the page was drawn again): nothing typed is lost.
+  function restore(root, values) {
+    const form = root.querySelector('[data-story-form]');
+    if (!form || !values) return;
+    const set = (name, v) => { const el = form.querySelector(`[name="${name}"]`); if (el && typeof v === 'string') { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } };
+    ['pathStart', 'pathHow', 'pathNow', 'about', 'sampleQuestion', 'sampleReply'].forEach((k) => set(k, values[k]));
+    const many = (name, list) => form.querySelectorAll(`[name="${name}"]`).forEach((el, i) => { el.value = (list || [])[i] || ''; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    many('helpPoint', values.helpPoints);
+    many('workLink', values.workLinks);
+    if (Array.isArray(values.startTags)) form.querySelectorAll('[data-start-tag]').forEach((b) => b.setAttribute('aria-pressed', String(values.startTags.includes(b.dataset.startTag))));
   }
 
   // "შენ შესახებ" before "Next" and before sending: at least 150 characters of real writing. -> null | { code, left }
@@ -213,5 +285,5 @@
     return name ? root.querySelector(`[data-story-form] [name="${name}"]`) : null;
   }
 
-  window.WisecallStoryForm = { html, wire, read, pathProblem, aboutProblem, aboutError, aboutText, errorText, knows, fieldOf };
+  window.WisecallStoryForm = { html, wire, read, pathProblem, pathProblems, problemText, fieldError, clearErrors, restore, aboutProblem, aboutError, aboutText, errorText, knows, fieldOf };
 })();

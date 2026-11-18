@@ -136,7 +136,10 @@ function parse(input, { draft = false, current = {} } = {}) {
   // (patch.about: server/verification/experience.js stores it as the bio)
   if (b.about !== undefined) {
     if (b.about !== null && typeof b.about !== 'string') return bad('invalid_field', 'about');
-    if (String(b.about || '').trim() !== ownAbout(current).trim()) {
+    // (a browser sends line breaks as \n whatever the stored text has: the same words with other line breaks are the same About, so an
+    // old About is never checked again, and never refuses the save of "My path" next to it)
+    const lines = (s) => String(s || '').replace(/\r\n?/g, '\n').trim();
+    if (lines(b.about) !== lines(ownAbout(current))) {
       const r = cleanText(b.about, 'about', { max: LIMITS.aboutMax });
       if (r.error) return r;
       patch.about = r.value;

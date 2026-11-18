@@ -9,6 +9,27 @@
   let box, user, goto, cats;
   let dPick = null;
   let dPicker = null;
+  // "My path" and the rest of the story form, never lost (docs: an approved mentor's path was wiped by "Send for a check", which drew the
+  // page again from the server before the path was saved):
+  //   savedStory   what the server has (read() of the form as drawn, or as last saved), to tell typed-but-not-saved text
+  //   a draft      what is typed and not saved, kept in this browser (with what the server had then), put back if the page is left
+  //   every other button on this page saves an unsaved story first; refused, the reason is under its field and nothing else is sent
+  let savedStory = null;
+  let storyLimits = {};
+  const storyForm = () => (box ? box.querySelector('#storyForm') : null);
+  const storyNow = () => { const f = storyForm(); return f ? JSON.stringify(WisecallStoryForm.read(f)) : null; };
+  const storyDirty = () => { const now = storyNow(); return Boolean(now) && savedStory !== null && now !== savedStory; };
+  const draftKey = () => `wisecall_story_draft_${user && user.id}`;
+  function keepDraft() {
+    try {
+      if (storyDirty()) localStorage.setItem(draftKey(), JSON.stringify({ base: savedStory, values: WisecallStoryForm.read(storyForm()), at: Date.now() }));
+      else localStorage.removeItem(draftKey());
+    } catch (e) { /* storage unavailable: the page still keeps it until it is left */ }
+  }
+  function readDraft() {
+    try { const d = JSON.parse(localStorage.getItem(draftKey()) || 'null'); return d && d.values ? d : null; } catch (e) { return null; }
+  }
+  const showDraftNote = (on) => { const n = box.querySelector('#storyDraftNote'); if (n) n.hidden = !on; };
 
   const nameOf = (x) => (x ? WisecallI18n.nameIn(x) : '');
   const fillText = (key, vars) => Object.entries(vars || {}).reduce((s, [k, v]) => s.split(`{${k}}`).join(v), WisecallI18n.t(key));
@@ -30,10 +51,13 @@
 
   async function draw() {
     const t = WisecallI18n.t;
+    // (typed in the story form and not saved: put back after the page is drawn again)
+    const carry = storyDirty() ? WisecallStoryForm.read(storyForm()) : null;
     let d;
     try {
       [d, cats] = await Promise.all([WisecallAPI.apiFetch('/me/details'), cats ? Promise.resolve(cats) : WisecallAPI.apiFetch('/categories')]);
     } catch (e) { box.innerHTML = `<p class="muted">${esc(t('toast.error'))}</p>`; return; }
+    storyLimits = d.story.limits || {};
     const det = d.details;
     const f = d.fields;
     const pending = d.pendingChange;
@@ -45,6 +69,7 @@
       <section class="settings-card details-story" id="story" aria-labelledby="detailsStoryTitle">
         <h2 id="detailsStoryTitle">${esc(t('details.story.title'))}</h2>
         <p class="muted small">${esc(t('details.story.intro'))}</p>
+        <p class="note-box story-draft-note" id="storyDraftNote" role="status" hidden>${esc(t('details.story.draft'))}</p>
         <form id="storyForm" novalidate>
           ${WisecallStoryForm.html(d.story, { limits: d.story.limits, startTags: d.story.startTags, prefix: 'ds', oldStory: d.story.oldStory, open: true })}
           <p class="form-error" role="alert" id="storyError"></p>
@@ -127,6 +152,14 @@
     if (dPick.main && !dPick.directions.length) dPicker.showError(true);
     ready();
     wire();
+    // What the server has; then what was typed and not saved, back in the form: from before the page was drawn again, or a draft kept in
+    // this browser (only while the server still has what it had when the draft was typed: a newer save from elsewhere wins).
+    savedStory = storyNow();
+    const draft = carry ? { values: carry } : readDraft();
+    if (draft && (carry || draft.base === savedStory)) {
+      WisecallStoryForm.restore(box, draft.values);
+      showDraftNote(storyDirty());
+    } else if (draft) { try { localStorage.removeItem(draftKey()); } catch (e) { /* none */ } }
   }
 
   function licenceForm(t) {
@@ -154,30 +187,88 @@
       if (b) goto(b.dataset.gotoTab);
     });
     // My path, the starting-point tags, the sample answer, "I can help with" and the work links (public/js/story-form.js): saved at once.
-    const storyForm = box.querySelector('#storyForm');
-    WisecallStoryForm.wire(storyForm);
-    storyForm.addEventListener('submit', async (ev) => {
+    const sForm = storyForm();
+    WisecallStoryForm.wire(sForm);
+    // (what is typed and not saved is kept in this browser as it is typed: nothing is lost if the page is left or drawn again)
+    sForm.addEventListener('input', () => { keepDraft(); showDraftNote(false); });
+    sForm.addEventListener('click', (ev) => { if (ev.target.closest('[data-start-tag]')) keepDraft(); });
+    sForm.addEventListener('submit', async (ev) => {
       ev.preventDefault();
+      if ((await saveStory()) === true) WisecallNav.showToast(t('story.saved'));
+    });
+    // Saves the story form. Checked here first (each "My path" block says under itself what it still needs), then by the server; a refusal
+    // is said under the field it is about, in view and in focus. Nothing typed is ever cleared.
+    // -> true when saved; 'partial' when all of it but a refused "შენ შესახებ" was saved; false when nothing was
+    async function saveStory() {
+      const form = storyForm();
       const err = box.querySelector('#storyError');
       err.textContent = '';
-      WisecallStoryForm.aboutError(storyForm, '');
-      try {
-        const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: WisecallStoryForm.read(storyForm) });
-        Object.assign(user, data.user);
-        WisecallNav.showToast(t('story.saved'));
-      } catch (e) {
-        // ("შენ შესახებ" is required here too, 150 characters: what it still needs is said right under it, and the box is in focus)
-        if (e.data && e.data.field === 'about') {
-          const L = { aboutMin: Number((storyForm.querySelector('[name="about"]') || { dataset: {} }).dataset.min) || 150 };
-          const p = e.code === 'about_short' || e.code === 'about_repeated' ? WisecallStoryForm.aboutProblem(WisecallStoryForm.read(storyForm), L) : null;
-          WisecallStoryForm.aboutError(storyForm, p ? WisecallStoryForm.aboutText(p, L) : WisecallStoryForm.errorText(e, L), { focus: true });
-          return;
-        }
-        err.textContent = WisecallStoryForm.knows(e.code) ? WisecallStoryForm.errorText(e) : errorText(e.code);
-        const el = WisecallStoryForm.fieldOf(storyForm, e);
-        if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
+      WisecallStoryForm.clearErrors(form);
+      const values = WisecallStoryForm.read(form);
+      const problems = WisecallStoryForm.pathProblems(values, storyLimits);
+      if (problems.length) {
+        problems.forEach((p, i) => WisecallStoryForm.fieldError(form, p.field, WisecallStoryForm.problemText(p, storyLimits), { focus: i === 0 }));
+        // (and in one line by the button that was pressed)
+        err.textContent = WisecallStoryForm.errorText({ code: problems[0].code }, storyLimits);
+        return false;
       }
-    });
+      try {
+        const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: values });
+        Object.assign(user, data.user);
+        savedStory = JSON.stringify(values);
+        keepDraft();
+        showDraftNote(false);
+        return true;
+      } catch (e) {
+        if (!e || !e.code) { err.textContent = t('apply.err.network'); return false; } // (no answer: what was typed stays, and as a draft)
+        const field = e.data && e.data.field;
+        // ("შენ შესახებ" is required here too, 150 characters: what it still needs is said right under it, and the box is in focus. A refused
+        // About takes nothing else with it: "My path" and the rest are saved without it, as on the application's step; its text stays.)
+        if (field === 'about') {
+          const L = { aboutMin: Number((form.querySelector('[name="about"]') || { dataset: {} }).dataset.min) || storyLimits.aboutMin || 150 };
+          const p = e.code === 'about_short' || e.code === 'about_repeated' ? WisecallStoryForm.aboutProblem(values, L) : null;
+          const { about, ...rest } = values;
+          const before = savedStory ? JSON.parse(savedStory) : {};
+          let partial = JSON.stringify({ ...values, about: before.about }) === savedStory; // (nothing but the About to save: the rest is saved already)
+          if (!partial) {
+            try {
+              const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: rest });
+              Object.assign(user, data.user);
+              savedStory = JSON.stringify({ ...values, about: before.about });
+              keepDraft();
+              partial = true;
+              WisecallNav.showToast(t('story.saved'));
+            } catch (e2) {
+              const f2 = e2 && e2.data && e2.data.field;
+              const mine2 = WisecallStoryForm.pathProblems(values, storyLimits).find((x) => x.field === f2);
+              if (f2 && WisecallStoryForm.fieldError(form, f2, mine2 ? WisecallStoryForm.problemText(mine2, storyLimits) : WisecallStoryForm.errorText(e2, storyLimits), { focus: true })) return false;
+            }
+          }
+          WisecallStoryForm.aboutError(form, p ? WisecallStoryForm.aboutText(p, L) : WisecallStoryForm.errorText(e, L), { focus: true });
+          return partial ? 'partial' : false;
+        }
+        // (a "My path" block the server refused: said under that block, with how many characters it still needs when it is that)
+        const mine = WisecallStoryForm.pathProblems(values, storyLimits).find((p) => p.field === field);
+        const text = mine ? WisecallStoryForm.problemText(mine, storyLimits) : (WisecallStoryForm.knows(e.code) ? WisecallStoryForm.errorText(e, storyLimits) : errorText(e.code));
+        if (!(field && WisecallStoryForm.fieldError(form, field, text, { focus: true }))) {
+          err.textContent = text;
+          const el = WisecallStoryForm.fieldOf(form, e);
+          if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
+        }
+        return false;
+      }
+    }
+    // Every other button on this page first saves "My path" when it has unsaved text (a mentor who typed it and pressed "Send for a check"
+    // meant both). Refused: nothing else is sent, its reason is under the story's field, and this line says so. -> true to go on
+    // (only a refused "შენ შესახებ" left: "My path" is saved, the About keeps its message and its text, and the other button goes on)
+    async function storyFirst(errLine) {
+      if (!storyDirty()) return true;
+      const saved = await saveStory();
+      if (saved === true) { WisecallNav.showToast(t('story.saved')); return true; }
+      if (saved === 'partial') return true;
+      if (errLine) errLine.textContent = t('details.err.storyFirst');
+      return false;
+    }
     // The box a save was refused for: marked and in focus, with a line right under it saying what is wrong (in sight on a phone); right
     // again once it is changed. A refusal that is about no box is said under the form.
     const detailsForm = box.querySelector('#detailsForm');
@@ -195,6 +286,7 @@
       const err = box.querySelector('#detailsError');
       err.textContent = '';
       detailsForm.querySelectorAll('[aria-invalid]').forEach((el) => { el.removeAttribute('aria-invalid'); fieldLine(el, ''); });
+      if (!(await storyFirst(err))) return;
       try {
         const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: {
           specialtyTags: box.querySelector('#dSpecs').value, currentRole: box.querySelector('#dRole').value, university: box.querySelector('#dUni').value,
@@ -211,6 +303,7 @@
       const err = box.querySelector('#fieldsError');
       err.textContent = '';
       if (!dPicker.valid()) { dPicker.showError(true); err.textContent = t('fp.err.min'); return; }
+      if (!(await storyFirst(err))) return;
       try {
         const data = await WisecallAPI.apiFetch('/me/fields', { method: 'PUT', body: {
           fieldId: dPick.main, extraFields: dPick.extras.filter((x) => x !== dPick.main), directions: dPick.directions, directionOther: dPick.other } });
@@ -226,6 +319,7 @@
       ev.preventDefault();
       const err = box.querySelector('#licenceError');
       err.textContent = '';
+      if (!(await storyFirst(err))) return;
       try {
         await WisecallAPI.apiFetch('/verification/license', { method: 'POST', body: { number: box.querySelector('#dLicNo').value, issuingBody: box.querySelector('#dLicBody').value, validUntil: box.querySelector('#dLicNoExpiry').checked ? '' : box.querySelector('#dLicUntil').value, noExpiry: box.querySelector('#dLicNoExpiry').checked } });
         WisecallNav.showToast(t('details.licence.sent'));
@@ -237,6 +331,7 @@
       ev.preventDefault();
       const err = box.querySelector('#proofError');
       err.textContent = '';
+      if (!(await storyFirst(err))) return;
       try {
         await WisecallAPI.apiFetch('/me/evidence', { method: 'POST', body: { url: box.querySelector('#dProof').value } });
         box.querySelector('#dProof').value = '';
