@@ -9,7 +9,7 @@ const usernames = require('../usernames');
 const identities = require('../identities');
 const { query } = require('../db');
 const { encrypt, decrypt } = require('../cryptoBox');
-const { isValidGeorgianIban, normalize, pretty } = require('../iban');
+const { pretty } = require('../iban');
 const ledger = require('../ledger');
 const rules = require('../verification/rules');
 const verification = require('../verification/steps');
@@ -177,10 +177,8 @@ router.patch('/', requireAuth, asyncHandler(async (req, res) => {
     // Evidence pages are checked for the mentor's name, so an application already analysed is analysed again with the new name.
     if (experience.submitted(user)) require('../verification/analysis').afterNameChange(user.id);
   }
-  // An approved mentor who answered for free and now sets a price needs payout details to stay in Browse experts: the page asks for them
-  // now (and not before: a free mentor never needs a bank account).
-  const payoutNeeded = patch.price > 0 && existing.verificationStatus === 'verified' && !existing.payoutIbanEnc;
-  res.json({ user: meProfile(user), ...(payoutNeeded ? { payoutNeeded: true } : {}) });
+  // (a price needs no payout details: the bank account is asked for when the mentor withdraws)
+  res.json({ user: meProfile(user) });
   if (stepsBefore) require('../verification/experience').trackSteps(req, stepsBefore, user.id);
 }));
 
@@ -286,11 +284,11 @@ router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
     return res.status(403).json({ error: 'reauth_required', minutes: config.REAUTH_MINUTES });
   }
 
-  const cleanName = name.trim().replace(/\s+/g, ' ');
-  if (cleanName.length < 5 || cleanName.length > 100 || !cleanName.includes(' ')) return res.status(400).json({ error: 'invalid_payout_name' });
-  if (!isValidGeorgianIban(iban)) return res.status(400).json({ error: 'invalid_iban' });
-
-  const normalized = normalize(iban);
+  // (the same checks as when the details are given at a withdrawal: server/payoutDetails.js)
+  const cleaned = require('../payoutDetails').clean({ name, iban });
+  if (cleaned.error) return res.status(400).json({ error: cleaned.error });
+  const cleanName = cleaned.name;
+  const normalized = cleaned.iban;
   // Changing details that were already saved: the mentor is told by email, and their payouts wait (a stolen account cannot redirect
   // money before the owner can react). The first details a mentor saves are not a change.
   const before = user.payoutIbanEnc ? decrypt(user.payoutIbanEnc) : null;
@@ -312,7 +310,6 @@ router.put('/payout', requireAuth, asyncHandler(async (req, res) => {
   }
   // The account holder's name is compared with the name on the ID.
   await names.recompute(user.id);
-  require('../waitlist').afterMaybeListed(user.id); // an approved mentor becomes visible once they can be paid
   res.json({ user: meProfile(updated), name: cleanName, iban: pretty(normalized), last4: normalized.slice(-4) });
 }));
 
@@ -352,12 +349,15 @@ router.get('/balance', requireAuth, asyncHandler(async (req, res) => {
 
 // "Withdraw": the whole available amount (the server computes it; nothing the page sends changes it). Needs the current password, or a
 // recent sign-in for an account without one. Asking again while a request is open returns that request.
+// A mentor with no bank account yet gives it with the request (payout: { name, iban }): checked as in Settings → ანაზღაურება, the account
+// holder's name must be the name on their ID, and then the request goes on. Refused, nothing is saved.
 const WITHDRAW_STATUS = { not_found: 404, password_required: 400, wrong_password: 400, reauth_required: 403, suspended: 403, no_payout_details: 409,
+  missing_fields: 400, invalid_payout_name: 400, invalid_iban: 400, payout_name_mismatch: 409,
   name_mismatch: 409, open_flags: 409, nothing_available: 409, below_minimum: 409, debt_exceeds_available: 409 };
 router.post('/withdrawals', requireAuth, asyncHandler(async (req, res) => {
   const withdrawals = require('../withdrawals');
   try {
-    const r = await withdrawals.request({ mentorId: req.userToken.id, password: (req.body || {}).currentPassword, sessionId: req.userToken.sid });
+    const r = await withdrawals.request({ mentorId: req.userToken.id, password: (req.body || {}).currentPassword, sessionId: req.userToken.sid, payout: (req.body || {}).payout });
     res.status(r.existing ? 200 : 201).json(r);
   } catch (e) {
     if (!(e instanceof withdrawals.WithdrawalError)) throw e;

@@ -307,9 +307,9 @@ describe('LAUNCH_MODE left empty: prelaunch until the first mentor is listed', (
     const admin = await signupVerified(auto.base, 'QA Admin', 'qa-admin@example.com');
     const m = await signupVerified(auto.base, 'First Mentor', 'first@example.com');
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Founder', niche: 'business', price: 15, proofUrl: 'https://linkedin.com/in/first', sampleAnswer: SAMPLE } });
+    assert.equal(await mode(auto), 'prelaunch', 'nobody approved yet');
     await approveMentor(admin, m);
-    assert.equal(await mode(auto), 'prelaunch', 'approved but without payout details nobody can be paid yet');
-    await addPayoutDetails(m);
+    // (approved is listed: a bank account is not needed for that, so the first approved mentor opens the site)
     assert.equal(await mode(auto), 'live');
     assert.match(auto.logs(), /the site is now in LIVE mode \(1 listed mentor/);
     const mentorId = (await m.api('/me')).user.id;

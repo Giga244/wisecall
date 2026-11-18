@@ -49,8 +49,6 @@
         Object.assign(user, data.user);
         if (user.price > 0) lastPaid = user.price;
         box.querySelector('[data-price-now]').textContent = now();
-        // (from free to a price without payout details: they are needed to stay in Browse experts)
-        if (data.payoutNeeded) { WisecallNav.showToast(t('settings.payouts.neededForPrice')); if (o.onPayoutNeeded) o.onPayoutNeeded(); else window.location.href = '/settings.html?tab=payouts'; return; }
         WisecallNav.showToast(t('priceBlock.saved'));
         if (o.onSaved) o.onSaved(user);
       } catch (e) {

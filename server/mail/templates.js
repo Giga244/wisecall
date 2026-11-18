@@ -94,6 +94,12 @@ const S = {
       intro: 'We suspended your mentor profile. It is hidden from Browse experts, and questions that were waiting for your answer were refunded.', reasonLabel: 'Reason:',
       after: 'If you think this is a mistake, please contact us and we will look at it again.', button: 'Contact us'
     },
+    addBank: {
+      subject: 'Add your bank account to withdraw your Wisecall earnings', heading: 'Add your bank account to withdraw',
+      intro: 'You have {amount} on your Wisecall balance, and no bank account for us to send it to yet.',
+      how: 'Add the account holder’s name and your Georgian IBAN: it takes a minute. The name must be the same as on your ID.',
+      button: 'Add bank account', note: 'Your profile stays on the site either way. We remind you about this at most once a week.'
+    },
     priceChanged: {
       subject: 'Your Wisecall price was changed', heading: 'Your price was changed',
       intro: 'Your price was changed: {from} → {to}. If you did not ask for this, write to us.', free: 'free',
@@ -207,8 +213,8 @@ const S = {
     mentorApproved: {
       subject: "You're approved as a Wisecall mentor", heading: 'Welcome aboard',
       intro: 'Your mentor application was approved.',
-      after: 'One last step: add your name and IBAN in Settings so you appear in Browse experts and can be paid.', button: 'Add payout details',
-      afterFree: 'You answer for free, so you need no bank account: you are in Browse experts now. If you set a price later, add your payout details in Settings first.', buttonFree: 'Open your dashboard',
+      after: 'You need no bank account to be shown in Browse experts: add it in Settings → Payouts whenever you like, or when you first withdraw what you earn.', button: 'Open your dashboard',
+      afterFree: 'You answer for free, so you need no bank account: you are in Browse experts now. If you set a price later, you add a bank account when you first withdraw.', buttonFree: 'Open your dashboard',
       prelaunch: "Wisecall has not opened to buyers yet. Your profile goes live on launch day, and we'll email you the day it does."
     },
     mentorRejected: {
@@ -458,6 +464,12 @@ const S = {
       intro: 'შენი მენტორის პროფილი შევაჩერეთ. ის ექსპერტების სიაში დამალულია, ხოლო კითხვები, რომლებიც შენს პასუხს ელოდა, დაბრუნდა.', reasonLabel: 'მიზეზი:',
       after: 'თუ გგონია, რომ ეს შეცდომაა, დაგვიკავშირდი და თავიდან განვიხილავთ.', button: 'დაგვიკავშირდი'
     },
+    addBank: {
+      subject: 'დაამატე საბანკო ანგარიში Wisecall-იდან თანხის გასატანად', heading: 'დაამატე საბანკო ანგარიში თანხის გასატანად',
+      intro: 'Wisecall-ის ბალანსზე {amount} გაქვს, საბანკო ანგარიში კი ჯერ არ მიგითითებია, რომ გადმოგირიცხოთ.',
+      how: 'მიუთითე ანგარიშის მფლობელის სახელი, გვარი და ქართული IBAN: ერთი წუთი სჭირდება. სახელი და გვარი პირადობის მოწმობისას უნდა ემთხვეოდეს.',
+      button: 'ანგარიშის დამატება', note: 'შენი პროფილი საიტზე ნებისმიერ შემთხვევაში ჩანს. ამას კვირაში ერთხელ მეტად არ შეგახსენებთ.'
+    },
     priceChanged: {
       subject: 'შენი ფასი Wisecall-ზე შეიცვალა', heading: 'შენი ფასი შეიცვალა',
       intro: 'თქვენი ფასი შეიცვალა: {from} → {to}. თუ ეს თქვენ არ გითხოვიათ, მოგვწერეთ.', free: 'უფასოდ',
@@ -570,8 +582,8 @@ const S = {
     mentorApproved: {
       subject: 'შენ დამტკიცდი Wisecall-ის მენტორად', heading: 'კეთილი იყოს შენი მობრძანება',
       intro: 'შენი მენტორის განაცხადი დამტკიცდა.',
-      after: 'ბოლო ნაბიჯი: პარამეტრებში მიუთითე შენი სახელი და IBAN, რომ გამოჩნდე ექსპერტების სიაში და ანაზღაურება მიიღო.', button: 'გადახდის მონაცემების დამატება',
-      afterFree: 'უფასოდ პასუხობ, ამიტომ საბანკო ანგარიში არ გჭირდება: უკვე ჩანხარ ექსპერტების სიაში. თუ მოგვიანებით ფასს დააწესებ, ჯერ პარამეტრებში მიუთითე ანაზღაურების მონაცემები.', buttonFree: 'პირადი კაბინეტის გახსნა',
+      after: 'ექსპერტების სიაში გამოსაჩენად საბანკო ანგარიში არ გჭირდება: დაამატე, როცა გინდა (პარამეტრები → ანაზღაურება), ან მაშინ, როცა გამომუშავებულ თანხას პირველად გაიტან.', button: 'პირადი კაბინეტის გახსნა',
+      afterFree: 'უფასოდ პასუხობ, ამიტომ საბანკო ანგარიში არ გჭირდება: უკვე ჩანხარ ექსპერტების სიაში. თუ მოგვიანებით ფასს დააწესებ, ანგარიშს თანხის პირველი გატანისას დაამატებ.', buttonFree: 'პირადი კაბინეტის გახსნა',
       prelaunch: 'Wisecall ჯერ მყიდველებისთვის არ გახსნილა. შენი პროფილი გამოჩნდება გახსნის დღეს და იმ დღესვე მოგწერთ ელფოსტით.'
     },
     mentorRejected: {
@@ -903,7 +915,12 @@ const BUILDERS = {
   mentorApproved: (s, d) => ({
     heading: s.mentorApproved.heading,
     blocks: [{ p: s.mentorApproved.intro }, { p: d.free ? s.mentorApproved.afterFree : s.mentorApproved.after }, ...(config.LAUNCH_MODE === 'prelaunch' ? [{ p: s.mentorApproved.prelaunch }] : []),
-      d.free ? { button: s.mentorApproved.buttonFree, url: `${config.PUBLIC_URL}/dashboard.html` } : { button: s.mentorApproved.button, url: `${config.PUBLIC_URL}/settings.html` }]
+      { button: d.free ? s.mentorApproved.buttonFree : s.mentorApproved.button, url: `${config.PUBLIC_URL}/dashboard.html` }]
+  }),
+  // A mentor with money on their balance and no bank account yet (server/payoutReminder.js: at most once a week). d.amount: "45.00 ₾".
+  addBank: (s, d) => ({
+    heading: s.addBank.heading,
+    blocks: [{ p: fill(s.addBank.intro, d, false) }, { p: s.addBank.how }, { button: s.addBank.button, url: `${config.PUBLIC_URL}/settings.html?tab=payouts` }, { small: s.addBank.note }]
   }),
   mentorRejected: (s, d) => ({
     heading: s.mentorRejected.heading,

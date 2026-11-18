@@ -32,7 +32,7 @@ async function logPrice(userId, from, to, by, source, reason = null) {
     [userId, from === undefined ? null : from, to, by.id || null, by.label || null, source, reason]);
 }
 
-// An admin changes the price: a reason is required, it is logged, and the mentor gets an email. -> { user, payoutNeeded }
+// An admin changes the price: a reason is required, it is logged, and the mentor gets an email. -> { user }
 async function adminSetPrice({ mentorId, price, reason, admin }) {
   const mentor = isUuid(mentorId) ? await getUserById(mentorId) : null;
   if (!isMentor(mentor)) throw new EditError('not_found');
@@ -46,8 +46,7 @@ async function adminSetPrice({ mentorId, price, reason, admin }) {
   await require('./verification/steps').audit(mentor.id, require('./verification/steps').adminActor(admin), 'price_changed', { reason: `${mentor.price} -> ${to}: ${why.slice(0, 300)}` });
   require('./notify').notifyPriceChanged(user, mentor.price, to);
   await require('./waitlist').afterMaybeListed(mentor.id);
-  // (a price on a mentor who answered for free, without payout details: they leave Browse until they add them)
-  return { user, payoutNeeded: to > 0 && !mentor.payoutIbanEnc && mentor.verificationStatus === 'verified' };
+  return { user };
 }
 
 async function priceHistory(userId) {

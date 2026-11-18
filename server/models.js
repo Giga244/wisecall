@@ -252,13 +252,13 @@ async function claimAnswer(id, answer, hold) {
   return bookingFromRow(rows[0]);
 }
 
-// A mentor shows up publicly (and can be booked) only when this is true: approved by an admin, payout details saved when they charge
-// (so a question can never be paid to someone we cannot pay; a mentor who answers for free needs none: docs/CLAUDE-CODE-WALKTHROUGH-
-// FIXES.md #5), and no required verification step that no longer holds. The same rule, for one user object, is isListable() in
+// A mentor shows up publicly (and can be booked) only when this is true: approved by an admin, with a price (0 is free), and no required
+// verification step that no longer holds. Payout details are NOT part of it: a mentor adds their bank account when they withdraw (what
+// they earn waits on their balance until then; server/withdrawals.js). The same rule, for one user object, is isListable() in
 // server/util.js. `u` names the users row when the query gives it another name.
 function listableSql(u = 'users') {
   return `${u}.role IN ('mentor', 'both') AND ${u}.price IS NOT NULL AND ${u}.niche IS NOT NULL
-    AND ${u}.role_title IS NOT NULL AND ${u}.verification_status = 'verified' AND (${u}.price = 0 OR ${u}.payout_iban_enc IS NOT NULL)
+    AND ${u}.role_title IS NOT NULL AND ${u}.verification_status = 'verified'
     AND ${u}.deletion_requested_at IS NULL AND ${u}.deleted_at IS NULL
     AND NOT ${failedRequiredStepSql(u)}`;
 }

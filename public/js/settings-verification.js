@@ -165,7 +165,8 @@
   // The headline and its colour come from v.state (a failed required step is never "verified").
   function headline() {
     const v = data.v;
-    if (v.state === 'verified') return !data.user.needsPayout ? (WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed') : 'vt.status.verifiedNoPayout';
+    // (verified is listed: no bank account is needed to be shown)
+    if (v.state === 'verified') return WisecallI18n.launchMode() === 'prelaunch' ? 'vt.status.verifiedPrelaunch' : 'vt.status.verifiedListed';
     if (v.state === 'needs_attention') return 'vt.status.needsAttention';
     if (v.state === 'suspended') return 'vt.status.suspended';
     return 'ap.status.inReview';
@@ -180,7 +181,6 @@
           <h2>${t('settings.tab.verification')}</h2>
           <span class="badge badge-${tone}">${t(headline())}</span>
         </div>
-        ${v.state === 'verified' && data.user.needsPayout && data.user.price > 0 ? `<p class="muted small">${t('settings.payouts.needForListing')} <button type="button" class="linklike" data-goto="payouts">${t('vt.addPayout')}</button></p>` : ''}
       </div>
       ${identitySection()}
       ${licenceSection()}

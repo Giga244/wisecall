@@ -96,7 +96,10 @@ async function summary(user) {
   const [holds, history, blockers] = await Promise.all([holdsOf(user.id), historyOf(user.id), blockersFor(user, balance)]);
   return {
     currency: config.CURRENCY, minimum: minimum(), closing: isClosing(user), holdDays: ledger.holdDays(),
-    balance, holds, history, blockers, canWithdraw: blockers.length === 0,
+    // (no bank account yet is not in the way: the Withdraw form asks for it, needsPayoutDetails)
+    balance, holds, history, blockers, canWithdraw: blockers.filter((b) => b !== 'no_payout_details').length === 0, needsPayoutDetails: !user.payoutIbanEnc,
+    // (money on the balance and no bank account: the dashboard's "add your bank account" card)
+    bankCard: require('./payoutReminder').wantsCard(user, balance),
     withdrawAmount: Math.max(balance.available - balance.owedBack, 0),
     needsPassword: Boolean(user.passwordHash), reauthMinutes: config.REAUTH_MINUTES
   };
@@ -117,13 +120,28 @@ async function checkIdentity(user, { password, sessionId }) {
 }
 
 // -> { request, existing } (existing: the open request that was already there; asking twice changes nothing).
-async function request({ mentorId, password, sessionId }) {
-  const user = await getUserById(mentorId);
+// payout: { name, iban }, from a mentor who has no bank account saved yet (a bank account is never needed to be shown on the site: it is
+// asked for here, at the first withdrawal). The same checks as in Settings → ანაზღაურება (server/payoutDetails.js), and the account holder
+// must be the person on the verified ID: a name that does not match is refused and nothing is saved. Saved, the request goes on.
+async function request({ mentorId, password, sessionId, payout }) {
+  let user = await getUserById(mentorId);
   if (!user) throw new WithdrawalError('not_found');
   await checkIdentity(user, { password, sessionId });
   const pre = await blockersFor(user, await balanceOf(user.id));
-  const hard = pre.filter((b) => ['suspended', 'no_payout_details', 'name_mismatch', 'open_flags'].includes(b));
+  const hard = pre.filter((b) => ['suspended', 'name_mismatch', 'open_flags'].includes(b));
   if (hard.length) throw new WithdrawalError(hard[0]);
+  if (!user.payoutIbanEnc) {
+    if (!payout || typeof payout !== 'object') throw new WithdrawalError('no_payout_details');
+    // (nothing to withdraw yet: said first, and the details are not taken for a request that cannot be made)
+    const soft = pre.find((b) => ['nothing_available', 'below_minimum', 'debt_exceeds_available'].includes(b));
+    if (soft) throw new WithdrawalError(soft, soft === 'below_minimum' ? { minimum: minimum() } : {});
+    const payoutDetails = require('./payoutDetails');
+    const details = payoutDetails.clean(payout);
+    if (details.error) throw new WithdrawalError(details.error);
+    if ((await payoutDetails.nameFitsId(user.id, details.name)) === false) throw new WithdrawalError('payout_name_mismatch');
+    user = await payoutDetails.saveFirst(user, details);
+    await audit(null, user.id, { id: user.id, label: user.email }, 'payout_details_added', `at a withdrawal, account ending ${details.iban.slice(-4)}`);
+  }
 
   let result;
   try {

@@ -87,7 +87,8 @@ describe('every email goes out through the Resend API', () => {
     await admin.api(`/admin/mentors/${id2}/reject`, { method: 'POST', body: { reason: 'Profile link is private' } });
 
     const ok = await waitFor(() => mailTo('approved@example.com', 'approved')[0]);
-    assert.match(ok.body.html, /IBAN/, 'tells the mentor to add payout details');
+    assert.doesNotMatch(ok.body.html, /IBAN/, 'no "last step": a bank account is not needed to be shown');
+    assert.match(ok.body.text, /You need no bank account to be shown in Browse experts/);
     const no = await waitFor(() => mailTo('rejected@example.com', 'განაცხადის')[0]);
     assert.match(no.body.html, /Profile link is private/, 'the reason is included');
     assert.match(no.body.html, /[ა-ჿ]/);

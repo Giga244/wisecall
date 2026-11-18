@@ -255,7 +255,7 @@ describe('the way in', () => {
     assert.match(signup, /<div class="field" data-for-as="asker">\s*<label for="username"/, 'no username for a mentor');
     assert.match(read('public/css/app.css'), /html:not\(\[data-as="mentor"\]\) \[data-for-as="mentor"\], html\[data-as="mentor"\] \[data-for-as="asker"\] \{ display: none !important; \}/);
     assert.match(read('public/js/verify-email.js'), /body: \{ becomeMentor: true \}/);
-    assert.match(read('public/js/dashboard.js'), /'\/apply\.html'/);
+    assert.match(read('public/js/dashboard.js'), /href="\/apply\.html"/);
     const mail = read('server/mail/templates.js');
     assert.match(mail, /s\.verificationSimplified\.button, url: `\$\{config\.PUBLIC_URL\}\/apply\.html`/);
     assert.match(mail, /s\.mentorRejected\.button, url: `\$\{config\.PUBLIC_URL\}\/apply\.html`/);

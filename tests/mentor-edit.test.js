@@ -76,12 +76,13 @@ describe('the admin changes a price', () => {
     assert.match(mail.body.html, /25 ₾ → უფასოდ/);
   });
 
-  test('a free mentor without payout details who is given a price: the admin is told they leave Browse until they add them', async () => {
+  test('a free mentor without payout details who is given a price stays in Browse: a bank account is asked for only at a withdrawal', async () => {
     const f = await makeMentor('Free Fiona', 'fiona-price@example.com', 0);
     assert.ok(await listed(f.id));
     const r = await admin.api(`/admin/mentors/${f.id}/price`, { method: 'POST', body: { price: 20, reason: 'Asked by phone, 02.11' } });
-    assert.equal(r.payoutNeeded, true);
-    assert.equal(await listed(f.id), undefined);
+    assert.equal(r.status, 200, r.text);
+    assert.equal(r.payoutNeeded, undefined);
+    assert.ok(await listed(f.id), 'still listed, with the price');
   });
 });
 

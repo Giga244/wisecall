@@ -262,11 +262,11 @@
 
   // ---- Questions for me (mentors) -----------------------------------------------------------------------------------
   function receivedEmpty() {
-    const listed = user.verificationStatus === 'verified' && !user.needsPayout; // (a free mentor needs no payout details)
+    const listed = user.verificationStatus === 'verified'; // (shown once approved: no bank account is needed for that)
     const prelaunch = WisecallI18n.launchMode() === 'prelaunch';
     return listed
       ? (prelaunch ? emptyState('dash.received.prelaunch.title', 'dash.received.prelaunch.body', '') : emptyState('dash.received.empty.title', 'dash.received.empty.body', ''))
-      : emptyState('dash.received.notListed.title', 'dash.received.notListed.body', `<a class="btn btn-primary" href="${user.verificationStatus === 'verified' ? '/settings.html?tab=payouts' : '/apply.html'}">${t(user.verificationStatus === 'verified' ? 'vt.addPayout' : 'settings.app.see')}</a>`);
+      : emptyState('dash.received.notListed.title', 'dash.received.notListed.body', `<a class="btn btn-primary" href="/apply.html">${t('settings.app.see')}</a>`);
   }
 
   // A short reminder above the answer box (not something to tick: nothing is required), with a link to the guide. Open for a mentor's first
@@ -595,6 +595,35 @@
   drawAboutCard();
   document.addEventListener('wisecall:lang-changed', drawStoryCard);
   document.addEventListener('wisecall:lang-changed', drawAboutCard);
+  // Money on the balance and no bank account yet (a bank account is never needed to be shown on the site): one card, to Settings →
+  // ანაზღაურება, where it is added; the Withdraw form asks for it too. Gone once the account is saved. (The server also emails about
+  // it, at most once a week: server/payoutReminder.js.)
+  let bankBalance = null;
+  function drawBankCard() {
+    const box = document.getElementById('bankCard');
+    if (!box) return;
+    if (!isMentor || !bankBalance || !bankBalance.bankCard) { box.hidden = true; box.innerHTML = ''; return; }
+    const amount = WisecallAPI.formatAmount(bankBalance.balance.available + bankBalance.balance.onHold);
+    box.hidden = false;
+    box.innerHTML = `
+      <section class="mentor-card story-card bank-card" aria-labelledby="bankCardTitle">
+        <div class="mentor-card-text">
+          <h2 id="bankCardTitle">${escapeHtml(t('dash.bank.title'))}</h2>
+          <p>${escapeHtml(t('dash.bank.body').replace('{amount}', amount))}</p>
+        </div>
+        <div class="story-card-actions">
+          <a class="btn btn-primary" href="/settings.html?tab=payouts">${escapeHtml(t('dash.bank.cta'))}</a>
+        </div>
+      </section>`;
+  }
+  async function loadBankCard() {
+    if (!isMentor) return;
+    try { bankBalance = await WisecallAPI.apiFetch('/me/balance'); } catch (e) { bankBalance = null; }
+    drawBankCard();
+  }
+  loadBankCard();
+  document.addEventListener('wisecall:lang-changed', drawBankCard);
+  document.addEventListener('wisecall:payout-saved', loadBankCard); // (the account was given with a withdrawal)
 
   // Email not confirmed yet (docs/CLAUDE-CODE-EMAIL-CODE-FIX.md): a banner with the code box and "Resend the code", in place of the bar
   // that sends people to another page. A mentor's application waits for it before it can be approved, which the banner says.

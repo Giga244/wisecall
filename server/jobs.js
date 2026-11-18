@@ -225,6 +225,7 @@ async function runSweep({ wait = false } = {}) {
       await ageGroups();
       await accountHousekeeping();
       await require('./verification/reminders').sweep().catch((e) => console.error('[jobs] application reminders failed:', e.message)); // (an unfinished application)
+      await require('./payoutReminder').sweep().catch((e) => console.error('[jobs] bank account reminders failed:', e.message)); // (money on the balance, no bank account)
       await require('./live/settle').sweep(); // (live sessions: holds, refunds, minimum, no-shows, endings, reminders, clean-up)
       lastSweepAt = new Date();
     } finally {

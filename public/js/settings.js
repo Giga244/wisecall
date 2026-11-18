@@ -22,9 +22,11 @@
   // An approved mentor (or a suspended one): their Mentor and Verification tabs. Someone applying has the card above the tabs instead.
   function isApprovedMentor(u) { return isMentorUser(u) && ['verified', 'suspended'].includes(u.verificationStatus); }
 
-  // No payout details yet: a mentor who answers for free needs none, one with a price needs them to be listed.
+  // No payout details yet: never needed to be shown on the site; a mentor adds them here, or at the first withdrawal.
   const payoutMissing = () => t(user.price === 0 ? 'settings.payouts.notSavedFree' : 'settings.payouts.notSaved');
 
+  // (the bank account was given with a withdrawal, in the Balance card above: the form below shows it)
+  document.addEventListener('wisecall:payout-saved', () => { user.hasPayoutDetails = true; loadPayout(); });
   async function loadPayout() {
     payoutCard.style.display = isMentorUser(user) ? 'block' : 'none';
     const balanceBox = document.getElementById('balanceSettings');
@@ -202,10 +204,7 @@
       const body = priceMode() === 'free' ? { price: 0, freeWeeklyCap: Number(document.getElementById('freeWeeklyCap').value) } : { price: Number(priceInput.value) };
       const data = await WisecallAPI.apiFetch('/me', { method: 'PATCH', body });
       Object.assign(user, data.user);
-      // (no payout details: the Payouts tab says whether they are needed, which a change between free and a price changes)
       if (!user.hasPayoutDetails) payoutStatus.textContent = payoutMissing();
-      // From free to a price: payout details are needed now, to stay in Browse experts.
-      if (data.payoutNeeded) { WisecallNav.showToast(t('settings.payouts.neededForPrice')); selectTab('payouts'); return; }
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
       WisecallNav.showToast(t(e.code === 'invalid_price' ? 'settings.mentor.price.invalid' : (e.code === 'invalid_free_cap' ? 'price.cap.invalid' : 'toast.error')));

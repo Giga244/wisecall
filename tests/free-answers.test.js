@@ -73,26 +73,26 @@ describe('the price', () => {
     assert.equal((await mentor.api('/me', { method: 'PATCH', body: { freeWeeklyCap: 4 } })).user.freeWeeklyCap, 4);
   });
 
-  test('an approved free mentor without payout details is not told to add them; with a price they are', async () => {
+  test('an approved mentor without payout details is never told to add them to be listed, free or with a price', async () => {
     const c = await signupVerified(base, 'Free Fiona', 'fiona@example.com');
     await c.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Career coach', niche: 'business', price: 0, proofUrl: 'https://linkedin.com/in/fiona', sampleAnswer: SAMPLE } });
     await approveMentor(admin, c);
     let me = (await c.api('/me')).user;
-    assert.equal(me.needsPayout, false);
+    assert.equal(me.needsPayout, undefined);
     assert.equal(me.isListedMentor, true, 'listed with no bank details');
     me = (await c.api('/me', { method: 'PATCH', body: { price: 30 } })).user;
-    assert.equal(me.needsPayout, true);
-    assert.equal((await c.api('/me', { method: 'PATCH', body: { price: 0 } })).user.needsPayout, false);
-    // (left with a price and no bank details: not listed, so Nino stays the only free mentor in Browse for the tests below)
-    assert.equal((await c.api('/me', { method: 'PATCH', body: { price: 30 } })).user.isListedMentor, false);
-    // (Settings: "add your payout details to be listed" only to a mentor with a price, and the texts say a free mentor needs none)
+    assert.equal(me.isListedMentor, true, 'with a price too: the bank account is asked for at the first withdrawal');
+    assert.equal(me.needsPayout, undefined);
+    // (suspended here, so Nino stays the only free mentor and Pia the only paid one in Browse for the tests below)
+    await pool.query(`UPDATE users SET verification_status = 'suspended' WHERE id = $1`, [me.id]);
+    // (Settings: nothing says "add your payout details to be listed"; the texts say no bank account is needed for that)
     const pub = (f) => require('fs').readFileSync(require('path').join(ROOT, 'public', f), 'utf8');
-    assert.match(pub('js/settings-verification.js'), /needsPayout && data\.user\.price > 0 \? `<p class="muted small">\$\{t\('settings\.payouts\.needForListing'\)\}/);
+    assert.doesNotMatch(pub('js/settings-verification.js'), /needsPayout|needForListing/);
     assert.match(pub('js/settings.js'), /const payoutMissing = \(\) => t\(user\.price === 0 \? 'settings\.payouts\.notSavedFree'/);
-    for (const [lang, free] of [['en', /for free needs none/], ['ka', /უფასოდ პასუხისთვის ისინი არ გჭირდება/]]) {
+    for (const [lang, none] of [['en', /You need no bank account for that/], ['ka', /ამისთვის საბანკო ანგარიში არ გჭირდება/]]) {
       const d = JSON.parse(pub(`i18n/${lang}.json`));
-      assert.match(d['settings.mentor.hint'], free, lang);
-      assert.match(d['settings.payouts.needForListing'], lang === 'en' ? /You charge for answers/ : /პასუხებში თანხას იღებ/, lang);
+      assert.match(d['settings.mentor.hint'], none, lang);
+      assert.equal(d['settings.payouts.needForListing'], undefined, lang);
     }
   });
 

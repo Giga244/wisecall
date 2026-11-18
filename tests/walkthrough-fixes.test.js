@@ -129,25 +129,24 @@ describe('5. a mentor who answers for free needs no bank account', () => {
   before(async () => { admin = await signupVerified(base, 'QA Admin', 'qa-admin@example.com'); });
   const listed = async (id) => (await client(base).api('/experts')).experts.some((e) => e.id === id);
 
-  test('approved at price 0 with no payout details: listed; a price makes them ask for payout details and leave the list until they add them', async () => {
+  test('approved at price 0 with no payout details: listed; with a price they stay listed, and nothing asks for payout details', async () => {
     const m = await signupVerified(base, 'Free Fiona', 'fiona@example.com');
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Beekeeper', niche: 'business', price: 0, proofUrl: 'https://linkedin.com/in/fiona', sampleAnswer: SAMPLE } });
     const id = await approveMentor(admin, m);
     let me = (await m.api('/me')).user;
     assert.equal(me.hasPayoutDetails, false);
-    assert.equal(me.needsPayout, false, 'nothing to ask for while free');
+    assert.equal(me.needsPayout, undefined, 'nothing says a bank account is needed');
     assert.equal(me.isListedMentor, true);
     assert.ok(await listed(id), 'in Browse experts with no bank account');
-    // a price: asked for payout details now, and off the list until they are saved (a paid question must be payable)
+    // a price: still listed, and not asked for payout details (they are asked for at the first withdrawal)
     const r = await m.api('/me', { method: 'PATCH', body: { price: 25 } });
     assert.equal(r.status, 200);
-    assert.equal(r.payoutNeeded, true);
-    assert.equal(r.user.needsPayout, true);
-    assert.equal(await listed(id), false);
+    assert.equal(r.payoutNeeded, undefined);
+    assert.ok(await listed(id), 'listed with a price and no bank account');
     await addPayoutDetails(m);
     assert.ok(await listed(id));
     me = (await m.api('/me')).user;
-    assert.equal(me.needsPayout, false);
+    assert.equal(me.hasPayoutDetails, true);
     // back to free, then a price again: payout details are already there, nothing to ask
     await m.api('/me', { method: 'PATCH', body: { price: 0 } });
     const again = await m.api('/me', { method: 'PATCH', body: { price: 30 } });
@@ -155,24 +154,24 @@ describe('5. a mentor who answers for free needs no bank account', () => {
     assert.ok(await listed(id));
   });
 
-  test('a paid mentor still needs payout details to be listed', async () => {
+  test('a paid mentor is listed without payout details', async () => {
     const m = await signupVerified(base, 'Paid Paul', 'paul@example.com');
     await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Accountant', niche: 'business', price: 30, proofUrl: 'https://linkedin.com/in/paul', sampleAnswer: SAMPLE } });
     const id = await approveMentor(admin, m);
-    assert.equal(await listed(id), false);
-    assert.equal((await m.api('/me')).user.needsPayout, true);
+    assert.equal(await listed(id), true);
+    assert.equal((await m.api('/me')).user.hasPayoutDetails, false);
   });
 
-  test('the approval email of a free mentor does not ask for a bank account; the texts say a bank account is needed only with a price', () => {
+  test('the approval email never asks for a bank account; the texts say it is added at the first withdrawal', () => {
     const { render } = require('../server/mail/templates');
     for (const l of ['en', 'ka']) {
       const free = render('mentorApproved', l, { free: true }).text;
       assert.doesNotMatch(free, /IBAN/);
-      assert.match(render('mentorApproved', l, {}).text, /IBAN/);
+      assert.doesNotMatch(render('mentorApproved', l, {}).text, /IBAN/);
     }
     assert.match(render('mentorApproved', 'en', { free: true }).text, /you need no bank account/);
-    assert.match(dict('en')['mentors.how.3.body'], /if you charge a price, add your bank account first/);
-    assert.match(dict('ka')['mentors.how.3.body'], /თუ ფასს აწესებ, ჯერ საბანკო ანგარიში დაამატე/);
+    assert.match(dict('en')['mentors.how.3.body'], /you add your bank account then/);
+    assert.match(dict('ka')['mentors.how.3.body'], /საბანკო ანგარიშს სწორედ მაშინ დაამატებ/);
     for (const l of ['en', 'ka']) assert.match(fs.readFileSync(path.join(HELP, l, '05-become-a-mentor.md'), 'utf8'), l === 'en' ? /answers for free needs no bank account/ : /უფასოდ პასუხობს, საბანკო ანგარიში არ სჭირდება/);
   });
 });

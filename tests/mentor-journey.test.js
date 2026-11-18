@@ -107,9 +107,9 @@ describe('a new Medicine mentor (regulated)', () => {
     assert.ok(v.requirements.every((r) => r.status === (r.step === 'experience' ? 'pending' : 'passed')), 'the Experience step is accepted by the approval itself');
   });
 
-  test('approved but without payout details: still hidden; then listed with the right badges', async () => {
+  test('approved: listed at once, without payout details, with the right badges; the bank account is added whenever', async () => {
     assert.equal((await admin.api(`/admin/mentors/${id}/approve`, { method: 'POST' })).status, 200);
-    assert.equal(await listed(id), undefined, 'a mentor we cannot pay is not listed');
+    assert.ok(await listed(id), 'listed as soon as approved: a bank account is not needed for that');
     assert.equal((await doc.api('/me/payout', { method: 'PUT', body: { name: 'Levan Kiknadze', iban: GOOD_IBAN, currentPassword: 'test-pass-12345' } })).status, 200);
     const e = await listed(id);
     assert.ok(e, 'listed');

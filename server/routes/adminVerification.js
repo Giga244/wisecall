@@ -265,7 +265,7 @@ router.post('/mentors/:id/price', requireAuth, requireAdmin, asyncHandler(async 
   const b = req.body || {};
   try {
     const out = await require('../mentorEdit').adminSetPrice({ mentorId: req.params.id, price: b.price, reason: b.reason, admin: req.adminUser });
-    res.json({ ok: true, price: out.user.price, payoutNeeded: out.payoutNeeded });
+    res.json({ ok: true, price: out.user.price });
   } catch (e) { fail(res, e); }
 }));
 

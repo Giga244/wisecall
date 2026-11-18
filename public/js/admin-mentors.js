@@ -267,7 +267,7 @@
           <input type="text" class="mv-price-reason" maxlength="300" placeholder="${esc(t('admin.price.reason'))}" aria-label="${esc(t('admin.price.reason'))}">
           <button class="btn btn-outline btn-sm mv-price-save">${t('admin.price.save')}</button>
         </div>
-        <p class="muted small">${esc(t('admin.price.keep'))}${d.price === 0 && !d.mentor.hasPayoutDetails ? ' ' + esc(t('admin.price.payout')) : ''}</p>
+        <p class="muted small">${esc(t('admin.price.keep'))}</p>
         ${h.length ? `<details class="mv-audit"><summary>${t('admin.price.history')} (${h.length})</summary>
           <ul class="earn-list mv-price-history">${h.map((x) => `<li><span>${fmt(x.at)}</span><span>${esc(money(x.from))} → ${esc(money(x.to))} · ${esc(x.source === 'admin' ? (x.by || 'admin') : t('admin.price.byMentor'))}</span><span class="muted small">${esc(x.reason || '')}</span></li>`).join('')}</ul>
         </details>` : ''}
@@ -369,6 +369,7 @@
           ${v.waiting ? `<span class="badge badge-pending_payment">${t('admin.mv.waiting').replace('{n}', v.waiting)}</span>` : ''}
           ${v.openFlags ? `<span class="badge badge-rejected">${t('admin.mv.flagsOpen').replace('{n}', v.openFlags)}</span>` : ''}
           ${v.failedRequired ? `<span class="badge badge-rejected">${t('admin.mv.failedRequired')}</span>` : ''}
+          ${m.verificationStatus === 'verified' ? `<span class="badge ${m.hasPayoutDetails ? 'badge-answered' : 'badge-muted'} mv-payout-chip">${esc(t(m.hasPayoutDetails ? 'admin.mv.payoutYes' : 'admin.mv.payoutNo'))}</span>` : ''}
           ${v.waitingForId ? `<span class="badge badge-rejected mv-waiting-id">${esc(t('admin.mv.waitingForId'))}</span>
             <button type="button" class="btn btn-outline btn-sm mv-id-reminder">${esc(t('admin.mv.idReminder'))}</button>` : ''}
           ${(m.reviewCount >= 3 && m.ratingAvg < 3.5) ? `<span class="form-error" style="margin:0">${t('admin.lowRatingFlag').replace('{avg}', m.ratingAvg)}</span>` : ''}
@@ -529,7 +530,7 @@
           priceSave.disabled = true;
           try {
             const r = await WisecallAPI.apiFetch(`/admin/mentors/${id}/price`, { method: 'POST', body: { price, reason } });
-            WisecallNav.showToast(t(r.payoutNeeded ? 'admin.price.savedPayout' : 'admin.price.saved'));
+            WisecallNav.showToast(t('admin.price.saved'));
             await loadPanel(); onChange({ soft: true });
           } catch (e) {
             WisecallNav.showToast(t({ invalid_price: 'admin.price.invalid', same_price: 'admin.price.same', reason_required: 'admin.mv.reasonRequired' }[e.code] || 'toast.error'));

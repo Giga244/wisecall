@@ -134,7 +134,7 @@
         <p class="small">${esc(t('details.id.locked'))} <a href="/contact.html">${esc(t('details.id.write'))}</a></p>
       </section>`;
 
-    WisecallPriceBlock.mount(box.querySelector('#detailsPrice'), user, { history: d.priceHistory, onPayoutNeeded: () => goto('payouts') });
+    WisecallPriceBlock.mount(box.querySelector('#detailsPrice'), user, { history: d.priceHistory });
     // The field and its directions: public/js/field-picker.js (1 to 5 directions; save stays faded until there is one).
     const from = pending ? pending.proposed : f;
     dPick = { main: from.fieldId || null, extras: [...(from.extraFields || [])], directions: [...(from.directions || [])], other: { ...(from.directionOther || {}) }, suggestion: d.story.fieldSuggestion || '' };

@@ -67,17 +67,16 @@ describe('payout details', () => {
     assert.equal((await seeker.api('/me/payout', { method: 'PUT', body: { name: 'Sam Seeker', iban: GOOD_IBAN, currentPassword: 'test-pass-12345' } })).error, 'not_a_mentor');
   });
 
-  test('a mentor without payout details is approved but hidden and not bookable', async () => {
-    assert.equal((await client(base).api('/experts')).experts.length, 0);
-    assert.equal((await client(base).api(`/experts/${aId}`)).status, 404);
-    const r = await seeker.api('/bookings', { method: 'POST', body: { mentorId: aId, question: longQuestion('Can I book someone with no payout details?') } });
-    assert.equal(r.status, 404);
+  test('a mentor without payout details is approved and shown: a bank account is not needed to be listed', async () => {
+    assert.equal((await client(base).api('/experts')).experts.length, 2);
+    assert.equal((await client(base).api(`/experts/${aId}`)).status, 200);
     const me = (await mentorA.api('/me')).user;
     assert.equal(me.verificationStatus, 'verified');
     assert.equal(me.hasPayoutDetails, false);
+    assert.equal(me.isListedMentor, true);
   });
 
-  test('saving accepts spaces and lower case, stores the IBAN encrypted, and lists the mentor', async () => {
+  test('saving accepts spaces and lower case, and stores the IBAN encrypted', async () => {
     const r = await mentorA.api('/me/payout', { method: 'PUT', body: { name: '  Nino   Beridze ', iban: 'ge29 nb00 0000 0101 9049 17', currentPassword: 'test-pass-12345' } });
     assert.equal(r.status, 200);
     assert.equal(r.iban, 'GE29 NB00 0000 0101 9049 17');
@@ -88,7 +87,7 @@ describe('payout details', () => {
     assert.match(db.payout_iban_enc, /^v1:/);
     assert.ok(!db.payout_iban_enc.includes('GE29') && !db.payout_iban_enc.includes('0101904917'), 'IBAN is not stored in clear text');
     assert.equal(db.payout_iban_last4, '4917');
-    assert.equal((await client(base).api('/experts')).experts.length, 2, 'both mentors are listed now');
+    assert.equal((await client(base).api('/experts')).experts.length, 2, 'both mentors are listed, as before');
   });
 
   test('only the mentor and admins can read the IBAN', async () => {

@@ -188,10 +188,10 @@ describe('mentor application and approval', () => {
     const me = (await ids.mentorClient.api('/me')).user;
     assert.equal(me.verificationStatus, 'verified');
 
-    // Approved is not enough: without payout details the mentor stays hidden and cannot be booked.
-    assert.equal((await client(base).api('/experts')).experts.length, 0);
-    const early = await ids.seekerClient.api('/bookings', { method: 'POST', body: { mentorId: ids.mentor, question: longQuestion('Is a mentor without payout details bookable?') } });
-    assert.equal(early.status, 404);
+    // Approved is enough to be shown: payout details are not needed for that (they are asked for at the first withdrawal).
+    assert.equal(me.hasPayoutDetails, false);
+    assert.equal(me.isListedMentor, true);
+    assert.equal((await client(base).api('/experts')).experts.length, 1);
     await addPayoutDetails(ids.mentorClient);
   });
 

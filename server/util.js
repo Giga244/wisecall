@@ -33,8 +33,8 @@ function meProfile(user) {
   // The encrypted IBAN never leaves the server through this; owners fetch it from /api/me/payout.
   const { passwordHash, resetTokenHash, resetTokenExpiresAt, emailVerifyCodeHash, emailVerifyCodeExpiresAt, payoutIbanEnc, ...rest } = user;
   return {
-    // needsPayout: payout details are still needed to be listed (a mentor who answers for free needs none)
-    ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), needsPayout: user.price !== 0 && !payoutIbanEnc, needsAge: !user.birthYm, hasPassword: Boolean(passwordHash), photoUrl: photoUrl(user), isListedMentor: isListable(user),
+    // (payout details are never needed to be shown on the site: a mentor adds them when they withdraw, server/withdrawals.js)
+    ...rest, hasPayoutDetails: Boolean(payoutIbanEnc), needsAge: !user.birthYm, hasPassword: Boolean(passwordHash), photoUrl: photoUrl(user), isListedMentor: isListable(user),
     verificationState: verificationState(user),
     // (the About as the person wrote it: empty while a mentor's bio is only the copy of their path, server/mentorStory.js ownAbout)
     about: require('./mentorStory').ownAbout(user),
@@ -52,7 +52,7 @@ function meProfile(user) {
 function isListable(user) {
   return Boolean(user) && (user.role === 'mentor' || user.role === 'both') &&
     user.price !== null && user.price !== undefined && Boolean(user.niche) && Boolean(user.roleTitle) &&
-    user.verificationStatus === 'verified' && (user.price === 0 || Boolean(user.payoutIbanEnc)) && user.hasFailedRequiredStep === false && // (free: no bank needed)
+    user.verificationStatus === 'verified' && user.hasFailedRequiredStep === false && // (no bank account needed to be shown: it is asked for at the first withdrawal)
     !user.deletionRequestedAt && !user.deletedAt; // (an account being deleted is closed at once)
 }
 

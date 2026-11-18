@@ -25,6 +25,11 @@
 .pa-status .linklike { margin-left: 6px; }
 .bal-holds { margin: 4px 0 12px; padding-left: 18px; }
 .bal-withdraw { display: grid; gap: 10px; max-width: 420px; margin: 8px 0 4px; }
+/* (no bank account saved yet: the Withdraw form asks for it right there) */
+.bal-bank { display: grid; gap: 10px; margin: 0; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); min-width: 0; }
+.bal-bank legend { font-weight: 700; padding: 0 6px; }
+.bal-bank p { margin: 0; }
+.bal-bank label { display: grid; gap: 4px; }
 .wd-held { font-size: 1.35rem; margin: 6px 0 12px; }
 .mv-field-form { display: grid; gap: 10px; max-width: 420px; margin-top: 8px; }
 .mv-field-form label.check { display: flex; gap: 8px; align-items: center; }

@@ -1,6 +1,6 @@
 // Which mode the site is in. config.LAUNCH_MODE is "prelaunch" or "live":
 //   - set explicitly with LAUNCH_MODE=prelaunch or LAUNCH_MODE=live, that is what it is;
-//   - left empty ("auto"), it is prelaunch while nobody can be booked (no mentor is verified, with payout details saved)
+//   - left empty ("auto"), it is prelaunch while nobody can be booked (no mentor is approved yet: a bank account is not needed to be listed)
 //     and live from the moment there is at least one.
 // This file keeps the number of bookable mentors up to date (config.LISTED_MENTORS).
 const { query } = require('./db');

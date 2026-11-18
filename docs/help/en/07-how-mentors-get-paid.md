@@ -11,7 +11,7 @@
 - **Paid out**: what we have sent you.
 - **Owed back**: if a buyer was refunded after you were paid for that answer; it is deducted from your next withdrawal.
 
-**How to withdraw:** press **Withdraw** once your available balance is **100 ₾ or more**. You withdraw the whole available amount (minus anything owed back), and you confirm with your password (if you sign in with Google, sign in again first). One request at a time. Our team sends it by **bank transfer** to the Georgian IBAN in **Settings → Payouts**, and you get an email with the bank reference. If a request can't be sent, you get an email with the reason and the money is available again.
+**How to withdraw:** press **Withdraw** once your available balance is **100 ₾ or more**. You withdraw the whole available amount (minus anything owed back), and you confirm with your password (if you sign in with Google, sign in again first). One request at a time. **No bank account saved yet?** The Withdraw form asks for it right there (the account holder’s name and your Georgian IBAN), and then your request goes on; you can also add it earlier in **Settings → Payouts**. Our team sends the money by **bank transfer** to that IBAN, and you get an email with the bank reference. If a request can't be sent, you get an email with the reason and the money is available again.
 
 **Closing your mentor account?** Then you can withdraw any amount above zero.
 
