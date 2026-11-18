@@ -198,13 +198,24 @@ window.SettingsProfile = (function () {
     loaded = values();
   }
 
+  // What is wrong with "About me" is said right under it (and the box is in focus); nothing in it is ever cleared.
+  let bioDraft = null;
+  function bioError(text) {
+    const line = $('bioError');
+    line.textContent = text || '';
+    line.hidden = !text;
+    $('bio').setAttribute('aria-invalid', text ? 'true' : 'false');
+    if (text) { $('bio').scrollIntoView({ block: 'center' }); $('bio').focus({ preventScroll: true }); }
+  }
+
   async function save(ev) {
     ev.preventDefault();
     const error = $('profileError');
     error.textContent = '';
+    bioError('');
     const v = values();
     if (!v.name) { error.textContent = t('profile.err.name'); return; }
-    if (v.bio.length > 2000) { error.textContent = t('profile.err.bioLong'); return; }
+    if (v.bio.length > 2000) { bioError(t('profile.err.bioLong')); return; }
     if (v.languages.length > MAX_LANGUAGES) { $('profileMore').open = true; error.textContent = fill(t('profile.err.languages'), { n: MAX_LANGUAGES }); return; }
     try {
       const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -216,15 +227,20 @@ window.SettingsProfile = (function () {
       Object.assign(user, data.user);
       // What was saved may differ a little from what was typed (spaces removed, links completed): show what is stored.
       fillForm();
+      if (bioDraft) bioDraft.saved($('bio').value); // (saved: the draft of "About me" is done)
       WisecallNav.showToast(t('toast.saved'));
     } catch (e) {
+      // (no answer at all: said plainly; what was typed stays, and as a draft)
+      if (!e || !e.code) { error.textContent = t('apply.err.network'); return; }
       // "About me" changed elsewhere since this page was opened: what was typed stays in the box; the next save replaces the newer text,
       // knowingly (or a reload shows it)
       if (e.code === 'bio_changed') {
         if (e.data && typeof e.data.bio === 'string') { user.about = e.data.bio; loaded.bio = e.data.bio.trim(); }
-        error.textContent = t('profile.err.bioChanged');
+        bioError(t('profile.err.bioChanged'));
         return;
       }
+      // (about "About me": under the box itself)
+      if ((e.data && e.data.field === 'bio') || e.code === 'bio_too_long') { bioError(t({ contact_details: 'story.err.contact', offensive: 'story.err.offensive', bio_too_long: 'profile.err.bioLong' }[e.code] || 'toast.error')); return; }
       const map = { contact_details: 'story.err.contact', offensive: 'story.err.offensive', invalid_linkedin_url: 'profile.err.linkedin', invalid_website_url: 'profile.err.website', bio_too_long: 'profile.err.bioLong', invalid_language: 'profile.err.language', missing_fields: 'profile.err.name', mentor_profile_must_be_public: 'profile.visibility.lockedMentor' };
       error.textContent = t(map[e.code] || 'toast.error');
       if (['invalid_linkedin_url', 'invalid_website_url', 'invalid_language', 'mentor_profile_must_be_public'].includes(e.code)) $('profileMore').open = true; // (the field is under "More profile details")
@@ -234,10 +250,15 @@ window.SettingsProfile = (function () {
   function init(currentUser) {
     user = currentUser; // (isListedMentor: a mentor buyers can book, whose profile has to stay public)
     fillForm();
+    // "About me" is never lost: a draft is kept as it is typed and put back after a failed save or a reload (public/js/drafts.js)
+    if (window.WisecallDrafts) {
+      WisecallDrafts.user(user.id);
+      bioDraft = WisecallDrafts.bindText($('bio'), 'bio', { note: $('bioDraftNote') });
+    }
     $('profileForm').addEventListener('submit', save);
     $('profileForm').addEventListener('input', (ev) => {
       if (ev.target.id === 'username') return;
-      if (ev.target.id === 'bio') drawBioCount();
+      if (ev.target.id === 'bio') { drawBioCount(); if (ev.isTrusted !== false) bioError(''); }
       if (ev.target.id === 'name') drawPhoto();
       if (ev.target.id === 'profileVisibility') drawVisibilityHint();
       drawPreview();

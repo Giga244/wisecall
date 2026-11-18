@@ -113,8 +113,11 @@ if (!useFakeVideo) {
 app.use('/api', csrfGuard);
 // (an article written in Admin is long, and a Georgian letter is three bytes: its own, larger limit; server/articles.js checks the lengths)
 app.use('/api/admin/articles', express.json({ limit: '300kb' }));
+// (a draft is a whole text, with what was saved before it: server/drafts.js checks the lengths)
+app.use('/api/me/drafts', express.json({ limit: '150kb' }));
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
+app.use('/api', require('./saveAlerts').middleware); // (a signed-in user's save that fails: the owner is emailed, server/saveAlerts.js)
 app.use(require('./attribution').capture); // (where visitors come from: a first-party cookie, see server/attribution.js)
 
 const authLimit = (max) => rateLimit({ windowMs: 15 * 60 * 1000, max });
@@ -217,6 +220,7 @@ app.use('/api/contact', require('./routes/contact'));
 app.use('/api/waitlist', require('./routes/waitlist'));
 app.use('/api/me/2fa', rateLimit({ windowMs: 15 * 60 * 1000, max: 30 }));
 app.use('/api/me/2fa', require('./routes/twoFactorUser'));
+app.use('/api/me/drafts', rateLimit({ windowMs: 60 * 60 * 1000, max: 900 }), require('./routes/drafts')); // (kept as a person types: public/js/drafts.js)
 app.use('/api/me', require('./routes/me'));
 app.use('/api', require('./routes/profileSections'));
 app.use('/api', require('./routes/profiles'));

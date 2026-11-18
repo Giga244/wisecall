@@ -275,6 +275,7 @@
       <form class="apply-step" data-step="1" novalidate>
         <h1 tabindex="-1">${esc(t('story.title'))}</h1>
         <p class="apply-lead">${esc(t('story.lead'))}</p>
+        <p class="note-box story-draft-note" data-story-draft-note role="status" hidden>${esc(t('draft.restoredStep'))}</p>
         ${WisecallStoryForm.html(f, { limits: v.limits.story, startTags: v.startTags || [], prefix: 'ap', oldStory: pathDone ? '' : (f.story || ''), aboutOptional: optional('bio') })}
         ${nav(1)}
       </form>`;
@@ -745,6 +746,37 @@
     aboutDraftTimer = setTimeout(() => { if (form.isConnected) saveAbout(form).catch(() => {}); }, 600);
   }
 
+  // Step 2 is never lost (public/js/drafts.js, key "apply-story"): what is typed is kept as a draft, in this browser and on the server,
+  // and put back after a failed save, a reload, or coming back from a later step; field by field, only over what the server still has
+  // from when it was typed (WisecallStoryForm.merge). Cleared when the step is saved whole.
+  let storySaved = null; // (the step's values as the server has them: the form as drawn)
+  function wireStoryDraft(form) {
+    if (!window.WisecallDrafts) return;
+    WisecallDrafts.user(user && user.id);
+    const parse = (text) => { try { return JSON.parse(text); } catch (e) { return null; } };
+    const now = () => JSON.stringify(WisecallStoryForm.read(form));
+    storySaved = now();
+    const current = JSON.parse(storySaved);
+    const note = form.querySelector('[data-story-draft-note]');
+    const keep = () => { if (now() === storySaved) WisecallDrafts.clear('apply-story'); else WisecallDrafts.write('apply-story', now(), storySaved); };
+    const putBack = (d) => {
+      const values = d && parse(d.value);
+      const m = values ? WisecallStoryForm.merge(current, d.base ? parse(d.base) : null, values) : { changed: false };
+      if (!m.changed) return false;
+      WisecallStoryForm.restore(root, m.values);
+      if (note) note.hidden = false;
+      keep();
+      return true;
+    };
+    const local = WisecallDrafts.read('apply-story');
+    if (!putBack(local)) {
+      if (local) WisecallDrafts.clear('apply-story');
+      WisecallDrafts.readServer('apply-story').then((d) => { if (form.isConnected && now() === storySaved) putBack(d); });
+    }
+    form.addEventListener('input', (ev) => { if (ev.isTrusted !== false && note) note.hidden = true; keep(); });
+    form.addEventListener('click', (ev) => { if (ev.target.closest('[data-start-tag]')) keep(); });
+  }
+
   // Saves what the current step holds. check: also refuse to move on while something this step needs is missing.
   async function saveStep(check) {
     let form = root.querySelector('form.apply-step');
@@ -780,6 +812,8 @@
         if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
         return false;
       }
+      // (saved whole: the draft is done. A step that is saved but not complete yet keeps nothing more than the server has.)
+      if (window.WisecallDrafts) { WisecallDrafts.clear('apply-story'); storySaved = JSON.stringify(story); }
       // (all three blocks, each long enough; or none of them while a story written before still counts)
       const problem = WisecallStoryForm.pathProblem(story, v.limits.story, { oldStoryOk: oldStoryOk() });
       // "შენ შესახებ", at least 150 characters: only "Save and continue" asks (a draft is saved however short it is); never asked of an
@@ -1162,7 +1196,10 @@
       });
       Object.entries(ERROR_INPUT).forEach(([n, id]) => { const el = form.querySelector('#' + id); if (el) el.addEventListener('input', () => fieldError(form, n, '')); });
     }
-    if (current === 1) WisecallStoryForm.wire(form); // (the counters, and "at most 3" for the starting-point tags)
+    if (current === 1) {
+      WisecallStoryForm.wire(form); // (the counters, and "at most 3" for the starting-point tags)
+      wireStoryDraft(form);
+    }
     if (current === 2) {
       const input = form.price;
       const out = form.querySelector('#apPriceYou') || root.querySelector('#apPriceYou');

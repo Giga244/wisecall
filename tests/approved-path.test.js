@@ -120,7 +120,9 @@ describe('the page', () => {
       assert.match(src, new RegExp(`querySelector\\('${form}'\\);\\s+err\\.textContent = '';[\\s\\S]{0,260}?if \\(!\\(await storyFirst\\(err\\)\\)\\) return;`), form);
     }
     assert.match(src, /const carry = storyDirty\(\) \? WisecallStoryForm\.read\(storyForm\(\)\) : null;/);
-    assert.match(src, /WisecallStoryForm\.restore\(box, draft\.values\)/);
+    assert.match(src, /if \(carry\) \{ WisecallStoryForm\.restore\(box, carry\);/);
+    // (a draft kept in the browser or on the server goes back field by field, over what the server still has from when it was typed)
+    assert.match(src, /WisecallStoryForm\.merge\(current, draft\.base, draft\.values\)/);
     // the field's own line under each "My path" block
     const form = fs.readFileSync(path.join(ROOT, 'public/js/story-form.js'), 'utf8');
     assert.match(form, /data-field-error="\$\{key\}"/);

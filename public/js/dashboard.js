@@ -10,6 +10,7 @@
     return;
   }
   const isMentor = user.role === 'mentor' || user.role === 'both';
+  if (window.WisecallDrafts) WisecallDrafts.user(user.id); // (drafts of answers are kept for this person, here and on the server)
   const { answerMin, answerMax } = await WisecallI18n.getConfig(); // how long an answer must be (the server decides)
 
   const askedList = document.getElementById('askedList');
@@ -315,6 +316,7 @@
                 <textarea id="answer-${b.id}" rows="7" maxlength="${answerMax}" placeholder="${escapeHtml(t('dash.answer.placeholder'))}" aria-describedby="answer-meta-${b.id} answer-error-${b.id}" required></textarea>
                 <div class="q-meta" id="answer-meta-${b.id}"><span class="a-help"></span><span class="a-count"></span></div>
                 <p class="form-error" id="answer-error-${b.id}" role="alert"></p>
+                <p class="hint draft-note" role="status" hidden>${escapeHtml(t('draft.restored'))}</p>
                 <button type="submit" class="btn btn-primary btn-sm">${t('dash.answer.check')}</button>
               </div>
               <div class="answer-review" hidden>
@@ -379,6 +381,10 @@
       };
       textarea.addEventListener('input', () => { errorEl.textContent = ''; count(); });
       count();
+      // The answer is never lost: a draft is kept as it is typed (here and on the server) and put back when the list is drawn again, after
+      // a failed send or a reload; cleared only when the answer is sent (public/js/drafts.js).
+      const draftNote = form.querySelector('.draft-note');
+      const answerDraft = window.WisecallDrafts ? WisecallDrafts.bindText(textarea, `answer:${form.dataset.id}`, { note: draftNote }) : null;
 
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
@@ -400,11 +406,13 @@
         sendError.textContent = '';
         try {
           await WisecallAPI.apiFetch(`/bookings/${form.dataset.id}/answer`, { method: 'POST', body: { answer: textarea.value.trim() } });
+          if (answerDraft) answerDraft.clear(); // (sent: nothing to keep)
           WisecallNav.showToast(t('toast.answerSent'));
           load();
         } catch (e) {
           const map = { answer_too_short: 'dash.answer.tooShort', answer_repetitive: 'dash.answer.err.repetitive', answer_too_long: 'dash.answer.err.long', already_answered: 'dash.answer.err.already', deadline_passed: 'dash.answer.err.deadline', declined: 'dash.answer.err.declined', contact_blocked: 'safety.contactBlocked' };
-          sendError.textContent = e.code === 'contact_blocked' ? WisecallAPI.contactBlockedText(e.data && e.data.kinds) : t(map[e.code] || 'toast.error');
+          // (no answer from the server at all: said plainly; the text stays in the box, and as a draft)
+          sendError.textContent = e.code === 'contact_blocked' ? WisecallAPI.contactBlockedText(e.data && e.data.kinds) : t(map[e.code] || (e.code ? 'toast.error' : 'apply.err.network'));
           btn.disabled = false;
           if (e.code === 'already_answered' || e.code === 'declined') load();
         }

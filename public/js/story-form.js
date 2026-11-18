@@ -9,6 +9,7 @@
 //   WisecallStoryForm.aboutProblem(values, limits) -> null | { code, left }; aboutError(root, text, { focus }); aboutText(problem, limits)
 //   WisecallStoryForm.pathProblems(values, limits) -> [{ field, code, left }] (each block's own reason); problemText(p, limits)
 //   WisecallStoryForm.fieldError(root, field, text, { focus }) / clearErrors(root): the line under a field; restore(root, values): typed text back
+//   WisecallStoryForm.merge(current, base, draft) -> { values, changed }: which fields of a draft go back over what the server has
 //   WisecallStoryForm.errorText(error)      -> words for a server answer (error.code, error.data.field)
 (function () {
   const t = (k) => WisecallI18n.t(k);
@@ -241,6 +242,23 @@
     if (Array.isArray(values.startTags)) form.querySelectorAll('[data-start-tag]').forEach((b) => b.setAttribute('aria-pressed', String(values.startTags.includes(b.dataset.startTag))));
   }
 
+  // A draft over what the server has now, field by field: a field of the draft goes back when it differs from the server's and the
+  // server still has what it had when the draft was typed (base). A field saved since (here, on another device, or by a save that took
+  // the rest of the form but refused one field) is newer than the draft and stays. -> { values, changed }
+  const DRAFT_FIELDS = ['pathStart', 'pathHow', 'pathNow', 'about', 'sampleQuestion', 'sampleReply', 'startTags', 'helpPoints', 'workLinks'];
+  function merge(current, base, draft) {
+    const same = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+    const values = { ...current };
+    let changed = false;
+    for (const f of DRAFT_FIELDS) {
+      if (!draft || draft[f] === undefined || same(draft[f], current[f])) continue;
+      if (base && !same(base[f], current[f])) continue;
+      values[f] = draft[f];
+      changed = true;
+    }
+    return { values, changed };
+  }
+
   // "შენ შესახებ" before "Next" and before sending: at least 150 characters of real writing. -> null | { code, left }
   function aboutProblem(values, limits) {
     const min = (limits && limits.aboutMin) || 150;
@@ -285,5 +303,5 @@
     return name ? root.querySelector(`[data-story-form] [name="${name}"]`) : null;
   }
 
-  window.WisecallStoryForm = { html, wire, read, pathProblem, pathProblems, problemText, fieldError, clearErrors, restore, aboutProblem, aboutError, aboutText, errorText, knows, fieldOf };
+  window.WisecallStoryForm = { html, wire, read, merge, pathProblem, pathProblems, problemText, fieldError, clearErrors, restore, aboutProblem, aboutError, aboutText, errorText, knows, fieldOf };
 })();

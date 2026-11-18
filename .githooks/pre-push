@@ -1,0 +1,5 @@
+#!/bin/sh
+# Blocks a push while a user flow is broken: sign-up, the mentor application to "sent", an approved mentor's "ჩემი გზა" and directions,
+# My details, password reset, and asking and answering a question (e2e/user-flows.spec.js, about a minute, in a real browser against
+# the TEST database). Installed by `npm install` (scripts/install-hooks.js). The whole test suite is still run by hand before a push.
+node scripts/pre-push.js || { echo "Push blocked: a user flow test failed (see above). Fix it, or run 'npm run test:flows' to see it again."; exit 1; }

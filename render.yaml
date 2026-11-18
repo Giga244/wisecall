@@ -71,6 +71,9 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+      # Who is emailed when a user's save fails (server/saveAlerts.js); empty: the admins above.
+      - key: ALERT_EMAIL
+        sync: false
       # Flitt (docs/BANK-GOLIVE.md section 0): asked for here, set PAYMENT_PROVIDER=flitt on launch day.
       - key: FLITT_MERCHANT_ID
         sync: false

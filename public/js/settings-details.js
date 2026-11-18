@@ -19,15 +19,21 @@
   const storyForm = () => (box ? box.querySelector('#storyForm') : null);
   const storyNow = () => { const f = storyForm(); return f ? JSON.stringify(WisecallStoryForm.read(f)) : null; };
   const storyDirty = () => { const now = storyNow(); return Boolean(now) && savedStory !== null && now !== savedStory; };
-  const draftKey = () => `wisecall_story_draft_${user && user.id}`;
+  // (the draft: in this browser and, a moment later, on the server: public/js/drafts.js, key "story". The key of the first version of
+  // this, in this browser only, is still read once.)
+  const oldDraftKey = () => `wisecall_story_draft_${user && user.id}`;
+  const parse = (text) => { try { return JSON.parse(text); } catch (e) { return null; } };
   function keepDraft() {
-    try {
-      if (storyDirty()) localStorage.setItem(draftKey(), JSON.stringify({ base: savedStory, values: WisecallStoryForm.read(storyForm()), at: Date.now() }));
-      else localStorage.removeItem(draftKey());
-    } catch (e) { /* storage unavailable: the page still keeps it until it is left */ }
+    try { localStorage.removeItem(oldDraftKey()); } catch (e) { /* none */ }
+    if (storyDirty()) WisecallDrafts.write('story', JSON.stringify(WisecallStoryForm.read(storyForm())), savedStory);
+    else WisecallDrafts.clear('story');
   }
+  // -> { values, base } | null   (base: the form's values when the draft was typed)
+  const draftOf = (d) => { const values = d && parse(d.value); return values ? { values, base: d.base ? parse(d.base) : null } : null; };
   function readDraft() {
-    try { const d = JSON.parse(localStorage.getItem(draftKey()) || 'null'); return d && d.values ? d : null; } catch (e) { return null; }
+    const d = draftOf(WisecallDrafts.read('story'));
+    if (d) return d;
+    try { const old = JSON.parse(localStorage.getItem(oldDraftKey()) || 'null'); return old && old.values ? { values: old.values, base: old.base ? parse(old.base) : null } : null; } catch (e) { return null; }
   }
   const showDraftNote = (on) => { const n = box.querySelector('#storyDraftNote'); if (n) n.hidden = !on; };
 
@@ -42,6 +48,7 @@
 
   async function init(el, opts) {
     box = el; user = opts.user; goto = opts.goto;
+    WisecallDrafts.user(user && user.id);
     await draw();
     // (from the dashboard's "add your path" card: straight to that card)
     if (window.location.hash === '#story') { const el = box.querySelector('#story'); if (el) el.scrollIntoView({ block: 'start' }); }
@@ -154,12 +161,24 @@
     wire();
     // What the server has; then what was typed and not saved, back in the form: from before the page was drawn again, or a draft kept in
     // this browser (only while the server still has what it had when the draft was typed: a newer save from elsewhere wins).
+    // (a draft goes back field by field, only over what the server still has from when it was typed: WisecallStoryForm.merge)
     savedStory = storyNow();
-    const draft = carry ? { values: carry } : readDraft();
-    if (draft && (carry || draft.base === savedStory)) {
-      WisecallStoryForm.restore(box, draft.values);
+    const current = JSON.parse(savedStory);
+    const putBack = (draft) => {
+      const m = draft ? WisecallStoryForm.merge(current, draft.base, draft.values) : { changed: false };
+      if (!m.changed) return false;
+      WisecallStoryForm.restore(box, m.values);
       showDraftNote(storyDirty());
-    } else if (draft) { try { localStorage.removeItem(draftKey()); } catch (e) { /* none */ } }
+      keepDraft();
+      return true;
+    };
+    if (carry) { WisecallStoryForm.restore(box, carry); showDraftNote(storyDirty()); keepDraft(); return; }
+    const local = readDraft();
+    if (putBack(local)) return;
+    if (local) WisecallDrafts.clear('story'); // (everything in it was saved since, or is older than what is saved)
+    // (nothing in this browser: a draft kept on the server, from another device or an earlier visit)
+    const form = storyForm();
+    WisecallDrafts.readServer('story').then((d) => { if (storyForm() === form && !storyDirty()) putBack(draftOf(d)); });
   }
 
   function licenceForm(t) {

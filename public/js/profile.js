@@ -418,10 +418,22 @@
   let formBack = false; // the payment did not happen: the form is shown again (also after the language changes)
   // What the buyer has typed so far, kept when the page is redrawn and (per mentor, for this visit) while they are at the bank, so a
   // cancelled or failed payment does not cost them their question.
+  // (and as a draft, public/js/drafts.js: in this browser beyond this visit, and on the server for a signed-in person, so a reload, a
+  // closed tab or another device never costs them their question; cleared only when the question is sent)
   const draftKey = `wisecall_question_${expert.id}`;
+  const questionKey = `question:${expert.id}`;
+  if (window.WisecallDrafts) WisecallDrafts.user(user && user.id);
   const stored = {
-    get() { try { return sessionStorage.getItem(draftKey) || ''; } catch (e) { return ''; } },
-    set(v) { try { if (v) sessionStorage.setItem(draftKey, v); else sessionStorage.removeItem(draftKey); } catch (e) { /* storage not available */ } }
+    get() {
+      let v = '';
+      try { v = sessionStorage.getItem(draftKey) || ''; } catch (e) { /* storage not available */ }
+      if (!v && window.WisecallDrafts) { const d = WisecallDrafts.read(questionKey); if (d) v = d.value; }
+      return v;
+    },
+    set(v) {
+      try { if (v) sessionStorage.setItem(draftKey, v); else sessionStorage.removeItem(draftKey); } catch (e) { /* storage not available */ }
+      if (window.WisecallDrafts) { if (v) WisecallDrafts.write(questionKey, v); else WisecallDrafts.clear(questionKey); }
+    }
   };
   let draft = stored.get();
   // A discount code from a live session (the link in its email or the dashboard adds ?code=...).
@@ -558,6 +570,15 @@
     const box = document.getElementById('question');
     box.value = draft;
     box.addEventListener('input', () => { draft = box.value; stored.set(draft); });
+    // (nothing typed in this browser: a draft kept on the server, from another device or an earlier visit, is put back)
+    if (!draft && user && window.WisecallDrafts) {
+      WisecallDrafts.readServer(questionKey).then((d) => {
+        if (!d || !d.value || box.value || !box.isConnected) return;
+        box.value = d.value;
+        draft = d.value;
+        box.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
     const count = () => {
       const n = WisecallAPI.textLength(box.value);
       const el = document.getElementById('qCount');
@@ -638,8 +659,10 @@
       const limits = { too_many_unpaid: 'expert.err.tooManyUnpaid', too_many_bookings: 'expert.err.tooManyBookings', email_not_verified: 'expert.err.freeVerify', free_limit_mentor: 'expert.err.freeMentor', free_limit_total: 'expert.err.freeTotal', free_full: 'expert.freeFull' };
       if (free) { WisecallTurnstile.reset(document.getElementById('askForm')); const human = WisecallTurnstile.errorText(e.code); if (human) { errorEl.textContent = human; return; } }
       if (/^(invalid_code|code_)/.test(e.code || '')) { errorEl.textContent = t('live.err.' + e.code); appliedCode = null; return; }
+      // (the exact reason, under the question; no answer from the server at all is said plainly. The question stays in the box.)
       errorEl.textContent = e.code === 'question_too_short' ? t('expert.question.tooShort').replace('{n}', MIN_QUESTION)
-        : (limits[e.code] ? t(limits[e.code]).replace('{n}', (e.data && e.data.max) || '') : (e.message2 || t('expert.sendError')));
+        : (e.code === 'question_too_long' ? t('expert.question.tooLong').replace('{n}', MAX_QUESTION)
+          : (limits[e.code] ? t(limits[e.code]).replace('{n}', (e.data && e.data.max) || '') : (e.message2 || t(e.code ? 'expert.sendError' : 'apply.err.network'))));
     }
   }
 

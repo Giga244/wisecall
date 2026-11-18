@@ -67,7 +67,9 @@ describe('what the page does with it', () => {
 
   test('the question is kept for this visit, per mentor (sessionStorage, guarded), restored, and cleared once it is paid', () => {
     assert.match(js, /wisecall_question_\$\{expert\.id\}/);
-    assert.match(js, /try \{ return sessionStorage\.getItem\(draftKey\)/);
+    assert.match(js, /try \{ v = sessionStorage\.getItem\(draftKey\) \|\| ''; \}/);
+    // (and beyond this visit, as a draft: in this browser and, signed in, on the server; public/js/drafts.js)
+    assert.match(js, /if \(v\) WisecallDrafts\.write\(questionKey, v\); else WisecallDrafts\.clear\(questionKey\);/);
     assert.match(js, /try \{ if \(v\) sessionStorage\.setItem\(draftKey, v\)/);
     assert.match(js, /last\.question/, 'the booking\'s own copy is the fallback');
     assert.match(js, /stored\.set\(''\); draft = '';/, 'cleared when it was sent');

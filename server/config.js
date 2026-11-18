@@ -167,6 +167,9 @@ const config = {
 
   // ADMIN_EMAILS is a comma-separated list; the old single ADMIN_EMAIL still works.
   ADMIN_EMAILS: list(env.ADMIN_EMAILS || env.ADMIN_EMAIL),
+  // Who is emailed when a signed-in user's save fails on the server (server/saveAlerts.js): ALERT_EMAIL, a comma-separated list. Left
+  // empty, the admins (ADMIN_EMAILS) get it.
+  ALERT_EMAILS: list(env.ALERT_EMAIL),
   // Admin accounts must pass a second step (an authenticator app) before any admin action. "required" is the default; "off" exists only for
   // automated tests and is refused in production. A verified session lasts ADMIN_2FA_SESSION_HOURS, then the code is asked for again.
   ADMIN_2FA: (env.ADMIN_2FA || 'required').trim().toLowerCase(),

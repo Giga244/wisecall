@@ -40,7 +40,7 @@ test('"About me" changed elsewhere since the page opened: the save is refused wi
   const typed = `${FULL}\n\nჩემი ახალი წინადადება.`;
   await page.fill('#bio', typed);
   await page.click('#profileForm button[type="submit"]');
-  await expect(page.locator('#profileError')).toContainText('was changed somewhere else');
+  await expect(page.locator('#bioError')).toContainText('was changed somewhere else'); // (said right under the box)
   await expect(page.locator('#bio')).toHaveValue(typed);
   expect(await bio()).toBe(`${FULL}\n\nდამატებული სხვა ჩანართიდან.`);
   await page.click('#profileForm button[type="submit"]');
@@ -55,7 +55,7 @@ test('a pasted "About me" over 2000 characters stays whole in the box and is ref
   expect(await page.locator('#bio').evaluate((el) => el.value.length)).toBe(2100);
   await expect(page.locator('#bioCount')).toHaveClass(/is-over/);
   await page.click('#profileForm button[type="submit"]');
-  await expect(page.locator('#profileError')).toContainText('2000');
+  await expect(page.locator('#bioError')).toContainText('2000'); // (said right under the box)
   expect((await bio()).length).toBeLessThan(2100);
   expect(await page.locator('#bio').evaluate((el) => el.value.length)).toBe(2100);
 });
