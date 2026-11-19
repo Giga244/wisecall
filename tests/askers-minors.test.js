@@ -116,7 +116,12 @@ describe('contact details', () => {
     assert.equal(rows[0].surface, 'question');
     assert.ok(rows[0].kinds.includes('phone'));
     assert.equal(rows[0].minor, false);
-    assert.doesNotMatch(JSON.stringify(rows[0]), /555/);
+    // Nothing of the question is kept: the row has no column for text at all, and what it has says nothing of the number or the words.
+    // (the row's own ids and time are left out of the search: they are random, and "555" turned up in one by chance on CI)
+    const { id, user_id: userId, created_at: createdAt, ...kept } = rows[0];
+    assert.ok(id && userId && createdAt);
+    assert.deepEqual(Object.keys(kept).sort(), ['kinds', 'minor', 'surface']);
+    assert.doesNotMatch(JSON.stringify(kept), /555|12 34 56|call me|university/i);
   });
 
   test('a minor is held to the strict rule: naming a messenger is refused for them, not for an adult', async () => {
