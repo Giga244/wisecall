@@ -54,7 +54,7 @@ describe('the admin page', () => {
     assert.equal(r.headers.get('cache-control'), 'no-store');
     assert.match(r.text, /data-i18n="error\.403\.title"/);
     assert.match(r.text, /You don't have access to this page/);
-    assert.match(r.text, /href="\/index\.html"[^>]*data-i18n="error\.home"/, 'a button back home');
+    assert.match(r.text, /href="\/"[^>]*data-i18n="error\.home"/, 'a button back home (to /, the home page\'s one address)');
     assert.match(r.text, /js\/header\.js/, 'in the site design');
     for (const leak of [/adminLaunchNote/, /Prelaunch/i, /LAUNCH_MODE/, /ADMIN_EMAILS/, /admin-mentors\.js/, /js\/admin\.js/, /wisecall-i18n-extra/, /admin\.launch/, /Mentor applications/, /Payouts/]) {
       assert.doesNotMatch(r.text, leak, String(leak));

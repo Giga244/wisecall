@@ -125,7 +125,7 @@ test('a sign-in from before the hint existed: the header corrects itself once, a
   await me.release();
   // and signing out takes the hint away
   await page.locator('#logoutBtn').click();
-  await page.waitForURL(/\/index\.html$/);
+  await page.waitForURL((u) => u.pathname === '/'); // (the home page's one address)
   await expect.poll(() => hintOf(ctx)).toBe('');
   await expect(page.locator('#siteHeader')).not.toHaveClass(/is-authed/);
   await ctx.close();

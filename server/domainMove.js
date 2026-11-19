@@ -22,11 +22,12 @@ const answersEverywhere = (path) => KEEP.some((re) => re.test(path));
 const hostOf = (req) => String(req.hostname || '').toLowerCase().replace(/\.$/, '');
 const siteHost = () => { try { return new URL(config.PUBLIC_URL).hostname.toLowerCase(); } catch (e) { return ''; } };
 
+// (an old domain's "www." form counts too, set or not: www.old-site.ge goes straight to PUBLIC_URL in one step, never through old-site.ge)
 function moved(host) {
   const own = siteHost();
   if (!host || !own || host === own) return false;
   if (!own.startsWith('www.') && host === `www.${own}`) return true;
-  return config.OLD_DOMAINS.includes(host);
+  return config.OLD_DOMAINS.includes(host) || (host.startsWith('www.') && config.OLD_DOMAINS.includes(host.slice(4)));
 }
 
 function redirectOldDomains(req, res, next) {

@@ -89,7 +89,9 @@ describe('/llms.txt', () => {
 
 describe('search engine verification', () => {
   test('with the codes set: both tags on the home page, in both languages, once; nowhere else', async () => {
-    for (const p of ['/', '/ka/', '/index.html']) {
+    // (/index.html is a 301 to /: one address for the home page, tests/canonical.test.js)
+    assert.equal((await fetch(`${pre.base}/index.html`, { redirect: 'manual' })).headers.get('location'), '/');
+    for (const p of ['/', '/ka/']) {
       const h = await html(pre, p);
       assert.equal((h.match(/<meta name="google-site-verification" content="g00gle-Code_123456">/g) || []).length, 1, p);
       assert.equal((h.match(/<meta name="msvalidate\.01" content="B1NGC0DE4567890">/g) || []).length, 1, p);

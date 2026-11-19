@@ -110,7 +110,7 @@
 
   function crumbsHtml() {
     return `<ol>
-      <li><a href="/index.html">${t('expert.crumb.home')}</a></li>
+      <li><a href="/">${t('expert.crumb.home')}</a></li>
       ${isMentor ? `<li><a href="/experts.html">${t('nav.browse')}</a></li>
       ${expert.niche ? (expert.niche === 'other' ? `<li><span>${escapeHtml(WisecallI18n.nicheName('other', expert.customNiche))}</span></li>` : `<li><a href="/advice/${encodeURIComponent(expert.niche)}">${escapeHtml(t('niche.' + expert.niche))}</a></li>`) : ''}` : ''}
       <li><span aria-current="page">${escapeHtml(expert.name)}</span></li>

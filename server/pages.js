@@ -56,8 +56,19 @@ function metaDescription(d, key) {
   return text ? withSettings(text) : text;
 }
 
+// Browse's filters (an old link to the home page may carry them: it is sent to /experts.html with them, see pageRoutes)
+const BROWSE_FILTERS = ['field', 'niche', 'chip', 'q', 'free', 'paid', 'country', 'years'];
+
 function languagePrefix(req, res, next) {
-  if (req.path === '/ka') return res.redirect(301, '/ka/' + (req.url.slice(3) || ''));
+  // One address per page for search engines: /ka and /en are /ka/ and /en/, and index.html is the folder's own address (/, /ka/, /en/).
+  // The query string goes along (the canonical link leaves it out anyway).
+  if (req.path === '/ka' || req.path === '/en') return res.redirect(301, `${req.path}/${req.url.slice(3) || ''}`);
+  // (an old link with Browse's filters on the home page is sent to Browse by the home page itself, in one step: not through / first)
+  const index = /^(\/(?:ka|en))?\/index\.html$/.exec(req.path);
+  if (index && (req.method === 'GET' || req.method === 'HEAD') && !BROWSE_FILTERS.some((k) => req.query[k] !== undefined)) {
+    const q = req.url.indexOf('?');
+    return res.redirect(301, `${index[1] || ''}/${q === -1 ? '' : req.url.slice(q)}`);
+  }
   if (req.path.startsWith('/ka/') && !req.path.startsWith('/ka/api/')) {
     res.locals.pageLang = 'ka';
     req.url = req.url.slice(3);
@@ -243,7 +254,11 @@ async function sendProfile(res, row, asked) {
   vars.OG_IMAGE = config.PUBLIC_URL + assets.rewrite('/og-image-1200x630.png');
   vars.PROFILE_SSR = SKELETON;
   if (u && isPublic) {
-    const title = listable ? `${u.name}, ${u.roleTitle} — Wisecall` : `${u.name} — Wisecall`;
+    // (in the page's language: a profile's own words are the same in both versions, so its title is what tells the two apart, for people
+    // and for search engines; each version names the other with hreflang)
+    // (a profile that is not a listed mentor's is never indexed: it keeps its plain title)
+    const titleIn = (l) => (listable ? `${u.name}, ${u.roleTitle} — ${l === 'ka' ? 'დასვი კითხვა' : 'Ask a question'} | Wisecall` : `${u.name} — Wisecall`);
+    const title = titleIn(lang);
     vars.TITLE = escapeHtml(title);
     // The profile's visible content, in the page itself, so search engines and link previews can read it (the page script then
     // draws the full, interactive profile over it). Only what a visitor may see: About and the headline follow their visibility.
@@ -253,7 +268,7 @@ async function sendProfile(res, row, asked) {
       : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`;
     vars.DESCRIPTION = escapeHtml(shortText(text));
     // (the preview of a bare address is Georgian: the same sentence as /ka/ writes)
-    ogFor(res, () => ({ description: shortText(listable ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price === 0 ? 'უფასოდ' : `${u.price} ₾`}. ${profile.bio || ''}` : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`) }));
+    ogFor(res, () => ({ title: titleIn('ka'), description: shortText(listable ? `დაუსვი კითხვა: ${u.name} (${u.roleTitle}), ${u.price === 0 ? 'უფასოდ' : `${u.price} ₾`}. ${profile.bio || ''}` : `${u.name} — Wisecall. ${profile.headline || profile.bio || ''}`) }));
     if (u.photoUpdatedAt) vars.OG_IMAGE = config.PUBLIC_URL + require('./util').photoUrl(u);
     const stats = listable ? (await require('./models').mentorStatsFor([u.id]))[u.id] : null;
     // (the About written into the page is the mentor's own: not the copy of their path made before, which the page shows as "ჩემი გზა")
@@ -1058,7 +1073,7 @@ function pageRoutes() {
       // Browse experts is its own page now (/experts.html, docs/CLAUDE-CODE-NEW-HOME.md): an old link to the home page with Browse's filters
       // (?field=, ?niche= from earlier emails, ?q=...) goes there with them. (A bare /#experts is moved by the page itself: the server never
       // sees the part after #.)
-      const BROWSE = ['field', 'niche', 'chip', 'q', 'free', 'paid', 'country', 'years'];
+      const BROWSE = BROWSE_FILTERS;
       if (BROWSE.some((k) => req.query[k] !== undefined)) {
         const qs = new URLSearchParams();
         for (const k of BROWSE) if (typeof req.query[k] === 'string') qs.set(k, req.query[k].slice(0, 200));
@@ -1270,7 +1285,7 @@ function seoRoutes() {
 
   router.get('/sitemap.xml', async (req, res, next) => {
     try {
-      const staticPages = [['/', 1.0], ['/about.html', 0.6], ['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/become-a-mentor.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/match', 0.6], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
+      const staticPages = [['/', 1.0], ['/experts.html', 0.9], ['/about.html', 0.6],['/faq.html', 0.6], ['/how-we-verify.html', 0.6], ['/become-a-mentor.html', 0.6], ['/help.html', 0.5], ['/contact.html', 0.4], ['/match', 0.6], ['/terms.html', 0.3], ['/privacy.html', 0.3]]
         .filter(([p]) => p === '/' || p === '/match' || fs.existsSync(path.join(PUBLIC, p)))
         // (a help article in both languages)
         .concat(require('./help').articles('en').filter((a) => require('./help').article('ka', a.slug)).map((a) => [`/help/${a.slug}`, 0.4]));

@@ -158,7 +158,7 @@ describe('the logo in the header, the menu, the footer and the emails', () => {
   test('the pages\' script draws it into a real link to the home page with a name', async () => {
     // (the browser tests look at the result; here the markup the script builds)
     const header = read('js/header.js');
-    assert.match(header, /<a href="\/index\.html" class="logo">\$\{WisecallBrand\.logoHtml\(\)\}<\/a>/);
+    assert.match(header, /<a href="\/" class="logo">\$\{WisecallBrand\.logoHtml\(\)\}<\/a>/); // (/, the home page's one address)
   });
 
   // (the sign-up code is a plain email, with no images at all, so it reaches the inbox: docs/CLAUDE-CODE-MENTOR-JOURNEY-AND-ORIGINALITY.md part 1)

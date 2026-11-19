@@ -401,7 +401,7 @@ describe('SEO, error pages and the contact form', () => {
     const { username } = (await ids.mentorClient.api('/me')).user;
     assert.match(username, /^dr-mentor/);
     const html = await (await get(`/u/${username}`)).text();
-    assert.match(html, /<title>Dr Mentor, Cardiologist — Wisecall<\/title>/);
+    assert.match(html, /<title>Dr Mentor, Cardiologist — Ask a question \| Wisecall<\/title>/); // (in the page's language: tests/canonical.test.js)
     assert.match(html, new RegExp(`rel="canonical" href="http://localhost:4551/u/${username}"`));
     assert.match(html, /name="robots" content="index, follow"/);
     const unknownRes = await get('/u/nobody-by-this-name');

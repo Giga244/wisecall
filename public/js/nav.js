@@ -197,7 +197,7 @@
       }
       both('logoutBtn', 'mmLogoutBtn').forEach((btn) => btn.addEventListener('click', async () => {
         await WisecallAPI.apiFetch('/auth/logout', { method: 'POST' });
-        window.location.href = '/index.html';
+        window.location.href = '/';
       }));
       // Emails are sent in the language saved on the account, so keep it in step with the toggle.
       document.addEventListener('wisecall:lang-changed', (ev) => {
@@ -251,7 +251,7 @@
     bar.className = 'launch-banner';
     bar.innerHTML = mentor
       ? `<span data-i18n="launch.banner.mentor">${t('launch.banner.mentor')}</span>`
-      : `<span data-i18n="launch.banner">${t('launch.banner')}</span> <a href="/index.html#join" data-i18n="wait.join">${t('wait.join')}</a>`;
+      : `<span data-i18n="launch.banner">${t('launch.banner')}</span> <a href="/#join" data-i18n="wait.join">${t('wait.join')}</a>`;
     const after = header.nextElementSibling && header.nextElementSibling.classList.contains('verify-banner') ? header.nextElementSibling : header;
     after.insertAdjacentElement('afterend', bar);
   }

@@ -138,7 +138,7 @@
       try {
         const pw = box.querySelector('#deletePassword');
         await WisecallAPI.apiFetch('/me', { method: 'DELETE', body: { password: pw ? pw.value : undefined } });
-        window.location.href = '/index.html?account=closed';
+        window.location.href = '/?account=closed';
       } catch (e) {
         btn.disabled = false;
         if (e.code === 'open_items') {

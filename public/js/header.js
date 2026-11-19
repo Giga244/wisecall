@@ -26,7 +26,7 @@
   };
   const here = window.location.pathname.replace(/^\/(?:ka|en)(?=\/|$)/, '') || '/'; // (the Georgian address /ka/... and the English /en/... are the same page)
   const onHome = here === '/' || here === '/index.html';
-  const link = (l) => l.href || (onHome ? '' : '/index.html') + l.hash; // on the home page "How it works" just scrolls; Browse and the mentors' page are their own
+  const link = (l) => l.href || (onHome ? '' : '/') + l.hash; // on the home page "How it works" just scrolls; Browse and the mentors' page are their own
 
   // The header's own words, in the page's language from its first frame (the page's dictionary arrives a moment later and writes the
   // same words; tests/header-hint.test.js keeps these equal to public/i18n/en.json and ka.json). The language as i18n.js finds it.
@@ -147,7 +147,7 @@
     <a class="skip-link" href="#main" data-i18n="a11y.skip">${w('a11y.skip')}</a>
     <header class="nav${signedIn ? ' is-authed' : ''}" id="siteHeader">
       <div class="container nav-inner">
-        <a href="/index.html" class="logo">${WisecallBrand.logoHtml()}</a>
+        <a href="/" class="logo">${WisecallBrand.logoHtml()}</a>
         <nav class="nav-links" aria-label="Main">
           ${shown.map((l) => `<a href="${link(l)}"${cls(l, true) ? ` class="${cls(l, true)}"` : ''} data-i18n="${l.key}">${w(l.key)}</a>`).join('\n          ')}
         </nav>
