@@ -1443,3 +1443,42 @@ a:not([class]) { text-decoration-thickness: 1px; }
 .nav-links a[aria-current], .nav-right .btn-ghost[aria-current], .mm-links a[aria-current], .mm-more a[aria-current] {
   color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
 .nav-right .btn-ghost { font-weight: 400; }
+
+/* ---- Checkboxes: one look everywhere (docs/CLAUDE-CODE-BROWSE-POLISH.md) ----------------------------------------------------------------
+   A real <input type="checkbox"> (so its label, the keyboard and screen readers work as they always did), drawn by us: a 22px rounded box,
+   coral with an ink tick when checked. The tick is CSS only. A checkbox that is only the click area of a chip (.check-chip) keeps its own look,
+   and the colours are the --check-* tokens, so both themes follow. */
+input[type="checkbox"]:not(.check-chip *) {
+  -webkit-appearance: none; appearance: none; flex: none; display: inline-grid; place-content: center; width: 22px; height: 22px; min-width: 0; min-height: 0; margin: 0; padding: 0;
+  border: 2px solid var(--check-line); border-radius: 7px; background: var(--check-bg); color: var(--check-tick); box-shadow: none; cursor: pointer; vertical-align: middle;
+  transition: background-color 0.12s var(--ease-out), border-color 0.12s var(--ease-out), box-shadow 0.12s var(--ease-out);
+}
+input[type="checkbox"]:not(.check-chip *)::before {
+  content: ""; width: 12px; height: 10px; background: var(--check-tick); transform: scale(0); transition: transform 0.12s ease-in-out;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+input[type="checkbox"]:not(.check-chip *):checked { background: var(--check-on); border-color: var(--check-on); }
+input[type="checkbox"]:not(.check-chip *):checked::before { transform: scale(1); }
+/* (a box that is neither on nor off: a dash) */
+input[type="checkbox"]:not(.check-chip *):indeterminate { background: var(--check-on); border-color: var(--check-on); }
+input[type="checkbox"]:not(.check-chip *):indeterminate::before { width: 10px; height: 2px; border-radius: 1px; transform: scale(1); clip-path: none; }
+input[type="checkbox"]:not(.check-chip *):focus-visible { outline: 2px solid transparent; outline-offset: 2px; box-shadow: 0 0 0 4px var(--check-ring); }
+input[type="checkbox"]:not(.check-chip *):disabled { opacity: 0.5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { input[type="checkbox"]:not(.check-chip *), input[type="checkbox"]:not(.check-chip *)::before { transition: none; } }
+/* (high-contrast modes draw it in the system's colours) */
+@media (forced-colors: active) {
+  input[type="checkbox"]:not(.check-chip *) { border-color: ButtonText; background: Canvas; }
+  input[type="checkbox"]:not(.check-chip *)::before { background: CanvasText; }
+  input[type="checkbox"]:not(.check-chip *):checked { background: Canvas; border-color: Highlight; }
+}
+
+/* ---- Scrollbars: thin and in the theme, instead of the grey bar of the system -------------------------------------------------------------
+   scrollbar-width / scrollbar-color are what Chrome and Firefox read (and newer Safari); the ::-webkit-scrollbar rules are for older Safari.
+   A row that hides its own scrollbar (the filter pills, the tabs) says so with scrollbar-width: none, which wins over this. */
+:root { scrollbar-color: var(--scroll-thumb) transparent; }
+* { scrollbar-width: thin; }
+::-webkit-scrollbar { width: 10px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+::-webkit-scrollbar-corner { background: transparent; }

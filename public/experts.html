@@ -96,8 +96,17 @@
     </aside>
     <p class="browse-note small muted" data-i18n="browse.note">Already have a rough idea of your field? Find an expert in it and ask.</p>
     <!-- (what the words name, while a student types; then the fields, or the chips of the chosen one: they scroll sideways on a phone) -->
-    <div class="field-chips" id="searchChips" role="group" hidden></div>
-    <div class="field-chips" id="fieldChips" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field"></div>
+    <!-- (each row: one line that scrolls sideways with no scrollbar, a fade at its right edge, and, on a computer, round buttons that scroll it: public/js/chips-scroll.js) -->
+    <div class="chips-scroll">
+      <div class="field-chips" id="searchChips" role="group" hidden></div>
+      <button type="button" class="chips-arrow chips-arrow-prev" data-chips-prev data-i18n-aria="browse.chipsPrev" aria-label="Scroll left" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="chips-arrow chips-arrow-next" data-chips-next data-i18n-aria="browse.chipsNext" aria-label="Scroll right" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="chips-scroll">
+      <div class="field-chips" id="fieldChips" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field"></div>
+      <button type="button" class="chips-arrow chips-arrow-prev" data-chips-prev data-i18n-aria="browse.chipsPrev" aria-label="Scroll left" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="chips-arrow chips-arrow-next" data-chips-next data-i18n-aria="browse.chipsNext" aria-label="Scroll right" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
     <div class="filters-slot" id="filtersSlot">
       <div class="filters" id="filters" role="group" data-i18n-aria="experts.filterLabel" aria-label="Filter by field">
       </div>
@@ -212,6 +221,7 @@
 <script src="/js/niche-icons.js"></script>
 <script src="/js/home.js"></script>
 <script src="/js/clamp.js"></script>
+<script src="/js/chips-scroll.js"></script>
 <script src="/js/main.js"></script>
 </body>
 </html>

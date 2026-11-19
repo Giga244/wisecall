@@ -906,6 +906,8 @@
   "browse.notify": "შემატყობინე, როცა მენტორი გამოჩნდება",
   "browse.soon.body": "აქ მენტორი ჯერ არ არის. დატოვე ელფოსტა და ერთხელ გაცნობებთ, როცა გამოჩნდება.",
   "browse.allFields": "ყველა სფერო",
+  "browse.chipsPrev": "სფეროების გადახვევა მარცხნივ",
+  "browse.chipsNext": "სფეროების გადახვევა მარჯვნივ",
   "browse.filter.paid": "ფასიანი",
   "browse.filter.country": "ქვეყანა",
   "browse.filter.years": "გამოცდილების წლები",

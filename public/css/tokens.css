@@ -94,6 +94,21 @@
   /* Google's sign-in button (Google's own light and dark button colours) */
   --gbtn-bg: #ffffff; --gbtn-border: #747775; --gbtn-ink: #1f1f1f; --gbtn-hover: #f0f0f0; --gbtn-active: #e6e6e6; --gbtn-shadow: rgba(60, 64, 67, 0.3);
 
+  /* ---- Browse experts, checkboxes, scrollbars (docs/CLAUDE-CODE-BROWSE-POLISH.md): the dark values are the approved ones, these are
+     their light twins from the palette (paper, white, line, ink, muted, coral, green) ---- */
+  --pill-bg: #ffffff;  --pill-line: #ebe7e0;  --pill-line-hover: #cdc6d9;  --pill-ink: #1e1a31;      /* a field in the filter row */
+  --pill-on-bg: #1e1a31;  --pill-on-ink: #fbfaf7;  --pill-on-count-bg: rgba(251, 250, 247, 0.16);     /* the chosen field */
+  --pill-count-bg: #f1eee8;  --pill-count-ink: #5d5873;                                               /* its count */
+  --tint-coral-bg: rgba(255, 111, 89, 0.12);  --tint-coral-ink: #b5361f;                              /* "soon", "new mentor" */
+  --arrow-bg: #ffffff;  --arrow-hover-bg: #f6f3ee;  --arrow-line: #dcd6ca;  --arrow-ink: #1e1a31;     /* the round scroll buttons */
+  --arrow-shadow: 0 6px 18px rgba(30, 26, 49, 0.14);
+  --mcard-bg: #ffffff;  --mcard-line: #ebe7e0;  --mcard-line-hover: #c9c3d6;                          /* a mentor card */
+  --mcard-name: #1e1a31;  --mcard-role: #6a6580;  --mcard-bio: #1e1a31;  --mcard-muted: #6a6580;
+  --trust-bg: rgba(27, 127, 95, 0.08);  --trust-line: rgba(27, 127, 95, 0.28);  --trust-ink: #17694f; /* trust badges on a card */
+  --check-bg: #ffffff;  --check-line: #8f8a9e;  --check-on: #ff6f59;  --check-tick: #1e1a31;          /* a checkbox (3:1 outline, WCAG 1.4.11) */
+  --check-ring: rgba(212, 63, 40, 0.4);
+  --scroll-thumb: #cfc9db;                                                                            /* the scrollbar's thumb */
+
   /* ---- Type ---- */
   --font-display: 'Bricolage Grotesque', 'Noto Sans Georgian', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Onest', 'Noto Sans Georgian', ui-sans-serif, system-ui, sans-serif;
@@ -195,6 +210,19 @@
   --gbtn-bg: #131314; --gbtn-border: #8e918f; --gbtn-ink: #e3e3e3; --gbtn-hover: #1f1f20; --gbtn-active: #2a2a2b; --gbtn-shadow: rgba(0, 0, 0, 0.5);
   --bubble-a: #ffffff; --bubble-a-ink: #25213b;
   --hero-field: #181428; --hero-field-ink: #f4f2ee; --hero-field-hint: #a9a3c2; --banner-btn: #1e1a31; --banner-btn-ink: #ffc3b8;
+  /* Browse experts, checkboxes, scrollbars: the approved dark values */
+  --pill-bg: #1e1a2e;  --pill-line: #322c4a;  --pill-line-hover: #4a4466;  --pill-ink: #d9d5e6;
+  --pill-on-bg: #f4f2ee;  --pill-on-ink: #1e1a31;  --pill-on-count-bg: rgba(30, 26, 49, 0.12);
+  --pill-count-bg: #2c2742;  --pill-count-ink: #c4bfd8;
+  --tint-coral-bg: rgba(255, 143, 125, 0.14);  --tint-coral-ink: #ffb3a6;
+  --arrow-bg: #2a2540;  --arrow-hover-bg: #342e4e;  --arrow-line: #3d3756;  --arrow-ink: #f4f2ee;
+  --arrow-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  --mcard-bg: #1c1829;  --mcard-line: #2c2840;  --mcard-line-hover: #4a4466;
+  --mcard-name: #ffffff;  --mcard-role: #c4bfd8;  --mcard-bio: #ebe8f2;  --mcard-muted: #9d97b4;
+  --trust-bg: rgba(127, 217, 184, 0.09);  --trust-line: rgba(127, 217, 184, 0.24);  --trust-ink: #a6e9cf;
+  --check-bg: #221d33;  --check-line: #77709a;  --check-on: #ff6f59;  --check-tick: #1e1a31;
+  --check-ring: rgba(255, 143, 125, 0.45);
+  --scroll-thumb: #3d3756;
 }
 
 /* Georgian: Noto Sans Georgian for headings and text (Latin letters and numbers keep the brand fonts), no negative tracking, no capitals

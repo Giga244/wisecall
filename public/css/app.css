@@ -540,7 +540,7 @@ a.reviewer:hover { color: var(--accent-text); text-decoration: underline; }
 .inbox-composer { display: grid; gap: 6px; }
 .inbox-composer textarea, .inbox-composer input[type="text"] { width: 100%; }
 .inbox-composer .checkbox-row { display: flex; gap: 8px; align-items: center; justify-content: flex-start; }
-.inbox-composer .checkbox-row input { width: auto; flex: none; }
+.inbox-composer .checkbox-row input { flex: none; }
 .composer-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .thread-closed { background: var(--gray-soft); border-radius: var(--radius-sm); padding: 10px 14px; margin: 0; }
 .inbox-rules { margin: 10px 0 0; }

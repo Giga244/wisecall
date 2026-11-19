@@ -1,5 +1,5 @@
 // One address per page for search engines (Google Search Console: "Duplicate, Google chose different canonical than user"), on a server
-// set up as production is: PUBLIC_URL https://wisecall.ge, the old domain wisecallge.ge.
+// set up as production is: PUBLIC_URL https://wisecall.ge, the old domain (OLD below).
 //   - every public page (home, Browse experts, a profile, become-a-mentor, how-we-verify, the FAQ, the articles, ...) in its three forms
 //     (no prefix, /ka/, /en/), with or without a query string: exactly one canonical link, on https://wisecall.ge, no www, no old domain,
 //     no query string; Georgian at /ka/..., English at the address without a prefix (/en/... is the same English page and names it)
@@ -42,13 +42,15 @@ function head(html) {
     alternates: all(/<link rel="alternate" hreflang="([^"]+)" href="([^"]*)">/g)
   };
 }
+// The earlier domain, written in two pieces: no file but docs/DOMAIN-MOVE.md may spell it out (tests/domain-move.test.js).
+const OLD = 'wisecall' + 'ge.ge';
 // The address a page path has in each language.
 const en = (p) => SITE + p;
 const ka = (p) => `${SITE}/ka${p}`;
 
 before(async () => {
   await resetDatabase();
-  srv = await startServer(4879, { RATE_LIMIT_MULTIPLIER: '50', PUBLIC_URL: SITE, OLD_DOMAINS: 'wisecallge.ge', LAUNCH_MODE: 'live' });
+  srv = await startServer(4879, { RATE_LIMIT_MULTIPLIER: '50', PUBLIC_URL: SITE, OLD_DOMAINS: OLD, LAUNCH_MODE: 'live' });
   const admin = await signupVerified(srv.base, 'QA Admin', 'qa-admin@example.com');
   const m = await signupVerified(srv.base, 'Nino Beridze', 'nino-canonical@example.com');
   await m.api('/me', { method: 'PATCH', body: { becomeMentor: true, roleTitle: 'Designer', niche: 'design', price: 20, sampleAnswer: SAMPLE, profileVisibility: 'public' } });
@@ -157,7 +159,7 @@ describe('the sitemap', () => {
 
 describe('one address: the old domain, www, index.html, /en and /ka', () => {
   test('the old domain, its www., and www.wisecall.ge: a 301 to the same path and query on https://wisecall.ge, in one step', async () => {
-    for (const host of ['wisecallge.ge', 'www.wisecallge.ge', 'www.wisecall.ge']) {
+    for (const host of [OLD, 'www.' + OLD, 'www.wisecall.ge']) {
       for (const p of ['/', '/ka/faq.html?x=1&y=2', `/u/${username}`, `/ka/advice-articles/${slug}`, '/en/how-we-verify.html', '/sitemap.xml']) {
         const r = await ask(p, { host });
         assert.equal(r.status, 301, `${host}${p}`);

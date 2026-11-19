@@ -55,7 +55,13 @@ const PAIRS = [
   ['--on-pastel', '--c-blush', TEXT, 'ink text on blush'], ['--on-pastel', '--c-lav', TEXT, 'ink text on lavender'], ['--on-pastel', '--sticker', TEXT, 'ink text on a white or lavender sticker'], ['--c-muted', '--c-mint', TEXT, 'muted ink on mint'],
   ['--headline-accent', '--bg', LARGE, 'the coral words of a big headline (24px and up)'], ['--on-navy-soft', '--navy', TEXT, 'muted text on the ink bands'], ['--on-navy', '--navy-card', TEXT, 'text on a card in an ink band'],
   ['--c-paper', '--c-ink', TEXT, 'paper on ink (the marquee, ink buttons)'],
-  ['--gbtn-border', '--gbtn-bg', UI, 'the Google button outline']
+  ['--gbtn-border', '--gbtn-bg', UI, 'the Google button outline'],
+  // the browse polish (docs/CLAUDE-CODE-BROWSE-POLISH.md): field pills, round arrows, mentor cards, custom checkboxes
+  ['--pill-ink', '--pill-bg', TEXT, 'a field pill'], ['--pill-on-ink', '--pill-on-bg', TEXT, 'the selected field pill'], ['--pill-count-ink', '--pill-count-bg', TEXT, 'the count in a field pill'],
+  ['--arrow-ink', '--arrow-bg', TEXT, 'the arrow of a round scroll button'], ['--arrow-ink', '--arrow-hover-bg', TEXT, 'the arrow of a hovered scroll button'],
+  ['--mcard-name', '--mcard-bg', TEXT, 'a mentor name'], ['--mcard-role', '--mcard-bg', TEXT, 'a mentor role'], ['--mcard-bio', '--mcard-bg', TEXT, 'a mentor bio'], ['--mcard-muted', '--mcard-bg', TEXT, 'no ratings yet, on a mentor card'],
+  ['--check-line', '--check-bg', UI, 'the outline of a checkbox'], ['--check-line', '--card', UI, 'the outline of a checkbox on a card'], ['--check-line', '--bg', UI, 'the outline of a checkbox on the page'],
+  ['--check-tick', '--check-on', TEXT, 'the tick of a checked checkbox']
 ];
 
 function check() {

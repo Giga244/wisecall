@@ -906,6 +906,8 @@
   "browse.notify": "Notify me when a mentor appears",
   "browse.soon.body": "No mentor here yet. Leave your email and we’ll tell you once when one is listed.",
   "browse.allFields": "All fields",
+  "browse.chipsPrev": "Scroll the fields to the left",
+  "browse.chipsNext": "Scroll the fields to the right",
   "browse.filter.paid": "Paid",
   "browse.filter.country": "Country",
   "browse.filter.years": "Years of experience",

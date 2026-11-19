@@ -309,51 +309,78 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
 .browse-page .result-count { margin: 0 auto 0 0; color: var(--ink-soft); font-size: 0.9rem; }
 .browse-page .sort-select { border: 1px solid var(--line); border-radius: var(--r-btn); background: var(--card); box-shadow: none; }
 .browse-page .browse-note { display: none; }
-/* the fields: tabs in one row that scrolls sideways; the chosen one in ink with a coral line under it */
-.browse-page .field-chips { display: flex; flex-wrap: nowrap; gap: 0 26px; margin: 18px calc(var(--gutter) * -1) 0; padding: 0 var(--gutter); overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+/* the fields: pills in one row that scrolls sideways, with no scrollbar; a fade at the right edge while there is more to see, and, on a
+   computer, round buttons that scroll it (public/js/chips-scroll.js). The chosen one is turned round (light on dark, dark on light). */
+.browse-page .chips-scroll { position: relative; margin-top: 18px; }
+.browse-page .chips-scroll:has(> .field-chips[hidden]) { display: none; }
+.browse-page .field-chips { display: flex; flex-wrap: nowrap; gap: 10px; margin: 0 calc(var(--gutter) * -1); padding: 6px var(--gutter); overflow-x: auto; scrollbar-width: none; scroll-padding: 0 var(--gutter); }
 .browse-page .field-chips::-webkit-scrollbar { display: none; }
-.browse-page .field-chips .chip { flex: 0 0 auto; min-height: 48px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--ink-soft); font-size: 0.97rem; font-weight: 400; white-space: nowrap; box-shadow: none; }
-.browse-page .field-chips .chip:hover { background: none; color: var(--ink); }
-.browse-page .field-chips .chip.active, .browse-page .field-chips .chip[aria-pressed="true"] { background: none; color: var(--ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--accent); }
+.browse-page .chips-scroll[data-more-right="true"] .field-chips { -webkit-mask-image: linear-gradient(to right, black calc(100% - min(90px, 22%)), transparent); mask-image: linear-gradient(to right, black calc(100% - min(90px, 22%)), transparent); }
+.browse-page .field-chips .chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; height: 42px; min-height: 42px; padding: 0 18px; border: 1px solid var(--pill-line); border-radius: 999px; background: var(--pill-bg); color: var(--pill-ink); font-size: 0.97rem; font-weight: 500; white-space: nowrap; box-shadow: none; transition: border-color 0.15s var(--ease-out), background-color 0.15s var(--ease-out), color 0.15s var(--ease-out); }
+.browse-page .field-chips .chip:hover { background: var(--pill-bg); border-color: var(--pill-line-hover); color: var(--pill-ink); }
+.browse-page .field-chips .chip.active, .browse-page .field-chips .chip[aria-pressed="true"] { background: var(--pill-on-bg); border-color: var(--pill-on-bg); color: var(--pill-on-ink); font-weight: 700; box-shadow: none; }
+.browse-page .field-chips .chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .browse-page .field-chips .chip > [aria-hidden="true"], .browse-page .field-chips .chip .chip-icon { display: none; }
+/* its count, and "soon" for a field nobody is in yet */
+.browse-page .field-chips .chip .chip-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 7px; border-radius: 999px; background: var(--pill-count-bg); color: var(--pill-count-ink); font-size: 12px; font-weight: 600; line-height: 1; opacity: 1; }
+.browse-page .field-chips .chip.active .chip-count, .browse-page .field-chips .chip[aria-pressed="true"] .chip-count { background: var(--pill-on-count-bg); color: var(--pill-on-ink); }
+.browse-page .field-chips .chip .chip-soon { display: inline-flex; align-items: center; height: 20px; padding: 0 9px; border: 0; border-radius: 999px; background: var(--tint-coral-bg); color: var(--tint-coral-ink); font-size: 12px; font-weight: 700; line-height: 1; }
+.browse-page .chips-arrow { display: none; }
 .browse-page .filters { margin-top: 14px; }
 .browse-page .filters select { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--card); color: var(--ink); font: inherit; font-size: 0.88rem; }
 .browse-page .field-chips .chip .badge, .browse-page .field-chips .chip small { font-size: 0.7rem; padding: 1px 7px; border: 0; background: var(--gray-soft); color: var(--ink-soft); }
-/* the mentors: rows */
-.browse-page .expert-grid { display: block; margin-top: 6px; }
-.browse-page .expert-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 22px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none;
-  box-shadow: none; transform: none; color: var(--ink); text-decoration: none; }
-.browse-page .expert-card:hover { transform: none; box-shadow: none; }
+/* the mentors: one card each, the list stays one column */
+.browse-page .expert-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 12px; }
+.browse-page .expert-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 18px 16px; border: 1px solid var(--mcard-line); border-radius: 20px; background: var(--mcard-bg);
+  box-shadow: none; transform: none; color: var(--ink); text-decoration: none; transition: border-color 0.18s var(--ease-out), transform 0.18s var(--ease-out); }
+.browse-page .expert-card:hover { border-color: var(--mcard-line-hover); transform: translateY(-2px); box-shadow: none; }
+.browse-page .expert-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .browse-page .expert-card { transition: none; } .browse-page .expert-card:hover { transform: none; } }
+@media (hover: none) { .browse-page .expert-card:hover { transform: none; } }
 @media (max-width: 1023px) { .browse-page .skeleton-expert:nth-of-type(n+7) { display: none; } }
 .browse-page .expert-card > * { grid-column: 1 / -1; min-width: 0; }
 .browse-page .expert-card .card-top { display: flex; align-items: center; gap: 16px; margin: 0; padding: 0; background: none; border: 0; color: var(--ink); }
-.browse-page .expert-card .card-top .card-role { color: var(--ink-soft); opacity: 1; }
+.browse-page .expert-card .card-top .card-role { color: var(--mcard-role); opacity: 1; }
 .browse-page .expert-card .card-top .badge { border: 0; }
-.browse-page .expert-card .card-top .avatar { width: 56px; height: 56px; font-size: 1.05rem; flex: 0 0 auto; border: 0; }
-.browse-page .card-name { font-size: 1.2rem; font-weight: 700; }
+.browse-page .expert-card .card-top .avatar { width: 60px; height: 60px; font-size: 1.1rem; flex: 0 0 auto; border: 0; }
+.browse-page .expert-card .card-top > div:last-child { min-width: 0; }
+.browse-page .card-name { font-size: 20px; font-weight: 800; line-height: 1.25; color: var(--mcard-name); }
 .browse-page .card-name .badge { font-family: var(--font-body); font-size: 0.72rem; font-weight: 600; padding: 2px 9px; border: 0; background: var(--gray-soft); color: var(--ink-soft); vertical-align: middle; }
-.browse-page .card-role { color: var(--ink-soft); font-size: 0.94rem; font-weight: 400; }
+.browse-page .card-name .badge-paid { background: var(--tint-coral-bg); color: var(--tint-coral-ink); font-weight: 700; }
+/* the role: up to two lines, then an ellipsis */
+.browse-page .card-role { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; color: var(--mcard-role); font-size: 14.5px; line-height: 1.5; font-weight: 400; }
 .browse-page .card-headline, .browse-page .card-skills { display: none; }
-.browse-page .card-bio { font-size: 1rem; color: var(--ink); }
+.browse-page .card-bio { font-size: 1rem; color: var(--mcard-bio); }
+.browse-page .card-bio-text { color: var(--mcard-bio); font-size: 15.5px; line-height: 1.65; }
 .browse-page .card-more { color: var(--accent-text); font-weight: 700; font-size: 0.9rem; }
-.browse-page .expert-card .trust-row { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 0; }
-.browse-page .expert-card .trust-badge { white-space: nowrap; }
-.browse-page .expert-card .trust-badge { padding: 0; border: 0; background: none; color: var(--accent2-text); font-size: 0.85rem; font-weight: 400; }
+/* trust badges: pills that wrap onto as many lines as they need, never past the card */
+.browse-page .expert-card .trust-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; min-width: 0; }
+.browse-page .expert-card .trust-badge { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 12px 5px 9px; border: 1px solid var(--trust-line); border-radius: 999px; background: var(--trust-bg); color: var(--trust-ink); font-size: 13px; font-weight: 600; line-height: 1.3; }
+.browse-page .expert-card .trust-badge .trust-icon { flex: 0 0 auto; width: 15px; height: 15px; }
 .browse-page .expert-card .card-bottom { grid-column: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 0; margin: 0; border: 0; }
-.browse-page .expert-card .price { font-size: 1.2rem; white-space: nowrap; }
-.browse-page .expert-card .price span { font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; color: var(--ink-soft); }
-.browse-page .expert-card .rating { color: var(--ink-soft); font-size: 0.82rem; }
+.browse-page .expert-card .price { font-size: 24px; font-weight: 800; line-height: 1.2; color: var(--mcard-name); white-space: nowrap; }
+.browse-page .expert-card .price span { font-family: var(--font-body); font-size: 0.8rem; font-weight: 400; color: var(--mcard-role); }
+.browse-page .expert-card .rating { color: var(--mcard-muted); font-size: 0.82rem; font-weight: 600; }
 .browse-page .expert-card > .btn { grid-column: 2; width: auto; min-height: 48px; padding: 0 20px; font-size: 0.97rem; }
 @media (min-width: 768px) {
   .browse-page .browse-head { padding-top: 64px; }
-  /* (the tabs scroll sideways inside the page's width; they fade out at the right edge to show there are more) */
-  .browse-page .field-chips { margin-left: 0; margin-right: 0; padding: 0 48px 0 0; -webkit-mask-image: linear-gradient(to right, var(--ink) calc(100% - 56px), transparent); mask-image: linear-gradient(to right, var(--ink) calc(100% - 56px), transparent); scrollbar-width: thin; }
-  .browse-page .expert-card .trust-row { flex-wrap: nowrap; }
-  .browse-page .expert-card { grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 24px; padding: 26px 0; }
+  /* (the pills scroll sideways inside the page's width, fade out at the right edge while there is more, and, for a mouse, have buttons) */
+  .browse-page .field-chips { margin-left: -4px; margin-right: -4px; padding: 6px 4px; scroll-padding: 0 4px; }
+  .browse-page .expert-card { grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 24px; padding: 24px 28px; }
   .browse-page .expert-card > * { grid-column: 1; }
-  .browse-page .expert-card .card-bio, .browse-page .expert-card .trust-row { padding-left: 72px; }
+  .browse-page .expert-card .card-bio, .browse-page .expert-card .trust-row { padding-left: 76px; }
   .browse-page .expert-card .card-bottom { grid-column: 2; grid-row: 1 / span 4; align-items: flex-end; align-self: center; }
   .browse-page .expert-card > .btn { grid-column: 3; grid-row: 1 / span 4; align-self: center; }
+}
+/* the round scroll buttons: for a mouse, from 768px; a phone or a tablet swipes (they stay hidden) */
+@media (min-width: 768px) and (hover: hover) {
+  .browse-page .chips-arrow { position: absolute; top: 50%; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: 0; padding: 0; transform: translateY(-50%);
+    border: 1px solid var(--arrow-line); border-radius: 50%; background: var(--arrow-bg); color: var(--arrow-ink); box-shadow: var(--arrow-shadow); cursor: pointer; transition: background-color 0.15s var(--ease-out); }
+  .browse-page .chips-arrow[hidden] { display: none; }
+  .browse-page .chips-arrow:hover { background: var(--arrow-hover-bg); }
+  .browse-page .chips-arrow:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+  .browse-page .chips-arrow-prev { left: 0; }
+  .browse-page .chips-arrow-next { right: 0; }
 }
 
 /* Browse cards (docs/CLAUDE-CODE-MENTOR-STORY.md): where the mentor started from (up to 2 chips, their own choice) and "Sample answer ✓". */
