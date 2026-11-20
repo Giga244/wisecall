@@ -107,7 +107,10 @@
   --trust-bg: rgba(27, 127, 95, 0.08);  --trust-line: rgba(27, 127, 95, 0.28);  --trust-ink: #17694f; /* trust badges on a card */
   --check-bg: #ffffff;  --check-line: #8f8a9e;  --check-on: #ff6f59;  --check-tick: #1e1a31;          /* a checkbox (3:1 outline, WCAG 1.4.11) */
   --check-ring: rgba(212, 63, 40, 0.4);
-  --scroll-thumb: #cfc9db;                                                                            /* the scrollbar's thumb */
+  /* the mentor's story as tabs on the profile (docs/CLAUDE-CODE-STORY-TABS.md): a lavender bar, a deep purple active tab, a white card */
+  --story-label: #5d55a3;  --story-tabs-bg: #efecf8;  --story-tab-ink: #6a6580;  --story-tab-on-bg: #5b4bd6;  --story-tab-on-ink: #ffffff;
+  --story-panel-bg: #ffffff;  --story-panel-line: #ebe7e0;  --story-text: #2a2540;  --story-hint: #6a6580;  --story-dot: #d6d1e8;  --story-dot-on: #5b4bd6;
+  --scroll-thumb: #cfc9db;                                                                         /* the scrollbar's thumb */
 
   /* ---- Type ---- */
   --font-display: 'Bricolage Grotesque', 'Noto Sans Georgian', ui-sans-serif, system-ui, sans-serif;
@@ -223,6 +226,9 @@
   --check-bg: #221d33;  --check-line: #77709a;  --check-on: #ff6f59;  --check-tick: #1e1a31;
   --check-ring: rgba(255, 143, 125, 0.45);
   --scroll-thumb: #3d3756;
+  /* (the approved story colours; the active tab a little deeper than #8b7cf6 and the hint a little lighter than #7d77a6, for 4.5:1) */
+  --story-label: #9c95c9;  --story-tabs-bg: #1d1a30;  --story-tab-ink: #9c95c9;  --story-tab-on-bg: #7262e9;  --story-tab-on-ink: #ffffff;
+  --story-panel-bg: #1d1a30;  --story-panel-line: #2c2846;  --story-text: #cfcae6;  --story-hint: #8a84b3;  --story-dot: #3a3558;  --story-dot-on: #8b7cf6;
 }
 
 /* Georgian: Noto Sans Georgian for headings and text (Latin letters and numbers keep the brand fonts), no negative tracking, no capitals

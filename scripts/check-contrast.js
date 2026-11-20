@@ -61,7 +61,10 @@ const PAIRS = [
   ['--arrow-ink', '--arrow-bg', TEXT, 'the arrow of a round scroll button'], ['--arrow-ink', '--arrow-hover-bg', TEXT, 'the arrow of a hovered scroll button'],
   ['--mcard-name', '--mcard-bg', TEXT, 'a mentor name'], ['--mcard-role', '--mcard-bg', TEXT, 'a mentor role'], ['--mcard-bio', '--mcard-bg', TEXT, 'a mentor bio'], ['--mcard-muted', '--mcard-bg', TEXT, 'no ratings yet, on a mentor card'],
   ['--check-line', '--check-bg', UI, 'the outline of a checkbox'], ['--check-line', '--card', UI, 'the outline of a checkbox on a card'], ['--check-line', '--bg', UI, 'the outline of a checkbox on the page'],
-  ['--check-tick', '--check-on', TEXT, 'the tick of a checked checkbox']
+  ['--check-tick', '--check-on', TEXT, 'the tick of a checked checkbox'],
+  // the mentor's story as tabs on the profile (docs/CLAUDE-CODE-STORY-TABS.md)
+  ['--story-label', '--bg', TEXT, 'the story label on the page'], ['--story-tab-ink', '--story-tabs-bg', TEXT, 'a tab that is not shown'], ['--story-tab-on-ink', '--story-tab-on-bg', TEXT, 'the shown tab'],
+  ['--story-text', '--story-panel-bg', TEXT, 'the story text'], ['--ink', '--story-panel-bg', TEXT, 'a story part title'], ['--story-hint', '--bg', TEXT, 'the swipe hint'], ['--focus', '--story-tabs-bg', UI, 'the focus ring on a tab']
 ];
 
 function check() {

@@ -178,14 +178,14 @@ test('the profile: the three blocks, the starting-point chips, "what I can help 
   await liveLook(ctx);
   const page = await ctx.newPage();
   await page.goto(`/ka/u/${nino.username}`);
-  const pathBlocks = page.locator('.profile-path .path-block');
+  const pathBlocks = page.locator('.profile-path .story-panel');
   await expect(page.locator('.profile-path h2')).toHaveText('ჩემი გზა');
   await expect(pathBlocks).toHaveCount(3);
   await expect(pathBlocks.nth(0)).toContainText('სად დავიწყე');
-  await expect(pathBlocks.nth(0).locator('p')).toHaveText(START);
+  await expect(pathBlocks.nth(0).locator('.story-text')).toHaveText(START);
   await expect(pathBlocks.nth(1)).toContainText('როგორ გავუმკლავდი');
   await expect(pathBlocks.nth(2)).toContainText('სად ვარ ახლა');
-  await expect(pathBlocks.nth(2).locator('p')).toHaveText(NOW);
+  await expect(pathBlocks.nth(2).locator('.story-text')).toHaveText(NOW);
   await expect(page.locator('.profile-about')).toHaveCount(0); // (the same words are not shown twice)
   await expect(page.locator('.profile-start .tag-start')).toHaveText(['რეგიონიდან ჩამოვედი', 'სწავლასთან ერთად ვმუშაობდი', 'თვითნასწავლი ვარ']);
   // The head: a small "✓ გადამოწმებული" by the name and nowhere else; the field and the directions in one wrapping row, the main field
@@ -261,7 +261,7 @@ test('the profile: the three blocks, the starting-point chips, "what I can help 
     const c2 = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: scheme });
     const p2 = await c2.newPage();
     await p2.goto(`/ka/u/${nino.username}`);
-    await expect(p2.locator('.profile-path .path-block')).toHaveCount(3);
+    await expect(p2.locator('.profile-path .story-panel')).toHaveCount(3);
     await noOverflow(p2);
     await c2.close();
   }
@@ -369,7 +369,7 @@ test('a mentor from before: one card on the dashboard, to "My details"; saving t
   await expect(page.locator('#toast')).toHaveText('შენახულია ✓');
   await noOverflow(page);
   await page.goto(`/ka/u/${giorgi.username}`);
-  await expect(page.locator('.profile-path .path-block')).toHaveCount(3);
+  await expect(page.locator('.profile-path .story-panel')).toHaveCount(3);
   await expect(page.locator('.profile-start .tag-start')).toHaveText(['სფერო შევიცვალე']);
 
   // the card is still there (no sample answer yet); closed, it stays closed

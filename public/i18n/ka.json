@@ -3198,6 +3198,8 @@
   "profile.path.start": "სად დავიწყე",
   "profile.path.how": "როგორ გავუმკლავდი",
   "profile.path.now": "სად ვარ ახლა",
+  "profile.story.label": "მენტორის ისტორია",
+  "profile.story.hint": "გადაფურცლე → შემდეგი",
   "profile.startTags": "საიდან დაიწყო",
   "profile.sample.label": "ნიმუში პასუხი",
   "profile.sample.note": "ეს მენტორის დაწერილი ნიმუშია: ასე პასუხობს ის ხშირ კითხვას. ნამდვილი სტუდენტის კითხვა არ არის.",

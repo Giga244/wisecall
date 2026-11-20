@@ -164,10 +164,14 @@
     const st = story();
     if (!st) return '';
     const para = (text) => escapeHtml(text);
-    const path = st.path ? `<section class="profile-section profile-path" aria-labelledby="pathTitle">
+    // "ჩემი გზა": the parts the mentor wrote, one under the other, each with its title (what is read without scripts); public/js/story-tabs.js
+    // makes them tabs over one card. Only the parts there are (server/mentorStory.js publicView), none: no section.
+    const parts = st.path ? [['start', st.path.start], ['how', st.path.how], ['now', st.path.now]].filter(([, text]) => text) : [];
+    const path = parts.length ? `<section class="profile-section profile-path" aria-labelledby="pathTitle" data-story-tabs>
+        <p class="story-label">${t('profile.story.label')}</p>
         <h2 id="pathTitle">${t('profile.path.title')}</h2>
-        <div class="path-blocks">
-          ${[['start', st.path.start], ['how', st.path.how], ['now', st.path.now]].map(([k, text], i) => `<div class="path-block"><h3><span class="path-n" aria-hidden="true">${i + 1}</span>${t('profile.path.' + k)}</h3><p>${para(text)}</p></div>`).join('')}
+        <div class="story-panels">
+          ${parts.map(([k, text]) => `<div class="story-panel" id="storyPanel-${k}" data-story-panel><h3 class="story-panel-title">${t('profile.path.' + k)}</h3><p class="story-text">${para(text)}</p></div>`).join('')}
         </div>
       </section>` : '';
     const help = st.helpPoints.length ? `<section class="profile-section profile-help" aria-labelledby="helpTitle">
@@ -283,6 +287,7 @@
     crumbs.innerHTML = crumbsHtml();
     page.setAttribute('aria-busy', 'false');
     page.innerHTML = profileHtml();
+    if (window.WisecallStoryTabs) WisecallStoryTabs.enhance(page);
     wireProfileReport();
     if (!isMentor) return;
     mountAsk();

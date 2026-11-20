@@ -210,10 +210,13 @@ const formOf = (u) => ({
 
 // What everyone may see on the profile. showAbout: the About section is visible to this viewer (the path, the sample answer and the
 // "I can help with" lines follow it; the tags, the links and the years are the mentor's own public choices).
+// path: the blocks that count (long enough, real writing), each or null; null when none does. The profile shows them as tabs, one tab per
+// block there is (public/js/story-tabs.js); a mentor with all three has all three.
 function publicView(u, { showAbout = true } = {}) {
-  const complete = pathComplete(u);
+  const shown = (k) => (blockOk(u[k]) ? u[k] : null);
+  const path = showAbout && PATH_KEYS.some((k) => blockOk(u[k])) ? { start: shown('pathStart'), how: shown('pathHow'), now: shown('pathNow') } : null;
   return {
-    path: showAbout && complete ? { start: u.pathStart, how: u.pathHow, now: u.pathNow } : null,
+    path,
     // (the About text is the same words as the path: the page shows the three blocks instead of it, not both)
     aboutIsPath: aboutIsPathCopy(u),
     startTags: (u.startTags || []).filter(isTag),

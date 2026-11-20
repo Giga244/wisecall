@@ -3198,6 +3198,8 @@
   "profile.path.start": "Where I started",
   "profile.path.how": "How I coped",
   "profile.path.now": "Where I am now",
+  "profile.story.label": "Mentor's story",
+  "profile.story.hint": "Swipe → next",
   "profile.startTags": "Where they started",
   "profile.sample.label": "Sample answer",
   "profile.sample.note": "A sample written by the mentor: how they answer a common question. It is not a real student's question.",

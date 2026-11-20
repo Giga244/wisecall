@@ -270,3 +270,15 @@ describe('mentors from before', () => {
     assert.equal((await other.c.api('/me')).user.storyCard, false, 'closed for good');
   });
 });
+
+describe('the profile shows the parts the mentor wrote (docs/CLAUDE-CODE-STORY-TABS.md)', () => {
+  const pv = (u) => mentorStory.publicView(u).path;
+  test('each part that counts, each on its own; one too short or missing is null; none: no path', () => {
+    assert.deepEqual(pv({ pathStart: START, pathHow: HOW, pathNow: NOW }), { start: START, how: HOW, now: NOW });
+    assert.deepEqual(pv({ pathStart: START, pathHow: null, pathNow: NOW }), { start: START, how: null, now: NOW });
+    assert.deepEqual(pv({ pathStart: 'Too short', pathHow: null, pathNow: NOW }), { start: null, how: null, now: NOW });
+    assert.equal(pv({ pathStart: 'Too short', pathHow: null, pathNow: null }), null);
+    assert.equal(pv({}), null);
+    assert.equal(mentorStory.publicView({ pathStart: START, pathHow: HOW, pathNow: NOW }, { showAbout: false }).path, null, 'hidden with About');
+  });
+});
