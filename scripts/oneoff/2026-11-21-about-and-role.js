@@ -55,8 +55,12 @@ async function emptyCards() {
   console.log(`   old: ${show(l.bio)}`);
   console.log(`   new: ${show(ABOUT)}  (${[...ABOUT].length} characters)`);
   console.log(`   the sentence is in his story: ${story.includes(ABOUT) ? 'yes, word for word' : 'NOT word for word (it is set as given anyway)'}`);
-  const aboutOk = Boolean(l.id) && !String(l.bio || '').trim();
-  if (l.id && !aboutOk) console.log('   STOPPED for this one: his About is not empty any more. Nothing changed.');
+  // (an About that is only the copy of his "ჩემი გზა" the site made before counts as empty: it is never shown, server/mentorStory.js ownAbout;
+  // an About he wrote himself is never replaced)
+  const isCopy = Boolean(l.id) && Boolean(String(l.bio || '').trim()) && mentorStory.aboutIsPathCopy(userFromRow(l));
+  const aboutOk = Boolean(l.id) && (!String(l.bio || '').trim() || isCopy);
+  if (isCopy) console.log('   his About is only the copy of his "ჩემი გზა" (never shown): it is replaced; the story itself stays as it is');
+  if (l.id && !aboutOk) console.log('   STOPPED for this one: his About is his own text. Nothing changed.');
 
   // ---- 2. Irakli's role line ----
   const r = await byUsername(ROLE_USER);
@@ -71,7 +75,8 @@ async function emptyCards() {
 
   if (apply) {
     if (aboutOk) {
-      const u = await db.query(`UPDATE users SET bio = $2 WHERE id = $1 AND COALESCE(btrim(bio), '') = ''`, [l.id, ABOUT]);
+      // (only while it is still what was read above: empty, or that same copy)
+      const u = await db.query(`UPDATE users SET bio = $2 WHERE id = $1 AND bio IS NOT DISTINCT FROM $3`, [l.id, ABOUT, l.bio]);
       if (u.rowCount === 1) { await audit(l.id, 'about_set_by_admin', 'About set to his own sentence from his story (2026-11-21-about-and-role.js).'); console.log('\n   1: done.'); }
       else console.log('\n   1: his About changed meanwhile: nothing written.');
     }
