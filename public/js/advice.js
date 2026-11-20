@@ -12,6 +12,8 @@
 
   const nicheOf = () => (WisecallI18n.niches().find((n) => n.key === key) || null);
 
+  // (as on Browse, public/js/main.js: the start of the About; without one the "I can help with" lines; never the words of "ჩემი გზა")
+  const cardText = (e) => (e.bio && e.bio.trim() ? e.bio.trim() : ((e.trust && e.trust.helpPoints) || []).join(' · '));
   function card(e) {
     return `
       <a class="expert-card" href="/u/${encodeURIComponent(e.username)}">
@@ -22,8 +24,9 @@
             <div class="card-role">${esc(e.roleTitle || '')}</div>
           </div>
         </div>
-        <div class="card-bio">${esc(e.bio || '')}</div>
+        ${cardText(e) ? `<div class="card-bio"><p class="card-bio-text">${esc(cardText(e))}</p></div>` : ''}
         ${WisecallBadges.row(e.badges)}
+        <span class="card-view">${t('experts.card.view')}</span>
         <div class="card-bottom">
           <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${t('expert.reviewsShort')})` : t('expert.noReviewsYet')}</span>
           <span class="price${e.price === 0 ? ' is-free' : ''}">${WisecallAPI.formatPrice(e.price)}${e.price === 0 ? '' : `<span> ${t('expert.perQuestion')}</span>`}</span>

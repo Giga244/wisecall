@@ -352,7 +352,7 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
 .browse-page .card-headline, .browse-page .card-skills { display: none; }
 .browse-page .card-bio { font-size: 1rem; color: var(--mcard-bio); }
 .browse-page .card-bio-text { color: var(--mcard-bio); font-size: 15.5px; line-height: 1.65; }
-.browse-page .card-more { color: var(--accent-text); font-weight: 700; font-size: 0.9rem; }
+.browse-page .expert-card .card-view { margin: 0; }
 /* trust badges: pills that wrap onto as many lines as they need, never past the card */
 .browse-page .expert-card .trust-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; min-width: 0; }
 .browse-page .expert-card .trust-badge { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 12px 5px 9px; border: 1px solid var(--trust-line); border-radius: 999px; background: var(--trust-bg); color: var(--trust-ink); font-size: 13px; font-weight: 600; line-height: 1.3; }
@@ -368,7 +368,7 @@ html.motion .faq-a.is-closing { animation: faq-close 0.16s ease-in forwards; }
   .browse-page .field-chips { margin-left: -4px; margin-right: -4px; padding: 6px 4px; scroll-padding: 0 4px; }
   .browse-page .expert-card { grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 24px; padding: 24px 28px; }
   .browse-page .expert-card > * { grid-column: 1; }
-  .browse-page .expert-card .card-bio, .browse-page .expert-card .trust-row { padding-left: 76px; }
+  .browse-page .expert-card .card-bio, .browse-page .expert-card .trust-row, .browse-page .expert-card .card-view { padding-left: 76px; }
   .browse-page .expert-card .card-bottom { grid-column: 2; grid-row: 1 / span 4; align-items: flex-end; align-self: center; }
   .browse-page .expert-card > .btn { grid-column: 3; grid-row: 1 / span 4; align-self: center; }
 }

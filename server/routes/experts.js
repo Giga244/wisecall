@@ -76,7 +76,8 @@ router.get('/', asyncHandler(async (req, res) => {
   // (the card's line from "where I am now", its starting-point chips and "sample answer": nothing for a hidden profile)
   const byId = new Map(users.map((u) => [u.id, u]));
   const mentorStory = require('../mentorStory');
-  res.json({ experts: (await withStats(users)).map((e) => ({ ...e, bio: summaries[e.id] && summaries[e.id].showAbout ? e.bio : null, profile: summaries[e.id] || null,
+  // (the card's text is the mentor's own About: never an About that is only the copy of their path, which is personal)
+  res.json({ experts: (await withStats(users)).map((e) => ({ ...e, bio: summaries[e.id] && summaries[e.id].showAbout ? (mentorStory.ownAbout(byId.get(e.id)) || null) : null, profile: summaries[e.id] || null,
     trust: summaries[e.id] ? mentorStory.cardView(byId.get(e.id), { showAbout: Boolean(summaries[e.id].showAbout) }) : null })) });
 }));
 

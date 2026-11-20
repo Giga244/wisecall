@@ -268,13 +268,17 @@ test('the profile: the three blocks, the starting-point chips, "what I can help 
   await ctx.close();
 });
 
-test('Browse: the card shows the first line of "where I am now", two chips and "Sample answer ✓"; the "Where they started" filter', async ({ browser }) => {
+test('Browse: the card shows her About, never the words of "My path"; two chips, "Sample answer ✓" and "სრულად ნახვა →"; the "Where they started" filter', async ({ browser }) => {
   const ctx = await browser.newContext(PHONE);
   await liveLook(ctx);
   const page = await ctx.newPage();
   await page.goto('/ka/experts.html');
   const card = page.locator('.expert-card').filter({ hasText: 'ნინო წერეთელი' });
-  await expect(card.locator('.card-now')).toHaveText('3 წელია ფრილანსერი ვებ-დიზაინერი ვარ.');
+  // (the path is personal: the card has the start of the About, or the "I can help with" lines; docs/CLAUDE-CODE-CARD-ABOUT.md)
+  await expect(card.locator('.card-now')).toHaveCount(0);
+  await expect(card).not.toContainText('3 წელია ფრილანსერი ვებ-დიზაინერი ვარ.');
+  await expect(card.locator('.card-bio-text')).toBeVisible();
+  await expect(card.locator('.card-view')).toHaveText('სრულად ნახვა →');
   await expect(card.locator('.card-start .tag-start')).toHaveText(['რეგიონიდან ჩამოვედი', 'სწავლასთან ერთად ვმუშაობდი']); // (two of her three)
   await expect(card.locator('.tag-sample')).toHaveText('ნიმუში პასუხი ✓');
   const plain = page.locator('.expert-card').filter({ hasText: 'გიორგი აბაშიძე' });

@@ -128,7 +128,8 @@ describe('a match: real mentors of the chosen category only', () => {
     assert.deepEqual(r.mentors[0].why, { tags: ['region', 'selftaught'], directions: ['art.web'], stage: null, field: 'art' });
     assert.deepEqual(r.mentors[1].why, { tags: ['region'], directions: ['art.web'], stage: null, field: 'art' });
     assert.deepEqual(r.mentors[2].why, { tags: [], directions: [], stage: { tag: 'switched' }, field: 'art' });
-    assert.deepEqual(r.mentors[0].trust, { nowLine: 'I have been a freelance web designer for three years.', startTags: ['region', 'selftaught'], hasSample: true });
+    // (whether the path is told, never its words: docs/CLAUDE-CODE-CARD-ABOUT.md)
+    assert.deepEqual(r.mentors[0].trust, { hasPath: true, helpPoints: [], startTags: ['region', 'selftaught'], hasSample: true });
     const ids = r.mentors.map((m) => m.id);
     assert.ok(!ids.includes(other.id) && !ids.includes(draft.id) && !ids.includes(fourth.id));
     // the card has what it shows, and nothing private
@@ -165,7 +166,7 @@ describe('a match: real mentors of the chosen category only', () => {
     assert.equal((await best.c.api('/me/profile/visibility', { method: 'PUT', body: { section: 'about', level: 'only_me' } })).status, 200);
     const r = await match(client(base), answers);
     const card = r.mentors.find((m) => m.id === best.id);
-    assert.deepEqual(card.trust, { nowLine: null, startTags: ['region', 'selftaught'], hasSample: false });
+    assert.deepEqual(card.trust, { hasPath: false, helpPoints: [], startTags: ['region', 'selftaught'], hasSample: false });
     assert.equal((await best.c.api('/me/profile/visibility', { method: 'PUT', body: { section: 'about', level: 'everyone' } })).status, 200);
   });
 

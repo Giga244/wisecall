@@ -132,12 +132,17 @@ describe('the cards show the first lines, the profile and the stored text stay w
     await pg.end();
   });
 
-  test('the clamp is only a display rule: 3 lines (2 at 360px) and "Read more →" only when cut, in both languages', () => {
+  test('the clamp is only a display rule: the home page 3 lines (2 at 360px) with "Read more →" when cut; an expert card 2 lines and always "სრულად ნახვა →"', () => {
     const css = read('public/css/style.css');
     assert.match(css, /\.card-bio-text, \.lexpert-bio \{ margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;/);
     assert.match(css, /@media \(max-width: 360px\) \{ \.card-bio-text, \.lexpert-bio \{ -webkit-line-clamp: 2; line-clamp: 2; \} \}/);
     assert.match(read('public/js/clamp.js'), /const cut = \(el\) => el\.scrollHeight > el\.clientHeight \+ 1;/);
-    assert.match(read('public/js/main.js'), /<span class="card-more" data-clamp-more hidden>/);
+    // (an expert card, docs/CLAUDE-CODE-CARD-ABOUT.md: two lines with an ellipsis, and the link at its foot on every card, a span: the card is the link)
+    assert.ok(css.includes('.card-bio-text { -webkit-line-clamp: 2; line-clamp: 2; text-overflow: ellipsis; }'));
+    assert.ok(read('public/js/main.js').includes("<span class=\"card-view\">${escapeHtml(t('experts.card.view'))}</span>"));
+    assert.doesNotMatch(read('public/js/main.js'), /<a [^>]*class="card-view"/, 'never a link inside the card\'s link');
+    assert.equal(JSON.parse(read('public/i18n/ka.json'))['experts.card.view'], 'სრულად ნახვა →');
+    assert.equal(JSON.parse(read('public/i18n/en.json'))['experts.card.view'], 'View full profile →');
     assert.match(read('public/js/home-mentors.js'), /<a class="lmore lexpert-more" href="\$\{href\}" data-clamp-more hidden>/);
     assert.equal(JSON.parse(read('public/i18n/ka.json'))['experts.card.more'], 'სრულად ნახვა →');
     assert.equal(JSON.parse(read('public/i18n/en.json'))['experts.card.more'], 'Read more →');

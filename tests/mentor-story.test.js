@@ -186,15 +186,18 @@ describe('on the profile and on Browse', () => {
     assert.equal(p.mentor.trust.years, 3);
   });
 
-  test('the Browse card: the first line of "where I am now", the chips, "sample answer"; the filter finds who started the same way', async () => {
+  test('the Browse card: never the words of "My path" (only that it is told), the "I can help with" lines, the chips, "sample answer"; the filter finds who started the same way', async () => {
     const other = await listed('Giorgi Other');
     assert.equal((await details(other.c, { startTags: ['abroad'] })).status, 200);
     const card = await cardOf(m.id);
-    assert.equal(card.trust.nowLine, 'I have been a freelance web designer for three years.');
+    assert.equal(card.trust.hasPath, true);
+    assert.equal(card.trust.nowLine, undefined);
+    assert.doesNotMatch(JSON.stringify(card.trust), /freelance web designer for three years/, 'the path is personal: not on a card (docs/CLAUDE-CODE-CARD-ABOUT.md)');
+    assert.deepEqual(card.trust.helpPoints, ['Building a first portfolio', 'Pricing an order', 'Writing to a client abroad']);
     assert.deepEqual(card.trust.startTags, ['region', 'worked', 'selftaught']);
     assert.equal(card.trust.hasSample, true);
     const plain = await cardOf(other.id);
-    assert.deepEqual(plain.trust, { nowLine: null, startTags: ['abroad'], hasSample: false });
+    assert.deepEqual(plain.trust, { hasPath: false, helpPoints: [], startTags: ['abroad'], hasSample: false });
     assert.doesNotMatch(JSON.stringify(card), /ratingAvg":\s*[1-9]/, 'no rating that nobody gave');
 
     const region = (await client(base).api('/experts?start=region')).experts.map((e) => e.id);
@@ -216,7 +219,8 @@ describe('on the profile and on Browse', () => {
     assert.equal(hidden.mentor.trust.path, null);
     assert.equal(hidden.mentor.trust.sample, null);
     assert.deepEqual(hidden.mentor.trust.helpPoints, []);
-    assert.equal((await cardOf(m.id)).trust.nowLine, null);
+    assert.equal((await cardOf(m.id)).trust.hasPath, false);
+    assert.deepEqual((await cardOf(m.id)).trust.helpPoints, []);
     assert.equal((await cardOf(m.id)).trust.hasSample, false);
     assert.equal((await m.c.api('/me/profile/visibility', { method: 'PUT', body: { section: 'about', level: 'everyone' } })).status, 200);
 

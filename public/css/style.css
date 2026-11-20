@@ -333,6 +333,11 @@ html.motion .wc-dialog:not([open])::backdrop { opacity: 0; }
 /* A short bio on a card: 3 lines (2 on a small phone) ending in "…", at a word (lines break between words); the profile shows it all.
    "Read more →" only when it is cut (public/js/clamp.js). The stored text is never shortened. */
 .card-bio-text, .lexpert-bio { margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; overflow-wrap: break-word; }
+/* (an expert card: the start of the About, two lines, "…" where it is cut; docs/CLAUDE-CODE-CARD-ABOUT.md) */
+.card-bio-text { -webkit-line-clamp: 2; line-clamp: 2; text-overflow: ellipsis; }
+/* "სრულად ნახვა →" at the foot of every expert card: a cue only, the whole card is the link */
+.expert-card .card-view { justify-self: start; align-self: start; color: var(--accent-text); font-weight: 700; font-size: 16px; line-height: 1.4; }
+.expert-card:hover .card-view, .expert-card:focus-visible .card-view { text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 360px) { .card-bio-text, .lexpert-bio { -webkit-line-clamp: 2; line-clamp: 2; } }
 .card-more { display: inline-block; margin-top: 4px; color: var(--accent-text); font-weight: 700; font-size: 0.9rem; }
 .card-more[hidden], .lexpert-more[hidden] { display: none; }

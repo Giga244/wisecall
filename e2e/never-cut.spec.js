@@ -60,10 +60,11 @@ test('a pasted "About me" over 2000 characters stays whole in the box and is ref
   expect(await page.locator('#bio').evaluate((el) => el.value.length)).toBe(2100);
 });
 
-// ---- The cards show the first lines of a long bio, with "Read more →"; the profile shows all of it; the stored text stays whole
+// ---- The cards show the first lines of a long bio (an expert card 2 lines and always "სრულად ნახვა →", docs/CLAUDE-CODE-CARD-ABOUT.md; the
+// home page 3 lines, 2 at 360px, with "Read more →" when cut); the profile shows all of it; the stored text stays whole
 const lines = (loc) => loc.evaluate((el) => Math.round(el.clientHeight / parseFloat(getComputedStyle(el).lineHeight)));
 for (const [width, lang, want] of [[1280, 'ka', 3], [360, 'ka', 2], [1280, 'en', 3], [360, 'en', 2]]) {
-  test(`${width}px ${lang}: a long bio is clamped to ${want} lines on Browse and the home page, "Read more" opens the whole text; a short one has no link`, async ({ browser }) => {
+  test(`${width}px ${lang}: a long bio is clamped (2 lines on Browse, ${want} on the home page), the card's link opens the whole text; a short one is whole, the link still there`, async ({ browser }) => {
     await S.sql('UPDATE users SET bio = $2 WHERE id = $1', [mentor.id, FULL]);
     const short = await S.listedMentor(client(S.BASE), { name: `მოკლე ბიო ${width}${lang}`, email: `short-bio-${width}${lang}-${stamp}@e2e.test`, niche: 'teaching' }).catch(() => null);
     if (short) await S.sql("UPDATE users SET bio = 'მოკლე ტექსტი.' WHERE id = $1", [short.id]);
@@ -71,26 +72,28 @@ for (const [width, lang, want] of [[1280, 'ka', 3], [360, 'ka', 2], [1280, 'en',
     await ctx.addInitScript((l) => { try { localStorage.setItem('wisecall_lang', l); } catch (e) { /* none */ } }, lang);
     const page = await ctx.newPage();
     const more = lang === 'ka' ? 'სრულად ნახვა →' : 'Read more →';
+    const view = lang === 'ka' ? 'სრულად ნახვა →' : 'View full profile →';
     // Browse
     await page.goto(`${lang === 'ka' ? '/ka' : ''}/experts.html?q=${encodeURIComponent('დავით ქავთარაძე')}`);
     const card = page.locator('.expert-card', { hasText: 'დავით ქავთარაძე' });
     await expect(card).toBeVisible();
     const text = card.locator('.card-bio-text');
-    expect(await lines(text)).toBe(want);
-    expect(await text.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
-    await expect(card.locator('.card-more')).toBeVisible();
-    await expect(card.locator('.card-more')).toHaveText(more);
+    // (polled: the search draws the cards again when its answer comes, and a card measured in between is gone from the page)
+    await expect.poll(() => lines(text)).toBe(2);
+    await expect.poll(() => text.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+    await expect(card.locator('.card-view')).toBeVisible();
+    await expect(card.locator('.card-view')).toHaveText(view);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-    // a short bio: whole on the card, no link
+    // a short bio: whole on the card, and the link as on every card
     if (short) {
       await page.goto(`${lang === 'ka' ? '/ka' : ''}/experts.html?q=${encodeURIComponent(short.name)}`);
       const s = page.locator('.expert-card', { hasText: short.name });
       await expect(s.locator('.card-bio-text')).toHaveText('მოკლე ტექსტი.');
-      await expect(s.locator('.card-more')).toBeHidden();
+      await expect(s.locator('.card-view')).toHaveText(view);
       await page.goto(`${lang === 'ka' ? '/ka' : ''}/experts.html?q=${encodeURIComponent('დავით ქავთარაძე')}`);
     }
-    // "Read more" (the card) opens the profile: the whole text, its paragraphs kept
-    await card.locator('.card-more').click();
+    // the link (the card) opens the profile: the whole text, its paragraphs kept
+    await card.locator('.card-view').click();
     await page.waitForURL(/\/u\//);
     const about = page.locator('.profile-about p');
     await expect(about).toBeVisible();
@@ -103,7 +106,7 @@ for (const [width, lang, want] of [[1280, 'ka', 3], [360, 'ka', 2], [1280, 'en',
       await page.goto(lang === 'ka' ? '/ka/' : '/');
       const home = page.locator('#homeMentorsList .lexpert', { hasText: 'დავით ქავთარაძე' });
       await expect(home).toBeVisible();
-      expect(await lines(home.locator('.lexpert-bio'))).toBe(want);
+      await expect.poll(() => lines(home.locator('.lexpert-bio'))).toBe(want);
       await expect(home.locator('.lexpert-more')).toBeVisible();
       await expect(home.locator('.lexpert-more')).toHaveText(more);
       await home.locator('.lexpert-more').click();

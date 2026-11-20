@@ -227,10 +227,11 @@ function publicView(u, { showAbout = true } = {}) {
   };
 }
 
-// What a Browse card shows: the first line of "where I am now", up to 2 starting-point chips, and whether there is a sample answer.
+// What a Browse card has besides the About text: whether the mentor told their path (for the order only: the path's words are personal and
+// are never on a card, docs/CLAUDE-CODE-CARD-ABOUT.md), the "I can help with" lines (the card's text when there is no About), up to 2
+// starting-point chips, and whether there is a sample answer.
 function cardView(u, { showAbout = true } = {}) {
-  const first = showAbout && pathComplete(u) ? String(u.pathNow).split(/\n|(?<=[.!?…])\s/)[0].trim() : null;
-  return { nowLine: first || null, startTags: (u.startTags || []).filter(isTag), hasSample: showAbout && hasSample(u) };
+  return { hasPath: Boolean(showAbout && pathComplete(u)), helpPoints: showAbout ? (u.helpPoints || []) : [], startTags: (u.startTags || []).filter(isTag), hasSample: showAbout && hasSample(u) };
 }
 
 // The dashboard's one card for mentors from before this ("add your path and a sample answer"): until it is closed, or both are there.

@@ -2609,6 +2609,7 @@
   "experts.card.years": "{n}+ წელი",
   "experts.card.at": "{title}, {organisation}",
   "experts.card.more": "სრულად ნახვა →",
+  "experts.card.view": "სრულად ნახვა →",
   "ap.f.fromProfile": "ჩემი პროფილიდან შევსება",
   "ap.f.fromProfileDone": "ცარიელი ველები შენი პროფილიდან შეივსო. შენახვამდე გადაამოწმე.",
   "ap.f.fromProfileNothing": "შესავსები არაფერია: პროფილში გამოცდილება ჯერ არ გაქვს, ან ეს ველები უკვე შევსებულია.",

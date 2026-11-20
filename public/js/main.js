@@ -70,7 +70,7 @@
     else {
       // Recommended: real ratings first (when there are any), then the profiles that tell a student more (their path, a sample answer),
       // then the newest. Nothing here is a number the site made up.
-      const told = (e) => (e.trust ? (e.trust.nowLine ? 1 : 0) + (e.trust.hasSample ? 1 : 0) : 0);
+      const told = (e) => (e.trust ? (e.trust.hasPath ? 1 : 0) + (e.trust.hasSample ? 1 : 0) : 0);
       sorted.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0) || (b.reviewCount || 0) - (a.reviewCount || 0) || told(b) - told(a) || new Date(b.createdAt) - new Date(a.createdAt));
     }
     return sorted;
@@ -247,11 +247,12 @@
           </div>
         </div>
         ${e.profile && e.profile.headline ? `<div class="card-headline">${escapeHtml(e.profile.headline)}</div>` : ''}
-        <div class="card-bio">${e.trust && e.trust.nowLine ? `<p class="card-bio-text card-now" data-clamp>${escapeHtml(e.trust.nowLine)}</p><span class="card-more" data-clamp-more hidden>${escapeHtml(t('experts.card.more'))}</span>` : (e.bio ? `<p class="card-bio-text" data-clamp>${escapeHtml(e.bio)}</p><span class="card-more" data-clamp-more hidden>${escapeHtml(t('experts.card.more'))}</span>` : '')}</div>
+        ${cardText(e) ? `<div class="card-bio"><p class="card-bio-text">${escapeHtml(cardText(e))}</p></div>` : ''}
         ${e.trust && (e.trust.startTags.length || e.trust.hasSample) ? `<div class="card-start">${e.trust.startTags.slice(0, 2).map((id) => `<span class="tag tag-start">${escapeHtml(t('start.' + id))}</span>`).join(' ')}${e.trust.hasSample ? ` <span class="tag tag-sample">${escapeHtml(t('experts.card.sample'))}</span>` : ''}</div>` : ''}
         ${e.profile && (e.profile.topSkills || []).length ? `<div class="card-skills">${e.profile.topSkills.map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join(' ')}</div>` : ''}
         ${(e.directions || []).length ? `<div class="card-skills">${e.directions.slice(0, 3).map(chipById).filter((c) => c && !c.other).map((c) => `<span class="tag">${escapeHtml(nameIn(c))}</span>`).join(' ')}</div>` : ''}
         ${WisecallBadges.row(e.badges)}
+        <span class="card-view">${escapeHtml(t('experts.card.view'))}</span>
         <div class="card-bottom">
           <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : t('expert.noReviewsYet')}</span>
           <span class="price${e.price === 0 ? ' is-free' : ''}">${WisecallAPI.formatPrice(e.price)}${e.price === 0 ? '' : `<span> ${perQ}</span>`}</span>
@@ -259,8 +260,13 @@
         <span class="btn btn-primary btn-sm btn-block">${askLabel}</span>
       </a>
     `).join('');
-    // ("Read more →" only under a bio that the card really cuts: public/js/clamp.js)
-    if (window.WisecallClamp) WisecallClamp.watch(grid);
+  }
+  // The card's text (docs/CLAUDE-CODE-CARD-ABOUT.md): the start of the mentor's "შესახებ" (About), two lines, "…" where it is cut; without
+  // one, their "რაში დაგეხმარები" lines; without those, nothing (the headline says who they are). Never the words of "ჩემი გზა".
+  function cardText(e) {
+    if (e.bio && e.bio.trim()) return e.bio.trim();
+    const help = (e.trust && e.trust.helpPoints) || [];
+    return help.length ? help.join(' · ') : '';
   }
 
   filters.addEventListener('click', ev => {
