@@ -228,6 +228,9 @@ async function runSweep({ wait = false } = {}) {
       await require('./verification/reminders').sweep().catch((e) => console.error('[jobs] application reminders failed:', e.message)); // (an unfinished application)
       await require('./payoutReminder').sweep().catch((e) => console.error('[jobs] bank account reminders failed:', e.message)); // (money on the balance, no bank account)
       await require('./live/settle').sweep(); // (live sessions: holds, refunds, minimum, no-shows, endings, reminders, clean-up)
+      // (once a day: approved mentors whose card has no text or a warning, emailed to the admins; nothing to report, no email)
+      await require('./cardCheck').dailyReport().then((n) => { if (n) console.log(`[jobs] card check: ${n} mentor(s) emailed to the admins`); })
+        .catch((e) => console.error('[jobs] card check failed:', e.message));
       lastSweepAt = new Date();
     } finally {
       await client.query('SELECT pg_advisory_unlock($1)', [LOCK_ID]);

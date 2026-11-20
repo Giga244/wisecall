@@ -1199,6 +1199,9 @@
     if (current === 1) {
       WisecallStoryForm.wire(form); // (the counters, and "at most 3" for the starting-point tags)
       wireStoryDraft(form);
+      // (the card as students will see it, under "შენ შესახებ": the name, role, field and price from the application so far)
+      const f = v.application.form;
+      WisecallStoryForm.mountPreview(form, { ...user, roleTitle: f.roleTitle || user.roleTitle, niche: f.niche || user.niche, customNiche: f.customNiche || user.customNiche, price: user.price });
     }
     if (current === 2) {
       const input = form.price;

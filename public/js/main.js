@@ -50,17 +50,6 @@
     return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  // The role and the field say the same thing ("ვებ-დიზაინერი" and "ვებ-დიზაინი", "Product designer" and "Product design"): the card says it once.
-  function sameThing(a, b) {
-    const n = (v) => String(v || '').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}]+/gu, '');
-    const x = n(a), y = n(b);
-    if (!x || !y) return false;
-    const short = x.length <= y.length ? x : y, long = x.length <= y.length ? y : x;
-    let i = 0;
-    while (i < short.length && short[i] === long[i]) i += 1;
-    return i >= Math.max(4, Math.ceil(short.length * 0.75));
-  }
-
   function sortList(list) {
     const sorted = [...list];
     if (sortMode === 'priceAsc') sorted.sort((a, b) => a.price - b.price);
@@ -233,40 +222,11 @@
       }
       return;
     }
-    const perQ = t('expert.perQuestion');
-    const askLabel = t('expert.ask');
-    const reviewsLabel = t('expert.reviewsShort');
-    grid.innerHTML = list.map(e => `
-      <a class="expert-card" href="/u/${encodeURIComponent(e.username)}${activeChip && inChip(e, activeChip) ? `?chip=${encodeURIComponent(activeChip)}` : ''}">
-        <div class="card-top">
-          ${WisecallAPI.avatar(e)}
-          <div>
-            <div class="card-name">${escapeHtml(e.name)} ${(e.reviewCount || 0) < 3 ? `<span class="badge badge-paid">${t('expert.newMentor')}</span>` : ''}</div>
-            <div class="card-role">${[e.roleTitle, e.niche && !sameThing(e.roleTitle, WisecallI18n.fieldName(e)) ? WisecallI18n.fieldName(e) : ''].filter(Boolean).map(escapeHtml).join(' · ')}${e.practiceKind ? ` <span class="chip-tag kind-tag">${escapeHtml(t('profile.kind.' + e.practiceKind))}</span>` : ''}</div>
-            ${e.profile && (e.profile.currentPosition || e.profile.yearsOfExperience) ? `<div class="card-role small">${e.profile.currentPosition ? escapeHtml(t('experts.card.at').replace('{title}', e.profile.currentPosition.title).replace('{organisation}', e.profile.currentPosition.organisation)) : ''}${e.profile.currentPosition && e.profile.yearsOfExperience ? ' · ' : ''}${e.profile.yearsOfExperience ? escapeHtml(t('experts.card.years').replace('{n}', e.profile.yearsOfExperience)) : ''}</div>` : ''}
-          </div>
-        </div>
-        ${e.profile && e.profile.headline ? `<div class="card-headline">${escapeHtml(e.profile.headline)}</div>` : ''}
-        ${cardText(e) ? `<div class="card-bio"><p class="card-bio-text">${escapeHtml(cardText(e))}</p></div>` : ''}
-        ${e.trust && (e.trust.startTags.length || e.trust.hasSample) ? `<div class="card-start">${e.trust.startTags.slice(0, 2).map((id) => `<span class="tag tag-start">${escapeHtml(t('start.' + id))}</span>`).join(' ')}${e.trust.hasSample ? ` <span class="tag tag-sample">${escapeHtml(t('experts.card.sample'))}</span>` : ''}</div>` : ''}
-        ${e.profile && (e.profile.topSkills || []).length ? `<div class="card-skills">${e.profile.topSkills.map((k) => `<span class="tag">${escapeHtml(k)}</span>`).join(' ')}</div>` : ''}
-        ${(e.directions || []).length ? `<div class="card-skills">${e.directions.slice(0, 3).map(chipById).filter((c) => c && !c.other).map((c) => `<span class="tag">${escapeHtml(nameIn(c))}</span>`).join(' ')}</div>` : ''}
-        ${WisecallBadges.row(e.badges)}
-        <span class="card-view">${escapeHtml(t('experts.card.view'))}</span>
-        <div class="card-bottom">
-          <span class="rating">${e.ratingAvg ? `★ ${e.ratingAvg} (${e.reviewCount} ${reviewsLabel})` : t('expert.noReviewsYet')}</span>
-          <span class="price${e.price === 0 ? ' is-free' : ''}">${WisecallAPI.formatPrice(e.price)}${e.price === 0 ? '' : `<span> ${perQ}</span>`}</span>
-        </div>
-        <span class="btn btn-primary btn-sm btn-block">${askLabel}</span>
-      </a>
-    `).join('');
-  }
-  // The card's text (docs/CLAUDE-CODE-CARD-ABOUT.md): the start of the mentor's "შესახებ" (About), two lines, "…" where it is cut; without
-  // one, their "რაში დაგეხმარები" lines; without those, nothing (the headline says who they are). Never the words of "ჩემი გზა".
-  function cardText(e) {
-    if (e.bio && e.bio.trim()) return e.bio.trim();
-    const help = (e.trust && e.trust.helpPoints) || [];
-    return help.length ? help.join(' · ') : '';
+    // (the card itself: public/js/expert-card.js, the same one the card previews show)
+    grid.innerHTML = list.map((e) => WisecallExpertCard.html(e, {
+      href: `/u/${encodeURIComponent(e.username)}${activeChip && inChip(e, activeChip) ? `?chip=${encodeURIComponent(activeChip)}` : ''}`,
+      directions: (e.directions || []).slice(0, 3).map(chipById).filter((c) => c && !c.other).map((c) => nameIn(c))
+    })).join('');
   }
 
   filters.addEventListener('click', ev => {

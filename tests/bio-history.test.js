@@ -1,7 +1,8 @@
 // A mentor's "About me" is only ever their own words (docs/CLAUDE-CODE-FINISH.md part 2). A profile once showed a shortened third-person
 // text that no code of ours writes. Now:
 // - only two places in the code write it: the mentor's own Settings save (server/profiles.js) and the copy of their own story while the two
-//   are the same text (storyToBio, server/verification/experience.js), which copies it exactly, never rewritten or shortened;
+//   are the same text (storyToBio, server/verification/experience.js), which copies it exactly, never rewritten or shortened; and an
+//   admin's fix from the review (server/cardCheck.js adminEdit, audit-logged: docs/CLAUDE-CODE-CARD-CHECKS.md);
 // - every change is kept by the database (migrations/063_bio_changes.sql), with what made it: the site, or a script or manual query.
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
@@ -73,8 +74,8 @@ describe('"About me" is the mentor\'s own words, and every change is kept', () =
       const rel = path.relative(ROOT, f).replace(/\\/g, '/');
       if (/\bpatch\.bio\s*=|\bSET\s+bio\s*=|\bbio\s*=\s*\$\d/i.test(src)) writers.push(rel);
     }
-    assert.deepEqual(writers.sort(), ['server/account.js', 'server/profiles.js', 'server/verification/experience.js'].filter((w) => writers.includes(w)).sort(), `writers: ${writers.join(', ')}`);
-    for (const w of writers) assert.ok(['server/account.js', 'server/profiles.js', 'server/verification/experience.js'].includes(w), `${w} writes "About me"`);
+    assert.deepEqual(writers.sort(), ['server/account.js', 'server/cardCheck.js', 'server/profiles.js', 'server/verification/experience.js'].filter((w) => writers.includes(w)).sort(), `writers: ${writers.join(', ')}`);
+    for (const w of writers) assert.ok(['server/account.js', 'server/cardCheck.js', 'server/profiles.js', 'server/verification/experience.js'].includes(w), `${w} writes "About me"`);
     // the copy is the story itself, never a summary or a model's text
     assert.match(fs.readFileSync(path.join(ROOT, 'server/verification/experience.js'), 'utf8'), /if \(patch\.story && inStep\(user\.bio, user\.story\)\) patch\.bio = patch\.story;/);
     // (server/account.js only empties it when an account is deleted)

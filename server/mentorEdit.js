@@ -98,10 +98,14 @@ async function saveDetailsReport(user, input) {
     if (r.error) { refused.push({ field: r.field, error: r.error }); continue; }
     // "შენ შესახებ" is required here too (150 characters at least) when the section sends it: one that is new or changed, and an empty one.
     // An About the mentor already had and sent back as it was is kept as it is, however short (nothing that was there is ever refused).
+    // An approved mentor is never refused for its length (docs/CLAUDE-CODE-CARD-CHECKS.md): the form counts and hints, and the admins' daily
+    // check lists a card with a short or missing About; the 150 is for an application that is not approved yet.
     if (part.about !== undefined) {
       const sent = r.patch.bio; // (undefined: the same About as before, which parseExperience leaves out)
       const kept = sent === undefined && ms.ownAbout(user).trim();
-      const reason = kept ? null : ms.aboutReason(sent === undefined ? ms.ownAbout(user) : sent);
+      const found = kept ? null : ms.aboutReason(sent === undefined ? ms.ownAbout(user) : sent);
+      // (the length, for an approved mentor, is only hinted; one letter or a few words over and over is still refused)
+      const reason = found === 'short' && user.verificationStatus === 'verified' ? null : found;
       if (reason) { refused.push({ field: 'about', error: reason === 'repeated' ? 'about_repeated' : 'about_short' }); continue; }
     }
     Object.assign(patch, r.patch);

@@ -78,7 +78,7 @@
         <p class="muted small">${esc(t('details.story.intro'))}</p>
         <p class="note-box story-draft-note" id="storyDraftNote" role="status" hidden>${esc(t('details.story.draft'))}</p>
         <form id="storyForm" novalidate>
-          ${WisecallStoryForm.html(d.story, { limits: d.story.limits, startTags: d.story.startTags, prefix: 'ds', oldStory: d.story.oldStory, open: true })}
+          ${WisecallStoryForm.html(d.story, { limits: d.story.limits, startTags: d.story.startTags, prefix: 'ds', oldStory: d.story.oldStory, open: true, aboutSoft: user.verificationStatus === 'verified' })}
           <p class="form-error" role="alert" id="storyError"></p>
           <button type="submit" class="btn btn-primary">${esc(t('details.story.save'))}</button>
         </form>
@@ -208,6 +208,8 @@
     // My path, the starting-point tags, the sample answer, "I can help with" and the work links (public/js/story-form.js): saved at once.
     const sForm = storyForm();
     WisecallStoryForm.wire(sForm);
+    // (the card as students will see it, under "შენ შესახებ", drawn again as they type: docs/CLAUDE-CODE-CARD-CHECKS.md)
+    WisecallStoryForm.mountPreview(sForm, { ...user });
     // (what is typed and not saved is kept in this browser as it is typed: nothing is lost if the page is left or drawn again)
     sForm.addEventListener('input', () => { keepDraft(); showDraftNote(false); });
     sForm.addEventListener('click', (ev) => { if (ev.target.closest('[data-start-tag]')) keepDraft(); });

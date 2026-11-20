@@ -279,6 +279,41 @@
     return `<p class="mv-note mv-updated" role="note"><span class="badge badge-pending_payment">${t('admin.updated.badge')}</span> ${esc(fill('admin.updated.what', { date: fmt(c.at), list: (c.fields || []).map((f) => t('admin.updated.f.' + f)).join(', ') }))}</p>`;
   }
 
+  // The expert card as students will see it (public/js/expert-card.js), the automatic checks on it, and its texts, fixable from here
+  // (docs/CLAUDE-CODE-CARD-CHECKS.md): saved at once and audit-logged; the mentor is not emailed.
+  function cardBlock(d) {
+    if (!d.card) return '';
+    const warnings = d.cardWarnings || [];
+    const x = d.texts || {};
+    const wText = (w) => fill('admin.card.w.' + w.code, { field: t('admin.card.f.' + w.field), word: w.word || '' });
+    const area = (key, label, value, rows) => `<div class="apply-field"><label for="mvc-${key}-${d.mentor.id}">${esc(label)}</label><textarea id="mvc-${key}-${d.mentor.id}" data-text="${key}" rows="${rows}">${esc(value)}</textarea></div>`;
+    const line = (key, label, value) => `<div class="apply-field"><label for="mvc-${key}-${d.mentor.id}">${esc(label)}</label><input type="text" id="mvc-${key}-${d.mentor.id}" data-text="${key}" value="${esc(value)}"></div>`;
+    return `
+      <section class="mv-card-check" aria-label="${esc(t('admin.card.title'))}">
+        <div>
+          <p><strong>${t('admin.card.title')}</strong></p>
+          <div class="card-preview">${window.WisecallExpertCard ? WisecallExpertCard.html(d.card, { preview: true }) : ''}</div>
+        </div>
+        <div class="mv-card-checks">
+          <p><strong>${t('admin.card.checks')}</strong></p>
+          ${warnings.length ? `<ul class="mv-card-warnings">${warnings.map((w) => `<li data-warning="${esc(w.code)}" data-level="${esc(w.level || 'warning')}"><span class="badge ${w.level === 'error' ? 'badge-rejected' : 'badge-pending_payment'}" aria-hidden="true">!</span><span>${esc(wText(w))}</span></li>`).join('')}</ul>` : `<p class="mv-card-ok">${t('admin.card.ok')}</p>`}
+        </div>
+        <details class="mv-card-edit"${warnings.length ? ' open' : ''}>
+          <summary>${t('admin.card.edit')}</summary>
+          <p class="muted small">${t('admin.card.editNote')}</p>
+          ${area('about', t('admin.card.about'), x.about || '', 4)}
+          ${line('roleTitle', t('admin.card.roleTitle'), x.roleTitle || '')}
+          ${line('headline', t('admin.card.headline'), x.headline || '')}
+          ${area('helpPoints', t('admin.card.help'), (x.helpPoints || []).join('\n'), 3)}
+          ${area('pathStart', t('admin.card.pathStart'), x.pathStart || '', 3)}
+          ${area('pathHow', t('admin.card.pathHow'), x.pathHow || '', 3)}
+          ${area('pathNow', t('admin.card.pathNow'), x.pathNow || '', 3)}
+          <button type="button" class="btn btn-primary btn-sm mv-card-save">${t('admin.card.save')}</button>
+          <p class="form-error mv-card-error" role="alert"></p>
+        </details>
+      </section>`;
+  }
+
   function panelHtml(d) {
     const rows = d.requirements.map(stepRow).join('');
     const optional = (d.optional || []).filter((r) => r.status !== 'todo').map(stepRow).join('');
@@ -288,6 +323,7 @@
     return `
       <div class="mv-panel">
         ${updatedBlock(d)}
+        ${cardBlock(d)}
         ${analysisBlock(d)}
         ${applicationBlock(d)}
         ${evidenceBlock(d)}
@@ -457,6 +493,29 @@
       }
 
       function wire() {
+        // The card's texts, fixed by the admin: only what changed is sent; refused, the field and the reason are said
+        const cardSave = body.querySelector('.mv-card-save');
+        if (cardSave) cardSave.addEventListener('click', async () => {
+          const was = (current && current.texts) || {};
+          const out = {};
+          body.querySelectorAll('.mv-card-edit [data-text]').forEach((el) => {
+            const key = el.dataset.text;
+            const value = key === 'helpPoints' ? el.value.split('\n').map((v) => v.trim()).filter(Boolean) : el.value;
+            if (JSON.stringify(value) !== JSON.stringify(key === 'helpPoints' ? (was.helpPoints || []) : (was[key] || ''))) out[key] = value;
+          });
+          const err = body.querySelector('.mv-card-error');
+          err.textContent = '';
+          if (!Object.keys(out).length) { WisecallNav.showToast(t('admin.card.same')); return; }
+          cardSave.disabled = true;
+          try {
+            const r = await WisecallAPI.apiFetch(`/admin/mentors/${id}/texts`, { method: 'PUT', body: out });
+            WisecallNav.showToast(r.changed.length ? fill('admin.card.saved', { fields: r.changed.join(', ') }) : t('admin.card.same'));
+            await loadPanel();
+          } catch (e) {
+            err.textContent = e && e.code ? `${(e.data && e.data.field) || ''} ${e.code}`.trim() : t('toast.error');
+            cardSave.disabled = false;
+          }
+        });
         body.querySelectorAll('.mv-step').forEach((row) => {
           const step = row.dataset.step;
           const decide = async (decision) => {

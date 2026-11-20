@@ -1475,3 +1475,24 @@ textarea.story-point.story-grow { min-height: 48px; line-height: 1.4; overflow-w
 .art-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 .art-buttons .btn { min-height: 48px; }
 @media (max-width: 479px) { .art-buttons .btn { flex: 1 1 100%; } }
+
+/* ---- The card preview and "where it appears" (docs/CLAUDE-CODE-CARD-CHECKS.md) --------------------------------------------------------------
+   Under "შენ შესახებ" in the mentor's form, and in the admin's review: the expert card as students will see it (public/js/expert-card.js,
+   public/css/expert-card.css), drawn again as the mentor types. It leads nowhere. */
+.story-where { margin: 4px 0 0; font-size: 0.82rem; color: var(--ink-soft); }
+.card-preview-box { margin: 4px 0 20px; padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--r-card); background: var(--bg); min-width: 0; }
+.card-preview-title { margin: 0; font-weight: 700; }
+.card-preview-note { margin: 2px 0 10px; }
+.card-preview { min-width: 0; }
+.card-preview .expert-card { cursor: default; }
+.card-preview .expert-card:hover { transform: none; border-color: var(--mcard-line); }
+/* the admin's review: the card, the checks and the edit form */
+.mv-card-check { display: grid; gap: 14px; margin: 0 0 18px; }
+.mv-card-warnings { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.mv-card-warnings li { display: flex; gap: 8px; align-items: flex-start; overflow-wrap: anywhere; }
+.mv-card-ok { color: var(--accent2-text); font-weight: 700; }
+.mv-card-edit .apply-field { margin: 0 0 12px; }
+.mv-card-edit label { display: block; font-weight: 700; margin-bottom: 4px; }
+.mv-card-edit textarea, .mv-card-edit input { width: 100%; padding: 10px 12px; border: 1px solid var(--field-border); border-radius: var(--r-field); background: var(--field); color: var(--ink); font: inherit; font-size: 0.95rem; line-height: 1.5; }
+.mv-card-edit textarea:focus-visible, .mv-card-edit input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (min-width: 900px) { .mv-card-check { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } .mv-card-check > .mv-card-edit { grid-column: 1 / -1; } }

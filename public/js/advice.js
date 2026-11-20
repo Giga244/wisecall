@@ -12,8 +12,8 @@
 
   const nicheOf = () => (WisecallI18n.niches().find((n) => n.key === key) || null);
 
-  // (as on Browse, public/js/main.js: the start of the About; without one the "I can help with" lines; never the words of "ჩემი გზა")
-  const cardText = (e) => (e.bio && e.bio.trim() ? e.bio.trim() : ((e.trust && e.trust.helpPoints) || []).join(' · '));
+  // (the same words as Browse, public/js/expert-card.js: the start of the About; without one the "I can help with" lines; never "ჩემი გზა")
+  const cardText = (e) => WisecallExpertCard.text(e);
   function card(e) {
     return `
       <a class="expert-card" href="/u/${encodeURIComponent(e.username)}">

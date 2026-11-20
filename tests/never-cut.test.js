@@ -139,8 +139,10 @@ describe('the cards show the first lines, the profile and the stored text stay w
     assert.match(read('public/js/clamp.js'), /const cut = \(el\) => el\.scrollHeight > el\.clientHeight \+ 1;/);
     // (an expert card, docs/CLAUDE-CODE-CARD-ABOUT.md: two lines with an ellipsis, and the link at its foot on every card, a span: the card is the link)
     assert.ok(css.includes('.card-bio-text { -webkit-line-clamp: 2; line-clamp: 2; text-overflow: ellipsis; }'));
-    assert.ok(read('public/js/main.js').includes("<span class=\"card-view\">${escapeHtml(t('experts.card.view'))}</span>"));
-    assert.doesNotMatch(read('public/js/main.js'), /<a [^>]*class="card-view"/, 'never a link inside the card\'s link');
+    // (the card is drawn by public/js/expert-card.js for Browse and the previews: docs/CLAUDE-CODE-CARD-CHECKS.md)
+    assert.ok(read('public/js/expert-card.js').includes("<span class=\"card-view\">${esc(t('experts.card.view'))}</span>"));
+    assert.doesNotMatch(read('public/js/expert-card.js'), /<a [^>]*class="card-view"/, 'never a link inside the card\'s link');
+    assert.match(read('public/js/main.js'), /WisecallExpertCard\.html\(e, \{/);
     assert.equal(JSON.parse(read('public/i18n/ka.json'))['experts.card.view'], 'სრულად ნახვა →');
     assert.equal(JSON.parse(read('public/i18n/en.json'))['experts.card.view'], 'View full profile →');
     assert.match(read('public/js/home-mentors.js'), /<a class="lmore lexpert-more" href="\$\{href\}" data-clamp-more hidden>/);

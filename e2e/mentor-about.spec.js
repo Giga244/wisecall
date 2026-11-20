@@ -155,7 +155,7 @@ test('the profile: "შესახებ" above "ჩემი გზა", the h
   await ctx.close();
 });
 
-test('an approved mentor without an About: listed, "შესახებ" not shown, one card on the dashboard to My details, where it is required', async ({ browser }) => {
+test('an approved mentor without an About: listed, "შესახებ" not shown, one card on the dashboard to My details, where a gentle tip asks for it (never a refused save)', async ({ browser }) => {
   const admin = await adminClient();
   const m = await S.listedMentor(admin, { name: 'სატესტო ფოტოგრაფი', email: `about-card-${tag}@e2e.test`, niche: 'design', roleTitle: 'ფოტოგრაფი', price: 25 });
   expect((await m.client.api('/me/details', { method: 'PUT', body: { pathStart: S.PATH.start, pathHow: S.PATH.how, pathNow: S.PATH.now } })).status).toBe(200);
@@ -178,10 +178,11 @@ test('an approved mentor without an About: listed, "შესახებ" not s
   await page.waitForURL(/settings\.html\?tab=details#about$/);
   const box = page.locator('#ds-about');
   await expect(box).toBeFocused();
-  // required here too: saving the section without it says so under the box, and nothing changes
+  // (docs/CLAUDE-CODE-CARD-CHECKS.md: an approved mentor is never refused a save for the About's length; the count gives a gentle tip)
+  await expect(page.locator('#ds-about-count')).toHaveText(fill('story.about.soft', { n: 0, min: 150, left: 150 }));
   await page.locator('#storyForm button[type="submit"]').click();
-  await expect(page.locator('#ds-about-err')).toHaveText(fill('story.err.aboutShort', { min: 150, left: 150 }));
-  await expect(box).toBeFocused();
+  await expect(page.locator('#toast')).toHaveText(KA['story.saved']);
+  await expect(page.locator('#ds-about-err')).toBeHidden();
   expect((await S.sql('SELECT bio FROM users WHERE id = $1', [m.id]))[0].bio).toBeNull();
   await box.fill(ABOUT);
   await expect(page.locator('#ds-about-err')).toBeHidden();

@@ -1,9 +1,10 @@
 // "My path" and what goes with it (docs/CLAUDE-CODE-MENTOR-STORY.md), one form for step 2 of the application (public/js/apply.js) and for
 // Settings -> My details (public/js/settings-details.js): three short blocks (where I started, how I coped, where I am now), up to 3
-// starting-point tags, "შენ შესახებ" (the profile's About, required, 150 to 2000 characters), and, all optional, a sample question with a short sample answer, three "I can help with" lines and up to 3 work links.
+// starting-point tags, "შენ შესახებ" (the profile's About and the start of the card, required for a new application, 150 to 2000 characters), and, all optional, a sample question with a short sample answer, three "I can help with" lines and up to 3 work links.
 // The server decides every rule (server/mentorStory.js); this asks, counts and explains. Every example is labelled "Example".
 //   WisecallStoryForm.html(values, { limits, startTags, prefix, oldStory, open })  -> the fields (inside the page's own <form>)
 //   WisecallStoryForm.wire(root)            counters, "at most 3" for the tags
+//   WisecallStoryForm.mountPreview(root, base)  the live card preview under the About (docs/CLAUDE-CODE-CARD-CHECKS.md)
 //   WisecallStoryForm.read(root)            -> what to send
 //   WisecallStoryForm.pathProblem(values, limits, { oldStoryOk }) -> null | { field, code }   (before "Next": all three blocks, or none with an old story)
 //   WisecallStoryForm.aboutProblem(values, limits) -> null | { code, left }; aboutError(root, text, { focus }); aboutText(problem, limits)
@@ -18,7 +19,7 @@
   const size = (text) => (window.WisecallTextRules ? WisecallTextRules.size(text) : [...String(text || '').trim().replace(/\s+/g, ' ')].length);
   const PATH = [['pathStart', 'start'], ['pathHow', 'how'], ['pathNow', 'now']];
 
-  function html(values, { limits, startTags = [], prefix = 'st', oldStory = '', open = false, aboutOptional = false } = {}) {
+  function html(values, { limits, startTags = [], prefix = 'st', oldStory = '', open = false, aboutOptional = false, aboutSoft = false } = {}) {
     const v = values || {};
     const L = limits;
     const block = ([key, name]) => `
@@ -27,6 +28,7 @@
         <textarea id="${prefix}-${key}" name="${key}" rows="4" data-story-count data-min="${L.pathMin}" data-max="${L.pathMax}" aria-describedby="${prefix}-${key}-count ${prefix}-${key}-err ${prefix}-${key}-ex">${esc(v[key] || '')}</textarea>
         <p class="apply-count story-count" id="${prefix}-${key}-count" aria-live="polite"></p>
         <p class="apply-field-error" id="${prefix}-${key}-err" data-field-error="${key}" role="alert" hidden></p>
+        <p class="hint story-where">${esc(t('story.where.profile'))}</p>
         <p class="hint story-example" id="${prefix}-${key}-ex"><span class="story-example-label">${esc(t('story.example'))}</span> ${esc(t(`story.${name}.ex`))}</p>
       </div>`;
     // (short boxes that wrap and grow like the others: a point is never cut off at the side of a phone; a line break in one is a space)
@@ -35,7 +37,7 @@
     const points = [0, 1, 2].map((i) => `<textarea id="${prefix}-helpPoint-${i}" name="helpPoint" rows="1" class="story-point" data-story-count data-plain data-min="${pointMin}" data-max="${pointMax}" placeholder="${esc(t('story.example'))} ${esc(t(`story.help.ex${i + 1}`))}" aria-label="${esc(fill('story.help.n', { n: i + 1 }))}" aria-describedby="${prefix}-helpPoint-${i}-count">${esc((v.helpPoints || [])[i] || '')}</textarea>
               <p class="apply-count story-count story-point-count" id="${prefix}-helpPoint-${i}-count" aria-live="polite"></p>`).join('');
     const links = [0, 1, 2].map((i) => `<input type="url" name="workLink" inputmode="url" value="${esc((v.workLinks || [])[i] || '')}" placeholder="https://" aria-label="${esc(fill('story.links.n', { n: i + 1 }))}">`).join('');
-    // "შენ შესახებ" / "About you": the whole career in the mentor's own words; the profile's About. Required, 150 to 2000 characters (an
+    // "შენ შესახებ" / "About you": the whole career in the mentor's own words; the profile's About. Required for a new application, 150 to 2000 characters (an
     // application sent before has it as optional: aboutOptional). No length cap in the box (nothing typed is ever cut): the count says how
     // many more are needed, and when it is over; the server says so too. What is wrong with it is said right under it (data-about-error).
     const aboutMin = L.aboutMin || 150;
@@ -44,10 +46,16 @@
       <div class="apply-field story-about">
         <label for="${prefix}-about">${esc(t('story.about.label'))}${aboutOptional ? ` <span class="hint">${esc(t('story.about.optional'))}</span>` : ''}</label>
         <p class="hint" id="${prefix}-about-hint">${esc(t('story.about.hint'))}</p>
-        <textarea id="${prefix}-about" name="about" rows="6" data-about-count data-min="${aboutMin}" data-max="${aboutMax}" aria-describedby="${prefix}-about-hint ${prefix}-about-count ${prefix}-about-err ${prefix}-about-ex"${aboutOptional ? '' : ' aria-required="true"'}>${esc(v.about || '')}</textarea>
+        <p class="hint story-where">${esc(t('story.where.card'))}</p>
+        <textarea id="${prefix}-about" name="about" rows="6" data-about-count${aboutSoft ? ' data-soft' : ''} data-min="${aboutMin}" data-max="${aboutMax}" aria-describedby="${prefix}-about-hint ${prefix}-about-count ${prefix}-about-err ${prefix}-about-ex"${aboutOptional || aboutSoft ? '' : ' aria-required="true"'}>${esc(v.about || '')}</textarea>
         <p class="apply-count story-count" id="${prefix}-about-count" aria-live="polite"></p>
         <p class="apply-field-error" id="${prefix}-about-err" data-about-error hidden></p>
         <p class="hint story-example" id="${prefix}-about-ex"><span class="story-example-label">${esc(t('story.example'))}</span> ${esc(t('story.about.ex'))}</p>
+      </div>
+      <div class="card-preview-box" data-card-preview hidden>
+        <p class="card-preview-title">${esc(t('story.preview.title'))}</p>
+        <p class="hint card-preview-note">${esc(t('story.preview.note'))}</p>
+        <div class="card-preview" data-card-preview-slot></div>
       </div>`;
     return `
       <div class="story-form" data-story-form>
@@ -90,6 +98,7 @@
               <legend class="sr-only">${esc(t('story.help.title'))}</legend>
               ${points}
               <p class="apply-field-error" data-field-error="helpPoints" role="alert" hidden></p>
+              <p class="hint story-where">${esc(t('story.where.profile'))}</p>
             </fieldset>
           </details>
           <details class="story-opt" data-opt="links"${open || (v.workLinks || []).length ? ' open' : ''}>
@@ -134,7 +143,7 @@
         const over = [...area.value.trim()].length > max;
         const repeated = n >= min && Boolean(window.WisecallTextRules) && WisecallTextRules.looksRepeated(area.value);
         out.textContent = over ? fill('story.count.over', { n: [...area.value.trim()].length, max })
-          : (n < min ? fill('story.about.need', { left: min - n, min }) : fill(repeated ? 'apply.story.countRepeated' : 'story.count.ok', { n, max }));
+          : (n < min ? fill(area.hasAttribute('data-soft') ? 'story.about.soft' : 'story.about.need', { left: min - n, min, n }) : fill(repeated ? 'apply.story.countRepeated' : 'story.count.ok', { n, max }));
         out.classList.toggle('is-ok', n >= min && !over && !repeated);
         out.classList.toggle('is-over', over);
       };
@@ -316,5 +325,23 @@
     return name ? root.querySelector(`[data-story-form] [name="${name}"]`) : null;
   }
 
-  window.WisecallStoryForm = { html, wire, read, merge, pathProblem, pathProblems, problemText, fieldError, clearErrors, restore, aboutProblem, aboutError, aboutText, errorText, knows, fieldOf };
+  // The card as students will see it (public/js/expert-card.js), right under the About, drawn again as the mentor types: the About (or,
+  // without one, the "რაში დაგეხმარები" lines), the starting-point chips and "Sample answer". base: the mentor as the page knows them (name,
+  // photo, role, field, price, badges); nothing is sent anywhere.
+  function mountPreview(root, base) {
+    const form = root.querySelector('[data-story-form]');
+    const box = form && form.querySelector('[data-card-preview]');
+    if (!box || !base || !window.WisecallExpertCard) return;
+    const slot = box.querySelector('[data-card-preview-slot]');
+    const draw = () => {
+      const v = read(root);
+      slot.innerHTML = WisecallExpertCard.html({ ...base, bio: v.about, trust: { ...(base.trust || {}), helpPoints: v.helpPoints, startTags: v.startTags, hasSample: Boolean(String(v.sampleQuestion || '').trim() && String(v.sampleReply || '').trim()) } }, { preview: true });
+    };
+    box.hidden = false;
+    draw();
+    form.addEventListener('input', draw);
+    form.addEventListener('click', (ev) => { if (ev.target.closest('[data-start-tag]')) setTimeout(draw, 0); });
+  }
+
+  window.WisecallStoryForm = { mountPreview, html, wire, read, merge, pathProblem, pathProblems, problemText, fieldError, clearErrors, restore, aboutProblem, aboutError, aboutText, errorText, knows, fieldOf };
 })();

@@ -13,7 +13,7 @@
 //   workLinks    up to 3 links to their work (Behance, Dribbble, a site, LinkedIn). http/https only; never a messenger, payment or contact link.
 //   about        "შენ შესახებ" / "About you": the mentor's whole career in their own words (users.bio, the profile's About), up to 2000
 //                characters. A new application needs at least 150 (aboutReason; experience.missingFor 'bio'), but a draft is saved however
-//                short it is. Settings -> My details asks for 150 too when the About is new or changed (an About an approved mentor already
+//                short it is. Settings -> My details asks for 150 too when the About is new or changed, but never of an approved mentor (an About an approved mentor already
 //                has is kept as it is). Never written by the site: the path is no longer copied into it. An About that is still the copy of
 //                the path made before (ownAbout) counts as empty: the form shows nothing and the profile shows the path instead.
 //
@@ -21,6 +21,8 @@
 const textSafety = require('./textSafety');
 const { size, looksRepeated } = require('./content');
 
+// (the About, docs/CLAUDE-CODE-CARD-CHECKS.md: at least 150 for a new application; up to 2000 for everybody, the card shows its first two lines.
+// An approved mentor is never refused a save of "My details" for its length: the form counts and hints, the admins' daily check flags it.)
 // (pointMax was 90, which the form never said: a 126-character Georgian line was refused with the whole form, docs/CLAUDE-CODE-STORY-SAVE.md)
 const LIMITS = { pathMin: 40, pathMax: 400, tagsMax: 3, questionMin: 10, questionMax: 160, replyMin: 100, replyMax: 600, pointsMax: 3, pointMin: 3, pointMax: 200, linksMax: 3, linkMax: 300, suggestionMax: 60, aboutMin: 150, aboutMax: 2000 };
 

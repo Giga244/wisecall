@@ -125,7 +125,7 @@ describe('in the application ("ჩემი გზა" step)', () => {
 });
 
 describe('in Settings → My details, and on the Profile tab', () => {
-  test('an approved mentor adds and changes it in My details, but cannot empty it or make it short; the profile shows it', async () => {
+  test('an approved mentor adds and changes it in My details; a short or empty one is saved too (never refused for its length), one letter over and over is not; the profile shows it', async () => {
     const m = await mentor('Settings About');
     assert.equal((await put(m.c, PATH)).status, 200);
     await approveMentor(admin, m.c);
@@ -138,29 +138,32 @@ describe('in Settings → My details, and on the Profile tab', () => {
     assert.equal(p.mentor.trust.aboutIsPath, false);
     assert.deepEqual(p.mentor.trust.path, { start: START, how: HOW, now: NOW }, 'and "ჩემი გზა" next to it');
     assert.equal((await details(m.c, { about: `${ABOUT} Call me on +995 599 12 34 56` })).error, 'contact_details');
-    // required here too: never emptied, never under 150 characters, never one letter over and over; the About stays as it was
-    for (const [text, code] of [['', 'about_short'], ['I design websites.', 'about_short'], ['ა'.repeat(200), 'about_repeated']]) {
-      r = await details(m.c, { ...PATH, about: text });
-      assert.equal(r.status, 400, text);
-      assert.equal(r.error, code, text);
-      assert.equal(r.field, 'about', 'said next to the field');
-      assert.equal(await bioOf(m.id), ABOUT, 'nothing was changed');
-    }
+    // one letter over and over: refused, said next to the field, the About stays as it was
+    r = await details(m.c, { ...PATH, about: 'ა'.repeat(200) });
+    assert.equal(r.status, 400);
+    assert.equal(r.error, 'about_repeated');
+    assert.equal(r.field, 'about', 'said next to the field');
+    assert.equal(await bioOf(m.id), ABOUT, 'nothing was changed');
+    // (docs/CLAUDE-CODE-CARD-CHECKS.md: an approved mentor is never refused a save for the About's length; the form hints, the admins'
+    // daily check lists the card)
+    r = await details(m.c, { ...PATH, about: 'I design websites.' });
+    assert.equal(r.status, 200, r.text);
+    assert.equal(await bioOf(m.id), 'I design websites.');
     // the other fields of the API are saved without it (only the section that sends it asks for it)
     assert.equal((await details(m.c, { startTags: ['region'] })).status, 200);
     p = await profileOf(m.username);
-    assert.equal(p.bio, ABOUT);
+    assert.equal(p.bio, 'I design websites.');
+    assert.equal((await details(m.c, { ...PATH, about: '' })).status, 200, 'emptied too');
   });
 
-  test('an approved mentor with no About: the section cannot be saved without one (150 at least), and the first one that is long enough is saved', async () => {
+  test('an approved mentor with no About: the section is saved without one (never refused for its length), and the first one written is saved', async () => {
     const m = await mentor('Settings Empty About');
     assert.equal((await put(m.c, PATH)).status, 200);
     await approveMentor(admin, m.c);
     await addPayoutDetails(m.c);
     const r = await details(m.c, { ...PATH, about: '', startTags: ['worked'] });
-    assert.equal(r.status, 400);
-    assert.equal(r.error, 'about_short');
-    assert.equal(r.field, 'about');
+    assert.equal(r.status, 200, r.text);
+    assert.deepEqual((await pool.query('SELECT start_tags FROM users WHERE id = $1', [m.id])).rows[0].start_tags, ['worked'], 'the rest is saved');
     assert.equal((await details(m.c, { ...PATH, about: ABOUT, startTags: ['worked'] })).status, 200);
     assert.equal(await bioOf(m.id), ABOUT);
   });

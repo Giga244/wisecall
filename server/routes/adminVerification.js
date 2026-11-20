@@ -106,6 +106,17 @@ router.get('/mentors/:id/verification', requireAuth, requireAdmin, asyncHandler(
       return { wasApproved: auditRows.rows.some((a) => a.action === 'approved'), backInReview: mentor.verificationStatus === 'pending' && Boolean(last) && last.action === 'reinstated' };
     })(),
     registries: rules.registriesFor(mentor.niche),
+    // The expert card as students will see it, what is wrong with it, and the texts an admin can fix here (docs/CLAUDE-CODE-CARD-CHECKS.md)
+    ...(await (async () => {
+      const cardCheck = require('../cardCheck');
+      const card = await cardCheck.cardFor(mentor);
+      const ms = require('../mentorStory');
+      return {
+        card, cardWarnings: cardCheck.warningsFor(mentor, { showAbout: Boolean(card.profile && card.profile.showAbout) }),
+        texts: { about: ms.ownAbout(mentor), headline: mentor.headline || '', roleTitle: mentor.roleTitle || '', helpPoints: mentor.helpPoints || [],
+          pathStart: mentor.pathStart || '', pathHow: mentor.pathHow || '', pathNow: mentor.pathNow || '' }
+      };
+    })()),
     // (docs/CLAUDE-CODE-MENTOR-EDIT.md: the price and who changed it; what changed in a sent application; a change waiting for a decision)
     price: mentor.price, priceHistory: await require('../mentorEdit').priceHistory(mentor.id),
     applicationChanges: experience.submitted(mentor) ? mentor.applicationChanges : null,
@@ -124,6 +135,22 @@ router.post('/mentors/:id/steps/:step', requireAuth, requireAdmin, asyncHandler(
     const summary = await review.decideStep({ mentorId: req.params.id, step: req.params.step, decision, reason, admin: req.adminUser });
     res.json({ ready: summary.ready, missing: summary.missing });
   } catch (e) { fail(res, e); }
+}));
+
+// The texts of a mentor's card and profile, fixed by an admin (docs/CLAUDE-CODE-CARD-CHECKS.md): the About, the headline, the role,
+// "რაში დაგეხმარები" and "ჩემი გზა". Saved at once, each change in the audit log (who, what it was, what it is); the mentor is not emailed.
+router.put('/mentors/:id/texts', requireAuth, requireAdmin, asyncHandler(async (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'not_found' });
+  const cardCheck = require('../cardCheck');
+  const body = Object.fromEntries(cardCheck.ADMIN_FIELDS.filter((k) => (req.body || {})[k] !== undefined).map((k) => [k, req.body[k]]));
+  try {
+    const out = await cardCheck.adminEdit(req.adminUser, req.params.id, body);
+    const card = await cardCheck.cardFor(out.user);
+    res.json({ changed: out.changed, card, cardWarnings: cardCheck.warningsFor(out.user, { showAbout: Boolean(card.profile && card.profile.showAbout) }) });
+  } catch (e) {
+    if (e instanceof cardCheck.CardEditError) return res.status(e.code === 'not_found' ? 404 : 400).json({ error: e.code, ...(e.field ? { field: e.field } : {}) });
+    throw e;
+  }
 }));
 
 // A mentor's field: the words and the category ("Your field"), and "not a licensed profession".
