@@ -1226,6 +1226,8 @@ details.profile-more[open] > summary::after { transform: rotate(225deg); margin-
 .story-example { margin: 4px 0 0; color: var(--ink-soft); }
 .story-example-label { font-weight: 700; }
 .story-count { margin: 4px 0 0; }
+.apply-count.is-over { color: var(--red-strong); }
+.story-point-count { font-size: 0.85rem; }
 .story-old-text { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-soft); }
 .story-tags, .story-points, .story-links { border: 0; padding: 0; margin-inline: 0; min-width: 0; }
 .story-tags legend, .story-points legend, .story-links legend { font-weight: 700; padding: 0; }

@@ -213,7 +213,9 @@
     sForm.addEventListener('click', (ev) => { if (ev.target.closest('[data-start-tag]')) keepDraft(); });
     sForm.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      if ((await saveStory()) === true) WisecallNav.showToast(t('story.saved'));
+      const saved = await saveStory();
+      if (saved === true) WisecallNav.showToast(t('story.saved'));
+      else if (saved === 'partial' || saved === 'some') WisecallNav.showToast(t('story.savedPart'));
     });
     // Saves the story form. Checked here first (each "My path" block says under itself what it still needs), then by the server; a refusal
     // is said under the field it is about, in view and in focus. Nothing typed is ever cleared.
@@ -240,41 +242,45 @@
         return true;
       } catch (e) {
         if (!e || !e.code) { err.textContent = t('apply.err.network'); return false; } // (no answer: what was typed stays, and as a draft)
-        const field = e.data && e.data.field;
-        // ("შენ შესახებ" is required here too, 150 characters: what it still needs is said right under it, and the box is in focus. A refused
-        // About takes nothing else with it: "My path" and the rest are saved without it, as on the application's step; its text stays.)
-        if (field === 'about') {
-          const L = { aboutMin: Number((form.querySelector('[name="about"]') || { dataset: {} }).dataset.min) || storyLimits.aboutMin || 150 };
-          const p = e.code === 'about_short' || e.code === 'about_repeated' ? WisecallStoryForm.aboutProblem(values, L) : null;
-          const { about, ...rest } = values;
+        // The server checks each part on its own (docs/CLAUDE-CODE-STORY-SAVE.md): what it refused is in refused, each with its reason, and
+        // the rest is saved (saved). Every refused part says why right under itself; the first is in view and in focus; nothing typed is
+        // cleared (a refused part stays in the box and in the draft until it is saved).
+        const data = e.data || {};
+        const refused = Array.isArray(data.refused) && data.refused.length ? data.refused : [{ field: data.field, error: e.code }];
+        const savedKeys = Array.isArray(data.saved) ? data.saved : [];
+        if (data.user) Object.assign(user, data.user);
+        if (savedKeys.length) {
           const before = savedStory ? JSON.parse(savedStory) : {};
-          let partial = JSON.stringify({ ...values, about: before.about }) === savedStory; // (nothing but the About to save: the rest is saved already)
-          if (!partial) {
-            try {
-              const data = await WisecallAPI.apiFetch('/me/details', { method: 'PUT', body: rest });
-              Object.assign(user, data.user);
-              savedStory = JSON.stringify({ ...values, about: before.about });
-              keepDraft();
-              partial = true;
-              WisecallNav.showToast(t('story.saved'));
-            } catch (e2) {
-              const f2 = e2 && e2.data && e2.data.field;
-              const mine2 = WisecallStoryForm.pathProblems(values, storyLimits).find((x) => x.field === f2);
-              if (f2 && WisecallStoryForm.fieldError(form, f2, mine2 ? WisecallStoryForm.problemText(mine2, storyLimits) : WisecallStoryForm.errorText(e2, storyLimits), { focus: true })) return false;
-            }
+          const now = { ...before };
+          Object.keys(values).forEach((k) => { if (savedKeys.includes(k)) now[k] = values[k]; });
+          savedStory = JSON.stringify(now);
+          keepDraft();
+        }
+        const L = { ...storyLimits, aboutMin: Number((form.querySelector('[name="about"]') || { dataset: {} }).dataset.min) || storyLimits.aboutMin || 150 };
+        const textOf = (r) => {
+          // ("შენ შესახებ": how many characters it still needs; a "My path" block: its own reason, with what it still needs)
+          if (r.field === 'about') {
+            const p = r.error === 'about_short' || r.error === 'about_repeated' ? WisecallStoryForm.aboutProblem(values, L) : null;
+            return p ? WisecallStoryForm.aboutText(p, L) : WisecallStoryForm.errorText({ code: r.error, data: { field: r.field } }, L);
           }
-          WisecallStoryForm.aboutError(form, p ? WisecallStoryForm.aboutText(p, L) : WisecallStoryForm.errorText(e, L), { focus: true });
-          return partial ? 'partial' : false;
-        }
-        // (a "My path" block the server refused: said under that block, with how many characters it still needs when it is that)
-        const mine = WisecallStoryForm.pathProblems(values, storyLimits).find((p) => p.field === field);
-        const text = mine ? WisecallStoryForm.problemText(mine, storyLimits) : (WisecallStoryForm.knows(e.code) ? WisecallStoryForm.errorText(e, storyLimits) : errorText(e.code));
-        if (!(field && WisecallStoryForm.fieldError(form, field, text, { focus: true }))) {
-          err.textContent = text;
-          const el = WisecallStoryForm.fieldOf(form, e);
-          if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
-        }
-        return false;
+          const mine = WisecallStoryForm.pathProblems(values, storyLimits).find((p) => p.field === r.field && !/_too_long$/.test(r.error));
+          if (mine) return WisecallStoryForm.problemText(mine, storyLimits);
+          return WisecallStoryForm.knows(r.error) || /_too_long$/.test(r.error || '') ? WisecallStoryForm.errorText({ code: r.error, data: { field: r.field } }, storyLimits) : errorText(r.error);
+        };
+        let lineText = '';
+        refused.forEach((r, i) => {
+          const text = textOf(r);
+          if (!(r.field && WisecallStoryForm.fieldError(form, r.field, text, { focus: i === 0 }))) {
+            lineText = lineText || text;
+            const el = i === 0 ? WisecallStoryForm.fieldOf(form, { data: { field: r.field } }) : null;
+            if (el) { const more = el.closest('details'); if (more) more.open = true; el.focus(); }
+          }
+        });
+        // (and in one line by the button: what was not saved, and that the rest was)
+        err.textContent = savedKeys.length ? t('story.err.partSaved') : (lineText || textOf(refused[0]));
+        if (!savedKeys.length) return false;
+        // ('partial': only "შენ შესახებ" was refused, so the page's other buttons may go on; 'some': another part was refused)
+        return refused.every((r) => r.field === 'about') ? 'partial' : 'some';
       }
     }
     // Every other button on this page first saves "My path" when it has unsaved text (a mentor who typed it and pressed "Send for a check"

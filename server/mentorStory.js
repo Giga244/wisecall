@@ -9,7 +9,7 @@
 //   startTags    up to 3 of START_TAGS: where the mentor started from. Never about income or family wealth. Chips on the profile and the
 //                Browse cards, and a Browse filter.
 //   sample       a common question in their field and a short sample answer (100 to 600 characters), always labelled "Sample answer".
-//   helpPoints   up to 3 short lines: "I can help with".
+//   helpPoints   up to 3 lines: "I can help with", 3 to 200 characters each (the form counts each one and shows the 200).
 //   workLinks    up to 3 links to their work (Behance, Dribbble, a site, LinkedIn). http/https only; never a messenger, payment or contact link.
 //   about        "შენ შესახებ" / "About you": the mentor's whole career in their own words (users.bio, the profile's About), up to 2000
 //                characters. A new application needs at least 150 (aboutReason; experience.missingFor 'bio'), but a draft is saved however
@@ -21,7 +21,8 @@
 const textSafety = require('./textSafety');
 const { size, looksRepeated } = require('./content');
 
-const LIMITS = { pathMin: 40, pathMax: 400, tagsMax: 3, questionMin: 10, questionMax: 160, replyMin: 100, replyMax: 600, pointsMax: 3, pointMin: 3, pointMax: 90, linksMax: 3, linkMax: 300, suggestionMax: 60, aboutMin: 150, aboutMax: 2000 };
+// (pointMax was 90, which the form never said: a 126-character Georgian line was refused with the whole form, docs/CLAUDE-CODE-STORY-SAVE.md)
+const LIMITS = { pathMin: 40, pathMax: 400, tagsMax: 3, questionMin: 10, questionMax: 160, replyMin: 100, replyMax: 600, pointsMax: 3, pointMin: 3, pointMax: 200, linksMax: 3, linkMax: 300, suggestionMax: 60, aboutMin: 150, aboutMax: 2000 };
 
 // Where a mentor started from. Neutral on purpose: what they did and where they came from, never what their family had.
 const START_TAGS = [
@@ -38,15 +39,19 @@ const isTag = (id) => TAG_IDS.includes(id);
 
 const PATH_KEYS = ['pathStart', 'pathHow', 'pathNow'];
 const KEYS = [...PATH_KEYS, 'startTags', 'sampleQuestion', 'sampleReply', 'helpPoints', 'workLinks', 'fieldSuggestion', 'about'];
+// The parts of the form that are checked and saved on their own (Settings -> My details): one refused part never stops the others. The
+// path is one part (all three blocks or none), and so are the sample question and its answer.
+const GROUPS = [PATH_KEYS, ['sampleQuestion', 'sampleReply'], ['startTags'], ['helpPoints'], ['workLinks'], ['fieldSuggestion'], ['about']];
 
 const bad = (error, field) => ({ error, field });
-// A text as it is stored (or null), or what is wrong with it.
-function cleanText(value, field, { max, oneLine = false }) {
+// A text as it is stored (or null), or what is wrong with it. kept: the texts stored now; one sent back exactly as it is stored is never
+// refused for its length (it was saved under an earlier limit; refusing it would stop every later save of the form).
+function cleanText(value, field, { max, oneLine = false, kept = [] }) {
   if (value !== null && value !== undefined && typeof value !== 'string') return bad('invalid_field', field);
   let v = textSafety.cleanText(value || '');
   if (oneLine) v = v.replace(/\s+/g, ' ');
   if (!v) return { value: null };
-  if ([...v].length > max) return bad(`${field}_too_long`, field);
+  if ([...v].length > max && !kept.includes(v)) return bad(`${field}_too_long`, field);
   if (textSafety.isOffensive(v)) return bad('offensive', field);
   if (textSafety.findBlockedContact(v).length) return bad('contact_details', field);
   return { value: v };
@@ -82,7 +87,7 @@ function parse(input, { draft = false, current = {} } = {}) {
   const patch = {};
   for (const key of PATH_KEYS) {
     if (b[key] === undefined) continue;
-    const r = cleanText(b[key], key, { max: LIMITS.pathMax });
+    const r = cleanText(b[key], key, { max: LIMITS.pathMax, kept: [current[key]] });
     if (r.error) return r;
     // (a draft is saved as it was typed, so nothing is lost: a block that is short or repeated just does not count yet, and the page says why)
     if (r.value && !draft && size(r.value) < LIMITS.pathMin) return bad('path_short', key);
@@ -96,13 +101,13 @@ function parse(input, { draft = false, current = {} } = {}) {
     patch.startTags = tags;
   }
   if (b.sampleQuestion !== undefined) {
-    const r = cleanText(b.sampleQuestion, 'sampleQuestion', { max: LIMITS.questionMax, oneLine: true });
+    const r = cleanText(b.sampleQuestion, 'sampleQuestion', { max: LIMITS.questionMax, oneLine: true, kept: [current.sampleQuestion] });
     if (r.error) return r;
     if (r.value && !draft && size(r.value) < LIMITS.questionMin) return bad('sample_question_short', 'sampleQuestion');
     patch.sampleQuestion = r.value;
   }
   if (b.sampleReply !== undefined) {
-    const r = cleanText(b.sampleReply, 'sampleReply', { max: LIMITS.replyMax });
+    const r = cleanText(b.sampleReply, 'sampleReply', { max: LIMITS.replyMax, kept: [current.sampleReply] });
     if (r.error) return r;
     if (r.value && !draft && (size(r.value) < LIMITS.replyMin || looksRepeated(r.value))) return bad('sample_reply_short', 'sampleReply');
     patch.sampleReply = r.value;
@@ -111,7 +116,7 @@ function parse(input, { draft = false, current = {} } = {}) {
     if (!Array.isArray(b.helpPoints)) return bad('invalid_field', 'helpPoints');
     const out = [];
     for (const raw of b.helpPoints) {
-      const r = cleanText(raw, 'helpPoints', { max: LIMITS.pointMax, oneLine: true });
+      const r = cleanText(raw, 'helpPoints', { max: LIMITS.pointMax, oneLine: true, kept: current.helpPoints || [] });
       if (r.error) return r;
       if (!r.value) continue;
       if (size(r.value) < LIMITS.pointMin) return bad('help_point_short', 'helpPoints');
@@ -231,4 +236,4 @@ const wantsCard = (u) => !u.pathCardDismissedAt && (!pathComplete(u) || !hasSamp
 // such a mentor is never hidden, blocked or sent back to review for it.
 const wantsAboutCard = (u) => !u.aboutCardDismissedAt && !ownAbout(u).trim();
 
-module.exports = { LIMITS, START_TAGS, TAG_IDS, PATH_KEYS, KEYS, isTag, parse, pathComplete, pathReason, asStory, aboutIsPathCopy, ownAbout, aboutReason, hasSample, formOf, publicView, cardView, linkChip, wantsCard, wantsAboutCard };
+module.exports = { LIMITS, START_TAGS, TAG_IDS, PATH_KEYS, KEYS, GROUPS, isTag, parse, pathComplete, pathReason, asStory, aboutIsPathCopy, ownAbout, aboutReason, hasSample, formOf, publicView, cardView, linkChip, wantsCard, wantsAboutCard };

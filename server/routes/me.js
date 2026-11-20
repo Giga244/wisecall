@@ -197,11 +197,24 @@ router.get('/details', requireAuth, asyncHandler(async (req, res) => {
   res.json(await require('../mentorEdit').detailsFor(user));
 }));
 // (a refused save is written to the log with what was refused and why, never the text: "PUT /api/me/details 400" alone said nothing)
-const logRefused = (what, req, e) => { if (e && e.code) console.warn(`[${what}] refused ${e.code}${e.field ? ` field=${e.field}` : ''} user=${req.userToken && req.userToken.id} sent=${Object.keys(req.body || {}).join(',')}`); };
+const logRefused = (what, req, e) => {
+  if (!e || !e.code) return;
+  const all = Array.isArray(e.refused) && e.refused.length > 1 ? ` all=${e.refused.map((r) => `${r.field}:${r.error}`).join(',')}` : '';
+  const kept = Array.isArray(e.saved) && e.saved.length ? ` saved=${e.saved.join(',')}` : '';
+  // (the same line as before, with what else was refused and what was saved after it)
+  console.warn(`[${what}] refused ${e.code}${e.field ? ` field=${e.field}` : ''} user=${req.userToken && req.userToken.id} sent=${Object.keys(req.body || {}).join(',')}${all}${kept}`);
+};
 router.put('/details', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);
   if (!user) return res.status(404).json({ error: 'not_found' });
-  try { res.json({ user: meProfile(await require('../mentorEdit').saveDetails(user, req.body || {})) }); } catch (e) { logRefused('details', req, e); editFail(res, e); }
+  try { res.json({ user: meProfile(await require('../mentorEdit').saveDetails(user, req.body || {})) }); } catch (e) {
+    logRefused('details', req, e);
+    // (a part refused and the rest saved: every refused part with its reason, what was saved, and the mentor as they are now)
+    if (e instanceof verification.VerificationError && Array.isArray(e.refused)) {
+      return res.status(400).json({ error: e.code, field: e.field, refused: e.refused, saved: e.saved || [], ...(e.user ? { user: meProfile(e.user) } : {}) });
+    }
+    editFail(res, e);
+  }
 }));
 router.put('/fields', requireAuth, asyncHandler(async (req, res) => {
   const user = await getUserById(req.userToken.id);

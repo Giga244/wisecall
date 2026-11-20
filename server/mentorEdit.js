@@ -68,26 +68,50 @@ async function markUpdated(user, fields) {
 // (and, docs/CLAUDE-CODE-MENTOR-STORY.md: my path, the starting-point tags, the sample answer, "I can help with" and the work links. The
 // mentor's own words about themselves, checked by the contact filter; they can change or remove them at any time.)
 const FREE = ['specialtyTags', 'university', 'country', 'currentRole', 'yearsExperience', ...require('./mentorStory').KEYS];
+// -> the mentor as saved. Throws an EditError when something was refused; when the rest was saved anyway, the error carries
+// refused: [{ field, error }] (every refused part, each with its own reason), saved: the parts that were saved, and user: the mentor now.
 async function saveDetails(user, input) {
+  const out = await saveDetailsReport(user, input);
+  if (!out.refused.length) return out.user;
+  const [first] = out.refused;
+  throw new EditError(first.error, { field: first.field, refused: out.refused, saved: out.saved, user: out.saved.length ? out.user : null });
+}
+
+// My details, part by part (docs/CLAUDE-CODE-STORY-SAVE.md): the specializations, role, university, country and years as before (one
+// refusal stops them), and the story form's parts (server/mentorStory.js GROUPS) each on its own, so a refused "I can help with" line
+// never takes "My path" and the rest with it. -> { user, refused: [{ field, error }], saved: [keys] }
+async function saveDetailsReport(user, input) {
   if (!isMentor(user)) throw new EditError('not_a_mentor');
+  const ms = require('./mentorStory');
   const body = Object.fromEntries(FREE.filter((k) => (input || {})[k] !== undefined).map((k) => [k, input[k]]));
   const experience = require('./verification/experience');
-  const { patch, error, field } = experience.parseExperience(body, { strict: true, current: user });
+  const pick = (keys) => Object.fromEntries(keys.filter((k) => body[k] !== undefined).map((k) => [k, body[k]]));
+  const others = pick(FREE.filter((k) => !ms.KEYS.includes(k)));
+  const { patch, error, field } = experience.parseExperience(others, { strict: true, current: user });
   if (error) throw new EditError(error, { field });
-  // "შენ შესახებ" is required here too (150 characters at least) when the section sends it: one that is new or changed, and an empty one.
-  // An About the mentor already had and sent back as it was is kept as it is, however short (nothing that was there is ever refused).
-  if (body.about !== undefined) {
-    const ms = require('./mentorStory');
-    const sent = patch.bio; // (undefined: the same About as before, which parseExperience leaves out)
-    const kept = sent === undefined && ms.ownAbout(user).trim();
-    const reason = kept ? null : ms.aboutReason(sent === undefined ? ms.ownAbout(user) : sent);
-    if (reason) throw new EditError(reason === 'repeated' ? 'about_repeated' : 'about_short', { field: 'about' });
+  const saved = Object.keys(others);
+  const refused = [];
+  for (const group of ms.GROUPS) {
+    const part = pick(group);
+    if (!Object.keys(part).length) continue;
+    const r = experience.parseExperience(part, { strict: true, current: user });
+    if (r.error) { refused.push({ field: r.field, error: r.error }); continue; }
+    // "შენ შესახებ" is required here too (150 characters at least) when the section sends it: one that is new or changed, and an empty one.
+    // An About the mentor already had and sent back as it was is kept as it is, however short (nothing that was there is ever refused).
+    if (part.about !== undefined) {
+      const sent = r.patch.bio; // (undefined: the same About as before, which parseExperience leaves out)
+      const kept = sent === undefined && ms.ownAbout(user).trim();
+      const reason = kept ? null : ms.aboutReason(sent === undefined ? ms.ownAbout(user) : sent);
+      if (reason) { refused.push({ field: 'about', error: reason === 'repeated' ? 'about_repeated' : 'about_short' }); continue; }
+    }
+    Object.assign(patch, r.patch);
+    saved.push(...Object.keys(part));
   }
   experience.pathToStory(user, patch); // (a complete path is the story, and the About text while that follows it)
-  if (!Object.keys(patch).length) return user;
+  if (!Object.keys(patch).length) return { user, refused, saved };
   const updated = await updateUser(user.id, patch);
-  await markUpdated(user, Object.keys(body));
-  return updated;
+  await markUpdated(user, saved);
+  return { user: updated, refused, saved };
 }
 
 // ---- The field and chips --------------------------------------------------------------------------------------------------------------------------
@@ -236,4 +260,4 @@ async function detailsFor(user) {
   };
 }
 
-module.exports = { EditError, cleanPrice, logPrice, adminSetPrice, priceHistory, priceHistoryForMentor, saveDetails, saveFields, addEvidence, storeDocument, forLicence, queue, decide, detailsFor, openChange };
+module.exports = { EditError, cleanPrice, logPrice, adminSetPrice, priceHistory, priceHistoryForMentor, saveDetails, saveDetailsReport, saveFields, addEvidence, storeDocument, forLicence, queue, decide, detailsFor, openChange };

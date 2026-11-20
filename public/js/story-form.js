@@ -30,7 +30,10 @@
         <p class="hint story-example" id="${prefix}-${key}-ex"><span class="story-example-label">${esc(t('story.example'))}</span> ${esc(t(`story.${name}.ex`))}</p>
       </div>`;
     // (short boxes that wrap and grow like the others: a point is never cut off at the side of a phone; a line break in one is a space)
-    const points = [0, 1, 2].map((i) => `<textarea name="helpPoint" rows="1" class="story-point" placeholder="${esc(t('story.example'))} ${esc(t(`story.help.ex${i + 1}`))}" aria-label="${esc(fill('story.help.n', { n: i + 1 }))}">${esc((v.helpPoints || [])[i] || '')}</textarea>`).join('');
+    // (each line has its own count and limit, like the other boxes: a line over it says so under itself, and nothing typed is ever cut)
+    const pointMin = L.pointMin || 3, pointMax = L.pointMax || 200;
+    const points = [0, 1, 2].map((i) => `<textarea id="${prefix}-helpPoint-${i}" name="helpPoint" rows="1" class="story-point" data-story-count data-plain data-min="${pointMin}" data-max="${pointMax}" placeholder="${esc(t('story.example'))} ${esc(t(`story.help.ex${i + 1}`))}" aria-label="${esc(fill('story.help.n', { n: i + 1 }))}" aria-describedby="${prefix}-helpPoint-${i}-count">${esc((v.helpPoints || [])[i] || '')}</textarea>
+              <p class="apply-count story-count story-point-count" id="${prefix}-helpPoint-${i}-count" aria-live="polite"></p>`).join('');
     const links = [0, 1, 2].map((i) => `<input type="url" name="workLink" inputmode="url" value="${esc((v.workLinks || [])[i] || '')}" placeholder="https://" aria-label="${esc(fill('story.links.n', { n: i + 1 }))}">`).join('');
     // "შენ შესახებ" / "About you": the whole career in the mentor's own words; the profile's About. Required, 150 to 2000 characters (an
     // application sent before has it as optional: aboutOptional). No length cap in the box (nothing typed is ever cut): the count says how
@@ -68,7 +71,8 @@
             <summary><span class="story-opt-name">${esc(t('profile.sample.label'))}</span><span class="story-opt-what">${esc(t('story.opt.sample'))}</span></summary>
             <div class="apply-field">
               <label for="${prefix}-sampleQuestion">${esc(t('story.sample.q'))}</label>
-              <textarea id="${prefix}-sampleQuestion" name="sampleQuestion" rows="1" class="story-point" aria-describedby="${prefix}-sq-ex">${esc(v.sampleQuestion || '')}</textarea>
+              <textarea id="${prefix}-sampleQuestion" name="sampleQuestion" rows="1" class="story-point" data-story-count data-plain data-min="${L.questionMin || 10}" data-max="${L.questionMax || 160}" aria-describedby="${prefix}-sampleQuestion-count ${prefix}-sq-ex">${esc(v.sampleQuestion || '')}</textarea>
+              <p class="apply-count story-count" id="${prefix}-sampleQuestion-count" aria-live="polite"></p>
               <span class="hint story-example" id="${prefix}-sq-ex"><span class="story-example-label">${esc(t('story.example'))}</span> ${esc(t('story.sample.q.ex'))}</span>
               <p class="apply-field-error" data-field-error="sampleQuestion" role="alert" hidden></p>
             </div>
@@ -81,7 +85,7 @@
             </div>
           </details>
           <details class="story-opt" data-opt="help"${open || (v.helpPoints || []).length ? ' open' : ''}>
-            <summary><span class="story-opt-name">${esc(t('story.help.title'))}</span><span class="story-opt-what">${esc(t('story.help.hint'))}</span></summary>
+            <summary><span class="story-opt-name">${esc(t('story.help.title'))}</span><span class="story-opt-what">${esc(fill('story.help.hint', { max: pointMax }))}</span></summary>
             <fieldset class="apply-field story-points">
               <legend class="sr-only">${esc(t('story.help.title'))}</legend>
               ${points}
@@ -108,9 +112,11 @@
       const draw = () => {
         const n = size(area.value);
         const min = Number(area.dataset.min), max = Number(area.dataset.max);
-        const over = [...area.value.trim()].length > max;
-        // (long enough but one letter or a few words over and over: it would not count, and the count says so; public/js/text-rules.js)
-        const repeated = n >= min && Boolean(window.WisecallTextRules) && WisecallTextRules.looksRepeated(area.value);
+        // (a one-line box, data-plain, is counted as the server stores it: spaces and line breaks in a row are one space)
+        const over = (area.hasAttribute('data-plain') ? n : [...area.value.trim()].length) > max;
+        // (long enough but one letter or a few words over and over: it would not count, and the count says so; public/js/text-rules.js.
+        // Not for the short one-line boxes, which the server does not check for that.)
+        const repeated = !area.hasAttribute('data-plain') && n >= min && Boolean(window.WisecallTextRules) && WisecallTextRules.looksRepeated(area.value);
         out.textContent = !area.value.trim() ? fill('story.count.empty', { min, max }) : fill(over ? 'story.count.over' : (repeated ? 'apply.story.countRepeated' : (n >= min ? 'story.count.ok' : 'story.count')), { n, min, max });
         out.classList.toggle('is-ok', Boolean(area.value.trim()) && n >= min && !over && !repeated);
         out.classList.toggle('is-over', over);
@@ -200,7 +206,9 @@
     if (text && focus) {
       const more = line.closest('details');
       if (more) more.open = true;
-      const target = inputs.find((i) => !i.value.trim()) || inputs[0] || line;
+      // (the box that is over its limit, when it is that; else the first empty one)
+      const overMax = (i) => i.dataset.max && size(i.value) > Number(i.dataset.max);
+      const target = inputs.find(overMax) || inputs.find((i) => !i.value.trim()) || inputs[0] || line;
       if (target.scrollIntoView) target.scrollIntoView({ block: 'center' });
       if (target.focus) target.focus({ preventScroll: true });
     }
@@ -294,8 +302,13 @@
     if (e.code === 'contact_details' && field === 'workLinks') return t('story.err.linkContact');
     const L = limits || {};
     if (e.code === 'about_short' || e.code === 'about_repeated') return fill(ERRORS[e.code], { min: L.aboutMin || 150 });
+    // (too long: the limit of that field, in the words)
+    if (/_too_long$/.test(e.code || '') && e.code !== 'about_too_long') return fill('story.err.too_long', { max: L[MAX_OF[field]] || DEFAULT_MAX[field] || '' });
     return fill(ERRORS[e.code] || 'toast.error', { min: L.pathMin || 40, max: L.tagsMax || 3 });
   }
+  // (which limit a field's "too long" is about: server/mentorStory.js LIMITS)
+  const MAX_OF = { pathStart: 'pathMax', pathHow: 'pathMax', pathNow: 'pathMax', sampleQuestion: 'questionMax', sampleReply: 'replyMax', helpPoints: 'pointMax', fieldSuggestion: 'suggestionMax' };
+  const DEFAULT_MAX = { pathStart: 400, pathHow: 400, pathNow: 400, sampleQuestion: 160, sampleReply: 600, helpPoints: 200, fieldSuggestion: 60 };
   // The input a server answer is about (to focus it).
   function fieldOf(root, e) {
     const field = e && e.data && e.data.field;
